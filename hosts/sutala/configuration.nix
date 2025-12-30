@@ -10,6 +10,8 @@
   networking.hostName = "sutala";
   networking.hostId = "d2a81622";
 
+  time.timeZone = "UTC";
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
@@ -32,7 +34,15 @@
   };
   services.zfs.trim.enable = true;
 
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "prohibit-password";
+    };
+  };
 
   home-manager.users.kra3 = import ../../home/kra3.nix;
 

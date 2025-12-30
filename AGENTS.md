@@ -14,6 +14,9 @@ Nix build outputs (`result`, `result-*`) and `direnv` artifacts (`.direnv/`) are
 ## Host Roles & Home Manager
 Servers install software via `environment.systemPackages` and system services. Home Manager is used for user services and user-land configuration (e.g., `home/kra3.nix`), enabled via the flake input and imported into the host config. Keep user-specific packages and dotfiles in `home/`, and keep system-level changes in `modules/` or host files.
 
+## Host Defaults
+- Timezone: servers use `UTC`; personal machines use `Europe/Copenhagen`.
+
 ## Build, Test, and Development Commands
 Use host-targeted commands so changes are explicit and reproducible. Common examples (adjust to match the repo’s structure):
 - `nixos-rebuild switch --flake .#<hostname>`: apply the config to a machine.

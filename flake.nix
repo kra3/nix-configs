@@ -7,9 +7,13 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }:
+  outputs = { self, nixpkgs, home-manager, disko, ... }:
     {
       nixosConfigurations = {
         sutala = nixpkgs.lib.nixosSystem {
@@ -17,6 +21,7 @@
           modules = [
             ./hosts/sutala/configuration.nix
             home-manager.nixosModules.home-manager
+            disko.nixosModules.disko
           ];
         };
       };

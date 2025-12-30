@@ -9,6 +9,7 @@ flake.nix
 hosts/
   <hostname>/
     configuration.nix
+    disko.nix
     hardware-configuration.nix  # generated on the host
 modules/
   nix.nix
@@ -40,6 +41,7 @@ A host typically imports shared modules and user files:
 ```nix
 {
   imports = [
+    ./disko.nix
     ./hardware-configuration.nix
     ../../modules/nix.nix
     ../../users/<user>.nix
@@ -58,11 +60,12 @@ This repository follows a direct import chain where hosts are the root and every
 ```
 flake.nix
 └─ nixosConfigurations.<hostname>
-   ├─ home-manager.nixosModules.home-manager
-   └─ hosts/<hostname>/configuration.nix
-        ├─ ./hardware-configuration.nix
-        ├─ modules/nix.nix
-        ├─ users/<user>.nix
+       ├─ home-manager.nixosModules.home-manager
+       └─ hosts/<hostname>/configuration.nix
+            ├─ ./disko.nix
+            ├─ ./hardware-configuration.nix
+            ├─ modules/nix.nix
+            ├─ users/<user>.nix
         ├─ modules/services/<service>.nix
         └─ home-manager.users.<user>
              └─ home/<user>.nix

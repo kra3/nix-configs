@@ -4,6 +4,7 @@
 This repository holds NixOS configurations for multiple machines. Keep host-specific configs separated and shared logic centralized. Use simple, direct imports (no helper methods) for composition. The expected layout is:
 - `flake.nix` and `flake.lock` for inputs and system outputs.
 - `hosts/<hostname>/configuration.nix` for each machine (current host: `hosts/sutala/` for an `x86_64-linux` server).
+- `hosts/<hostname>/disko.nix` for disk layout (using `/dev/disk/by-id/` paths).
 - `modules/nix.nix` for shared Nix settings (flakes and `nix-command`).
 - `modules/services/<service>.nix` for reusable service modules and configs.
 - `users/<user>.nix` for system users (primary user: `kra3`; `root` is implicit).

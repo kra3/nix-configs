@@ -122,13 +122,19 @@
             mountpoint = "/srv/media";
             options = {
               logbias = "throughput";
+              "com.sun:auto-snapshot" = "false";
             };
           };
-          frigate = {
+          surveillance = {
             type = "zfs_fs";
-            mountpoint = "/srv/frigate";
+            mountpoint = "/srv/surveillance";
             options = {
               logbias = "throughput";
+              "com.sun:auto-snapshot:frequent" = "false";
+              "com.sun:auto-snapshot:hourly" = "false";
+              "com.sun:auto-snapshot:daily" = "true";
+              "com.sun:auto-snapshot:weekly" = "true";
+              "com.sun:auto-snapshot:monthly" = "false";
             };
           };
         };

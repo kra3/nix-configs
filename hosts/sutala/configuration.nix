@@ -10,6 +10,9 @@
   networking.hostName = "sutala";
   networking.hostId = "d2a81622";
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   boot.supportedFilesystems = [ "zfs" ];
   boot.kernelParams = [ "zfs.zfs_arc_max=3338665984" ];
   boot.zfs.extraPools = [ "tank" ];
@@ -28,6 +31,8 @@
     monthly = 3;
   };
   services.zfs.trim.enable = true;
+
+  services.openssh.enable = true;
 
   home-manager.users.kra3 = import ../../home/kra3.nix;
 

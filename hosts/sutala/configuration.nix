@@ -11,9 +11,23 @@
   networking.hostId = "d2a81622";
 
   boot.supportedFilesystems = [ "zfs" ];
-  boot.extraModprobeConfig = ''
-    options zfs zfs_arc_max=3338665984
-  '';
+  boot.kernelParams = [ "zfs.zfs_arc_max=3338665984" ];
+  boot.zfs.extraPools = [ "tank" ];
+
+  services.zfs.autoScrub = {
+    enable = true;
+    pools = [ "rpool" "tank" ];
+  };
+
+  services.zfs.autoSnapshot = {
+    enable = true;
+    frequent = 2;
+    hourly = 6;
+    daily = 3;
+    weekly = 2;
+    monthly = 3;
+  };
+  services.zfs.trim.enable = true;
 
   home-manager.users.kra3 = import ../../home/kra3.nix;
 

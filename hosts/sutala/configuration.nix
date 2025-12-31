@@ -1,6 +1,15 @@
-{ config, pkgs, ... }:
+{
+  inputs,
+  config,
+  pkgs,
+  ...
+}:
 {
   imports = [
+    inputs.home-manager.nixosModules.home-manager
+    inputs.disko.nixosModules.disko
+    inputs.sops-nix.nixosModules.sops
+
     ./hardware-configuration.nix
     ./disko.nix
     ../../modules/nix.nix

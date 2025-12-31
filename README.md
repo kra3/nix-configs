@@ -90,6 +90,16 @@ flake.nix
 - `nix fmt`: format Nix files via treefmt-nix.
 - `nix develop`: enter the dev shell with repo tooling.
 
+## Just Tasks
+
+Common operations are also available through `.justfile`:
+
+- `just fmt`
+- `just check`
+- `just deploy`
+- `just switch-remote`
+- `just build-remote`
+
 ## Colmena Deployment
 
 This repository exposes a `colmena` flake output for remote deployments. Update `deployment.targetHost` and `deployment.targetUser` in `flake.nix`, then run:

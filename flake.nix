@@ -46,6 +46,8 @@
               packages = [
                 pkgs.age
                 pkgs.colmena
+                pkgs.just
+                pkgs.nixos-rebuild
                 pkgs.nixfmt-rfc-style
                 pkgs.sops
               ];
@@ -56,7 +58,7 @@
           nixosConfigurations = {
             sutala = nixpkgs.lib.nixosSystem {
               system = "x86_64-linux";
-              specialArgs = { inherit inputs; };
+              specialArgs = { inputs = builtins.removeAttrs inputs [ "self" ]; };
               modules = [
                 ./hosts/sutala/configuration.nix
               ];
@@ -67,6 +69,7 @@
           colmena = {
             meta = {
               nixpkgs = import nixpkgs { system = "x86_64-linux"; };
+              specialArgs = { inputs = builtins.removeAttrs inputs [ "self" ]; };
             };
             sutala =
               { ... }:
@@ -76,7 +79,6 @@
                   targetUser = "root";
                   buildOnTarget = true;
                 };
-                specialArgs = { inherit inputs; };
                 imports = [
                   ./hosts/sutala/configuration.nix
                 ];

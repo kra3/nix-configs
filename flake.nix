@@ -17,8 +17,16 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, disko, colmena, ... }:
-    {       
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      disko,
+      colmena,
+      ...
+    }:
+    {
       nixosConfigurations = {
         sutala = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
@@ -29,24 +37,26 @@
           ];
         };
       };
-      
+
       colmenaHive = colmena.lib.makeHive self.outputs.colmena;
       colmena = {
         meta = {
           nixpkgs = import nixpkgs { system = "x86_64-linux"; };
         };
-        sutala = { ... }: {
-          deployment = {
-            targetHost = "sutala-root";
-            targetUser = "root";
-            buildOnTarget = true;
+        sutala =
+          { ... }:
+          {
+            deployment = {
+              targetHost = "sutala-root";
+              targetUser = "root";
+              buildOnTarget = true;
+            };
+            imports = [
+              ./hosts/sutala/configuration.nix
+              home-manager.nixosModules.home-manager
+              disko.nixosModules.disko
+            ];
           };
-          imports = [
-            ./hosts/sutala/configuration.nix
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-          ];
-        };
       };
     };
 }

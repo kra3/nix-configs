@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -26,58 +27,57 @@
   };
 
   outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      home-manager,
-      disko,
-      sops-nix,
-      colmena,
-      treefmt-nix,
-      ...
-    }:
-    let
-      systems = [
-        "aarch64-darwin"
-        "x86_64-linux"
-      ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-      treefmtEval = system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} ./treefmt.nix;
-    in
-    {
-      formatter = forAllSystems (system: (treefmtEval system).config.build.wrapper);
-      checks = forAllSystems (system: {
-        treefmt = (treefmtEval system).config.build.check self;
-      });
+    inputs@{ flake-parts, nixpkgs, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { config, ... }:
+      {
+        systems = [
+          "aarch64-darwin"
+          "x86_64-linux"
+        ];
 
-      nixosConfigurations = {
-        sutala = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./hosts/sutala/configuration.nix
-          ];
-        };
-      };
+        imports = [ inputs.treefmt-nix.flakeModule ];
 
-      colmenaHive = colmena.lib.makeHive self.outputs.colmena;
-      colmena = {
-        meta = {
-          nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-        };
-        sutala =
-          { ... }:
+        perSystem =
+          { pkgs, ... }:
           {
-            deployment = {
-              targetHost = "sutala-root";
-              targetUser = "root";
-              buildOnTarget = true;
+            treefmt = {
+              projectRootFile = "flake.nix";
+              programs.nixfmt-rfc-style.enable = true;
             };
-            specialArgs = { inherit inputs; };
-            imports = [
-              ./hosts/sutala/configuration.nix
-            ];
           };
-      };
-    };
+
+        flake = {
+          nixosConfigurations = {
+            sutala = nixpkgs.lib.nixosSystem {
+              system = "x86_64-linux";
+              specialArgs = { inherit inputs; };
+              modules = [
+                ./hosts/sutala/configuration.nix
+              ];
+            };
+          };
+
+          colmenaHive = inputs.colmena.lib.makeHive config.flake.colmena;
+          colmena = {
+            meta = {
+              nixpkgs = import nixpkgs { system = "x86_64-linux"; };
+            };
+            sutala =
+              { ... }:
+              {
+                deployment = {
+                  targetHost = "sutala-root";
+                  targetUser = "root";
+                  buildOnTarget = true;
+                };
+                specialArgs = { inherit inputs; };
+                imports = [
+                  ./hosts/sutala/configuration.nix
+                ];
+              };
+          };
+        };
+      }
+    );
 }

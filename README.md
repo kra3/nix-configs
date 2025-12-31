@@ -2,11 +2,12 @@
 
 This repository stores NixOS configurations for multiple machines using a simple, import-only layout. Hosts define machine-specific settings, modules hold shared system configuration, `users/` defines system accounts, and `home/` (when present) manages user-land configuration through Home Manager.
 
+The flake is structured with `flake-parts` to keep outputs modular as the repo grows.
+
 ## Structure
 
 ```
 flake.nix
-treefmt.nix
 hosts/
   <hostname>/
     configuration.nix
@@ -87,8 +88,6 @@ flake.nix
 - `nixos-rebuild build --flake .#<hostname>`: build without switching.
 - `nix flake check`: evaluate flake checks.
 - `nix fmt`: format Nix files via treefmt-nix.
-
-Treefmt configuration lives in `treefmt.nix`.
 
 ## Colmena Deployment
 

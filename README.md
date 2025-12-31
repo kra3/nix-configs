@@ -85,6 +85,22 @@ This repository exposes a `colmena` flake output for remote deployments. Update 
 nix run github:zhaofengli/colmena -- apply --on <hostname>
 ```
 
+Optional: enable the Colmena binary cache for faster builds:
+
+```
+nix run nixpkgs#cachix -- use colmena
+```
+
+## Impermanence
+
+The root filesystem is rolled back to a baseline ZFS snapshot on boot. Persistent state lives under `/persist` and is bound into the system via `environment.persistence."/persist"`. User persistence is handled in Home Manager via `home.persistence`.
+
+The baseline snapshot (`rpool/root@empty`) is created by `disko` via `postCreateHook` on first install. If the host already exists without that snapshot, create it once:
+
+```
+zfs snapshot rpool/root@empty
+```
+
 ## Notes
 
 - Keep configs import-only; avoid helper methods in Nix.

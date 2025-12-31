@@ -34,6 +34,10 @@
   };
   services.zfs.trim.enable = true;
 
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+  };
   services.openssh = {
     enable = true;
     openFirewall = true;

@@ -41,9 +41,14 @@
         perSystem =
           { pkgs, ... }:
           {
-            treefmt = {
-              projectRootFile = "flake.nix";
-              programs.nixfmt-rfc-style.enable = true;
+            treefmt.projectRootFile = "flake.nix";
+            devShells.default = pkgs.mkShell {
+              packages = [
+                pkgs.age
+                pkgs.colmena
+                pkgs.nixfmt-rfc-style
+                pkgs.sops
+              ];
             };
           };
 

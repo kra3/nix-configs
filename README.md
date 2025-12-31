@@ -88,6 +88,7 @@ flake.nix
 - `nixos-rebuild build --flake .#<hostname>`: build without switching.
 - `nix flake check`: evaluate flake checks.
 - `nix fmt`: format Nix files via treefmt-nix.
+- `nix develop`: enter the dev shell with repo tooling.
 
 ## Colmena Deployment
 

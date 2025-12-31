@@ -77,6 +77,14 @@ flake.nix
 - `nixos-rebuild build --flake .#<hostname>`: build without switching.
 - `nix flake check`: evaluate flake checks.
 
+## Colmena Deployment
+
+This repository exposes a `colmena` flake output for remote deployments. Update `deployment.targetHost` and `deployment.targetUser` in `flake.nix`, then run:
+
+```
+nix run github:zhaofengli/colmena -- apply --on <hostname>
+```
+
 ## Notes
 
 - Keep configs import-only; avoid helper methods in Nix.

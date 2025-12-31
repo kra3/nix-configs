@@ -21,7 +21,10 @@
 
   services.zfs.autoScrub = {
     enable = true;
-    pools = [ "rpool" "tank" ];
+    pools = [
+      "rpool"
+      "tank"
+    ];
   };
 
   services.zfs.autoSnapshot = {

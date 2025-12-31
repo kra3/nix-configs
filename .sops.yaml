@@ -1,0 +1,8 @@
+keys:
+  - &mgmnt age17lmyhh69fx44qk5nc82mqagyaxtz52etk85yeedvnu06wgnptqssarfa7e
+  - &sutala age1damfg7g5hjqg9z76fn3ujh3ve06dxzw0rnz59hanx4y0rhyfcvqszhcrn8 
+creation_rules:
+  - path_regex: secrets/[^/]+(\.(yaml|json|env|ini|conf))?$
+    age: 
+      - *mgmnt
+      - *sutala

@@ -91,15 +91,15 @@ Optional: enable the Colmena binary cache for faster builds:
 nix run nixpkgs#cachix -- use colmena
 ```
 
-## Impermanence
+## SOPS Secrets
 
-The root filesystem is rolled back to a baseline ZFS snapshot on boot. Persistent state lives under `/persist` and is bound into the system via `environment.persistence."/persist"`. User persistence is handled in Home Manager via `home.persistence`.
+Secrets are managed with `sops-nix`. The module is enabled via `modules/sops.nix` and derives its age key from the host SSH key.
 
-The baseline snapshot (`rpool/root@empty`) is created by `disko` via `postCreateHook` on first install. If the host already exists without that snapshot, create it once:
-
-```
-zfs snapshot rpool/root@empty
-```
+Setup:
+- On the host, derive an age recipient: `ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub`
+- Add that recipient to `.sops.yaml` (replace `REPLACE_WITH_AGE_PUBLIC_KEY`)
+- Encrypt `secrets/secrets.yaml` in-place once you add values.
+- Store password hashes under `root-password` and `kra3-password`.
 
 ## Notes
 

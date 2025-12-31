@@ -29,7 +29,7 @@ Use host-targeted commands so changes are explicit and reproducible. Common exam
 If you are not using flakes, document the equivalent `nixos-rebuild -I` or `nix-build` commands here.
 
 ## Coding Style & Naming Conventions
-Keep Nix files readable and consistent: 2-space indentation, trailing commas in multi-line lists/attrsets, and one attribute per line for large sets. Use descriptive, lowercase names with hyphens or underscores (e.g., `hardware-configuration.nix`, `users.nix`). If a formatter is configured (e.g., `nix fmt`), run it before committing.
+Keep Nix files readable and consistent: 2-space indentation, trailing commas in multi-line lists/attrsets, and one attribute per line for large sets. Use descriptive, lowercase names with hyphens or underscores (e.g., `hardware-configuration.nix`, `users.nix`). Use `nix fmt` (treefmt-nix) before committing.
 
 ## Testing Guidelines
 Treat `nix flake check` as the primary validation step for evaluation and checks. If you add host-specific checks or test derivations, document how to run them and what outputs to expect.

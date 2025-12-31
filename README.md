@@ -6,6 +6,7 @@ This repository stores NixOS configurations for multiple machines using a simple
 
 ```
 flake.nix
+treefmt.nix
 hosts/
   <hostname>/
     configuration.nix
@@ -85,6 +86,9 @@ flake.nix
 - `nixos-rebuild switch --flake .#<hostname>`: apply config to a host.
 - `nixos-rebuild build --flake .#<hostname>`: build without switching.
 - `nix flake check`: evaluate flake checks.
+- `nix fmt`: format Nix files via treefmt-nix.
+
+Treefmt configuration lives in `treefmt.nix`.
 
 ## Colmena Deployment
 

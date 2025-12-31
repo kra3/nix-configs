@@ -19,6 +19,10 @@
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -29,9 +33,23 @@
       disko,
       sops-nix,
       colmena,
+      treefmt-nix,
       ...
     }:
+    let
+      systems = [
+        "aarch64-darwin"
+        "x86_64-linux"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs systems;
+      treefmtEval = system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} ./treefmt.nix;
+    in
     {
+      formatter = forAllSystems (system: (treefmtEval system).config.build.wrapper);
+      checks = forAllSystems (system: {
+        treefmt = (treefmtEval system).config.build.check self;
+      });
+
       nixosConfigurations = {
         sutala = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";

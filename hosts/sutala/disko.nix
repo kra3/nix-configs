@@ -53,7 +53,6 @@
         options = {
           ashift = "12";
           autotrim = "on";
-          bootfs = "rpool/root";
         };
         rootFsOptions = {
           canmount = "off";

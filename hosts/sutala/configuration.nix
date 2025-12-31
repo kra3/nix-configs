@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 {
   imports = [
-    # ./hardware-configuration.nix
+    ./hardware-configuration.nix
     ./disko.nix
     ../../modules/nix.nix
     ../../users/kra3.nix

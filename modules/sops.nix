@@ -12,7 +12,7 @@
     gnupg.sshKeyPaths = [ ];
     secrets = {
       root-password.neededForUsers = true;
-      kra3-passwordc.neededForUsers = true;
+      kra3-password.neededForUsers = true;
     };
   };
 }

@@ -39,8 +39,13 @@ home/
 A host typically imports shared modules and user files:
 
 ```nix
+{ inputs, ... }:
 {
   imports = [
+    inputs.home-manager.nixosModules.home-manager
+    inputs.disko.nixosModules.disko
+    inputs.sops-nix.nixosModules.sops
+
     ./disko.nix
     ./hardware-configuration.nix
     ../../modules/nix.nix
@@ -53,6 +58,8 @@ A host typically imports shared modules and user files:
 }
 ```
 
+`flake.nix` passes `inputs` via `specialArgs` so host configs can import `inputs.home-manager`, `inputs.disko`, and `inputs.sops-nix` directly.
+
 ## Dependency Tree
 
 This repository follows a direct import chain where hosts are the root and everything else is pulled in from there:
@@ -60,15 +67,17 @@ This repository follows a direct import chain where hosts are the root and every
 ```
 flake.nix
 └─ nixosConfigurations.<hostname>
-       ├─ home-manager.nixosModules.home-manager
        └─ hosts/<hostname>/configuration.nix
+            ├─ inputs.home-manager.nixosModules.home-manager
+            ├─ inputs.disko.nixosModules.disko
+            ├─ inputs.sops-nix.nixosModules.sops
             ├─ ./disko.nix
             ├─ ./hardware-configuration.nix
             ├─ modules/nix.nix
             ├─ users/<user>.nix
-        ├─ modules/services/<service>.nix
-        └─ home-manager.users.<user>
-             └─ home/<user>.nix
+            ├─ modules/services/<service>.nix
+            └─ home-manager.users.<user>
+                 └─ home/<user>.nix
 ```
 
 ## Build and Apply

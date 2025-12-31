@@ -22,7 +22,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       home-manager,
@@ -35,11 +35,9 @@
       nixosConfigurations = {
         sutala = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
           modules = [
             ./hosts/sutala/configuration.nix
-            home-manager.nixosModules.home-manager
-            disko.nixosModules.disko
-            sops-nix.nixosModules.sops
           ];
         };
       };
@@ -57,11 +55,9 @@
               targetUser = "root";
               buildOnTarget = true;
             };
+            specialArgs = { inherit inputs; };
             imports = [
               ./hosts/sutala/configuration.nix
-              home-manager.nixosModules.home-manager
-              disko.nixosModules.disko
-              sops-nix.nixosModules.sops
             ];
           };
       };

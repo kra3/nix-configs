@@ -12,6 +12,8 @@ This repository holds NixOS configurations for multiple machines. Keep host-spec
 - `home/<user>.nix` for Home Manager configs.
 Nix build outputs (`result`, `result-*`) and `direnv` artifacts (`.direnv/`) are ignored and should not be committed.
 
+`flake.nix` should only list `hosts/<hostname>/configuration.nix` in `nixosConfigurations.*.modules`. Host configs own all imports, including `inputs.home-manager.nixosModules.home-manager`, `inputs.disko.nixosModules.disko`, and `inputs.sops-nix.nixosModules.sops`. Pass `inputs` via `specialArgs` so host configs can reference them.
+
 ## Host Roles & Home Manager
 Servers install software via `environment.systemPackages` and system services. Home Manager is used for user services and user-land configuration (e.g., `home/kra3.nix`), enabled via the flake input and imported into the host config. Keep user-specific packages and dotfiles in `home/`, and keep system-level changes in `modules/` or host files.
 
@@ -31,6 +33,9 @@ Keep Nix files readable and consistent: 2-space indentation, trailing commas in 
 
 ## Testing Guidelines
 Treat `nix flake check` as the primary validation step for evaluation and checks. If you add host-specific checks or test derivations, document how to run them and what outputs to expect.
+
+## Verification Discipline
+Before asserting the state of a file or configuration, re-read it with a command (`cat`, `rg`, etc.) and reference that verification in the response. If you cannot verify, say so explicitly.
 
 ## Commit & Pull Request Guidelines
 Use short, imperative commit messages (e.g., "Add laptop NixOS profile") and keep changes scoped to one host or module. For pull requests, include a clear description, list any commands run (e.g., `nix flake check`), and call out affected hosts.

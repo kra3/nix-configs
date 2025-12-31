@@ -11,6 +11,10 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     colmena = {
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,6 +27,7 @@
       nixpkgs,
       home-manager,
       disko,
+      sops-nix,
       colmena,
       ...
     }:
@@ -34,6 +39,7 @@
             ./hosts/sutala/configuration.nix
             home-manager.nixosModules.home-manager
             disko.nixosModules.disko
+            sops-nix.nixosModules.sops
           ];
         };
       };
@@ -55,6 +61,7 @@
               ./hosts/sutala/configuration.nix
               home-manager.nixosModules.home-manager
               disko.nixosModules.disko
+              sops-nix.nixosModules.sops
             ];
           };
       };

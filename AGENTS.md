@@ -6,6 +6,7 @@ This repository holds NixOS configurations for multiple machines. Keep host-spec
 - `hosts/<hostname>/configuration.nix` for each machine (current host: `hosts/sutala/` for an `x86_64-linux` server).
 - `hosts/<hostname>/disko.nix` for disk layout (using `/dev/disk/by-id/` paths).
 - `modules/nix.nix` for shared Nix settings (flakes and `nix-command`).
+- `modules/sops.nix` for `sops-nix` configuration and secrets tooling.
 - `modules/services/<service>.nix` for reusable service modules and configs.
 - `users/<user>.nix` for system users (primary user: `kra3`; `root` is implicit).
 - `home/<user>.nix` for Home Manager configs.
@@ -16,7 +17,6 @@ Servers install software via `environment.systemPackages` and system services. H
 
 ## Host Defaults
 - Timezone: servers use `UTC`; personal machines use `Europe/Copenhagen`.
-- Impermanence: root rolls back to `rpool/root@empty` at boot; persistent state lives in `/persist` and Home Manager uses `home.persistence`.
 
 ## Build, Test, and Development Commands
 Use host-targeted commands so changes are explicit and reproducible. Common examples (adjust to match the repo’s structure):

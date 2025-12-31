@@ -4,6 +4,8 @@
     ./hardware-configuration.nix
     ./disko.nix
     ../../modules/nix.nix
+    ../../modules/openssh.nix
+    ../../modules/sops.nix
     ../../users/kra3.nix
   ];
 
@@ -41,16 +43,6 @@
     useGlobalPkgs = true;
     useUserPackages = true;
   };
-  services.openssh = {
-    enable = true;
-    openFirewall = true;
-    settings = {
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "prohibit-password";
-    };
-  };
-
   home-manager.users.kra3 = import ../../home/kra3.nix;
 
   system.stateVersion = "25.05";

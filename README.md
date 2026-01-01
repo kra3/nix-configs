@@ -1,6 +1,6 @@
 # NixOS Configs
 
-This repository stores NixOS configurations for multiple machines using a simple, import-only layout. Hosts define machine-specific settings, modules hold shared system configuration, `users/` defines system accounts, and `home/` (when present) manages user-land configuration through Home Manager.
+This repository stores NixOS configurations for multiple machines using a simple, import-only layout. Hosts define machine-specific settings, modules hold shared system configuration, and `modules/users/` defines system accounts and Home Manager user configs.
 
 The flake is structured with `flake-parts` to keep outputs modular as the repo grows.
 
@@ -15,12 +15,10 @@ hosts/
     hardware-configuration.nix  # generated on the host
 modules/
   nix.nix
+  users/
+    <user>.nix
   services/
     <service>.nix
-users/
-  <user>.nix
-home/
-  <user>.nix
 ```
 
 ## What Each Layer Does
@@ -29,10 +27,8 @@ home/
   - Machine-specific system config (hardware, hostname, bootloader, host-only tweaks).
 - **modules** (`modules/*.nix`)
   - Shared system modules (e.g., `modules/nix.nix` for Nix settings).
-- **user** (`users/*.nix`)
-  - System accounts and groups (who exists on the machine).
-- **home** (`home/*.nix`)
-  - Home Manager user-land packages and dotfiles.
+- **user** (`modules/users/*.nix`)
+  - System accounts and groups (who exists on the machine) plus Home Manager user-land config.
 - **services** (`modules/services/*.nix`)
   - Reusable service modules and configs.
 
@@ -51,12 +47,9 @@ A host typically imports shared modules and user files:
     ./disko.nix
     ./hardware-configuration.nix
     ../../modules/nix.nix
-    ../../users/<user>.nix
+    ../../modules/users/<user>.nix
     ../../modules/services/<service>.nix
   ];
-
-  # Example:
-  # home-manager.users.<user> = import ../../home/<user>.nix;
 }
 ```
 
@@ -76,10 +69,9 @@ flake.nix
             ├─ ./disko.nix
             ├─ ./hardware-configuration.nix
             ├─ modules/nix.nix
-            ├─ users/<user>.nix
+            ├─ modules/users/<user>.nix
             ├─ modules/services/<service>.nix
-            └─ home-manager.users.<user>
-                 └─ home/<user>.nix
+            └─ home-manager.users.<user> (from modules/users/<user>.nix)
 ```
 
 ## Build and Apply

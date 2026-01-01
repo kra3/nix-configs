@@ -8,16 +8,17 @@ This repository holds NixOS configurations for multiple machines. Keep host-spec
 - `modules/nix.nix` for shared Nix settings (flakes and `nix-command`).
 - `modules/sops.nix` for `sops-nix` configuration and secrets tooling.
 - `modules/services/<service>.nix` for reusable service modules and configs.
-- `users/<user>.nix` for system users (primary user: `kra3`; `root` is implicit).
-- `home/<user>.nix` for Home Manager configs.
+- `modules/users/<user>.nix` for system users plus Home Manager config (primary user: `kra3`; `root` uses its own module).
 Nix build outputs (`result`, `result-*`) and `direnv` artifacts (`.direnv/`) are ignored and should not be committed.
+
+All Nix modules live under `modules/`; only hosts live under `hosts/`.
 
 `flake.nix` should only list `hosts/<hostname>/configuration.nix` in `nixosConfigurations.*.modules`. Host configs own all imports, including `inputs.home-manager.nixosModules.home-manager`, `inputs.disko.nixosModules.disko`, and `inputs.sops-nix.nixosModules.sops`. Pass `inputs` via `specialArgs` so host configs can reference them.
 
 The flake uses `flake-parts` for output composition; add new outputs under the flake-parts `flake` section and system-specific config under `perSystem`.
 
 ## Host Roles & Home Manager
-Servers install software via `environment.systemPackages` and system services. Home Manager is used for user services and user-land configuration (e.g., `home/kra3.nix`), enabled via the flake input and imported into the host config. Keep user-specific packages and dotfiles in `home/`, and keep system-level changes in `modules/` or host files.
+Servers install software via `environment.systemPackages` and system services. Home Manager is used for user services and user-land configuration, enabled via the flake input and imported into the host config; user modules (`modules/users/<user>.nix`) embed their Home Manager config. Keep user-specific packages and dotfiles inside their user module, and keep system-level changes in `modules/` or host files.
 
 ## Host Defaults
 - Timezone: servers use `UTC`; personal machines use `Europe/Copenhagen`.

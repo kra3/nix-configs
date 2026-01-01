@@ -7,11 +7,13 @@
         type = "ed25519";
       }
     ];
-    openFirewall = true;
+    openFirewall = false;
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "prohibit-password";
     };
   };
+
+  networking.firewall.interfaces.enp2s0.allowedTCPPorts = [ 22 ];
 }

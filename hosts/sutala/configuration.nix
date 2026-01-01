@@ -17,6 +17,7 @@
     ../../modules/nginx.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
+    ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix

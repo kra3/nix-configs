@@ -9,7 +9,22 @@ Setup:
 
 Password hashes:
 - Generate a SHA-512 hash with `mkpasswd -m sha-512` or `openssl passwd -6`.
-- Store the hashes under `root-password` and `kra3-password`.
+- Store the hashes under `users.root.password` and `users.kra3.password`.
+
+Cloudflare DNS:
+- Store the token under `cloudflare.dns_api_token` as the raw value.
+
+Example structure:
+
+```
+users:
+  root:
+    password: "$6$..."
+  kra3:
+    password: "$6$..."
+cloudflare:
+  dns_api_token: "..."
+```
 
 Example encryption command:
 

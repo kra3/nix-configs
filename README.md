@@ -114,7 +114,8 @@ Setup:
 - On the host, derive an age recipient: `ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub`
 - Add that recipient to `.sops.yaml` (replace `REPLACE_WITH_AGE_PUBLIC_KEY`)
 - Encrypt `secrets/secrets.yaml` in-place once you add values.
-- Store password hashes under `root-password` and `kra3-password`.
+- Store password hashes under `users.root.password` and `users.kra3.password`.
+- Store Cloudflare DNS credentials under `cloudflare.dns_api_token` (token value).
 
 ## Notes
 

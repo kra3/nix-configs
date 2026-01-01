@@ -13,8 +13,10 @@
     ./hardware-configuration.nix
     ./disko.nix
     ../../modules/nix.nix
+    ../../modules/acme.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
+    ../../modules/vim.nix
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];

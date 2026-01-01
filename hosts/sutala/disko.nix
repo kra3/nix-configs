@@ -55,6 +55,7 @@
           autotrim = "on";
         };
         rootFsOptions = {
+          acltype = "posixacl";
           canmount = "off";
           mountpoint = "none";
           compression = "zstd";
@@ -62,17 +63,22 @@
           relatime = "on";
           xattr = "sa";
         };
+
         datasets = {
           root = {
             type = "zfs_fs";
             mountpoint = "/";
             options = {
               acltype = "posix";
+              "com.sun:auto-snapshot" = "false";
             };
           };
           nix = {
             type = "zfs_fs";
             mountpoint = "/nix";
+            options = {
+              "com.sun:auto-snapshot" = "false";
+            };
           };
           appdata = {
             type = "zfs_fs";
@@ -81,6 +87,9 @@
               compression = "zstd";
               atime = "off";
               xattr = "sa";
+              options = {
+                "com.sun:auto-snapshot" = "true";
+              };
             };
           };
           databases = {
@@ -93,6 +102,9 @@
               xattr = "sa";
               primarycache = "all";
               logbias = "throughput";
+              options = {
+                "com.sun:auto-snapshot" = "true";
+              };
             };
           };
         };
@@ -105,6 +117,7 @@
           autotrim = "on";
         };
         rootFsOptions = {
+          acltype = "posixacl";
           canmount = "off";
           mountpoint = "none";
           recordsize = "1M";

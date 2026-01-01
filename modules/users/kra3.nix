@@ -1,18 +1,12 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   users = {
     mutableUsers = false;
 
     users = {
-      root = {
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMY4lTahzgn3hOIq3edXBPzg2XdJlcYUBIdWm0BD2HkP sutala root"
-        ];
-        hashedPasswordFile = config.sops.secrets."root-password".path;
-      };
-
       kra3 = {
         isNormalUser = true;
+        createHome = true;
         description = "Arun Karunagath";
         extraGroups = [ "wheel" ];
         openssh.authorizedKeys.keys = [
@@ -24,4 +18,15 @@
       };
     };
   };
+
+  home-manager.users.kra3 = {
+    home.stateVersion = "25.05";
+
+    # Add user packages and services here.
+    home.packages = with pkgs; [
+      # Add user packages here.
+    ];
+  };
+
+  nix.settings.trusted-users = [ "kra3" ];
 }

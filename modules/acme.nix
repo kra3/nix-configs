@@ -1,7 +1,5 @@
 { config, ... }:
 {
-  users.users.nginx.extraGroups = [ "acme" ];
-
   security.acme = {
     acceptTerms = true;
     defaults = {
@@ -11,6 +9,8 @@
     certs."karunagath.in" = {
       extraDomainNames = [ "*.karunagath.in" ];
       dnsProvider = "cloudflare";
+      dnsPropagationCheck = true;
+      webroot = null;
       credentialFiles = {
         CF_DNS_API_TOKEN_FILE = config.sops.secrets."cloudflare.dns_api_token".path;
       };

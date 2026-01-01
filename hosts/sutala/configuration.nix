@@ -14,6 +14,7 @@
     ./disko.nix
     ../../modules/nix.nix
     ../../modules/acme.nix
+    ../../modules/nginx.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
     ../../modules/vim.nix
@@ -23,6 +24,9 @@
 
   networking.hostName = "sutala";
   networking.hostId = "d2a81622";
+  networking.enableIPv6 = false;
+  networking.firewall.enable = true;
+  networking.nftables.enable = true;
 
   time.timeZone = "UTC";
 
@@ -30,7 +34,10 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.supportedFilesystems = [ "zfs" ];
-  boot.kernelParams = [ "zfs.zfs_arc_max=3338665984" ];
+  boot.kernelParams = [
+    "zfs.zfs_arc_max=3338665984"
+    "ipv6.disable=1"
+  ];
   boot.zfs.extraPools = [ "tank" ];
 
   services.zfs = {

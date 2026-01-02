@@ -20,7 +20,7 @@
       };
     };
 
-    virtualHosts."dns.karunagath.in" = {
+    virtualHosts."*.karunagath.in" = {
       useACMEHost = "karunagath.in";
       forceSSL = true;
       extraConfig = ''
@@ -29,10 +29,11 @@
         deny all;
       '';
       locations."/" = {
-        proxyPass = "http://127.0.0.1:5380";
-        proxyWebsockets = true;
+        return = "404";
       };
     };
+
+
   };
 
   networking.firewall.interfaces.enp2s0.allowedTCPPorts = [

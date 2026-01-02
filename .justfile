@@ -31,5 +31,5 @@ switch-remote host=default_host target=default_host:
 deploy host=default_host:
     nix run github:zhaofengli/colmena -- apply --on {{host}}
 
-sops-edit:
-    sops secrets/secrets.yaml
+sops-edit file="secrets/secrets.yaml":
+    sops {{file}}

@@ -1,5 +1,7 @@
 { config, pkgs, ... }:
 {
+  sops.secrets."users.kra3.password".neededForUsers = true;
+
   users = {
     mutableUsers = false;
 

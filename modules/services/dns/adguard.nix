@@ -31,10 +31,33 @@ in
   };
 
   config = {
+    users.groups.adguardhome = { };
+    users.users.adguardhome = {
+      isSystemUser = true;
+      group = "adguardhome";
+      home = "/var/lib/AdGuardHome";
+      createHome = false;
+    };
+
+    systemd.tmpfiles.rules = [
+      "d /var/lib/AdGuardHome 0750 adguardhome adguardhome - -"
+      "Z /var/lib/AdGuardHome - adguardhome adguardhome - -"
+    ];
+
+    systemd.services.adguardhome.serviceConfig = {
+      DynamicUser = lib.mkForce false;
+      User = "adguardhome";
+      Group = "adguardhome";
+    };
+
     sops.secrets."dns.adguard.password" = { };
     sops.secrets."dns-static-leases.yaml" = {
       sopsFile = ../../../secrets/dns-static-leases.yaml;
       format = "yaml";
+      key = "";
+      owner = "adguardhome";
+      group = "adguardhome";
+      mode = "0440";
     };
 
     systemd.services.adguardhome.preStart = lib.mkAfter ''
@@ -54,6 +77,7 @@ in
 
       host = "127.0.0.1";
       port = 3000;
+      openFirewall = false;
 
       settings = {
         schema_version = config.services.adguardhome.package.schema_version;

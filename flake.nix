@@ -55,6 +55,7 @@
                 pkgs.nixos-rebuild
                 pkgs.nixfmt-rfc-style
                 pkgs.sops
+                pkgs.ssh-to-age
               ];
             };
           };

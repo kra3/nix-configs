@@ -1,5 +1,7 @@
 { config, ... }:
 {
+  sops.secrets."cloudflare.dns_api_token" = { };
+
   security.acme = {
     acceptTerms = true;
     defaults = {

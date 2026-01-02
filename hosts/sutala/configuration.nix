@@ -7,7 +7,6 @@
 {
   imports = [
     inputs.disko.nixosModules.disko
-    inputs.sops-nix.nixosModules.sops
     inputs.home-manager.nixosModules.home-manager
 
     ./hardware-configuration.nix
@@ -17,30 +16,49 @@
     ../../modules/nginx.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
-    ../../modules/technitium.nix
+    ../../modules/services/dns
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];
 
-  networking.hostName = "sutala";
-  networking.hostId = "d2a81622";
-  networking.enableIPv6 = false;
-  networking.firewall.enable = true;
-  networking.nftables.enable = true;
+  vars = {
+    lanIf = "enp2s0";
+    lanIp = "192.168.1.10";
+  };
+
+  boot = {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
+
+    supportedFilesystems = [ "zfs" ];
+    kernelParams = [
+      "zfs.zfs_arc_max=3338665984" # zfs
+      "ipv6.disable=1"  # networking 
+    ];
+    zfs.extraPools = [ "tank" ];
+  };
+
+  networking = {
+    hostName = "sutala";
+    hostId = "d2a81622";
+    enableIPv6 = false;
+    firewall.enable = true;
+    nftables.enable = true;
+
+    defaultGateway = "192.168.1.1";
+    interfaces.${config.vars.lanIf}.ipv4.addresses = [
+      {
+        address = config.vars.lanIp;
+        prefixLength = 24;
+      }
+    ];
+  };
 
   time.timeZone = "UTC";
-
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  boot.supportedFilesystems = [ "zfs" ];
-  boot.kernelParams = [
-    "zfs.zfs_arc_max=3338665984"
-    "ipv6.disable=1"
-  ];
-  boot.zfs.extraPools = [ "tank" ];
 
   services.zfs = {
     autoScrub = {

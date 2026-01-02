@@ -48,6 +48,7 @@
     enableIPv6 = false;
     firewall.enable = true;
     nftables.enable = true;
+    nameservers = [ config.vars.lanIp ];
 
     defaultGateway = "192.168.1.1";
     interfaces.${config.vars.lanIf}.ipv4.addresses = [

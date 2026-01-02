@@ -18,10 +18,10 @@ in
         edns-buffer-size = 1232;
 
         local-zone = [
-          "karunagath.in. redirect"
+          ''"karunagath.in." redirect''
         ];
         local-data = [
-          "karunagath.in. A ${vars.lanIp}"
+          ''"karunagath.in. A ${vars.lanIp}"''
         ];
       };
 

@@ -241,6 +241,15 @@ in
       group = "adguardhome";
       mode = "0440";
     };
+    sops.secrets."adguard.leases.json" = {
+      sopsFile = ../../../secrets/leases.json;
+      format = "json";
+      key = "";
+      path = "/var/lib/AdGuardHome/data/leases.json";
+      owner = "adguardhome";
+      group = "adguardhome";
+      mode = "0440";
+    };
     sops.secrets."dns-static-leases.yaml" = {
       sopsFile = ../../../secrets/dns-static-leases.yaml;
       format = "yaml";
@@ -252,13 +261,6 @@ in
 
     systemd.services.adguardhome.preStart = lib.mkAfter ''
       if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
-        ${pkgs.yq-go}/bin/yq eval \
-          '.dhcp = (.dhcp // {})
-           | .dhcp.static_leases = (load("${config.sops.secrets."dns-static-leases.yaml".path}").dhcp.static_leases // [])' \
-          "$STATE_DIRECTORY/AdGuardHome.yaml" \
-          > "$STATE_DIRECTORY/AdGuardHome.yaml.tmp"
-        mv "$STATE_DIRECTORY/AdGuardHome.yaml.tmp" "$STATE_DIRECTORY/AdGuardHome.yaml"
-
         password="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."dns.adguard.password".path})"
         ${pkgs.gnused}/bin/sed -i "s|__SOPS_DNS_ADGUARD_PASSWORD__|$password|" \
           "$STATE_DIRECTORY/AdGuardHome.yaml"

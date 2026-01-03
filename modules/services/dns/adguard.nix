@@ -241,11 +241,19 @@ in
       group = "adguardhome";
       mode = "0440";
     };
+    sops.secrets."dns.adguard.username" = {
+      owner = "adguardhome";
+      group = "adguardhome";
+      mode = "0440";
+    };
 
     systemd.services.adguardhome.preStart = lib.mkAfter ''
       if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
         password="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."dns.adguard.password".path})"
         ${pkgs.gnused}/bin/sed -i "s|__SOPS_DNS_ADGUARD_PASSWORD__|$password|" \
+          "$STATE_DIRECTORY/AdGuardHome.yaml"
+        username="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."dns.adguard.username".path})"
+        ${pkgs.gnused}/bin/sed -i "s|__SOPS_DNS_ADGUARD_USERNAME__|$username|" \
           "$STATE_DIRECTORY/AdGuardHome.yaml"
       fi
     '';
@@ -407,7 +415,7 @@ in
         };
         users = [
           {
-            name = "kra3";
+            name = "__SOPS_DNS_ADGUARD_USERNAME__";
             password = "__SOPS_DNS_ADGUARD_PASSWORD__";
           }
         ];

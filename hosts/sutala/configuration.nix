@@ -17,6 +17,7 @@
     ../../modules/openssh.nix
     ../../modules/sops.nix
     ../../modules/services/dns
+    ../../modules/services/monitoring
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix

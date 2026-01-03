@@ -25,6 +25,10 @@ in
         ];
       };
 
+      remote-control = {
+        control-enable = true;
+      };
+
       forward-zone = [
         {
           name = ".";

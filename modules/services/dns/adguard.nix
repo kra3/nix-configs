@@ -241,23 +241,6 @@ in
       group = "adguardhome";
       mode = "0440";
     };
-    sops.secrets."adguard.leases.json" = {
-      sopsFile = ../../../secrets/leases.json;
-      format = "json";
-      key = "";
-      path = "/var/lib/AdGuardHome/data/leases.json";
-      owner = "adguardhome";
-      group = "adguardhome";
-      mode = "0440";
-    };
-    sops.secrets."dns-static-leases.yaml" = {
-      sopsFile = ../../../secrets/dns-static-leases.yaml;
-      format = "yaml";
-      key = "";
-      owner = "adguardhome";
-      group = "adguardhome";
-      mode = "0440";
-    };
 
     systemd.services.adguardhome.preStart = lib.mkAfter ''
       if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
@@ -270,7 +253,7 @@ in
     services.adguardhome = {
       enable = true;
       mutableSettings = true;
-      allowDHCP = true;
+      allowDHCP = false;
 
       host = "127.0.0.1";
       port = 3000;
@@ -343,27 +326,6 @@ in
           certificate_path = "";
           private_key_path = "";
           strict_sni_check = false;
-        };
-
-        dhcp = {
-          enabled = true;
-          interface_name = lanIf;
-          local_domain_name = "karunagath.in";
-          dhcpv4 = {
-            gateway_ip = "192.168.1.1";
-            subnet_mask = "255.255.255.0";
-            range_start = "192.168.1.100";
-            range_end = "192.168.1.199";
-            lease_duration = 86400;
-            icmp_timeout_msec = 1000;
-            options = [ ];
-          };
-          dhcpv6 = {
-            range_start = "";
-            lease_duration = 86400;
-            ra_slaac_only = false;
-            ra_allow_slaac = false;
-          };
         };
 
         filtering = {
@@ -471,11 +433,7 @@ in
 
     networking.firewall.interfaces.${lanIf} = {
       allowedTCPPorts = [ 53 ];
-      allowedUDPPorts = [
-        53
-        67
-        68
-      ];
+      allowedUDPPorts = [ 53 ];
     };
   };
 }

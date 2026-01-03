@@ -10,7 +10,7 @@
   environment.etc."alloy/config.alloy".text = ''
     loki.write "default" {
       endpoint {
-        url = "http://127.0.0.1:3100/loki/api/v1/push"
+        url = "http://10.0.50.2:3100/loki/api/v1/push"
       }
     }
 

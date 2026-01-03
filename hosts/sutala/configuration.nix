@@ -17,7 +17,8 @@
     ../../modules/openssh.nix
     ../../modules/sops.nix
     ../../modules/services/dns
-    ../../modules/services/monitoring
+    ../../modules/services/monitoring/agent
+    ../../modules/containers/monitoring.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
@@ -62,6 +63,7 @@
       }
     ];
   };
+
 
   time.timeZone = "UTC";
 

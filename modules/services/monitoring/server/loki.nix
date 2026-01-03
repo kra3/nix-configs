@@ -4,11 +4,11 @@
     configuration = {
       auth_enabled = false;
       server = {
-        http_listen_address = "127.0.0.1";
+        http_listen_address = "10.0.50.2";
         http_listen_port = 3100;
       };
       common = {
-        instance_addr = "127.0.0.1";
+        instance_addr = "10.0.50.2";
         path_prefix = "/var/lib/loki";
         storage = {
           filesystem = {
@@ -32,5 +32,10 @@
         }
       ];
     };
+  };
+
+  systemd.services.loki = {
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
   };
 }

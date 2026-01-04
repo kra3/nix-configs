@@ -15,7 +15,9 @@
     environmentFiles = [ "/run/secrets/media.lidarr.env" ];
   };
 
-  users.users.lidarr.extraGroups = [ "media" ];
+  users.users.lidarr = {
+    extraGroups = [ "media" ];
+  };
 
   systemd.services.lidarr = {
     after = [ "network-online.target" ];

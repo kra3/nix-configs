@@ -15,7 +15,9 @@
     environmentFiles = [ "/run/secrets/media.sonarr.env" ];
   };
 
-  users.users.sonarr.extraGroups = [ "media" ];
+  users.users.sonarr = {
+    extraGroups = [ "media" ];
+  };
 
   systemd.services.sonarr = {
     after = [ "network-online.target" ];

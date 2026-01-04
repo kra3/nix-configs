@@ -1,5 +1,12 @@
 {
-  containers.media-management = {
+  networking.firewall.interfaces = {
+    ve-media-mgmt = {
+      allowedTCPPorts = [ 53 ];
+      allowedUDPPorts = [ 53 ];
+    };
+  };
+
+  containers.media-mgmt = {
     autoStart = true;
     privateNetwork = true;
     hostAddress = "10.0.50.3";
@@ -10,8 +17,13 @@
         ../services/media/management/server
       ];
 
-      networking.hostName = "media-management";
-      networking.enableIPv6 = false;
+      networking = {
+        hostName = "media-mgmt";
+        enableIPv6 = false;
+        defaultGateway = "10.0.50.3";
+        nameservers = [ "192.168.1.10" ];
+        useHostResolvConf = false;
+      };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";
     };
@@ -21,35 +33,35 @@
         isReadOnly = false;
       };
       "/var/lib/radarr" = {
-        hostPath = "/srv/appdata/media-management/radarr";
+        hostPath = "/srv/appdata/media-mgmt/radarr";
         isReadOnly = false;
       };
       "/var/lib/sonarr" = {
-        hostPath = "/srv/appdata/media-management/sonarr";
+        hostPath = "/srv/appdata/media-mgmt/sonarr";
         isReadOnly = false;
       };
       "/var/lib/prowlarr" = {
-        hostPath = "/srv/appdata/media-management/prowlarr";
+        hostPath = "/srv/appdata/media-mgmt/prowlarr";
         isReadOnly = false;
       };
       "/var/lib/sabnzbd" = {
-        hostPath = "/srv/appdata/media-management/sabnzbd";
+        hostPath = "/srv/appdata/media-mgmt/sabnzbd";
         isReadOnly = false;
       };
       "/var/lib/bazarr" = {
-        hostPath = "/srv/appdata/media-management/bazarr";
+        hostPath = "/srv/appdata/media-mgmt/bazarr";
         isReadOnly = false;
       };
       "/var/lib/recyclarr" = {
-        hostPath = "/srv/appdata/media-management/recyclarr";
+        hostPath = "/srv/appdata/media-mgmt/recyclarr";
         isReadOnly = false;
       };
       "/var/lib/lidarr" = {
-        hostPath = "/srv/appdata/media-management/lidarr";
+        hostPath = "/srv/appdata/media-mgmt/lidarr";
         isReadOnly = false;
       };
       "/var/lib/jellyseerr" = {
-        hostPath = "/srv/appdata/media-management/jellyseerr";
+        hostPath = "/srv/appdata/media-mgmt/jellyseerr";
         isReadOnly = false;
       };
       "/run/secrets/media.radarr.env" = {

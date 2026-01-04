@@ -20,7 +20,7 @@
     ../../modules/services/monitoring/agent
     ../../modules/services/media/management/agent
     ../../modules/containers/monitoring.nix
-    ../../modules/containers/media-management.nix
+    ../../modules/containers/media-mgmt.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
@@ -56,6 +56,14 @@
     firewall.enable = true;
     nftables.enable = true;
     nameservers = [ config.vars.lanIp ];
+    nat = {
+      enable = true;
+      externalInterface = config.vars.lanIf;
+      internalInterfaces = [
+        "ve-monitoring"
+        "ve-media-mgmt"
+      ];
+    };
 
     defaultGateway = "192.168.1.1";
     interfaces.${config.vars.lanIf}.ipv4.addresses = [

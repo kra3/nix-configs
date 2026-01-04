@@ -9,7 +9,9 @@
     listenPort = 6767;
   };
 
-  users.users.bazarr.extraGroups = [ "media" ];
+  users.users.bazarr = {
+    extraGroups = [ "media" ];
+  };
 
   systemd.services.bazarr = {
     after = [ "network-online.target" ];

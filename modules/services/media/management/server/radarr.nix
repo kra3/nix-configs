@@ -15,7 +15,9 @@
     environmentFiles = [ "/run/secrets/media.radarr.env" ];
   };
 
-  users.users.radarr.extraGroups = [ "media" ];
+  users.users.radarr = {
+    extraGroups = [ "media" ];
+  };
 
   systemd.services.radarr = {
     after = [ "network-online.target" ];

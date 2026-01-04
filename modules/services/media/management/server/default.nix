@@ -1,12 +1,12 @@
 {
   imports = [
-    ./bazarr.nix
-    ./jellyseerr.nix
-    ./lidarr.nix
-    ./prowlarr.nix
     ./radarr.nix
-    ./recyclarr.nix
-    ./sabnzbd.nix
     ./sonarr.nix
+    ./lidarr.nix
+    ./bazarr.nix
+    ./recyclarr.nix
+    ./prowlarr.nix
+    ./sabnzbd.nix
+    ./jellyseerr.nix
   ];
 }

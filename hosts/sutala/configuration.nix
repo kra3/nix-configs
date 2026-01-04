@@ -18,7 +18,9 @@
     ../../modules/sops.nix
     ../../modules/services/dns
     ../../modules/services/monitoring/agent
+    ../../modules/services/media/management/agent
     ../../modules/containers/monitoring.nix
+    ../../modules/containers/media-management.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix

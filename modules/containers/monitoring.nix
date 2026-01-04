@@ -21,6 +21,18 @@
       system.stateVersion = "25.05";
     };
     bindMounts = {
+      "/var/lib/grafana" = {
+        hostPath = "/srv/appdata/monitoring/grafana";
+        isReadOnly = false;
+      };
+      "/var/lib/prometheus" = {
+        hostPath = "/srv/databases/monitoring/prometheus";
+        isReadOnly = false;
+      };
+      "/var/lib/loki" = {
+        hostPath = "/srv/databases/monitoring/loki";
+        isReadOnly = false;
+      };
       "/run/secrets/monitoring.grafana.admin.user" = {
         hostPath = "/run/secrets/monitoring.grafana.admin.user";
         isReadOnly = true;

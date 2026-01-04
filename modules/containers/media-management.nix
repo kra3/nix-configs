@@ -21,35 +21,35 @@
         isReadOnly = false;
       };
       "/var/lib/radarr" = {
-        hostPath = "/src/appdata/media-management/radarr";
+        hostPath = "/srv/appdata/media-management/radarr";
         isReadOnly = false;
       };
       "/var/lib/sonarr" = {
-        hostPath = "/src/appdata/media-management/sonarr";
+        hostPath = "/srv/appdata/media-management/sonarr";
         isReadOnly = false;
       };
       "/var/lib/prowlarr" = {
-        hostPath = "/src/appdata/media-management/prowlarr";
+        hostPath = "/srv/appdata/media-management/prowlarr";
         isReadOnly = false;
       };
       "/var/lib/sabnzbd" = {
-        hostPath = "/src/appdata/media-management/sabnzbd";
+        hostPath = "/srv/appdata/media-management/sabnzbd";
         isReadOnly = false;
       };
       "/var/lib/bazarr" = {
-        hostPath = "/src/appdata/media-management/bazarr";
+        hostPath = "/srv/appdata/media-management/bazarr";
         isReadOnly = false;
       };
       "/var/lib/recyclarr" = {
-        hostPath = "/src/appdata/media-management/recyclarr";
+        hostPath = "/srv/appdata/media-management/recyclarr";
         isReadOnly = false;
       };
       "/var/lib/lidarr" = {
-        hostPath = "/src/appdata/media-management/lidarr";
+        hostPath = "/srv/appdata/media-management/lidarr";
         isReadOnly = false;
       };
       "/var/lib/jellyseerr" = {
-        hostPath = "/src/appdata/media-management/jellyseerr";
+        hostPath = "/srv/appdata/media-management/jellyseerr";
         isReadOnly = false;
       };
       "/run/secrets/media.radarr.env" = {

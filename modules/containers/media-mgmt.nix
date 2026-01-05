@@ -84,8 +84,12 @@
         hostPath = "/run/secrets/media.bazarr.env";
         isReadOnly = true;
       };
-      "/run/secrets/media.recyclarr.env" = {
-        hostPath = "/run/secrets/media.recyclarr.env";
+      "/run/secrets/media.recyclarr.radarr_api_key" = {
+        hostPath = "/run/secrets/media.recyclarr.radarr_api_key";
+        isReadOnly = true;
+      };
+      "/run/secrets/media.recyclarr.sonarr_api_key" = {
+        hostPath = "/run/secrets/media.recyclarr.sonarr_api_key";
         isReadOnly = true;
       };
       "/run/secrets/media.lidarr.env" = {

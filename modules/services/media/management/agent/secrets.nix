@@ -24,10 +24,15 @@
     group = "media";
     mode = "0440";
   };
-  sops.secrets."media.recyclarr.env" = {
+  sops.secrets."media.recyclarr.radarr_api_key" = {
     owner = "root";
-    group = "media";
-    mode = "0440";
+    group = "root";
+    mode = "0400";
+  };
+  sops.secrets."media.recyclarr.sonarr_api_key" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
   };
   sops.secrets."media.lidarr.env" = {
     owner = "root";

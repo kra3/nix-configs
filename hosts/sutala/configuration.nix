@@ -39,7 +39,7 @@
     extraPackages = with pkgs; [
       intel-media-driver # VAAPI driver for Gen9+ Intel iGPU (Comet Lake)
       intel-vaapi-driver # legacy i965 VAAPI driver fallback
-      vaapiVdpau # VAAPI to VDPAU translation layer
+      libva-vdpau-driver # VAAPI to VDPAU translation layer
       libvdpau-va-gl # VDPAU on top of VAAPI/OpenGL
       intel-compute-runtime # OpenCL/oneAPI runtime for Intel iGPU
       vpl-gpu-rt # oneVPL runtime for Intel QSV pipelines

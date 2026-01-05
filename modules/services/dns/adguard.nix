@@ -260,7 +260,7 @@ in
 
     services.adguardhome = {
       enable = true;
-      mutableSettings = true;
+      mutableSettings = false;
       allowDHCP = false;
 
       host = "127.0.0.1";
@@ -352,6 +352,7 @@ in
             {
               domain = "*.karunagath.in";
               answer = lanIp;
+              enabled = true;
             }
           ];
           cache_time = 30;

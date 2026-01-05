@@ -76,6 +76,7 @@
       internalInterfaces = [
         "ve-monitoring"
         "ve-media-mgmt"
+        "ve-media-play"
       ];
     };
 

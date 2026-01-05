@@ -19,7 +19,7 @@
     "d /srv/media/library 0775 root media - -"
     "d /srv/media/library/movies 0775 root media - -"
     "d /srv/media/library/tv 0775 root media - -"
-    "d /srv/media/library/songs 0775 root media - -"
+    "d /srv/media/library/music 0775 root media - -"
     "d /srv/media/library/books 0775 root media - -"
     "d /srv/media/library/anime 0775 root media - -"
     "d /srv/media/library/audiobooks 0775 root media - -"

@@ -6,5 +6,7 @@
   systemd.tmpfiles.rules = [
     "d /srv/appdata/media-play 0770 root media - -"
     "d /srv/appdata/media-play/jellyfin 0770 root media - -"
+    "d /srv/appdata/media-play/navidrome 0770 root media - -"
+    "d /srv/appdata/media-play/music-assistant 0770 root media - -"
   ];
 }

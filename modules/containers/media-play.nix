@@ -1,8 +1,15 @@
 {
-  networking.firewall.interfaces = {
-    ve-media-play = {
-      allowedTCPPorts = [ 53 ];
-      allowedUDPPorts = [ 53 ];
+  networking.firewall = {
+    interfaces = {
+      ve-media-play = {
+        allowedTCPPorts = [
+          53
+          4533
+          8095
+          8096
+        ];
+        allowedUDPPorts = [ 53 ];
+      };
     };
   };
 
@@ -23,6 +30,14 @@
         defaultGateway = "10.0.50.5";
         nameservers = [ "192.168.1.10" ];
         useHostResolvConf = false;
+        firewall.allowedTCPPorts = [
+          4533
+          8095
+          8096
+          1704
+          1705
+          1780
+        ];
       };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";
@@ -38,6 +53,14 @@
       };
       "/var/lib/jellyfin" = {
         hostPath = "/srv/appdata/media-play/jellyfin";
+        isReadOnly = false;
+      };
+      "/var/lib/navidrome" = {
+        hostPath = "/srv/appdata/media-play/navidrome";
+        isReadOnly = false;
+      };
+      "/var/lib/music-assistant" = {
+        hostPath = "/srv/appdata/media-play/music-assistant";
         isReadOnly = false;
       };
     };

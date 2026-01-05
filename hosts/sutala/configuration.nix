@@ -19,8 +19,10 @@
     ../../modules/services/dns
     ../../modules/services/monitoring/agent
     ../../modules/services/media/management/agent
+    ../../modules/services/media/players/agent
     ../../modules/containers/monitoring.nix
     ../../modules/containers/media-mgmt.nix
+    ../../modules/containers/media-play.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
@@ -30,6 +32,18 @@
   vars = {
     lanIf = "enp2s0";
     lanIp = "192.168.1.10";
+  };
+
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver # VAAPI driver for Gen9+ Intel iGPU (Comet Lake)
+      intel-vaapi-driver # legacy i965 VAAPI driver fallback
+      vaapiVdpau # VAAPI to VDPAU translation layer
+      libvdpau-va-gl # VDPAU on top of VAAPI/OpenGL
+      intel-compute-runtime # OpenCL/oneAPI runtime for Intel iGPU
+      vpl-gpu-rt # oneVPL runtime for Intel QSV pipelines
+    ];
   };
 
   boot = {

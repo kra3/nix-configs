@@ -63,5 +63,6 @@
     "grafana-dashboards/nginx.json".source = ./dashboards/nginx.json;
     "grafana-dashboards/unbound.json".source = ./dashboards/unbound.json;
     "grafana-dashboards/zfs.json".source = ./dashboards/zfs.json;
+    "grafana-dashboards/logs-overview.json".source = ./dashboards/logs-overview.json;
   };
 }

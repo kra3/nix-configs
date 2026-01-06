@@ -84,6 +84,49 @@
       ],
       "title": "Response Time (p95)",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Unbound log rate from systemd journal",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\"} |= \"unbound\"[5m]))",
+          "legendFormat": "unbound logs",
+          "refId": "A"
+        }
+      ],
+      "title": "Unbound Log Rate (Loki)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Recent unbound errors",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 5,
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "expr": "{job=\"systemd-journal\", host=\"sutala\"} |= \"unbound\" |~ \"(?i)error|fail|panic\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Unbound Errors (Loki)",
+      "type": "logs"
     }
   ],
   "refresh": "30s",

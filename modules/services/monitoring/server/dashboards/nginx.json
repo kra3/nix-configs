@@ -74,6 +74,49 @@
       ],
       "title": "Nginx Connections",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Nginx log rate from systemd journal",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\"} |= \"nginx\"[5m]))",
+          "legendFormat": "nginx logs",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginx Log Rate (Loki)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Recent nginx errors",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 4,
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "expr": "{job=\"systemd-journal\", host=\"sutala\"} |= \"nginx\" |~ \"(?i)error|fail|panic\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginx Errors (Loki)",
+      "type": "logs"
     }
   ],
   "refresh": "30s",

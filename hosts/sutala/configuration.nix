@@ -55,10 +55,13 @@
       efi.canTouchEfiVariables = true;
     };
 
+    kernelModules = [ "i915" ];
     supportedFilesystems = [ "zfs" ];
     kernelParams = [
       "zfs.zfs_arc_max=3338665984" # zfs
       "ipv6.disable=1"  # networking 
+      "i915.enable_guc=2" # QSV low-power encode/decode requires HuC/GuC firmware
+      "i915.enable_fbc=1" # allow framebuffer compression to reduce power draw
     ];
     zfs.extraPools = [ "tank" ];
   };

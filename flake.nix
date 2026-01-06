@@ -24,6 +24,10 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    declarative-jellyfin = {
+      url = "github:Sveske-Juice/declarative-jellyfin";
+    };
     
     colmena = {
       url = "github:zhaofengli/colmena";

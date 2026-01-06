@@ -1,3 +1,4 @@
+{ inputs, ... }:
 {
   networking.firewall = {
     interfaces = {
@@ -21,6 +22,8 @@
     config = {
       imports = [
         ../nix.nix
+        inputs.declarative-jellyfin.nixosModules.default
+        ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/players/server
       ];
 
@@ -63,6 +66,18 @@
         hostPath = "/srv/appdata/media-play/music-assistant";
         isReadOnly = false;
       };
+      "/run/secrets/media.jellyfin.users.kra3.password" = {
+        hostPath = "/run/secrets/media.jellyfin.users.kra3.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/media.jellyfin.users.home.password" = {
+        hostPath = "/run/secrets/media.jellyfin.users.home.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/media.jellyfin.apikeys.jellyseerr" = {
+        hostPath = "/run/secrets/media.jellyfin.apikeys.jellyseerr";
+        isReadOnly = true;
+      };
     };
     allowedDevices = [
       {
@@ -75,4 +90,8 @@
       }
     ];
   };
+
+  sops.secrets."media.jellyfin.users.kra3.password".mode = "0444";
+  sops.secrets."media.jellyfin.users.home.password".mode = "0444";
+  sops.secrets."media.jellyfin.apikeys.jellyseerr".mode = "0444";
 }

@@ -112,13 +112,21 @@
         contentType = "books";
         pathInfos = [ "/data/library/books" ];
       };
-      Anime = {
+      "Anime Movies" = {
+        contentType = "movies";
+        pathInfos = [ "/data/library/anime/movies" ];
+      };
+      "Anime TV" = {
         contentType = "tvshows";
-        pathInfos = [ "/data/library/anime" ];
+        pathInfos = [ "/data/library/anime/tv" ];
       };
       Audiobooks = {
         contentType = "books";
         pathInfos = [ "/data/library/audiobooks" ];
+      };
+      "Home Videos" = {
+        contentType = "homevideos";
+        pathInfos = [ "/data/library/homevideos" ];
       };
     };
 

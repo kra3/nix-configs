@@ -1,7 +1,10 @@
 {
   networking.firewall.interfaces = {
     ve-media-mgmt = {
-      allowedTCPPorts = [ 53 ];
+      allowedTCPPorts = [
+        53
+        9100
+      ];
       allowedUDPPorts = [ 53 ];
     };
   };
@@ -14,6 +17,7 @@
     config = {
       imports = [
         ../nix.nix
+        ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/management/server
       ];
 

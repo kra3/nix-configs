@@ -16,10 +16,22 @@
         ];
       }
       {
-        job_name = "node";
+        job_name = "node-host";
         static_configs = [
           {
             targets = [ "10.0.50.1:9100" ];
+          }
+        ];
+      }
+      {
+        job_name = "node-containers";
+        static_configs = [
+          {
+            targets = [
+              "10.0.50.2:9100"
+              "10.0.50.4:9100"
+              "10.0.50.6:9100"
+            ];
           }
         ];
       }

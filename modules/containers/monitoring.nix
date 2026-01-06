@@ -20,6 +20,7 @@
     config = {
       imports = [
         ../nix.nix
+        ../services/monitoring/agent/node-exporter-container.nix
         ../services/monitoring/server
       ];
 
@@ -33,6 +34,7 @@
           3001
           3100
           9090
+          9100
         ];
       };
       time.timeZone = "UTC";

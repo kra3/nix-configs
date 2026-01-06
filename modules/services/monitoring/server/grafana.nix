@@ -23,14 +23,28 @@
             name = "Prometheus";
             type = "prometheus";
             access = "proxy";
-            url = "http://127.0.0.1:9090";
+            url = "http://10.0.50.2:9090";
             isDefault = true;
           }
           {
             name = "Loki";
             type = "loki";
             access = "proxy";
-            url = "http://127.0.0.1:3100";
+            url = "http://10.0.50.2:3100";
+          }
+        ];
+      };
+      dashboards.settings = {
+        apiVersion = 1;
+        providers = [
+          {
+            name = "default";
+            orgId = 1;
+            folder = "Sutala";
+            type = "file";
+            disableDeletion = true;
+            editable = false;
+            options.path = "/etc/grafana-dashboards";
           }
         ];
       };
@@ -40,5 +54,14 @@
   systemd.services.grafana = {
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+  };
+
+  environment.etc = {
+    "grafana-dashboards/services-overview.json".source = ./dashboards/services-overview.json;
+    "grafana-dashboards/system-metrics.json".source = ./dashboards/system-metrics.json;
+    "grafana-dashboards/node.json".source = ./dashboards/node.json;
+    "grafana-dashboards/nginx.json".source = ./dashboards/nginx.json;
+    "grafana-dashboards/unbound.json".source = ./dashboards/unbound.json;
+    "grafana-dashboards/zfs.json".source = ./dashboards/zfs.json;
   };
 }

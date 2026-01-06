@@ -12,6 +12,7 @@
         static_configs = [
           {
             targets = [ "127.0.0.1:9090" ];
+            labels.instance = "monitoring";
           }
         ];
       }
@@ -20,6 +21,7 @@
         static_configs = [
           {
             targets = [ "10.0.50.1:9100" ];
+            labels.instance = "sutala";
           }
         ];
       }
@@ -27,11 +29,19 @@
         job_name = "node-containers";
         static_configs = [
           {
-            targets = [
-              "10.0.50.2:9100"
-              "10.0.50.4:9100"
-              "10.0.50.6:9100"
-            ];
+            targets = [ "10.0.50.2:9100" ];
+            labels.container = "monitoring";
+            labels.instance = "monitoring";
+          }
+          {
+            targets = [ "10.0.50.4:9100" ];
+            labels.container = "media-mgmt";
+            labels.instance = "media-mgmt";
+          }
+          {
+            targets = [ "10.0.50.6:9100" ];
+            labels.container = "media-play";
+            labels.instance = "media-play";
           }
         ];
       }
@@ -40,6 +50,7 @@
         static_configs = [
           {
             targets = [ "10.0.50.1:9113" ];
+            labels.instance = "sutala";
           }
         ];
       }
@@ -48,6 +59,7 @@
         static_configs = [
           {
             targets = [ "10.0.50.1:9167" ];
+            labels.instance = "sutala";
           }
         ];
       }
@@ -56,6 +68,7 @@
         static_configs = [
           {
             targets = [ "10.0.50.1:9134" ];
+            labels.instance = "sutala";
           }
         ];
       }

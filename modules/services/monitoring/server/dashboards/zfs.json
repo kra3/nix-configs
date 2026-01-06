@@ -1,0 +1,91 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "description": "Pool size and allocation",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "zfs_pool_size_bytes",
+          "legendFormat": "size {{pool}}",
+          "refId": "A"
+        },
+        {
+          "expr": "zfs_pool_allocated_bytes",
+          "legendFormat": "allocated {{pool}}",
+          "refId": "B"
+        },
+        {
+          "expr": "zfs_pool_free_bytes",
+          "legendFormat": "free {{pool}}",
+          "refId": "C"
+        }
+      ],
+      "title": "ZFS Pool Capacity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Pool usage percent",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "100 * (zfs_pool_allocated_bytes / zfs_pool_size_bytes)",
+          "legendFormat": "{{pool}}",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Pool Usage (%)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "monitoring",
+    "zfs"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "ZFS",
+  "uid": "zfs-drilldown",
+  "version": 1
+}

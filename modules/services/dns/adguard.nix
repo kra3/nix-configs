@@ -345,7 +345,7 @@ in
             google = true;
             pixabay = true;
             yandex = true;
-            youtube = true;
+            youtube = false;
           };
           blocking_mode = "default";
           rewrites = [

@@ -72,7 +72,12 @@
     hostName = "sutala";
     hostId = "d2a81622";
     enableIPv6 = false;
-    firewall.enable = true;
+    firewall = {
+      enable = true;
+      logRefusedConnections = true;
+      logRefusedPackets = true;
+      logRefusedUnicastsOnly = true;
+    };
     nftables.enable = true;
     nameservers = [ config.vars.lanIp ];
     nat = {

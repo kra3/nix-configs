@@ -27,6 +27,7 @@
       imports = [
         ../nix.nix
         inputs.declarative-jellyfin.nixosModules.default
+        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/players/server
       ];
@@ -49,6 +50,9 @@
         firewall.allowedUDPPorts = [
           7359 # Jellyfin client discovery
         ];
+        firewall.logRefusedConnections = true;
+        firewall.logRefusedPackets = true;
+        firewall.logRefusedUnicastsOnly = true;
       };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";

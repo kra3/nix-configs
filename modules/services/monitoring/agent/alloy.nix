@@ -1,4 +1,7 @@
 { config, ... }:
+let
+  roleLabel = if config.boot.isContainer then "container" else "host";
+in
 {
   services.alloy = {
     enable = true;
@@ -19,7 +22,50 @@
       labels = {
         job = "systemd-journal",
         host = "${config.networking.hostName}",
+        service_group = "${config.networking.hostName}",
+        role = "${roleLabel}",
       }
+    }
+
+    loki.source.file "nginx" {
+      targets = [
+        { __path__ = "/var/log/nginx/*.log" },
+      ]
+      labels = {
+        job = "nginx",
+        host = "${config.networking.hostName}",
+        service_group = "${config.networking.hostName}",
+        role = "${roleLabel}",
+      }
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.source.file "app_logs" {
+      targets = [
+        { __path__ = "/var/lib/*/logs/*.log" },
+        { __path__ = "/var/lib/*/log/*.log" },
+      ]
+      labels = {
+        job = "app-logs",
+        host = "${config.networking.hostName}",
+        service_group = "${config.networking.hostName}",
+        role = "${roleLabel}",
+      }
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.source.file "adguardhome" {
+      targets = [
+        { __path__ = "/var/lib/AdGuardHome/data/*.log" },
+        { __path__ = "/var/lib/AdGuardHome/data/*.json" },
+      ]
+      labels = {
+        job = "adguardhome",
+        host = "${config.networking.hostName}",
+        service_group = "${config.networking.hostName}",
+        role = "${roleLabel}",
+      }
+      forward_to = [loki.write.default.receiver]
     }
   '';
 }

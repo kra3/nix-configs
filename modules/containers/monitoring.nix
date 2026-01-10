@@ -22,6 +22,7 @@
     config = {
       imports = [
         ../nix.nix
+        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/monitoring/server
       ];
@@ -38,6 +39,9 @@
           9090 # Prometheus
           9100 # node-exporter
         ];
+        firewall.logRefusedConnections = true;
+        firewall.logRefusedPackets = true;
+        firewall.logRefusedUnicastsOnly = true;
       };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";

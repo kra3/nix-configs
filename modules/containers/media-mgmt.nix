@@ -19,6 +19,7 @@
     config = {
       imports = [
         ../nix.nix
+        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/management/server
       ];
@@ -29,6 +30,9 @@
         defaultGateway = "10.0.50.3";
         nameservers = [ "10.0.50.1" ];
         useHostResolvConf = false;
+        firewall.logRefusedConnections = true;
+        firewall.logRefusedPackets = true;
+        firewall.logRefusedUnicastsOnly = true;
       };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";

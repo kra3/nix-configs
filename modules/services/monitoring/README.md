@@ -33,5 +33,5 @@ LAN Browser │                                             │
    Alloy (sutala)                         │
    journald -> Loki                       │
                                           │
-         container (monitoring) 10.0.50.2 │
+         container (monitoring) 10.0.50.2    │
 ```

@@ -4,13 +4,16 @@
     interfaces = {
       ve-media-play = {
         allowedTCPPorts = [
-          53
-          4533
-          8095
-          8096
-          9100
+          53 # DNS (if a resolver is enabled in the container)
+          4533 # Navidrome
+          8095 # Music Assistant
+          8096 # Jellyfin
+          9100 # node-exporter
         ];
-        allowedUDPPorts = [ 53 ];
+        allowedUDPPorts = [
+          53 # DNS (if a resolver is enabled in the container)
+          7359 # Jellyfin client discovery
+        ];
       };
     };
   };
@@ -32,16 +35,19 @@
         hostName = "media-play";
         enableIPv6 = false;
         defaultGateway = "10.0.50.5";
-        nameservers = [ "192.168.1.10" ];
+        nameservers = [ "10.0.50.1" ];
         useHostResolvConf = false;
         firewall.allowedTCPPorts = [
-          4533
-          8095
-          8096
-          1704
-          1705
-          1780
-          9100
+          4533 # Navidrome
+          8095 # Music Assistant
+          8096 # Jellyfin
+          1704 # Snapcast audio stream
+          1705 # Snapcast control/stream
+          1780 # Snapcast JSON API
+          9100 # node-exporter
+        ];
+        firewall.allowedUDPPorts = [
+          7359 # Jellyfin client discovery
         ];
       };
       time.timeZone = "UTC";

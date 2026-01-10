@@ -2,13 +2,15 @@
   networking.firewall.interfaces = {
     ve-monitoring = {
       allowedTCPPorts = [
-        53
-        9100
-        9113
-        9134
-        9167
+        53 # DNS (if a resolver is enabled in the container)
+        9100 # node-exporter
+        9113 # nginx-exporter
+        9134 # zfs-exporter
+        9167 # unbound-exporter
       ];
-      allowedUDPPorts = [ 53 ];
+      allowedUDPPorts = [
+        53 # DNS (if a resolver is enabled in the container)
+      ];
     };
   };
 
@@ -28,13 +30,13 @@
         hostName = "monitoring";
         enableIPv6 = false;
         defaultGateway = "10.0.50.1";
-        nameservers = [ "192.168.1.10" ];
+        nameservers = [ "10.0.50.1" ];
         useHostResolvConf = false;
         firewall.allowedTCPPorts = [
-          3001
-          3100
-          9090
-          9100
+          3001 # Grafana
+          3100 # Loki
+          9090 # Prometheus
+          9100 # node-exporter
         ];
       };
       time.timeZone = "UTC";

@@ -16,7 +16,6 @@
       "filesystem_local"
       "hass"
       "hass_players"
-      "jellyfin"
       "lastfm_scrobble"
       "opensubsonic"
       "player_group"

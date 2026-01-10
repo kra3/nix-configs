@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   users.users.nginx.extraGroups = [ "acme" ];
 
@@ -44,7 +45,7 @@
 
   };
 
-  networking.firewall.interfaces.enp2s0.allowedTCPPorts = [
+  networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [
     443
   ];
 }

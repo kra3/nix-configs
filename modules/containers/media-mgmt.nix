@@ -2,10 +2,12 @@
   networking.firewall.interfaces = {
     ve-media-mgmt = {
       allowedTCPPorts = [
-        53
-        9100
+        53 # DNS (if a resolver is enabled in the container)
+        9100 # node-exporter
       ];
-      allowedUDPPorts = [ 53 ];
+      allowedUDPPorts = [
+        53 # DNS (if a resolver is enabled in the container)
+      ];
     };
   };
 
@@ -25,7 +27,7 @@
         hostName = "media-mgmt";
         enableIPv6 = false;
         defaultGateway = "10.0.50.3";
-        nameservers = [ "192.168.1.10" ];
+        nameservers = [ "10.0.50.1" ];
         useHostResolvConf = false;
       };
       time.timeZone = "UTC";

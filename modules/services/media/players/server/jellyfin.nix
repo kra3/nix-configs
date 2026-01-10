@@ -104,14 +104,6 @@
         contentType = "tvshows";
         pathInfos = [ "/data/library/tv" ];
       };
-      Music = {
-        contentType = "music";
-        pathInfos = [ "/data/library/music" ];
-      };
-      Books = {
-        contentType = "books";
-        pathInfos = [ "/data/library/books" ];
-      };
       "Anime Movies" = {
         contentType = "movies";
         pathInfos = [ "/data/library/anime/movies" ];
@@ -119,10 +111,6 @@
       "Anime TV" = {
         contentType = "tvshows";
         pathInfos = [ "/data/library/anime/tv" ];
-      };
-      Audiobooks = {
-        contentType = "books";
-        pathInfos = [ "/data/library/audiobooks" ];
       };
       "Home Videos" = {
         contentType = "homevideos";
@@ -135,6 +123,7 @@
         mutable = false;
         hashedPasswordFile = "/run/secrets/media.jellyfin.users.kra3.password";
         permissions.isAdministrator = true;
+        permissions.isDisabled = false;
       };
       home = {
         mutable = false;

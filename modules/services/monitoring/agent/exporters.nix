@@ -1,3 +1,4 @@
+{ ... }:
 {
   services.nginx.statusPage = true;
 
@@ -26,7 +27,7 @@
     };
   };
 
-  networking.firewall.interfaces."ve-monitoring".allowedTCPPorts = [
+  networking.firewall.interfaces.ve-monitoring.allowedTCPPorts = [
     9100
     9113
     9134

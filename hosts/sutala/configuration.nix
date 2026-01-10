@@ -12,11 +12,13 @@
     ./hardware-configuration.nix
     ./disko.nix
     ../../modules/nix.nix
+    ../../modules/vars.nix
     ../../modules/acme.nix
     ../../modules/nginx.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
     ../../modules/services/dns
+    ../../modules/services/discovery/mdns.nix
     ../../modules/services/monitoring/agent
     ../../modules/services/media/management/agent
     ../../modules/services/media/players/agent
@@ -82,7 +84,6 @@
         "ve-media-play"
       ];
     };
-
     defaultGateway = "192.168.1.1";
     interfaces.${config.vars.lanIf}.ipv4.addresses = [
       {

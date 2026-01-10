@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   services.openssh = {
     enable = true;
@@ -15,5 +16,5 @@
     };
   };
 
-  networking.firewall.interfaces.enp2s0.allowedTCPPorts = [ 22 ];
+  networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [ 22 ];
 }

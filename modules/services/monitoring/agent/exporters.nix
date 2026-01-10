@@ -6,6 +6,7 @@
     node = {
       enable = true;
       listenAddress = "10.0.50.1";
+      enabledCollectors = [ "systemd" ];
     };
     nginx = {
       enable = true;

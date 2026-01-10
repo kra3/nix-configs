@@ -79,6 +79,36 @@
       ],
       "title": "Container Node Exporter Up",
       "type": "table"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Systemd services that are active",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "node_systemd_unit_state{state=\"active\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {}
+        }
+      ],
+      "title": "Systemd Units Active",
+      "type": "table"
     }
   ],
   "refresh": "30s",

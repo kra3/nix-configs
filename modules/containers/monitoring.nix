@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   networking.firewall.interfaces = {
     ve-monitoring = {
@@ -22,7 +23,6 @@
     config = {
       imports = [
         ../nix.nix
-        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/monitoring/server
       ];
@@ -31,7 +31,7 @@
         hostName = "monitoring";
         enableIPv6 = false;
         defaultGateway = "10.0.50.1";
-        nameservers = [ "10.0.50.1" ];
+        nameservers = [ config.vars.lanIp ];
         useHostResolvConf = false;
         firewall.allowedTCPPorts = [
           3001 # Grafana

@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   networking.firewall.interfaces = {
     ve-media-mgmt = {
@@ -19,7 +20,6 @@
     config = {
       imports = [
         ../nix.nix
-        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/management/server
       ];
@@ -28,7 +28,7 @@
         hostName = "media-mgmt";
         enableIPv6 = false;
         defaultGateway = "10.0.50.3";
-        nameservers = [ "10.0.50.1" ];
+        nameservers = [ config.vars.lanIp ];
         useHostResolvConf = false;
         firewall.logRefusedConnections = true;
         firewall.logRefusedPackets = true;

@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ config, inputs, ... }:
 {
   networking.firewall = {
     interfaces = {
@@ -27,7 +27,6 @@
       imports = [
         ../nix.nix
         inputs.declarative-jellyfin.nixosModules.default
-        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/players/server
       ];
@@ -36,7 +35,7 @@
         hostName = "media-play";
         enableIPv6 = false;
         defaultGateway = "10.0.50.5";
-        nameservers = [ "10.0.50.1" ];
+        nameservers = [ config.vars.lanIp ];
         useHostResolvConf = false;
         firewall.allowedTCPPorts = [
           4533 # Navidrome
@@ -54,6 +53,14 @@
         firewall.logRefusedPackets = true;
         firewall.logRefusedUnicastsOnly = true;
       };
+      systemd.tmpfiles.rules = [
+        "z /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
+        "z /var/lib/jellyfin/logs 0750 jellyfin jellyfin - -"
+        "Z /var/lib/jellyfin/log/*.log 0640 jellyfin jellyfin - -"
+        "Z /var/lib/jellyfin/log/*.txt 0640 jellyfin jellyfin - -"
+        "Z /var/lib/jellyfin/logs/*.log 0640 jellyfin jellyfin - -"
+        "Z /var/lib/jellyfin/logs/*.txt 0640 jellyfin jellyfin - -"
+      ];
       time.timeZone = "UTC";
       system.stateVersion = "25.05";
     };

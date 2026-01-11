@@ -28,6 +28,16 @@
     declarative-jellyfin = {
       url = "github:Sveske-Juice/declarative-jellyfin";
     };
+
+    nur = {
+      url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    ijohanne-nur = {
+      url = "github:ijohanne/nur-packages";
+      flake = false;
+    };
     
     colmena = {
       url = "github:zhaofengli/colmena";

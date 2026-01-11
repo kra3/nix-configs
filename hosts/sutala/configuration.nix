@@ -8,6 +8,7 @@
   imports = [
     inputs.disko.nixosModules.disko
     inputs.home-manager.nixosModules.home-manager
+    inputs.nur.modules.nixos.default
 
     ./hardware-configuration.nix
     ./disko.nix
@@ -19,6 +20,7 @@
     ../../modules/sops.nix
     ../../modules/services/dns
     ../../modules/services/discovery/mdns.nix
+    ../../modules/services/discovery/ssdp.nix
     ../../modules/services/monitoring/agent
     ../../modules/services/media/management/agent
     ../../modules/services/media/players/agent

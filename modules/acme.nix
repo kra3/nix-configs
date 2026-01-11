@@ -13,10 +13,11 @@
       dnsProvider = "cloudflare";
       dnsPropagationCheck = true;
       webroot = null;
+      group = "acme";
       credentialFiles = {
         CF_DNS_API_TOKEN_FILE = config.sops.secrets."cloudflare.dns_api_token".path;
       };
-      reloadServices = [ "nginx" ];
+      reloadServices = [ "nginx" "adguardhome" ];
     };
   };
 }

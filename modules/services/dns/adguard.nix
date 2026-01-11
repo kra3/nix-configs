@@ -210,6 +210,7 @@ in
     users.users.adguardhome = {
       isSystemUser = true;
       group = "adguardhome";
+      extraGroups = [ "acme" ];
       home = "/var/lib/AdGuardHome";
       createHome = false;
     };
@@ -223,6 +224,7 @@ in
       DynamicUser = lib.mkForce false;
       User = "adguardhome";
       Group = "adguardhome";
+      SupplementaryGroups = [ "acme" ];
     };
 
     sops.secrets."dns.adguard.password" = {
@@ -309,19 +311,17 @@ in
         };
 
         tls = {
-          enabled = false;
-          allow_unencrypted_doh = true;
-          server_name = "";
+          enabled = true;
+          allow_unencrypted_doh = false;
+          server_name = "dns.karunagath.in";
           force_https = false;
-          port_https = 443;
+          port_https = 3001;
           port_dns_over_tls = 853;
           port_dns_over_quic = 853;
           port_dnscrypt = 0;
           dnscrypt_config_file = "";
-          certificate_chain = "";
-          private_key = "";
-          certificate_path = "";
-          private_key_path = "";
+          certificate_path = "${config.security.acme.certs."karunagath.in".directory}/fullchain.pem";
+          private_key_path = "${config.security.acme.certs."karunagath.in".directory}/key.pem";
           strict_sni_check = false;
         };
 
@@ -421,11 +421,11 @@ in
         deny all;
       '';
       locations."/" = {
-        proxyPass = "http://127.0.0.1:3000";
+        proxyPass = "https://127.0.0.1:3001";
         proxyWebsockets = true;
       };
       locations."/dns-query" = {
-        proxyPass = "http://127.0.0.1:3000";
+        proxyPass = "https://127.0.0.1:3001";
       };
     };
 

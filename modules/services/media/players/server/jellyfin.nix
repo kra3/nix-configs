@@ -54,8 +54,15 @@
         {
           tag = "RepositoryInfo";
           content = {
-            Name = "Jellyfin Tweaks";
-            Url = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.10/manifest.json";
+            Name = "Jellyfin Tweaks + Enhanced";
+            Url = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json";
+          };
+        }
+        {
+          tag = "RepositoryInfo";
+          content = {
+            Name = "Streamyfin";
+            Url = "https://raw.githubusercontent.com/streamyfin/jellyfin-plugin-streamyfin/main/manifest.json";
           };
         }
       ];
@@ -140,8 +147,9 @@
 
     branding = {
       customCss = ''
+        /* using https://github.com/ranaldsgift/KefinTweaks instead gives much more options */
         /* @import url("https://cdn.jsdelivr.net/gh/lscambo13/ElegantFin@main/Theme/ElegantFin-jellyfin-theme-build-latest-minified.css"); */
-        @import url('https://cdn.jsdelivr.net/gh/stpnwf/ZestyTheme@latest/theme.css'); 
+        /* @import url('https://cdn.jsdelivr.net/gh/stpnwf/ZestyTheme@latest/theme.css'); */
         /* cyan is default, others: blue, coral, grey, green, purple, red, yellow */
         /* @import url('https://cdn.jsdelivr.net/gh/stpnwf/ZestyTheme@latest/colorschemes/blue.css'); */
       '';

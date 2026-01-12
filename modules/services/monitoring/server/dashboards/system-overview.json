@@ -1,0 +1,800 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Drilldown",
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "url": "",
+      "dashboardUid": "system-monitor"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "description": "Node exporter availability",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"node-.*\", instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Node Exporter Up",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Uptime (last value)",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "time() - node_boot_time_seconds{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Load average (1m)",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "node_load1{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Load (1m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "CPU usage (last value)",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m])) * 100)",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Memory usage (last value)",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - (avg by (instance) (node_memory_MemAvailable_bytes{instance=~\"$instance\"}) / avg by (instance) (node_memory_MemTotal_bytes{instance=~\"$instance\"})))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Disk usage (last value)",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - (sum by (instance) (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs|ramfs|autofs\", instance=~\"$instance\"}) / sum by (instance) (node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs|ramfs|autofs\", instance=~\"$instance\"})))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Usage",
+      "type": "stat"
+    },
+    {
+      "id": 15,
+      "type": "text",
+      "title": "Launch Pad",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;flex-wrap:wrap;gap:6px;\"><a href=\"https://dns.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">AdGuard</a><a href=\"https://grafana.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Grafana</a><a href=\"https://jellyfin.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Jellyfin</a><a href=\"https://jellyseerr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Jellyseerr</a><a href=\"https://navidrome.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Navidrome</a><a href=\"https://mass.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Music Assistant</a><a href=\"https://radarr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Radarr</a><a href=\"https://sonarr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Sonarr</a><a href=\"https://prowlarr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Prowlarr</a><a href=\"https://bazarr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Bazarr</a><a href=\"https://lidarr.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Lidarr</a><a href=\"https://sabnzbd.karunagath.in\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;margin:4px 6px;border:1px solid #2c2f33;border-radius:8px;color:#e8eaed;text-decoration:none;background:#15181b;font-size:12px;\">Sabnzbd</a></div>"
+      }
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Services (All)",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 20
+      },
+      "targets": [
+        {
+          "expr": "label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"nginx.service\"},\"service\",\"Nginx\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"adguardhome.service\"},\"service\",\"AdGuard\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"unbound.service\"},\"service\",\"Unbound\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"avahi-daemon.service\"},\"service\",\"Avahi\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"multicast-relay.service\"},\"service\",\"SSDP Relay\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"sshd.service\"},\"service\",\"SSHD\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"zfs.target\"},\"service\",\"ZFS\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"alloy.service\"},\"service\",\"Alloy\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"grafana.service\"},\"service\",\"Grafana\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"prometheus.service\"},\"service\",\"Prometheus\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"loki.service\"},\"service\",\"Loki\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"jellyfin.service\"},\"service\",\"Jellyfin\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"navidrome.service\"},\"service\",\"Navidrome\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"music-assistant.service\"},\"service\",\"Music Assistant\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"radarr.service\"},\"service\",\"Radarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"sonarr.service\"},\"service\",\"Sonarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"prowlarr.service\"},\"service\",\"Prowlarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"lidarr.service\"},\"service\",\"Lidarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"bazarr.service\"},\"service\",\"Bazarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"sabnzbd.service\"},\"service\",\"Sabnzbd\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"jellyseerr.service\"},\"service\",\"Jellyseerr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\")",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "\u2193"
+                },
+                "1": {
+                  "text": "\u2191"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "displayMode": "color-text"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "showFilter": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "group": true,
+              "job": true,
+              "name": true,
+              "type": true,
+              "container": true,
+              "state": true
+            },
+            "renameByName": {
+              "service": "Service",
+              "instance": "Instance",
+              "Value": "Status"
+            },
+            "indexByName": {
+              "Instance": 0,
+              "Service": 1,
+              "Status": 2
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Instance",
+                "desc": false
+              },
+              {
+                "field": "Service",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "gauge",
+      "title": "CPU Now",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "orientation": "horizontal",
+        "showThresholds": true
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=\"sutala\"}[5m])) * 100)",
+          "legendFormat": "CPU",
+          "refId": "A"
+        }
+      ],
+      "transparent": true,
+      "tags": [
+        "snapshots"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "gauge",
+      "title": "Mem Now",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 13,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "orientation": "horizontal",
+        "showThresholds": true
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - (avg by (instance) (node_memory_MemAvailable_bytes{instance=\"sutala\"}) / avg by (instance) (node_memory_MemTotal_bytes{instance=\"sutala\"})))",
+          "legendFormat": "Mem",
+          "refId": "A"
+        }
+      ],
+      "transparent": true,
+      "tags": [
+        "snapshots"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Network Now",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(node_network_receive_bytes_total{device!~\"lo\", instance=\"sutala\"}[5m]))",
+          "legendFormat": "RX",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(node_network_transmit_bytes_total{device!~\"lo\", instance=\"sutala\"}[5m]))",
+          "legendFormat": "TX",
+          "refId": "B"
+        }
+      ],
+      "transparent": true,
+      "tags": [
+        "snapshots"
+      ]
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Disk Now",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 20,
+        "y": 13,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(node_disk_read_bytes_total{instance=\"sutala\"}[5m]))",
+          "legendFormat": "Read",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(node_disk_written_bytes_total{instance=\"sutala\"}[5m]))",
+          "legendFormat": "Write",
+          "refId": "B"
+        }
+      ],
+      "transparent": true,
+      "tags": [
+        "snapshots"
+      ]
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Net Errors",
+      "datasource": "Prometheus",
+      "gridPos": {
+        "x": 16,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(node_network_receive_errs_total{device!~\"lo\", instance=\"sutala\"}[5m])) + sum(rate(node_network_transmit_errs_total{device!~\"lo\", instance=\"sutala\"}[5m]))",
+          "legendFormat": "Errors",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(node_network_receive_drop_total{device!~\"lo\", instance=\"sutala\"}[5m])) + sum(rate(node_network_transmit_drop_total{device!~\"lo\", instance=\"sutala\"}[5m]))",
+          "legendFormat": "Drops",
+          "refId": "B"
+        }
+      ],
+      "transparent": true,
+      "tags": [
+        "snapshots"
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "monitoring",
+    "system",
+    "overview"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(node_uname_info, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(node_uname_info, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "System Overview",
+  "uid": "system-overview",
+  "version": 2
+}

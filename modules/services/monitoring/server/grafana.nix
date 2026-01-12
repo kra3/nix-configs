@@ -42,7 +42,7 @@
             orgId = 1;
             folder = "Sutala";
             type = "file";
-            disableDeletion = true;
+            disableDeletion = false;
             editable = false;
             options.path = "/etc/grafana-dashboards";
           }
@@ -57,12 +57,11 @@
   };
 
   environment.etc = {
-    "grafana-dashboards/services-overview.json".source = ./dashboards/services-overview.json;
-    "grafana-dashboards/system-metrics.json".source = ./dashboards/system-metrics.json;
-    "grafana-dashboards/node.json".source = ./dashboards/node.json;
     "grafana-dashboards/nginx.json".source = ./dashboards/nginx.json;
     "grafana-dashboards/unbound.json".source = ./dashboards/unbound.json;
     "grafana-dashboards/zfs.json".source = ./dashboards/zfs.json;
     "grafana-dashboards/logs-overview.json".source = ./dashboards/logs-overview.json;
+    "grafana-dashboards/system-monitor.json".source = ./dashboards/system-monitor.json;
+    "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
   };
 }

@@ -72,6 +72,15 @@
           }
         ];
       }
+      {
+        job_name = "systemd";
+        static_configs = [
+          {
+            targets = [ "10.0.50.1:9558" ];
+            labels.instance = "sutala";
+          }
+        ];
+      }
     ];
   };
 

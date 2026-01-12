@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   services.nginx.statusPage = true;
 
@@ -33,6 +33,7 @@
     9113
     9134
     9167
+    9558
   ];
 
   systemd.services.prometheus-node-exporter = {
@@ -50,5 +51,16 @@
   systemd.services.prometheus-zfs-exporter = {
     after = [ "container@monitoring.service" "network-online.target" ];
     wants = [ "container@monitoring.service" "network-online.target" ];
+  };
+
+  systemd.services.systemd-exporter = {
+    after = [ "container@monitoring.service" "network-online.target" ];
+    wants = [ "container@monitoring.service" "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      DynamicUser = true;
+      Restart = "always";
+      ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=0.0.0.0:9558";
+    };
   };
 }

@@ -44,4 +44,4 @@ Before asserting the state of a file or configuration, re-read it with a command
 Use short, imperative commit messages (e.g., "Add laptop NixOS profile") and keep changes scoped to one host or module. For pull requests, include a clear description, list any commands run (e.g., `nix flake check`), and call out affected hosts.
 
 ## Configuration & Secrets
-Avoid committing secrets or machine-specific credentials. Use nested sops keys for structure (e.g., `users.root.password`, `users.kra3.password`, `cloudflare.dns_api_token`) and keep local-only overrides out of version control.
+Avoid committing secrets or machine-specific credentials. Use nested sops keys for structure (e.g., `users.root.password`, `users.kra3.password`, `cloudflare.acme.token`) and keep local-only overrides out of version control.

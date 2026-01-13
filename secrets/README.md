@@ -12,14 +12,15 @@ Password hashes:
 - Store the hashes under `users.root.password` and `users.kra3.password` as literal keys.
 
 Cloudflare DNS:
-- Store the token under `cloudflare.dns_api_token` as the raw value.
+- Store the token under `cloudflare.acme.token` as the raw value.
+- Store the DDNS token under `cloudflare.ddns.token` as `CLOUDFLARE_API_TOKEN=...`.
 
 Example structure:
 
 ```
 'users.root.password': "$6$..."
 'users.kra3.password': "$6$..."
-'cloudflare.dns_api_token': "..."
+'cloudflare.acme.token': "..."
 ```
 
 Example encryption command:

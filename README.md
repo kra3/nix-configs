@@ -115,7 +115,8 @@ Setup:
 - Add that recipient to `.sops.yaml` (replace `REPLACE_WITH_AGE_PUBLIC_KEY`)
 - Encrypt `secrets/secrets.yaml` in-place once you add values.
 - Store password hashes under `users.root.password` and `users.kra3.password` (literal keys).
-- Store Cloudflare DNS credentials under `cloudflare.dns_api_token` (token value, literal key).
+- Store Cloudflare DNS credentials under `cloudflare.acme.token` (token value, literal key).
+- Store Cloudflare DDNS credentials under `cloudflare.ddns.token` (value must be `CLOUDFLARE_API_TOKEN=...`).
 See `secrets/README.md` for the exact structure.
 
 ## Notes

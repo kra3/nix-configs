@@ -40,6 +40,16 @@ in
       };
     };
 
+    virtualHosts."ha.karunagath.in" = {
+      useACMEHost = "karunagath.in";
+      forceSSL = true;
+      extraConfig = allowBlock;
+      locations."/" = {
+        proxyPass = "http://192.168.1.31:8123";
+        proxyWebsockets = true;
+      };
+    };
+
 
   };
 

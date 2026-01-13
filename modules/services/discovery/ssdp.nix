@@ -1,6 +1,7 @@
 { config, inputs, lib, pkgs, ... }:
 let
   lanIf = config.vars.lanIf;
+  mediaPlayHostIp = config.containers.media-play.hostAddress or "10.0.50.5";
   ijohanne = import inputs.ijohanne-nur { inherit pkgs; };
 in
 {
@@ -18,9 +19,20 @@ in
     enable = true;
     interfaces = [
       lanIf
-      "ve-media-play"
+      mediaPlayHostIp
     ];
     extraConfig = "--noMDNS --noSonosDiscovery";
+  };
+
+  systemd.services.multicast-relay = {
+    after = [
+      "container@media-play.service"
+      "network-online.target"
+    ];
+    wants = [
+      "container@media-play.service"
+      "network-online.target"
+    ];
   };
 
   networking.firewall.interfaces.${lanIf}.allowedUDPPorts = lib.mkAfter [ 1900 ];

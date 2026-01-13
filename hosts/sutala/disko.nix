@@ -82,8 +82,8 @@
           };
           appdata = {
             type = "zfs_fs";
-            mountpoint = "/srv/appdata";
             options = {
+              mountpoint = "/srv/appdata";
               compression = "zstd";
               atime = "off";
               xattr = "sa";
@@ -94,8 +94,8 @@
           };
           databases = {
             type = "zfs_fs";
-            mountpoint = "/srv/databases";
             options = {
+              mountpoint = "/srv/databases";
               recordsize = "16K";
               compression = "zstd";
               atime = "off";
@@ -131,16 +131,16 @@
         datasets = {
           data = {
             type = "zfs_fs";
-            mountpoint = "/srv/media";
             options = {
+              mountpoint = "/srv/media";
               logbias = "throughput";
               "com.sun:auto-snapshot" = "false";
             };
           };
           surveillance = {
             type = "zfs_fs";
-            mountpoint = "/srv/surveillance";
             options = {
+              mountpoint = "/srv/surveillance";
               logbias = "throughput";
               "com.sun:auto-snapshot:frequent" = "false";
               "com.sun:auto-snapshot:hourly" = "false";

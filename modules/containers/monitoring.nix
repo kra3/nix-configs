@@ -69,4 +69,15 @@
       };
     };
   };
+
+  systemd.services."container@monitoring" = {
+    requires = [
+      "zfs-mount.service"
+      "systemd-tmpfiles-resetup.service"
+    ];
+    after = [
+      "zfs-mount.service"
+      "systemd-tmpfiles-resetup.service"
+    ];
+  };
 }

@@ -110,6 +110,17 @@
     ];
   };
 
+  systemd.services."container@media-play" = {
+    requires = [
+      "zfs-mount.service"
+      "systemd-tmpfiles-resetup.service"
+    ];
+    after = [
+      "zfs-mount.service"
+      "systemd-tmpfiles-resetup.service"
+    ];
+  };
+
   sops.secrets."media.jellyfin.users.kra3.password".mode = "0444";
   sops.secrets."media.jellyfin.users.home.password".mode = "0444";
   sops.secrets."media.jellyfin.apikeys.jellyseerr".mode = "0444";

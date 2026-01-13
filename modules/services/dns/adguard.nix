@@ -3,6 +3,10 @@ let
   cfg = config.vars;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
+  allowBlock = ''
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") cfg.nginxAllowCidrs)}
+    deny all;
+  '';
   adguardFilters = [
     {
       enabled = false;
@@ -269,6 +273,7 @@ in
           bind_hosts = [
             "127.0.0.1"
             lanIp
+            "100.100.31.11"
           ];
           port = 53;
           anonymize_client_ip = true;
@@ -415,11 +420,7 @@ in
     services.nginx.virtualHosts."dns.karunagath.in" = {
       useACMEHost = "karunagath.in";
       forceSSL = true;
-      extraConfig = ''
-        allow 192.168.1.0/24;
-        allow 127.0.0.1;
-        deny all;
-      '';
+      extraConfig = allowBlock;
       locations."/" = {
         proxyPass = "https://127.0.0.1:3001";
         proxyWebsockets = true;

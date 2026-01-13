@@ -1,4 +1,10 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  allowBlock = ''
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.nginxAllowCidrs)}
+    deny all;
+  '';
+in
 {
   users.users.nginx.extraGroups = [ "acme" ];
 
@@ -19,11 +25,7 @@
     virtualHosts."karunagath.in" = {
       enableACME = true;
       forceSSL = true;
-      extraConfig = ''
-        allow 192.168.1.0/24;
-        allow 127.0.0.1;
-        deny all;
-      '';
+      extraConfig = allowBlock;
       locations."/" = {
         return = "404";
       };
@@ -32,11 +34,7 @@
     virtualHosts."*.karunagath.in" = {
       useACMEHost = "karunagath.in";
       forceSSL = true;
-      extraConfig = ''
-        allow 192.168.1.0/24;
-        allow 127.0.0.1;
-        deny all;
-      '';
+      extraConfig = allowBlock;
       locations."/" = {
         return = "404";
       };

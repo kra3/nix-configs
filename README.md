@@ -116,7 +116,7 @@ Setup:
 - Encrypt `secrets/secrets.yaml` in-place once you add values.
 - Store password hashes under `users.root.password` and `users.kra3.password` (literal keys).
 - Store Cloudflare DNS credentials under `cloudflare.acme.token` (token value, literal key).
-- Store Cloudflare DDNS credentials under `cloudflare.ddns.token` (value must be `CLOUDFLARE_API_TOKEN=...`).
+- Store Tailscale auth key under `tailscale.authkey` (token value, literal key).
 See `secrets/README.md` for the exact structure.
 
 ## Notes

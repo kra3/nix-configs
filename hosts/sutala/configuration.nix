@@ -18,8 +18,8 @@
     ../../modules/nginx.nix
     ../../modules/openssh.nix
     ../../modules/sops.nix
+    ../../modules/services/tailscale.nix
     ../../modules/services/dns
-    ../../modules/services/ddns/cloudflare.nix
     ../../modules/services/discovery/mdns.nix
     ../../modules/services/discovery/ssdp.nix
     ../../modules/services/monitoring/agent

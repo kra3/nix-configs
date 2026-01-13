@@ -13,7 +13,7 @@ Password hashes:
 
 Cloudflare DNS:
 - Store the token under `cloudflare.acme.token` as the raw value.
-- Store the DDNS token under `cloudflare.ddns.token` as `CLOUDFLARE_API_TOKEN=...`.
+- Store the Tailscale auth key under `tailscale.authkey` as the raw value.
 
 Example structure:
 

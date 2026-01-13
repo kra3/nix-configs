@@ -1,12 +1,15 @@
+{ config, lib, ... }:
+let
+  allowBlock = ''
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.nginxAllowCidrs)}
+    deny all;
+  '';
+in
 {
   services.nginx.virtualHosts."grafana.karunagath.in" = {
     useACMEHost = "karunagath.in";
     forceSSL = true;
-    extraConfig = ''
-      allow 192.168.1.0/24;
-      allow 127.0.0.1;
-      deny all;
-    '';
+    extraConfig = allowBlock;
     locations."/" = {
       proxyPass = "http://10.0.50.2:3001";
       proxyWebsockets = true;

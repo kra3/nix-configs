@@ -29,6 +29,7 @@
     ../../modules/containers/monitoring.nix
     ../../modules/containers/media-mgmt.nix
     ../../modules/containers/media-play.nix
+    ../../modules/containers/home-auto.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
     ../../modules/users/root.nix
@@ -91,6 +92,14 @@
         "ve-monitoring"
         "ve-media-mgmt"
         "ve-media-play"
+        "ve-home-auto"
+      ];
+      forwardPorts = [
+        {
+          sourcePort = 1883;
+          destination = "10.0.50.8:1883";
+          proto = "tcp";
+        }
       ];
     };
     defaultGateway = "192.168.1.1";

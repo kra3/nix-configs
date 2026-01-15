@@ -50,7 +50,6 @@ in
       };
     };
 
-
   };
 
   networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [

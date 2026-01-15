@@ -40,6 +40,10 @@ LAN 192.168.1.0/24
         |-- ve-media-play (veth)
               hostAddress: 10.0.50.5
               localAddress: 10.0.50.6  (container "media-play")
+        |
+        |-- ve-home-auto (veth)
+              hostAddress: 10.0.50.7
+              localAddress: 10.0.50.8  (container "home-auto")
 ```
 
 ## Interfaces and IPs
@@ -49,20 +53,23 @@ LAN 192.168.1.0/24
   - `ve-monitoring` -> `10.0.50.1`
   - `ve-media-mgmt` -> `10.0.50.3`
   - `ve-media-play` -> `10.0.50.5`
+  - `ve-home-auto` -> `10.0.50.7`
 - Containers:
   - `monitoring` -> `10.0.50.2`
   - `media-mgmt` -> `10.0.50.4`
   - `media-play` -> `10.0.50.6`
+  - `home-auto` -> `10.0.50.8`
 
 ## Routing and NAT
 
 - Host NAT:
   - `externalInterface = enp2s0`
-  - `internalInterfaces = [ "ve-monitoring" "ve-media-mgmt" "ve-media-play" ]`
+  - `internalInterfaces = [ "ve-monitoring" "ve-media-mgmt" "ve-media-play" "ve-home-auto" ]`
 - Container gateways:
   - `monitoring` -> `10.0.50.1`
   - `media-mgmt` -> `10.0.50.3`
   - `media-play` -> `10.0.50.5`
+  - `home-auto` -> `10.0.50.7`
 - Container DNS:
   - `nameservers = [ 192.168.1.10 ]`
 
@@ -139,6 +146,12 @@ Unbound -> DoT upstreams (1.1.1.1:853, 9.9.9.11:853)
 - Node exporter: `9100/tcp`
 - DNS (if enabled inside container): `53/tcp`, `53/udp`
 
+### Container: home-auto (10.0.50.8)
+
+- Mosquitto: `1883/tcp` (DNAT from `192.168.1.10:1883`)
+- Node exporter: `9100/tcp`
+- DNS (if enabled inside container): `53/tcp`, `53/udp`
+
 ## Discovery and Multicast
 
 - mDNS:
@@ -167,7 +180,7 @@ host+containers journals -> Alloy (host) -> Loki (10.0.50.2:3100) -> Grafana
 ## Firewall Allowlist Summary (host)
 
 - `enp2s0` (LAN):
-  - `22/tcp`, `53/tcp`, `53/udp`, `443/tcp`, `5353/udp`
+  - `22/tcp`, `53/tcp`, `53/udp`, `443/tcp`, `5353/udp`, `1883/tcp`
 - `ve-monitoring`:
   - `9100/tcp`, `9113/tcp`, `9134/tcp`, `9167/tcp`
 - `ve-media-mgmt`:
@@ -175,3 +188,5 @@ host+containers journals -> Alloy (host) -> Loki (10.0.50.2:3100) -> Grafana
 - `ve-media-play`:
   - `53/tcp`, `53/udp`, `5353/udp`, `7359/udp`, `4533/tcp`, `8095/tcp`,
     `8096/tcp`, `9100/tcp`
+- `ve-home-auto`:
+  - `53/tcp`, `53/udp`, `1883/tcp`, `9100/tcp`

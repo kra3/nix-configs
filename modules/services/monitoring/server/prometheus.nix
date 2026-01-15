@@ -43,6 +43,11 @@
             labels.container = "media-play";
             labels.instance = "media-play";
           }
+          {
+            targets = [ "10.0.50.8:9100" ];
+            labels.container = "home-auto";
+            labels.instance = "home-auto";
+          }
         ];
       }
       {

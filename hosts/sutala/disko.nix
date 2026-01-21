@@ -87,9 +87,7 @@
               compression = "zstd";
               atime = "off";
               xattr = "sa";
-              options = {
-                "com.sun:auto-snapshot" = "true";
-              };
+              "com.sun:auto-snapshot" = "true";
             };
           };
           databases = {
@@ -102,9 +100,7 @@
               xattr = "sa";
               primarycache = "all";
               logbias = "throughput";
-              options = {
-                "com.sun:auto-snapshot" = "true";
-              };
+              "com.sun:auto-snapshot" = "true";
             };
           };
         };

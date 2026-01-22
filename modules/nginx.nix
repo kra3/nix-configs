@@ -20,6 +20,8 @@ in
       proxy_set_header X-Forwarded-Proto $scheme;
       proxy_set_header X-Forwarded-Host $host;
       proxy_set_header X-Forwarded-Port $server_port;
+      proxy_headers_hash_max_size 1024;
+      proxy_headers_hash_bucket_size 128;
     '';
 
     virtualHosts."karunagath.in" = {

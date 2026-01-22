@@ -4,7 +4,9 @@
     ve-home-auto = {
       allowedTCPPorts = [
         53 # DNS (if a resolver is enabled in the container)
+        80 # Frigate nginx
         1883 # Mosquitto
+        1984 # go2rtc UI
         9100 # node-exporter
       ];
       allowedUDPPorts = [
@@ -19,6 +21,8 @@
 
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
+    "d /srv/appdata/home-auto/frigate 0750 root root - -"
+    "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
   ];
 
   containers.home-auto = {
@@ -31,6 +35,7 @@
         ../nix.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/mosquitto.nix
+        ../services/surveillance
       ];
 
       networking = {
@@ -40,7 +45,9 @@
         nameservers = [ config.vars.lanIp ];
         useHostResolvConf = false;
         firewall.allowedTCPPorts = [
+          80 # Frigate nginx
           1883 # Mosquitto
+          1984 # go2rtc UI
           9100 # node-exporter
         ];
         firewall.allowedUDPPorts = [
@@ -54,12 +61,32 @@
       system.stateVersion = "25.05";
     };
     bindMounts = {
+      "/media/frigate" = {
+        hostPath = "/srv/surveillance";
+        isReadOnly = false;
+      };
+      "/var/lib/frigate" = {
+        hostPath = "/srv/appdata/home-auto/frigate";
+        isReadOnly = false;
+      };
+      "/var/lib/go2rtc" = {
+        hostPath = "/srv/appdata/home-auto/go2rtc";
+        isReadOnly = false;
+      };
       "/var/lib/mosquitto" = {
         hostPath = "/srv/appdata/home-auto/mosquitto";
         isReadOnly = false;
       };
       "/run/secrets/mqtt.users.kothu.password" = {
         hostPath = "/run/secrets/mqtt.users.kothu.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/surveillance.go2rtc.ranger_duo.password" = {
+        hostPath = "/run/secrets/surveillance.go2rtc.ranger_duo.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/surveillance.go2rtc.ranger_uno.password" = {
+        hostPath = "/run/secrets/surveillance.go2rtc.ranger_uno.password";
         isReadOnly = true;
       };
     };

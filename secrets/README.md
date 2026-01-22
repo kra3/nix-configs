@@ -14,6 +14,9 @@ Password hashes:
 Cloudflare DNS:
 - Store the token under `cloudflare.acme.token` as the raw value.
 - Store the Tailscale auth key under `tailscale.authkey` as the raw value.
+- Store go2rtc camera passwords under:
+  - `surveillance.go2rtc.ranger_duo.password`
+  - `surveillance.go2rtc.ranger_uno.password`
 
 Example structure:
 

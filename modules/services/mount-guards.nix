@@ -4,11 +4,13 @@ let
     "/srv/appdata"
     "/srv/databases"
     "/srv/media"
+    "/srv/surveillance"
   ];
   guardedServices = [
     "container@media-mgmt"
     "container@media-play"
     "container@monitoring"
+    "container@home-auto"
   ];
 in
 {

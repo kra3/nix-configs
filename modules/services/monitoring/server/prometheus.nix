@@ -86,6 +86,17 @@
           }
         ];
       }
+      {
+        job_name = "frigate";
+        metrics_path = "/api/metrics";
+        static_configs = [
+          {
+            targets = [ "10.0.50.8:80" ];
+            labels.container = "home-auto";
+            labels.instance = "home-auto";
+          }
+        ];
+      }
     ];
   };
 

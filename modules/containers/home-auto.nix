@@ -61,6 +61,10 @@
       system.stateVersion = "25.05";
     };
     bindMounts = {
+      "/dev/dri" = {
+        hostPath = "/dev/dri";
+        isReadOnly = false;
+      };
       "/media/frigate" = {
         hostPath = "/srv/surveillance";
         isReadOnly = false;
@@ -90,6 +94,16 @@
         isReadOnly = true;
       };
     };
+    allowedDevices = [
+      {
+        node = "/dev/dri/card1";
+        modifier = "rw";
+      }
+      {
+        node = "/dev/dri/renderD128";
+        modifier = "rw";
+      }
+    ];
   };
 
   systemd.services."container@home-auto" = {

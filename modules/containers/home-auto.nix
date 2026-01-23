@@ -7,6 +7,8 @@
         80 # Frigate nginx
         1883 # Mosquitto
         1984 # go2rtc UI
+        5000 # Frigate UI
+        5001 # Frigate metrics
         9100 # node-exporter
       ];
       allowedUDPPorts = [
@@ -50,6 +52,8 @@
           80 # Frigate nginx
           1883 # Mosquitto
           1984 # go2rtc UI
+          5000 # Frigate UI
+          5001 # Frigate metrics
           9100 # node-exporter
         ];
         firewall.allowedUDPPorts = [

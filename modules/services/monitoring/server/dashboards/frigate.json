@@ -1,0 +1,610 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "description": "Frigate scrape availability",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"frigate\", instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Frigate Up",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Uptime in seconds",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "frigate_service_uptime_seconds{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Seconds since last update",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "time() - frigate_service_last_updated_timestamp{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Update Age",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Cameras with detection enabled",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "expr": "sum(frigate_detection_enabled{instance=~\"$instance\"})",
+          "legendFormat": "enabled",
+          "refId": "A"
+        }
+      ],
+      "title": "Detection Enabled",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Average CPU usage across Frigate processes",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "avg(frigate_cpu_usage_percent{instance=~\"$instance\"})",
+          "legendFormat": "cpu",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Average memory usage across Frigate processes",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 6
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "avg(frigate_mem_usage_percent{instance=~\"$instance\"})",
+          "legendFormat": "mem",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "GPU usage by device",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "frigate_gpu_usage_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{gpu_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "GPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "GPU memory usage by device",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "frigate_gpu_mem_usage_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{gpu_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "GPU Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Storage usage by mount",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 13
+      },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "(frigate_storage_used_bytes{instance=~\"$instance\"} / frigate_storage_total_bytes{instance=~\"$instance\"}) * 100",
+          "legendFormat": "{{storage}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Storage Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Detectors inference speed",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 13
+      },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "frigate_detector_inference_speed_seconds{instance=~\"$instance\", name=~\"$detector\"}",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Detector Inference Speed",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Events per camera (last hour)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 13
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "gradient",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "targets": [
+        {
+          "expr": "increase(frigate_camera_events{instance=~\"$instance\", camera=~\"$camera\"}[1h])",
+          "legendFormat": "{{camera}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Events (1h)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Device temperatures",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 13
+      },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "frigate_device_temperature{instance=~\"$instance\"}",
+          "legendFormat": "{{device}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Device Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Camera FPS, detection FPS, and skipped FPS",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "fps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "frigate_camera_fps{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}} camera",
+          "refId": "A"
+        },
+        {
+          "expr": "frigate_detection_fps{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}} detect",
+          "refId": "B"
+        },
+        {
+          "expr": "frigate_skipped_fps{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}} skipped",
+          "refId": "C"
+        }
+      ],
+      "title": "Camera FPS",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Audio levels for selected camera",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 14,
+      "targets": [
+        {
+          "expr": "frigate_audio_dBFS{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}} dBFS",
+          "refId": "A"
+        },
+        {
+          "expr": "frigate_audio_rms{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}} RMS",
+          "refId": "B"
+        }
+      ],
+      "title": "Audio Levels",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Process FPS for selected camera",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "fps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 15,
+      "targets": [
+        {
+          "expr": "frigate_process_fps{instance=~\"$instance\", camera_name=~\"$camera\"}",
+          "legendFormat": "{{camera_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Process FPS",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "monitoring",
+    "frigate",
+    "nvr"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(frigate_service_uptime_seconds, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(frigate_service_uptime_seconds, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(frigate_camera_fps, camera_name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Camera",
+        "multi": true,
+        "name": "camera",
+        "options": [],
+        "query": "label_values(frigate_camera_fps, camera_name)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(frigate_detector_inference_speed_seconds, name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Detector",
+        "multi": true,
+        "name": "detector",
+        "options": [],
+        "query": "label_values(frigate_detector_inference_speed_seconds, name)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Frigate",
+  "uid": "frigate",
+  "version": 1
+}

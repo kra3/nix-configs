@@ -63,5 +63,6 @@
     "grafana-dashboards/logs-overview.json".source = ./dashboards/logs-overview.json;
     "grafana-dashboards/system-monitor.json".source = ./dashboards/system-monitor.json;
     "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
+    "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
   };
 }

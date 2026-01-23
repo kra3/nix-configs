@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   environment.sessionVariables = {
     LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
@@ -122,6 +122,16 @@
         };
       };
     };
+  };
+
+  services.nginx.virtualHosts."${config.services.frigate.hostname}".locations."/api/metrics" = {
+    proxyPass = "http://frigate-api/metrics";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      auth_request off;
+      access_log off;
+      add_header Cache-Control "no-store";
+    '';
   };
 
   systemd.services.frigate = {

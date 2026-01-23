@@ -41,6 +41,12 @@
   vars = {
     lanIf = "enp2s0";
     lanIp = "192.168.1.10";
+    nginxAllowCidrs = [
+      "192.168.1.0/24"
+      "100.64.0.0/10"
+      "127.0.0.1"
+      "10.0.50.2/32"
+    ];
   };
 
   hardware.graphics = {

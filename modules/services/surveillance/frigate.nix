@@ -23,6 +23,12 @@
     vaapiDriver = "iHD";
     checkConfig = false;
     settings = {
+      detect = {
+        enabled = true;
+        width = 640;
+        height = 480;
+      };
+
       detectors = {
         cpu = {
           type = "cpu";
@@ -44,6 +50,16 @@
 
       audio = {
         enabled = true;
+        listen = [
+          "fire_alarm"
+          "explosion"
+          "glass"
+          "shatter"
+          "scream"
+          "yell"
+          # "speech"
+          "bark"
+        ];
       };
 
       mqtt = {

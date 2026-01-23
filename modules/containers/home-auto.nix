@@ -23,6 +23,8 @@
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
     "d /srv/appdata/home-auto/frigate 0750 root root - -"
     "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
+    "d /srv/surveillance/recordings 0750 root root - -"
+    "d /srv/surveillance/clips 0750 root root - -"
   ];
 
   containers.home-auto = {
@@ -71,6 +73,14 @@
       };
       "/var/lib/frigate" = {
         hostPath = "/srv/appdata/home-auto/frigate";
+        isReadOnly = false;
+      };
+      "/var/lib/frigate/recordings" = {
+        hostPath = "/srv/surveillance/recordings";
+        isReadOnly = false;
+      };
+      "/var/lib/frigate/clips" = {
+        hostPath = "/srv/surveillance/clips";
         isReadOnly = false;
       };
       "/var/lib/go2rtc" = {

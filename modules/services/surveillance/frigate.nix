@@ -70,8 +70,26 @@
         password = "@@MQTT_PASSWORD@@";
       };
 
+      # required to trick frigate to enable restreaming support
+      go2rtc = {
+        streams = {
+          ranger_duo_fxd = "rtsp://127.0.0.1:8554/ranger_duo_fxd";
+          ranger_duo_fxd_sub = "rtsp://127.0.0.1:8554/ranger_duo_fxd_sub";
+          ranger_duo_ptz = "rtsp://127.0.0.1:8554/ranger_duo_ptz";
+          ranger_duo_ptz_sub = "rtsp://127.0.0.1:8554/ranger_duo_ptz_sub";
+          ranger_uno = "rtsp://127.0.0.1:8554/ranger_uno";
+          ranger_uno_sub = "rtsp://127.0.0.1:8554/ranger_uno_sub";
+        };
+      };
+
       cameras = {
         ranger_duo_fxd = {
+          live = {
+            streams = {
+              Main = "ranger_duo_fxd";
+              Sub = "ranger_duo_fxd_sub";
+            };
+          };
           ffmpeg = {
             inputs = [
               {
@@ -91,6 +109,12 @@
           };
         };
         ranger_duo_ptz = {
+          live = {
+            streams = {
+              Main = "ranger_duo_ptz";
+              Sub = "ranger_duo_ptz_sub";
+            };
+          };
           ffmpeg = {
             inputs = [
               {
@@ -110,6 +134,12 @@
           };
         };
         ranger_uno = {
+          live = {
+            streams = {
+              Main = "ranger_uno";
+              Sub = "ranger_uno_sub";
+            };
+          };
           ffmpeg = {
             inputs = [
               {
@@ -162,9 +192,16 @@
           ${pkgs.python3}/bin/python - <<'PY'
           from pathlib import Path
 
-          secret = Path("/run/secrets/mqtt.users.kothu.password").read_text().strip()
+          replacements = {
+            "@@MQTT_PASSWORD@@": Path("/run/secrets/mqtt.users.kothu.password").read_text().strip(),
+            "@@RANGER_DUO_PASSWORD@@": Path("/run/secrets/surveillance.go2rtc.ranger_duo.password").read_text().strip(),
+            "@@RANGER_UNO_PASSWORD@@": Path("/run/secrets/surveillance.go2rtc.ranger_uno.password").read_text().strip(),
+          }
           config_path = Path("/run/frigate/frigate.yml")
-          config_path.write_text(config_path.read_text().replace("@@MQTT_PASSWORD@@", secret))
+          content = config_path.read_text()
+          for placeholder, secret in replacements.items():
+            content = content.replace(placeholder, secret)
+          config_path.write_text(content)
           config_path.chmod(0o640)
           PY
           chown frigate:frigate /run/frigate/frigate.yml

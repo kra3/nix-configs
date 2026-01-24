@@ -108,6 +108,16 @@
           destination = "10.0.50.8:1883";
           proto = "tcp";
         }
+        {
+          sourcePort = 8555;
+          destination = "10.0.50.8:8555";
+          proto = "tcp";
+        }
+        {
+          sourcePort = 8555;
+          destination = "10.0.50.8:8555";
+          proto = "udp";
+        }
       ];
     };
     defaultGateway = "192.168.1.1";

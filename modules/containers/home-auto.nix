@@ -7,19 +7,27 @@
         80 # Frigate nginx
         1883 # Mosquitto
         1984 # go2rtc UI
+        8555 # go2rtc WebRTC
         5000 # Frigate UI
         5001 # Frigate metrics
         9100 # node-exporter
       ];
       allowedUDPPorts = [
         53 # DNS (if a resolver is enabled in the container)
+        8555 # go2rtc WebRTC
       ];
     };
   };
 
-  networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [
-    1883 # Mosquitto (DNAT to 10.0.50.8)
-  ];
+  networking.firewall.interfaces.${config.vars.lanIf} = {
+    allowedTCPPorts = [
+      1883 # Mosquitto (DNAT to 10.0.50.8)
+      8555 # go2rtc WebRTC (DNAT to 10.0.50.8)
+    ];
+    allowedUDPPorts = [
+      8555 # go2rtc WebRTC (DNAT to 10.0.50.8)
+    ];
+  };
 
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
@@ -52,12 +60,14 @@
           80 # Frigate nginx
           1883 # Mosquitto
           1984 # go2rtc UI
+          8555 # go2rtc WebRTC
           5000 # Frigate UI
           5001 # Frigate metrics
           9100 # node-exporter
         ];
         firewall.allowedUDPPorts = [
           53 # DNS (if a resolver is enabled in the container)
+          8555 # go2rtc WebRTC
         ];
         firewall.logRefusedConnections = true;
         firewall.logRefusedPackets = true;

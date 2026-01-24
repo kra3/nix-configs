@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   networking.firewall.interfaces = {
     ve-home-auto = {
@@ -72,6 +72,15 @@
         firewall.logRefusedConnections = true;
         firewall.logRefusedPackets = true;
         firewall.logRefusedUnicastsOnly = true;
+      };
+      hardware.graphics = {
+        enable = true;
+        extraPackages = with pkgs; [
+          intel-compute-runtime
+          intel-media-driver
+          intel-vaapi-driver
+          vpl-gpu-rt
+        ];
       };
       time.timeZone = "UTC";
       system.stateVersion = "25.05";

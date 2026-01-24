@@ -1,15 +1,5 @@
 { config, lib, pkgs, ... }:
 {
-  environment.sessionVariables = {
-    LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
-    LIBVA_DRIVER_NAME = "iHD";
-  };
-  environment.systemPackages = [
-    pkgs.intel-compute-runtime
-    pkgs.intel-media-driver
-    pkgs.intel-vaapi-driver
-    pkgs.vpl-gpu-rt
-  ];
   users.groups.render = { };
   users.groups.video = { };
   users.users.frigate.extraGroups = [
@@ -60,6 +50,11 @@
           # "speech"
           "bark"
         ];
+      };
+
+      birdseye = {
+        enabled = true;
+        restream = true;
       };
 
       mqtt = {
@@ -195,7 +190,6 @@
   systemd.services.frigate = {
     environment = {
       LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
-      LIBVA_DRIVER_NAME = "iHD";
     };
     serviceConfig = {
       PermissionsStartOnly = true;

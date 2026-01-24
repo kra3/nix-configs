@@ -23,11 +23,11 @@ in
       webrtc.listen = "127.0.0.1:8555";
       streams = {
         ranger_duo_fxd = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=2&subtype=0";
-        ranger_duo_fxd_sub = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=2&subtype=1";
-        ranger_duo_ptz = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=1&subtype=0";
-        ranger_duo_ptz_sub = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=1&subtype=1";
-        ranger_uno = "rtsp://admin:@@RANGER_UNO_PASSWORD@@@192.168.1.22:554/cam/realmonitor?channel=1&subtype=0";
-        ranger_uno_sub = "rtsp://admin:@@RANGER_UNO_PASSWORD@@@192.168.1.22:554/cam/realmonitor?channel=1&subtype=1";
+        ranger_duo_fxd_sub = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=2&subtype=1#backchannel=0";
+        ranger_duo_ptz = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
+        ranger_duo_ptz_sub = "rtsp://admin:@@RANGER_DUO_PASSWORD@@@192.168.1.21:554/cam/realmonitor?channel=1&subtype=1#backchannel=0";
+        ranger_uno = "rtsp://admin:@@RANGER_UNO_PASSWORD@@@192.168.1.22:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
+        ranger_uno_sub = "rtsp://admin:@@RANGER_UNO_PASSWORD@@@192.168.1.22:554/cam/realmonitor?channel=1&subtype=1#backchannel=0";
       };
     };
   };

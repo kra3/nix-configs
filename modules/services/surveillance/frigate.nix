@@ -20,9 +20,18 @@
       };
 
       detectors = {
-        cpu = {
-          type = "cpu";
+        openvino = {
+          type = "openvino";
+          device = "CPU";
         };
+      };
+      model = {
+        width = 300;
+        height = 300;
+        input_tensor = "nhwc";
+        input_pixel_format = "bgr";
+        path = "/var/lib/frigate/models/ssdlite_mobilenet_v2/ssdlite_mobilenet_v2.xml";
+        labelmap_path = "${config.services.frigate.package}/share/frigate/coco_91cl_bkgr.txt";
       };
 
       ffmpeg = {

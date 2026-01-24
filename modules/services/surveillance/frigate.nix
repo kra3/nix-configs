@@ -115,6 +115,12 @@
               Sub = "ranger_duo_ptz_sub";
             };
           };
+          onvif = {
+            host = "192.168.1.21";
+            port = 80;
+            user = "admin";
+            password = "@@RANGER_DUO_PASSWORD@@";
+          };
           ffmpeg = {
             inputs = [
               {
@@ -139,6 +145,12 @@
               Main = "ranger_uno";
               Sub = "ranger_uno_sub";
             };
+          };
+          onvif = {
+            host = "192.168.1.22";
+            port = 80;
+            user = "admin";
+            password = "@@RANGER_UNO_PASSWORD@@";
           };
           ffmpeg = {
             inputs = [

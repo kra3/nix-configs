@@ -23,28 +23,22 @@
     config = {
       imports = [
         ../nix.nix
+        ../containers/common.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/monitoring/server
       ];
 
       networking = {
         hostName = "monitoring";
-        enableIPv6 = false;
         defaultGateway = "10.0.50.1";
         nameservers = [ config.vars.lanIp ];
-        useHostResolvConf = false;
         firewall.allowedTCPPorts = [
           3001 # Grafana
           3100 # Loki
           9090 # Prometheus
           9100 # node-exporter
         ];
-        firewall.logRefusedConnections = true;
-        firewall.logRefusedPackets = true;
-        firewall.logRefusedUnicastsOnly = true;
       };
-      time.timeZone = "UTC";
-      system.stateVersion = "25.05";
     };
     bindMounts = {
       "/var/lib/grafana" = {

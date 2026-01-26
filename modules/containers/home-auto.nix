@@ -45,6 +45,7 @@
     config = {
       imports = [
         ../nix.nix
+        ../containers/common.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/mosquitto.nix
         ../services/surveillance
@@ -52,10 +53,8 @@
 
       networking = {
         hostName = "home-auto";
-        enableIPv6 = false;
         defaultGateway = "10.0.50.7";
         nameservers = [ config.vars.lanIp ];
-        useHostResolvConf = false;
         firewall.allowedTCPPorts = [
           80 # Frigate nginx
           1883 # Mosquitto
@@ -69,9 +68,6 @@
           53 # DNS (if a resolver is enabled in the container)
           8555 # go2rtc WebRTC
         ];
-        firewall.logRefusedConnections = true;
-        firewall.logRefusedPackets = true;
-        firewall.logRefusedUnicastsOnly = true;
       };
       hardware.graphics = {
         enable = true;
@@ -82,8 +78,6 @@
           vpl-gpu-rt
         ];
       };
-      time.timeZone = "UTC";
-      system.stateVersion = "25.05";
     };
     bindMounts = {
       "/dev/dri" = {

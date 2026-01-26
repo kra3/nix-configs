@@ -20,22 +20,16 @@
     config = {
       imports = [
         ../nix.nix
+        ../containers/common.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/management/server
       ];
 
       networking = {
         hostName = "media-mgmt";
-        enableIPv6 = false;
         defaultGateway = "10.0.50.3";
         nameservers = [ config.vars.lanIp ];
-        useHostResolvConf = false;
-        firewall.logRefusedConnections = true;
-        firewall.logRefusedPackets = true;
-        firewall.logRefusedUnicastsOnly = true;
       };
-      time.timeZone = "UTC";
-      system.stateVersion = "25.05";
     };
     bindMounts = {
       "/data" = {

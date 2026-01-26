@@ -37,7 +37,6 @@
       ffmpeg = {
         path = pkgs.ffmpeg-full;
         input_args = "preset-rtsp-restream";
-        hwaccel_args = "preset-vaapi";
         output_args = {
           record = "preset-record-generic-audio-copy";
         };
@@ -98,12 +97,14 @@
             inputs = [
               {
                 path = "rtsp://127.0.0.1:8554/ranger_duo_fxd";
+                hwaccel_args = "preset-intel-qsv-h265";
                 roles = [
                   "record"
                 ];
               }
               {
                 path = "rtsp://127.0.0.1:8554/ranger_duo_fxd_sub";
+                hwaccel_args = "preset-intel-qsv-h264";
                 roles = [
                   "audio"
                   "detect"
@@ -124,17 +125,22 @@
             port = 80;
             user = "admin";
             password = "@@RANGER_DUO_PASSWORD@@";
+            autotracking = {
+              enabled = false;
+            };
           };
           ffmpeg = {
             inputs = [
               {
                 path = "rtsp://127.0.0.1:8554/ranger_duo_ptz";
+                hwaccel_args = "preset-intel-qsv-h265";
                 roles = [
                   "record"
                 ];
               }
               {
                 path = "rtsp://127.0.0.1:8554/ranger_duo_ptz_sub";
+                hwaccel_args = "preset-intel-qsv-h264";
                 roles = [
                   "audio"
                   "detect"
@@ -155,17 +161,22 @@
             port = 80;
             user = "admin";
             password = "@@RANGER_UNO_PASSWORD@@";
+            autotracking = {
+              enabled = false;
+            };
           };
           ffmpeg = {
             inputs = [
               {
                 path = "rtsp://127.0.0.1:8554/ranger_uno";
+                hwaccel_args = "preset-intel-qsv-h265";
                 roles = [
                   "record"
                 ];
               }
               {
                 path = "rtsp://127.0.0.1:8554/ranger_uno_sub";
+                hwaccel_args = "preset-intel-qsv-h264";
                 roles = [
                   "audio"
                   "detect"

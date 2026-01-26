@@ -94,7 +94,7 @@
     };
     allowedDevices = [
       {
-        node = "/dev/dri/card0";
+        node = "/dev/dri/card1";
         modifier = "rw";
       }
       {

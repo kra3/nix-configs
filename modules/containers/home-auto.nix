@@ -42,6 +42,8 @@
     privateNetwork = true;
     hostAddress = "10.0.50.7";
     localAddress = "10.0.50.8";
+    additionalCapabilities = [ "CAP_PERFMON" ];
+    extraFlags = [ "--system-call-filter=perf_event_open" ];
     config = {
       imports = [
         ../nix.nix
@@ -74,8 +76,8 @@
         extraPackages = with pkgs; [
           intel-compute-runtime
           intel-media-driver
-          intel-vaapi-driver
-          vpl-gpu-rt
+          # intel-vaapi-driver
+          intel-media-sdk
         ];
       };
     };

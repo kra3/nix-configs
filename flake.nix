@@ -55,16 +55,18 @@
           "x86_64-linux"
         ];
 
-        imports = [ inputs.treefmt-nix.flakeModule ];
+        imports = [
+          inputs.treefmt-nix.flakeModule
+        ];
 
         perSystem =
-          { pkgs, ... }:
+          { pkgs, inputs', ... }:
           {
             treefmt.projectRootFile = "flake.nix";
             devShells.default = pkgs.mkShell {
               packages = [
                 pkgs.age
-                pkgs.colmena
+                inputs'.colmena.packages.colmena
                 pkgs.just
                 pkgs.nixos-rebuild
                 pkgs.nixfmt-rfc-style
@@ -75,11 +77,13 @@
           };
 
         flake = {
+          overlays.default = import ./modules/overlays/intel-media-sdk-cxx17.nix;
           nixosConfigurations = {
             sutala = nixpkgs.lib.nixosSystem {
               system = "x86_64-linux";
-              specialArgs = { inputs = builtins.removeAttrs inputs [ "self" ]; };
+              specialArgs = { inputs = inputs; };
               modules = [
+                { nixpkgs.overlays = [ inputs.self.overlays.default ]; }
                 ./hosts/sutala/configuration.nix
               ];
             };
@@ -88,8 +92,11 @@
           colmenaHive = inputs.colmena.lib.makeHive config.flake.colmena;
           colmena = {
             meta = {
-              nixpkgs = import nixpkgs { system = "x86_64-linux"; };
-              specialArgs = { inputs = builtins.removeAttrs inputs [ "self" ]; };
+              nixpkgs = import nixpkgs {
+                system = "x86_64-linux";
+                overlays = [ inputs.self.overlays.default ];
+              };
+              specialArgs = { inputs = inputs; };
             };
             sutala =
               { ... }:

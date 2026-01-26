@@ -13,40 +13,7 @@
     vaapiDriver = "iHD";
     checkConfig = false;
     settings = {
-      detect = {
-        enabled = true;
-        width = 640;
-        height = 480;
-      };
-
-      detectors = {
-        openvino = {
-          type = "openvino";
-          device = "GPU";
-        };
-      };
-      model = {
-        width = 300;
-        height = 300;
-        input_tensor = "nhwc";
-        input_pixel_format = "bgr";
-        path = "/var/lib/frigate/models/ssdlite_mobilenet_v2/ssdlite_mobilenet_v2.xml";
-        labelmap_path = "${config.services.frigate.package}/share/frigate/coco_91cl_bkgr.txt";
-      };
-
-      ffmpeg = {
-        path = pkgs.ffmpeg-full;
-        input_args = "preset-rtsp-restream";
-        output_args = {
-          record = "preset-record-generic-audio-copy";
-        };
-      };
-
-      motion = {
-        enabled = true;
-      };
-
-      audio = {
+       audio = {
         enabled = true;
         listen = [
           "fire_alarm"
@@ -54,35 +21,15 @@
           "glass"
           "shatter"
           "scream"
-          "yell"
+          #"yell"
           # "speech"
-          "bark"
+          #"bark"
         ];
       };
 
       birdseye = {
         enabled = true;
         restream = true;
-      };
-
-      mqtt = {
-        enabled = true;
-        host = "10.0.50.8";
-        port = 1883;
-        user = "kothu";
-        password = "@@MQTT_PASSWORD@@";
-      };
-
-      # required to trick frigate to enable restreaming support
-      go2rtc = {
-        streams = {
-          ranger_duo_fxd = "rtsp://127.0.0.1:8554/ranger_duo_fxd";
-          ranger_duo_fxd_sub = "rtsp://127.0.0.1:8554/ranger_duo_fxd_sub";
-          ranger_duo_ptz = "rtsp://127.0.0.1:8554/ranger_duo_ptz";
-          ranger_duo_ptz_sub = "rtsp://127.0.0.1:8554/ranger_duo_ptz_sub";
-          ranger_uno = "rtsp://127.0.0.1:8554/ranger_uno";
-          ranger_uno_sub = "rtsp://127.0.0.1:8554/ranger_uno_sub";
-        };
       };
 
       cameras = {
@@ -187,6 +134,61 @@
         };
       };
       
+      detect = {
+        enabled = true;
+        width = 640;
+        height = 480;
+        fps = 5;
+      };
+
+      detectors = {
+        openvino = {
+          type = "openvino";
+          device = "GPU";
+        };
+      };
+
+      ffmpeg = {
+        path = pkgs.ffmpeg-full;
+        input_args = "preset-rtsp-restream";
+        output_args = {
+          record = "preset-record-generic-audio-copy";
+        };
+      };
+      
+      model = {
+        width = 300;
+        height = 300;
+        input_tensor = "nhwc";
+        input_pixel_format = "bgr";
+        path = "/var/lib/frigate/models/ssdlite_mobilenet_v2/ssdlite_mobilenet_v2.xml";
+        labelmap_path = "${config.services.frigate.package}/share/frigate/coco_91cl_bkgr.txt";
+      };
+
+      motion = {
+        enabled = true;
+      };
+
+      mqtt = {
+        enabled = true;
+        host = "10.0.50.8";
+        port = 1883;
+        user = "kothu";
+        password = "@@MQTT_PASSWORD@@";
+      };
+
+      # required to trick frigate to enable restreaming support
+      go2rtc = {
+        streams = {
+          ranger_duo_fxd = "rtsp://127.0.0.1:8554/ranger_duo_fxd";
+          ranger_duo_fxd_sub = "rtsp://127.0.0.1:8554/ranger_duo_fxd_sub";
+          ranger_duo_ptz = "rtsp://127.0.0.1:8554/ranger_duo_ptz";
+          ranger_duo_ptz_sub = "rtsp://127.0.0.1:8554/ranger_duo_ptz_sub";
+          ranger_uno = "rtsp://127.0.0.1:8554/ranger_uno";
+          ranger_uno_sub = "rtsp://127.0.0.1:8554/ranger_uno_sub";
+        };
+      };
+
       record = {
         enabled = true;
         retain = {

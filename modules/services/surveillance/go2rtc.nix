@@ -18,6 +18,9 @@ in
   services.go2rtc = {
     enable = true;
     settings = {
+      ffmpeg = {
+        bin = "${pkgs.ffmpeg-full}/bin/ffmpeg";
+      };
       api.listen = "127.0.0.1:1984";
       api.origin = "*";
       rtsp.listen = "127.0.0.1:8554";

@@ -385,7 +385,7 @@
       },
       "targets": [
         {
-          "expr": "label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"nginx.service\"},\"service\",\"Nginx\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"adguardhome.service\"},\"service\",\"AdGuard\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"unbound.service\"},\"service\",\"Unbound\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"avahi-daemon.service\"},\"service\",\"Avahi\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"multicast-relay.service\"},\"service\",\"SSDP Relay\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"sshd.service\"},\"service\",\"SSHD\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"zfs.target\"},\"service\",\"ZFS\",\"name\",\".*\"),\"group\",\"Core\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"sutala\",state=\"active\",name=\"alloy.service\"},\"service\",\"Alloy\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"grafana.service\"},\"service\",\"Grafana\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"prometheus.service\"},\"service\",\"Prometheus\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"monitoring\",state=\"active\",name=\"loki.service\"},\"service\",\"Loki\",\"name\",\".*\"),\"group\",\"Observability\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"jellyfin.service\"},\"service\",\"Jellyfin\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"navidrome.service\"},\"service\",\"Navidrome\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-play\",state=\"active\",name=\"music-assistant.service\"},\"service\",\"Music Assistant\",\"name\",\".*\"),\"group\",\"Media Services\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"radarr.service\"},\"service\",\"Radarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"sonarr.service\"},\"service\",\"Sonarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"prowlarr.service\"},\"service\",\"Prowlarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"lidarr.service\"},\"service\",\"Lidarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"bazarr.service\"},\"service\",\"Bazarr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"sabnzbd.service\"},\"service\",\"Sabnzbd\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\") or label_replace(label_replace(node_systemd_unit_state{instance=\"media-mgmt\",state=\"active\",name=\"jellyseerr.service\"},\"service\",\"Jellyseerr\",\"name\",\".*\"),\"group\",\"Media Automation\",\"name\",\".*\")",
+          "expr": "label_replace(label_replace(node_systemd_unit_state{instance=~\"$instance\",state=\"active\",name=~\"(frigate|go2rtc|mosquitto|grafana|prometheus|loki|jellyfin|navidrome|music-assistant|snapcast|radarr|sonarr|prowlarr|lidarr|bazarr|sabnzbd|jellyseerr|recyclarr|node-exporter)[.]service\"},\"service\",\"$1\",\"name\",\"(.*)\"),\"group\",\"$1\",\"instance\",\"(.*)\")",
           "refId": "A",
           "format": "table",
           "instant": true
@@ -452,7 +452,7 @@
             "excludeByName": {
               "Time": true,
               "__name__": true,
-              "group": true,
+              "instance": true,
               "job": true,
               "name": true,
               "type": true,
@@ -460,12 +460,12 @@
               "state": true
             },
             "renameByName": {
+              "group": "Host",
               "service": "Service",
-              "instance": "Instance",
               "Value": "Status"
             },
             "indexByName": {
-              "Instance": 0,
+              "Host": 0,
               "Service": 1,
               "Status": 2
             }

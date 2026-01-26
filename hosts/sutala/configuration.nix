@@ -54,12 +54,18 @@
     extraPackages = with pkgs; [
       intel-media-driver # VAAPI driver for Gen9+ Intel iGPU (Comet Lake)
       # intel-vaapi-driver # legacy i965 VAAPI driver fallback
+      
       libva-vdpau-driver # VAAPI to VDPAU translation layer
       libvdpau-va-gl # VDPAU on top of VAAPI/OpenGL
-      intel-compute-runtime # OpenCL/oneAPI runtime for Intel iGPU
+
+      intel-compute-runtime-legacy1 # OpenCL/oneAPI runtime for Intel iGPU
+      level-zero # Level Zero loader for OpenVINO GPU
+      
       intel-media-sdk # oneVPL runtime for Intel QSV pipelines
     ];
   };
+
+  hardware.enableRedistributableFirmware = true;
 
   boot = {
     loader = {

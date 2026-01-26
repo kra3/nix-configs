@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ config, inputs, pkgs, ... }:
 {
   networking.firewall = {
     interfaces = {
@@ -47,6 +47,17 @@
         ];
         firewall.allowedUDPPorts = [
           7359 # Jellyfin client discovery
+        ];
+      };
+
+      hardware.graphics = {
+        enable = true;
+        extraPackages = with pkgs; [
+          intel-compute-runtime-legacy1
+          intel-media-driver
+          # intel-vaapi-driver
+          level-zero
+          intel-media-sdk
         ];
       };
       systemd.tmpfiles.rules = [

@@ -22,7 +22,7 @@
       detectors = {
         openvino = {
           type = "openvino";
-          device = "CPU";
+          device = "GPU";
         };
       };
       model = {

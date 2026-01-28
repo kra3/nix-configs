@@ -1,3 +1,4 @@
+{ config, lib, ... }:
 {
   services.grafana = {
     enable = true;
@@ -65,4 +66,38 @@
     "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
     "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/grafana 0750 grafana grafana - -"
+    "d /var/lib/grafana/data 0750 grafana grafana - -"
+    "d /var/lib/grafana/data/log 0750 grafana grafana - -"
+  ];
+
+  services.logrotate.settings.grafana = {
+    files = [
+      "/var/lib/grafana/data/log/*.log"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "grafana grafana";
+  };
+
+  environment.etc."alloy/grafana.alloy".text = ''
+    loki.source.file "grafana" {
+      targets = [
+        {
+          __path__ = "/var/lib/grafana/data/log/grafana.log",
+          job = "grafana",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

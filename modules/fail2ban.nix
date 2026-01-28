@@ -1,6 +1,6 @@
 # Fail2ban intrusion prevention
 
-{ lib, ... }:
+{ config, lib, ... }:
 let
   defaultSetting = lib.mkDefault;
 in
@@ -48,4 +48,5 @@ in
       };
     };
   };
+
 }

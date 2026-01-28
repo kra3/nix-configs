@@ -1,3 +1,4 @@
+{ config, lib, ... }:
 {
   services.recyclarr = {
     enable = true;
@@ -209,4 +210,39 @@
       "sonarr-api_key:/run/secrets/media.recyclarr.sonarr_api_key"
     ];
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/recyclarr 0750 recyclarr recyclarr - -"
+    "d /var/lib/recyclarr/logs 0750 recyclarr recyclarr - -"
+    "d /var/lib/recyclarr/logs/cli 0750 recyclarr recyclarr - -"
+    "f /var/lib/recyclarr/logs/cli/recyclarr.log 0640 recyclarr recyclarr - -"
+  ];
+
+  services.logrotate.settings.recyclarr = {
+    files = [
+      "/var/lib/recyclarr/logs/cli/*.log"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "recyclarr recyclarr";
+  };
+
+  environment.etc."alloy/recyclarr.alloy".text = ''
+    loki.source.file "recyclarr" {
+      targets = [
+        {
+          __path__ = "/var/lib/recyclarr/logs/cli/recyclarr.log",
+          job = "recyclarr",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

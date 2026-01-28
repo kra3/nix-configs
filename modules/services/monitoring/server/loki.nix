@@ -1,3 +1,4 @@
+{ ... }:
 {
   services.loki = {
     enable = true;
@@ -31,6 +32,18 @@
           };
         }
       ];
+      limits_config = {
+        ingestion_rate_mb = 16;
+        ingestion_burst_size_mb = 32;
+        retention_period = "14d";
+      };
+      compactor = {
+        working_directory = "/var/lib/loki/compactor";
+        delete_request_store = "filesystem";
+        retention_enabled = true;
+        retention_delete_delay = "2h";
+        retention_delete_worker_count = 50;
+      };
     };
   };
 
@@ -38,4 +51,5 @@
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
   };
+
 }

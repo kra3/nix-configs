@@ -48,6 +48,7 @@
       imports = [
         ../nix.nix
         ../containers/common.nix
+        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/mosquitto.nix
         ../services/surveillance

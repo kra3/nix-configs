@@ -57,4 +57,38 @@ in
   networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [
     443
   ];
+
+  services.logrotate.settings.nginx = {
+    files = [
+      "/var/log/nginx/*.log"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "nginx nginx";
+  };
+
+  environment.etc."alloy/config.alloy".text = lib.mkAfter ''
+    loki.source.file "nginx" {
+      targets = [
+        {
+          __path__ = "/var/log/nginx/access.log",
+          job = "nginx",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+        {
+          __path__ = "/var/log/nginx/error.log",
+          job = "nginx",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

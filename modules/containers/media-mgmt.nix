@@ -21,6 +21,7 @@
       imports = [
         ../nix.nix
         ../containers/common.nix
+        ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/management/server
       ];

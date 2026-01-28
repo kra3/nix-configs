@@ -1,3 +1,4 @@
+{ ... }:
 {
   services.prometheus = {
     enable = true;
@@ -104,4 +105,5 @@
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
   };
+
 }

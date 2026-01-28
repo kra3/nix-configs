@@ -1,3 +1,4 @@
+{ ... }:
 {
   users.groups.media = {
     gid = 2000;
@@ -22,4 +23,5 @@
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
   };
+
 }

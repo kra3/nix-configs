@@ -138,6 +138,15 @@
 
   time.timeZone = "UTC";
 
+  services.journald.extraConfig = ''
+    SystemMaxUse=200M
+    SystemMaxFileSize=50M
+    MaxRetentionSec=12h
+  '';
+
+  services.logrotate.enable = true;
+  systemd.timers.logrotate.timerConfig.OnCalendar = "*-*-* 00,12:00:00";
+
   services.zfs = {
     autoScrub = {
       enable = true;

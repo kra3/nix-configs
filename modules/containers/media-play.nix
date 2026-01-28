@@ -27,6 +27,7 @@
       imports = [
         ../nix.nix
         ../containers/common.nix
+        ../services/monitoring/agent/alloy.nix
         inputs.declarative-jellyfin.nixosModules.default
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/media/players/server

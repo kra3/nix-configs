@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   users.groups.media = {
     gid = 2000;
@@ -32,4 +32,38 @@
       Group = "prowlarr";
     };
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/prowlarr 0750 prowlarr prowlarr - -"
+    "d /var/lib/prowlarr/logs 0750 prowlarr prowlarr - -"
+    "f /var/lib/prowlarr/logs/prowlarr.txt 0640 prowlarr prowlarr - -"
+  ];
+
+  services.logrotate.settings.prowlarr = {
+    files = [
+      "/var/lib/prowlarr/logs/*.txt"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "prowlarr prowlarr";
+  };
+
+  environment.etc."alloy/prowlarr.alloy".text = ''
+    loki.source.file "prowlarr" {
+      targets = [
+        {
+          __path__ = "/var/lib/prowlarr/logs/prowlarr.txt",
+          job = "prowlarr",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

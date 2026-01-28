@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
   environment.sessionVariables.LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
@@ -168,4 +168,45 @@
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
+    "f /var/lib/jellyfin/log/jellyfin.log 0640 jellyfin jellyfin - -"
+    "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"
+  ];
+
+  services.logrotate.settings.jellyfin = {
+    files = [
+      "/var/lib/jellyfin/log/*.log"
+      "/var/log/jellyfin*.txt"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "jellyfin jellyfin";
+  };
+
+  environment.etc."alloy/jellyfin.alloy".text = ''
+    loki.source.file "jellyfin" {
+      targets = [
+        {
+          __path__ = "/var/lib/jellyfin/log/jellyfin.log",
+          job = "jellyfin",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+        {
+          __path__ = "/var/log/jellyfin.txt",
+          job = "jellyfin",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

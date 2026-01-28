@@ -403,9 +403,9 @@ in
 
         log = {
           enabled = true;
-          max_backups = 0;
+          max_backups = 1;
           max_size = 100;
-          max_age = 3;
+          max_age = 1;
           local_time = true;
         };
         users = [
@@ -434,5 +434,39 @@ in
       allowedTCPPorts = [ 53 ];
       allowedUDPPorts = [ 53 ];
     };
+
+    services.logrotate.settings.adguardhome = {
+      files = [
+        "/var/lib/AdGuardHome/data/*.log"
+        "/var/lib/AdGuardHome/data/*.json"
+      ];
+      rotate = 1;
+      frequency = "hourly";
+      compress = true;
+      delaycompress = true;
+      missingok = true;
+      notifempty = true;
+      copytruncate = true;
+      su = "adguardhome adguardhome";
+    };
+    environment.etc."alloy/adguardhome.alloy".text = ''
+      loki.source.file "adguardhome" {
+        targets = [
+          {
+            __path__ = "/var/lib/AdGuardHome/data/*.log",
+            job = "adguardhome",
+            host = "${config.networking.hostName}",
+            role = "${if config.boot.isContainer then "container" else "host"}",
+          },
+          {
+            __path__ = "/var/lib/AdGuardHome/data/*.json",
+            job = "adguardhome",
+            host = "${config.networking.hostName}",
+            role = "${if config.boot.isContainer then "container" else "host"}",
+          },
+        ]
+        forward_to = [loki.write.default.receiver]
+      }
+    '';
   };
 }

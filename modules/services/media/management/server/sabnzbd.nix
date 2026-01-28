@@ -67,4 +67,38 @@
     serviceConfig.UMask = "0002";
     serviceConfig.EnvironmentFile = [ "/run/secrets/media.sabnzbd.env" ];
   };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/sabnzbd 0775 sabnzbd media - -"
+    "d /var/lib/sabnzbd/logs 0775 sabnzbd media - -"
+    "f /var/lib/sabnzbd/logs/sabnzbd.log 0640 sabnzbd media - -"
+  ];
+
+  services.logrotate.settings.sabnzbd = {
+    files = [
+      "/var/lib/sabnzbd/logs/*.log"
+    ];
+    rotate = 1;
+    frequency = "hourly";
+    compress = true;
+    delaycompress = true;
+    missingok = true;
+    notifempty = true;
+    copytruncate = true;
+    su = "sabnzbd media";
+  };
+
+  environment.etc."alloy/sabnzbd.alloy".text = ''
+    loki.source.file "sabnzbd" {
+      targets = [
+        {
+          __path__ = "/var/lib/sabnzbd/logs/sabnzbd.log",
+          job = "sabnzbd",
+          host = "${config.networking.hostName}",
+          role = "${if config.boot.isContainer then "container" else "host"}",
+        },
+      ]
+      forward_to = [loki.write.default.receiver]
+    }
+  '';
 }

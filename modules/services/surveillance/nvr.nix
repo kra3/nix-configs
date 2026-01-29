@@ -179,6 +179,23 @@ in
     };
   };
 
+  # to allow peometheus to parse metrics. without it is failing 401.
+  services.nginx.virtualHosts."${config.services.frigate.hostname}" = {
+    serverAliases = [
+      "10.0.50.8"
+      "localhost"
+    ];
+    locations."/api/metrics" = {
+      proxyPass = "http://frigate-api/metrics";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+        access_log off;
+        add_header Cache-Control "no-store";
+      '';
+    };
+  };
+
   services.go2rtc = {
     enable = true;
     settings = {

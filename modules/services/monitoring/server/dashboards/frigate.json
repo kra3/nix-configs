@@ -292,7 +292,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "GPU memory usage by device",
+      "description": "GPU memory usage by device (falls back to GPU usage if memory metrics are missing)",
       "fieldConfig": {
         "defaults": {
           "max": 100,
@@ -310,7 +310,7 @@
       "id": 8,
       "targets": [
         {
-          "expr": "frigate_gpu_mem_usage_percent{instance=~\"$instance\"}",
+          "expr": "sum by (gpu_name) (frigate_gpu_mem_usage_percent{instance=~\"$instance\"}) or sum by (gpu_name) (frigate_gpu_usage_percent{instance=~\"$instance\"})",
           "legendFormat": "{{gpu_name}}",
           "refId": "A"
         }
@@ -427,8 +427,8 @@
       "id": 12,
       "targets": [
         {
-          "expr": "frigate_device_temperature{instance=~\"$instance\"}",
-          "legendFormat": "{{device}}",
+          "expr": "max by (chip) (node_hwmon_temp_celsius{instance=~\"$instance\"})",
+          "legendFormat": "{{chip}}",
           "refId": "A"
         }
       ],

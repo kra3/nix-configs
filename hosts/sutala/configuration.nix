@@ -21,7 +21,6 @@
     ../../modules/services/tailscale.nix
     ../../modules/services/dns
     ../../modules/services/surveillance/proxy.nix
-    ../../modules/services/surveillance/secrets.nix
     ../../modules/services/mount-guards.nix
     ../../modules/services/discovery/mdns.nix
     ../../modules/services/discovery/ssdp.nix

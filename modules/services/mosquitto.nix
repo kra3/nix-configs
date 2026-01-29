@@ -10,7 +10,7 @@
         };
         users = {
           kothu = {
-            passwordFile = "/run/secrets/mqtt.users.kothu.password";
+            passwordFile = "/run/secrets/mqtt.password";
             acl = [ "readwrite #" ];
           };
         };

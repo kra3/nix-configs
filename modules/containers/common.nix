@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   environment.systemPackages = [
     pkgs.vim
@@ -6,7 +6,8 @@
 
   networking = {
     enableIPv6 = false;
-    useHostResolvConf = false;
+    # Workaround for bug https://github.com/NixOS/nixpkgs/issues/162686
+    useHostResolvConf = lib.mkForce false;
     firewall = {
       logRefusedConnections = true;
       logRefusedPackets = true;

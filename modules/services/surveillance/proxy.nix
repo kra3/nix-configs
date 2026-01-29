@@ -15,14 +15,5 @@ in
       proxyPass = "http://${homeAutoIp}:80";
       proxyWebsockets = true;
     };
-    locations."/api/metrics" = {
-      proxyPass = "http://${homeAutoIp}:80/api/metrics";
-      extraConfig = ''
-        allow 10.0.50.2;
-        deny all;
-        access_log off;
-        add_header Cache-Control "no-store";
-      '';
-    };
   };
 }

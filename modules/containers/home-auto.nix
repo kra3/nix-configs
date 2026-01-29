@@ -90,10 +90,6 @@
         hostPath = "/dev/dri";
         isReadOnly = false;
       };
-      "/media/frigate" = {
-        hostPath = "/srv/surveillance";
-        isReadOnly = false;
-      };
       "/var/lib/frigate" = {
         hostPath = "/srv/appdata/home-auto/frigate";
         isReadOnly = false;
@@ -106,16 +102,12 @@
         hostPath = "/srv/surveillance/clips";
         isReadOnly = false;
       };
-      "/var/lib/go2rtc" = {
-        hostPath = "/srv/appdata/home-auto/go2rtc";
-        isReadOnly = false;
-      };
       "/var/lib/mosquitto" = {
         hostPath = "/srv/appdata/home-auto/mosquitto";
         isReadOnly = false;
       };
-      "/run/secrets/mqtt.users.kothu.password" = {
-        hostPath = "/run/secrets/mqtt.users.kothu.password";
+      "/run/secrets/mqtt.password" = {
+        hostPath = "/run/secrets/mqtt.password";
         isReadOnly = true;
       };
       "/run/secrets/surveillance.go2rtc.ranger_duo.password" = {
@@ -124,6 +116,14 @@
       };
       "/run/secrets/surveillance.go2rtc.ranger_uno.password" = {
         hostPath = "/run/secrets/surveillance.go2rtc.ranger_uno.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/surveillance-nvr-go2rtc.env" = {
+        hostPath = config.sops.templates."surveillance-nvr-go2rtc.env".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/surveillance-nvr-frigate.env" = {
+        hostPath = config.sops.templates."surveillance-nvr-frigate.env".path;
         isReadOnly = true;
       };
     };
@@ -150,7 +150,63 @@
     ];
   };
 
-  sops.secrets."mqtt.users.kothu.password" = {
+  sops.templates."surveillance-nvr-go2rtc.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      RANGER_DUO_USER=${config.sops.placeholder."surveillance.go2rtc.ranger_duo.user"}
+      RANGER_DUO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_duo.password"}
+      RANGER_UNO_USER=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.user"}
+      RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
+    '';
+  };
+
+  sops.templates."surveillance-nvr-frigate.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      FRIGATE_MQTT_USER=${config.sops.placeholder."mqtt.user"}
+      FRIGATE_MQTT_PASSWORD=${config.sops.placeholder."mqtt.password"}
+      FRIGATE_RANGER_DUO_USER=${config.sops.placeholder."surveillance.go2rtc.ranger_duo.user"}
+      FRIGATE_RANGER_DUO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_duo.password"}
+      FRIGATE_RANGER_UNO_USER=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.user"}
+      FRIGATE_RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
+    '';
+  };
+
+  sops.secrets."mqtt.password" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."mqtt.user" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."surveillance.go2rtc.ranger_duo.password" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."surveillance.go2rtc.ranger_duo.user" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."surveillance.go2rtc.ranger_uno.password" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."surveillance.go2rtc.ranger_uno.user" = {
     owner = "root";
     group = "root";
     mode = "0400";

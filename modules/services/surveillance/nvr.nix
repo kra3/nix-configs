@@ -90,6 +90,9 @@ let
 
 in
 {
+  users.groups.frigate = {
+    gid = 2100;
+  };
   users.groups.render = { };
   users.groups.video = { };
   users.users.frigate.extraGroups = [

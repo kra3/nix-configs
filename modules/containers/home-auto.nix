@@ -29,12 +29,16 @@
     ];
   };
 
+  users.groups.frigate = {
+    gid = 2100;
+  };
+
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
-    "d /srv/appdata/home-auto/frigate 0750 root root - -"
+    "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
     "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
-    "d /srv/surveillance/recordings 0750 root root - -"
-    "d /srv/surveillance/clips 0750 root root - -"
+    "d /srv/surveillance/recordings 2770 root frigate - -"
+    "d /srv/surveillance/clips 2770 root frigate - -"
   ];
 
   containers.home-auto = {

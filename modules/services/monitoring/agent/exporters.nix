@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   services.nginx.statusPage = true;
 
@@ -6,7 +6,13 @@
     node = {
       enable = true;
       listenAddress = "10.0.50.1";
-      enabledCollectors = [ "systemd" ];
+      enabledCollectors = [
+        "systemd"
+      ];
+    };
+    smartctl = {
+      enable = true;
+      listenAddress = "10.0.50.1";
     };
     nginx = {
       enable = true;
@@ -33,6 +39,7 @@
     9113
     9134
     9167
+    9633
     9558
   ];
 
@@ -51,6 +58,23 @@
   systemd.services.prometheus-zfs-exporter = {
     after = [ "container@monitoring.service" "network-online.target" ];
     wants = [ "container@monitoring.service" "network-online.target" ];
+  };
+  systemd.services.prometheus-smartctl-exporter = {
+    after = [ "container@monitoring.service" "network-online.target" ];
+    wants = [ "container@monitoring.service" "network-online.target" ];
+    serviceConfig = {
+      SupplementaryGroups = [ "disk" ];
+      AmbientCapabilities = [
+        "CAP_DAC_READ_SEARCH"
+        "CAP_SYS_ADMIN"
+        "CAP_SYS_RAWIO"
+      ];
+      CapabilityBoundingSet = [
+        "CAP_DAC_READ_SEARCH"
+        "CAP_SYS_ADMIN"
+        "CAP_SYS_RAWIO"
+      ];
+    };
   };
 
   systemd.services.systemd-exporter = {

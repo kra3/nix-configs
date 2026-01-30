@@ -88,6 +88,15 @@
         ];
       }
       {
+        job_name = "smartctl";
+        static_configs = [
+          {
+            targets = [ "10.0.50.1:9633" ];
+            labels.instance = "sutala";
+          }
+        ];
+      }
+      {
         job_name = "frigate";
         metrics_path = "/api/metrics";
         static_configs = [

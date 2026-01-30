@@ -33,6 +33,7 @@
     ../../modules/containers/home-auto.nix
     ../../modules/fail2ban.nix
     ../../modules/vim.nix
+    ../../modules/sysadmin.nix
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];

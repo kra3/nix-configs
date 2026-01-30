@@ -65,6 +65,7 @@
     "grafana-dashboards/system-monitor.json".source = ./dashboards/system-monitor.json;
     "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
     "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
+    "grafana-dashboards/smart.json".source = ./dashboards/smart.json;
   };
 
   systemd.tmpfiles.rules = [

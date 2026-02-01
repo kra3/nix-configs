@@ -390,12 +390,16 @@ in
           enabled = true;
         };
 
+        dhcp = {
+          enabled = false;
+        };
+
         clients = {
           runtime_sources = {
             whois = true;
             arp = true;
             rdns = true;
-            dhcp = true;
+            dhcp = false;
             hosts = true;
           };
           persistent = [ ];

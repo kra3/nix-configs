@@ -7,6 +7,16 @@ let
   homeAutoIp = config.containers.home-auto.localAddress or "10.0.50.8";
 in
 {
+  services.nginx.virtualHosts."z2m.karunagath.in" = {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = allowBlock;
+    locations."/" = {
+      proxyPass = "http://${homeAutoIp}:8080";
+      proxyWebsockets = true;
+    };
+  };
+
   services.nginx.virtualHosts."nvr.karunagath.in" = {
     useACMEHost = "karunagath.in";
     forceSSL = true;

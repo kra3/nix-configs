@@ -1,10 +1,11 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
   networking.firewall.interfaces = {
     ve-home-auto = {
       allowedTCPPorts = [
         53 # DNS (if a resolver is enabled in the container)
         80 # Frigate nginx
+        8080 # Zigbee2MQTT UI
         1883 # Mosquitto
         1984 # go2rtc UI
         8555 # go2rtc WebRTC
@@ -32,11 +33,18 @@
   users.groups.frigate = {
     gid = 2100;
   };
+  users.groups.zigbee2mqtt = {
+    gid = config.ids.gids.zigbee2mqtt;
+  };
+  services.udev.extraRules = ''
+    SUBSYSTEM=="tty", ENV{ID_SERIAL}=="Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_3c705f2672d9ee119f42b74c37b89984", SYMLINK+="zigbee"
+  '';
 
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
     "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
     "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
+    "d /srv/appdata/home-auto/zigbee2mqtt 2770 root zigbee2mqtt - -"
     "d /srv/surveillance/recordings 2770 root frigate - -"
     "d /srv/surveillance/clips 2770 root frigate - -"
   ];
@@ -56,6 +64,7 @@
         ../services/monitoring/agent/node-exporter-container.nix
         ../services/mosquitto.nix
         ../services/surveillance
+        ../services/zigbee2mqtt.nix
       ];
 
       networking = {
@@ -64,6 +73,7 @@
         nameservers = [ config.vars.lanIp ];
         firewall.allowedTCPPorts = [
           80 # Frigate nginx
+          8080 # Zigbee2MQTT UI
           1883 # Mosquitto
           1984 # go2rtc UI
           8555 # go2rtc WebRTC
@@ -110,8 +120,20 @@
         hostPath = "/srv/appdata/home-auto/mosquitto";
         isReadOnly = false;
       };
+      "/var/lib/zigbee2mqtt" = {
+        hostPath = "/srv/appdata/home-auto/zigbee2mqtt";
+        isReadOnly = false;
+      };
+      "/dev/zigbee" = {
+        hostPath = "/dev/zigbee";
+        isReadOnly = false;
+      };
       "/run/secrets/mqtt.password" = {
         hostPath = "/run/secrets/mqtt.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/zigbee2mqtt.env" = {
+        hostPath = config.sops.templates."zigbee2mqtt.env".path;
         isReadOnly = true;
       };
       "/run/secrets/surveillance.go2rtc.ranger_duo.password" = {
@@ -140,6 +162,10 @@
         node = "/dev/dri/renderD128";
         modifier = "rw";
       }
+      {
+        node = "/dev/zigbee";
+        modifier = "rw";
+      }
     ];
   };
 
@@ -151,6 +177,9 @@
     after = [
       "zfs-mount.service"
       "systemd-tmpfiles-resetup.service"
+    ];
+    serviceConfig.ExecStartPre = lib.mkAfter [
+      "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"
     ];
   };
 
@@ -177,6 +206,16 @@
       FRIGATE_RANGER_DUO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_duo.password"}
       FRIGATE_RANGER_UNO_USER=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.user"}
       FRIGATE_RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
+    '';
+  };
+
+  sops.templates."zigbee2mqtt.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      ZIGBEE2MQTT_CONFIG_MQTT_USER=${config.sops.placeholder."mqtt.user"}
+      ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${config.sops.placeholder."mqtt.password"}
     '';
   };
 

@@ -8,7 +8,6 @@
   services.music-assistant = {
     enable = true;
     providers = [
-      # "apple_music"
       "builtin"
       "builtin_player"
       "chromecast"
@@ -16,7 +15,7 @@
       "filesystem_local"
       "hass"
       "hass_players"
-      "lastfm_scrobble"
+      "listenbrainz_scrobble"
       "opensubsonic"
       "player_group"
       "radiobrowser"

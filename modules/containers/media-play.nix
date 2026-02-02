@@ -33,6 +33,10 @@
         ../services/media/players/server
       ];
 
+      nixpkgs.overlays = [
+        inputs.self.overlays.default
+      ];
+
       networking = {
         hostName = "media-play";
         defaultGateway = "10.0.50.5";

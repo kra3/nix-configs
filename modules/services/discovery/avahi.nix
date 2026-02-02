@@ -5,8 +5,10 @@ in
 {
   services.avahi = {
     enable = true;
+    # mDNS relay between LAN and the media-play container.
     nssmdns4 = true;
     reflector = true;
+    allowPointToPoint = true;
     allowInterfaces = [
       lanIf
       "ve-media-play"

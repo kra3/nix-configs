@@ -77,7 +77,7 @@
           };
 
         flake = {
-          overlays.default = import ./modules/overlays/intel-media-sdk-cxx17.nix;
+          overlays.default = import ./modules/overlays;
           nixosConfigurations = {
             sutala = nixpkgs.lib.nixosSystem {
               system = "x86_64-linux";

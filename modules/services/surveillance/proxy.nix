@@ -26,4 +26,23 @@ in
       proxyWebsockets = true;
     };
   };
+
+  services.nginx.virtualHosts."ha2.karunagath.in" = {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = ''
+      ${allowBlock}
+      client_max_body_size 500m;
+    '';
+    locations."/" = {
+      proxyPass = "http://${homeAutoIp}:8123";
+      proxyWebsockets = true;
+      extraConfig = ''
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+      '';
+    };
+  };
 }

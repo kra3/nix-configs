@@ -1,10 +1,11 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 {
   networking.firewall.interfaces = {
     ve-home-auto = {
       allowedTCPPorts = [
         53 # DNS (if a resolver is enabled in the container)
         80 # Frigate nginx
+        8123 # Home Assistant
         8080 # Zigbee2MQTT UI
         1883 # Mosquitto
         1984 # go2rtc UI
@@ -44,6 +45,7 @@
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
     "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
     "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
+    "d /srv/appdata/home-auto/home-assistant 0750 root root - -"
     "d /srv/appdata/home-auto/zigbee2mqtt 2770 root zigbee2mqtt - -"
     "d /srv/surveillance/recordings 2770 root frigate - -"
     "d /srv/surveillance/clips 2770 root frigate - -"
@@ -56,12 +58,16 @@
     localAddress = "10.0.50.8";
     additionalCapabilities = [ "CAP_PERFMON" ];
     extraFlags = [ "--system-call-filter=perf_event_open" ];
+    specialArgs = {
+      inherit inputs;
+    };
     config = {
       imports = [
         ../nix.nix
         ../containers/common.nix
         ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix
+        ../services/home-assistant.nix
         ../services/mosquitto.nix
         ../services/surveillance
         ../services/zigbee2mqtt.nix
@@ -73,6 +79,7 @@
         nameservers = [ config.vars.lanIp ];
         firewall.allowedTCPPorts = [
           80 # Frigate nginx
+          8123 # Home Assistant
           8080 # Zigbee2MQTT UI
           1883 # Mosquitto
           1984 # go2rtc UI
@@ -98,6 +105,9 @@
         ];
       };
 
+      services.home-assistant.package =
+        inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.home-assistant;
+
     };
     bindMounts = {
       "/dev/dri" = {
@@ -119,6 +129,14 @@
       "/var/lib/mosquitto" = {
         hostPath = "/srv/appdata/home-auto/mosquitto";
         isReadOnly = false;
+      };
+      "/var/lib/home-assistant" = {
+        hostPath = "/srv/appdata/home-auto/home-assistant";
+        isReadOnly = false;
+      };
+      "/var/lib/home-assistant/secrets.yaml" = {
+        hostPath = config.sops.templates."home-assistant-secrets.yaml".path;
+        isReadOnly = true;
       };
       "/var/lib/zigbee2mqtt" = {
         hostPath = "/srv/appdata/home-auto/zigbee2mqtt";
@@ -220,6 +238,16 @@
     '';
   };
 
+  sops.templates."home-assistant-secrets.yaml" = {
+    owner = "root";
+    group = "root";
+    mode = "0444";
+    content = ''
+      homeassistant_latitude: ${config.sops.placeholder."homeassistant.latitude"}
+      homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
+    '';
+  };
+
   sops.secrets."mqtt.password" = {
     owner = "root";
     group = "root";
@@ -227,6 +255,18 @@
   };
 
   sops.secrets."mqtt.user" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."homeassistant.latitude" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."homeassistant.longitude" = {
     owner = "root";
     group = "root";
     mode = "0400";

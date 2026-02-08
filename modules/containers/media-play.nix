@@ -134,7 +134,21 @@ in
   systemd.services."container@media-play" =
     containerLib.container.definition.mkContainerSystemdDeps [ ];
 
-  sops.secrets."media.jellyfin.users.kra3.password".mode = "0400";
-  sops.secrets."media.jellyfin.users.home.password".mode = "0400";
-  sops.secrets."media.jellyfin.apikeys.jellyseerr".mode = "0400";
+  # Create jellyfin group on host matching container GID for secret access
+  users.groups.jellyfin = {
+    gid = 999;
+  };
+
+  sops.secrets."media.jellyfin.users.kra3.password" = {
+    mode = "0440";
+    group = "jellyfin";
+  };
+  sops.secrets."media.jellyfin.users.home.password" = {
+    mode = "0440";
+    group = "jellyfin";
+  };
+  sops.secrets."media.jellyfin.apikeys.jellyseerr" = {
+    mode = "0440";
+    group = "jellyfin";
+  };
 }

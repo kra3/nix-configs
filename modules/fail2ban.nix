@@ -39,14 +39,6 @@ in
       nginx-botsearch = {
         enabled = true;
       };
-
-      nginx-badbots = {
-        enabled = true;
-      };
-
-      nginx-noscript = {
-        enabled = true;
-      };
     };
   };
 

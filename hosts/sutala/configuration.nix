@@ -87,6 +87,28 @@
       "i915.enable_fbc=1" # allow framebuffer compression to reduce power draw
     ];
     zfs.extraPools = [ "tank" ];
+
+    # Kernel hardening parameters
+    # NOTE: kernel.unprivileged_userns_clone NOT set to preserve container compatibility
+    # Setting it to 0 would break Podman and potentially systemd-nspawn containers
+    kernel.sysctl = {
+      # Kernel hardening
+      "kernel.kptr_restrict" = 2;              # Hide kernel pointers in /proc
+      "kernel.dmesg_restrict" = 1;             # Restrict dmesg to root only
+      "kernel.yama.ptrace_scope" = 2;          # Restrict ptrace to admin only
+
+      # Network hardening
+      "net.ipv4.tcp_syncookies" = 1;                    # SYN flood protection
+      "net.ipv4.conf.all.rp_filter" = 1;                # Reverse path filtering (anti-spoofing)
+      "net.ipv4.conf.default.rp_filter" = 1;
+      "net.ipv4.icmp_echo_ignore_broadcasts" = 1;       # Ignore broadcast pings
+      "net.ipv4.conf.all.accept_redirects" = 0;         # Disable ICMP redirects
+      "net.ipv4.conf.default.accept_redirects" = 0;
+      "net.ipv4.conf.all.secure_redirects" = 0;         # Disable secure ICMP redirects
+      "net.ipv4.conf.default.secure_redirects" = 0;
+      "net.ipv4.conf.all.send_redirects" = 0;           # Don't send ICMP redirects
+      "net.ipv4.conf.default.send_redirects" = 0;
+    };
   };
 
   networking = {

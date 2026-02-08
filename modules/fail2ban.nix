@@ -2,6 +2,7 @@
 
 { config, lib, ... }:
 let
+  serviceLib = import ./lib { inherit lib config; };
   defaultSetting = lib.mkDefault;
 in
 {
@@ -48,5 +49,16 @@ in
       };
     };
   };
+
+  systemd.services.fail2ban.serviceConfig = lib.mkMerge [
+    (serviceLib.deployment.hardening.mkServiceSandbox {
+      readWritePaths = [
+        "/var/lib/fail2ban"
+        "/var/log/nginx"
+      ];
+      capabilities = [ "CAP_NET_ADMIN" ];
+      extraAddressFamilies = [ "AF_NETLINK" ];
+    })
+  ];
 
 }

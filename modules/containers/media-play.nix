@@ -25,7 +25,7 @@
     localAddress = "10.0.50.6";
     config = {
       imports = [
-        ../nix.nix
+        ../services/system/nix.nix
         ../containers/common.nix
         ../services/monitoring/agent/alloy.nix
         inputs.declarative-jellyfin.nixosModules.default

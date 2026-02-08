@@ -22,7 +22,7 @@
     localAddress = "10.0.50.2";
     config = {
       imports = [
-        ../nix.nix
+        ../services/system/nix.nix
         ../containers/common.nix
         ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix

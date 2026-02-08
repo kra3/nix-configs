@@ -12,7 +12,7 @@
 
     ./hardware-configuration.nix
     ./disko.nix
-    ../../modules/nix.nix
+    ../../modules/services/system/nix.nix
     ../../modules/vars.nix
     ../../modules/acme.nix
     ../../modules/nginx.nix
@@ -32,8 +32,8 @@
     ../../modules/containers/media-play.nix
     ../../modules/containers/home-auto.nix
     ../../modules/fail2ban.nix
-    ../../modules/vim.nix
-    ../../modules/sysadmin.nix
+    ../../modules/services/system/vim.nix
+    ../../modules/services/system/sysadmin.nix
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];

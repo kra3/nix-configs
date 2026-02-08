@@ -63,7 +63,7 @@
     };
     config = {
       imports = [
-        ../nix.nix
+        ../services/system/nix.nix
         ../containers/common.nix
         ../services/monitoring/agent/alloy.nix
         ../services/monitoring/agent/node-exporter-container.nix

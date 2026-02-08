@@ -1,4 +1,7 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  containerLib = import ../lib { inherit lib config; };
+in
 {
   networking.firewall.interfaces = {
     ve-monitoring = {
@@ -15,11 +18,12 @@
     };
   };
 
-  containers.monitoring = {
+  containers.monitoring = ({
     autoStart = true;
-    privateNetwork = true;
+  } // containerLib.container.definition.mkContainerNetwork {
     hostAddress = "10.0.50.1";
     localAddress = "10.0.50.2";
+  } // {
     config = {
       imports = [
         ../services/system/nix.nix
@@ -63,16 +67,8 @@
         isReadOnly = true;
       };
     };
-  };
+  });
 
-  systemd.services."container@monitoring" = {
-    requires = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-    after = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-  };
+  systemd.services."container@monitoring" =
+    containerLib.container.definition.mkContainerSystemdDeps [ ];
 }

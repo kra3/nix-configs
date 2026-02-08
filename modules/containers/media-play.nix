@@ -23,6 +23,9 @@
     privateNetwork = true;
     hostAddress = "10.0.50.5";
     localAddress = "10.0.50.6";
+    specialArgs = {
+      inherit inputs;
+    };
     config = {
       imports = [
         ../services/system/nix.nix

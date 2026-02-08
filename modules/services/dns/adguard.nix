@@ -229,6 +229,10 @@ in
       User = "adguardhome";
       Group = "adguardhome";
       SupplementaryGroups = [ "acme" ];
+      LoadCredential = [
+        "password:${config.sops.secrets."dns.adguard.password".path}"
+        "username:${config.sops.secrets."dns.adguard.username".path}"
+      ];
     };
 
     sops.secrets."dns.adguard.password" = {
@@ -242,16 +246,32 @@ in
       mode = "0440";
     };
 
-    systemd.services.adguardhome.preStart = lib.mkAfter ''
-      if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
-        password="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."dns.adguard.password".path})"
-        ${pkgs.gnused}/bin/sed -i "s|__SOPS_DNS_ADGUARD_PASSWORD__|$password|" \
-          "$STATE_DIRECTORY/AdGuardHome.yaml"
-        username="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."dns.adguard.username".path})"
-        ${pkgs.gnused}/bin/sed -i "s|__SOPS_DNS_ADGUARD_USERNAME__|$username|" \
-          "$STATE_DIRECTORY/AdGuardHome.yaml"
-      fi
-    '';
+    systemd.services.adguardhome.preStart =
+      let
+        setupScript = pkgs.writeShellScript "adguard-setup" ''
+          set -euo pipefail
+
+          if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
+            # Read credentials from systemd credential directory (secure, not visible in ps)
+            PASSWORD=$(${pkgs.coreutils}/bin/cat "''${CREDENTIALS_DIRECTORY}/password" | ${pkgs.coreutils}/bin/tr -d '\n')
+            USERNAME=$(${pkgs.coreutils}/bin/cat "''${CREDENTIALS_DIRECTORY}/username" | ${pkgs.coreutils}/bin/tr -d '\n')
+
+            # Create temporary sed script to avoid password in command line
+            SCRIPT=$(${pkgs.coreutils}/bin/mktemp)
+            trap "${pkgs.coreutils}/bin/rm -f $SCRIPT" EXIT
+
+            # Write sed commands to temp file (not visible in ps)
+            cat > "$SCRIPT" <<EOF
+          s|__SOPS_DNS_ADGUARD_PASSWORD__|$PASSWORD|
+          s|__SOPS_DNS_ADGUARD_USERNAME__|$USERNAME|
+          EOF
+
+            # Execute sed with script file (no secrets in command line)
+            ${pkgs.gnused}/bin/sed -i -f "$SCRIPT" "$STATE_DIRECTORY/AdGuardHome.yaml"
+          fi
+        '';
+      in
+      lib.mkAfter (toString setupScript);
 
     services.adguardhome = {
       enable = true;

@@ -462,7 +462,8 @@ in
     services.logrotate.settings.adguardhome = {
       files = [
         "/var/lib/AdGuardHome/data/*.log"
-        "/var/lib/AdGuardHome/data/*.json"
+        "/var/lib/AdGuardHome/data/querylog.json"
+        "/var/lib/AdGuardHome/data/stats.json"
       ];
       rotate = 1;
       frequency = "hourly";

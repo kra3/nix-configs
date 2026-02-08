@@ -15,7 +15,7 @@
     ../../modules/services/system/nix.nix
     ../../modules/vars.nix
     ../../modules/services/infrastructure/acme.nix
-    ../../modules/nginx.nix
+    ../../modules/services/proxy/nginx.nix
     ../../modules/services/infrastructure/openssh.nix
     ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix

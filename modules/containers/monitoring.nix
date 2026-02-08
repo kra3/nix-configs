@@ -32,7 +32,7 @@
       networking = {
         hostName = "monitoring";
         defaultGateway = "10.0.50.1";
-        nameservers = [ config.vars.lanIp ];
+        nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           3001 # Grafana
           3100 # Loki

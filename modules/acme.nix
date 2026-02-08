@@ -6,7 +6,7 @@
     acceptTerms = true;
     defaults = {
       # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
-      email = "the1.arun@gmail.com";
+      email = config.vars.acme.email;
     };
     certs."karunagath.in" = {
       extraDomainNames = [ "*.karunagath.in" ];

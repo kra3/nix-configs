@@ -1,6 +1,6 @@
 { config, inputs, lib, pkgs, ... }:
 let
-  lanIf = config.vars.lanIf;
+  lanIf = config.vars.network.lanIf;
   mediaPlayHostIp = config.containers.media-play.hostAddress or "10.0.50.5";
   ijohanne = import inputs.ijohanne-nur { inherit pkgs; };
 in

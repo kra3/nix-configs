@@ -40,7 +40,7 @@
       networking = {
         hostName = "media-play";
         defaultGateway = "10.0.50.5";
-        nameservers = [ config.vars.lanIp ];
+        nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           4533 # Navidrome
           8095 # Music Assistant

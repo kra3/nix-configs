@@ -29,7 +29,7 @@
       networking = {
         hostName = "media-mgmt";
         defaultGateway = "10.0.50.3";
-        nameservers = [ config.vars.lanIp ];
+        nameservers = [ config.vars.network.lanIp ];
       };
     };
     bindMounts = {

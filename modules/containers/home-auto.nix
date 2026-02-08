@@ -21,7 +21,7 @@
     };
   };
 
-  networking.firewall.interfaces.${config.vars.lanIf} = {
+  networking.firewall.interfaces.${config.vars.network.lanIf} = {
     allowedTCPPorts = [
       1883 # Mosquitto (DNAT to 10.0.50.8)
       8555 # go2rtc WebRTC (DNAT to 10.0.50.8)
@@ -76,7 +76,7 @@
       networking = {
         hostName = "home-auto";
         defaultGateway = "10.0.50.7";
-        nameservers = [ config.vars.lanIp ];
+        nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           80 # Frigate nginx
           8123 # Home Assistant

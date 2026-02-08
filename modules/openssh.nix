@@ -16,5 +16,5 @@
     };
   };
 
-  networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [ 22 ];
+  networking.firewall.interfaces.${config.vars.network.lanIf}.allowedTCPPorts = [ 22 ];
 }

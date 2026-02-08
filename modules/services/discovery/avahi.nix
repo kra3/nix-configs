@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  lanIf = config.vars.lanIf;
+  lanIf = config.vars.network.lanIf;
 in
 {
   services.avahi = {

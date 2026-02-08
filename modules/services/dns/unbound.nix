@@ -1,6 +1,6 @@
 { config, ... }:
 let
-  vars = config.vars;
+  vars = config.vars.network;
 in
 {
   services.unbound = {

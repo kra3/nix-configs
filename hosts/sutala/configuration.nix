@@ -38,7 +38,7 @@
     ../../modules/users/kra3.nix
   ];
 
-  vars = {
+  vars.network = {
     lanIf = "enp2s0";
     lanIp = "192.168.1.10";
     nginxAllowCidrs = [
@@ -48,6 +48,8 @@
       "10.0.50.2/32"
     ];
   };
+
+  vars.acme.email = "the1.arun@gmail.com";
 
   hardware.graphics = {
     enable = true;
@@ -98,10 +100,10 @@
       logRefusedUnicastsOnly = true;
     };
     nftables.enable = true;
-    nameservers = [ config.vars.lanIp ];
+    nameservers = [ config.vars.network.lanIp ];
     nat = {
       enable = true;
-      externalInterface = config.vars.lanIf;
+      externalInterface = config.vars.network.lanIf;
       internalInterfaces = [
         "ve-monitoring"
         "ve-media-mgmt"
@@ -127,9 +129,9 @@
       ];
     };
     defaultGateway = "192.168.1.1";
-    interfaces.${config.vars.lanIf}.ipv4.addresses = [
+    interfaces.${config.vars.network.lanIf}.ipv4.addresses = [
       {
-        address = config.vars.lanIp;
+        address = config.vars.network.lanIp;
         prefixLength = 24;
       }
     ];

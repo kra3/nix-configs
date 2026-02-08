@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.nginxAllowCidrs)}
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
     deny all;
   '';
 in
@@ -54,7 +54,7 @@ in
 
   };
 
-  networking.firewall.interfaces.${config.vars.lanIf}.allowedTCPPorts = [
+  networking.firewall.interfaces.${config.vars.network.lanIf}.allowedTCPPorts = [
     443
   ];
 

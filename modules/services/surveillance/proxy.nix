@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.nginxAllowCidrs)}
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
     deny all;
   '';
   homeAutoIp = config.containers.home-auto.localAddress or "10.0.50.8";

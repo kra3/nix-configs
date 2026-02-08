@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 let
-  cfg = config.vars;
+  cfg = config.vars.network;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
   allowBlock = ''

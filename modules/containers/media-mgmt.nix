@@ -1,4 +1,7 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  containerLib = import ../lib { inherit lib config; };
+in
 {
   networking.firewall.interfaces = {
     ve-media-mgmt = {
@@ -12,11 +15,12 @@
     };
   };
 
-  containers.media-mgmt = {
+  containers.media-mgmt = ({
     autoStart = true;
-    privateNetwork = true;
+  } // containerLib.container.definition.mkContainerNetwork {
     hostAddress = "10.0.50.3";
     localAddress = "10.0.50.4";
+  } // {
     config = {
       imports = [
         ../services/system/nix.nix
@@ -106,16 +110,8 @@
         isReadOnly = true;
       };
     };
-  };
+  });
 
-  systemd.services."container@media-mgmt" = {
-    requires = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-    after = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-  };
+  systemd.services."container@media-mgmt" =
+    containerLib.container.definition.mkContainerSystemdDeps [ ];
 }

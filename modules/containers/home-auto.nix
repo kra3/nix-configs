@@ -1,4 +1,7 @@
 { config, pkgs, lib, inputs, ... }:
+let
+  containerLib = import ../lib { inherit lib config; };
+in
 {
   networking.firewall.interfaces = {
     ve-home-auto = {
@@ -51,16 +54,17 @@
     "d /srv/surveillance/clips 2770 root frigate - -"
   ];
 
-  containers.home-auto = {
+  containers.home-auto = ({
     autoStart = true;
-    privateNetwork = true;
-    hostAddress = "10.0.50.7";
-    localAddress = "10.0.50.8";
     additionalCapabilities = [ "CAP_PERFMON" ];
     extraFlags = [ "--system-call-filter=perf_event_open" ];
     specialArgs = {
       inherit inputs;
     };
+  } // containerLib.container.definition.mkContainerNetwork {
+    hostAddress = "10.0.50.7";
+    localAddress = "10.0.50.8";
+  } // {
     config = {
       imports = [
         ../services/system/nix.nix
@@ -185,17 +189,11 @@
         modifier = "rw";
       }
     ];
-  };
+  });
 
-  systemd.services."container@home-auto" = {
-    requires = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-    after = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
+  systemd.services."container@home-auto" = (
+    containerLib.container.definition.mkContainerSystemdDeps [ ]
+  ) // {
     serviceConfig.ExecStartPre = lib.mkAfter [
       "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"
     ];

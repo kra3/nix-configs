@@ -1,4 +1,7 @@
-{ config, inputs, pkgs, ... }:
+{ config, inputs, pkgs, lib, ... }:
+let
+  containerLib = import ../lib { inherit lib config; };
+in
 {
   networking.firewall = {
     interfaces = {
@@ -18,14 +21,15 @@
     };
   };
 
-  containers.media-play = {
+  containers.media-play = ({
     autoStart = true;
-    privateNetwork = true;
-    hostAddress = "10.0.50.5";
-    localAddress = "10.0.50.6";
     specialArgs = {
       inherit inputs;
     };
+  } // containerLib.container.definition.mkContainerNetwork {
+    hostAddress = "10.0.50.5";
+    localAddress = "10.0.50.6";
+  } // {
     config = {
       imports = [
         ../services/system/nix.nix
@@ -121,18 +125,10 @@
         modifier = "rw";
       }
     ];
-  };
+  });
 
-  systemd.services."container@media-play" = {
-    requires = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-    after = [
-      "zfs-mount.service"
-      "systemd-tmpfiles-resetup.service"
-    ];
-  };
+  systemd.services."container@media-play" =
+    containerLib.container.definition.mkContainerSystemdDeps [ ];
 
   sops.secrets."media.jellyfin.users.kra3.password".mode = "0400";
   sops.secrets."media.jellyfin.users.home.password".mode = "0400";

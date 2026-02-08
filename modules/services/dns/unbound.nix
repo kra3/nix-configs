@@ -1,5 +1,6 @@
-{ config, ... }:
+{ config, lib, ... }:
 let
+  serviceLib = import ../../lib { inherit lib config; };
   vars = config.vars.network;
 in
 {
@@ -52,4 +53,10 @@ in
     };
   };
 
+  systemd.services.unbound.serviceConfig = lib.mkMerge [
+    (serviceLib.deployment.hardening.mkServiceSandbox {
+      readWritePaths = [ "/var/lib/unbound" ];
+      capabilities = [ ];
+    })
+  ];
 }

@@ -1,7 +1,7 @@
 { lib, ... }:
 {
   # Standard systemd sandboxing for services
-  mkServiceSandbox = { readWritePaths ? [], capabilities ? [] }: {
+  mkServiceSandbox = { readWritePaths ? [], capabilities ? [], allowNetworkNamespaces ? false, extraAddressFamilies ? [] }: {
     # Filesystem
     ProtectSystem = "strict";
     ProtectHome = true;
@@ -19,10 +19,10 @@
     AmbientCapabilities = capabilities;
 
     # Namespaces
-    RestrictNamespaces = true;
+    RestrictNamespaces = if allowNetworkNamespaces then "~user ipc pid uts cgroup" else true;
 
     # Network
-    RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+    RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ] ++ extraAddressFamilies;
 
     # Syscalls
     SystemCallFilter = [ "@system-service" ];

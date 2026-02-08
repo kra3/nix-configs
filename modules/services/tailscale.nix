@@ -1,4 +1,7 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  serviceLib = import ../lib { inherit lib config; };
+in
 {
   sops.secrets."tailscale.authkey" = { };
 
@@ -17,6 +20,22 @@
       "--advertise-exit-node"
     ];
   };
+
+  systemd.services.tailscaled.serviceConfig = lib.mkMerge [
+    (serviceLib.deployment.hardening.mkServiceSandbox {
+      readWritePaths = [
+        "/var/lib/tailscale"
+        "/run/tailscale"
+      ];
+      capabilities = [
+        "CAP_NET_ADMIN"
+        "CAP_NET_RAW"
+        "CAP_NET_BIND_SERVICE"
+      ];
+      allowNetworkNamespaces = true;
+      extraAddressFamilies = [ "AF_NETLINK" ];
+    })
+  ];
 
   networking.firewall.interfaces.tailscale0 = {
     allowedTCPPorts = [

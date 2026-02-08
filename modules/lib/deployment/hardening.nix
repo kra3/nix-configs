@@ -25,7 +25,7 @@
     RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
 
     # Syscalls
-    SystemCallFilter = [ "@system-service" "~@privileged" ];
+    SystemCallFilter = [ "@system-service" ];
     SystemCallArchitectures = "native";
   };
 

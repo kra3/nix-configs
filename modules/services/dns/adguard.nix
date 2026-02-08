@@ -1,5 +1,6 @@
 { config, lib, pkgs, ... }:
 let
+  serviceLib = import ../../lib { inherit lib config; };
   cfg = config.vars.network;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
@@ -224,16 +225,22 @@ in
       "Z /var/lib/AdGuardHome - adguardhome adguardhome - -"
     ];
 
-    systemd.services.adguardhome.serviceConfig = {
-      DynamicUser = lib.mkForce false;
-      User = "adguardhome";
-      Group = "adguardhome";
-      SupplementaryGroups = [ "acme" ];
-      LoadCredential = [
-        "password:${config.sops.secrets."dns.adguard.password".path}"
-        "username:${config.sops.secrets."dns.adguard.username".path}"
-      ];
-    };
+    systemd.services.adguardhome.serviceConfig = lib.mkMerge [
+      {
+        DynamicUser = lib.mkForce false;
+        User = "adguardhome";
+        Group = "adguardhome";
+        SupplementaryGroups = [ "acme" ];
+        LoadCredential = [
+          "password:${config.sops.secrets."dns.adguard.password".path}"
+          "username:${config.sops.secrets."dns.adguard.username".path}"
+        ];
+      }
+      (serviceLib.deployment.hardening.mkServiceSandbox {
+        readWritePaths = [ "/var/lib/AdGuardHome" ];
+        capabilities = [ "CAP_NET_BIND_SERVICE" ];
+      })
+    ];
 
     sops.secrets."dns.adguard.password" = {
       owner = "adguardhome";

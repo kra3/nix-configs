@@ -37,6 +37,10 @@ in
       };
     };
     bindMounts = {
+      "/etc/localtime" = {
+        hostPath = "/etc/localtime";
+        isReadOnly = true;
+      };
       "/data" = {
         hostPath = "/srv/media";
         isReadOnly = false;

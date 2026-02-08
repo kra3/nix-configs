@@ -82,6 +82,10 @@ in
       ];
     };
     bindMounts = {
+      "/etc/localtime" = {
+        hostPath = "/etc/localtime";
+        isReadOnly = true;
+      };
       "/dev/dri" = {
         hostPath = "/dev/dri";
         isReadOnly = false;

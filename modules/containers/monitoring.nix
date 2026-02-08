@@ -46,6 +46,10 @@ in
       };
     };
     bindMounts = {
+      "/etc/localtime" = {
+        hostPath = "/etc/localtime";
+        isReadOnly = true;
+      };
       "/var/lib/grafana" = {
         hostPath = "/srv/appdata/monitoring/grafana";
         isReadOnly = false;

@@ -1,5 +1,6 @@
 { config, lib, ... }:
 let
+  serviceLib = import ../../lib { inherit lib config; };
   allowBlock = ''
     ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
     deny all;
@@ -53,6 +54,13 @@ in
     };
 
   };
+
+  systemd.services.nginx.serviceConfig = lib.mkMerge [
+    (serviceLib.deployment.hardening.mkServiceSandbox {
+      readWritePaths = [ "/var/log/nginx" ];
+      capabilities = [ "CAP_NET_BIND_SERVICE" ];
+    })
+  ];
 
   networking.firewall.interfaces.${config.vars.network.lanIf}.allowedTCPPorts = [
     443

@@ -131,7 +131,7 @@
     ];
   };
 
-  sops.secrets."media.jellyfin.users.kra3.password".mode = "0444";
-  sops.secrets."media.jellyfin.users.home.password".mode = "0444";
-  sops.secrets."media.jellyfin.apikeys.jellyseerr".mode = "0444";
+  sops.secrets."media.jellyfin.users.kra3.password".mode = "0400";
+  sops.secrets."media.jellyfin.users.home.password".mode = "0400";
+  sops.secrets."media.jellyfin.apikeys.jellyseerr".mode = "0400";
 }

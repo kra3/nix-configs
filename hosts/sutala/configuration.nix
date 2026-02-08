@@ -14,10 +14,10 @@
     ./disko.nix
     ../../modules/services/system/nix.nix
     ../../modules/vars.nix
-    ../../modules/acme.nix
+    ../../modules/services/infrastructure/acme.nix
     ../../modules/nginx.nix
-    ../../modules/openssh.nix
-    ../../modules/sops.nix
+    ../../modules/services/infrastructure/openssh.nix
+    ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix
     ../../modules/services/dns
     ../../modules/services/surveillance/proxy.nix

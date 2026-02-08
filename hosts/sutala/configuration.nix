@@ -23,9 +23,6 @@
     ../../modules/services/surveillance/proxy.nix
     ../../modules/services/discovery/avahi.nix
     ../../modules/services/discovery/ssdp.nix
-    ../../modules/services/monitoring/agent
-    ../../modules/services/media/management/agent
-    ../../modules/services/media/players/agent
     ../../modules/containers/monitoring.nix
     ../../modules/containers/media-mgmt.nix
     ../../modules/containers/media-play.nix

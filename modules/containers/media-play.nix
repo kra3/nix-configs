@@ -1,8 +1,65 @@
 { config, inputs, pkgs, lib, ... }:
 let
   containerLib = import ../lib { inherit lib config; };
+  allowBlock = ''
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
+    deny all;
+  '';
 in
 {
+  # Host group for media files
+  users.groups.media = {
+    gid = 2000;
+  };
+
+  # Host storage for media-play container
+  systemd.tmpfiles.rules = lib.mkMerge [
+    [
+      "d /srv/appdata/media-play 0770 root media - -"
+    ]
+    (lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) [
+      "d /srv/appdata/media-play/jellyfin 0770 root media - -"
+    ])
+    (lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) [
+      "d /srv/appdata/media-play/navidrome 0770 root media - -"
+    ])
+    (lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) [
+      "d /srv/appdata/media-play/music-assistant 0770 root media - -"
+    ])
+  ];
+
+  # Host nginx reverse proxies for media-play container
+  services.nginx.virtualHosts."jellyfin.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = allowBlock;
+    locations."/" = {
+      proxyPass = "http://10.0.50.6:8096";
+      proxyWebsockets = true;
+    };
+  };
+
+  services.nginx.virtualHosts."navidrome.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = allowBlock;
+    locations."/" = {
+      proxyPass = "http://10.0.50.6:4533";
+      proxyWebsockets = true;
+    };
+  };
+
+  services.nginx.virtualHosts."mass.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = allowBlock;
+    locations."/" = {
+      proxyPass = "http://10.0.50.6:8095";
+      proxyWebsockets = true;
+    };
+  };
+
+  # Host firewall for media-play container
   networking.firewall = {
     interfaces = {
       ve-media-play = {
@@ -34,10 +91,8 @@ in
       imports = [
         ../services/system/nix.nix
         ../containers/common.nix
-        ../services/monitoring/agent/alloy.nix
         inputs.declarative-jellyfin.nixosModules.default
-        ../services/monitoring/agent/node-exporter-container.nix
-        ../services/media/players/server
+        ../services/media/players
       ];
 
       nixpkgs.overlays = [
@@ -135,19 +190,19 @@ in
     containerLib.container.definition.mkContainerSystemdDeps [ ];
 
   # Create jellyfin group on host matching container GID for secret access
-  users.groups.jellyfin = {
+  users.groups.jellyfin = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
     gid = 999;
   };
 
-  sops.secrets."media.jellyfin.users.kra3.password" = {
+  sops.secrets."media.jellyfin.users.kra3.password" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
     mode = "0440";
     group = "jellyfin";
   };
-  sops.secrets."media.jellyfin.users.home.password" = {
+  sops.secrets."media.jellyfin.users.home.password" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
     mode = "0440";
     group = "jellyfin";
   };
-  sops.secrets."media.jellyfin.apikeys.jellyseerr" = {
+  sops.secrets."media.jellyfin.apikeys.jellyseerr" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
     mode = "0440";
     group = "jellyfin";
   };

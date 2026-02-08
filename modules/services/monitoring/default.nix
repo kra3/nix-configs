@@ -1,6 +1,7 @@
 {
   imports = [
-    ./agent
-    ./server
+    ./grafana.nix
+    ./loki.nix
+    ./prometheus.nix
   ];
 }

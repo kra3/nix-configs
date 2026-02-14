@@ -178,7 +178,7 @@ in
         hostPath = "/srv/appdata/monitoring/grafana";
         isReadOnly = false;
       };
-      "/var/lib/prometheus" = {
+      "/var/lib/prometheus2" = {
         hostPath = "/srv/databases/monitoring/prometheus";
         isReadOnly = false;
       };

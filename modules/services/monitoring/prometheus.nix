@@ -5,6 +5,7 @@
     checkConfig = false; # Disable build-time validation (secrets not available at build time)
     listenAddress = "10.0.50.2";
     port = 9090;
+    retentionTime = "2y";
     globalConfig = {
       scrape_interval = "15s";
     };

@@ -27,6 +27,8 @@
       };
 
       wake_on_lan = {};
+
+      prometheus = {};
     };
 
     extraComponents = [

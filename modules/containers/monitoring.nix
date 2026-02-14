@@ -42,6 +42,9 @@ in
   sops.secrets."monitoring.grafana.admin.password" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
     mode = "0444";
   };
+  sops.secrets."homeassistant.token" = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
+    mode = "0444";
+  };
 
   # Host Prometheus exporters (scraped by monitoring container)
   services.nginx.statusPage = true;
@@ -189,6 +192,10 @@ in
       };
       "/run/secrets/monitoring.grafana.admin.password" = {
         hostPath = "/run/secrets/monitoring.grafana.admin.password";
+        isReadOnly = true;
+      };
+      "/run/secrets/homeassistant.token" = {
+        hostPath = "/run/secrets/homeassistant.token";
         isReadOnly = true;
       };
     };

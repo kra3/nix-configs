@@ -2,6 +2,7 @@
 {
   services.prometheus = {
     enable = true;
+    checkConfig = false; # Disable build-time validation (secrets not available at build time)
     listenAddress = "10.0.50.2";
     port = 9090;
     globalConfig = {
@@ -104,6 +105,20 @@
             targets = [ "10.0.50.8:80" ];
             labels.container = "home-auto";
             labels.instance = "home-auto";
+          }
+        ];
+      }
+      {
+        job_name = "homeassistant";
+        metrics_path = "/api/prometheus";
+        authorization = {
+          type = "Bearer";
+          credentials_file = "/run/secrets/homeassistant.token";
+        };
+        static_configs = [
+          {
+            targets = [ "192.168.1.31:8123" ];
+            labels.instance = "ha";
           }
         ];
       }

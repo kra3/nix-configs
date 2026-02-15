@@ -1,0 +1,71 @@
+{ config, lib, ... }:
+let
+  allowBlock = ''
+    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
+    deny all;
+  '';
+in
+{
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.arcane = {
+      image = "ghcr.io/getarcaneapp/arcane:latest";
+      autoStart = true;
+      ports = [ "127.0.0.1:3552:3552" ];
+      volumes = [
+        "/var/run/podman/podman.sock:/var/run/docker.sock"
+        "/srv/appdata/arcane:/app/data"
+        "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+      ];
+      environment = {
+        APP_URL = "https://oci.karunagath.in";
+        PUID = "1000";
+        PGID = "1000";
+        LOG_LEVEL = "info";
+        LOG_JSON = "false";
+        OIDC_ENABLED = "false";
+        DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
+      };
+      environmentFiles = [
+        config.sops.templates."arcane.env".path
+      ];
+    };
+  };
+
+  virtualisation.podman = {
+    enable = true;
+    dockerSocket.enable = true;
+  };
+
+  services.nginx.virtualHosts."oci.karunagath.in" = {
+    useACMEHost = "karunagath.in";
+    forceSSL = true;
+    extraConfig = ''
+      ${allowBlock}
+      add_header X-Frame-Options "*";
+      add_header X-Robots-Tag "noindex, nofollow";
+    '';
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:3552";
+      proxyWebsockets = true;
+      extraConfig = ''
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+      '';
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /srv/appdata/arcane 0755 root root - -"
+  ];
+
+  sops.secrets."arcane.encryption_key" = {};
+  sops.secrets."arcane.jwt_secret" = {};
+
+  sops.templates."arcane.env" = {
+    content = ''
+      ENCRYPTION_KEY=${config.sops.placeholder."arcane.encryption_key"}
+      JWT_SECRET=${config.sops.placeholder."arcane.jwt_secret"}
+    '';
+  };
+}

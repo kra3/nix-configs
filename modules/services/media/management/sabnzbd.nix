@@ -8,6 +8,7 @@
     enable = true;
     configFile = "/var/lib/sabnzbd/sabnzbd.ini";
     openFirewall = true;
+    group = "media";
   };
 
   users.users.sabnzbd = {

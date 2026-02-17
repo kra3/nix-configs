@@ -1,0 +1,119 @@
+# Media Management Stack
+# Deploy to: /srv/appdata/arcane/projects/media-mgmt/
+# Note: Volume paths match NixOS service data locations
+
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    volumes:
+      - /srv/appdata/media-mgmt/radarr/.config/Radarr:/config
+      - /srv/media:/data
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - RADARR__API_KEY=${RADARR__API_KEY}
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    volumes:
+      - /srv/appdata/media-mgmt/sonarr/.config/NzbDrone:/config
+      - /srv/media:/data
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - SONARR__API_KEY=${SONARR__API_KEY}
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    ports:
+      - "9696:9696"
+    volumes:
+      - /srv/appdata/media-mgmt/prowlarr:/config
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - PROWLARR__API_KEY=${PROWLARR__API_KEY}
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /srv/appdata/media-mgmt/sabnzbd:/config
+      - /srv/media/downloads:/data/downloads
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - SABNZBD__API_KEY=${SABNZBD__API_KEY}
+      - SABNZBD__NZB_KEY=${SABNZBD__NZB_KEY}
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    ports:
+      - "6767:6767"
+    volumes:
+      - /srv/appdata/media-mgmt/bazarr:/config
+      - /srv/media:/data
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - BAZARR__API_KEY=${BAZARR__API_KEY}
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    ports:
+      - "8686:8686"
+    volumes:
+      - /srv/appdata/media-mgmt/lidarr/.config/Lidarr:/config
+      - /srv/media:/data
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - LIDARR__API_KEY=${LIDARR__API_KEY}
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    volumes:
+      - /srv/appdata/media-mgmt/jellyseerr/config:/app/config
+    environment:
+      - PUID=1000
+      - PGID=2000
+      - TZ=UTC
+      - JELLYSEERR__API_KEY=${JELLYSEERR__API_KEY}
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    restart: unless-stopped
+    volumes:
+      - /srv/appdata/media-mgmt/recyclarr:/config
+    environment:
+      - TZ=UTC
+      - RECYCLARR__RADARR__API_KEY=${RECYCLARR__RADARR__API_KEY}
+      - RECYCLARR__SONARR__API_KEY=${RECYCLARR__SONARR__API_KEY}

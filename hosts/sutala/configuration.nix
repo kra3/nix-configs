@@ -48,6 +48,8 @@
 
   vars.acme.email = "the1.arun@gmail.com";
 
+  vars.media.backend = "arcane";
+
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [

@@ -48,7 +48,7 @@
 
   vars.acme.email = "the1.arun@gmail.com";
 
-  vars.media.backend = "container";
+  vars.media.backend = "arcane";
 
   hardware.graphics = {
     enable = true;

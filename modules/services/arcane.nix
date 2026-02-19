@@ -10,7 +10,7 @@ in
   virtualisation.oci-containers = {
     backend = "docker";
     containers.arcane = {
-      image = "ghcr.io/getarcaneapp/arcane:latest";
+      image = "ghcr.io/getarcaneapp/arcane:v1.15.2";
       autoStart = true;
       ports = [ "3552:3552" ];
       volumes = [

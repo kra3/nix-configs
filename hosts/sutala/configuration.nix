@@ -30,7 +30,7 @@
     ../../modules/fail2ban.nix
     ../../modules/services/system/vim.nix
     ../../modules/services/system/sysadmin.nix
-    ../../modules/services/arcane.nix
+    ../../modules/services/virtualisation
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];

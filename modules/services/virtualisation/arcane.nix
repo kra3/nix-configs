@@ -7,35 +7,27 @@ let
   isArcaneMedia = config.vars.media.backend == "arcane";
 in
 {
-  virtualisation.oci-containers = {
-    backend = "docker";
-    containers.arcane = {
-      image = "ghcr.io/getarcaneapp/arcane:v1.15.2";
-      autoStart = true;
-      ports = [ "3552:3552" ];
-      volumes = [
-        "/var/run/docker.sock:/var/run/docker.sock"
-        "/srv/appdata/arcane:/app/data"
-        "/sys/fs/cgroup:/sys/fs/cgroup:ro"
-      ];
-      environment = {
-        APP_URL = "https://oci.karunagath.in";
-        PUID = "1000";
-        PGID = "1000";
-        LOG_LEVEL = "info";
-        LOG_JSON = "false";
-        OIDC_ENABLED = "false";
-        DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
-      };
-      environmentFiles = [
-        config.sops.templates."arcane.env".path
-      ];
+  virtualisation.oci-containers.containers.arcane = {
+    image = "ghcr.io/getarcaneapp/arcane:v1.15.2";
+    autoStart = true;
+    ports = [ "127.0.0.1:3552:3552" ];
+    volumes = [
+      "/var/run/docker.sock:/var/run/docker.sock"
+      "/srv/appdata/arcane:/app/data"
+      "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    ];
+    environment = {
+      APP_URL = "https://oci.karunagath.in";
+      PUID = "1000";
+      PGID = "1000";
+      LOG_LEVEL = "info";
+      LOG_JSON = "false";
+      OIDC_ENABLED = "false";
+      DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
     };
-  };
-
-  virtualisation.docker = {
-    enable = true;
-    autoPrune.enable = true;
+    environmentFiles = [
+      config.sops.templates."arcane.env".path
+    ];
   };
 
   services.nginx.virtualHosts."oci.karunagath.in" = {
@@ -60,7 +52,7 @@ in
   ];
 
   environment.etc."arcane/stacks/media-mgmt/compose.yaml" = lib.mkIf isArcaneMedia {
-    source = ../../stacks/media-mgmt/compose.yaml;
+    source = ../../../stacks/media-mgmt/compose.yaml;
   };
 
   sops.secrets."arcane.encryption_key" = {};

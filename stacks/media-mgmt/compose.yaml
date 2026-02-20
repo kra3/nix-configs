@@ -8,7 +8,7 @@ services:
     container_name: radarr
     restart: unless-stopped
     ports:
-      - "7878:7878"
+      - "127.0.0.1:7878:7878"
     volumes:
       - /srv/appdata/media-mgmt/radarr/.config/Radarr:/config
       - /srv/media:/data
@@ -23,7 +23,7 @@ services:
     container_name: sonarr
     restart: unless-stopped
     ports:
-      - "8989:8989"
+      - "127.0.0.1:8989:8989"
     volumes:
       - /srv/appdata/media-mgmt/sonarr/.config/NzbDrone:/config
       - /srv/media:/data
@@ -38,7 +38,7 @@ services:
     container_name: prowlarr
     restart: unless-stopped
     ports:
-      - "9696:9696"
+      - "127.0.0.1:9696:9696"
     volumes:
       - /srv/appdata/media-mgmt/prowlarr:/config
     environment:
@@ -52,7 +52,7 @@ services:
     container_name: sabnzbd
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - /srv/appdata/media-mgmt/sabnzbd:/config
       - /srv/media/downloads:/data/downloads
@@ -68,7 +68,7 @@ services:
     container_name: bazarr
     restart: unless-stopped
     ports:
-      - "6767:6767"
+      - "127.0.0.1:6767:6767"
     volumes:
       - /srv/appdata/media-mgmt/bazarr:/config
       - /srv/media:/data
@@ -83,7 +83,7 @@ services:
     container_name: lidarr
     restart: unless-stopped
     ports:
-      - "8686:8686"
+      - "127.0.0.1:8686:8686"
     volumes:
       - /srv/appdata/media-mgmt/lidarr/.config/Lidarr:/config
       - /srv/media:/data
@@ -98,7 +98,7 @@ services:
     container_name: jellyseerr
     restart: unless-stopped
     ports:
-      - "5055:5055"
+      - "127.0.0.1:5055:5055"
     volumes:
       - /srv/appdata/media-mgmt/jellyseerr/config:/app/config
     environment:

@@ -40,12 +40,5 @@
         description = "Email for ACME certificates";
       };
     };
-    media = {
-      backend = lib.mkOption {
-        type = lib.types.enum [ "container" "arcane" ];
-        default = "container";
-        description = "Media management backend: 'container' for NixOS container, 'arcane' for Docker Compose via Arcane";
-      };
-    };
   };
 }

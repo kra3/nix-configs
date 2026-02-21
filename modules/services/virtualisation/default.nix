@@ -1,6 +1,8 @@
+{ inputs, ... }:
 {
   imports = [
-    ./docker.nix
+    inputs.quadlet-nix.nixosModules.quadlet
+    ./podman.nix
     ./arcane.nix
   ];
 }

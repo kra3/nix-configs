@@ -24,7 +24,7 @@
     ../../modules/services/discovery/avahi.nix
     ../../modules/services/discovery/ssdp.nix
     ../../modules/containers/monitoring.nix
-    ../../modules/containers/media-mgmt.nix
+    ../../modules/containers/media-mgmt
     ../../modules/containers/media-play.nix
     ../../modules/containers/home-auto.nix
     ../../modules/fail2ban.nix
@@ -47,8 +47,6 @@
   };
 
   vars.acme.email = "the1.arun@gmail.com";
-
-  vars.media.backend = "arcane";
 
   hardware.graphics = {
     enable = true;
@@ -127,7 +125,6 @@
       externalInterface = config.vars.network.lanIf;
       internalInterfaces = [
         "ve-monitoring"
-        "ve-media-mgmt"
         "ve-media-play"
         "ve-home-auto"
       ];

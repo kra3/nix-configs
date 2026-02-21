@@ -382,11 +382,6 @@ in
               enabled = true;
             }
             {
-              domain = "media-mgmt";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
               domain = "media-play";
               answer = "10.0.50.6";
               enabled = true;
@@ -394,42 +389,6 @@ in
             {
               domain = "home-auto";
               answer = "10.0.50.8";
-              enabled = true;
-            }
-            # Media services (all run in media-mgmt container)
-            {
-              domain = "radarr";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "sonarr";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "prowlarr";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "sabnzbd";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "bazarr";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "lidarr";
-              answer = "10.0.50.4";
-              enabled = true;
-            }
-            {
-              domain = "jellyseerr";
-              answer = "10.0.50.4";
               enabled = true;
             }
           ];

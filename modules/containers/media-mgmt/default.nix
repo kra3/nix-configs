@@ -10,7 +10,7 @@
     ./sabnzbd.nix
     ./bazarr.nix
     ./lidarr.nix
-    ./jellyseerr.nix
+    ./seerr.nix
     ./recyclarr.nix
   ];
 }

@@ -140,8 +140,8 @@
     };
 
     apikeys = {
-      Jellyseerr = {
-        keyPath = "/run/secrets/media.jellyfin.apikeys.jellyseerr";
+      Seerr = {
+        keyPath = "/run/secrets/media.jellyfin.apikeys.seerr";
       };
     };
 

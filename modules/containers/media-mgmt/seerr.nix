@@ -7,18 +7,18 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.jellyseerr.api_key" = {};
+  sops.secrets."media.seerr.api_key" = {};
 
-  sops.templates."media.jellyseerr.env" = {
+  sops.templates."media.seerr.env" = {
     owner = "root";
     group = "media";
     mode = "0440";
-    content = "JELLYSEERR__API_KEY=${config.sops.placeholder."media.jellyseerr.api_key"}";
+    content = "SEERR__API_KEY=${config.sops.placeholder."media.seerr.api_key"}";
   };
 
-  virtualisation.quadlet.containers.jellyseerr = {
+  virtualisation.quadlet.containers.seerr = {
     containerConfig = {
-      image = "fallenbagel/jellyseerr:2.7.3";
+      image = "ghcr.io/seerr-team/seerr:sha-68f56d2";
       publishPorts = [ "127.0.0.1:5055:5055" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -27,9 +27,9 @@ in
         PGID = "2000";
         TZ = "UTC";
       };
-      environmentFiles = [ config.sops.templates."media.jellyseerr.env".path ];
+      environmentFiles = [ config.sops.templates."media.seerr.env".path ];
       volumes = [
-        "/srv/appdata/media-mgmt/jellyseerr:/app/config"
+        "/srv/appdata/media-mgmt/seerr:/app/config"
       ];
     };
     unitConfig = {
@@ -39,11 +39,11 @@ in
     serviceConfig.Restart = "always";
   };
 
-  environment.etc."alloy/jellyseerr.alloy".text = ''
-    loki.source.journal "jellyseerr" {
-      matches = "_SYSTEMD_UNIT=jellyseerr.service"
+  environment.etc."alloy/seerr.alloy".text = ''
+    loki.source.journal "seerr" {
+      matches = "_SYSTEMD_UNIT=seerr.service"
       labels = {
-        job = "jellyseerr",
+        job = "seerr",
         host = "${config.networking.hostName}",
         role = "host",
       }
@@ -51,7 +51,7 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."jellyseerr.${config.vars.acme.domain}" = {
+  services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = {
     useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;

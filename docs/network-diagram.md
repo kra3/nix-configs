@@ -27,7 +27,7 @@ LAN 192.168.1.0/24
         |     - sabnzbd.karunagath.in    -> 10.0.50.4:8080 (TCP)
         |     - bazarr.karunagath.in     -> 10.0.50.4:6767 (TCP)
         |     - lidarr.karunagath.in     -> 10.0.50.4:8686 (TCP)
-        |     - jellyseerr.karunagath.in -> 10.0.50.4:5055 (TCP)
+        |     - seerr.karunagath.in      -> 127.0.0.1:5055 (TCP)
         |
         |-- ve-monitoring (veth)
         |     hostAddress: 10.0.50.1

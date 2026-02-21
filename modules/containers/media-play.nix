@@ -170,8 +170,8 @@ in
         hostPath = "/run/secrets/media.jellyfin.users.home.password";
         isReadOnly = true;
       };
-      "/run/secrets/media.jellyfin.apikeys.jellyseerr" = {
-        hostPath = "/run/secrets/media.jellyfin.apikeys.jellyseerr";
+      "/run/secrets/media.jellyfin.apikeys.seerr" = {
+        hostPath = "/run/secrets/media.jellyfin.apikeys.seerr";
         isReadOnly = true;
       };
     };
@@ -203,7 +203,7 @@ in
     mode = "0440";
     group = "jellyfin";
   };
-  sops.secrets."media.jellyfin.apikeys.jellyseerr" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
+  sops.secrets."media.jellyfin.apikeys.seerr" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
     mode = "0440";
     group = "jellyfin";
   };

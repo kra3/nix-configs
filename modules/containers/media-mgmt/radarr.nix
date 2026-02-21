@@ -33,6 +33,10 @@ in
         "/srv/media:/data"
       ];
     };
+    unitConfig = {
+      After = [ "media-mgmt-network.service" ];
+      Requires = [ "media-mgmt-network.service" ];
+    };
     serviceConfig.Restart = "always";
   };
 

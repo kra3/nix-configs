@@ -22,7 +22,7 @@ in
 
   virtualisation.quadlet.containers.sabnzbd = {
     containerConfig = {
-      image = "lscr.io/linuxserver/sabnzbd:4.5.5";
+      image = "lscr.io/linuxserver/sabnzbd:4.5.5-ls244";
       publishPorts = [ "127.0.0.1:8080:8080" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -30,12 +30,17 @@ in
         PUID = "1000";
         PGID = "2000";
         TZ = "UTC";
+        HAS_IPV6 = "false";
       };
       environmentFiles = [ config.sops.templates."media.sabnzbd.env".path ];
       volumes = [
         "/srv/appdata/media-mgmt/sabnzbd:/config"
         "/srv/media/downloads:/data/downloads"
       ];
+    };
+    unitConfig = {
+      After = [ "media-mgmt-network.service" ];
+      Requires = [ "media-mgmt-network.service" ];
     };
     serviceConfig.Restart = "always";
   };

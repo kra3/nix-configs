@@ -11,7 +11,7 @@ in
     autoStart = true;
     ports = [ "127.0.0.1:3552:3552" ];
     volumes = [
-      "/var/run/docker.sock:/var/run/docker.sock"
+      "/run/podman/podman.sock:/var/run/docker.sock"
       "/srv/appdata/arcane:/app/data"
       "/sys/fs/cgroup:/sys/fs/cgroup:ro"
     ];

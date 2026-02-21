@@ -183,7 +183,7 @@ in
 
   virtualisation.quadlet.containers.recyclarr = {
     containerConfig = {
-      image = "ghcr.io/recyclarr/recyclarr:7.5.2";
+      image = "ghcr.io/recyclarr/recyclarr:8.1.0";
       networks = [ network.ref ];
       logDriver = "journald";
       environments = {
@@ -196,6 +196,10 @@ in
         "${config.sops.templates."media.recyclarr.secrets.yml".path}:/config/secrets.yml:ro"
         "/srv/appdata/media-mgmt/recyclarr:/config"
       ];
+    };
+    unitConfig = {
+      After = [ "media-mgmt-network.service" ];
+      Requires = [ "media-mgmt-network.service" ];
     };
     serviceConfig.Restart = "on-failure";
   };

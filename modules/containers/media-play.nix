@@ -15,16 +15,16 @@ in
   # Host storage for media-play container
   systemd.tmpfiles.rules = lib.mkMerge [
     [
-      "d /srv/appdata/media-play 0770 root media - -"
+      "d /srv/appdata/media-play 2770 root media - -"
     ]
     (lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) [
-      "d /srv/appdata/media-play/jellyfin 0770 root media - -"
+      "d /srv/appdata/media-play/jellyfin 2770 root media - -"
     ])
     (lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) [
-      "d /srv/appdata/media-play/navidrome 0770 root media - -"
+      "d /srv/appdata/media-play/navidrome 2770 root media - -"
     ])
     (lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) [
-      "d /srv/appdata/media-play/music-assistant 0770 root media - -"
+      "d /srv/appdata/media-play/music-assistant 2770 root media - -"
     ])
   ];
 

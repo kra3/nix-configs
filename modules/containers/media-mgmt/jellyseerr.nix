@@ -32,6 +32,10 @@ in
         "/srv/appdata/media-mgmt/jellyseerr:/app/config"
       ];
     };
+    unitConfig = {
+      After = [ "media-mgmt-network.service" ];
+      Requires = [ "media-mgmt-network.service" ];
+    };
     serviceConfig.Restart = "always";
   };
 

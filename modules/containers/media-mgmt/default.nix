@@ -3,6 +3,7 @@
   imports = [
     ./network.nix
     ./storage.nix
+    # services
     ./radarr.nix
     ./sonarr.nix
     ./prowlarr.nix

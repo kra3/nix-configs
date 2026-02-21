@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, domain, ... }:
 {
   services.grafana = {
     enable = true;
@@ -10,8 +10,8 @@
       server = {
         http_addr = "10.0.50.2";
         http_port = 3001;
-        domain = "grafana.karunagath.in";
-        root_url = "https://grafana.karunagath.in/";
+        domain = "grafana.${domain}";
+        root_url = "https://grafana.${domain}/";
       };
       analytics.reporting_enabled = false;
     };

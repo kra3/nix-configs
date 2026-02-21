@@ -25,7 +25,7 @@ in
       proxy_headers_hash_bucket_size 128;
     '';
 
-    virtualHosts."karunagath.in" = {
+    virtualHosts.${config.vars.acme.domain} = {
       enableACME = true;
       forceSSL = true;
       extraConfig = allowBlock;
@@ -34,8 +34,8 @@ in
       };
     };
 
-    virtualHosts."*.karunagath.in" = {
-      useACMEHost = "karunagath.in";
+    virtualHosts."*.${config.vars.acme.domain}" = {
+      useACMEHost = config.vars.acme.domain;
       forceSSL = true;
       extraConfig = allowBlock;
       locations."/" = {
@@ -43,8 +43,8 @@ in
       };
     };
 
-    virtualHosts."ha.karunagath.in" = {
-      useACMEHost = "karunagath.in";
+    virtualHosts."ha.${config.vars.acme.domain}" = {
+      useACMEHost = config.vars.acme.domain;
       forceSSL = true;
       extraConfig = allowBlock;
       locations."/" = {

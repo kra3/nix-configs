@@ -29,8 +29,8 @@ in
   ];
 
   # Host nginx reverse proxies for media-play container
-  services.nginx.virtualHosts."jellyfin.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -39,8 +39,8 @@ in
     };
   };
 
-  services.nginx.virtualHosts."navidrome.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -49,8 +49,8 @@ in
     };
   };
 
-  services.nginx.virtualHosts."mass.karunagath.in" = lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."mass.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -82,6 +82,7 @@ in
     autoStart = true;
     specialArgs = {
       inherit inputs;
+      domain = config.vars.acme.domain;
     };
   } // containerLib.container.definition.mkContainerNetwork {
     hostAddress = "10.0.50.5";

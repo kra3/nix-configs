@@ -39,6 +39,11 @@
         default = "the1.arun@gmail.com";
         description = "Email for ACME certificates";
       };
+      domain = lib.mkOption {
+        type = lib.types.str;
+        default = "karunagath.in";
+        description = "Primary domain for wildcard TLS certificate";
+      };
     };
   };
 }

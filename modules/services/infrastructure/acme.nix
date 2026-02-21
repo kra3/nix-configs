@@ -8,8 +8,8 @@
       # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
       email = config.vars.acme.email;
     };
-    certs."karunagath.in" = {
-      extraDomainNames = [ "*.karunagath.in" ];
+    certs.${config.vars.acme.domain} = {
+      extraDomainNames = [ "*.${config.vars.acme.domain}" ];
       dnsProvider = "cloudflare";
       dnsPropagationCheck = true;
       webroot = null;

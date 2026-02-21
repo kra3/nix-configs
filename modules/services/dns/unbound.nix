@@ -2,6 +2,7 @@
 let
   serviceLib = import ../../lib { inherit lib config; };
   vars = config.vars.network;
+  domain = config.vars.acme.domain;
 in
 {
   services.unbound = {
@@ -26,10 +27,10 @@ in
         do-not-query-localhost = "yes";
 
         local-zone = [
-          ''"karunagath.in." redirect''
+          ''"${domain}." redirect''
         ];
         local-data = [
-          ''"karunagath.in. A ${vars.lanIp}"''
+          ''"${domain}. A ${vars.lanIp}"''
         ];
       };
 

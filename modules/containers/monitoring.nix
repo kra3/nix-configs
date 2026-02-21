@@ -25,8 +25,8 @@ in
   ];
 
   # Host nginx reverse proxy for Grafana
-  services.nginx.virtualHosts."grafana.karunagath.in" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."grafana.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -146,6 +146,9 @@ in
 
   containers.monitoring = ({
     autoStart = true;
+    specialArgs = {
+      domain = config.vars.acme.domain;
+    };
   } // containerLib.container.definition.mkContainerNetwork {
     hostAddress = "10.0.50.1";
     localAddress = "10.0.50.2";

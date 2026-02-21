@@ -47,8 +47,8 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."jellyseerr.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."jellyseerr.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {

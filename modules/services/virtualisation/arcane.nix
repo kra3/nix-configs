@@ -16,7 +16,7 @@ in
       "/sys/fs/cgroup:/sys/fs/cgroup:ro"
     ];
     environment = {
-      APP_URL = "https://oci.karunagath.in";
+      APP_URL = "https://oci.${config.vars.acme.domain}";
       PUID = "1000";
       PGID = "1000";
       LOG_LEVEL = "info";
@@ -29,8 +29,8 @@ in
     ];
   };
 
-  services.nginx.virtualHosts."oci.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."oci.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = ''
       ${allowBlock}

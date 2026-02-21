@@ -7,8 +7,8 @@ let
   homeAutoIp = config.containers.home-auto.localAddress or "10.0.50.8";
 in
 {
-  services.nginx.virtualHosts."z2m.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."z2m.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -17,8 +17,8 @@ in
     };
   };
 
-  services.nginx.virtualHosts."nvr.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."nvr.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
@@ -27,8 +27,8 @@ in
     };
   };
 
-  services.nginx.virtualHosts."ha2.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."ha2.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = ''
       ${allowBlock}

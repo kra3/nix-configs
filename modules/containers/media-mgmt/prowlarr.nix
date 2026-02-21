@@ -47,8 +47,8 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."prowlarr.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {

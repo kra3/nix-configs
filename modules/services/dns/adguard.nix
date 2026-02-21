@@ -2,6 +2,7 @@
 let
   serviceLib = import ../../lib { inherit lib config; };
   cfg = config.vars.network;
+  domain = config.vars.acme.domain;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
   allowBlock = ''
@@ -345,15 +346,15 @@ in
         tls = {
           enabled = true;
           allow_unencrypted_doh = false;
-          server_name = "dns.karunagath.in";
+          server_name = "dns.${domain}";
           force_https = false;
           port_https = 3001;
           port_dns_over_tls = 853;
           port_dns_over_quic = 853;
           port_dnscrypt = 0;
           dnscrypt_config_file = "";
-          certificate_path = "${config.security.acme.certs."karunagath.in".directory}/fullchain.pem";
-          private_key_path = "${config.security.acme.certs."karunagath.in".directory}/key.pem";
+          certificate_path = "${config.security.acme.certs.${domain}.directory}/fullchain.pem";
+          private_key_path = "${config.security.acme.certs.${domain}.directory}/key.pem";
           strict_sni_check = false;
         };
 
@@ -371,7 +372,7 @@ in
           blocking_mode = "default";
           rewrites = [
             {
-              domain = "*.karunagath.in";
+              domain = "*.${domain}";
               answer = lanIp;
               enabled = true;
             }
@@ -464,8 +465,8 @@ in
       };
     };
 
-    services.nginx.virtualHosts."dns.karunagath.in" = {
-      useACMEHost = "karunagath.in";
+    services.nginx.virtualHosts."dns.${domain}" = {
+      useACMEHost = domain;
       forceSSL = true;
       extraConfig = allowBlock;
       locations."/" = {

@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, domain, ... }:
 {
   environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
   environment.sessionVariables.LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
@@ -74,7 +74,7 @@
       internalHttpPort = 8096;
       publicHttpPort = 8096;
       publishedServerUriBySubnet = [
-        "all=https://jellyfin.karunagath.in"
+        "all=https://jellyfin.${domain}"
       ];
     };
 

@@ -52,8 +52,8 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."sabnzbd.karunagath.in" = {
-    useACMEHost = "karunagath.in";
+  services.nginx.virtualHosts."sabnzbd.${config.vars.acme.domain}" = {
+    useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {

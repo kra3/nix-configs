@@ -30,11 +30,6 @@
       url = "github:Sveske-Juice/declarative-jellyfin";
     };
 
-    nur = {
-      url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     ijohanne-nur = {
       url = "github:ijohanne/nur-packages";
       flake = false;
@@ -47,7 +42,6 @@
 
     quadlet-nix = {
       url = "github:SEIAROTg/quadlet-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -79,6 +73,9 @@
                 pkgs.sops
                 pkgs.ssh-to-age
               ];
+              shellHook = ''
+                unset PROMPT_COMMAND
+              '';
             };
           };
 
@@ -86,9 +83,9 @@
           overlays.default = import ./modules/overlays;
           nixosConfigurations = {
             sutala = nixpkgs.lib.nixosSystem {
-              system = "x86_64-linux";
               specialArgs = { inputs = inputs; };
               modules = [
+                { nixpkgs.hostPlatform = "x86_64-linux"; }
                 { nixpkgs.overlays = [ inputs.self.overlays.default ]; }
                 ./hosts/sutala/configuration.nix
               ];

@@ -8,7 +8,6 @@
   imports = [
     inputs.disko.nixosModules.disko
     inputs.home-manager.nixosModules.home-manager
-    inputs.nur.modules.nixos.default
 
     ./hardware-configuration.nix
     ./disko.nix

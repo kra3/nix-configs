@@ -19,6 +19,11 @@ in
   virtualisation.quadlet.containers.prowlarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/prowlarr:2.3.0";
+      healthCmd = "wget -qO-  http://localhost:9696/ping";
+      healthInterval = "30s";
+      healthTimeout = "10s";
+      healthRetries = 3;
+      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:9696:9696" ];
       networks = [ network.ref ];
       logDriver = "journald";

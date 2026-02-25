@@ -23,6 +23,11 @@ in
   virtualisation.quadlet.containers.sabnzbd = {
     containerConfig = {
       image = "lscr.io/linuxserver/sabnzbd:4.5.5-ls244";
+      healthCmd = "wget -qO- http://localhost:8080/api?mode=version";
+      healthInterval = "30s";
+      healthTimeout = "10s";
+      healthRetries = 3;
+      healthStartPeriod = "60s";
       publishPorts = [ "127.0.0.1:8080:8080" ];
       networks = [ network.ref ];
       logDriver = "journald";

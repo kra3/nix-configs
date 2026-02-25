@@ -19,6 +19,11 @@ in
   virtualisation.quadlet.containers.lidarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/lidarr:3.1.0";
+      healthCmd = "wget -qO-  http://localhost:8686/ping";
+      healthInterval = "30s";
+      healthTimeout = "10s";
+      healthRetries = 3;
+      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:8686:8686" ];
       networks = [ network.ref ];
       logDriver = "journald";

@@ -19,6 +19,11 @@ in
   virtualisation.quadlet.containers.radarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/radarr:6.0.4";
+      healthCmd = "wget -qO-  http://localhost:7878/ping";
+      healthInterval = "30s";
+      healthTimeout = "10s";
+      healthRetries = 3;
+      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:7878:7878" ];
       networks = [ network.ref ];
       logDriver = "journald";

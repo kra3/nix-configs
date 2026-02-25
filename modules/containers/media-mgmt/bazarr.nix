@@ -19,6 +19,11 @@ in
   virtualisation.quadlet.containers.bazarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/bazarr:1.5.5";
+      healthCmd = "wget -qO-  http://localhost:6767/ping";
+      healthInterval = "30s";
+      healthTimeout = "10s";
+      healthRetries = 3;
+      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:6767:6767" ];
       networks = [ network.ref ];
       logDriver = "journald";

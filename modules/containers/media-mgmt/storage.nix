@@ -34,6 +34,7 @@
     "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
     "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
     "d /srv/appdata/media-mgmt/lidarr 2770 root media - -"
+    "d /srv/appdata/media-mgmt/bookshelf 2770 root media - -"
     "d /srv/appdata/media-mgmt/seerr 2770 kra3 media - -"
   ];
 }

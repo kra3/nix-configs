@@ -31,5 +31,9 @@ switch-remote host=default_host target=default_host:
 deploy host=default_host:
     nix run github:zhaofengli/colmena -- apply --on {{host}}
 
+deploy-stop-first host=default_host:
+    ssh {{host}}-root "systemctl stop 'podman-*.service' 2>/dev/null || true"
+    nix run github:zhaofengli/colmena -- apply --on {{host}}
+
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}

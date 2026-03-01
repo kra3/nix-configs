@@ -24,6 +24,7 @@ in
     containerConfig = {
       image = "lscr.io/linuxserver/sabnzbd:4.5.5-ls244";
       healthCmd = "wget -qO- http://localhost:8080/api?mode=version";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

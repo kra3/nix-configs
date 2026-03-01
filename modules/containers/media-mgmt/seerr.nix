@@ -20,6 +20,7 @@ in
     containerConfig = {
       image = "ghcr.io/seerr-team/seerr:sha-68f56d2";
       healthCmd = "wget -qO- http://localhost:5055/api/v1/status";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

@@ -20,6 +20,7 @@ in
     containerConfig = {
       image = "lscr.io/linuxserver/bazarr:1.5.5";
       healthCmd = "wget -qO-  http://localhost:6767/ping";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

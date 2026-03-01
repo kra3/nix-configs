@@ -20,6 +20,7 @@ in
     containerConfig = {
       image = "lscr.io/linuxserver/radarr:6.0.4";
       healthCmd = "wget -qO-  http://localhost:7878/ping";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

@@ -20,6 +20,7 @@ in
     containerConfig = {
       image = "lscr.io/linuxserver/lidarr:3.1.0";
       healthCmd = "wget -qO-  http://localhost:8686/ping";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

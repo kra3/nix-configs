@@ -20,6 +20,7 @@ in
     containerConfig = {
       image = "lscr.io/linuxserver/prowlarr:2.3.0";
       healthCmd = "wget -qO-  http://localhost:9696/ping";
+      healthOnFailure = "none";
       healthInterval = "30s";
       healthTimeout = "10s";
       healthRetries = 3;

@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.seerr = {
     containerConfig = {
-      image = "ghcr.io/seerr-team/seerr:sha-68f56d2";
+      image = "ghcr.io/seerr-team/seerr:v3.1.0";
       healthCmd = "wget -qO- http://localhost:5055/api/v1/status";
       healthOnFailure = "none";
       healthInterval = "30s";

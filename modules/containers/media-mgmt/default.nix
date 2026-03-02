@@ -11,6 +11,8 @@
     ./bazarr.nix
     ./lidarr.nix
     ./bookshelf.nix
+    ./kavita.nix
+    ./audiobookshelf.nix
     ./seerr.nix
     ./recyclarr.nix
   ];

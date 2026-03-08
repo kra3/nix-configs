@@ -27,6 +27,9 @@ in
       volumes = [
         "/srv/appdata/media-mgmt/kavita:/config"
         "/srv/media/library/books:/books"
+        "/srv/media/library/audiobooks:/audiobooks"
+        "/srv/media/bkup/Books/Ebooks:/ebooks:ro"
+        "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
       ];
     };
     unitConfig = {

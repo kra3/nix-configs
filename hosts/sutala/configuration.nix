@@ -19,6 +19,7 @@
     ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix
     ../../modules/services/dns
+    # ../../modules/services/postgres.nix  # enable when deploying firefly
     ../../modules/services/surveillance/proxy.nix
     ../../modules/services/discovery/avahi.nix
     ../../modules/services/discovery/ssdp.nix
@@ -26,6 +27,7 @@
     ../../modules/containers/media-mgmt
     ../../modules/containers/media-play.nix
     ../../modules/containers/home-auto.nix
+    ../../modules/containers/life
     ../../modules/fail2ban.nix
     ../../modules/services/system/vim.nix
     ../../modules/services/system/sysadmin.nix

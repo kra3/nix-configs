@@ -20,6 +20,7 @@
     ../../modules/services/tailscale.nix
     ../../modules/services/dns
     ../../modules/services/postgres.nix
+    ../../modules/services/redis.nix
     ../../modules/services/surveillance/proxy.nix
     ../../modules/services/discovery/avahi.nix
     ../../modules/containers/monitoring.nix

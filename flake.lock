@@ -157,22 +157,6 @@
         "type": "github"
       }
     },
-    "ijohanne-nur": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1773349515,
-        "narHash": "sha256-kc2Lp9WBLhfIKIhGV0zXrqKfO6H2wI3x2nxPD8p2OeM=",
-        "owner": "ijohanne",
-        "repo": "nur-packages",
-        "rev": "fd092e304443d0eb71ee92eab28db5b8cb5711de",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ijohanne",
-        "repo": "nur-packages",
-        "type": "github"
-      }
-    },
     "nix-fast-build": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -250,11 +234,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1773282481,
-        "narHash": "sha256-b/GV2ysM8mKHhinse2wz+uP37epUrSE+sAKXy/xvBY4=",
+        "lastModified": 1773389992,
+        "narHash": "sha256-wvfdLLWJ2I9oEpDd9PfMA8osfIZicoQ5MT1jIwNs9Tk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "fe416aaedd397cacb33a610b33d60ff2b431b127",
+        "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
         "type": "github"
       },
       "original": {
@@ -302,7 +286,6 @@
         "disko": "disko",
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager",
-        "ijohanne-nur": "ijohanne-nur",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "quadlet-nix": "quadlet-nix",

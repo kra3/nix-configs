@@ -19,10 +19,9 @@
     ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix
     ../../modules/services/dns
-    # ../../modules/services/postgres.nix  # enable when deploying firefly
+    ../../modules/services/postgres.nix
     ../../modules/services/surveillance/proxy.nix
     ../../modules/services/discovery/avahi.nix
-    ../../modules/services/discovery/ssdp.nix
     ../../modules/containers/monitoring.nix
     ../../modules/containers/media-mgmt
     ../../modules/containers/media-play.nix

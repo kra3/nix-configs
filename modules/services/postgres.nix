@@ -1,7 +1,8 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   systemd.tmpfiles.rules = [
     "d /srv/databases 0755 root root - -"
+    "d /srv/databases/postgresql 0700 postgres postgres - -"
   ];
 
   services.postgresql = {
@@ -13,6 +14,9 @@
       {
         name = "firefly";
         ensureDBOwnership = true;
+        ensureClauses = {
+          login = true;
+        };
       }
     ];
     authentication = lib.mkOverride 10 ''

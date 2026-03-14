@@ -30,11 +30,6 @@
       url = "github:Sveske-Juice/declarative-jellyfin";
     };
 
-    ijohanne-nur = {
-      url = "github:ijohanne/nur-packages";
-      flake = false;
-    };
-    
     colmena = {
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";

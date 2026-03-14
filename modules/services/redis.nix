@@ -12,7 +12,6 @@
     port = 6379;
     save = [ [ 900 1 ] [ 300 10 ] [ 60 10000 ] ];
     settings = {
-      dir = "/srv/databases/redis";
       # protected-mode blocks non-loopback connections when no password is set;
       # disable it since we rely on firewall for access control (same as postgres trust auth)
       protected-mode = "no";

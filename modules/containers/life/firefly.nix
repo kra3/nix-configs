@@ -25,7 +25,7 @@ in
       DB_PORT=5432
       DB_DATABASE=firefly
       DB_USERNAME=firefly
-      DB_PASSWORD=
+      DB_PASSWORD=${config.sops.placeholder."db.firefly_password"}
       PGSQL_SSL_MODE=disable
       PGSQL_SCHEMA=public
       CACHE_DRIVER=file
@@ -60,8 +60,8 @@ in
       ];
     };
     unitConfig = {
-      After = [ "life-network.service" "postgresql.service" ];
-      Requires = [ "life-network.service" "postgresql.service" ];
+      After = [ "life-network.service" "postgresql-set-passwords.service" ];
+      Requires = [ "life-network.service" "postgresql-set-passwords.service" ];
     };
     serviceConfig.Restart = "always";
   };

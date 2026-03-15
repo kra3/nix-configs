@@ -1,21 +1,35 @@
-{ ... }:
+{ config, ... }:
 {
-  systemd.tmpfiles.rules = [
-    "d /srv/databases/redis 0700 redis redis - -"
-  ];
+  sops.secrets."db.redis_password" = {
+    owner = "redis-default";
+    group = "redis-default";
+    mode = "0400";
+  };
 
-  # bind 0.0.0.0 like postgres (listen_addresses = "*") — firewall restricts
-  # access to br-life only (see allowedTCPPorts below)
   services.redis.servers.default = {
     enable = true;
     bind = "0.0.0.0";
     port = 6379;
     save = [ [ 900 1 ] [ 300 10 ] [ 60 10000 ] ];
+    requirePassFile = config.sops.secrets."db.redis_password".path;
+    maxclients = 50;
     settings = {
-      # protected-mode blocks non-loopback connections when no password is set;
-      # disable it since we rely on firewall for access control (same as postgres trust auth)
-      protected-mode = "no";
+      rename-command = "FLUSHALL \"\"";
     };
+  };
+
+  # systemd sandboxing
+  systemd.services.redis-default.serviceConfig = {
+    ProtectHome = true;
+    ProtectSystem = "strict";
+    PrivateTmp = true;
+    ReadWritePaths = [ "/var/lib/redis-default" ];
+    NoNewPrivileges = true;
+    RestrictSUIDSGID = true;
+    RemoveIPC = true;
+    LockPersonality = true;
+    RestrictAddressFamilies = [ "AF_INET" "AF_UNIX" ];
+    SystemCallArchitectures = "native";
   };
 
   # allow containers on br-life to reach redis

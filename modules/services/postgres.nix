@@ -1,10 +1,5 @@
 { lib, pkgs, config, ... }:
 {
-  sops.secrets."db.firefly_password" = {
-    owner = "postgres";
-    group = "postgres";
-    mode = "0400";
-  };
   sops.secrets."db.ghostfolio_password" = {
     owner = "postgres";
     group = "postgres";
@@ -33,15 +28,8 @@
       # auth
       password_encryption = "scram-sha-256";
     };
-    ensureDatabases = [ "firefly" "ghostfolio" ];
+    ensureDatabases = [ "ghostfolio" ];
     ensureUsers = [
-      {
-        name = "firefly";
-        ensureDBOwnership = true;
-        ensureClauses = {
-          login = true;
-        };
-      }
       {
         name = "ghostfolio";
         ensureDBOwnership = true;
@@ -52,7 +40,6 @@
     ];
     authentication = lib.mkOverride 10 ''
       # life containers connect from br-life (10.89.0.0/24) via scram-sha-256
-      host firefly firefly 10.89.0.0/24 scram-sha-256
       host ghostfolio ghostfolio 10.89.0.0/24 scram-sha-256
       # all other local socket connections use peer (OS user must match pg user)
       local all all peer
@@ -73,9 +60,7 @@
       User = "postgres";
     };
     script = ''
-      FIREFLY_PW=$(cat ${config.sops.secrets."db.firefly_password".path})
       GHOSTFOLIO_PW=$(cat ${config.sops.secrets."db.ghostfolio_password".path})
-      ${lib.getExe' config.services.postgresql.package "psql"} -c "ALTER USER firefly PASSWORD '$FIREFLY_PW'"
       ${lib.getExe' config.services.postgresql.package "psql"} -c "ALTER USER ghostfolio PASSWORD '$GHOSTFOLIO_PW'"
     '';
   };
@@ -97,4 +82,3 @@
   # allow containers on br-life to reach postgresql
   networking.firewall.interfaces.br-life.allowedTCPPorts = [ 5432 ];
 }
-

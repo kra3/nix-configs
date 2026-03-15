@@ -108,7 +108,7 @@ in
       };
 
       services.home-assistant.package =
-        inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.home-assistant;
+        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.home-assistant;
 
     };
     bindMounts = {

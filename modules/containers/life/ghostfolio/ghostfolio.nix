@@ -12,7 +12,7 @@ in
 
   sops.templates."life.ghostfolio.env" = {
     owner = "root";
-    group = "media";
+    group = "life";
     mode = "0440";
     content = ''
       NODE_ENV=production

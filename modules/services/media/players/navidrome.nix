@@ -7,7 +7,7 @@
   services.navidrome = {
     enable = true;
     openFirewall = false;
-    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.navidrome;
+    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.navidrome;
     settings = {
       Address = "0.0.0.0";
       Port = 4533;

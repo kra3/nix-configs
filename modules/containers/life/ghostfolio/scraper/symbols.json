@@ -1,0 +1,82 @@
+[
+  {
+    "provider": "avanza",
+    "symbol": "AVANZA_EMERGING_MARKETS",
+    "orderbook_id": "944976"
+  },
+  {
+    "provider": "avanza",
+    "symbol": "AVANZA_GLOBAL",
+    "orderbook_id": "878733"
+  },
+  {
+    "provider": "avanza",
+    "symbol": "HANDELSBANKEN_GLOBAL_SMABOLAG_INDEX",
+    "orderbook_id": "799913"
+  },
+  {
+    "provider": "avanza",
+    "symbol": "PLUS_ALLABOLAG_SVERIGE_INDEX",
+    "orderbook_id": "1151293"
+  },
+  {
+    "provider": "avanza",
+    "symbol": "LF_GLOBAL_INDEX",
+    "orderbook_id": "417655"
+  },
+  {
+    "provider": "avanza",
+    "symbol": "LF_TILLVAXTMARKNAD_INDEX_A",
+    "orderbook_id": "487076"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "DSP_LIQUIDITY_GROWTH",
+    "scheme_code": "119125"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "DSP_NIFTY_50_EQUAL_WEIGHT_INDEX_GROWTH",
+    "scheme_code": "141877"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "ICICI_PRU_LARGE_CAP_GROWTH",
+    "scheme_code": "120586"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "ICICI_PRU_US_BLUECHIP_EQUITY_GROWTH",
+    "scheme_code": "120186"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "NIPPON_INDIA_LIQUID_GROWTH",
+    "scheme_code": "118701"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "NIPPON_INDIA_SHORT_DURATION_GROWTH",
+    "scheme_code": "118796"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "PARAG_PARIKH_FLEXI_CAP_GROWTH",
+    "scheme_code": "122639"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "PARAG_PARIKH_LIQUID_GROWTH",
+    "scheme_code": "143269"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "UTI_NIFTY_50_INDEX_GROWTH",
+    "scheme_code": "120716"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "UTI_NIFTY_NEXT_50_INDEX_GROWTH",
+    "scheme_code": "143341"
+  }
+]

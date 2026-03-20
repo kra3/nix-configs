@@ -1,0 +1,610 @@
+views:
+- title: Home
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Lights
+      heading_style: title
+      badges: []
+    - features:
+      - type: light-brightness
+      - type: light-color-temp
+      type: tile
+      entity: light.kitchen_ceiling_lights
+      name: Kitchen
+    - features:
+      - type: light-brightness
+      - type: light-color-temp
+      type: tile
+      entity: light.living_room_ceiling_lights
+      name: Living room
+      state_content:
+      - brightness
+      - effect
+    - type: tile
+      entity: light.kitchen_dining_lights
+      name: Kitchen Dining
+      vertical: false
+      features:
+      - type: light-brightness
+      features_position: bottom
+    - type: tile
+      entity: light.bedroom_wardrobe_lights
+      name: Bedroom
+      vertical: false
+      features:
+      - type: light-brightness
+      features_position: bottom
+    - type: tile
+      entity: light.hall
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.living_room_light_ceiling_ll_light_3
+      name: Knitting light
+    - type: custom:mushroom-light-card
+      collapsible_controls: true
+      show_color_control: false
+      show_color_temp_control: false
+      use_light_color: true
+      show_brightness_control: true
+      entity: light.tv_backlight_3_lite_2
+      icon_color: primary
+      fill_container: false
+      icon: mdi:led-strip
+    - type: tile
+      entity: light.dining_room_ceiling_lights
+      name: 'Dining room '
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.office_room_light
+      name: Office
+      show_entity_picture: false
+      hide_state: false
+      vertical: false
+      features:
+      - type: light-brightness
+      - type: light-color-temp
+      features_position: bottom
+    - type: tile
+      entity: switch.hue_plug_1
+      name: Plants shelf
+      icon: mdi:flower
+      show_entity_picture: false
+      hide_state: false
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: switch.hue_plug_2
+      name: Christmas Tree
+      icon: mdi:tree-outline
+      show_entity_picture: false
+      hide_state: false
+      vertical: false
+      features_position: bottom
+    - square: false
+      type: grid
+      cards:
+      - type: custom:mushroom-light-card
+        entity: light.moes_front_door_light
+        name: Main Entrance
+        collapsible_controls: true
+      - type: custom:mushroom-light-card
+        entity: light.moes_front_door_light_2
+        name: Street
+        layout: horizontal
+      columns: 2
+  - type: grid
+    cards:
+    - type: todo-list
+      entity: todo.shopping_list
+      title: Shopping List
+      hide_completed: true
+    - show_current: true
+      show_forecast: true
+      type: weather-forecast
+      entity: weather.forecast_home
+      forecast_type: daily
+      secondary_info_attribute: wind_speed
+      forecast_slots: 7
+      tap_action:
+        action: more-info
+  - type: grid
+    cards:
+    - type: heading
+      heading: Security
+      heading_style: title
+      badges:
+      - type: entity
+        entity: alarm_control_panel.verisure_alarm
+      - type: entity
+        entity: lock.front_door
+      - type: entity
+        entity: binary_sensor.house_exits_open_status
+    - type: vertical-stack
+      cards:
+      - type: heading
+        icon: mdi:door-open
+        heading: Open door/window
+        heading_style: subtitle
+        badges: []
+      - type: entity-filter
+        entities:
+        - entity: binary_sensor.dorr_vrum_opening
+        - entity: binary_sensor.entredorr_opening
+        - entity: binary_sensor.finentredorr_opening
+        - entity: binary_sensor.ho_fonster_sovrum_opening
+        - entity: binary_sensor.ho_fonster_tv_opening
+        - entity: binary_sensor.ho_glas_vrum_opening
+        conditions:
+        - condition: state
+          state: 'on'
+        card:
+          type: glance
+    - type: custom:alarmo-card
+      entity: alarm_control_panel.alarmo
+      name: ''
+      keep_keypad_visible: false
+      button_scale_actions: 1
+      button_scale_keypad: 1
+      states:
+      - arm_home
+      - arm_away
+      show_messages: true
+      show_ready_indicator: true
+      show_bypassed_sensors: true
+      use_code_dialog: false
+      hide_keypad: false
+  - type: grid
+    cards:
+    - type: heading
+      heading_style: title
+      heading: Climat (Hall)
+      badges:
+      - type: entity
+        show_state: true
+        show_icon: true
+        entity: sensor.hue_pir_hall_temperature
+      - type: entity
+        entity: sensor.hall_humidity
+    - graph: line
+      type: sensor
+      entity: sensor.hue_pir_kitchen_temperature
+      detail: 2
+      unit: C
+      name: Temperature
+      hours_to_show: 168
+    - graph: line
+      type: sensor
+      entity: sensor.hall_humidity
+      detail: 2
+      name: Humidity
+      hours_to_show: 168
+    - chart_type: line
+      period: hour
+      type: statistics-graph
+      entities:
+      - sensor.hue_pir_kitchen_temperature
+      - sensor.hue_pir_hall_temperature
+      - sensor.fresh_kitchen_fan_temperature
+      stat_types:
+      - mean
+      - min
+      - max
+      logarithmic_scale: true
+    - type: statistics-graph
+      entities:
+      - sensor.laundry_humidity
+      - sensor.hall_humidity
+  - type: grid
+    cards:
+    - type: heading
+      heading: Media Server
+      heading_style: title
+      badges:
+      - type: entity
+        show_state: true
+        show_icon: true
+        entity: media_player.google_tv_2
+        icon: mdi:google-play
+        color: state
+        state_content: volume_level
+      - type: entity
+        entity: media_player.lg_webos_tv_oled77c35la_2
+      - type: entity
+        entity: media_player.home_theater_2
+      icon: mdi:plex
+    - type: media-control
+      entity: media_player.lg_webos_tv_oled77c35la_2
+      grid_options:
+        columns: full
+        rows: 2
+    - type: media-control
+      entity: media_player.home_theater
+    - type: media-control
+      entity: media_player.home_theater_2
+  badges:
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: person.anjalipc
+    color: ''
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: person.arun_karunagath
+    color: ''
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: alarm_control_panel.alarmo
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: lock.yale_front_door_2
+  - type: entity-filter
+    entities:
+    - binary_sensor.dorr_vrum_opening
+    - binary_sensor.entredorr_opening
+    - binary_sensor.finentredorr_opening
+    - binary_sensor.ho_fonster_sovrum_opening
+    - binary_sensor.va_fonster_sovrum_opening
+    - binary_sensor.ho_fonster_tv_opening
+    - binary_sensor.va_fonster_tv_opening
+    - binary_sensor.ho_glas_vrum_opening
+    - binary_sensor.va_glas_vrum_opening
+    conditions:
+    - condition: state
+      state: 'on'
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.waste_truck_type
+    color: ''
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.hue_pir_hall_temperature
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: weather.forecast_home
+    state_content:
+    - temperature
+    - state
+    - wind_speed
+    - uv_index
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.sun_next_rising
+    color: ''
+    visibility:
+    - condition: state
+      entity: sun.sun
+      state: below_horizon
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.sun_next_dusk
+    color: ''
+    visibility:
+    - condition: state
+      entity: sun.sun
+      state: above_horizon
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.moon_phase
+    color: ''
+  - type: entity
+    entity: sensor.season_2
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: sensor.backup_backup_manager_state
+    color: red
+    visibility:
+    - condition: user
+      users:
+      - a1d4401b8b714ebb83f07c5316ab399c
+    - condition: state
+      entity: binary_sensor.backups_stale
+      state: 'on'
+    name: Backup
+    state_content: state
+    icon: mdi:cloud-upload
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.iphone2_battery_level
+    visibility:
+    - condition: user
+      users:
+      - a1d4401b8b714ebb83f07c5316ab399c
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.home_arun_karunagath_distance
+    visibility:
+    - condition: user
+      users:
+      - a1d4401b8b714ebb83f07c5316ab399c
+  - type: entity
+    show_name: false
+    show_state: true
+    show_icon: true
+    entity: sensor.v2040_battery_level
+    color: ''
+    visibility:
+    - condition: user
+      users:
+      - 6edcc5a09c3144d684077ee362e7394a
+  cards: []
+- type: sections
+  title: System Health
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: vertical-stack
+      cards:
+      - type: heading
+        icon: mdi:raspberry-pi
+        heading_style: title
+        heading: Raspberry Pi 3B+
+        badges:
+        - type: entity
+          show_state: true
+          show_icon: true
+          entity: binary_sensor.rpi_power_status
+      - type: heading
+        icon: mdi:camera-timer
+        heading: Last Boot
+        heading_style: subtitle
+        badges:
+        - type: entity
+          entity: sensor.system_monitor_last_boot
+      - show_name: false
+        show_icon: true
+        show_state: true
+        type: glance
+        entities:
+        - entity: sensor.system_monitor_processor_use
+        - entity: sensor.system_monitor_memory_usage
+        - entity: sensor.system_monitor_disk_usage
+        - entity: sensor.system_monitor_swap_usage
+        state_color: true
+      grid_options:
+        columns: 18
+        rows: auto
+  - type: grid
+    cards:
+    - type: vertical-stack
+      cards:
+      - type: heading
+        icon: mdi:cpu-64-bit
+        heading_style: title
+        heading: CPU
+      - type: heading
+        icon: mdi:cpu-64-bit
+        heading: Use / Temp
+        heading_style: subtitle
+        badges:
+        - type: entity
+          entity: sensor.system_monitor_processor_use
+        - type: entity
+          entity: sensor.system_monitor_processor_temperature
+      - square: true
+        type: grid
+        cards:
+        - type: gauge
+          entity: sensor.system_monitor_load_1m
+          name: 1m
+          min: 0
+          max: 1
+          severity:
+            green: 0
+            yellow: 0.5
+            red: 0.8
+        - type: gauge
+          entity: sensor.system_monitor_load_5m
+          name: 5m
+          min: 0
+          max: 1
+          severity:
+            green: 0
+            yellow: 0.5
+            red: 0.8
+        - type: gauge
+          entity: sensor.system_monitor_load_15m
+          name: 15m
+          min: 0
+          max: 1
+          severity:
+            green: 0
+            yellow: 0.5
+            red: 0.8
+        columns: 3
+      grid_options:
+        columns: 14
+        rows: auto
+    - type: vertical-stack
+      cards:
+      - type: heading
+        icon: mdi:memory
+        heading_style: title
+        heading: Memory
+      - type: heading
+        icon: mdi:memory
+        heading_style: subtitle
+        heading: Memory
+        badges:
+        - type: entity
+          entity: sensor.system_monitor_memory_use
+        - type: entity
+          entity: sensor.system_monitor_memory_free
+      - type: gauge
+        entity: sensor.system_monitor_memory_usage
+        name: RAM
+        min: 0
+        max: 100
+        needle: false
+        severity:
+          green: 0
+          yellow: 55
+          red: 85
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: vertical-stack
+      cards:
+      - type: heading
+        icon: mdi:sd
+        heading_style: title
+        heading: Storage
+      - type: heading
+        icon: mdi:sd
+        heading_style: subtitle
+        heading: Used / Free
+        badges:
+        - type: entity
+          entity: sensor.system_monitor_disk_use
+        - type: entity
+          entity: sensor.system_monitor_disk_free
+      - type: gauge
+        entity: sensor.system_monitor_disk_usage
+        max: 100
+        min: 0
+        name: /
+        needle: false
+        severity:
+          green: 0
+          yellow: 60
+          red: 85
+      grid_options:
+        columns: 6
+        rows: auto
+  - type: grid
+    cards:
+    - type: entities
+      entities:
+      - entity: sensor.system_monitor_ipv4_address_wlan0
+        name: WiFi
+        icon: mdi:wifi
+        secondary_info: last-updated
+      - entity: sensor.system_monitor_ipv4_address_enu1u1u1
+        name: LAN
+        icon: mdi:lan
+        secondary_info: last-updated
+      - entity: sensor.system_monitor_ipv4_address_docker0
+        name: Docker
+        icon: mdi:docker
+        secondary_info: last-updated
+      - entity: sensor.system_monitor_ipv4_address_hassio
+        name: HA
+        icon: mdi:home-assistant
+        secondary_info: last-updated
+      grid_options:
+        columns: 18
+        rows: auto
+    - square: true
+      type: grid
+      cards:
+      - chart_type: line
+        period: day
+        type: statistics-graph
+        entities:
+        - sensor.cloudflare_speed_test_90th_percentile_down
+        - sensor.cloudflare_speed_test_25mb_down
+        - sensor.cloudflare_speed_test_10mb_down
+        - sensor.cloudflare_speed_test_1mb_down
+        - sensor.cloudflare_speed_test_100kb_down
+        stat_types:
+        - max
+        title: Download
+      - chart_type: line
+        period: day
+        type: statistics-graph
+        entities:
+        - sensor.cloudflare_speed_test_90th_percentile_up
+        - sensor.cloudflare_speed_test_10mb_up
+        - sensor.cloudflare_speed_test_1mb_up
+        - sensor.cloudflare_speed_test_100kb_up
+        stat_types:
+        - max
+        title: Upload
+      - chart_type: line
+        period: day
+        type: statistics-graph
+        entities:
+        - sensor.cloudflare_speed_test_latency
+        - sensor.cloudflare_speed_test_jitter
+        stat_types:
+        - min
+        title: Ping
+      title: Speed
+  - type: grid
+    cards:
+    - type: heading
+      heading: New section
+    - type: tile
+      entity: switch.power_monitor
+    - type: tile
+      entity: sensor.power_monitor_power
+    - type: tile
+      entity: select.power_monitor_start_up_behaviour
+    - type: tile
+      entity: sensor.power_monitor_summation_delivered
+    - type: tile
+      entity: sensor.power_monitor_voltage
+    - type: tile
+      entity: sensor.power_monitor_current
+    - type: tile
+      entity: switch.power_monitor_child_lock
+  visible:
+  - user: a1d4401b8b714ebb83f07c5316ab399c
+- type: panel
+  path: cctv
+  title: CCTV
+  icon: mdi:cctv
+  cards:
+  - type: custom:advanced-camera-card
+    cameras:
+    - camera_entity: camera.ranger_duo_fxd
+      live_provider: go2rtc
+    - camera_entity: camera.ranger_duo_ptz
+      live_provider: go2rtc
+      go2rtc:
+        mode: webrtc
+    - camera_entity: camera.ranger_uno
+      live_provider: go2rtc
+      go2rtc:
+        mode: webrtc
+    view:
+      dim: true
+    menu:
+      buttons:
+        microphone:
+          enabled: true
+    status_bar:
+      style: overlay
+    image:
+      mode: camera
+    grid_options:
+      columns: full

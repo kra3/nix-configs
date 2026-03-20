@@ -27,6 +27,7 @@
     ../../modules/containers/media-mgmt
     ../../modules/containers/media-play.nix
     ../../modules/containers/home-auto.nix
+    ../../modules/containers/home-auto/home-assistant
     ../../modules/containers/life
     ../../modules/fail2ban.nix
     ../../modules/services/system/vim.nix

@@ -1,0 +1,11 @@
+strategy:
+  type: original-states
+resources:
+- url: /hacsfiles/lovelace-mushroom/mushroom.js?hacstag=444350375511
+  type: module
+- url: /webrtc/webrtc-camera.js?v=v3.6.1
+  type: module
+- url: /hacsfiles/advanced-camera-card/advanced-camera-card.js?hacstag=3940825527272
+  type: module
+- url: /hacsfiles/alarmo-card/alarmo-card.js?hacstag=391372854166
+  type: module

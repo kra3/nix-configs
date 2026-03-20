@@ -48,7 +48,6 @@ in
     "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
     "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
     "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
-    "d /srv/appdata/home-auto/home-assistant 0750 root root - -"
     "d /srv/appdata/home-auto/zigbee2mqtt 2770 root zigbee2mqtt - -"
     "d /srv/surveillance/recordings 2770 root frigate - -"
     "d /srv/surveillance/clips 2770 root frigate - -"
@@ -135,14 +134,6 @@ in
       "/var/lib/mosquitto" = {
         hostPath = "/srv/appdata/home-auto/mosquitto";
         isReadOnly = false;
-      };
-      "/var/lib/home-assistant" = {
-        hostPath = "/srv/appdata/home-auto/home-assistant";
-        isReadOnly = false;
-      };
-      "/var/lib/home-assistant/secrets.yaml" = {
-        hostPath = config.sops.templates."home-assistant-secrets.yaml".path;
-        isReadOnly = true;
       };
       "/var/lib/zigbee2mqtt" = {
         hostPath = "/srv/appdata/home-auto/zigbee2mqtt";
@@ -238,16 +229,6 @@ in
     '';
   };
 
-  sops.templates."home-assistant-secrets.yaml" = {
-    owner = "root";
-    group = "root";
-    mode = "0444";
-    content = ''
-      homeassistant_latitude: ${config.sops.placeholder."homeassistant.latitude"}
-      homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
-    '';
-  };
-
   sops.secrets."mqtt.password" = {
     owner = "root";
     group = "root";
@@ -255,18 +236,6 @@ in
   };
 
   sops.secrets."mqtt.user" = {
-    owner = "root";
-    group = "root";
-    mode = "0400";
-  };
-
-  sops.secrets."homeassistant.latitude" = {
-    owner = "root";
-    group = "root";
-    mode = "0400";
-  };
-
-  sops.secrets."homeassistant.longitude" = {
     owner = "root";
     group = "root";
     mode = "0400";

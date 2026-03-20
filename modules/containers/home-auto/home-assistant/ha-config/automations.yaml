@@ -1,0 +1,437 @@
+- id: '1733346573361'
+  alias: remote control
+  description: ''
+  use_blueprint:
+    path: lsismeiro/ikea_e2001_e2002.yaml
+    input:
+      integration: ZHA
+      controller_device: f3322a89a337bba1ad201cc86046ee2c
+      helper_last_controller_event: input_text.dining_remote_control_last_event
+      action_button_left_short: []
+      action_button_up_short:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          color_temp: 474
+        target:
+          area_id: living_room
+          entity_id: light.living_room_ceiling_lights
+      action_button_down_short:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          color_temp: 179
+        target:
+          area_id: living_room
+          entity_id: light.living_room_ceiling_lights
+      helper_debounce_delay: 30
+      button_down_double_press: true
+      button_up_double_press: true
+      button_right_double_press: true
+      button_left_double_press: true
+      action_button_left_double: []
+      action_button_right_double: []
+      action_button_up_double:
+      - action: light.turn_on
+        metadata: {}
+        data: {}
+        target:
+          area_id: dining_room
+          entity_id: light.dining_room_ceiling_lights
+      action_button_down_double:
+      - action: light.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.dining_room_ceiling_lights
+          area_id: dining_room
+- id: '1733346957071'
+  alias: Hook - Living room ceiling lights
+  description: ''
+  use_blueprint:
+    path: EPMatt/light.yaml
+    input:
+      controller_device: f3322a89a337bba1ad201cc86046ee2c
+      controller_model: IKEA E2001/E2002 STYRBAR Remote control
+      light: light.living_room_ceiling_lights
+      light_color_mode: Auto
+      min_brightness: 75
+      brightness_steps_short: 4
+      brightness_steps_long: 12
+      force_brightness: true
+      on_brightness: 255
+- id: '1733594588791'
+  alias: Neelu left home
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.anjalipc
+      zone_entity: zone.home
+      notify_device: f4da98937625ae764a56ad8144fd2c88
+- id: '1733594815974'
+  alias: Kunsu left home
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.arun_karunagath
+      zone_entity: zone.home
+      notify_device: a00372a62748fcca4d78e08dd49b1979
+- id: '1733595301092'
+  alias: Low Battery Notifications & Actions
+  description: ''
+  use_blueprint:
+    path: Blackshome/low-battery-notifications-and-actions.yaml
+    input:
+      include_time: time_disabled
+      time: '20:10:00'
+      include_persistent_notification: enable_persistent_notification
+      include_easy_notify: enable_easy_notify
+      notify_device:
+      - b4c7eb99866347bf5826b5d0d97b4743
+      - a00372a62748fcca4d78e08dd49b1979
+      include_button: disable_button_trigger
+- id: '1759077667503'
+  alias: Turn on TV
+  description: ''
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: webostv
+    type: webostv.turn_on
+    trigger: device
+  conditions:
+  - condition: device
+    device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: media_player
+    entity_id: d82eff522a62e356a89979d2dd74f5df
+    type: is_off
+  actions:
+  - action: wake_on_lan.send_magic_packet
+    metadata: {}
+    data:
+      mac: 20:28:bc:b7:ff:3e
+      broadcast_port: 7
+  mode: single
+- id: '1760916162440'
+  alias: tv_back_light_on
+  description: ''
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: webostv
+    type: webostv.turn_on
+    trigger: device
+    id: on_tv_power_on
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: "{{ state_attr('sun.sun', 'elevation') | float\n   < states('input_number.light_on_sun_elevation_threshold')
+        | float }}\n"
+    - condition: template
+      value_template: '{{ state_attr(''weather.forecast_home'', ''cloud_coverage'')
+        | float > 70 }}
+
+        '
+  actions:
+  - type: turn_on
+    device_id: 76e25efec2b514e252ab3129922d89ca
+    entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
+    domain: light
+  mode: single
+- id: '1760916276890'
+  alias: tv_backlight_off
+  description: ''
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: media_player
+    entity_id: d82eff522a62e356a89979d2dd74f5df
+    type: turned_off
+    trigger: device
+    id: on_tv_power_off
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 76e25efec2b514e252ab3129922d89ca
+    entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
+    domain: light
+  mode: restart
+- id: garage_remote_toggle
+  alias: 'Garage: handheld remote pressed (RF Bridge)'
+  description: ''
+  triggers:
+  - topic: tele/rfbridge/RESULT
+    trigger: mqtt
+  conditions:
+  - condition: template
+    value_template: "{% set d = (trigger.payload_json.get('RfRaw', {}).get('Data',
+      '')\n             if trigger.payload_json is defined else '') %}\n{{ '281818'
+      in d }}"
+  actions:
+  - target:
+      entity_id: cover.garage_door
+    action: cover.toggle
+  mode: single
+- id: '1762533741087'
+  alias: Kitchen — Is Dark (ON)
+  description: Set dark=ON when lux stays <30 for 2m or when sun goes below horizon
+  triggers:
+  - entity_id: sensor.hue_pir_kitchen_illuminance
+    below: 30
+    for: 00:02:00
+    trigger: numeric_state
+  - entity_id: sun.sun
+    to: below_horizon
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id: input_boolean.kitchen_is_dark
+    action: input_boolean.turn_on
+  mode: single
+- id: '1762533852644'
+  alias: Kitchen — Is Dark (OFF)
+  description: Clear dark when lux stays >120 for 2m (while sun is up)
+  triggers:
+  - entity_id: sensor.hue_pir_kitchen_illuminance
+    above: 120
+    for: 00:02:00
+    trigger: numeric_state
+  - entity_id: sun.sun
+    to: above_horizon
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: above_horizon
+  actions:
+  - target:
+      entity_id: input_boolean.kitchen_is_dark
+    action: input_boolean.turn_off
+  mode: single
+- id: '1762534079414'
+  alias: Kitchen lights — ON on motion (when dark)
+  description: Full before midnight; dim at night. Requires input_boolean.kitchen_is_dark
+  triggers:
+  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+    from: 'off'
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.kitchen_is_dark
+    state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: time
+        after: '22:30:00'
+        before: 06:00:00
+      sequence:
+      - target:
+          entity_id: light.kitchen_ceiling_lights
+        data:
+          brightness_pct: 15
+          transition: 1
+        action: light.turn_on
+    default:
+    - target:
+        entity_id: light.kitchen_ceiling_lights
+      data:
+        brightness_pct: 100
+        transition: 0.8
+      action: light.turn_on
+  mode: restart
+- id: '1762534186787'
+  alias: Kitchen lights — DIM after 5m (before sleep schedule)
+  description: If no motion for 5m outside sleep schedule, dim to 50%
+  triggers:
+  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+    to: 'off'
+    for: 00:5:00
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: 'off'
+  - condition: state
+    entity_id: light.kitchen_ceiling_lights
+    state: 'on'
+  actions:
+  - target:
+      entity_id: light.kitchen_ceiling_lights
+    data:
+      brightness_pct: 50
+      transition: 2
+    action: light.turn_on
+  mode: single
+- id: '1762534234631'
+  alias: Kitchen lights — VERY LOW after 15m (when dark)
+  description: If no motion for 15m outside 22:30–06:00, dim to very low (5%) instead
+    of turning off
+  triggers:
+  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+    to: 'off'
+    for: 00:10:00
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: 'off'
+  - condition: state
+    entity_id: light.kitchen_ceiling_lights
+    state: 'on'
+  actions:
+  - target:
+      entity_id: light.kitchen_ceiling_lights
+    data:
+      brightness_pct: 15
+      transition: 2
+    action: light.turn_on
+  mode: single
+- id: '1762534278433'
+  alias: Kitchen lights — OFF after 1m (during sleep time)
+  description: Between 22:30–06:00, turn off 1m after no motion
+  triggers:
+  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+    to: 'off'
+    for: 00:01:00
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: 'on'
+  - condition: state
+    entity_id: light.kitchen_ceiling_lights
+    state: 'on'
+  actions:
+  - target:
+      entity_id: light.kitchen_ceiling_lights
+    data:
+      transition: 1
+    action: light.turn_off
+  mode: single
+- id: '1762613142270'
+  alias: Hall — Is Dark (OFF)
+  description: Clear dark when lux stays >120 for 2m (while sun is up)
+  triggers:
+  - entity_id: sensor.hue_pir_hall_illuminance
+    above: 120
+    for: 00:02:00
+    trigger: numeric_state
+  - entity_id: sun.sun
+    to: above_horizon
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: above_horizon
+  actions:
+  - target:
+      entity_id: input_boolean.hall_is_dark
+    action: input_boolean.turn_off
+  mode: single
+- id: '1762613277636'
+  alias: Hall - Is Dark (ON)
+  description: Set dark=ON when lux stays <30 for 2m or when sun goes below horizon
+  triggers:
+  - entity_id: sensor.hue_pir_hall_illuminance
+    below: 30
+    for: 00:02:00
+    trigger: numeric_state
+  - entity_id: sun.sun
+    to: below_horizon
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id: input_boolean.hall_is_dark
+    action: input_boolean.turn_on
+  mode: single
+- id: '1762614514623'
+  alias: Hall — Baseline DIM when dark
+  description: ''
+  triggers:
+  - entity_id: input_boolean.hall_is_dark
+    to: 'on'
+    trigger: state
+  actions:
+  - target:
+      entity_id: light.hall
+    data:
+      brightness_pct: 15
+      transition: 1
+    action: light.turn_on
+  mode: single
+- id: '1762614586108'
+  alias: Hall — Night motion stays DIM
+  description: ''
+  triggers:
+  - entity_id: binary_sensor.hue_pir_hall
+    from: 'off'
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: 'on'
+  - condition: state
+    entity_id: schedule.sleep
+    state: 'on'
+  actions:
+  - target:
+      entity_id: light.hall
+    data:
+      brightness_pct: 10
+      transition: 0.5
+    action: light.turn_on
+  mode: restart
+- id: '1762614757780'
+  alias: Hall — Motion boost then cooldown to DIM (before sleeptime)
+  description: ''
+  triggers:
+  - entity_id:
+    - binary_sensor.hue_pir_hall
+    from:
+    - 'off'
+    to:
+    - 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: 'on'
+  - condition: state
+    entity_id: schedule.sleep
+    state:
+    - 'off'
+  actions:
+  - target:
+      entity_id: light.hall
+    data:
+      brightness_pct: 55
+      transition: 0.3
+    action: light.turn_on
+  - wait_for_trigger:
+    - entity_id: binary_sensor.hue_pir_hall
+      to: 'off'
+      trigger: state
+  - wait_for_trigger:
+    - entity_id: binary_sensor.hue_pir_hall
+      to: 'on'
+      trigger: state
+    timeout: 00:00:10
+    continue_on_timeout: true
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ not wait.completed }}'
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 15
+          transition: 0.8
+        action: light.turn_on
+    default: []
+  mode: restart

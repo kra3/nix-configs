@@ -1,0 +1,60 @@
+homeassistant:
+  name: Home
+  time_zone: Europe/Stockholm
+  unit_system: metric
+  temperature_unit: C
+  country: SE
+  currency: SEK
+  language: en-GB
+  latitude: !secret homeassistant_latitude
+  longitude: !secret homeassistant_longitude
+  packages: !include_dir_named packages
+
+default_config:
+
+http:
+  server_host: "0.0.0.0"
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - "127.0.0.1"
+    - "10.89.0.0/16"
+
+wake_on_lan:
+
+battery_notes:
+
+ffmpeg:
+
+stream:
+
+prometheus:
+  namespace: ha
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+lovelace:
+  resource_mode: yaml
+  dashboards:
+    lovelace:
+      mode: yaml
+      filename: lovelace.yaml
+      title: Overview
+      icon: mdi:view-dashboard
+      show_in_sidebar: true
+      require_admin: false
+    lovelace-map:
+      mode: yaml
+      filename: dashboards/map.yaml
+      title: Map
+      icon: mdi:map
+      show_in_sidebar: true
+      require_admin: false
+    dashboard-wip:
+      mode: yaml
+      filename: dashboards/dashboard_wip.yaml
+      title: Dashboard
+      icon: mdi:view-dashboard-variant
+      show_in_sidebar: true
+      require_admin: false

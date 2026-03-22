@@ -30,7 +30,7 @@ in
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
-      proxyPass = "http://10.0.50.2:3001";
+      proxyPass = "http://${config.vars.network.containers.monitoring.localAddress}:3001";
       proxyWebsockets = true;
     };
   };
@@ -52,28 +52,28 @@ in
   services.prometheus.exporters = {
     node = {
       enable = true;
-      listenAddress = "10.0.50.1";
+      listenAddress = config.vars.network.containers.monitoring.hostAddress;
       enabledCollectors = [
         "systemd"
       ];
     };
     smartctl = {
       enable = true;
-      listenAddress = "10.0.50.1";
+      listenAddress = config.vars.network.containers.monitoring.hostAddress;
     };
     nginx = {
       enable = true;
-      listenAddress = "10.0.50.1";
+      listenAddress = config.vars.network.containers.monitoring.hostAddress;
       scrapeUri = "http://127.0.0.1/nginx_status";
     };
     unbound = {
       enable = true;
-      listenAddress = "10.0.50.1";
+      listenAddress = config.vars.network.containers.monitoring.hostAddress;
       unbound.host = "tcp://127.0.0.1:8953";
     };
     zfs = {
       enable = true;
-      listenAddress = "10.0.50.1";
+      listenAddress = config.vars.network.containers.monitoring.hostAddress;
       pools = [
         "rpool"
         "tank"
@@ -88,7 +88,7 @@ in
     serviceConfig = {
       DynamicUser = true;
       Restart = "always";
-      ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=0.0.0.0:9558";
+      ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558";
     };
   };
 
@@ -148,10 +148,12 @@ in
     autoStart = true;
     specialArgs = {
       domain = config.vars.acme.domain;
+      monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
+      networkVars = config.vars.network;
     };
   } // containerLib.container.definition.mkContainerNetwork {
-    hostAddress = "10.0.50.1";
-    localAddress = "10.0.50.2";
+    hostAddress = config.vars.network.containers.monitoring.hostAddress;
+    localAddress = config.vars.network.containers.monitoring.localAddress;
   } // {
     config = {
       imports = [
@@ -162,7 +164,7 @@ in
 
       networking = {
         hostName = "monitoring";
-        defaultGateway = "10.0.50.1";
+        defaultGateway = config.vars.network.containers.monitoring.hostAddress;
         nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           3001 # Grafana

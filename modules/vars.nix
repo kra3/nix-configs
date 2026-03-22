@@ -32,6 +32,61 @@
         ];
         description = "CIDR blocks allowed for nginx access";
       };
+      podmanSubnets = {
+        life = lib.mkOption {
+          type = lib.types.str;
+          default = "10.3.0.0/24";
+          description = "Podman bridge subnet for life zone (br-life)";
+        };
+        mediaMgmt = lib.mkOption {
+          type = lib.types.str;
+          default = "10.3.1.0/24";
+          description = "Podman bridge subnet for media-mgmt zone (br-media-mgmt)";
+        };
+        homeAuto = lib.mkOption {
+          type = lib.types.str;
+          default = "10.3.2.0/24";
+          description = "Podman bridge subnet for iot zone (br-home-auto)";
+        };
+      };
+      containers = {
+        monitoring = {
+          hostAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.1";
+            description = "Host-side veth address for monitoring container";
+          };
+          localAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.2";
+            description = "Container-side veth address for monitoring container";
+          };
+        };
+        mediaPlay = {
+          hostAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.5";
+            description = "Host-side veth address for media-play container";
+          };
+          localAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.6";
+            description = "Container-side veth address for media-play container";
+          };
+        };
+        homeAuto = {
+          hostAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.9";
+            description = "Host-side veth address for home-auto container";
+          };
+          localAddress = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.255.10";
+            description = "Container-side veth address for home-auto container";
+          };
+        };
+      };
     };
     acme = {
       email = lib.mkOption {

@@ -39,8 +39,8 @@
       }
     ];
     authentication = lib.mkOverride 10 ''
-      # life containers connect from br-life (10.89.0.0/24) via scram-sha-256
-      host ghostfolio ghostfolio 10.89.0.0/24 scram-sha-256
+      # life containers connect from br-life (${config.vars.network.podmanSubnets.life}) via scram-sha-256
+      host ghostfolio ghostfolio ${config.vars.network.podmanSubnets.life} scram-sha-256
       # all other local socket connections use peer (OS user must match pg user)
       local all all peer
       # loopback TCP for manual access

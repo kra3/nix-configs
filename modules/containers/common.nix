@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, monitoringLocalAddress, ... }:
 let
   roleLabel = if config.boot.isContainer then "container" else "host";
 in
@@ -69,7 +69,7 @@ in
   environment.etc."alloy/base.alloy".text = ''
     loki.write "default" {
       endpoint {
-        url = "http://10.0.50.2:3100/loki/api/v1/push"
+        url = "http://${monitoringLocalAddress}:3100/loki/api/v1/push"
       }
     }
 

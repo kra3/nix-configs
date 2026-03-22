@@ -1,4 +1,4 @@
-{ config, lib, domain, ... }:
+{ config, lib, domain, networkVars, ... }:
 {
   services.grafana = {
     enable = true;
@@ -8,7 +8,7 @@
         admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
       };
       server = {
-        http_addr = "10.0.50.2";
+        http_addr = networkVars.containers.monitoring.localAddress;
         http_port = 3001;
         domain = "grafana.${domain}";
         root_url = "https://grafana.${domain}/";
@@ -24,14 +24,14 @@
             name = "Prometheus";
             type = "prometheus";
             access = "proxy";
-            url = "http://10.0.50.2:9090";
+            url = "http://${networkVars.containers.monitoring.localAddress}:9090";
             isDefault = true;
           }
           {
             name = "Loki";
             type = "loki";
             access = "proxy";
-            url = "http://10.0.50.2:3100";
+            url = "http://${networkVars.containers.monitoring.localAddress}:3100";
           }
         ];
       };

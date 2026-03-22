@@ -13,6 +13,7 @@
       Port = 4533;
       MusicFolder = "/data/library/music";
       DataFolder = "/var/lib/navidrome/data";
+      "Prometheus.Enabled" = true;
     };
   };
 

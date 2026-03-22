@@ -34,7 +34,7 @@ in
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
-      proxyPass = "http://10.0.50.6:8096";
+      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
       proxyWebsockets = true;
     };
   };
@@ -44,7 +44,7 @@ in
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
-      proxyPass = "http://10.0.50.6:4533";
+      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
       proxyWebsockets = true;
     };
   };
@@ -54,7 +54,7 @@ in
     forceSSL = true;
     extraConfig = allowBlock;
     locations."/" = {
-      proxyPass = "http://10.0.50.6:8095";
+      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:8095";
       proxyWebsockets = true;
     };
   };
@@ -83,10 +83,11 @@ in
     specialArgs = {
       inherit inputs;
       domain = config.vars.acme.domain;
+      monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
     };
   } // containerLib.container.definition.mkContainerNetwork {
-    hostAddress = "10.0.50.5";
-    localAddress = "10.0.50.6";
+    hostAddress = config.vars.network.containers.mediaPlay.hostAddress;
+    localAddress = config.vars.network.containers.mediaPlay.localAddress;
   } // {
     config = {
       imports = [
@@ -102,7 +103,7 @@ in
 
       networking = {
         hostName = "media-play";
-        defaultGateway = "10.0.50.5";
+        defaultGateway = config.vars.network.containers.mediaPlay.hostAddress;
         nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           4533 # Navidrome

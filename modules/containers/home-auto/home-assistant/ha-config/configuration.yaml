@@ -1,5 +1,5 @@
 homeassistant:
-  name: Home
+  name: Vasudha
   time_zone: Europe/Stockholm
   unit_system: metric
   temperature_unit: C
@@ -12,14 +12,18 @@ homeassistant:
 
 default_config:
 
+network:
+
 http:
   server_host: "0.0.0.0"
   use_x_forwarded_for: true
   trusted_proxies:
     - "127.0.0.1"
-    - "10.89.0.0/16"
+    - "10.3.0.0/16"
 
 wake_on_lan:
+
+bluetooth:
 
 battery_notes:
 

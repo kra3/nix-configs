@@ -1,15 +1,15 @@
-{ ... }:
+{ networkVars, ... }:
 {
   services.loki = {
     enable = true;
     configuration = {
       auth_enabled = false;
       server = {
-        http_listen_address = "10.0.50.2";
+        http_listen_address = networkVars.containers.monitoring.localAddress;
         http_listen_port = 3100;
       };
       common = {
-        instance_addr = "10.0.50.2";
+        instance_addr = networkVars.containers.monitoring.localAddress;
         path_prefix = "/var/lib/loki";
         storage = {
           filesystem = {

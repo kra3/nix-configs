@@ -44,7 +44,7 @@
       "192.168.1.0/24"
       "100.64.0.0/10"
       "127.0.0.1"
-      "10.0.50.2/32"
+      config.vars.network.containers.monitoring.localAddress
     ];
   };
 
@@ -116,9 +116,43 @@
     enableIPv6 = false;
     firewall = {
       enable = true;
+      filterForward = true;
       logRefusedConnections = true;
       logRefusedPackets = true;
       logRefusedUnicastsOnly = true;
+      # Default-deny inter-zone FORWARD policy with explicit allows
+      extraForwardRules = let
+        mon  = "10.3.255.2";   # monitoring container
+        mp   = "10.3.255.6";   # media-play container
+        ha   = "10.3.255.10";  # home-auto container
+        haNet = "10.3.2.0/24"; # home-auto Podman subnet (HA pod)
+      in ''
+        # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
+        ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
+        # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
+        ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
+        # 3. monitoring → HA pod: scrape Home Assistant Prometheus endpoint
+        ip saddr ${mon} ip daddr ${haNet} tcp dport 8123 accept
+        # 4. home-auto → monitoring: ship logs via Alloy → Loki
+        ip saddr ${ha} ip daddr ${mon} tcp dport 3100 accept
+        # 5. media-play → monitoring: ship logs via Alloy → Loki
+        ip saddr ${mp} ip daddr ${mon} tcp dport 3100 accept
+        # 6. HA pod → home-auto: HA talks to MQTT + Frigate
+        ip saddr ${haNet} ip daddr ${ha} tcp dport { 1883, 5000 } accept
+        # 7. home-auto → HA pod: Frigate notifications / automations
+        ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
+        # 8. HA pod → media-play: HA media_player integration (Jellyfin)
+        ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
+        # 9. HA pod → media-play: HA media_player integration (Music Assistant)
+        ip saddr ${haNet} ip daddr ${mp} tcp dport 8095 accept
+        # 10. LAN → home-auto: DNAT for MQTT + WebRTC
+        ip saddr 192.168.1.0/24 ip daddr ${ha} tcp dport { 1883, 8555 } accept
+        ip saddr 192.168.1.0/24 ip daddr ${ha} udp dport 8555 accept
+        # 11. Podman subnets → internet (outbound NAT)
+        ip saddr 10.3.0.0/24 accept comment "life pods outbound"
+        ip saddr 10.3.1.0/24 accept comment "media-mgmt pods outbound"
+        ip saddr 10.3.2.0/24 accept comment "home-auto pods outbound"
+      '';
     };
     nftables.enable = true;
     nameservers = [ config.vars.network.lanIp ];
@@ -133,17 +167,17 @@
       forwardPorts = [
         {
           sourcePort = 1883;
-          destination = "10.0.50.8:1883";
+          destination = "${config.vars.network.containers.homeAuto.localAddress}:1883";
           proto = "tcp";
         }
         {
           sourcePort = 8555;
-          destination = "10.0.50.8:8555";
+          destination = "${config.vars.network.containers.homeAuto.localAddress}:8555";
           proto = "tcp";
         }
         {
           sourcePort = 8555;
-          destination = "10.0.50.8:8555";
+          destination = "${config.vars.network.containers.homeAuto.localAddress}:8555";
           proto = "udp";
         }
       ];

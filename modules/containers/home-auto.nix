@@ -8,7 +8,6 @@ in
       allowedTCPPorts = [
         53 # DNS (if a resolver is enabled in the container)
         80 # Frigate nginx
-        8123 # Home Assistant
         8080 # Zigbee2MQTT UI
         1883 # Mosquitto
         1984 # go2rtc UI
@@ -59,16 +58,17 @@ in
     extraFlags = [ "--system-call-filter=perf_event_open" ];
     specialArgs = {
       inherit inputs;
+      monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
+      containerLocalAddress = config.vars.network.containers.homeAuto.localAddress;
     };
   } // containerLib.container.definition.mkContainerNetwork {
-    hostAddress = "10.0.50.7";
-    localAddress = "10.0.50.8";
+    hostAddress = config.vars.network.containers.homeAuto.hostAddress;
+    localAddress = config.vars.network.containers.homeAuto.localAddress;
   } // {
     config = {
       imports = [
         ../services/system/nix.nix
         ../containers/common.nix
-        ../services/home-assistant.nix
         ../services/mosquitto.nix
         ../services/surveillance
         ../services/zigbee2mqtt.nix
@@ -76,11 +76,10 @@ in
 
       networking = {
         hostName = "home-auto";
-        defaultGateway = "10.0.50.7";
+        defaultGateway = config.vars.network.containers.homeAuto.hostAddress;
         nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           80 # Frigate nginx
-          8123 # Home Assistant
           8080 # Zigbee2MQTT UI
           1883 # Mosquitto
           1984 # go2rtc UI
@@ -106,10 +105,7 @@ in
         ];
       };
 
-      services.home-assistant.package =
-        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.home-assistant;
-
-    };
+};
     bindMounts = {
       "/etc/localtime" = {
         hostPath = "/etc/localtime";

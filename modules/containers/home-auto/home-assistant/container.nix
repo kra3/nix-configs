@@ -5,14 +5,17 @@ let
     deny all;
   '';
   network = config.virtualisation.quadlet.networks.home-auto;
-  mediaNetwork = config.virtualisation.quadlet.networks.media-mgmt;
+  macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
 {
   virtualisation.quadlet.containers.home-assistant = {
     containerConfig = {
       image = "ghcr.io/home-assistant/home-assistant:stable";
       publishPorts = [ "127.0.0.1:8123:8123" ];
-      networks = [ network.ref mediaNetwork.ref ];
+      networks = [
+        "${network.ref}:ip=10.3.2.10"
+        "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21"
+      ];
       logDriver = "journald";
       environments = {
         TZ = "Europe/Stockholm";
@@ -25,11 +28,13 @@ in
         "${./ha-config/packages}:/config/packages:ro"
         "${./ha-config/blueprints}:/config/blueprints:ro"
         "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
+        "/run/dbus:/run/dbus:ro"
       ];
+      addCapabilities = [ "NET_ADMIN" "NET_RAW" ];
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "media-mgmt-network.service" ];
-      Requires = [ "home-auto-network.service" "media-mgmt-network.service" ];
+      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
     serviceConfig.Restart = "always";
   };

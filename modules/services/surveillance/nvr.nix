@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, containerLocalAddress, ... }:
 let
   cameras = {
     ranger_duo_fxd = {
@@ -185,7 +185,7 @@ in
   # to allow peometheus to parse metrics. without it is failing 401.
   services.nginx.virtualHosts."${config.services.frigate.hostname}" = {
     serverAliases = [
-      "10.0.50.8"
+      containerLocalAddress
       "localhost"
     ];
     locations."/api/metrics" = {
@@ -205,7 +205,7 @@ in
       ffmpeg = {
         bin = "${pkgs.ffmpeg-full}/bin/ffmpeg";
       };
-      api.listen = "127.0.0.1:1984";
+      api.listen = "0.0.0.0:1984";
       api.origin = "*";
       rtsp.listen = "127.0.0.1:8554";
       webrtc = {

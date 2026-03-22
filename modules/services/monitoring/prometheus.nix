@@ -1,9 +1,15 @@
-{ ... }:
+{ networkVars, ... }:
+let
+  hostAddr = networkVars.containers.monitoring.hostAddress;
+  monAddr = networkVars.containers.monitoring.localAddress;
+  mediaAddr = networkVars.containers.mediaPlay.localAddress;
+  haAddr = networkVars.containers.homeAuto.localAddress;
+in
 {
   services.prometheus = {
     enable = true;
     checkConfig = false; # Disable build-time validation (secrets not available at build time)
-    listenAddress = "10.0.50.2";
+    listenAddress = monAddr;
     port = 9090;
     retentionTime = "2y";
     globalConfig = {
@@ -23,7 +29,7 @@
         job_name = "node-host";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9100" ];
+            targets = [ "${hostAddr}:9100" ];
             labels.instance = "sutala";
           }
         ];
@@ -32,22 +38,17 @@
         job_name = "node-containers";
         static_configs = [
           {
-            targets = [ "10.0.50.2:9100" ];
+            targets = [ "${monAddr}:9100" ];
             labels.container = "monitoring";
             labels.instance = "monitoring";
           }
           {
-            targets = [ "10.0.50.4:9100" ];
-            labels.container = "media-mgmt";
-            labels.instance = "media-mgmt";
-          }
-          {
-            targets = [ "10.0.50.6:9100" ];
+            targets = [ "${mediaAddr}:9100" ];
             labels.container = "media-play";
             labels.instance = "media-play";
           }
           {
-            targets = [ "10.0.50.8:9100" ];
+            targets = [ "${haAddr}:9100" ];
             labels.container = "home-auto";
             labels.instance = "home-auto";
           }
@@ -57,7 +58,7 @@
         job_name = "nginx";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9113" ];
+            targets = [ "${hostAddr}:9113" ];
             labels.instance = "sutala";
           }
         ];
@@ -66,7 +67,7 @@
         job_name = "unbound";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9167" ];
+            targets = [ "${hostAddr}:9167" ];
             labels.instance = "sutala";
           }
         ];
@@ -75,7 +76,7 @@
         job_name = "zfs";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9134" ];
+            targets = [ "${hostAddr}:9134" ];
             labels.instance = "sutala";
           }
         ];
@@ -84,7 +85,7 @@
         job_name = "systemd";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9558" ];
+            targets = [ "${hostAddr}:9558" ];
             labels.instance = "sutala";
           }
         ];
@@ -93,7 +94,7 @@
         job_name = "smartctl";
         static_configs = [
           {
-            targets = [ "10.0.50.1:9633" ];
+            targets = [ "${hostAddr}:9633" ];
             labels.instance = "sutala";
           }
         ];
@@ -103,9 +104,20 @@
         metrics_path = "/api/metrics";
         static_configs = [
           {
-            targets = [ "10.0.50.8:80" ];
+            targets = [ "${haAddr}:80" ];
             labels.container = "home-auto";
             labels.instance = "home-auto";
+          }
+        ];
+      }
+      {
+        job_name = "navidrome";
+        metrics_path = "/metrics";
+        static_configs = [
+          {
+            targets = [ "${mediaAddr}:4533" ];
+            labels.container = "media-play";
+            labels.instance = "media-play";
           }
         ];
       }
@@ -118,7 +130,7 @@
         };
         static_configs = [
           {
-            targets = [ "192.168.1.31:8123" ];
+            targets = [ "10.3.2.10:8123" ];
             labels.instance = "ha";
           }
         ];

@@ -379,17 +379,17 @@ in
             # Container name resolution
             {
               domain = "monitoring";
-              answer = "10.0.50.2";
+              answer = cfg.containers.monitoring.localAddress;
               enabled = true;
             }
             {
               domain = "media-play";
-              answer = "10.0.50.6";
+              answer = cfg.containers.mediaPlay.localAddress;
               enabled = true;
             }
             {
               domain = "home-auto";
-              answer = "10.0.50.8";
+              answer = cfg.containers.homeAuto.localAddress;
               enabled = true;
             }
           ];

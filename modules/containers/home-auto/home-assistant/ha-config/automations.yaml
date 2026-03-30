@@ -1,5 +1,6 @@
+# ── Remote control ──────────────────────────────────────────────
 - id: '1733346573361'
-  alias: remote control
+  alias: Remote control
   description: ''
   use_blueprint:
     path: lsismeiro/ikea_e2001_e2002.yaml
@@ -45,6 +46,7 @@
         target:
           entity_id: light.dining_room_ceiling_lights
           area_id: dining_room
+
 - id: '1733346957071'
   alias: Hook - Living room ceiling lights
   description: ''
@@ -60,6 +62,8 @@
       brightness_steps_long: 12
       force_brightness: true
       on_brightness: 255
+
+# ── Presence notifications ─────────────────────────────────────
 - id: '1733594588791'
   alias: Neelu left home
   description: ''
@@ -69,6 +73,7 @@
       person_entity: person.anjalipc
       zone_entity: zone.home
       notify_device: f4da98937625ae764a56ad8144fd2c88
+
 - id: '1733594815974'
   alias: Kunsu left home
   description: ''
@@ -78,6 +83,8 @@
       person_entity: person.arun_karunagath
       zone_entity: zone.home
       notify_device: a00372a62748fcca4d78e08dd49b1979
+
+# ── Battery ────────────────────────────────────────────────────
 - id: '1733595301092'
   alias: Low Battery Notifications & Actions
   description: ''
@@ -92,70 +99,62 @@
       - b4c7eb99866347bf5826b5d0d97b4743
       - a00372a62748fcca4d78e08dd49b1979
       include_button: disable_button_trigger
-- id: '1759077667503'
-  alias: Turn on TV
-  description: ''
-  triggers:
-  - device_id: 346b2b9e49e306b3d7e24530babb842c
-    domain: webostv
-    type: webostv.turn_on
-    trigger: device
-  conditions:
-  - condition: device
-    device_id: 346b2b9e49e306b3d7e24530babb842c
-    domain: media_player
-    entity_id: d82eff522a62e356a89979d2dd74f5df
-    type: is_off
-  actions:
-  - action: wake_on_lan.send_magic_packet
-    metadata: {}
-    data:
-      mac: 20:28:bc:b7:ff:3e
-      broadcast_port: 7
-  mode: single
-- id: '1760916162440'
-  alias: tv_back_light_on
-  description: ''
-  triggers:
-  - device_id: 346b2b9e49e306b3d7e24530babb842c
-    domain: webostv
-    type: webostv.turn_on
-    trigger: device
-    id: on_tv_power_on
-  conditions:
-  - condition: or
-    conditions:
-    - condition: template
-      value_template: "{{ state_attr('sun.sun', 'elevation') | float\n   < states('input_number.light_on_sun_elevation_threshold')
-        | float }}\n"
-    - condition: template
-      value_template: '{{ state_attr(''weather.forecast_home'', ''cloud_coverage'')
-        | float > 70 }}
 
-        '
+# ── TV ─────────────────────────────────────────────────────────
+- id: tv_power_on
+  alias: TV — Power on + backlight
+  description: WoL if TV is off; turn on ambient backlight if dark or overcast
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: webostv
+    type: webostv.turn_on
+    trigger: device
   actions:
-  - type: turn_on
-    device_id: 76e25efec2b514e252ab3129922d89ca
-    entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
-    domain: light
+  - if:
+    - condition: device
+      device_id: 346b2b9e49e306b3d7e24530babb842c
+      domain: media_player
+      entity_id: d82eff522a62e356a89979d2dd74f5df
+      type: is_off
+    then:
+    - action: wake_on_lan.send_magic_packet
+      data:
+        mac: 20:28:bc:b7:ff:3e
+        broadcast_port: 7
+  - if:
+    - condition: or
+      conditions:
+      - condition: template
+        value_template: >-
+          {{ state_attr('sun.sun', 'elevation') | float(0)
+             < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
+      - condition: template
+        value_template: >-
+          {{ state_attr('weather.forecast_home', 'cloud_coverage') | float(0) > 70 }}
+    then:
+    - type: turn_on
+      device_id: 76e25efec2b514e252ab3129922d89ca
+      entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
+      domain: light
   mode: single
-- id: '1760916276890'
-  alias: tv_backlight_off
-  description: ''
+
+- id: tv_backlight_off
+  alias: TV — Backlight off
+  description: Turn off ambient backlight when TV powers off
   triggers:
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: media_player
     entity_id: d82eff522a62e356a89979d2dd74f5df
     type: turned_off
     trigger: device
-    id: on_tv_power_off
-  conditions: []
   actions:
   - type: turn_off
     device_id: 76e25efec2b514e252ab3129922d89ca
     entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
     domain: light
-  mode: restart
+  mode: single
+
+# ── Garage ─────────────────────────────────────────────────────
 - id: garage_remote_toggle
   alias: 'Garage: handheld remote pressed (RF Bridge)'
   description: ''
@@ -164,69 +163,131 @@
     trigger: mqtt
   conditions:
   - condition: template
-    value_template: "{% set d = (trigger.payload_json.get('RfRaw', {}).get('Data',
-      '')\n             if trigger.payload_json is defined else '') %}\n{{ '281818'
-      in d }}"
+    value_template: >-
+      {% set d = (trigger.payload_json.get('RfRaw', {}).get('Data', '')
+                  if trigger.payload_json is defined else '') %}
+      {{ '281818' in d }}
   actions:
   - target:
       entity_id: cover.garage_door
     action: cover.toggle
   mode: single
-- id: '1762533741087'
-  alias: Kitchen — Is Dark (ON)
-  description: Set dark=ON when lux stays <30 for 2m or when sun goes below horizon
+
+# ── Kitchen ────────────────────────────────────────────────────
+- id: kitchen_darkness
+  alias: Kitchen — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for kitchen.
+    ON: lux < 30 sustained 2 min AND sun below horizon.
+    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
   triggers:
   - entity_id: sensor.hue_pir_kitchen_illuminance
     below: 30
-    for: 00:02:00
+    for: "00:02:00"
     trigger: numeric_state
+    id: dark
   - entity_id: sun.sun
     to: below_horizon
     trigger: state
-  conditions: []
-  actions:
-  - target:
-      entity_id: input_boolean.kitchen_is_dark
-    action: input_boolean.turn_on
-  mode: single
-- id: '1762533852644'
-  alias: Kitchen — Is Dark (OFF)
-  description: Clear dark when lux stays >120 for 2m (while sun is up)
-  triggers:
+    id: dark
   - entity_id: sensor.hue_pir_kitchen_illuminance
     above: 120
-    for: 00:02:00
+    for: "00:02:00"
     trigger: numeric_state
+    id: bright
   - entity_id: sun.sun
     to: above_horizon
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: sun.sun
-    state: above_horizon
-  actions:
-  - target:
-      entity_id: input_boolean.kitchen_is_dark
-    action: input_boolean.turn_off
-  mode: single
-- id: '1762534079414'
-  alias: Kitchen lights — ON on motion (when dark)
-  description: Full before midnight; dim at night. Requires input_boolean.kitchen_is_dark
-  triggers:
-  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-    from: 'off'
-    to: 'on'
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: input_boolean.kitchen_is_dark
-    state: 'on'
+    id: bright
   actions:
   - choose:
     - conditions:
-      - condition: time
-        after: '22:30:00'
-        before: 06:00:00
+      - condition: trigger
+        id: dark
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      - condition: numeric_state
+        entity_id: sensor.hue_pir_kitchen_illuminance
+        below: 30
+      sequence:
+      - target:
+          entity_id: input_boolean.kitchen_is_dark
+        action: input_boolean.turn_on
+    - conditions:
+      - condition: trigger
+        id: bright
+      - condition: state
+        entity_id: sun.sun
+        state: above_horizon
+      - condition: numeric_state
+        entity_id: sensor.hue_pir_kitchen_illuminance
+        above: 120
+      sequence:
+      - target:
+          entity_id: input_boolean.kitchen_is_dark
+        action: input_boolean.turn_off
+      - if:
+        - condition: state
+          entity_id: light.kitchen_ceiling_lights
+          state: "on"
+        then:
+        - wait_for_trigger:
+          - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+            to: "off"
+            trigger: state
+        - target:
+            entity_id: light.kitchen_ceiling_lights
+          action: light.turn_off
+  mode: restart
+
+- id: kitchen_lighting
+  alias: Kitchen — Lighting
+  description: >-
+    Dark → on. No motion → progressive dim. Sleep → off.
+    Motion during sleep → brief 15% then off.
+  triggers:
+  - entity_id: input_boolean.kitchen_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+    from: "off"
+    to: "on"
+    trigger: state
+    id: motion
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.kitchen_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: light.kitchen_ceiling_lights
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.kitchen_ceiling_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: motion
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
       sequence:
       - target:
           entity_id: light.kitchen_ceiling_lights
@@ -234,6 +295,16 @@
           brightness_pct: 15
           transition: 1
         action: light.turn_on
+      - wait_for_trigger:
+        - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+          to: "off"
+          trigger: state
+      - delay: "00:01:00"
+      - target:
+          entity_id: light.kitchen_ceiling_lights
+        data:
+          transition: 1
+        action: light.turn_off
     default:
     - target:
         entity_id: light.kitchen_ceiling_lights
@@ -241,197 +312,553 @@
         brightness_pct: 100
         transition: 0.8
       action: light.turn_on
+    - wait_for_trigger:
+      - entity_id: binary_sensor.hue_pir_kitchen_occupancy
+        to: "off"
+        trigger: state
+    - delay: "00:05:00"
+    - target:
+        entity_id: light.kitchen_ceiling_lights
+      data:
+        brightness_pct: 50
+        transition: 2
+      action: light.turn_on
+    - delay: "00:05:00"
+    - target:
+        entity_id: light.kitchen_ceiling_lights
+      data:
+        brightness_pct: 15
+        transition: 2
+      action: light.turn_on
   mode: restart
-- id: '1762534186787'
-  alias: Kitchen lights — DIM after 5m (before sleep schedule)
-  description: If no motion for 5m outside sleep schedule, dim to 50%
-  triggers:
-  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-    to: 'off'
-    for: 00:5:00
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: schedule.sleep
-    state: 'off'
-  - condition: state
-    entity_id: light.kitchen_ceiling_lights
-    state: 'on'
-  actions:
-  - target:
-      entity_id: light.kitchen_ceiling_lights
-    data:
-      brightness_pct: 50
-      transition: 2
-    action: light.turn_on
-  mode: single
-- id: '1762534234631'
-  alias: Kitchen lights — VERY LOW after 15m (when dark)
-  description: If no motion for 15m outside 22:30–06:00, dim to very low (5%) instead
-    of turning off
-  triggers:
-  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-    to: 'off'
-    for: 00:10:00
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: schedule.sleep
-    state: 'off'
-  - condition: state
-    entity_id: light.kitchen_ceiling_lights
-    state: 'on'
-  actions:
-  - target:
-      entity_id: light.kitchen_ceiling_lights
-    data:
-      brightness_pct: 15
-      transition: 2
-    action: light.turn_on
-  mode: single
-- id: '1762534278433'
-  alias: Kitchen lights — OFF after 1m (during sleep time)
-  description: Between 22:30–06:00, turn off 1m after no motion
-  triggers:
-  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-    to: 'off'
-    for: 00:01:00
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: schedule.sleep
-    state: 'on'
-  - condition: state
-    entity_id: light.kitchen_ceiling_lights
-    state: 'on'
-  actions:
-  - target:
-      entity_id: light.kitchen_ceiling_lights
-    data:
-      transition: 1
-    action: light.turn_off
-  mode: single
-- id: '1762613142270'
-  alias: Hall — Is Dark (OFF)
-  description: Clear dark when lux stays >120 for 2m (while sun is up)
-  triggers:
-  - entity_id: sensor.hue_pir_hall_illuminance
-    above: 120
-    for: 00:02:00
-    trigger: numeric_state
-  - entity_id: sun.sun
-    to: above_horizon
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: sun.sun
-    state: above_horizon
-  actions:
-  - target:
-      entity_id: input_boolean.hall_is_dark
-    action: input_boolean.turn_off
-  mode: single
-- id: '1762613277636'
-  alias: Hall - Is Dark (ON)
-  description: Set dark=ON when lux stays <30 for 2m or when sun goes below horizon
+
+# ── Hall ───────────────────────────────────────────────────────
+- id: hall_darkness
+  alias: Hall — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for hall.
+    ON: lux < 30 sustained 2 min AND sun below horizon.
+    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
   triggers:
   - entity_id: sensor.hue_pir_hall_illuminance
     below: 30
-    for: 00:02:00
+    for: "00:02:00"
     trigger: numeric_state
+    id: dark
   - entity_id: sun.sun
     to: below_horizon
     trigger: state
-  conditions: []
-  actions:
-  - target:
-      entity_id: input_boolean.hall_is_dark
-    action: input_boolean.turn_on
-  mode: single
-- id: '1762614514623'
-  alias: Hall — Baseline DIM when dark
-  description: ''
-  triggers:
-  - entity_id: input_boolean.hall_is_dark
-    to: 'on'
+    id: dark
+  - entity_id: sensor.hue_pir_hall_illuminance
+    above: 120
+    for: "00:02:00"
+    trigger: numeric_state
+    id: bright
+  - entity_id: sun.sun
+    to: above_horizon
     trigger: state
+    id: bright
   actions:
-  - target:
-      entity_id: light.hall
-    data:
-      brightness_pct: 15
-      transition: 1
-    action: light.turn_on
-  mode: single
-- id: '1762614586108'
-  alias: Hall — Night motion stays DIM
-  description: ''
-  triggers:
-  - entity_id: binary_sensor.hue_pir_hall
-    from: 'off'
-    to: 'on'
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: 'on'
-  - condition: state
-    entity_id: schedule.sleep
-    state: 'on'
-  actions:
-  - target:
-      entity_id: light.hall
-    data:
-      brightness_pct: 10
-      transition: 0.5
-    action: light.turn_on
-  mode: restart
-- id: '1762614757780'
-  alias: Hall — Motion boost then cooldown to DIM (before sleeptime)
-  description: ''
-  triggers:
-  - entity_id:
-    - binary_sensor.hue_pir_hall
-    from:
-    - 'off'
-    to:
-    - 'on'
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: 'on'
-  - condition: state
-    entity_id: schedule.sleep
-    state:
-    - 'off'
-  actions:
-  - target:
-      entity_id: light.hall
-    data:
-      brightness_pct: 55
-      transition: 0.3
-    action: light.turn_on
-  - wait_for_trigger:
-    - entity_id: binary_sensor.hue_pir_hall
-      to: 'off'
-      trigger: state
-  - wait_for_trigger:
-    - entity_id: binary_sensor.hue_pir_hall
-      to: 'on'
-      trigger: state
-    timeout: 00:00:10
-    continue_on_timeout: true
   - choose:
     - conditions:
-      - condition: template
-        value_template: '{{ not wait.completed }}'
+      - condition: trigger
+        id: dark
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      - condition: numeric_state
+        entity_id: sensor.hue_pir_hall_illuminance
+        below: 30
+      sequence:
+      - target:
+          entity_id: input_boolean.hall_is_dark
+        action: input_boolean.turn_on
+    - conditions:
+      - condition: trigger
+        id: bright
+      - condition: state
+        entity_id: sun.sun
+        state: above_horizon
+      - condition: numeric_state
+        entity_id: sensor.hue_pir_hall_illuminance
+        above: 120
+      sequence:
+      - target:
+          entity_id: input_boolean.hall_is_dark
+        action: input_boolean.turn_off
+      - if:
+        - condition: state
+          entity_id: light.hall
+          state: "on"
+        then:
+        - wait_for_trigger:
+          - entity_id: binary_sensor.hue_pir_hall
+            to: "off"
+            trigger: state
+        - target:
+            entity_id: light.hall
+          action: light.turn_off
+  mode: restart
+
+- id: hall_lighting
+  alias: Hall — Lighting
+  description: >-
+    Dark → on. No motion → progressive dim. Sleep → off.
+    Motion during sleep → brief 15% then off.
+  triggers:
+  - entity_id: input_boolean.hall_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: binary_sensor.hue_pir_hall
+    from: "off"
+    to: "on"
+    trigger: state
+    id: motion
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
       sequence:
       - target:
           entity_id: light.hall
         data:
           brightness_pct: 15
-          transition: 0.8
+          transition: 3
         action: light.turn_on
-    default: []
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.hall
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: motion
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 15
+          transition: 0.5
+        action: light.turn_on
+      - wait_for_trigger:
+        - entity_id: binary_sensor.hue_pir_hall
+          to: "off"
+          trigger: state
+      - delay: "00:01:00"
+      - target:
+          entity_id: light.hall
+        data:
+          transition: 1
+        action: light.turn_off
+    default:
+    - target:
+        entity_id: light.hall
+      data:
+        brightness_pct: 55
+        transition: 0.3
+      action: light.turn_on
+    - wait_for_trigger:
+      - entity_id: binary_sensor.hue_pir_hall
+        to: "off"
+        trigger: state
+    - delay: "00:00:10"
+    - target:
+        entity_id: light.hall
+      data:
+        brightness_pct: 15
+        transition: 0.8
+      action: light.turn_on
   mode: restart
+
+# ── Living room ────────────────────────────────────────────────
+- id: living_room_lighting
+  alias: Living room — Lighting
+  description: >-
+    On at 30% when dark, off at sleep.
+  triggers:
+  - entity_id: input_boolean.hall_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: light.living_room_ceiling_lights
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.living_room_ceiling_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    default:
+    - target:
+        entity_id: light.living_room_ceiling_lights
+      data:
+        brightness_pct: 30
+        transition: 1
+      action: light.turn_on
+  mode: restart
+
+- id: living_room_media_aware
+  alias: Living room — Media-aware lighting
+  description: >-
+    Turn off living + dining lights when watching content on
+    Stremio, Jellyfin, or Apple TV. Restore when stopped.
+  triggers:
+  - entity_id: media_player.lg_webos_tv_oled77c35la_2
+    to: playing
+    trigger: state
+    id: playing
+  - entity_id: media_player.lg_webos_tv_oled77c35la_2
+    from: playing
+    trigger: state
+    id: not_playing
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: playing
+      - condition: template
+        value_template: >-
+          {{ state_attr('media_player.lg_webos_tv_oled77c35la_2', 'source')
+             in ['Stremio', 'Jellyfin', 'Apple TV'] }}
+      sequence:
+      - target:
+          entity_id:
+          - light.living_room_ceiling_lights
+          - light.dining_room_ceiling_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: not_playing
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      sequence:
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.living_room_ceiling_lights
+        data:
+          brightness_pct: 30
+          transition: 60
+        action: light.turn_on
+      - target:
+          entity_id: light.dining_room_ceiling_lights
+        data:
+          brightness_pct: 20
+          transition: 60
+        action: light.turn_on
+  mode: restart
+
+# ── Dining room ────────────────────────────────────────────────
+- id: dining_room_lighting
+  alias: Dining room — Lighting
+  description: >-
+    On at 20% when dark, off at sleep.
+    Manual override via STYRBAR double-tap.
+  triggers:
+  - entity_id: input_boolean.hall_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: light.dining_room_ceiling_lights
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.dining_room_ceiling_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    default:
+    - target:
+        entity_id: light.dining_room_ceiling_lights
+      data:
+        brightness_pct: 20
+        transition: 1
+      action: light.turn_on
+  mode: restart
+
+# ── Sleep routine ──────────────────────────────────────────────
+- id: sleep_tv_off
+  alias: Sleep — TV off if idle
+  description: >-
+    Turn off TV when sleep schedule starts, but only if nobody
+    is actively watching (not playing).
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.lg_webos_tv_oled77c35la_2
+      state: playing
+  actions:
+  - action: media_player.turn_off
+    target:
+      entity_id: media_player.lg_webos_tv_oled77c35la_2
+  mode: single
+
+- id: sleep_alarmo_arm_home
+  alias: Sleep — Arm Alarmo (home)
+  description: >-
+    Arm Alarmo in home mode when sleep schedule starts.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+  actions:
+  - action: alarm_control_panel.alarm_arm_home
+    target:
+      entity_id: alarm_control_panel.alarmo
+  mode: single
+
+# ── Wake-up ────────────────────────────────────────────────────
+- id: wakeup_lighting
+  alias: Wake-up — Gradual lighting
+  description: >-
+    When sleep schedule ends, gradually brighten bedroom and hall
+    over 10 minutes. Disarm Alarmo.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "off"
+    trigger: state
+  actions:
+  - action: alarm_control_panel.alarm_disarm
+    target:
+      entity_id: alarm_control_panel.alarmo
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 5
+      transition: 1
+    action: light.turn_on
+  - delay: "00:02:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 15
+      transition: 60
+    action: light.turn_on
+  - delay: "00:03:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 40
+      transition: 60
+    action: light.turn_on
+  - delay: "00:05:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 60
+      transition: 60
+    action: light.turn_on
+  mode: single
+
+# ── Exterior lighting ─────────────────────────────────────────
+- id: exterior_front_light
+  alias: Exterior — Front street light (dusk to sleep)
+  description: >-
+    Turn on front street light at sunset, off at sleep schedule.
+  triggers:
+  - entity_id: sun.sun
+    to: below_horizon
+    trigger: state
+    id: dusk
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: dusk
+      sequence:
+      - target:
+          entity_id: light.moes_front_door_light2
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: light.moes_front_door_light2
+        action: light.turn_off
+  mode: single
+
+# ── Door sensors ───────────────────────────────────────────────
+- id: door_opened_dark
+  alias: Door opened — Room lights + Alarmo alert
+  description: >-
+    When any outdoor exit opens at night, boost corresponding room
+    lights to 100% and trigger Alarmo alert (lock should be on).
+    entredorr → hall + entrance. finentredorr → hall. dorr_vrum → dining + living.
+  triggers:
+  - entity_id: binary_sensor.entredorr_opening
+    to: "on"
+    trigger: state
+    id: entredorr
+  - entity_id: binary_sensor.finentredorr_opening
+    to: "on"
+    trigger: state
+    id: finentredorr
+  - entity_id: binary_sensor.dorr_vrum_opening
+    to: "on"
+    trigger: state
+    id: dorr_vrum
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: entredorr
+      sequence:
+      - target:
+          entity_id:
+          - light.hall
+          - light.moes_front_door_light
+          - light.moes_front_door_light2
+        data:
+          brightness_pct: 100
+          transition: 0.3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: finentredorr
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 100
+          transition: 0.3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: dorr_vrum
+      sequence:
+      - target:
+          entity_id:
+          - light.dining_room_ceiling_lights
+          - light.living_room_ceiling_lights
+        data:
+          brightness_pct: 100
+          transition: 0.3
+        action: light.turn_on
+  - action: alarm_control_panel.alarm_trigger
+    target:
+      entity_id: alarm_control_panel.alarmo
+  mode: single
+
+# ── Away mode ──────────────────────────────────────────────────
+- id: everyone_left_home
+  alias: Everyone left home
+  description: >-
+    When all tracked persons leave the home zone for 5 min,
+    turn off all lights, arm Alarmo away, and notify both phones.
+  triggers:
+  - entity_id:
+    - person.anjalipc
+    - person.arun_karunagath
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  actions:
+  - delay: "00:05:00"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - action: light.turn_off
+    target:
+      entity_id: all
+  - action: alarm_control_panel.alarm_arm_away
+    target:
+      entity_id: alarm_control_panel.alarmo
+  - action: notify.mobile_app_anjalipc
+    data:
+      title: Home
+      message: Everyone left — lights off, alarm armed
+  - action: notify.mobile_app_arun_karunagath
+    data:
+      title: Home
+      message: Everyone left — lights off, alarm armed
+  mode: single

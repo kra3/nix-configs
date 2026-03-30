@@ -23,10 +23,13 @@ in
       volumes = [
         "/srv/appdata/home-auto/home-assistant/data:/config"
         "${./ha-config/configuration.yaml}:/config/configuration.yaml:ro"
+        "${./ha-config/automations.yaml}:/config/automations.yaml:ro"
         "${./ha-config/lovelace.yaml}:/config/lovelace.yaml:ro"
         "${./ha-config/dashboards}:/config/dashboards:ro"
         "${./ha-config/packages}:/config/packages:ro"
         "${./ha-config/blueprints}:/config/blueprints:ro"
+        "${./ha-config/scripts.yaml}:/config/scripts.yaml:ro"
+        "${./ha-config/scenes.yaml}:/config/scenes.yaml:ro"
         "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
         "/run/dbus:/run/dbus:ro"
       ];

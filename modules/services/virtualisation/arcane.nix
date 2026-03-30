@@ -18,7 +18,7 @@ in
     environment = {
       APP_URL = "https://oci.${config.vars.acme.domain}";
       PUID = "1000";
-      PGID = "1000";
+      PGID = "981";
       LOG_LEVEL = "info";
       LOG_JSON = "false";
       OIDC_ENABLED = "false";

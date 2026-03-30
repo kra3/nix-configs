@@ -13,7 +13,6 @@
       driver = "macvlan";
       ipv6 = false;
       subnets = [ "192.168.1.0/24" ];
-      gateways = [ "192.168.1.1" ];
       options = {
         parent = config.vars.network.lanIf;
         mode = "bridge";
@@ -22,4 +21,5 @@
   };
 
   networking.firewall.interfaces.br-home-auto.allowedUDPPorts = [ 53 ];
+  networking.firewall.interfaces.br-home-auto.allowedTCPPorts = [ 443 ];
 }

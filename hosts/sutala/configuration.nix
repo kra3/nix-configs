@@ -45,6 +45,7 @@
       "100.64.0.0/10"
       "127.0.0.1"
       config.vars.network.containers.monitoring.localAddress
+      config.vars.network.podmanSubnets.homeAuto
     ];
   };
 

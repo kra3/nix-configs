@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   allowBlock = ''
     ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
@@ -36,7 +36,12 @@ in
       After = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
       Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
-    serviceConfig.Restart = "always";
+    serviceConfig = {
+      Restart = "always";
+      # macvlan cannot reach parent interface's IP (192.168.1.10).
+      # Route host traffic via the Podman bridge gateway instead.
+      ExecStartPost = "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.lanIp}/32 via 10.3.2.1";
+    };
   };
 
   environment.etc."alloy/home-assistant.alloy".text = ''

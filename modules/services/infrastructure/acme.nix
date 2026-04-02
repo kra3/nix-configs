@@ -1,6 +1,9 @@
 { config, ... }:
 {
-  sops.secrets."cloudflare.acme.token" = { };
+  sops.secrets."cloudflare.acme.token" = {
+    owner = "acme";
+    group = "acme";
+  };
 
   security.acme = {
     acceptTerms = true;

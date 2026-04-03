@@ -78,5 +78,25 @@
     "provider": "mfapi",
     "symbol": "UTI_NIFTY_NEXT_50_INDEX_GROWTH",
     "scheme_code": "143341"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "ICICI_PRU_LIQUID_GROWTH",
+    "scheme_code": "120197"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "UTI_LIQUID_GROWTH",
+    "scheme_code": "120304"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "NIPPON_INDIA_LIQUID_QUARTERLY_IDCW",
+    "scheme_code": "118698"
+  },
+  {
+    "provider": "mfapi",
+    "symbol": "NIPPON_INDIA_US_EQUITY_OPP",
+    "scheme_code": "134923"
   }
 ]

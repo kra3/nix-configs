@@ -228,6 +228,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
   };
 
   system.stateVersion = "25.05";

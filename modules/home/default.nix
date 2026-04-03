@@ -22,6 +22,10 @@ in
   };
 
   config = {
+    catppuccin.enable = true;
+    catppuccin.flavor = "mocha";
+    catppuccin.accent = "blue";
+
     home.stateVersion = lib.mkDefault "25.11";
   };
 }

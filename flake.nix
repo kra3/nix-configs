@@ -43,6 +43,11 @@
       url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    catppuccin = {
+      url = "github:catppuccin/nix/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

@@ -38,6 +38,11 @@
     quadlet-nix = {
       url = "github:SEIAROTg/quadlet-nix";
     };
+
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -108,6 +113,16 @@
                   ./hosts/sutala/configuration.nix
                 ];
               };
+          };
+
+          darwinConfigurations.mac-work = inputs.nix-darwin.lib.darwinSystem {
+            system = "aarch64-darwin";
+            specialArgs = { inputs = inputs; };
+            modules = [
+              { nixpkgs.overlays = [ inputs.self.overlays.default ]; }
+              inputs.home-manager.darwinModules.home-manager
+              ./hosts/mac-work
+            ];
           };
         };
       }

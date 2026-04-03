@@ -23,12 +23,13 @@
   };
 
   home-manager.users.kra3 = {
-    home.stateVersion = "25.05";
+    imports = [ ../home ];
 
-    # Add user packages and services here.
-    home.packages = with pkgs; [
-      # Add user packages here.
-    ];
+    dotfiles = {
+      desktop = false;
+      work = false;
+      githubUser = "kra3";
+    };
   };
 
   nix.settings.trusted-users = [ "kra3" ];

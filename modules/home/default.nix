@@ -26,6 +26,7 @@ in
     ./colordiff
     ./eza.nix
     ./fd.nix
+    ./fzf.nix
     ./ripgrep.nix
   ];
 

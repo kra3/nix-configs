@@ -27,6 +27,7 @@ in
     ./eza.nix
     ./fd.nix
     ./fzf.nix
+    ./git
     ./ripgrep.nix
     ./zoxide.nix
   ];

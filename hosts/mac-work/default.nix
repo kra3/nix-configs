@@ -9,10 +9,11 @@
   # System-level shell setup (nix-darwin requires this for managed shells)
   programs.zsh.enable = true;
 
-  # home-manager integration
-  home-manager.useGlobalPkgs = true;
-  home-manager.useUserPackages = true;
-  home-manager.sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
+  };
 
   home-manager.users.akarunagath = {
     imports = [ ../../modules/home ];

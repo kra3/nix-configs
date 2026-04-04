@@ -21,6 +21,10 @@ in
     };
   };
 
+  imports = [
+    ./bat.nix
+  ];
+
   config = {
     catppuccin.enable = true;
     catppuccin.flavor = "mocha";

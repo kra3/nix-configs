@@ -86,6 +86,7 @@
 
         flake = {
           overlays.default = import ./modules/overlays;
+          
           nixosConfigurations = {
             sutala = nixpkgs.lib.nixosSystem {
               specialArgs = { inputs = inputs; };

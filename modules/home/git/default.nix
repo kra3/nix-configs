@@ -7,7 +7,7 @@ let
   cfg = config.dotfiles;
 in
 {
-  imports = [ ./delta.nix ];
+  imports = [ ./delta.nix ./lazygit.nix ];
 
   programs.git = {
     enable = true;

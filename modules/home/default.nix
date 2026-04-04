@@ -24,6 +24,7 @@ in
   imports = [
     ./bat.nix
     ./colordiff
+    ./eza.nix
     ./fd.nix
     ./ripgrep.nix
   ];

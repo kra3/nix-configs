@@ -30,8 +30,10 @@ in
     ./gh
     ./git
     ./gpg.nix
+    ./packages.nix
     ./ripgrep.nix
     ./sesh
+    ./tmux.nix
     ./vim
     ./zoxide.nix
   ];

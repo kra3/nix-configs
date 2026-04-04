@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   config,
   ...
 }:
@@ -8,6 +9,11 @@ let
 in
 {
   imports = [ ./delta.nix ./lazygit.nix ];
+
+  home.packages = with pkgs; [
+    git-absorb
+    difftastic
+  ];
 
   programs.git = {
     enable = true;

@@ -32,6 +32,7 @@ in
     ./gpg.nix
     ./ripgrep.nix
     ./sesh
+    ./vim
     ./zoxide.nix
   ];
 

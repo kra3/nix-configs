@@ -17,7 +17,7 @@
         ];
         hashedPasswordFile = config.sops.secrets."users.kra3.password".path;
 
-        # shell = pkgs.zsh;
+        shell = pkgs.zsh;
       };
     };
   };
@@ -33,4 +33,6 @@
   };
 
   nix.settings.trusted-users = [ "kra3" ];
+
+  programs.zsh.enable = true;
 }

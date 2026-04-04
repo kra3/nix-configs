@@ -36,6 +36,7 @@ in
     ./tmux.nix
     ./vim
     ./zoxide.nix
+    ./zsh
   ];
 
   config = {

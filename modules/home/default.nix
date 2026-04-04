@@ -23,6 +23,7 @@ in
 
   imports = [
     ./bat.nix
+    ./colordiff
     ./fd.nix
     ./ripgrep.nix
   ];

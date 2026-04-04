@@ -23,6 +23,7 @@ in
 
   imports = [
     ./bat.nix
+    ./fd.nix
   ];
 
   config = {

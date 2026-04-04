@@ -28,6 +28,7 @@ in
     ./fd.nix
     ./fzf.nix
     ./ripgrep.nix
+    ./zoxide.nix
   ];
 
   config = {

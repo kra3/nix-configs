@@ -9,3 +9,4 @@ result-*
 
 # Local dotfile overrides (sensitive, machine-specific)
 modules/home/gh/gh-dash-repo-paths.yml
+modules/home/sesh/sesh-session-paths.toml

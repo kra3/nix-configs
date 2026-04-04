@@ -1,0 +1,10 @@
+# Session search paths — copy to sesh-session-paths.toml and fill in your paths.
+# These are gitignored to keep local directory structure private.
+#
+# [[session_path]]
+# path = "~/src/public"
+# depth = 2
+#
+# [[session_path]]
+# path = "~/src/worktrees"
+# depth = 1

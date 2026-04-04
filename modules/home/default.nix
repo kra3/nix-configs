@@ -31,6 +31,7 @@ in
     ./git
     ./gpg.nix
     ./ripgrep.nix
+    ./sesh
     ./zoxide.nix
   ];
 

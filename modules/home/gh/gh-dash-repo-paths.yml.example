@@ -1,0 +1,9 @@
+# ============================================================================
+# gh-dash Repository Paths (local, not committed)
+# ============================================================================
+# Maps GitHub repos to local paths for quick checkout and opening.
+# Copy this file to gh-dash-repo-paths.yml and fill in your paths.
+# Format: org/*: ~/src/instance/org/*
+#
+# repoPaths:
+#   myorg/*: ~/src/myorg/*

@@ -33,10 +33,10 @@ in
     ./packages.nix
     ./ripgrep.nix
     ./sesh
+    ./shell
     ./tmux.nix
     ./vim
     ./zoxide.nix
-    ./zsh
   ];
 
   config = {

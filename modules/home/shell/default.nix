@@ -1,0 +1,8 @@
+{ ... }:
+{
+  imports = [
+    ./bash
+    ./common
+    ./zsh
+  ];
+}

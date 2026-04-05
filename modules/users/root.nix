@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
   sops.secrets."users.root.password".neededForUsers = true;
 
@@ -8,5 +8,10 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOFHJcFS3rx+AoqmqhHSjMbWpe8KqcLTmX/xgcf7/lTn nixos-deploy"
     ];
     hashedPasswordFile = config.sops.secrets."users.root.password".path;
+  };
+
+  home-manager.users.root = {
+    imports = [ ../home/shell/bash ];
+    home.stateVersion = lib.mkDefault "25.11";
   };
 }

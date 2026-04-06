@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.radarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/radarr:6.0.4";
+      image = "lscr.io/linuxserver/radarr:6.1.1.10360-ls298";
       healthCmd = "wget -qO-  http://localhost:7878/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

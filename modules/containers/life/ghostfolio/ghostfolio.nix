@@ -30,7 +30,7 @@ in
 
   virtualisation.quadlet.containers.ghostfolio = {
     containerConfig = {
-      image = "ghostfolio/ghostfolio:2.249.0";
+      image = "ghostfolio/ghostfolio:2.253.0";
       healthCmd = "wget -qO- http://localhost:3333/api/v1/health";
       healthOnFailure = "none";
       healthInterval = "30s";

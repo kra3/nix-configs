@@ -183,7 +183,7 @@ in
 
   virtualisation.quadlet.containers.recyclarr = {
     containerConfig = {
-      image = "ghcr.io/recyclarr/recyclarr:8.1.0";
+      image = "ghcr.io/recyclarr/recyclarr:8.5.1";
       networks = [ network.ref ];
       logDriver = "journald";
       environments = {

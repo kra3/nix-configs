@@ -10,7 +10,7 @@ in
 {
   virtualisation.quadlet.containers.home-assistant = {
     containerConfig = {
-      image = "ghcr.io/home-assistant/home-assistant:stable";
+      image = "ghcr.io/home-assistant/home-assistant:2026.4.1";
       publishPorts = [ "127.0.0.1:8123:8123" ];
       networks = [
         "${network.ref}:ip=10.3.2.10"
@@ -70,7 +70,6 @@ in
       proxyPass = "http://127.0.0.1:8123";
       proxyWebsockets = true;
       extraConfig = ''
-        proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;

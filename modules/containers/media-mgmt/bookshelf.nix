@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.bookshelf = {
     containerConfig = {
-      image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.20";
+      image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.20.129";
       healthCmd = "wget -qO- http://localhost:8787/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

@@ -177,37 +177,35 @@ in
       # Tmux-yank
       set -g @yank_selection 'primary'
       set -g @yank_selection_mouse 'clipboard'
-
-      # ============================================================================
-      # Catppuccin Theme Configuration
-      # ============================================================================
-
-      set -g @catppuccin_flavor 'mocha'
-
-      set -g @catppuccin_window_status_style "rounded"
-      set -g @catppuccin_window_text "#W"
-      set -g @catppuccin_window_current_text "#W"
-      set -g @catppuccin_window_flags "icon"
-      set -g @catppuccin_status_left_separator ""
-      set -g @catppuccin_status_right_separator " "
-
-      # ============================================================================
-      # Status Line (must come after catppuccin plugin load)
-      # ============================================================================
-
-      set -g status-position bottom
-      set -g status-justify "absolute-centre"
-      set -g status-left-length 40
-      set -g status-right-length 40
-
-      set -g status-left "#{E:@catppuccin_status_session}"
-      set -ag status-left "#{E:@catppuccin_status_application}"
-      set -ag status-left "#{E:@catppuccin_status_directory}"
-
-      set -g status-right " "
-      set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
-      set -agF status-right "#{E:@catppuccin_status_battery}"
-      set -agF status-right "#{E:@catppuccin_status_date_time}"
     '';
   };
+
+  # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources).
+  # extraConfig runs after the plugin is loaded — customise window/status layout here.
+  catppuccin.tmux.extraConfig = ''
+    set -g @catppuccin_window_status_style "rounded"
+    set -g @catppuccin_window_text "#W"
+    set -g @catppuccin_window_current_text "#W"
+    set -g @catppuccin_window_flags "icon"
+    set -g @catppuccin_status_left_separator ""
+    set -g @catppuccin_status_right_separator " "
+
+    # ============================================================================
+    # Status Line
+    # ============================================================================
+
+    set -g status-position bottom
+    set -g status-justify "absolute-centre"
+    set -g status-left-length 40
+    set -g status-right-length 40
+
+    set -g status-left "#{E:@catppuccin_status_session}"
+    set -ag status-left "#{E:@catppuccin_status_application}"
+    set -ag status-left "#{E:@catppuccin_status_directory}"
+
+    set -g status-right " "
+    set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
+    set -agF status-right "#{E:@catppuccin_status_battery}"
+    set -agF status-right "#{E:@catppuccin_status_date_time}"
+  '';
 }

@@ -19,10 +19,6 @@ in
     GRADLE_COMPLETION_UNQUALIFIED_TASKS = "true";
   };
 
-  # LS_COLORS — catppuccin.vivid sets programs.vivid.activeTheme; home-manager
-  # programs.vivid exports LS_COLORS at shell init. No manual generation needed.
-  catppuccin.vivid.enable = true;
-
   # lesspipe — sets LESSOPEN so less can preview archives, images, etc.
   programs.lesspipe.enable = true;
 

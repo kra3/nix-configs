@@ -12,7 +12,7 @@
     networkConfig = {
       driver = "macvlan";
       ipv6 = false;
-      subnets = [ "192.168.1.0/24" ];
+      subnets = [ config.vars.network.lanCidr ];
       options = {
         parent = config.vars.network.lanIf;
         mode = "bridge";

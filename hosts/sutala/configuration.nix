@@ -41,7 +41,7 @@
     lanIf = "enp2s0";
     lanIp = "192.168.1.10";
     nginxAllowCidrs = [
-      "192.168.1.0/24"
+      config.vars.network.lanCidr
       "100.64.0.0/10"
       "127.0.0.1"
       config.vars.network.containers.monitoring.localAddress
@@ -123,10 +123,15 @@
       logRefusedUnicastsOnly = true;
       # Default-deny inter-zone FORWARD policy with explicit allows
       extraForwardRules = let
-        mon  = "10.3.255.2";   # monitoring container
-        mp   = "10.3.255.6";   # media-play container
-        ha   = "10.3.255.10";  # home-auto container
-        haNet = "10.3.2.0/24"; # home-auto Podman subnet (HA pod)
+        c     = config.vars.network.containers;
+        p     = config.vars.network.podmanSubnets;
+        mon   = c.monitoring.localAddress;
+        mp    = c.mediaPlay.localAddress;
+        ha    = c.homeAuto.localAddress;
+        haNet = p.homeAuto;
+        mmNet = p.mediaMgmt;
+        liNet = p.life;
+        lan   = config.vars.network.lanCidr;
       in ''
         # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
         ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
@@ -144,15 +149,17 @@
         ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
         # 8. HA pod → media-play: HA media_player integration (Jellyfin)
         ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
-        # 9. HA pod → media-play: HA media_player integration (Music Assistant)
+        # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
+        ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
+        # 10. HA pod → media-play: HA media_player integration (Music Assistant)
         ip saddr ${haNet} ip daddr ${mp} tcp dport 8095 accept
-        # 10. LAN → home-auto: DNAT for MQTT + WebRTC
-        ip saddr 192.168.1.0/24 ip daddr ${ha} tcp dport { 1883, 8555 } accept
-        ip saddr 192.168.1.0/24 ip daddr ${ha} udp dport 8555 accept
-        # 11. Podman subnets → internet (outbound NAT)
-        ip saddr 10.3.0.0/24 accept comment "life pods outbound"
-        ip saddr 10.3.1.0/24 accept comment "media-mgmt pods outbound"
-        ip saddr 10.3.2.0/24 accept comment "home-auto pods outbound"
+        # 11. LAN → home-auto: DNAT for MQTT + WebRTC
+        ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
+        ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
+        # 12. Podman subnets → internet (outbound NAT)
+        ip saddr ${liNet} accept comment "life pods outbound"
+        ip saddr ${mmNet} accept comment "media-mgmt pods outbound"
+        ip saddr ${haNet} accept comment "home-auto pods outbound"
       '';
     };
     nftables.enable = true;

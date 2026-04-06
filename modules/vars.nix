@@ -23,6 +23,11 @@
         default = "192.168.1.10";
         description = "LAN IP address";
       };
+      lanCidr = lib.mkOption {
+        type = lib.types.str;
+        default = "192.168.1.0/24";
+        description = "LAN subnet CIDR";
+      };
       nginxAllowCidrs = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [

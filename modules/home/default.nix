@@ -11,7 +11,6 @@ let
 in
 {
   options.dotfiles = {
-    desktop = lib.mkEnableOption "Linux desktop tools (i3, conky, etc.)";
     work = lib.mkEnableOption "work-specific settings";
 
     githubUser = lib.mkOption {

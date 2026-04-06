@@ -1,125 +1,101 @@
 # NixOS Configs
 
-This repository stores NixOS configurations for multiple machines using a simple, import-only layout. Hosts define machine-specific settings, modules hold shared system configuration, and `modules/users/` defines system accounts and Home Manager user configs.
+NixOS and macOS configurations managed with Nix flakes. Hosts define machine-specific settings; shared modules cover system services, dotfiles, and Home Manager user config.
 
-The flake is structured with `flake-parts` to keep outputs modular as the repo grows.
+## Hosts
+
+| Host | OS | Role |
+|------|----|------|
+| `sutala` | NixOS (x86_64-linux) | Home server — media, home-automation, monitoring |
+| `akarunagath` | macOS (aarch64-darwin) | Personal laptop — nix-darwin + Home Manager |
 
 ## Structure
 
 ```
 flake.nix
 hosts/
-  <hostname>/
-    configuration.nix
-    disko.nix
-    hardware-configuration.nix  # generated on the host
+  sutala/            # NixOS host
+  akarunagath/       # nix-darwin host
 modules/
-  nix.nix
-  users/
-    <user>.nix
-  services/
-    <service>.nix
+  home/              # Home Manager dotfiles (shared across hosts/users)
+    shell/           # bash, zsh, readline, common env vars & aliases
+    git/             # git, delta, lazygit
+    vim/             # vim config
+    tmux.nix         # tmux with catppuccin + plugins
+    fzf.nix          # fzf with fd
+    bat.nix          # bat (cat replacement)
+    eza.nix          # eza (ls replacement)
+    gh/              # GitHub CLI
+    gpg.nix          # GPG + SSH agent
+    packages.nix     # user packages
+    ...
+  services/          # NixOS system services (nginx, postgres, containers, …)
+  containers/        # Podman quadlet container stacks
+  users/             # System accounts + Home Manager entrypoints
 ```
 
-## What Each Layer Does
+## Home Manager Options
 
-- **host** (`hosts/<hostname>/configuration.nix`)
-  - Machine-specific system config (hardware, hostname, bootloader, host-only tweaks).
-- **modules** (`modules/*.nix`)
-  - Shared system modules (e.g., `modules/nix.nix` for Nix settings).
-- **user** (`modules/users/*.nix`)
-  - System accounts and groups (who exists on the machine) plus Home Manager user-land config.
-- **services** (`modules/services/*.nix`)
-  - Reusable service modules and configs.
+`modules/home/default.nix` exposes two options:
 
-## Example Imports
+| Option | Default | Effect |
+|--------|---------|--------|
+| `dotfiles.work` | `false` | Enables work-specific settings |
 
-A host typically imports shared modules and user files:
+## Dotfiles
 
-```nix
-{ inputs, ... }:
-{
-  imports = [
-    inputs.home-manager.nixosModules.home-manager
-    inputs.disko.nixosModules.disko
-    inputs.sops-nix.nixosModules.sops
+All dotfiles are managed declaratively via Home Manager:
 
-    ./disko.nix
-    ./hardware-configuration.nix
-    ../../modules/nix.nix
-    ../../modules/users/<user>.nix
-    ../../modules/services/<service>.nix
-  ];
-}
-```
-
-`flake.nix` passes `inputs` via `specialArgs` so host configs can import `inputs.home-manager`, `inputs.disko`, and `inputs.sops-nix` directly.
-
-## Dependency Tree
-
-This repository follows a direct import chain where hosts are the root and everything else is pulled in from there:
-
-```
-flake.nix
-└─ nixosConfigurations.<hostname>
-       └─ hosts/<hostname>/configuration.nix
-            ├─ inputs.home-manager.nixosModules.home-manager
-            ├─ inputs.disko.nixosModules.disko
-            ├─ inputs.sops-nix.nixosModules.sops
-            ├─ ./disko.nix
-            ├─ ./hardware-configuration.nix
-            ├─ modules/nix.nix
-            ├─ modules/users/<user>.nix
-            ├─ modules/services/<service>.nix
-            └─ home-manager.users.<user> (from modules/users/<user>.nix)
-```
+- **Shell** — bash and zsh configured via `programs.bash`/`programs.zsh`; shared env vars, PATH, and aliases in `shell/common/`; readline in `programs.readline`
+- **Theme** — [Catppuccin Mocha](https://github.com/catppuccin/nix) applied globally via `catppuccin.enable = true`; individual overrides per tool
+- **LS_COLORS** — managed by `catppuccin.vivid` (sets `programs.vivid.activeTheme`)
+- **Machine-local config** — place in `~/.shell_local` (not tracked in git); sourced at end of every shell session
 
 ## Build and Apply
 
-- `nixos-rebuild switch --flake .#<hostname>`: apply config to a host.
-- `nixos-rebuild build --flake .#<hostname>`: build without switching.
-- `nix flake check`: evaluate flake checks.
-- `nix fmt`: format Nix files via treefmt-nix.
-- `nix develop`: enter the dev shell with repo tooling.
-
-## Just Tasks
-
-Common operations are also available through `.justfile`:
-
-- `just fmt`
-- `just check`
-- `just deploy`
-- `just switch-remote`
-- `just build-remote`
-
-## Colmena Deployment
-
-This repository exposes a `colmena` flake output for remote deployments. Update `deployment.targetHost` and `deployment.targetUser` in `flake.nix`, then run:
-
-```
-nix run github:zhaofengli/colmena -- apply --on <hostname>
+**NixOS (sutala):**
+```bash
+nixos-rebuild switch --flake .#sutala
+# Remote deploy:
+just deploy          # colmena apply
+just switch-remote   # nixos-rebuild over SSH
 ```
 
-Optional: enable the Colmena binary cache for faster builds:
-
+**macOS (nix-darwin):**
+```bash
+darwin-rebuild switch --flake .#akarunagath
 ```
-nix run nixpkgs#cachix -- use colmena
+
+**Checks and formatting:**
+```bash
+nix flake check
+nix fmt              # treefmt-nix
+nix develop          # dev shell with repo tooling
 ```
 
-## SOPS Secrets
+## Secrets
 
-Secrets are managed with `sops-nix`. The module is enabled via `modules/sops.nix` and derives its age key from the host SSH key.
+Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix). The age key is derived from the host SSH key.
 
-Setup:
-- On the host, derive an age recipient: `ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub`
-- Add that recipient to `.sops.yaml` (replace `REPLACE_WITH_AGE_PUBLIC_KEY`)
-- Encrypt `secrets/secrets.yaml` in-place once you add values.
-- Store password hashes under `users.root.password` and `users.kra3.password` (literal keys).
-- Store Cloudflare DNS credentials under `cloudflare.acme.token` (token value, literal key).
-- Store Tailscale auth key under `tailscale.authkey` (token value, literal key).
-See `secrets/README.md` for the exact structure.
+```bash
+# On host: get age recipient
+ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub
+
+# Add recipient to .sops.yaml, then edit secrets
+sops secrets/secrets.yaml
+```
+
+See `secrets/README.md` for the full secrets layout.
+
+## Adding a New Machine
+
+1. Create `hosts/<hostname>/configuration.nix` (NixOS) or `hosts/<hostname>/darwin-configuration.nix` (macOS)
+2. Add the host to `flake.nix` under `nixosConfigurations` or `darwinConfigurations`
+3. Import `modules/users/kra3.nix` (or create a new user module) to bring in Home Manager dotfiles
+4. For NixOS: run `nixos-generate-config` on the host to produce `hardware-configuration.nix` and `disko.nix`
 
 ## Notes
 
-- Keep configs import-only; avoid helper methods in Nix.
-- Store system packages in modules or host configs; keep user packages in Home Manager.
+- Configs are import-only — no helper functions in Nix
+- System packages go in host configs or service modules; user packages go in `modules/home/packages.nix`
+- Container stacks live in `modules/containers/` as Podman quadlets

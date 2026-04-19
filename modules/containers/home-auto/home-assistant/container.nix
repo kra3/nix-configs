@@ -62,7 +62,7 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."ha2.${config.vars.acme.domain}" = {
+  services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = {
     useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = ''

@@ -25,11 +25,11 @@ in
 
   networking.firewall.interfaces.${config.vars.network.lanIf} = {
     allowedTCPPorts = [
-      1883 # Mosquitto (DNAT to 10.0.50.8)
-      8555 # go2rtc WebRTC (DNAT to 10.0.50.8)
+      1883 # Mosquitto (DNAT to home-auto container)
+      8555 # go2rtc WebRTC (DNAT to home-auto container)
     ];
     allowedUDPPorts = [
-      8555 # go2rtc WebRTC (DNAT to 10.0.50.8)
+      8555 # go2rtc WebRTC (DNAT to home-auto container)
     ];
   };
 

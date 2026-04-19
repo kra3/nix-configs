@@ -223,6 +223,7 @@ in
       ZIGBEE2MQTT_CONFIG_MQTT_USER=${config.sops.placeholder."mqtt.user"}
       ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${config.sops.placeholder."mqtt.password"}
       ZIGBEE2MQTT_CONFIG_FRONTEND_AUTH_TOKEN=${config.sops.placeholder."zigbee2mqtt.frontend.auth_token"}
+      ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY=${config.sops.placeholder."zigbee2mqtt.network_key"}
     '';
   };
 
@@ -263,6 +264,12 @@ in
   };
 
   sops.secrets."zigbee2mqtt.frontend.auth_token" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."zigbee2mqtt.network_key" = {
     owner = "root";
     group = "root";
     mode = "0400";

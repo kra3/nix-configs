@@ -11,26 +11,26 @@ views:
       - type: light-brightness
       - type: light-color-temp
       type: tile
-      entity: light.kitchen_ceiling_lights
+      entity: light.kitchen_lights
       name: Kitchen
     - features:
       - type: light-brightness
       - type: light-color-temp
       type: tile
-      entity: light.living_room_ceiling_lights
+      entity: light.living_room_lights
       name: Living room
       state_content:
       - brightness
       - effect
     - type: tile
-      entity: light.kitchen_dining_lights
+      entity: light.kitchen_dining_lights_2
       name: Kitchen Dining
       vertical: false
       features:
       - type: light-brightness
       features_position: bottom
     - type: tile
-      entity: light.bedroom_wardrobe_lights
+      entity: light.bedroom_wardrobe_lights_2
       name: Bedroom
       vertical: false
       features:
@@ -40,21 +40,18 @@ views:
       entity: light.hall
       features:
       - type: light-brightness
-    - type: tile
-      entity: light.living_room_light_ceiling_ll_light_3
-      name: Knitting light
     - type: custom:mushroom-light-card
       collapsible_controls: true
       show_color_control: false
       show_color_temp_control: false
       use_light_color: true
       show_brightness_control: true
-      entity: light.tv_backlight_3_lite_2
+      entity: light.tv_backlight_3_lite
       icon_color: primary
       fill_container: false
       icon: mdi:led-strip
     - type: tile
-      entity: light.dining_room_ceiling_lights
+      entity: light.dining_lights
       name: 'Dining room '
       features:
       - type: light-brightness
@@ -69,7 +66,7 @@ views:
       - type: light-color-temp
       features_position: bottom
     - type: tile
-      entity: switch.hue_plug_1
+      entity: switch.hue_light_switch_1
       name: Plants shelf
       icon: mdi:flower
       show_entity_picture: false
@@ -77,7 +74,7 @@ views:
       vertical: false
       features_position: bottom
     - type: tile
-      entity: switch.hue_plug_2
+      entity: switch.hue_light_switch_2
       name: Christmas Tree
       icon: mdi:tree-outline
       show_entity_picture: false
@@ -88,13 +85,15 @@ views:
       type: grid
       cards:
       - type: custom:mushroom-light-card
-        entity: light.moes_front_door_light
+        entity: switch.front_entrance_double_switch_left
         name: Main Entrance
         collapsible_controls: true
+        icon: mdi:door
       - type: custom:mushroom-light-card
-        entity: light.moes_front_door_light_2
+        entity: switch.front_entrance_double_switch_right
         name: Street
         layout: horizontal
+        icon: mdi:outdoor-lamp
       columns: 2
   - type: grid
     cards:
@@ -118,9 +117,7 @@ views:
       heading_style: title
       badges:
       - type: entity
-        entity: alarm_control_panel.verisure_alarm
-      - type: entity
-        entity: lock.front_door
+        entity: lock.yale_front_door
       - type: entity
         entity: binary_sensor.house_exits_open_status
     - type: vertical-stack
@@ -130,19 +127,8 @@ views:
         heading: Open door/window
         heading_style: subtitle
         badges: []
-      - type: entity-filter
-        entities:
-        - entity: binary_sensor.dorr_vrum_opening
-        - entity: binary_sensor.entredorr_opening
-        - entity: binary_sensor.finentredorr_opening
-        - entity: binary_sensor.ho_fonster_sovrum_opening
-        - entity: binary_sensor.ho_fonster_tv_opening
-        - entity: binary_sensor.ho_glas_vrum_opening
-        conditions:
-        - condition: state
-          state: 'on'
-        card:
-          type: glance
+      - type: markdown
+        content: "No door sensors configured yet"
     - type: custom:alarmo-card
       entity: alarm_control_panel.alarmo
       name: ''
@@ -166,7 +152,7 @@ views:
       - type: entity
         show_state: true
         show_icon: true
-        entity: sensor.hue_pir_hall_temperature
+        entity: sensor.hue_pir_hallway_temperature
       - type: entity
         entity: sensor.hall_humidity
     - graph: line
@@ -187,7 +173,7 @@ views:
       type: statistics-graph
       entities:
       - sensor.hue_pir_kitchen_temperature
-      - sensor.hue_pir_hall_temperature
+      - sensor.hue_pir_hallway_temperature
       - sensor.fresh_kitchen_fan_temperature
       stat_types:
       - mean
@@ -204,13 +190,6 @@ views:
       heading: Media Server
       heading_style: title
       badges:
-      - type: entity
-        show_state: true
-        show_icon: true
-        entity: media_player.google_tv_2
-        icon: mdi:google-play
-        color: state
-        state_content: volume_level
       - type: entity
         entity: media_player.lg_webos_tv_oled77c35la_2
       - type: entity
@@ -248,20 +227,6 @@ views:
     show_state: true
     show_icon: true
     entity: lock.yale_front_door_2
-  - type: entity-filter
-    entities:
-    - binary_sensor.dorr_vrum_opening
-    - binary_sensor.entredorr_opening
-    - binary_sensor.finentredorr_opening
-    - binary_sensor.ho_fonster_sovrum_opening
-    - binary_sensor.va_fonster_sovrum_opening
-    - binary_sensor.ho_fonster_tv_opening
-    - binary_sensor.va_fonster_tv_opening
-    - binary_sensor.ho_glas_vrum_opening
-    - binary_sensor.va_glas_vrum_opening
-    conditions:
-    - condition: state
-      state: 'on'
   - type: entity
     show_name: false
     show_state: true
@@ -272,7 +237,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: sensor.hue_pir_hall_temperature
+    entity: sensor.hue_pir_hallway_temperature
   - type: entity
     show_name: false
     show_state: true
@@ -365,14 +330,9 @@ views:
     - type: vertical-stack
       cards:
       - type: heading
-        icon: mdi:raspberry-pi
+        icon: mdi:server
         heading_style: title
-        heading: Raspberry Pi 3B+
-        badges:
-        - type: entity
-          show_state: true
-          show_icon: true
-          entity: binary_sensor.rpi_power_status
+        heading: Sutala (Intel Comet Lake)
       - type: heading
         icon: mdi:camera-timer
         heading: Last Boot
@@ -417,29 +377,29 @@ views:
           entity: sensor.system_monitor_load_1m
           name: 1m
           min: 0
-          max: 1
+          max: 8
           severity:
             green: 0
-            yellow: 0.5
-            red: 0.8
+            yellow: 4
+            red: 6.5
         - type: gauge
           entity: sensor.system_monitor_load_5m
           name: 5m
           min: 0
-          max: 1
+          max: 8
           severity:
             green: 0
-            yellow: 0.5
-            red: 0.8
+            yellow: 4
+            red: 6.5
         - type: gauge
           entity: sensor.system_monitor_load_15m
           name: 15m
           min: 0
-          max: 1
+          max: 8
           severity:
             green: 0
-            yellow: 0.5
-            red: 0.8
+            yellow: 4
+            red: 6.5
         columns: 3
       grid_options:
         columns: 14
@@ -475,11 +435,11 @@ views:
     - type: vertical-stack
       cards:
       - type: heading
-        icon: mdi:sd
+        icon: mdi:harddisk
         heading_style: title
         heading: Storage
       - type: heading
-        icon: mdi:sd
+        icon: mdi:harddisk
         heading_style: subtitle
         heading: Used / Free
         badges:
@@ -504,21 +464,13 @@ views:
     cards:
     - type: entities
       entities:
-      - entity: sensor.system_monitor_ipv4_address_wlan0
-        name: WiFi
-        icon: mdi:wifi
-        secondary_info: last-updated
-      - entity: sensor.system_monitor_ipv4_address_enu1u1u1
-        name: LAN
+      - entity: sensor.system_monitor_ipv4_address_eth0
+        name: Podman Bridge
         icon: mdi:lan
         secondary_info: last-updated
-      - entity: sensor.system_monitor_ipv4_address_docker0
-        name: Docker
-        icon: mdi:docker
-        secondary_info: last-updated
-      - entity: sensor.system_monitor_ipv4_address_hassio
-        name: HA
-        icon: mdi:home-assistant
+      - entity: sensor.system_monitor_ipv4_address_eth1
+        name: Macvlan (LAN)
+        icon: mdi:ethernet
         secondary_info: last-updated
       grid_options:
         columns: 18
@@ -564,19 +516,19 @@ views:
     - type: heading
       heading: New section
     - type: tile
-      entity: switch.power_monitor
+      entity: switch.power_monitor_1
     - type: tile
-      entity: sensor.power_monitor_power
+      entity: sensor.power_monitor_1_power
     - type: tile
-      entity: select.power_monitor_start_up_behaviour
+      entity: select.power_monitor_1_power_on_behavior
     - type: tile
-      entity: sensor.power_monitor_summation_delivered
+      entity: sensor.power_monitor_1_energy
     - type: tile
-      entity: sensor.power_monitor_voltage
+      entity: sensor.power_monitor_1_voltage
     - type: tile
-      entity: sensor.power_monitor_current
+      entity: sensor.power_monitor_1_current
     - type: tile
-      entity: switch.power_monitor_child_lock
+      entity: switch.power_monitor_1_child_lock
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - type: panel

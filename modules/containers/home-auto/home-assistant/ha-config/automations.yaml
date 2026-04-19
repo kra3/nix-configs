@@ -1,67 +1,11 @@
-# ── Remote control ──────────────────────────────────────────────
-- id: '1733346573361'
-  alias: Remote control
-  description: ''
-  use_blueprint:
-    path: lsismeiro/ikea_e2001_e2002.yaml
-    input:
-      integration: ZHA
-      controller_device: f3322a89a337bba1ad201cc86046ee2c
-      helper_last_controller_event: input_text.dining_remote_control_last_event
-      action_button_left_short: []
-      action_button_up_short:
-      - action: light.turn_on
-        metadata: {}
-        data:
-          color_temp: 474
-        target:
-          area_id: living_room
-          entity_id: light.living_room_ceiling_lights
-      action_button_down_short:
-      - action: light.turn_on
-        metadata: {}
-        data:
-          color_temp: 179
-        target:
-          area_id: living_room
-          entity_id: light.living_room_ceiling_lights
-      helper_debounce_delay: 30
-      button_down_double_press: true
-      button_up_double_press: true
-      button_right_double_press: true
-      button_left_double_press: true
-      action_button_left_double: []
-      action_button_right_double: []
-      action_button_up_double:
-      - action: light.turn_on
-        metadata: {}
-        data: {}
-        target:
-          area_id: dining_room
-          entity_id: light.dining_room_ceiling_lights
-      action_button_down_double:
-      - action: light.turn_off
-        metadata: {}
-        data: {}
-        target:
-          entity_id: light.dining_room_ceiling_lights
-          area_id: dining_room
-
-- id: '1733346957071'
-  alias: Hook - Living room ceiling lights
-  description: ''
-  use_blueprint:
-    path: EPMatt/light.yaml
-    input:
-      controller_device: f3322a89a337bba1ad201cc86046ee2c
-      controller_model: IKEA E2001/E2002 STYRBAR Remote control
-      light: light.living_room_ceiling_lights
-      light_color_mode: Auto
-      min_brightness: 75
-      brightness_steps_short: 4
-      brightness_steps_long: 12
-      force_brightness: true
-      on_brightness: 255
+# ── Remote control (DISABLED — use Z2M direct binding instead) ──
+# - id: '1733346573361'
+#   alias: Remote control
+#   description: 'Disabled: migrated to Z2M direct binding'
+#
+# - id: '1733346957071'
+#   alias: Hook - Living room ceiling lights
+#   description: 'Disabled: migrated to Z2M direct binding'
 
 # ── Presence notifications ─────────────────────────────────────
 - id: '1733594588791'
@@ -229,7 +173,7 @@
         action: input_boolean.turn_off
       - if:
         - condition: state
-          entity_id: light.kitchen_ceiling_lights
+          entity_id: light.kitchen_lights
           state: "on"
         then:
         - wait_for_trigger:
@@ -237,7 +181,7 @@
             to: "off"
             trigger: state
         - target:
-            entity_id: light.kitchen_ceiling_lights
+            entity_id: light.kitchen_lights
           action: light.turn_off
   mode: restart
 
@@ -271,14 +215,14 @@
         id: sleep_started
       sequence:
       - target:
-          entity_id: light.kitchen_ceiling_lights
+          entity_id: light.kitchen_lights
         data:
           brightness_pct: 15
           transition: 3
         action: light.turn_on
       - delay: "00:00:30"
       - target:
-          entity_id: light.kitchen_ceiling_lights
+          entity_id: light.kitchen_lights
         data:
           transition: 2
         action: light.turn_off
@@ -290,7 +234,7 @@
         state: "on"
       sequence:
       - target:
-          entity_id: light.kitchen_ceiling_lights
+          entity_id: light.kitchen_lights
         data:
           brightness_pct: 15
           transition: 1
@@ -301,13 +245,13 @@
           trigger: state
       - delay: "00:01:00"
       - target:
-          entity_id: light.kitchen_ceiling_lights
+          entity_id: light.kitchen_lights
         data:
           transition: 1
         action: light.turn_off
     default:
     - target:
-        entity_id: light.kitchen_ceiling_lights
+        entity_id: light.kitchen_lights
       data:
         brightness_pct: 100
         transition: 0.8
@@ -318,14 +262,14 @@
         trigger: state
     - delay: "00:05:00"
     - target:
-        entity_id: light.kitchen_ceiling_lights
+        entity_id: light.kitchen_lights
       data:
         brightness_pct: 50
         transition: 2
       action: light.turn_on
     - delay: "00:05:00"
     - target:
-        entity_id: light.kitchen_ceiling_lights
+        entity_id: light.kitchen_lights
       data:
         brightness_pct: 15
         transition: 2
@@ -340,7 +284,7 @@
     ON: lux < 30 sustained 2 min AND sun below horizon.
     OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
   triggers:
-  - entity_id: sensor.hue_pir_hall_illuminance
+  - entity_id: sensor.hue_pir_hallway_illuminance
     below: 30
     for: "00:02:00"
     trigger: numeric_state
@@ -349,7 +293,7 @@
     to: below_horizon
     trigger: state
     id: dark
-  - entity_id: sensor.hue_pir_hall_illuminance
+  - entity_id: sensor.hue_pir_hallway_illuminance
     above: 120
     for: "00:02:00"
     trigger: numeric_state
@@ -367,7 +311,7 @@
         entity_id: sun.sun
         state: below_horizon
       - condition: numeric_state
-        entity_id: sensor.hue_pir_hall_illuminance
+        entity_id: sensor.hue_pir_hallway_illuminance
         below: 30
       sequence:
       - target:
@@ -380,7 +324,7 @@
         entity_id: sun.sun
         state: above_horizon
       - condition: numeric_state
-        entity_id: sensor.hue_pir_hall_illuminance
+        entity_id: sensor.hue_pir_hallway_illuminance
         above: 120
       sequence:
       - target:
@@ -392,7 +336,7 @@
           state: "on"
         then:
         - wait_for_trigger:
-          - entity_id: binary_sensor.hue_pir_hall
+          - entity_id: binary_sensor.hue_pir_hallway_occupancy
             to: "off"
             trigger: state
         - target:
@@ -410,7 +354,7 @@
     to: "on"
     trigger: state
     id: became_dark
-  - entity_id: binary_sensor.hue_pir_hall
+  - entity_id: binary_sensor.hue_pir_hallway_occupancy
     from: "off"
     to: "on"
     trigger: state
@@ -455,7 +399,7 @@
           transition: 0.5
         action: light.turn_on
       - wait_for_trigger:
-        - entity_id: binary_sensor.hue_pir_hall
+        - entity_id: binary_sensor.hue_pir_hallway_occupancy
           to: "off"
           trigger: state
       - delay: "00:01:00"
@@ -472,7 +416,7 @@
         transition: 0.3
       action: light.turn_on
     - wait_for_trigger:
-      - entity_id: binary_sensor.hue_pir_hall
+      - entity_id: binary_sensor.hue_pir_hallway_occupancy
         to: "off"
         trigger: state
     - delay: "00:00:10"
@@ -509,20 +453,20 @@
         id: sleep_started
       sequence:
       - target:
-          entity_id: light.living_room_ceiling_lights
+          entity_id: light.living_room_lights
         data:
           brightness_pct: 15
           transition: 3
         action: light.turn_on
       - delay: "00:00:30"
       - target:
-          entity_id: light.living_room_ceiling_lights
+          entity_id: light.living_room_lights
         data:
           transition: 2
         action: light.turn_off
     default:
     - target:
-        entity_id: light.living_room_ceiling_lights
+        entity_id: light.living_room_lights
       data:
         brightness_pct: 30
         transition: 1
@@ -559,8 +503,8 @@
       sequence:
       - target:
           entity_id:
-          - light.living_room_ceiling_lights
-          - light.dining_room_ceiling_lights
+          - light.living_room_lights
+          - light.dining_lights
         data:
           transition: 2
         action: light.turn_off
@@ -573,13 +517,13 @@
       sequence:
       - delay: "00:00:30"
       - target:
-          entity_id: light.living_room_ceiling_lights
+          entity_id: light.living_room_lights
         data:
           brightness_pct: 30
           transition: 60
         action: light.turn_on
       - target:
-          entity_id: light.dining_room_ceiling_lights
+          entity_id: light.dining_lights
         data:
           brightness_pct: 20
           transition: 60
@@ -612,20 +556,20 @@
         id: sleep_started
       sequence:
       - target:
-          entity_id: light.dining_room_ceiling_lights
+          entity_id: light.dining_lights
         data:
           brightness_pct: 15
           transition: 3
         action: light.turn_on
       - delay: "00:00:30"
       - target:
-          entity_id: light.dining_room_ceiling_lights
+          entity_id: light.dining_lights
         data:
           transition: 2
         action: light.turn_off
     default:
     - target:
-        entity_id: light.dining_room_ceiling_lights
+        entity_id: light.dining_lights
       data:
         brightness_pct: 20
         transition: 1
@@ -684,7 +628,7 @@
       entity_id: alarm_control_panel.alarmo
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights
+      - light.bedroom_wardrobe_lights_2
       - light.hall
     data:
       brightness_pct: 5
@@ -693,7 +637,7 @@
   - delay: "00:02:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights
+      - light.bedroom_wardrobe_lights_2
       - light.hall
     data:
       brightness_pct: 15
@@ -702,7 +646,7 @@
   - delay: "00:03:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights
+      - light.bedroom_wardrobe_lights_2
       - light.hall
     data:
       brightness_pct: 40
@@ -711,7 +655,7 @@
   - delay: "00:05:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights
+      - light.bedroom_wardrobe_lights_2
       - light.hall
     data:
       brightness_pct: 60
@@ -740,82 +684,21 @@
         id: dusk
       sequence:
       - target:
-          entity_id: light.moes_front_door_light2
-        action: light.turn_on
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_on
     - conditions:
       - condition: trigger
         id: sleep_started
       sequence:
       - target:
-          entity_id: light.moes_front_door_light2
-        action: light.turn_off
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_off
   mode: single
 
-# ── Door sensors ───────────────────────────────────────────────
-- id: door_opened_dark
-  alias: Door opened — Room lights + Alarmo alert
-  description: >-
-    When any outdoor exit opens at night, boost corresponding room
-    lights to 100% and trigger Alarmo alert (lock should be on).
-    entredorr → hall + entrance. finentredorr → hall. dorr_vrum → dining + living.
-  triggers:
-  - entity_id: binary_sensor.entredorr_opening
-    to: "on"
-    trigger: state
-    id: entredorr
-  - entity_id: binary_sensor.finentredorr_opening
-    to: "on"
-    trigger: state
-    id: finentredorr
-  - entity_id: binary_sensor.dorr_vrum_opening
-    to: "on"
-    trigger: state
-    id: dorr_vrum
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: entredorr
-      sequence:
-      - target:
-          entity_id:
-          - light.hall
-          - light.moes_front_door_light
-          - light.moes_front_door_light2
-        data:
-          brightness_pct: 100
-          transition: 0.3
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: finentredorr
-      sequence:
-      - target:
-          entity_id: light.hall
-        data:
-          brightness_pct: 100
-          transition: 0.3
-        action: light.turn_on
-    - conditions:
-      - condition: trigger
-        id: dorr_vrum
-      sequence:
-      - target:
-          entity_id:
-          - light.dining_room_ceiling_lights
-          - light.living_room_ceiling_lights
-        data:
-          brightness_pct: 100
-          transition: 0.3
-        action: light.turn_on
-  - action: alarm_control_panel.alarm_trigger
-    target:
-      entity_id: alarm_control_panel.alarmo
-  mode: single
+# ── Door sensors (DISABLED — sensors not migrated to Z2M yet) ──
+# - id: door_opened_dark
+#   alias: Door opened — Room lights + Alarmo alert
+#   description: 'Disabled: door sensors removed from Z2M'
 
 # ── Away mode ──────────────────────────────────────────────────
 - id: everyone_left_home

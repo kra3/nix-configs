@@ -10,6 +10,13 @@
       mqtt = {
         server = "mqtt://localhost:1883";
       };
+      advanced = {
+        channel = 25;
+        pan_id = 1245; # 0x04DD
+        ext_pan_id = [ 253 254 136 42 41 230 167 225 ];
+        transmit_power = 8;
+        log_level = "debug";
+      };
       serial = {
         adapter = "ember";
         baudrate = 115200;

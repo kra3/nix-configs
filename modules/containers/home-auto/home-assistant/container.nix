@@ -43,7 +43,10 @@ in
       Restart = "always";
       # macvlan cannot reach parent interface's IP (192.168.1.10).
       # Route host traffic via the Podman bridge gateway instead.
-      ExecStartPost = "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.lanIp}/32 via 10.3.2.1";
+      ExecStartPost = [
+        "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.lanIp}/32 via 10.3.2.1"
+        "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.containers.homeAuto.localAddress}/32 via 10.3.2.1"
+      ];
     };
   };
 

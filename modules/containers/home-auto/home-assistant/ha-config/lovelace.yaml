@@ -1,11 +1,25 @@
-strategy:
-  type: original-states
+resource_mode: yaml
 resources:
-- url: /hacsfiles/lovelace-mushroom/mushroom.js?hacstag=444350375511
-  type: module
-- url: /webrtc/webrtc-camera.js?v=v3.6.1
-  type: module
-- url: /hacsfiles/advanced-camera-card/advanced-camera-card.js?hacstag=3940825527272
-  type: module
-- url: /hacsfiles/alarmo-card/alarmo-card.js?hacstag=391372854166
-  type: module
+  - url: /hacsfiles/lovelace-mushroom/mushroom.js
+    type: module
+  - url: /webrtc/webrtc-camera.js
+    type: module
+  - url: /hacsfiles/advanced-camera-card/advanced-camera-card.js
+    type: module
+  - url: /hacsfiles/alarmo-card/alarmo-card.js
+    type: module
+dashboards:
+  lovelace-map:
+    mode: yaml
+    filename: dashboards/map.yaml
+    title: Map
+    icon: mdi:map
+    show_in_sidebar: true
+    require_admin: false
+  dashboard-wip:
+    mode: yaml
+    filename: dashboards/dashboard_wip.yaml
+    title: Dashboard
+    icon: mdi:view-dashboard-variant
+    show_in_sidebar: true
+    require_admin: false

@@ -46,13 +46,13 @@ views:
       show_color_temp_control: false
       use_light_color: true
       show_brightness_control: true
-      entity: light.tv_backlight_3_lite
+      entity: light.tv_backlight_3_lite_2
       icon_color: primary
       fill_container: false
       icon: mdi:led-strip
     - type: tile
       entity: light.dining_lights
-      name: 'Dining room '
+      name: Dining room
       features:
       - type: light-brightness
     - type: tile
@@ -147,26 +147,28 @@ views:
     cards:
     - type: heading
       heading_style: title
-      heading: Climat (Hall)
+      heading: Climate 
       badges:
       - type: entity
         show_state: true
         show_icon: true
         entity: sensor.hue_pir_hallway_temperature
       - type: entity
-        entity: sensor.hall_humidity
+        show_state: true
+        show_icon: true
+        entity: sensor.hue_pir_kitchen_temperature
     - graph: line
       type: sensor
       entity: sensor.hue_pir_kitchen_temperature
       detail: 2
       unit: C
-      name: Temperature
+      name: Temperature (Kitchen)
       hours_to_show: 168
     - graph: line
       type: sensor
-      entity: sensor.hall_humidity
+      entity: sensor.hue_pir_hallway_temperature
       detail: 2
-      name: Humidity
+      name: Temperature (Hall)
       hours_to_show: 168
     - chart_type: line
       period: hour
@@ -226,7 +228,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: lock.yale_front_door_2
+    entity: lock.yale_front_door
   - type: entity
     show_name: false
     show_state: true

@@ -38,27 +38,4 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
-lovelace:
-  resource_mode: yaml
-  dashboards:
-    lovelace:
-      mode: yaml
-      filename: lovelace.yaml
-      title: Overview
-      icon: mdi:view-dashboard
-      show_in_sidebar: true
-      require_admin: false
-    lovelace-map:
-      mode: yaml
-      filename: dashboards/map.yaml
-      title: Map
-      icon: mdi:map
-      show_in_sidebar: true
-      require_admin: false
-    dashboard-wip:
-      mode: yaml
-      filename: dashboards/dashboard_wip.yaml
-      title: Dashboard
-      icon: mdi:view-dashboard-variant
-      show_in_sidebar: true
-      require_admin: false
+lovelace: !include lovelace.yaml

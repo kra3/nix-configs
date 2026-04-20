@@ -1,13 +1,17 @@
 { config, pkgs, ... }:
 let
   network = config.virtualisation.quadlet.networks.home-auto;
+  macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
 {
   virtualisation.quadlet.containers.otbr = {
     containerConfig = {
       image = "docker.io/denniswitt/homeassistant-otbr:3.0.4";
       publishPorts = [ "127.0.0.1:8081:8081" ];
-      networks = [ "${network.ref}:ip=10.3.2.11" ];
+      networks = [
+        "${network.ref}:ip=10.3.2.11"
+        "${macvlan.ref}:ip=192.168.1.34,mac=02:42:c0:a8:01:22"
+      ];
       logDriver = "journald";
       volumes = [
         "/srv/appdata/home-auto/otbr:/data"
@@ -22,7 +26,7 @@ in
         DEVICE = "/dev/ttyUSB0";
         BAUDRATE = "460800";
         FLOW_CONTROL = "true";
-        BACKBONE_IF = "eth0";
+        BACKBONE_IF = "eth1";  # macvlan (LAN) interface
         AUTOFLASH_FIRMWARE = "false";
         OTBR_LOG_LEVEL = "notice";
         FIREWALL = "true";
@@ -30,8 +34,8 @@ in
       };
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "dev-thread.device" ];
-      Requires = [ "home-auto-network.service" ];
+      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" "dev-thread.device" ];
+      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
       BindsTo = [ "dev-thread.device" ];
     };
     serviceConfig = {

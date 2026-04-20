@@ -1,13 +1,17 @@
 { config, pkgs, ... }:
 let
   network = config.virtualisation.quadlet.networks.home-auto;
+  macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
 {
   virtualisation.quadlet.containers.matter-server = {
     containerConfig = {
       image = "ghcr.io/home-assistant-libs/python-matter-server:8.1.0";
       publishPorts = [ "127.0.0.1:5580:5580" ];
-      networks = [ "${network.ref}:ip=10.3.2.12" ];
+      networks = [
+        "${network.ref}:ip=10.3.2.12"
+        "${macvlan.ref}:ip=192.168.1.35,mac=02:42:c0:a8:01:23"
+      ];
       logDriver = "journald";
       volumes = [
         "/srv/appdata/home-auto/matter-server:/data"
@@ -18,8 +22,8 @@ in
       };
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "otbr.service" ];
-      Requires = [ "home-auto-network.service" ];
+      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" "otbr.service" ];
+      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
     serviceConfig = {
       Restart = "always";

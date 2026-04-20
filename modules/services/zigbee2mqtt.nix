@@ -23,7 +23,6 @@
         port = "/dev/zigbee";
         rtscts = false;
       };
-      # Firmware tool: https://dongle.sonoff.tech/sonoff-dongle-flasher/
       frontend = {
         enabled = true;
         host = "0.0.0.0";

@@ -28,6 +28,8 @@
     ../../modules/containers/media-play.nix
     ../../modules/containers/home-auto.nix
     ../../modules/containers/home-auto/home-assistant
+    ../../modules/containers/home-auto/otbr
+    ../../modules/containers/home-auto/matter-server
     ../../modules/containers/life
     ../../modules/fail2ban.nix
     ../../modules/services/system/vim.nix
@@ -82,7 +84,6 @@
     supportedFilesystems = [ "zfs" ];
     kernelParams = [
       "zfs.zfs_arc_max=3338665984" # zfs
-      "ipv6.disable=1"  # networking 
       "i915.enable_guc=2" # QSV low-power encode/decode requires HuC/GuC firmware
       "i915.enable_fbc=1" # allow framebuffer compression to reduce power draw
     ];

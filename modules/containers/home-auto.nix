@@ -39,6 +39,8 @@ in
   users.groups.zigbee2mqtt = {
     gid = config.ids.gids.zigbee2mqtt;
   };
+
+  # Firmware tool: https://dongle.sonoff.tech/sonoff-dongle-flasher/
   services.udev.extraRules = ''
     SUBSYSTEM=="tty", ENV{ID_SERIAL}=="Nabu_Casa_SkyConnect_v1.0_80c8f41dd693ed1189fe82f23b20a988", SYMLINK+="zigbee"
     SUBSYSTEM=="tty", ENV{ID_SERIAL}=="Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_3c705f2672d9ee119f42b74c37b89984", SYMLINK+="thread"

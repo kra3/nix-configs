@@ -74,11 +74,11 @@
              < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
       - condition: template
         value_template: >-
-          {{ state_attr('weather.forecast_home', 'cloud_coverage') | float(0) > 70 }}
+          {{ state_attr('weather.forecast_vasudha', 'cloud_coverage') | float(0) > 70 }}
     then:
     - type: turn_on
-      device_id: 76e25efec2b514e252ab3129922d89ca
-      entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
+      device_id: 5c2c4c65f834231378af61d835ec513a
+      entity_id: light.tv_backlight
       domain: light
   mode: single
 
@@ -93,8 +93,8 @@
     trigger: device
   actions:
   - type: turn_off
-    device_id: 76e25efec2b514e252ab3129922d89ca
-    entity_id: aee1c2e44db5f2a39250fe0e97c5ccdb
+    device_id: 5c2c4c65f834231378af61d835ec513a
+    entity_id: light.h6099
     domain: light
   mode: single
 

@@ -46,7 +46,8 @@ views:
       show_color_temp_control: false
       use_light_color: true
       show_brightness_control: true
-      entity: light.tv_backlight_3_lite_2
+      entity: light.tv_backlight
+      name: TV Backlight
       icon_color: primary
       fill_container: false
       icon: mdi:led-strip
@@ -104,7 +105,7 @@ views:
     - show_current: true
       show_forecast: true
       type: weather-forecast
-      entity: weather.forecast_home
+      entity: weather.forecast_vasudha
       forecast_type: daily
       secondary_info_attribute: wind_speed
       forecast_slots: 7
@@ -130,7 +131,7 @@ views:
       - type: markdown
         content: "No door sensors configured yet"
     - type: custom:alarmo-card
-      entity: alarm_control_panel.alarmo
+      entity: alarm_control_panel.vasudha_secure
       name: ''
       keep_keypad_visible: false
       button_scale_actions: 1
@@ -223,7 +224,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: alarm_control_panel.alarmo
+    entity: alarm_control_panel.vasudha_secure
   - type: entity
     show_name: false
     show_state: true
@@ -244,7 +245,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: weather.forecast_home
+    entity: weather.forecast_vasudha
     state_content:
     - temperature
     - state

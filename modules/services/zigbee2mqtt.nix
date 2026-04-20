@@ -9,6 +9,8 @@
       };
       mqtt = {
         server = "mqtt://localhost:1883";
+        client_id = "z2m";
+        version = 4;
       };
       advanced = {
         channel = 25;

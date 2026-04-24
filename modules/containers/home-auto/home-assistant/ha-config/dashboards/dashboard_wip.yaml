@@ -299,7 +299,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: sensor.iphone2_battery_level
+    entity: sensor.iphone_battery_level
     visibility:
     - condition: user
       users:

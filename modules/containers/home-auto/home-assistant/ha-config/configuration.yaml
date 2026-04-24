@@ -6,6 +6,8 @@ homeassistant:
   country: SE
   currency: SEK
   language: en-GB
+  internal_url: "http://192.168.1.33:8123"
+  external_url: "https://ha.karunagath.in"
   latitude: !secret homeassistant_latitude
   longitude: !secret homeassistant_longitude
   packages: !include_dir_named packages

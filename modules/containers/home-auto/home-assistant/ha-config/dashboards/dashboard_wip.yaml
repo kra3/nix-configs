@@ -194,12 +194,12 @@ views:
       heading_style: title
       badges:
       - type: entity
-        entity: media_player.lg_webos_tv_oled77c35la_2
+        entity: media_player.lg_webos_tv_oled77c35la
       - type: entity
         entity: media_player.home_theater_2
       icon: mdi:plex
     - type: media-control
-      entity: media_player.lg_webos_tv_oled77c35la_2
+      entity: media_player.lg_webos_tv_oled77c35la
       grid_options:
         columns: full
         rows: 2

@@ -479,11 +479,11 @@
     Turn off living + dining lights when watching content on
     Stremio, Jellyfin, or Apple TV. Restore when stopped.
   triggers:
-  - entity_id: media_player.lg_webos_tv_oled77c35la_2
+  - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
     trigger: state
     id: playing
-  - entity_id: media_player.lg_webos_tv_oled77c35la_2
+  - entity_id: media_player.lg_webos_tv_oled77c35la
     from: playing
     trigger: state
     id: not_playing
@@ -498,7 +498,7 @@
         id: playing
       - condition: template
         value_template: >-
-          {{ state_attr('media_player.lg_webos_tv_oled77c35la_2', 'source')
+          {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
              in ['Stremio', 'Jellyfin', 'Apple TV'] }}
       sequence:
       - target:
@@ -590,12 +590,12 @@
   - condition: not
     conditions:
     - condition: state
-      entity_id: media_player.lg_webos_tv_oled77c35la_2
+      entity_id: media_player.lg_webos_tv_oled77c35la
       state: playing
   actions:
   - action: media_player.turn_off
     target:
-      entity_id: media_player.lg_webos_tv_oled77c35la_2
+      entity_id: media_player.lg_webos_tv_oled77c35la
   mode: single
 
 - id: sleep_alarmo_arm_home
@@ -609,7 +609,7 @@
   actions:
   - action: alarm_control_panel.alarm_arm_home
     target:
-      entity_id: alarm_control_panel.alarmo
+      entity_id: alarm_control_panel.vasudha_secure
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
@@ -625,7 +625,7 @@
   actions:
   - action: alarm_control_panel.alarm_disarm
     target:
-      entity_id: alarm_control_panel.alarmo
+      entity_id: alarm_control_panel.vasudha_secure
   - target:
       entity_id:
       - light.bedroom_wardrobe_lights_2
@@ -735,7 +735,7 @@
       entity_id: all
   - action: alarm_control_panel.alarm_arm_away
     target:
-      entity_id: alarm_control_panel.alarmo
+      entity_id: alarm_control_panel.vasudha_secure
   - action: notify.mobile_app_anjalipc
     data:
       title: Home

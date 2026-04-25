@@ -39,5 +39,7 @@
     "d /srv/appdata/media-mgmt/audiobookshelf/config 2770 root media - -"
     "d /srv/appdata/media-mgmt/audiobookshelf/metadata 2770 root media - -"
     "d /srv/appdata/media-mgmt/seerr 2770 kra3 media - -"
+    "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
+    "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
   ];
 }

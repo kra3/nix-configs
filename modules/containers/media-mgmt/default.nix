@@ -14,5 +14,7 @@
     ./audiobookshelf.nix
     ./seerr.nix
     ./recyclarr.nix
+    ./unpackerr.nix
+    ./maintainerr.nix
   ];
 }

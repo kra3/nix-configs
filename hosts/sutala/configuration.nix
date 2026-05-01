@@ -135,6 +135,9 @@
         liNet = p.life;
         lan   = config.vars.network.lanCidr;
       in ''
+        # Allow established and related traffic (replies to allowed connections)
+        ct state established,related accept
+
         # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
         ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
         # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
@@ -147,6 +150,8 @@
         ip saddr ${mp} ip daddr ${mon} tcp dport 3100 accept
         # 6. HA pod → home-auto: HA talks to MQTT + Frigate
         ip saddr ${haNet} ip daddr ${ha} tcp dport { 1883, 5000 } accept
+        # 6a. home-auto → HA pod: MQTT return traffic (Fixes 'Connection Reset')
+        ip saddr ${ha} ip daddr ${haNet} tcp sport 1883 accept
         # 7. home-auto → HA pod: Frigate notifications / automations
         ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
         # 8. HA pod → media-play: HA media_player integration (Jellyfin)

@@ -23,14 +23,14 @@ views:
       - brightness
       - effect
     - type: tile
-      entity: light.kitchen_dining_lights_2
+      entity: light.kitchen_dining_lights
       name: Kitchen Dining
       vertical: false
       features:
       - type: light-brightness
       features_position: bottom
     - type: tile
-      entity: light.bedroom_wardrobe_lights_2
+      entity: light.bedroom_wardrobe_lights
       name: Bedroom
       vertical: false
       features:

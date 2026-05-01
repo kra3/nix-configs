@@ -5,6 +5,7 @@ let
     deny all;
   '';
   network = config.virtualisation.quadlet.networks.home-auto;
+  macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
 {
   virtualisation.quadlet.containers.music-assistant = {
@@ -13,7 +14,17 @@ in
       publishPorts = [ "127.0.0.1:8095:8095" ];
       networks = [
         "${network.ref}:ip=10.3.2.13"
+        "${macvlan.ref}:ip=192.168.1.36,mac=02:42:c0:a8:01:24"
       ];
+      # Bypasses macvlan isolation by forcing host domains to the bridge gateway
+      addHosts = [
+        "ha.${config.vars.acme.domain}:10.3.2.1"
+        "navidrome.${config.vars.acme.domain}:10.3.2.1"
+        "audiobookshelf.${config.vars.acme.domain}:10.3.2.1"
+        "ht:192.168.1.75"
+        "home-theater:192.168.1.75"
+      ];
+      dns = [ "10.3.2.1" ];
       logDriver = "journald";
       environments = {
         TZ = "Europe/Stockholm";
@@ -24,8 +35,8 @@ in
       addCapabilities = [ "NET_ADMIN" ];
     };
     unitConfig = {
-      After = [ "home-auto-network.service" ];
-      Requires = [ "home-auto-network.service" ];
+      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
     serviceConfig = {
       Restart = "always";
@@ -48,7 +59,7 @@ in
     }
   '';
 
-  services.nginx.virtualHosts."mass.${config.vars.acme.domain}" = {
+  services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = {
     useACMEHost = config.vars.acme.domain;
     forceSSL = true;
     extraConfig = allowBlock;

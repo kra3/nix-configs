@@ -14,9 +14,25 @@ in
       publishPorts = [ "127.0.0.1:8123:8123" ];
       networks = [
         "${network.ref}:ip=10.3.2.10"
-        "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21"
+        "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21,gateway=192.168.1.1"
       ];
+      dns = [ "10.3.2.1" ];
       logDriver = "journald";
+      # Bypasses macvlan isolation by forcing host domains to the bridge gateway
+      addHosts = [
+        "ma.${config.vars.acme.domain}:10.3.2.1"
+        "jellyfin.${config.vars.acme.domain}:10.3.2.1"
+        "navidrome.${config.vars.acme.domain}:10.3.2.1"
+        "dns.${config.vars.acme.domain}:10.3.2.1"
+        "nvr.${config.vars.acme.domain}:10.3.2.1"
+        "mqtt.${config.vars.acme.domain}:10.3.255.10"
+        "ht:192.168.1.75"
+        "home-theater:192.168.1.75"
+        "radarr.${config.vars.acme.domain}:10.3.2.1"
+        "sonarr.${config.vars.acme.domain}:10.3.2.1"
+        "sabnzbd.${config.vars.acme.domain}:10.3.2.1"
+        "seerr.${config.vars.acme.domain}:10.3.2.1"
+      ];
       environments = {
         TZ = "Europe/Stockholm";
       };
@@ -41,12 +57,6 @@ in
     };
     serviceConfig = {
       Restart = "always";
-      # macvlan cannot reach parent interface's IP (192.168.1.10).
-      # Route host traffic via the Podman bridge gateway instead.
-      ExecStartPost = [
-        "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.lanIp}/32 via 10.3.2.1"
-        "${pkgs.podman}/bin/podman exec home-assistant ip route add ${config.vars.network.containers.homeAuto.localAddress}/32 via 10.3.2.1"
-      ];
     };
   };
 

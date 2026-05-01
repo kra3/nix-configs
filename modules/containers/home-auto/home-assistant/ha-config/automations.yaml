@@ -94,7 +94,7 @@
   actions:
   - type: turn_off
     device_id: 5c2c4c65f834231378af61d835ec513a
-    entity_id: light.h6099
+    entity_id: light.tv_backlight
     domain: light
   mode: single
 
@@ -628,7 +628,7 @@
       entity_id: alarm_control_panel.vasudha_secure
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights_2
+      - light.bedroom_wardrobe_lights
       - light.hall
     data:
       brightness_pct: 5
@@ -637,7 +637,7 @@
   - delay: "00:02:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights_2
+      - light.bedroom_wardrobe_lights
       - light.hall
     data:
       brightness_pct: 15
@@ -646,7 +646,7 @@
   - delay: "00:03:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights_2
+      - light.bedroom_wardrobe_lights
       - light.hall
     data:
       brightness_pct: 40
@@ -655,7 +655,7 @@
   - delay: "00:05:00"
   - target:
       entity_id:
-      - light.bedroom_wardrobe_lights_2
+      - light.bedroom_wardrobe_lights
       - light.hall
     data:
       brightness_pct: 60

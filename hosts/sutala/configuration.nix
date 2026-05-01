@@ -30,6 +30,7 @@
     ../../modules/containers/home-auto/home-assistant
     ../../modules/containers/home-auto/otbr
     ../../modules/containers/home-auto/matter-server
+    ../../modules/containers/home-auto/music-assistant
     ../../modules/containers/life
     ../../modules/fail2ban.nix
     ../../modules/services/system/vim.nix
@@ -152,12 +153,10 @@
         ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
         # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
         ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
-        # 10. HA pod → media-play: HA media_player integration (Music Assistant)
-        ip saddr ${haNet} ip daddr ${mp} tcp dport 8095 accept
-        # 11. LAN → home-auto: DNAT for MQTT + WebRTC
+        # 10. LAN → home-auto: DNAT for MQTT + WebRTC
         ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
         ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
-        # 12. Podman subnets → internet (outbound NAT)
+        # 11. Podman subnets → internet (outbound NAT)
         ip saddr ${liNet} accept comment "life pods outbound"
         ip saddr ${mmNet} accept comment "media-mgmt pods outbound"
         ip saddr ${haNet} accept comment "home-auto pods outbound"

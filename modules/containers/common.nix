@@ -49,7 +49,6 @@ in
       ++ lib.optionals (config.services.jellyseerr.enable or false) [ "jellyseerr" ]
       ++ lib.optionals (config.services.recyclarr.enable or false) [ "recyclarr" ]
       ++ lib.optionals (config.services.grafana.enable or false) [ "grafana" ]
-      ++ lib.optionals (config.services.music-assistant.enable or false) [ "music-assistant" ]
     );
   };
 

@@ -23,9 +23,6 @@ in
     (lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) [
       "d /srv/appdata/media-play/navidrome 2770 root media - -"
     ])
-    (lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) [
-      "d /srv/appdata/media-play/music-assistant 2770 root media - -"
-    ])
   ];
 
   # Host nginx reverse proxies for media-play container
@@ -49,15 +46,7 @@ in
     };
   };
 
-  services.nginx.virtualHosts."mass.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.music-assistant.enable or false) {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:8095";
-      proxyWebsockets = true;
-    };
-  };
+
 
   # Host firewall for media-play container
   networking.firewall = {
@@ -66,7 +55,6 @@ in
         allowedTCPPorts = [
           53 # DNS (if a resolver is enabled in the container)
           4533 # Navidrome
-          8095 # Music Assistant
           8096 # Jellyfin
           9100 # node-exporter
         ];
@@ -107,11 +95,7 @@ in
         nameservers = [ config.vars.network.lanIp ];
         firewall.allowedTCPPorts = [
           4533 # Navidrome
-          8095 # Music Assistant
           8096 # Jellyfin
-          1704 # Snapcast audio stream
-          1705 # Snapcast control/stream
-          1780 # Snapcast JSON API
           9100 # node-exporter
         ];
         firewall.allowedUDPPorts = [
@@ -159,10 +143,7 @@ in
         hostPath = "/srv/appdata/media-play/navidrome";
         isReadOnly = false;
       };
-      "/var/lib/music-assistant" = {
-        hostPath = "/srv/appdata/media-play/music-assistant";
-        isReadOnly = false;
-      };
+
       "/run/secrets/media.jellyfin.users.kra3.password" = {
         hostPath = "/run/secrets/media.jellyfin.users.kra3.password";
         isReadOnly = true;

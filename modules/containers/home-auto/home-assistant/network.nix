@@ -21,5 +21,5 @@
   };
 
   networking.firewall.interfaces.br-home-auto.allowedUDPPorts = [ 53 ];
-  networking.firewall.interfaces.br-home-auto.allowedTCPPorts = [ 443 ];
+  networking.firewall.interfaces.br-home-auto.allowedTCPPorts = [ 443 8095 ];
 }

@@ -11,7 +11,9 @@ in
   virtualisation.quadlet.containers.music-assistant = {
     containerConfig = {
       image = "ghcr.io/music-assistant/server:2.8.6";
-      publishPorts = [ "127.0.0.1:8095:8095" ];
+      publishPorts = [
+        "127.0.0.1:8095:8095"
+      ];
       networks = [
         "${network.ref}:ip=10.3.2.13"
         "${macvlan.ref}:ip=192.168.1.36,mac=02:42:c0:a8:01:24"
@@ -68,4 +70,21 @@ in
       proxyWebsockets = true;
     };
   };
+
+  # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
+  services.nginx.virtualHosts."ma-snapcast" = {
+    serverName = "ma.${config.vars.acme.domain}";
+    useACMEHost = config.vars.acme.domain;
+    onlySSL = true;
+    listen = [
+      { addr = "0.0.0.0"; port = 1705; ssl = true; }
+    ];
+    extraConfig = allowBlock;
+    locations."/" = {
+      proxyPass = "http://10.3.2.13:1705";
+      proxyWebsockets = true;
+    };
+  };
+
+  networking.firewall.interfaces.${config.vars.network.lanIf}.allowedTCPPorts = [ 1705 ];
 }

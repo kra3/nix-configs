@@ -610,8 +610,6 @@
   - action: alarm_control_panel.alarm_arm_home
     target:
       entity_id: alarm_control_panel.vasudha_secure
-    data:
-      code: !secret alarm_code
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
@@ -628,8 +626,6 @@
   - action: alarm_control_panel.alarm_disarm
     target:
       entity_id: alarm_control_panel.vasudha_secure
-    data:
-      code: !secret alarm_code
   - target:
       entity_id:
       - light.bedroom_wardrobe_lights
@@ -809,8 +805,6 @@
   - action: alarm_control_panel.alarm_arm_away
     target:
       entity_id: alarm_control_panel.vasudha_secure
-    data:
-      code: !secret alarm_code
   - action: notify.mobile_app_anjalipc
     data:
       title: Home

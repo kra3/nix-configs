@@ -14,7 +14,7 @@ in
       publishPorts = [ "127.0.0.1:8123:8123" ];
       networks = [
         "${network.ref}:ip=10.3.2.10"
-        "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21,gateway=192.168.1.1"
+        "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21"
       ];
       dns = [ "10.3.2.1" ];
       logDriver = "journald";
@@ -25,7 +25,7 @@ in
         "navidrome.${config.vars.acme.domain}:10.3.2.1"
         "dns.${config.vars.acme.domain}:10.3.2.1"
         "nvr.${config.vars.acme.domain}:10.3.2.1"
-        "mqtt.${config.vars.acme.domain}:10.3.255.10"
+        "mqtt.${config.vars.acme.domain}:10.3.2.1"
         "ht:192.168.1.75"
         "home-theater:192.168.1.75"
         "radarr.${config.vars.acme.domain}:10.3.2.1"
@@ -90,6 +90,18 @@ in
     };
   };
 
+  # TCP proxy so HA pod (and any host-side client) can reach mosquitto in nspawn home-auto
+  # via the bridge gw 10.3.2.1:1883 — same pattern as *arr nginx vhosts.
+  # LAN clients reach mosquitto via existing DNAT on lanIf (sutala/configuration.nix forwardPorts);
+  # those packets are rewritten in PREROUTING and never hit this listener.
+  services.nginx.streamConfig = ''
+    server {
+      listen 1883;
+      proxy_pass ${config.vars.network.containers.homeAuto.localAddress}:1883;
+      proxy_timeout 1h;
+    }
+  '';
+
   sops.templates."home-assistant/secrets.yaml" = {
     owner = "root";
     group = "root";
@@ -98,6 +110,7 @@ in
       homeassistant_latitude: ${config.sops.placeholder."homeassistant.latitude"}
       homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
       mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
+      alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
     '';
   };
 
@@ -108,6 +121,12 @@ in
   };
 
   sops.secrets."homeassistant.longitude" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.secrets."homeassistant.alarm_code" = {
     owner = "root";
     group = "root";
     mode = "0400";

@@ -8,6 +8,7 @@ in
     containerConfig = {
       image = "ghcr.io/home-assistant-libs/python-matter-server:8.1.0";
       publishPorts = [ "127.0.0.1:5580:5580" ];
+      dns = [ "10.3.2.1" ];
       networks = [
         "${network.ref}:ip=10.3.2.12"
         "${macvlan.ref}:ip=192.168.1.35,mac=02:42:c0:a8:01:23"

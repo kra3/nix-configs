@@ -8,6 +8,7 @@ in
     containerConfig = {
       image = "docker.io/denniswitt/homeassistant-otbr:3.0.4";
       publishPorts = [ "127.0.0.1:8081:8081" ];
+      dns = [ "10.3.2.1" ];
       networks = [
         "${network.ref}:ip=10.3.2.11"
         "${macvlan.ref}:ip=192.168.1.34,mac=02:42:c0:a8:01:22"

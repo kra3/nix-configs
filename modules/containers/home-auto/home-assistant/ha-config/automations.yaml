@@ -610,6 +610,8 @@
   - action: alarm_control_panel.alarm_arm_home
     target:
       entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
@@ -626,6 +628,8 @@
   - action: alarm_control_panel.alarm_disarm
     target:
       entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
   - target:
       entity_id:
       - light.bedroom_wardrobe_lights
@@ -695,10 +699,79 @@
         action: switch.turn_off
   mode: single
 
-# ── Door sensors (DISABLED — sensors not migrated to Z2M yet) ──
-# - id: door_opened_dark
-#   alias: Door opened — Room lights + Alarmo alert
-#   description: 'Disabled: door sensors removed from Z2M'
+# ── Front Door Management ──────────────────────────────────────
+- id: front_door_management
+  alias: "Front Door: Knock, TTS & Lights"
+  description: Handles knocking, MA announcements, and smart lighting logic for street/entrance.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.front_door_knock_vibration
+      to: "on"
+  action:
+    # 1. TTS Announcement on MA players
+    - action: mass.play_announcement
+      data:
+        entity_id: 
+          - media_player.ma_home_theater
+          - media_player.ma_lg_webos_tv_oled77c35la
+        message: "Someone is knocking at the front door."
+        use_pre_announce: true
+    
+    # 2. Street Light: Turn on during sleep hours
+    - if:
+        - condition: state
+          entity_id: schedule.sleep
+          state: "on"
+      then:
+        - action: switch.turn_on
+          target:
+            entity_id: switch.front_entrance_double_switch_right
+            
+    # 3. Entrance Light: Turn on only if motion detected after knock (someone going to the door)
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.hue_pir_hallway_occupancy
+          to: "on"
+      timeout: "00:02:00"
+    - if:
+        - condition: template
+          value_template: "{{ wait.trigger is not none }}"
+      then:
+        - action: switch.turn_on
+          target:
+            entity_id: switch.front_entrance_double_switch_left
+            
+    # 4. Auto-off logic
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.yale_front_door_door
+          to: "on"
+      timeout: "00:10:00"
+      
+    - if:
+        - condition: template
+          value_template: "{{ wait.trigger is none }}"
+      then:
+        # No door open within 10 mins of knock - turn off both lights
+        - action: switch.turn_off
+          target:
+            entity_id:
+              - switch.front_entrance_double_switch_right
+              - switch.front_entrance_double_switch_left
+      else:
+        # Door was opened! Now wait for it to be closed.
+        - wait_for_trigger:
+            - platform: state
+              entity_id: binary_sensor.yale_front_door_door
+              to: "off"
+        # 10 min delay after door close before turning off
+        - delay: "00:10:00"
+        - action: switch.turn_off
+          target:
+            entity_id:
+              - switch.front_entrance_double_switch_right
+              - switch.front_entrance_double_switch_left
+  mode: restart
 
 # ── Away mode ──────────────────────────────────────────────────
 - id: everyone_left_home
@@ -736,6 +809,8 @@
   - action: alarm_control_panel.alarm_arm_away
     target:
       entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
   - action: notify.mobile_app_anjalipc
     data:
       title: Home

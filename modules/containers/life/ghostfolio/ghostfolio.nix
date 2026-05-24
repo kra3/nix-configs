@@ -7,8 +7,8 @@ let
   network = config.virtualisation.quadlet.networks.life;
 in
 {
-  sops.secrets."life.ghostfolio.access_token" = {};
-  sops.secrets."life.ghostfolio.jwt_secret" = {};
+  sops.secrets."life.ghostfolio.access_token" = { };
+  sops.secrets."life.ghostfolio.jwt_secret" = { };
 
   sops.templates."life.ghostfolio.env" = {
     owner = "root";
@@ -19,7 +19,9 @@ in
       POSTGRES_DB=ghostfolio
       POSTGRES_USER=ghostfolio
       POSTGRES_PASSWORD=${config.sops.placeholder."db.ghostfolio_password"}
-      DATABASE_URL=postgresql://ghostfolio:${config.sops.placeholder."db.ghostfolio_password"}@host.containers.internal:5432/ghostfolio?connect_timeout=300
+      DATABASE_URL=postgresql://ghostfolio:${
+        config.sops.placeholder."db.ghostfolio_password"
+      }@host.containers.internal:5432/ghostfolio?connect_timeout=300
       REDIS_HOST=host.containers.internal
       REDIS_PORT=6379
       REDIS_PASSWORD=${config.sops.placeholder."db.redis_password"}
@@ -30,7 +32,7 @@ in
 
   virtualisation.quadlet.containers.ghostfolio = {
     containerConfig = {
-      image = "ghostfolio/ghostfolio:2.253.0";
+      image = "ghostfolio/ghostfolio:3.5.0";
       healthCmd = "wget -qO- http://localhost:3333/api/v1/health";
       healthOnFailure = "none";
       healthInterval = "30s";
@@ -46,8 +48,16 @@ in
       environmentFiles = [ config.sops.templates."life.ghostfolio.env".path ];
     };
     unitConfig = {
-      After = [ "life-network.service" "postgresql-set-passwords.service" "redis-default.service" ];
-      Requires = [ "life-network.service" "postgresql-set-passwords.service" "redis-default.service" ];
+      After = [
+        "life-network.service"
+        "postgresql-set-passwords.service"
+        "redis-default.service"
+      ];
+      Requires = [
+        "life-network.service"
+        "postgresql-set-passwords.service"
+        "redis-default.service"
+      ];
     };
     serviceConfig.Restart = "always";
   };

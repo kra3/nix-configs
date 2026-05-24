@@ -7,7 +7,7 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.radarr.api_key" = {};
+  sops.secrets."media.radarr.api_key" = { };
 
   sops.templates."media.radarr.env" = {
     owner = "root";
@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.radarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/radarr:6.1.1.10360-ls298";
+      image = "lscr.io/linuxserver/radarr:6.1.1.10360-ls303";
       healthCmd = "wget -qO-  http://localhost:7878/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

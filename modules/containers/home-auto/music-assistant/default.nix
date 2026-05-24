@@ -10,7 +10,7 @@ in
 {
   virtualisation.quadlet.containers.music-assistant = {
     containerConfig = {
-      image = "ghcr.io/music-assistant/server:2.8.6";
+      image = "ghcr.io/music-assistant/server:2.8.8";
       publishPorts = [
         "127.0.0.1:8095:8095"
       ];
@@ -37,8 +37,14 @@ in
       addCapabilities = [ "NET_ADMIN" ];
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
-      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+      After = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+      ];
+      Requires = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+      ];
     };
     serviceConfig = {
       Restart = "always";
@@ -77,7 +83,11 @@ in
     useACMEHost = config.vars.acme.domain;
     onlySSL = true;
     listen = [
-      { addr = "0.0.0.0"; port = 1705; ssl = true; }
+      {
+        addr = "0.0.0.0";
+        port = 1705;
+        ssl = true;
+      }
     ];
     extraConfig = allowBlock;
     locations."/" = {

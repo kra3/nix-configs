@@ -7,7 +7,7 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.sonarr.api_key" = {};
+  sops.secrets."media.sonarr.api_key" = { };
 
   sops.templates."media.sonarr.env" = {
     owner = "root";
@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.sonarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/sonarr:4.0.17.2952-ls306";
+      image = "lscr.io/linuxserver/sonarr:4.0.17.2952-ls312";
       healthCmd = "wget -qO-  http://localhost:8989/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

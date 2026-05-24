@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.lidarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls22";
+      image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls29";
       healthCmd = "wget -qO-  http://localhost:8686/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

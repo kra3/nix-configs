@@ -7,7 +7,7 @@ let
 in
 {
   virtualisation.oci-containers.containers.arcane = {
-    image = "ghcr.io/getarcaneapp/arcane:v1.17.1";
+    image = "ghcr.io/getarcaneapp/arcane:v1.19.4";
     autoStart = true;
     ports = [ "127.0.0.1:3552:3552" ];
     volumes = [
@@ -48,8 +48,8 @@ in
     "d /srv/appdata/arcane/projects 0755 root root - -"
   ];
 
-  sops.secrets."arcane.encryption_key" = {};
-  sops.secrets."arcane.jwt_secret" = {};
+  sops.secrets."arcane.encryption_key" = { };
+  sops.secrets."arcane.jwt_secret" = { };
 
   sops.templates."arcane.env" = {
     content = ''

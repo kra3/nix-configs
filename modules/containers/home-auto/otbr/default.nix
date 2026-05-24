@@ -6,7 +6,7 @@ in
 {
   virtualisation.quadlet.containers.otbr = {
     containerConfig = {
-      image = "docker.io/denniswitt/homeassistant-otbr:3.0.4";
+      image = "docker.io/denniswitt/homeassistant-otbr:3.0.5";
       publishPorts = [ "127.0.0.1:8081:8081" ];
       dns = [ "10.3.2.1" ];
       networks = [
@@ -21,13 +21,16 @@ in
         "/dev/thread:/dev/ttyUSB0"
         "/dev/net/tun:/dev/net/tun"
       ];
-      addCapabilities = [ "NET_ADMIN" "NET_RAW" ];
+      addCapabilities = [
+        "NET_ADMIN"
+        "NET_RAW"
+      ];
       environments = {
         TZ = "Europe/Stockholm";
         DEVICE = "/dev/ttyUSB0";
         BAUDRATE = "460800";
         FLOW_CONTROL = "true";
-        BACKBONE_IF = "eth1";  # macvlan (LAN) interface
+        BACKBONE_IF = "eth1"; # macvlan (LAN) interface
         AUTOFLASH_FIRMWARE = "false";
         OTBR_LOG_LEVEL = "notice";
         FIREWALL = "true";
@@ -35,8 +38,15 @@ in
       };
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" "dev-thread.device" ];
-      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+      After = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+        "dev-thread.device"
+      ];
+      Requires = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+      ];
       BindsTo = [ "dev-thread.device" ];
     };
     serviceConfig = {

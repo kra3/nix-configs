@@ -7,7 +7,7 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.bazarr.api_key" = {};
+  sops.secrets."media.bazarr.api_key" = { };
 
   sops.templates."media.bazarr.env" = {
     owner = "root";
@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.bazarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/bazarr:1.5.6-ls342";
+      image = "lscr.io/linuxserver/bazarr:1.5.6-ls349";
       healthCmd = "wget -qO-  http://localhost:6767/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

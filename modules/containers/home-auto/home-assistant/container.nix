@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   allowBlock = ''
     ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
@@ -10,7 +15,7 @@ in
 {
   virtualisation.quadlet.containers.home-assistant = {
     containerConfig = {
-      image = "ghcr.io/home-assistant/home-assistant:2026.4.1";
+      image = "ghcr.io/home-assistant/home-assistant:2026.5.4";
       publishPorts = [ "127.0.0.1:8123:8123" ];
       networks = [
         "${network.ref}:ip=10.3.2.10"
@@ -49,11 +54,20 @@ in
         "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
         "/run/dbus:/run/dbus:ro"
       ];
-      addCapabilities = [ "NET_ADMIN" "NET_RAW" ];
+      addCapabilities = [
+        "NET_ADMIN"
+        "NET_RAW"
+      ];
     };
     unitConfig = {
-      After = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
-      Requires = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+      After = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+      ];
+      Requires = [
+        "home-auto-network.service"
+        "home-auto-macvlan-network.service"
+      ];
     };
     serviceConfig = {
       Restart = "always";

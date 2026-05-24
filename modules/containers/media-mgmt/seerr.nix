@@ -7,7 +7,7 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.seerr.api_key" = {};
+  sops.secrets."media.seerr.api_key" = { };
 
   sops.templates."media.seerr.env" = {
     owner = "root";
@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.seerr = {
     containerConfig = {
-      image = "ghcr.io/seerr-team/seerr:v3.1.0";
+      image = "ghcr.io/seerr-team/seerr:v3.2.0";
       healthCmd = "wget -qO- http://localhost:5055/api/v1/status";
       healthOnFailure = "none";
       healthInterval = "30s";

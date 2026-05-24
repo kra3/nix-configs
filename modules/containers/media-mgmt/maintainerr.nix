@@ -9,7 +9,7 @@ in
 {
   virtualisation.quadlet.containers.maintainerr = {
     containerConfig = {
-      image = "ghcr.io/maintainerr/maintainerr:3.8.0";
+      image = "ghcr.io/maintainerr/maintainerr:3.12.1";
       healthCmd = "wget -qO- http://localhost:6246/healthcheck";
       healthOnFailure = "none";
       healthInterval = "30s";

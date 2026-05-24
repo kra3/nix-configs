@@ -7,8 +7,8 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.sabnzbd.api_key" = {};
-  sops.secrets."media.sabnzbd.nzb_key" = {};
+  sops.secrets."media.sabnzbd.api_key" = { };
+  sops.secrets."media.sabnzbd.nzb_key" = { };
 
   sops.templates."media.sabnzbd.env" = {
     owner = "root";
@@ -22,7 +22,7 @@ in
 
   virtualisation.quadlet.containers.sabnzbd = {
     containerConfig = {
-      image = "lscr.io/linuxserver/sabnzbd:4.5.5-ls247";
+      image = "lscr.io/linuxserver/sabnzbd:5.0.3-ls255";
       healthCmd = "wget -qO- http://localhost:8080/api?mode=version";
       healthOnFailure = "none";
       healthInterval = "30s";

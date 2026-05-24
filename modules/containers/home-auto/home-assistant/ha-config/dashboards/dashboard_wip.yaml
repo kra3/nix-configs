@@ -148,45 +148,62 @@ views:
     cards:
     - type: heading
       heading_style: title
-      heading: Climate 
+      heading: Environment
       badges:
       - type: entity
         show_state: true
         show_icon: true
-        entity: sensor.hue_pir_hallway_temperature
+        entity: sensor.average_temperature
       - type: entity
         show_state: true
         show_icon: true
-        entity: sensor.hue_pir_kitchen_temperature
+        entity: sensor.average_humidity
+      - type: entity
+        show_state: true
+        show_icon: true
+        entity: sensor.average_illuminance
     - graph: line
       type: sensor
-      entity: sensor.hue_pir_kitchen_temperature
+      entity: sensor.average_temperature
       detail: 2
       unit: C
-      name: Temperature (Kitchen)
+      name: Temperature (Avg)
       hours_to_show: 168
     - graph: line
       type: sensor
-      entity: sensor.hue_pir_hallway_temperature
+      entity: sensor.average_humidity
       detail: 2
-      name: Temperature (Hall)
+      name: Humidity (Avg)
+      hours_to_show: 168
+    - graph: line
+      type: sensor
+      entity: sensor.average_illuminance
+      detail: 2
+      name: Illuminance (Avg)
       hours_to_show: 168
     - chart_type: line
       period: hour
       type: statistics-graph
       entities:
-      - sensor.hue_pir_kitchen_temperature
-      - sensor.hue_pir_hallway_temperature
-      - sensor.fresh_kitchen_fan_temperature
+      - sensor.average_temperature
       stat_types:
       - mean
       - min
       - max
-      logarithmic_scale: true
     - type: statistics-graph
       entities:
-      - sensor.laundry_humidity
-      - sensor.hall_humidity
+      - sensor.average_humidity
+      stat_types:
+      - mean
+      - min
+      - max
+    - type: statistics-graph
+      entities:
+      - sensor.average_illuminance
+      stat_types:
+      - mean
+      - min
+      - max
   - type: grid
     cards:
     - type: heading

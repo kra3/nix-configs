@@ -1,0 +1,34 @@
+sensor:
+  - platform: min_max
+    name: "Average Temperature"
+    type: mean
+    round_digits: 1
+    entity_ids:
+      - sensor.hue_pir_kitchen_temperature
+      - sensor.hue_pir_hallway_temperature
+      - sensor.bathroom_occupancy_temperature
+      - sensor.bedroom_occupancy_temperature
+      - sensor.laundry_occupancy_temperature
+      - sensor.toilet_occupancy_temperature
+
+  - platform: min_max
+    name: "Average Humidity"
+    type: mean
+    round_digits: 1
+    entity_ids:
+      - sensor.bathroom_occupancy_humidity
+      - sensor.bedroom_occupancy_humidity
+      - sensor.laundry_occupancy_humidity
+      - sensor.toilet_occupancy_humidity
+
+  - platform: min_max
+    name: "Average Illuminance"
+    type: mean
+    round_digits: 1
+    entity_ids:
+      - sensor.hue_pir_kitchen_illuminance
+      - sensor.hue_pir_hallway_illuminance
+      - sensor.bathroom_occupancy_illuminance
+      - sensor.bedroom_occupancy_illuminance
+      - sensor.laundry_occupancy_illuminance
+      - sensor.toilet_occupancy_illuminance

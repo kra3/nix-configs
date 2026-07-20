@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   serviceLib = import ../../lib { inherit lib config; };
   cfg = config.vars.network;
@@ -301,7 +306,7 @@ in
           bind_hosts = [
             "127.0.0.1"
             lanIp
-            "100.100.31.11"
+            "100.119.26.45"
           ];
           port = 53;
           anonymize_client_ip = true;
@@ -421,7 +426,7 @@ in
           "||mmstat.com^$important"
           "||statcounter.com^$important"
         ];
- 
+
         querylog = {
           interval = "1h";
           size_memory = 1000;

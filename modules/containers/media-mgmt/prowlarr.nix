@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.prowlarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/prowlarr:2.3.5.5327-ls147";
+      image = "lscr.io/linuxserver/prowlarr:2.4.0.5397-ls154";
       healthCmd = "wget -qO-  http://localhost:9696/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

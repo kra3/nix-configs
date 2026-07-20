@@ -7,7 +7,7 @@ let
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.lidarr.api_key" = {};
+  sops.secrets."media.lidarr.api_key" = { };
 
   sops.templates."media.lidarr.env" = {
     owner = "root";
@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.lidarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls29";
+      image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls35";
       healthCmd = "wget -qO-  http://localhost:8686/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

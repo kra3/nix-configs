@@ -7,7 +7,7 @@ let
 in
 {
   virtualisation.oci-containers.containers.arcane = {
-    image = "ghcr.io/getarcaneapp/arcane:v1.19.4";
+    image = "ghcr.io/getarcaneapp/arcane:v2.4.0";
     autoStart = true;
     ports = [ "127.0.0.1:3552:3552" ];
     volumes = [

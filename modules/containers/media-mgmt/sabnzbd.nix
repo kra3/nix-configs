@@ -22,7 +22,7 @@ in
 
   virtualisation.quadlet.containers.sabnzbd = {
     containerConfig = {
-      image = "lscr.io/linuxserver/sabnzbd:5.0.3-ls255";
+      image = "lscr.io/linuxserver/sabnzbd:5.0.4-ls262";
       healthCmd = "wget -qO- http://localhost:8080/api?mode=version";
       healthOnFailure = "none";
       healthInterval = "30s";

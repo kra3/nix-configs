@@ -9,7 +9,7 @@ in
 {
   virtualisation.quadlet.containers.audiobookshelf = {
     containerConfig = {
-      image = "ghcr.io/advplyr/audiobookshelf:2.35.0";
+      image = "ghcr.io/advplyr/audiobookshelf:2.35.1";
       healthCmd = "wget -qO- http://localhost:80/healthcheck";
       healthOnFailure = "none";
       healthInterval = "30s";

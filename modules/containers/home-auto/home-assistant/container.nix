@@ -40,6 +40,7 @@ in
       ];
       environments = {
         TZ = "Europe/Stockholm";
+        DBUS_SYSTEM_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
       };
       volumes = [
         "/srv/appdata/home-auto/home-assistant/data:/config"

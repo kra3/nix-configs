@@ -18,7 +18,7 @@ in
 
   virtualisation.quadlet.containers.sonarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/sonarr:4.0.19.2979-ls320";
+      image = "lscr.io/linuxserver/sonarr:4.0.19.2979-ls321";
       healthCmd = "wget -qO-  http://localhost:8989/ping";
       healthOnFailure = "none";
       healthInterval = "30s";

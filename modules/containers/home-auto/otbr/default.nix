@@ -6,7 +6,7 @@ in
 {
   virtualisation.quadlet.containers.otbr = {
     containerConfig = {
-      image = "docker.io/denniswitt/homeassistant-otbr:3.0.5";
+      image = "docker.io/denniswitt/homeassistant-otbr:4.2.1";
       publishPorts = [ "127.0.0.1:8081:8081" ];
       dns = [ "10.3.2.1" ];
       networks = [

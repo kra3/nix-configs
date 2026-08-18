@@ -16,14 +16,8 @@ default_config:
 
 network:
 
-http:
-  server_host: "0.0.0.0"
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - "127.0.0.1"
-    - "10.3.0.0/16"
-    - "10.3.2.1"
-    - "10.3.2.0/24"
+# Removed http: block — now configured via Home Assistant UI (Settings > System > Network)
+# If you need to re-add settings, configure them via the UI or re-add here and restart HA.
 
 wake_on_lan:
 

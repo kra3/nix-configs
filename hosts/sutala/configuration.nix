@@ -243,6 +243,9 @@
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs; };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
+    # Programs like niri write their own default config on first run;
+    # back those up instead of failing activation when we start managing them.
+    backupFileExtension = "hm-backup";
   };
 
   system.stateVersion = "25.05";

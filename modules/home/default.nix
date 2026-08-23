@@ -23,6 +23,7 @@ in
 
   imports = [
     ./claude-code.nix
+    ./mcp-nixos.nix
     ./bat.nix
     ./colordiff
     ./eza.nix

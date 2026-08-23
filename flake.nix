@@ -39,6 +39,8 @@
       url = "github:SEIAROTg/quadlet-nix";
     };
 
+    llm-agents.url = "github:numtide/llm-agents.nix";
+
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
       inputs.nixpkgs.follows = "nixpkgs";

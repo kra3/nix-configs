@@ -22,6 +22,7 @@ in
   };
 
   imports = [
+    ./claude-code.nix
     ./bat.nix
     ./colordiff
     ./eza.nix

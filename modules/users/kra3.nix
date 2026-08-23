@@ -48,6 +48,18 @@
     };
   };
 
+  system.activationScripts.kra3-sops-age-key = {
+    deps = [ "setupSecrets" ];
+    text = ''
+      mkdir -p /home/kra3/.config/sops/age
+      ${pkgs.ssh-to-age}/bin/ssh-to-age -private-key \
+        -i /home/kra3/.ssh/id_ed25519 \
+        > /home/kra3/.config/sops/age/keys.txt
+      chown kra3:users /home/kra3/.config/sops/age/keys.txt
+      chmod 600 /home/kra3/.config/sops/age/keys.txt
+    '';
+  };
+
   nix.settings.trusted-users = [ "kra3" ];
 
   programs.zsh.enable = true;

@@ -18,6 +18,7 @@
     ../../modules/services/infrastructure/openssh.nix
     ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix
+    ../../modules/services/niri.nix
     ../../modules/services/dns
     ../../modules/services/postgres.nix
     ../../modules/services/redis.nix

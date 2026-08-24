@@ -5,6 +5,8 @@
     useNautilus = false;
   };
 
+  programs.claude-desktop.enable = true;
+
   services.gnome.gnome-keyring.enable = false;
 
   home-manager.users.kra3 = {

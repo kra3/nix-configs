@@ -8,6 +8,7 @@
   imports = [
     inputs.disko.nixosModules.disko
     inputs.home-manager.nixosModules.home-manager
+    inputs.claude-desktop-nix-flake.nixosModules.default
 
     ./hardware-configuration.nix
     ./disko.nix

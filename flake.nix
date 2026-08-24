@@ -51,6 +51,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    claude-desktop-nix-flake = {
+      url = "github:poeck/claude-desktop-nix-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     mcp-nixos.url = "github:utensils/mcp-nixos";
   };
 

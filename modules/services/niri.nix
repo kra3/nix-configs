@@ -66,6 +66,7 @@
     programs.alacritty.settings.keyboard.bindings = [
       { key = "Return"; mods = "Shift"; chars = "\n"; }
     ];
+    programs.alacritty.settings.window.opacity = 0.96;
     programs.fuzzel.enable = true;
     programs.swaylock = {
       enable = true;

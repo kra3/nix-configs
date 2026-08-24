@@ -7,7 +7,23 @@
 
   programs.claude-desktop.enable = true;
 
-  services.gnome.gnome-keyring.enable = false;
+  # Needed for apps like Claude Desktop to store credentials via the
+  # Secret Service API. Auto-unlocked with the login password on the
+  # console (niri is started manually after a TTY login, so PAM service
+  # "login" is what actually authenticates — not "sshd").
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.login.enableGnomeKeyring = true;
+
+  # Home-manager's gtk module writes theme/color-scheme into dconf so
+  # xdg-desktop-portal-gtk can report "prefer-dark" to apps (Electron
+  # apps like Claude Desktop query this instead of reading GTK settings
+  # directly). Requires the system dconf service to actually exist.
+  programs.dconf.enable = true;
+
+  # Catppuccin Mocha for the Linux virtual console (only home-manager's
+  # bundle of catppuccin modules is imported by default; this NixOS-level
+  # one needs its own theming module enabled).
+  catppuccin.tty.enable = true;
 
   home-manager.users.kra3 = {
     home.packages = [ pkgs.swaybg ];
@@ -15,6 +31,24 @@
     programs.alacritty.enable = true;
     programs.fuzzel.enable = true;
     programs.swaylock.enable = true;
+
+    # catppuccin/nix dropped its GTK theme module (upstream catppuccin/gtk
+    # was archived), so there's no themed GTK stylesheet to pull in here —
+    # this just forces every GTK app (and, via the portal, Electron apps
+    # like Claude Desktop) into dark mode to match the rest of the
+    # Catppuccin Mocha setup.
+    gtk = {
+      enable = true;
+      theme = {
+        name = "Adwaita";
+        package = pkgs.gnome-themes-extra;
+      };
+      # GTK4 theming is unsupported upstream and defaults to null instead of
+      # inheriting gtk.theme from 26.05 on; pin it explicitly so GTK4 apps
+      # stay dark too instead of silently drifting to their own default.
+      gtk4.theme.name = "Adwaita";
+      colorScheme = "dark";
+    };
 
     programs.waybar = {
       enable = true;

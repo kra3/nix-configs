@@ -6,6 +6,10 @@
       security = {
         admin_user = "$__file{/run/secrets/monitoring.grafana.admin.user}";
         admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
+        # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB
+        # (no datasource secrets stored — Prometheus/Loki are unauthenticated,
+        # and access is nginx CIDR-allowlisted) keeps decrypting as before.
+        secret_key = "SW2YcwTIb9zpOOhoPsMm";
       };
       server = {
         http_addr = networkVars.containers.monitoring.localAddress;

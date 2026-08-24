@@ -12,6 +12,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    extraSpecialArgs = { inherit inputs; };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
   };
 

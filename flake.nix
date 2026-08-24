@@ -83,7 +83,7 @@
                 inputs'.colmena.packages.colmena
                 pkgs.just
                 pkgs.nixos-rebuild
-                pkgs.nixfmt-rfc-style
+                pkgs.nixfmt
                 pkgs.sops
                 pkgs.ssh-to-age
               ];

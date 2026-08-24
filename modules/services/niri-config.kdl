@@ -12,13 +12,8 @@ input {
             // You can set rules, model, layout, variant and options.
             // For more information, see xkeyboard-config(7).
 
-            // For example:
-            // layout "us,ru"
-            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
-
-            // If this section is empty, niri will fetch xkb settings
-            // from org.freedesktop.locale1. You can control these using
-            // localectl set-x11-keymap.
+            // Single US layout — Malayalam/Sanskrit go through ibus
+            // (i18n.inputMethod in niri.nix) instead of an XKB variant.
         }
 
         // Enable numlock on startup, omitting this setting disables it.
@@ -71,39 +66,17 @@ input {
 
 // You can configure outputs by their name, which you can find
 // by running `niri msg outputs` while inside a niri instance.
-// The built-in laptop monitor is usually called "eDP-1".
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Outputs
-// Remember to uncomment the node by removing "/-"!
-/-output "eDP-1" {
-    // Uncomment this line to disable this output.
-    // off
-
-    // Resolution and, optionally, refresh rate of the output.
-    // The format is "<width>x<height>" or "<width>x<height>@<refresh rate>".
-    // If the refresh rate is omitted, niri will pick the highest refresh rate
-    // for the resolution.
-    // If the mode is omitted altogether or is invalid, niri will pick one automatically.
-    // Run `niri msg outputs` while inside a niri instance to list all outputs and their modes.
-    mode "1920x1080@120.030"
-
-    // You can use integer or fractional scale, for example use 1.5 for 150% scale.
-    scale 2
-
-    // Transform allows to rotate the output counter-clockwise, valid values are:
-    // normal, 90, 180, 270, flipped, flipped-90, flipped-180 and flipped-270.
+output "HDMI-A-1" {
+    // Philips PHL 276E8V, 27" 4K. HDMI link caps out at 30Hz for 3840x2160
+    // (bandwidth limit), but native 4K clarity is preferred over the 60Hz
+    // 1440p fallback. Scale 1.5 keeps the same 2560x1440 logical/usable
+    // desktop space as the 1440p mode, just rendered at higher density.
+    mode "3840x2160@30.000"
+    scale 1.5
     transform "normal"
-
-    // Position of the output in the global coordinate space.
-    // This affects directional monitor actions like "focus-monitor-left", and cursor movement.
-    // The cursor can only move between directly adjacent outputs.
-    // Output scale and rotation has to be taken into account for positioning:
-    // outputs are sized in logical, or scaled, pixels.
-    // For example, a 3840×2160 output with scale 2.0 will have a logical size of 1920×1080,
-    // so to put another output directly adjacent to it on the right, set its x to 1920.
-    // If the position is unset or results in an overlap, the output is instead placed
-    // automatically.
-    position x=1280 y=0
+    position x=0 y=0
 }
 
 // Settings that influence how windows are positioned and sized.
@@ -111,7 +84,7 @@ input {
 // https://yalter.github.io/niri/Configuration:-Layout
 layout {
     // Set gaps around windows in logical pixels.
-    gaps 16
+    gaps 8
 
     // When to center a column when changing focus, options are:
     // - "never", default behavior, focusing an off-screen column will keep at the left
@@ -159,7 +132,7 @@ layout {
         // off
 
         // How many logical pixels the ring extends out from the windows.
-        width 4
+        width 1
 
         // Colors can be set in a variety of ways:
         // - CSS named colors: "red"
@@ -167,8 +140,8 @@ layout {
         // - CSS-like notation: "rgb(255, 127, 0)", rgba(), hsl() and a few others.
 
         // Color of the ring on the active monitor.
-        // Catppuccin Mocha blue, to match this repo's global theme.
-        active-color "#89b4fa"
+        // Catppuccin Mocha maroon.
+        active-color "#eba0ac"
 
         // Color of the ring on inactive monitors.
         //
@@ -275,9 +248,13 @@ spawn-at-startup "waybar"
 // Notification daemon (Catppuccin-themed via home-manager's services.mako).
 spawn-at-startup "mako"
 
-// Solid Catppuccin Mocha base color as the background, in lieu of a wallpaper image.
+// Wallpaper image, deployed by home-manager to ~/.local/share/wallpapers/.
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
-spawn-sh-at-startup "swaybg -c 1e1e2e"
+spawn-sh-at-startup "swaybg -i $HOME/.local/share/wallpapers/wallpaper.png -m fill"
+
+// ibus's Wayland IME client — needed for Ctrl+Space + Malayalam/Sanskrit input in
+// native-Wayland apps like Alacritty (GTK/Qt apps already get ibus via D-Bus).
+spawn-at-startup "@ibus-wayland@"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
@@ -333,6 +310,18 @@ window-rule {
     open-floating true
 }
 
+// pwvucontrol (waybar's volume-module right-click) opens floating, centered.
+window-rule {
+    match app-id=r#"^com\.saivert\.pwvucontrol$"#
+    open-floating true
+}
+
+// Float ibus's engine-switcher popup instead of tiling it like a regular window.
+window-rule {
+    match app-id=r#"^ibus"#
+    open-floating true
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {
@@ -377,9 +366,14 @@ binds {
     // For example, this is a standard bind to toggle the screen reader (orca).
     Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
-    // Clipboard history picker (cliphist + fuzzel), matching the Super+Alt+<letter>
-    // convention used above for lock/screen-reader.
+    // Clipboard history picker (cliphist + fuzzel).
     Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn-sh "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
+
+    // Bluetooth pairing picker; complements waybar's power-only toggle.
+    Super+Alt+B hotkey-overlay-title="Bluetooth Devices: bzmenu" { spawn "bzmenu" "--launcher" "fuzzel" "--icon" "xdg"; }
+
+    // Audio device picker, lighter than opening the full pwvucontrol mixer.
+    Super+Alt+P hotkey-overlay-title="Audio Devices: pwmenu" { spawn "pwmenu" "--launcher" "fuzzel" "--icon" "xdg"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.

@@ -92,6 +92,9 @@
       "i915.enable_fbc=1" # allow framebuffer compression to reduce power draw
     ];
     zfs.extraPools = [ "tank" ];
+    # "tank" was created by and always imports on this same host — no
+    # cross-machine import scenario needing the relaxed hostid check.
+    zfs.forceImportRoot = false;
 
     # Kernel hardening parameters
     # NOTE: kernel.unprivileged_userns_clone NOT set to preserve container compatibility

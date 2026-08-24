@@ -32,6 +32,17 @@
     programs.fuzzel.enable = true;
     programs.swaylock.enable = true;
 
+    programs.librewolf = {
+      enable = true;
+      profiles.default.isDefault = true;
+    };
+    catppuccin.librewolf.force = true;
+
+    programs.chromium = {
+      enable = true;
+      package = pkgs.ungoogled-chromium;
+    };
+
     # catppuccin/nix dropped its GTK theme module (upstream catppuccin/gtk
     # was archived), so there's no themed GTK stylesheet to pull in here —
     # this just forces every GTK app (and, via the portal, Electron apps

@@ -12,7 +12,7 @@ input {
             // You can set rules, model, layout, variant and options.
             // For more information, see xkeyboard-config(7).
 
-            // Single US layout — Malayalam/Sanskrit go through ibus
+            // Single US layout — Malayalam/Sanskrit go through fcitx5
             // (i18n.inputMethod in niri.nix) instead of an XKB variant.
         }
 
@@ -252,9 +252,8 @@ spawn-at-startup "mako"
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 spawn-sh-at-startup "swaybg -i $HOME/.local/share/wallpapers/wallpaper.png -m fill"
 
-// ibus's Wayland IME client — needed for Ctrl+Space + Malayalam/Sanskrit input in
-// native-Wayland apps like Alacritty (GTK/Qt apps already get ibus via D-Bus).
-spawn-at-startup "@ibus-wayland@"
+// fcitx5's Wayland support is built in — no separate helper process needed.
+spawn-at-startup "fcitx5"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
@@ -316,9 +315,9 @@ window-rule {
     open-floating true
 }
 
-// Float ibus's engine-switcher popup instead of tiling it like a regular window.
+// Float fcitx5's config tool and switcher popup (app-id is "org.fcitx.", trailing dot and all).
 window-rule {
-    match app-id=r#"^ibus"#
+    match app-id=r#"^org\.fcitx"#
     open-floating true
 }
 

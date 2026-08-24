@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 {
   programs.niri = {
     enable = true;
@@ -17,18 +17,25 @@
   # TTY theming isn't covered by home-manager's catppuccin bundle.
   catppuccin.tty.enable = true;
 
-  # Chromium/Electron's nixpkgs wrapper only adds --enable-wayland-ime (and native Wayland
-  # windowing) when this is set — without it, ibus silently doesn't work in Chromium-based
-  # apps (Claude Desktop included) even though niri is Wayland-only.
+  # Needed for Chromium/Electron's --enable-wayland-ime + native Wayland windowing.
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  # Malayalam/Sanskrit via ibus. waylandFrontend stays at its default (false), which is what
-  # auto-exports GTK_IM_MODULE/QT_IM_MODULE for GTK/Qt apps; native-Wayland apps (Alacritty)
-  # get ibus separately via the ibus-wayland spawn in niri-config.kdl.
+  # Malayalam/Sanskrit via fcitx5 (Wayland support is built in; spawned in niri-config.kdl).
   i18n.inputMethod = {
     enable = true;
-    type = "ibus";
-    ibus.engines = [ pkgs.ibus-engines.m17n ];
+    type = "fcitx5";
+    fcitx5.addons = [ pkgs.fcitx5-m17n ];
+    fcitx5.settings.inputMethod = {
+      "Groups/0" = {
+        Name = "Default";
+        "Default Layout" = "us";
+        DefaultIM = "keyboard-us";
+      };
+      "Groups/0/Items/0".Name = "keyboard-us";
+      "Groups/0/Items/1".Name = "m17n_ml_swanalekha";
+      "Groups/0/Items/2".Name = "m17n_sa_itrans";
+      GroupOrder."0" = "Default";
+    };
   };
 
   # Formalizes PipeWire, which was already running undeclared. pulse.enable backs waybar's
@@ -97,26 +104,6 @@
       colorScheme = "dark";
     };
 
-    # Preloads ibus engines + sets the Ctrl+Space switch hotkey so it works right after
-    # switch. Real engine IDs: `ibus engine --list-engine`.
-    dconf.settings = {
-      "org/freedesktop/ibus/general" = {
-        preload-engines = [
-          "xkb:us::eng"
-          "m17n:ml:swanalekha"
-          "m17n:sa:itrans"
-        ];
-        engines-order = [
-          "xkb:us::eng"
-          "m17n:ml:swanalekha"
-          "m17n:sa:itrans"
-        ];
-      };
-      "org/freedesktop/ibus/general/hotkey" = {
-        triggers = [ "<Control>space" ];
-      };
-    };
-
     programs.waybar = {
       enable = true;
       settings.mainBar = {
@@ -131,7 +118,6 @@
         modules-right = [
           "idle_inhibitor"
           "custom/nightlight"
-          "custom/ibus"
           "network"
           "bluetooth"
           "pulseaudio"
@@ -191,27 +177,6 @@
           on-click = "systemctl --user is-active --quiet wlsunset.service && systemctl --user stop wlsunset.service || systemctl --user start wlsunset.service";
           interval = 5;
           tooltip-format = "Night light (wlsunset) — click to toggle";
-        };
-
-        # Short engine code in the bar; full name + Ctrl+Space hint in the tooltip.
-        "custom/ibus" = {
-          exec = ''
-            engine=$(ibus engine 2>/dev/null)
-            case "$engine" in
-              xkb:us::eng)
-                short=us; name="English (US)" ;;
-              m17n:ml:swanalekha)
-                short=ml; name="Malayalam (Swanalekha)" ;;
-              m17n:sa:itrans)
-                short=skt; name="Sanskrit (ITRANS)" ;;
-              *)
-                short="$engine"; name="$engine" ;;
-            esac
-            printf '{"text":"%s","tooltip":"%s — Ctrl+Space to cycle"}' "$short" "$name"
-          '';
-          return-type = "json";
-          interval = 1;
-          format = " {}";
         };
 
         # No on-click toggle — enp2s0 carries DNS/media/Tailscale/SSH, so a misclick
@@ -301,7 +266,6 @@
         #niri-window,
         #idle_inhibitor,
         #custom-nightlight,
-        #custom-ibus,
         #network,
         #bluetooth,
         #pulseaudio,
@@ -401,10 +365,6 @@
     catppuccin.cursors.enable = true;
 
     # niri ships no default config; this is the whole session (autostart, binds, etc).
-    # @ibus-wayland@ is substituted with the real store path (see niri-config.kdl).
-    xdg.configFile."niri/config.kdl".text = builtins.replaceStrings
-      [ "@ibus-wayland@" ]
-      [ "${config.i18n.inputMethod.package}/libexec/ibus-wayland" ]
-      (builtins.readFile ./niri-config.kdl);
+    xdg.configFile."niri/config.kdl".source = ./niri-config.kdl;
   };
 }

@@ -25,6 +25,40 @@
         modules-right = [ "tray" ];
         clock.format = "{:%Y-%m-%d %H:%M}";
       };
+      # catppuccin.waybar only prepends `@import ".../mocha.css"`, which merely
+      # defines `@define-color` variables — it sets no selectors itself, so the
+      # bar stays GTK-default (white) without this to consume them.
+      style = ''
+        * {
+          font-family: sans-serif;
+          font-size: 13px;
+          border: none;
+          border-radius: 0;
+        }
+
+        window#waybar {
+          background-color: @base;
+          color: @text;
+        }
+
+        #workspaces button {
+          padding: 0 8px;
+          color: @subtext0;
+          background-color: transparent;
+        }
+
+        #workspaces button.active {
+          color: @base;
+          background-color: @blue;
+          border-radius: 8px;
+        }
+
+        #clock,
+        #tray {
+          padding: 0 10px;
+          color: @text;
+        }
+      '';
     };
 
     services.mako.enable = true;

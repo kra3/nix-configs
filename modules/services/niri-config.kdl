@@ -374,6 +374,9 @@ binds {
     // Audio device picker, lighter than opening the full pwvucontrol mixer.
     Super+Alt+P hotkey-overlay-title="Audio Devices: pwmenu" { spawn "pwmenu" "--launcher" "fuzzel" "--icon" "xdg"; }
 
+    // Self-hosted apps picker: group, then app, each opened as a chromeless chromium window.
+    Super+Alt+A hotkey-overlay-title="Self-hosted Apps: selfhosted-menu" { spawn "selfhosted-menu"; }
+
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
     // Using spawn-sh allows to pass multiple arguments together with the command.

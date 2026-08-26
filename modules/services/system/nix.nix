@@ -26,7 +26,14 @@
     enable = true;
     dates = "*-*-* 06:00:00";
     randomizedDelaySec = "1h";
-    flake = "github:kra3/nix-configs";
+    # Deploy from `release`, not `main`. `main` is an integration branch: CI and
+    # the flake-update bot write to it freely, and nothing there reaches this
+    # host until `release` is advanced deliberately.
+    #
+    # `release` must always contain this line. If it is ever pointed at a commit
+    # that still says `.../nix-configs`, the next timer re-reads that and silently
+    # reverts the host to tracking `main`.
+    flake = "github:kra3/nix-configs/release";
   };
 
   nixpkgs.config = {

@@ -36,11 +36,13 @@ modules/
 
 ## Home Manager Options
 
-`modules/home/default.nix` exposes two options:
+`modules/home/` is a flat set of leaf modules (git, vim, tmux, fzf, …) with no
+shared aggregator or `dotfiles.*` options — each host's `imports` list picks
+which leaves it wants (see `hosts/sutala/home.nix`, `hosts/mac-work/default.nix`).
 
-| Option | Default | Effect |
-|--------|---------|--------|
-| `dotfiles.work` | `false` | Enables work-specific settings |
+Work-specific settings (a `~/.gitconfig.work` include, credential-file
+exclusions for ripgrep) live in `modules/home/work.nix` and are opt-in: a host
+imports it to enable them (`mac-work` does, `sutala` doesn't).
 
 ## Dotfiles
 

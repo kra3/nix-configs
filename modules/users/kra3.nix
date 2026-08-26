@@ -29,7 +29,7 @@
 
   home-manager.users.kra3 = {
     imports = [
-      ../home
+      ../../hosts/sutala/home.nix
       ({ lib, ... }: {
         home.activation.installSshKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           $DRY_RUN_CMD mkdir -p ~/.ssh

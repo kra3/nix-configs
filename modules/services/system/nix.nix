@@ -36,10 +36,5 @@
     flake = "github:kra3/nix-configs/release";
   };
 
-  nixpkgs.config = {
-    allowUnfree = true;
-    permittedInsecurePackages = [
-      "intel-media-sdk-23.2.2"
-    ];
-  };
+  nixpkgs.config.allowUnfree = true;
 }

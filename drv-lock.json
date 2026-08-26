@@ -2,5 +2,5 @@
   "_comment": "Recorded drvPaths for the three hosts. A commit that intentionally changes a host's drvPath must update the matching value here in the same commit; the refactor-guard CI job fails otherwise. Regenerate with `just drv`.",
   "nixosConfigurations.sutala": "/nix/store/kkhp8zx3hqazxdxhszs3pizn191gl93f-nixos-system-sutala-26.05.20260825.f4f6986.drv",
   "darwinConfigurations.mac-work.system": "/nix/store/0pmdpgnhiy4rj3dfvyhrpvnzpmb698y8-darwin-system-26.05.c3e90c8.drv",
-  "colmenaHive.nodes.sutala": "/nix/store/apnn1l6f7gj81m72ckx1vpwqz7j79pk2-nixos-system-sutala-26.05pre-git.drv"
+  "colmenaHive.nodes.sutala": "/nix/store/kkhp8zx3hqazxdxhszs3pizn191gl93f-nixos-system-sutala-26.05.20260825.f4f6986.drv"
 }

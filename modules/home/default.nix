@@ -1,17 +1,9 @@
 {
   lib,
   pkgs,
-  config,
   ...
 }:
-let
-  cfg = config.dotfiles;
-in
 {
-  options.dotfiles = {
-    work = lib.mkEnableOption "work-specific settings";
-  };
-
   imports = [
     ./claude-code.nix
     ./mcp-nixos.nix

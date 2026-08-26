@@ -11,5 +11,11 @@
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"
     }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "allowedVersions": "!/(?i)(nightly|development|edge|canary|alpha|beta|rc\\d*)/"
+    }
   ]
 }

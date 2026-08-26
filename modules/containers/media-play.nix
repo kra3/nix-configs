@@ -89,6 +89,14 @@ in
         inputs.self.overlays.default
       ];
 
+      # Containers re-evaluate their own nixpkgs.config and don't inherit the
+      # host's (only nixpkgs.hostPlatform is inherited) -- this must be
+      # restated here, not just in modules/hardware/intel-igpu.nix, or
+      # hardware.graphics.extraPackages below fails to evaluate.
+      nixpkgs.config.permittedInsecurePackages = [
+        "intel-media-sdk-23.2.2"
+      ];
+
       networking = {
         hostName = "media-play";
         defaultGateway = config.vars.network.containers.mediaPlay.hostAddress;

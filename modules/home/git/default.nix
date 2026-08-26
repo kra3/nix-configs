@@ -193,7 +193,7 @@ in
 
       commit.gpgsign = true;
 
-      github.user = cfg.githubUser;
+      github.user = "kra3";
     };
   };
 }

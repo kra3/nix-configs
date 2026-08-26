@@ -27,10 +27,10 @@ Run `nix flake check` as the primary validation before committing.
 
 ### Hosts
 - **`hosts/sutala/`** — NixOS x86_64-linux home server (192.168.1.10, LAN if `enp2s0`). Media, home-automation, DNS, monitoring, surveillance. Disk layout via `disko.nix`; deployed both as a `nixosConfigurations` entry and as the sole `colmena` node (`flake.nix`).
-- **`hosts/mac-work/`** — nix-darwin aarch64-darwin laptop, single `default.nix` (no separate `darwin-configuration.nix`). Home Manager user `akarunagath`, `dotfiles.work = true`.
+- **`hosts/mac-work/`** — nix-darwin aarch64-darwin laptop, single `default.nix` (no separate `darwin-configuration.nix`). Home Manager user `akarunagath`, imports `modules/home/work.nix`.
 
 ### Module Layout
-- **`modules/home/`** — Home Manager dotfiles shared across hosts (git, vim, tmux, fzf, zoxide, sesh, gh, claude-code, mcp-nixos, etc.). `default.nix` exposes options `dotfiles.desktop`, `dotfiles.work`, `dotfiles.githubUser` and turns on Catppuccin (mocha/blue) for every user.
+- **`modules/home/`** — Home Manager dotfiles shared across hosts (git, vim, tmux, fzf, zoxide, sesh, gh, claude-code, mcp-nixos, etc.), as flat leaf modules with no shared aggregator or `dotfiles.*` options. Each host's own `imports` list picks which leaves it wants and sets Catppuccin/`home.stateVersion` itself (`hosts/sutala/home.nix`, `hosts/mac-work/default.nix`). `work.nix` (git `~/.gitconfig.work` include, ripgrep credential-file exclusions) is opt-in per host.
 - **`modules/services/`** — NixOS system services, one subdir per concern: `proxy/` (nginx), `dns/` (AdGuard Home + Unbound), `monitoring/` (Prometheus/Grafana/Loki), `infrastructure/` (ACME, OpenSSH, sops), `discovery/` (Avahi), `surveillance/` (NVR + proxy), `virtualisation/` (Podman, Arcane), `system/` (nix.conf, sysadmin, vim), plus `tailscale.nix`, `postgres.nix`, `redis.nix`, `mosquitto.nix`, `zigbee2mqtt.nix`, `niri.nix`.
 - **`modules/containers/`** — Podman quadlet stacks, each with its own subnet in `vars.nix`: `life/` (actualbudget, ghostfolio), `media-mgmt/` (arr-stack: radarr/sonarr/lidarr/bazarr/prowlarr/sabnzbd/etc.), `home-auto/` (home-assistant, matter-server, music-assistant, otbr), plus `monitoring.nix` and `media-play.nix`. Shared helpers in `common.nix`.
 - **`modules/users/`** — User accounts (`kra3.nix` primary user, `root.nix`). Each user module embeds its own Home Manager config.
@@ -45,7 +45,7 @@ Run `nix flake check` as the primary validation before committing.
 - **Secrets:** sops-nix with age encryption. Host SSH keys are the recipients (see `.sops.yaml`). Use nested keys (e.g. `users.kra3.password`, `cloudflare.acme.token`). Edit with `just sops-edit <file>`.
 - **Containers:** Podman + quadlet-nix. Each stack has its own veth bridge subnet defined in `modules/vars.nix`.
 - **Stable + unstable:** Both `nixpkgs` (`nixos-26.05`) and `nixpkgs-unstable` are inputs; unstable packages are accessible via the overlay or `pkgs.unstable`.
-- **Theming:** Catppuccin Mocha applied globally via the home-manager catppuccin module (set in `modules/home/default.nix`, not per-host).
+- **Theming:** Catppuccin Mocha applied via the home-manager catppuccin module, set per-host (`hosts/sutala/home.nix`, `hosts/mac-work/default.nix`).
 
 ## Coding Style
 - 2-space indentation, trailing commas in multi-line lists/attrsets, one attribute per line for large sets.

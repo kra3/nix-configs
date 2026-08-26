@@ -1,6 +1,6 @@
 { config, pkgs, lib, inputs, ... }:
 let
-  containerLib = import ../lib { inherit lib config; };
+  containerLib = import ../lib { inherit lib; };
 in
 {
   networking.firewall.interfaces = {

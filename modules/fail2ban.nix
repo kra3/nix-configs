@@ -2,7 +2,7 @@
 
 { config, lib, ... }:
 let
-  serviceLib = import ./lib { inherit lib config; };
+  serviceLib = import ./lib { inherit lib; };
   defaultSetting = lib.mkDefault;
 in
 {

@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  serviceLib = import ../lib { inherit lib config; };
+  serviceLib = import ../lib { inherit lib; };
 in
 {
   sops.secrets."tailscale.authkey" = { };

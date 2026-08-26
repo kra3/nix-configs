@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  serviceLib = import ../../lib { inherit lib config; };
+  serviceLib = import ../../lib { inherit lib; };
   allowBlock = ''
     ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
     deny all;

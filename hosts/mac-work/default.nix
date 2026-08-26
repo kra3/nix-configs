@@ -17,14 +17,13 @@
   };
 
   home-manager.users.akarunagath = {
-    imports = [ ../../modules/home ];
+    imports = [
+      ../../modules/home
+      ../../modules/home/work.nix
+    ];
 
     home.username = "akarunagath";
     home.homeDirectory = lib.mkForce "/Users/akarunagath";
-
-    dotfiles = {
-      work = true;
-    };
   };
 
   system.stateVersion = 6;

@@ -40,10 +40,6 @@
         '';
       })
     ];
-
-    dotfiles = {
-      work = false;
-    };
   };
 
   system.activationScripts.kra3-sops-age-key = {

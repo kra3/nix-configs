@@ -1,12 +1,8 @@
 {
   lib,
   pkgs,
-  config,
   ...
 }:
-let
-  cfg = config.dotfiles;
-in
 {
   imports = [ ./delta.nix ./lazygit.nix ];
 
@@ -23,8 +19,6 @@ in
 
     includes = [
       { path = "~/.gitconfig.local"; }
-    ] ++ lib.optionals cfg.work [
-      { path = "~/.gitconfig.work"; }
     ];
 
     settings = {

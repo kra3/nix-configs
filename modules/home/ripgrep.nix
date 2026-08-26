@@ -1,11 +1,5 @@
-{
-  lib,
-  config,
-  ...
-}:
+{ ... }:
 let
-  cfg = config.dotfiles;
-
   baseArguments = [
     "--smart-case"
     "--line-number"
@@ -112,14 +106,10 @@ let
     "--glob=!htmlcov/"
   ];
 
-  workArguments = [
-    "--glob=!.credentials/"
-    "--glob=!credentials.json"
-  ];
 in
 {
   programs.ripgrep = {
     enable = true;
-    arguments = baseArguments ++ lib.optionals cfg.work workArguments;
+    arguments = baseArguments;
   };
 }

@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 let
-  containerLib = import ../lib { inherit lib config; };
+  containerLib = import ../lib { inherit lib; };
   allowBlock = ''
     ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
     deny all;

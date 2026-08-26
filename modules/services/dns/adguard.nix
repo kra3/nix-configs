@@ -5,7 +5,7 @@
   ...
 }:
 let
-  serviceLib = import ../../lib { inherit lib config; };
+  serviceLib = import ../../lib { inherit lib; };
   cfg = config.vars.network;
   domain = config.vars.acme.domain;
   lanIf = cfg.lanIf;

@@ -36,7 +36,7 @@ Run `nix flake check` as the primary validation before committing.
 - **`modules/users/`** — User accounts (`kra3.nix` primary user, `root.nix`). Each user module embeds its own Home Manager config.
 - **`modules/vars.nix`** — Single source of truth (deliberately kept at module root, not nested, since it's cross-cut by hosts/containers/services/infrastructure): LAN interface/CIDR, per-container-stack Podman subnets and host/local veth addresses, ACME email/domain.
 - **`modules/overlays/`** — Custom nixpkgs patches (intel-media-sdk C++17 fix for iGPU), wired in via `flake.self.overlays.default`.
-- **`modules/lib/`** — Helper functions: `container/` (quadlet definition + integration), `deployment/` (hardening, monitoring, networking, storage), `utils/` (systemd, types).
+- **`modules/lib/`** — Helper functions: `container/` (quadlet definition), `deployment/` (hardening).
 
 ### Key Patterns
 - **flake-parts:** `flake.nix` uses flake-parts for output composition. New outputs go under the `flake` section; system-specific config under `perSystem`.

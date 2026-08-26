@@ -7,7 +7,7 @@ NixOS and macOS configurations managed with Nix flakes. Hosts define machine-spe
 | Host | OS | Role |
 |------|----|------|
 | `sutala` | NixOS (x86_64-linux) | Home server — media, home-automation, monitoring |
-| `akarunagath` | macOS (aarch64-darwin) | Personal laptop — nix-darwin + Home Manager |
+| `mac-work` | macOS (aarch64-darwin) | Personal laptop — nix-darwin + Home Manager |
 
 ## Structure
 
@@ -15,7 +15,7 @@ NixOS and macOS configurations managed with Nix flakes. Hosts define machine-spe
 flake.nix
 hosts/
   sutala/            # NixOS host
-  akarunagath/       # nix-darwin host
+  mac-work/          # nix-darwin host
 modules/
   home/              # Home Manager dotfiles (shared across hosts/users)
     shell/           # bash, zsh, readline, common env vars & aliases
@@ -65,7 +65,7 @@ just switch-remote   # nixos-rebuild over SSH
 
 **macOS (nix-darwin):**
 ```bash
-darwin-rebuild switch --flake .#akarunagath
+darwin-rebuild switch --flake .#mac-work
 ```
 
 **Checks and formatting:**

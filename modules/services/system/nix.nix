@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, config, ... }:
 {
   nix = {
     settings = {
@@ -18,7 +18,11 @@
     optimise.automatic = true;
   };
 
-  system.autoUpgrade = {
+  # Only the host auto-upgrades. Containers import this module too, and inside a
+  # container the generated unit resolves nixosConfigurations.$(hostname) --
+  # "monitoring" / "media-play" / "home-auto", none of which the flake exposes --
+  # so every container upgrade failed at flake resolution.
+  system.autoUpgrade = lib.mkIf (!config.boot.isContainer) {
     enable = true;
     dates = "*-*-* 06:00:00";
     randomizedDelaySec = "1h";

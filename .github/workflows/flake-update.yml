@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-flake:
@@ -24,14 +25,40 @@ jobs:
       - name: Update flake.lock
         run: nix flake update
 
-      - uses: stefanzweifel/git-auto-commit-action@v7
+      # A nixpkgs lock bump changes the drv name (system.nixos.revision embeds
+      # the input's rev), which moves all three hosts' drvPaths. The
+      # refactor-guard job in check.yml enforces HEAD's eval against
+      # drv-lock.json unconditionally, so this bot must refresh the lock file
+      # in the same commit or every lock bump would fail its own PR's check
+      # (and, if it ever landed on main directly, break every subsequent PR).
+      - name: Regenerate drv-lock.json
+        run: |
+          sutala=$(nix eval --raw .#nixosConfigurations.sutala.config.system.build.toplevel.drvPath)
+          macwork=$(nix eval --raw .#darwinConfigurations.mac-work.system.drvPath)
+          colmena=$(nix eval --raw .#colmenaHive.nodes.sutala.config.system.build.toplevel.drvPath)
+          jq \
+            --arg sutala "$sutala" \
+            --arg macwork "$macwork" \
+            --arg colmena "$colmena" \
+            '.["nixosConfigurations.sutala"] = $sutala
+             | .["darwinConfigurations.mac-work.system"] = $macwork
+             | .["colmenaHive.nodes.sutala"] = $colmena' \
+            drv-lock.json > drv-lock.json.new
+          mv drv-lock.json.new drv-lock.json
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
         with:
-          commit_message: "chore(deps): bump flake.lock"
-          commit_user_name: Flake Bot
-          commit_options: --no-verify --signoff
-          commit_author: Flake Bot <actions@github.com>
-          branch: main
-          file_pattern: flake.lock
-          skip_dirty_check: false
-          skip_fetch: true
           token: ${{ secrets.GH_PAT }}
+          commit-message: "chore(deps): bump flake.lock"
+          committer: Flake Bot <actions@github.com>
+          author: Flake Bot <actions@github.com>
+          branch: flake-update
+          delete-branch: true
+          add-paths: |
+            flake.lock
+            drv-lock.json
+          title: "chore(deps): bump flake.lock"
+          body: |
+            Automated `nix flake update`, with `drv-lock.json` regenerated to
+            match so the refactor-guard check passes.

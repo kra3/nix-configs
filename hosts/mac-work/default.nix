@@ -23,9 +23,7 @@
     home.homeDirectory = lib.mkForce "/Users/akarunagath";
 
     dotfiles = {
-      desktop = false;
       work = true;
-      githubUser = "kra3";
     };
   };
 

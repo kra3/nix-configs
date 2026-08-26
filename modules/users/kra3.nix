@@ -42,9 +42,7 @@
     ];
 
     dotfiles = {
-      desktop = false;
       work = false;
-      githubUser = "kra3";
     };
   };
 

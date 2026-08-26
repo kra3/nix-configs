@@ -6,19 +6,10 @@
 }:
 let
   cfg = config.dotfiles;
-  isDarwin = pkgs.stdenv.isDarwin;
-  isLinux = pkgs.stdenv.isLinux;
 in
 {
   options.dotfiles = {
-    desktop = lib.mkEnableOption "desktop-specific settings";
     work = lib.mkEnableOption "work-specific settings";
-
-    githubUser = lib.mkOption {
-      type = lib.types.str;
-      default = "kra3";
-      description = "GitHub username";
-    };
   };
 
   imports = [

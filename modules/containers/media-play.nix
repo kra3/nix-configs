@@ -1,4 +1,4 @@
-{ config, inputs, pkgs, lib, ... }:
+{ config, inputs, pkgs, lib, flakeModules, ... }:
 let
   containerLib = import ../lib { inherit lib; };
 in
@@ -61,7 +61,7 @@ in
   containers.media-play = ({
     autoStart = true;
     specialArgs = {
-      inherit inputs;
+      inherit inputs flakeModules;
       domain = config.vars.acme.domain;
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
     };
@@ -71,7 +71,7 @@ in
   } // {
     config = {
       imports = [
-        ../services/system/nix-defaults-nixos.nix
+        flakeModules.nixos.services-system-nix-defaults-nixos
         ../containers/common.nix
         inputs.declarative-jellyfin.nixosModules.default
         ../services/media/players

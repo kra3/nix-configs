@@ -16,6 +16,15 @@
     {
       "matchDatasources": ["docker"],
       "allowedVersions": "!/(?i)(nightly|development|edge|canary|alpha|beta|rc\\d*)/"
+    },
+    {
+      "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],
+      "allowedVersions": "/^[\\w.]+-ls\\d+$/"
     }
-  ]
+  ],
+  "postUpgradeTasks": {
+    "commands": ["nix develop --command just drv-lock"],
+    "fileFilters": ["drv-lock.json"],
+    "executionMode": "branch"
+  }
 }

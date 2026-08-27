@@ -2,6 +2,7 @@
   inputs,
   config,
   pkgs,
+  flakeModules,
   ...
 }:
 {
@@ -13,13 +14,14 @@
 
     ./hardware-configuration.nix
     ./disko.nix
-    ../../modules/services/system/nix-defaults-nixos.nix
-    ../../modules/services/system/nix-allow-unfree.nix
-    ../../modules/services/system/nix-autoupgrade.nix
+    flakeModules.nixos.services-system-nix-defaults-nixos
+    flakeModules.nixos.services-system-nix-allow-unfree
+    flakeModules.nixos.services-system-nix-autoupgrade
     ../../modules/hardware/intel-igpu.nix
     ../../modules/vars.nix
     ../../modules/services/infrastructure/acme.nix
     ../../modules/services/proxy/nginx.nix
+    ../../modules/services/monitoring/alloy-host.nix
     ../../modules/services/infrastructure/openssh.nix
     ../../modules/services/infrastructure/sops.nix
     ../../modules/services/tailscale.nix
@@ -39,8 +41,8 @@
     ../../modules/containers/home-auto/music-assistant
     ../../modules/containers/life
     ../../modules/fail2ban.nix
-    ../../modules/services/system/vim.nix
-    ../../modules/services/system/sysadmin.nix
+    flakeModules.nixos.services-system-vim
+    flakeModules.nixos.services-system-sysadmin
     ../../modules/services/virtualisation
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, flakeModules, ... }:
 let
   containerLib = import ../lib { inherit lib; };
 in
@@ -60,7 +60,7 @@ in
     additionalCapabilities = [ "CAP_PERFMON" ];
     extraFlags = [ "--system-call-filter=perf_event_open" ];
     specialArgs = {
-      inherit inputs;
+      inherit inputs flakeModules;
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
       containerLocalAddress = config.vars.network.containers.homeAuto.localAddress;
     };
@@ -70,7 +70,7 @@ in
   } // {
     config = {
       imports = [
-        ../services/system/nix-defaults-nixos.nix
+        flakeModules.nixos.services-system-nix-defaults-nixos
         ../containers/common.nix
         ../services/mosquitto.nix
         ../services/surveillance

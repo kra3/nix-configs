@@ -1,6 +1,6 @@
 {
-  "_comment": "Recorded drvPaths for the three hosts. A commit that intentionally changes a host's drvPath must update the matching value here in the same commit; the refactor-guard CI job fails otherwise. Regenerate with `just drv`.",
-  "nixosConfigurations.sutala": "/nix/store/ngyxxm3rkry34zqfc7aqwlkpqckxgxjd-nixos-system-sutala-26.05.20260826.062346a.drv",
+  "_comment": "Recorded drvPaths for the three hosts. A commit that intentionally changes a host's drvPath must update the matching value here in the same commit; the refactor-guard CI job fails otherwise. Regenerate with `just drv-lock` (Renovate's postUpgradeTasks does this automatically for dependency-bump PRs).",
+  "nixosConfigurations.sutala": "/nix/store/8x0jnxa4rn0dkfpcny0w7gkb9j4kx7as-nixos-system-sutala-26.05.20260826.062346a.drv",
   "darwinConfigurations.mac-work.system": "/nix/store/f7wsxgdib9i8498fi7k6rfmaj7c2z8ns-darwin-system-26.05.c3e90c8.drv",
-  "colmenaHive.nodes.sutala": "/nix/store/ngyxxm3rkry34zqfc7aqwlkpqckxgxjd-nixos-system-sutala-26.05.20260826.062346a.drv"
+  "colmenaHive.nodes.sutala": "/nix/store/8x0jnxa4rn0dkfpcny0w7gkb9j4kx7as-nixos-system-sutala-26.05.20260826.062346a.drv"
 }

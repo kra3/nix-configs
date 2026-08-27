@@ -195,6 +195,7 @@ in
       pkgs.pwvucontrol # audio mixer, waybar pulseaudio right-click
       pkgs.bzmenu # bluetooth picker, Super+Alt+B in niri-config.kdl
       pkgs.pwmenu # audio device picker, Super+Alt+P in niri-config.kdl
+      pkgs.wl-clipboard # wl-copy for the cliphist picker, Super+Alt+V in niri-config.kdl
       selfhostedMenu # self-hosted apps picker, Super+Alt+A in niri-config.kdl
       pkgs.adwaita-icon-theme-legacy # category icons for selfhosted-menu's group picker
     ];

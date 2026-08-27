@@ -226,6 +226,11 @@ in
     systemd.tmpfiles.rules = [
       "d /var/lib/AdGuardHome 0750 adguardhome adguardhome - -"
       "Z /var/lib/AdGuardHome - adguardhome adguardhome - -"
+      # AdGuardHome creates data/ (and the query log/stats files in it)
+      # itself at 0700, which blocks the alloy user's "adguardhome" group
+      # membership from reading the query log for log shipping; recursively
+      # re-widen it to group-readable on every activation.
+      "Z /var/lib/AdGuardHome/data 0750 adguardhome adguardhome - -"
     ];
 
     systemd.services.adguardhome.serviceConfig = lib.mkMerge [

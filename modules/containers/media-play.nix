@@ -79,7 +79,9 @@ in
   } // {
     config = {
       imports = [
-        ../services/system/nix.nix
+        ../services/system/nix-settings.nix
+        ../services/system/nix-store-maintenance-nixos.nix
+        ../services/system/nix-allow-unfree.nix
         ../containers/common.nix
         inputs.declarative-jellyfin.nixosModules.default
         ../services/media/players

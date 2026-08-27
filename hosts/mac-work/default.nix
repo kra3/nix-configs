@@ -1,9 +1,8 @@
 { lib, inputs, ... }:
 {
-  # nix-darwin system settings
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
+  imports = [
+    ../../modules/services/system/nix-settings.nix
+    ../../modules/services/system/nix-store-maintenance-darwin.nix
   ];
 
   # System-level shell setup (nix-darwin requires this for managed shells)

@@ -21,7 +21,7 @@ in
         "/srv/media/bkup/Books/Ebooks:/ebooks:ro"
         "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 80; };
+    } // containerLib.quadlet.mkHealthCheck { port = 80; path = "healthcheck"; };
   } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
   environment.etc."alloy/audiobookshelf.alloy".text = containerLib.observability.mkAlloyJournalSource {

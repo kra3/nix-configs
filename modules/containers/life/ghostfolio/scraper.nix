@@ -1,5 +1,6 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
+  containerLib = import ../../../lib { inherit lib; };
   scraperPython = pkgs.python3.withPackages (ps: [ ps.requests ps.psycopg2 ]);
   scraperScript = ./scraper/scraper.py;
   symbolsConfig = ./scraper/symbols.json;
@@ -47,15 +48,9 @@ in
     };
   };
 
-  environment.etc."alloy/ghostfolio-scraper.alloy".text = ''
-    loki.source.journal "ghostfolio_scraper" {
-      matches = "_SYSTEMD_UNIT=ghostfolio-scraper.service"
-      labels = {
-        job = "ghostfolio-scraper",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/ghostfolio-scraper.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "ghostfolio-scraper";
+    id = "ghostfolio_scraper";
+    hostName = config.networking.hostName;
+  };
 }

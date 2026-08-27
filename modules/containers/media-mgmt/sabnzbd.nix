@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -23,12 +20,6 @@ in
   virtualisation.quadlet.containers.sabnzbd = {
     containerConfig = {
       image = "lscr.io/linuxserver/sabnzbd:5.1.1-ls267";
-      healthCmd = "wget -qO- http://localhost:8080/api?mode=version";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "60s";
       publishPorts = [ "127.0.0.1:8080:8080" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -43,33 +34,22 @@ in
         "/srv/appdata/media-mgmt/sabnzbd:/config"
         "/srv/media/downloads:/data/downloads"
       ];
+    }
+    // containerLib.quadlet.mkHealthCheck {
+      port = 8080;
+      path = "api?mode=version";
+      startPeriod = "60s";
     };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/sabnzbd.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "sabnzbd";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/sabnzbd.alloy".text = ''
-    loki.source.journal "sabnzbd" {
-      matches = "_SYSTEMD_UNIT=sabnzbd.service"
-      labels = {
-        job = "sabnzbd",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."sabnzbd.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8080";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."sabnzbd.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8080";
   };
 }

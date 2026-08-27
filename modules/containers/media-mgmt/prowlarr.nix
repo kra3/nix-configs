@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -19,12 +16,6 @@ in
   virtualisation.quadlet.containers.prowlarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls156";
-      healthCmd = "wget -qO-  http://localhost:9696/ping";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:9696:9696" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -37,33 +28,17 @@ in
       volumes = [
         "/srv/appdata/media-mgmt/prowlarr:/config"
       ];
-    };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+    } // containerLib.quadlet.mkHealthCheck { port = 9696; };
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/prowlarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "prowlarr";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/prowlarr.alloy".text = ''
-    loki.source.journal "prowlarr" {
-      matches = "_SYSTEMD_UNIT=prowlarr.service"
-      labels = {
-        job = "prowlarr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:9696";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:9696";
   };
 }

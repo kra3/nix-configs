@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -19,12 +16,6 @@ in
   virtualisation.quadlet.containers.lidarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls39";
-      healthCmd = "wget -qO-  http://localhost:8686/ping";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:8686:8686" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -38,33 +29,17 @@ in
         "/srv/appdata/media-mgmt/lidarr:/config"
         "/srv/media:/data"
       ];
-    };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+    } // containerLib.quadlet.mkHealthCheck { port = 8686; };
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/lidarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "lidarr";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/lidarr.alloy".text = ''
-    loki.source.journal "lidarr" {
-      matches = "_SYSTEMD_UNIT=lidarr.service"
-      labels = {
-        job = "lidarr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8686";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8686";
   };
 }

@@ -10,10 +10,7 @@ let
   domain = config.vars.acme.domain;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") cfg.nginxAllowCidrs)}
-    deny all;
-  '';
+  allowBlock = serviceLib.nginx.mkAllowBlock cfg.nginxAllowCidrs;
   adguardFilters = [
     {
       enabled = false;

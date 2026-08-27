@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.life;
 in
 {
@@ -47,40 +44,20 @@ in
       };
       environmentFiles = [ config.sops.templates."life.ghostfolio.env".path ];
     };
-    unitConfig = {
-      After = [
-        "life-network.service"
-        "postgresql-set-passwords.service"
-        "redis-default.service"
-      ];
-      Requires = [
-        "life-network.service"
-        "postgresql-set-passwords.service"
-        "redis-default.service"
-      ];
-    };
-    serviceConfig.Restart = "always";
+  } // containerLib.quadlet.mkNetworkDeps {
+    networkServices = [ "life-network.service" ];
+    extraAfter = [ "postgresql-set-passwords.service" "redis-default.service" ];
+    extraRequires = [ "postgresql-set-passwords.service" "redis-default.service" ];
   };
 
-  environment.etc."alloy/ghostfolio.alloy".text = ''
-    loki.source.journal "ghostfolio" {
-      matches = "_SYSTEMD_UNIT=ghostfolio.service"
-      labels = {
-        job = "ghostfolio",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/ghostfolio.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "ghostfolio";
+    hostName = config.networking.hostName;
+  };
 
-  services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:3333";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:3333";
   };
 }

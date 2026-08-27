@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -29,52 +26,31 @@ in
       dns = [ "10.3.2.1" ];
       logDriver = "journald";
       environments = {
-        TZ = "Europe/Stockholm";
+        TZ = "UTC";
       };
       volumes = [
         "/srv/appdata/home-auto/music-assistant:/data"
       ];
       addCapabilities = [ "NET_ADMIN" ];
     };
-    unitConfig = {
-      After = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-      ];
-      Requires = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-      ];
-    };
-    serviceConfig = {
-      Restart = "always";
-    };
+  } // containerLib.quadlet.mkNetworkDeps {
+    networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
   };
 
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/music-assistant 0750 root root - -"
   ];
 
-  environment.etc."alloy/music-assistant.alloy".text = ''
-    loki.source.journal "music_assistant" {
-      matches = "_SYSTEMD_UNIT=music-assistant.service"
-      labels = {
-        job = "music-assistant",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/music-assistant.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "music-assistant";
+    id = "music_assistant";
+    hostName = config.networking.hostName;
+  };
 
-  services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8095";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8095";
   };
 
   # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
@@ -89,7 +65,7 @@ in
         ssl = true;
       }
     ];
-    extraConfig = allowBlock;
+    extraConfig = containerLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
     locations."/" = {
       proxyPass = "http://10.3.2.13:1705";
       proxyWebsockets = true;

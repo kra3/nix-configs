@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.life;
 in
 {
@@ -21,32 +18,16 @@ in
         "/srv/appdata/life/actualbudget:/data"
       ];
     };
-    unitConfig = {
-      After = [ "life-network.service" ];
-      Requires = [ "life-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };
+
+  environment.etc."alloy/actualbudget.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "actualbudget";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/actualbudget.alloy".text = ''
-    loki.source.journal "actualbudget" {
-      matches = "_SYSTEMD_UNIT=actualbudget.service"
-      labels = {
-        job = "actualbudget",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:5006";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:5006";
   };
 }

@@ -30,6 +30,14 @@ drv:
         --arg colmena "$colmena" \
         '{"nixosConfigurations.sutala": $sutala, "darwinConfigurations.mac-work.system": $macwork, "colmenaHive.nodes.sutala": $colmena}'
 
+# Regenerate drv-lock.json in place, preserving its _comment field. For local
+# use after an intentional drvPath change, and for Renovate's postUpgradeTasks.
+drv-lock:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    comment=$(jq -r '._comment' drv-lock.json)
+    just drv | jq --arg c "$comment" '{_comment: $c} + .' > drv-lock.json
+
 # Local pre-commit gate equivalent to CI: flake check, confirm all three hosts
 # eval, and confirm their drvPaths still match drv-lock.json. If a change is
 # meant to move a drvPath, update drv-lock.json in the same commit.

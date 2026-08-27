@@ -13,7 +13,10 @@
 
     ./hardware-configuration.nix
     ./disko.nix
-    ../../modules/services/system/nix.nix
+    ../../modules/services/system/nix-settings.nix
+    ../../modules/services/system/nix-store-maintenance-nixos.nix
+    ../../modules/services/system/nix-allow-unfree.nix
+    ../../modules/services/system/nix-autoupgrade.nix
     ../../modules/hardware/intel-igpu.nix
     ../../modules/vars.nix
     ../../modules/services/infrastructure/acme.nix

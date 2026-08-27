@@ -10,30 +10,30 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs flakeModules; };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
   };
 
   home-manager.users.akarunagath = {
     imports = [
-      ../../modules/home/claude-code.nix
-      ../../modules/home/mcp-nixos.nix
-      ../../modules/home/bat.nix
-      ../../modules/home/colordiff
-      ../../modules/home/eza.nix
-      ../../modules/home/fd.nix
-      ../../modules/home/fzf.nix
-      ../../modules/home/gh
-      ../../modules/home/git
-      ../../modules/home/gpg.nix
-      ../../modules/home/packages.nix
-      ../../modules/home/ripgrep.nix
-      ../../modules/home/sesh
-      ../../modules/home/shell
-      ../../modules/home/tmux.nix
-      ../../modules/home/vim
-      ../../modules/home/zoxide.nix
-      ../../modules/home/work.nix
+      flakeModules.homeManager.home-claude-code
+      flakeModules.homeManager.home-mcp-nixos
+      flakeModules.homeManager.home-bat
+      flakeModules.homeManager.home-colordiff-default
+      flakeModules.homeManager.home-eza
+      flakeModules.homeManager.home-fd
+      flakeModules.homeManager.home-fzf
+      flakeModules.homeManager.home-gh-default
+      flakeModules.homeManager.home-git-default
+      flakeModules.homeManager.home-gpg
+      flakeModules.homeManager.home-packages
+      flakeModules.homeManager.home-ripgrep
+      flakeModules.homeManager.home-sesh-default
+      flakeModules.homeManager.home-shell-default
+      flakeModules.homeManager.home-tmux
+      flakeModules.homeManager.home-vim-default
+      flakeModules.homeManager.home-zoxide
+      flakeModules.homeManager.home-work
     ];
 
     home.username = "akarunagath";

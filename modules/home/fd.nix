@@ -1,73 +1,74 @@
-{ ... }:
 {
-  programs.fd = {
-    enable = true;
-    ignores = [
-      # OS generated files
-      ".DS_Store"
-      ".DS_Store?"
-      "._*"
-      ".Spotlight-V100"
-      ".Trashes"
-      ".Trash"
-      "ehthumbs.db"
-      "Thumbs.db"
-      "Desktop.ini"
+  flake.homeManagerModules.home-fd = { ... }: {
+    programs.fd = {
+      enable = true;
+      ignores = [
+        # OS generated files
+        ".DS_Store"
+        ".DS_Store?"
+        "._*"
+        ".Spotlight-V100"
+        ".Trashes"
+        ".Trash"
+        "ehthumbs.db"
+        "Thumbs.db"
+        "Desktop.ini"
 
-      # Editor and IDE
-      ".vscode/"
-      ".idea/"
-      "*.swp"
-      "*.swo"
-      "*~"
-      ".*.sw?"
+        # Editor and IDE
+        ".vscode/"
+        ".idea/"
+        "*.swp"
+        "*.swo"
+        "*~"
+        ".*.sw?"
 
-      # Build artifacts and dependencies
-      "node_modules/"
-      "bower_components/"
-      "target/"
-      "build/"
-      "dist/"
-      "out/"
-      "*.egg-info/"
-      "__pycache__/"
-      "*.pyc"
-      ".gradle/"
-      ".mvn/"
+        # Build artifacts and dependencies
+        "node_modules/"
+        "bower_components/"
+        "target/"
+        "build/"
+        "dist/"
+        "out/"
+        "*.egg-info/"
+        "__pycache__/"
+        "*.pyc"
+        ".gradle/"
+        ".mvn/"
 
-      # Temporary files
-      "*.tmp"
-      "*.temp"
-      "*.log"
-      "*.cache"
+        # Temporary files
+        "*.tmp"
+        "*.temp"
+        "*.log"
+        "*.cache"
 
-      # Virtual environments
-      "venv/"
-      "env/"
-      ".venv/"
-      ".env/"
+        # Virtual environments
+        "venv/"
+        "env/"
+        ".venv/"
+        ".env/"
 
-      # Package manager caches
-      ".npm/"
-      ".yarn/"
-      ".pnpm-store/"
+        # Package manager caches
+        ".npm/"
+        ".yarn/"
+        ".pnpm-store/"
 
-      # Cloud and sync folders (partial indexing)
-      "Library/"
-      "Applications/"
-      "Pictures/"
-      "Music/"
-      "Movies/"
-      "Downloads/"
-      "Documents/iCloud*"
+        # Cloud and sync folders (partial indexing)
+        "Library/"
+        "Applications/"
+        "Pictures/"
+        "Music/"
+        "Movies/"
+        "Downloads/"
+        "Documents/iCloud*"
 
-      # System directories
-      "/proc/"
-      "/sys/"
-      "/dev/"
-      "/run/"
-      "/tmp/"
-      "/var/tmp/"
-    ];
+        # System directories
+        "/proc/"
+        "/sys/"
+        "/dev/"
+        "/run/"
+        "/tmp/"
+        "/var/tmp/"
+      ];
+    };
   };
 }

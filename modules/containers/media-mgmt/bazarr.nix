@@ -15,7 +15,7 @@ in
 
   virtualisation.quadlet.containers.bazarr = {
     containerConfig = {
-      image = "lscr.io/linuxserver/bazarr:v1.6.0-ls361";
+      image = "lscr.io/linuxserver/bazarr:1.6.0";
       publishPorts = [ "127.0.0.1:6767:6767" ];
       networks = [ network.ref ];
       logDriver = "journald";

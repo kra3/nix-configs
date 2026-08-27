@@ -1,13 +1,10 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
-  sops.secrets."media.bookshelf.api_key" = {};
+  sops.secrets."media.bookshelf.api_key" = { };
 
   sops.templates."media.bookshelf.env" = {
     owner = "root";
@@ -19,12 +16,6 @@ in
   virtualisation.quadlet.containers.bookshelf = {
     containerConfig = {
       image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.20.129";
-      healthCmd = "wget -qO- http://localhost:8787/ping";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:8787:8787" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -38,33 +29,17 @@ in
         "/srv/appdata/media-mgmt/bookshelf:/config"
         "/srv/media:/data"
       ];
-    };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+    } // containerLib.quadlet.mkHealthCheck { port = 8787; };
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/bookshelf.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "bookshelf";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/bookshelf.alloy".text = ''
-    loki.source.journal "bookshelf" {
-      matches = "_SYSTEMD_UNIT=bookshelf.service"
-      labels = {
-        job = "bookshelf",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."bookshelf.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8787";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."bookshelf.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8787";
   };
 }

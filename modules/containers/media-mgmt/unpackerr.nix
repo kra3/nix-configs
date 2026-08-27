@@ -1,5 +1,6 @@
 { config, lib, ... }:
 let
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -28,12 +29,6 @@ in
   virtualisation.quadlet.containers.unpackerr = {
     containerConfig = {
       image = "ghcr.io/unpackerr/unpackerr:0.15.2";
-      healthCmd = "wget -qO- http://localhost:5656/api/v1/health";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:5656:5656" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -48,23 +43,15 @@ in
         "/srv/appdata/media-mgmt/unpackerr:/config"
         "/srv/media:/data"
       ];
-    };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
-  };
-
-  environment.etc."alloy/unpackerr.alloy".text = ''
-    loki.source.journal "unpackerr" {
-      matches = "_SYSTEMD_UNIT=unpackerr.service"
-      labels = {
-        job = "unpackerr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
     }
-  '';
+    // containerLib.quadlet.mkHealthCheck {
+      port = 5656;
+      path = "api/v1/health";
+    };
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/unpackerr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "unpackerr";
+    hostName = config.networking.hostName;
+  };
 }

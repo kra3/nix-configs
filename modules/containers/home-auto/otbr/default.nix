@@ -1,5 +1,6 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
+  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -37,36 +38,18 @@ in
         NAT64 = "false";
       };
     };
-    unitConfig = {
-      After = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-        "dev-thread.device"
-      ];
-      Requires = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-      ];
-      BindsTo = [ "dev-thread.device" ];
-    };
-    serviceConfig = {
-      Restart = "always";
-    };
+  } // containerLib.quadlet.mkNetworkDeps {
+    networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
+    extraAfter = [ "dev-thread.device" ];
+    bindsTo = [ "dev-thread.device" ];
   };
 
   systemd.tmpfiles.rules = [
     "d /srv/appdata/home-auto/otbr 0750 root root - -"
   ];
 
-  environment.etc."alloy/otbr.alloy".text = ''
-    loki.source.journal "otbr" {
-      matches = "_SYSTEMD_UNIT=otbr.service"
-      labels = {
-        job = "otbr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/otbr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "otbr";
+    hostName = config.networking.hostName;
+  };
 }

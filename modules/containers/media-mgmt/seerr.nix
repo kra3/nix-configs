@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -19,12 +16,6 @@ in
   virtualisation.quadlet.containers.seerr = {
     containerConfig = {
       image = "ghcr.io/seerr-team/seerr:v3.4.1";
-      healthCmd = "wget -qO- http://localhost:5055/api/v1/status";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "60s";
       publishPorts = [ "127.0.0.1:5055:5055" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -37,33 +28,22 @@ in
       volumes = [
         "/srv/appdata/media-mgmt/seerr:/app/config"
       ];
+    }
+    // containerLib.quadlet.mkHealthCheck {
+      port = 5055;
+      path = "api/v1/status";
+      startPeriod = "60s";
     };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/seerr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "seerr";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/seerr.alloy".text = ''
-    loki.source.journal "seerr" {
-      matches = "_SYSTEMD_UNIT=seerr.service"
-      labels = {
-        job = "seerr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:5055";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:5055";
   };
 }

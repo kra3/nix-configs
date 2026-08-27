@@ -1,10 +1,7 @@
 { config, lib, ... }:
 let
   serviceLib = import ../../lib { inherit lib; };
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  allowBlock = serviceLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
 in
 {
   users.users.nginx.extraGroups = [ "acme" ];

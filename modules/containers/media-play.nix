@@ -1,10 +1,6 @@
 { config, inputs, pkgs, lib, ... }:
 let
   containerLib = import ../lib { inherit lib; };
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
 in
 {
   # Host group for media files
@@ -26,25 +22,21 @@ in
   ];
 
   # Host nginx reverse proxies for media-play container
-  services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
-      proxyWebsockets = true;
-    };
-  };
+  services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) (
+    containerLib.nginx.mkProxyVhost {
+      domain = config.vars.acme.domain;
+      cidrs = config.vars.network.nginxAllowCidrs;
+      upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
+    }
+  );
 
-  services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
-      proxyWebsockets = true;
-    };
-  };
+  services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) (
+    containerLib.nginx.mkProxyVhost {
+      domain = config.vars.acme.domain;
+      cidrs = config.vars.network.nginxAllowCidrs;
+      upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
+    }
+  );
 
 
 

@@ -1,10 +1,6 @@
 { config, lib, pkgs, ... }:
 let
   containerLib = import ../lib { inherit lib; };
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
 in
 {
   # Host storage for monitoring container
@@ -25,15 +21,13 @@ in
   ];
 
   # Host nginx reverse proxy for Grafana
-  services.nginx.virtualHosts."grafana.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://${config.vars.network.containers.monitoring.localAddress}:3001";
-      proxyWebsockets = true;
-    };
-  };
+  services.nginx.virtualHosts."grafana.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) (
+    containerLib.nginx.mkProxyVhost {
+      domain = config.vars.acme.domain;
+      cidrs = config.vars.network.nginxAllowCidrs;
+      upstream = "http://${config.vars.network.containers.monitoring.localAddress}:3001";
+    }
+  );
 
   # Host secrets for monitoring container
   sops.secrets."monitoring.grafana.admin.user" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {

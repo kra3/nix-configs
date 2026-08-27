@@ -1,5 +1,6 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 
   recyclarrConfig = pkgs.writeText "recyclarr.yml" ''
@@ -197,22 +198,13 @@ in
         "/srv/appdata/media-mgmt/recyclarr:/config"
       ];
     };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "on-failure";
+  } // containerLib.quadlet.mkNetworkDeps {
+    networkServices = [ "media-mgmt-network.service" ];
+    restart = "on-failure";
   };
 
-  environment.etc."alloy/recyclarr.alloy".text = ''
-    loki.source.journal "recyclarr" {
-      matches = "_SYSTEMD_UNIT=recyclarr.service"
-      labels = {
-        job = "recyclarr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/recyclarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "recyclarr";
+    hostName = config.networking.hostName;
+  };
 }

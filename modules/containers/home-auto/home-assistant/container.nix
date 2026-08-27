@@ -5,10 +5,7 @@
   ...
 }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -60,49 +57,26 @@ in
         "NET_RAW"
       ];
     };
-    unitConfig = {
-      After = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-      ];
-      Requires = [
-        "home-auto-network.service"
-        "home-auto-macvlan-network.service"
-      ];
-    };
-    serviceConfig = {
-      Restart = "always";
-    };
+  } // containerLib.quadlet.mkNetworkDeps {
+    networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
   };
 
-  environment.etc."alloy/home-assistant.alloy".text = ''
-    loki.source.journal "home_assistant" {
-      matches = "_SYSTEMD_UNIT=home-assistant.service"
-      labels = {
-        job = "home-assistant",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
+  environment.etc."alloy/home-assistant.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "home-assistant";
+    id = "home_assistant";
+    hostName = config.networking.hostName;
+  };
 
-  services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = ''
-      ${allowBlock}
-      client_max_body_size 500m;
+  services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8123";
+    vhostExtraConfig = "client_max_body_size 500m;";
+    locationExtraConfig = ''
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
     '';
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8123";
-      proxyWebsockets = true;
-      extraConfig = ''
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-      '';
-    };
   };
 
   # TCP proxy so HA pod (and any host-side client) can reach mosquitto in nspawn home-auto

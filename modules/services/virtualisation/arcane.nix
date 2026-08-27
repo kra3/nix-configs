@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
 in
 {
   virtualisation.oci-containers.containers.arcane = {
@@ -29,18 +26,14 @@ in
     ];
   };
 
-  services.nginx.virtualHosts."oci.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = ''
-      ${allowBlock}
+  services.nginx.virtualHosts."oci.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:3552";
+    vhostExtraConfig = ''
       add_header X-Frame-Options "*";
       add_header X-Robots-Tag "noindex, nofollow";
     '';
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:3552";
-      proxyWebsockets = true;
-    };
   };
 
   systemd.tmpfiles.rules = [

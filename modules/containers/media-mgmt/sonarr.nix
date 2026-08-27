@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  allowBlock = ''
-    ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") config.vars.network.nginxAllowCidrs)}
-    deny all;
-  '';
+  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -19,12 +16,6 @@ in
   virtualisation.quadlet.containers.sonarr = {
     containerConfig = {
       image = "lscr.io/linuxserver/sonarr:4.0.19.2979-ls321";
-      healthCmd = "wget -qO-  http://localhost:8989/ping";
-      healthOnFailure = "none";
-      healthInterval = "30s";
-      healthTimeout = "10s";
-      healthRetries = 3;
-      healthStartPeriod = "30s";
       publishPorts = [ "127.0.0.1:8989:8989" ];
       networks = [ network.ref ];
       logDriver = "journald";
@@ -38,33 +29,17 @@ in
         "/srv/appdata/media-mgmt/sonarr:/config"
         "/srv/media:/data"
       ];
-    };
-    unitConfig = {
-      After = [ "media-mgmt-network.service" ];
-      Requires = [ "media-mgmt-network.service" ];
-    };
-    serviceConfig.Restart = "always";
+    } // containerLib.quadlet.mkHealthCheck { port = 8989; };
+  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+  environment.etc."alloy/sonarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+    name = "sonarr";
+    hostName = config.networking.hostName;
   };
 
-  environment.etc."alloy/sonarr.alloy".text = ''
-    loki.source.journal "sonarr" {
-      matches = "_SYSTEMD_UNIT=sonarr.service"
-      labels = {
-        job = "sonarr",
-        host = "${config.networking.hostName}",
-        role = "host",
-      }
-      forward_to = [loki.write.default.receiver]
-    }
-  '';
-
-  services.nginx.virtualHosts."sonarr.${config.vars.acme.domain}" = {
-    useACMEHost = config.vars.acme.domain;
-    forceSSL = true;
-    extraConfig = allowBlock;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8989";
-      proxyWebsockets = true;
-    };
+  services.nginx.virtualHosts."sonarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+    domain = config.vars.acme.domain;
+    cidrs = config.vars.network.nginxAllowCidrs;
+    upstream = "http://127.0.0.1:8989";
   };
 }

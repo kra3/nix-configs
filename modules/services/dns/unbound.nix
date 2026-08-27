@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  serviceLib = import ../../lib { inherit lib; };
   vars = config.vars.network;
   domain = config.vars.acme.domain;
 in
@@ -55,7 +54,7 @@ in
   };
 
   systemd.services.unbound.serviceConfig = lib.mkMerge [
-    (serviceLib.deployment.hardening.mkServiceSandbox {
+    (flakeLib.deployment-hardening.mkServiceSandbox {
       readWritePaths = [ "/var/lib/unbound" ];
       capabilities = [ ];
     })

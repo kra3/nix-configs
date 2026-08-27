@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -29,15 +28,15 @@ in
         "/srv/appdata/media-mgmt/lidarr:/config"
         "/srv/media:/data"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 8686; };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+    } // flakeLib.quadlet.mkHealthCheck { port = 8686; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/lidarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/lidarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "lidarr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:8686";

@@ -1,6 +1,5 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 
   recyclarrConfig = pkgs.writeText "recyclarr.yml" ''
@@ -198,12 +197,12 @@ in
         "/srv/appdata/media-mgmt/recyclarr:/config"
       ];
     };
-  } // containerLib.quadlet.mkNetworkDeps {
+  } // flakeLib.quadlet.mkNetworkDeps {
     networkServices = [ "media-mgmt-network.service" ];
     restart = "on-failure";
   };
 
-  environment.etc."alloy/recyclarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/recyclarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "recyclarr";
     hostName = config.networking.hostName;
   };

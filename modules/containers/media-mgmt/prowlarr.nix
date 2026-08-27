@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -28,15 +27,15 @@ in
       volumes = [
         "/srv/appdata/media-mgmt/prowlarr:/config"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 9696; };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+    } // flakeLib.quadlet.mkHealthCheck { port = 9696; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/prowlarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/prowlarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "prowlarr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:9696";

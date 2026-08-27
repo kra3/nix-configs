@@ -1,7 +1,4 @@
-{ config, lib, pkgs, flakeModules, ... }:
-let
-  containerLib = import ../lib { inherit lib; };
-in
+{ config, lib, pkgs, flakeModules, flakeLib, ... }:
 {
   # Host storage for monitoring container
   systemd.tmpfiles.rules = lib.mkMerge [
@@ -22,7 +19,7 @@ in
 
   # Host nginx reverse proxy for Grafana
   services.nginx.virtualHosts."grafana.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) (
-    containerLib.nginx.mkProxyVhost {
+    flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
       upstream = "http://${config.vars.network.containers.monitoring.localAddress}:3001";
@@ -146,7 +143,7 @@ in
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
       networkVars = config.vars.network;
     };
-  } // containerLib.container.definition.mkContainerNetwork {
+  } // flakeLib.container-definition.mkContainerNetwork {
     hostAddress = config.vars.network.containers.monitoring.hostAddress;
     localAddress = config.vars.network.containers.monitoring.localAddress;
   } // {
@@ -202,5 +199,5 @@ in
   });
 
   systemd.services."container@monitoring" =
-    containerLib.container.definition.mkContainerSystemdDeps [ ];
+    flakeLib.container-definition.mkContainerSystemdDeps [ ];
 }

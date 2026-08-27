@@ -2,10 +2,10 @@
   config,
   lib,
   pkgs,
+  flakeLib,
   ...
 }:
 let
-  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -57,17 +57,17 @@ in
         "NET_RAW"
       ];
     };
-  } // containerLib.quadlet.mkNetworkDeps {
+  } // flakeLib.quadlet.mkNetworkDeps {
     networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
   };
 
-  environment.etc."alloy/home-assistant.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/home-assistant.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "home-assistant";
     id = "home_assistant";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:8123";

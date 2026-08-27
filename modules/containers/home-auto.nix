@@ -1,7 +1,4 @@
-{ config, pkgs, lib, inputs, flakeModules, ... }:
-let
-  containerLib = import ../lib { inherit lib; };
-in
+{ config, pkgs, lib, inputs, flakeModules, flakeLib, ... }:
 {
   networking.firewall.interfaces = {
     ve-home-auto = {
@@ -64,7 +61,7 @@ in
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
       containerLocalAddress = config.vars.network.containers.homeAuto.localAddress;
     };
-  } // containerLib.container.definition.mkContainerNetwork {
+  } // flakeLib.container-definition.mkContainerNetwork {
     hostAddress = config.vars.network.containers.homeAuto.hostAddress;
     localAddress = config.vars.network.containers.homeAuto.localAddress;
   } // {
@@ -192,7 +189,7 @@ in
   });
 
   systemd.services."container@home-auto" = (
-    containerLib.container.definition.mkContainerSystemdDeps [ ]
+    flakeLib.container-definition.mkContainerSystemdDeps [ ]
   ) // {
     serviceConfig.ExecStartPre = lib.mkAfter [
       "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"

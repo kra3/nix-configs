@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -20,19 +19,19 @@ in
         "/srv/appdata/media-mgmt/maintainerr:/opt/data"
       ];
     }
-    // containerLib.quadlet.mkHealthCheck {
+    // flakeLib.quadlet.mkHealthCheck {
       port = 6246;
       path = "healthcheck";
       startPeriod = "60s";
     };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/maintainerr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/maintainerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "maintainerr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."maintainerr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."maintainerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:6246";

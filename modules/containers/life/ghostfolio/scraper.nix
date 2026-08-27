@@ -1,6 +1,5 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, flakeLib, ... }:
 let
-  containerLib = import ../../../lib { inherit lib; };
   scraperPython = pkgs.python3.withPackages (ps: [ ps.requests ps.psycopg2 ]);
   scraperScript = ./scraper/scraper.py;
   symbolsConfig = ./scraper/symbols.json;
@@ -48,7 +47,7 @@ in
     };
   };
 
-  environment.etc."alloy/ghostfolio-scraper.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/ghostfolio-scraper.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "ghostfolio-scraper";
     id = "ghostfolio_scraper";
     hostName = config.networking.hostName;

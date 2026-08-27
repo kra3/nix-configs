@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.life;
 in
 {
@@ -44,18 +43,18 @@ in
       };
       environmentFiles = [ config.sops.templates."life.ghostfolio.env".path ];
     };
-  } // containerLib.quadlet.mkNetworkDeps {
+  } // flakeLib.quadlet.mkNetworkDeps {
     networkServices = [ "life-network.service" ];
     extraAfter = [ "postgresql-set-passwords.service" "redis-default.service" ];
     extraRequires = [ "postgresql-set-passwords.service" "redis-default.service" ];
   };
 
-  environment.etc."alloy/ghostfolio.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/ghostfolio.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "ghostfolio";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:3333";

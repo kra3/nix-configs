@@ -2,15 +2,15 @@
   config,
   lib,
   pkgs,
+  flakeLib,
   ...
 }:
 let
-  serviceLib = import ../../lib { inherit lib; };
   cfg = config.vars.network;
   domain = config.vars.acme.domain;
   lanIf = cfg.lanIf;
   lanIp = cfg.lanIp;
-  allowBlock = serviceLib.nginx.mkAllowBlock cfg.nginxAllowCidrs;
+  allowBlock = flakeLib.nginx.mkAllowBlock cfg.nginxAllowCidrs;
   adguardFilters = [
     {
       enabled = false;
@@ -244,7 +244,7 @@ in
           "username:${config.sops.secrets."dns.adguard.username".path}"
         ];
       }
-      (serviceLib.deployment.hardening.mkServiceSandbox {
+      (flakeLib.deployment-hardening.mkServiceSandbox {
         readWritePaths = [ "/var/lib/AdGuardHome" ];
         capabilities = [ "CAP_NET_BIND_SERVICE" ];
       })

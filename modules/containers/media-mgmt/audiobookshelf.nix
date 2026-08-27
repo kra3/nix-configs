@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -21,15 +20,15 @@ in
         "/srv/media/bkup/Books/Ebooks:/ebooks:ro"
         "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 80; path = "healthcheck"; };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+    } // flakeLib.quadlet.mkHealthCheck { port = 80; path = "healthcheck"; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/audiobookshelf.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/audiobookshelf.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "audiobookshelf";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."audiobookshelf.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."audiobookshelf.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:13378";

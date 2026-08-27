@@ -70,9 +70,7 @@ in
   } // {
     config = {
       imports = [
-        ../services/system/nix-settings.nix
-        ../services/system/nix-store-maintenance-nixos.nix
-        ../services/system/nix-allow-unfree.nix
+        ../services/system/nix-defaults-nixos.nix
         ../containers/common.nix
         ../services/mosquitto.nix
         ../services/surveillance

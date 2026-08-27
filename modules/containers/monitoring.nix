@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, flakeModules, ... }:
 let
   containerLib = import ../lib { inherit lib; };
 in
@@ -141,6 +141,7 @@ in
   containers.monitoring = ({
     autoStart = true;
     specialArgs = {
+      inherit flakeModules;
       domain = config.vars.acme.domain;
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
       networkVars = config.vars.network;
@@ -151,7 +152,7 @@ in
   } // {
     config = {
       imports = [
-        ../services/system/nix-defaults-nixos.nix
+        flakeModules.nixos.services-system-nix-defaults-nixos
         ../containers/common.nix
         ../services/monitoring
       ];

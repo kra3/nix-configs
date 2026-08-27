@@ -235,7 +235,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs flakeModules; };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
     # Programs like niri write their own default config on first run;
     # back those up instead of failing activation when we start managing them.

@@ -74,7 +74,9 @@
         imports = [
           inputs.treefmt-nix.flakeModule
           ./modules/flake-darwin-modules.nix
-        ] ++ (inputs.import-tree ./modules/services/system).imports;
+          ./modules/flake-home-manager-modules.nix
+        ] ++ (inputs.import-tree ./modules/services/system).imports
+          ++ (inputs.import-tree ./modules/home).imports;
 
         perSystem =
           { pkgs, inputs', ... }:
@@ -111,6 +113,7 @@
                     flakeModules = {
                       nixos = config.flake.nixosModules;
                       darwin = config.flake.darwinModules;
+                      homeManager = config.flake.homeManagerModules;
                     };
                   };
                 }
@@ -135,6 +138,7 @@
                   flakeModules = {
                     nixos = config.flake.nixosModules;
                     darwin = config.flake.darwinModules;
+                    homeManager = config.flake.homeManagerModules;
                   };
                 };
               };

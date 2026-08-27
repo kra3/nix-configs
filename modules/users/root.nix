@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, flakeModules, ... }:
 {
   sops.secrets."users.root.password".neededForUsers = true;
 
@@ -11,7 +11,7 @@
   };
 
   home-manager.users.root = {
-    imports = [ ../home/shell/bash ];
+    imports = [ flakeModules.homeManager.home-shell-bash-default ];
     home.stateVersion = lib.mkDefault "25.11";
   };
 }

@@ -1,39 +1,42 @@
 {
-  pkgs,
-  ...
-}:
-let
-  baseConfig = ''
-    # Sesh Configuration
-    # https://github.com/joshmedeski/sesh
+  flake.homeManagerModules.home-sesh-default =
+    {
+      pkgs,
+      ...
+    }:
+    let
+      baseConfig = ''
+        # Sesh Configuration
+        # https://github.com/joshmedeski/sesh
 
-    default_session_dir = "~"
-  '';
+        default_session_dir = "~"
+      '';
 
-  iconConfig = ''
+      iconConfig = ''
 
-    [icons]
-    default = "📁"
-    git = "󰊢"
-    home = "󰋜"
-    config = ""
-    downloads = "󰇚"
-    documents = "󰈙"
-    zoxide = ""
-    tmux = ""
-    session = ""
-  '';
-in
-{
-  home.packages = [ pkgs.sesh ];
+        [icons]
+        default = "📁"
+        git = "󰊢"
+        home = "󰋜"
+        config = ""
+        downloads = "󰇚"
+        documents = "󰈙"
+        zoxide = ""
+        tmux = ""
+        session = ""
+      '';
+    in
+    {
+      home.packages = [ pkgs.sesh ];
 
-  # session_paths kept in a gitignored local file
-  xdg.configFile."sesh/sesh.toml".text =
-    baseConfig
-    + (
-      if builtins.pathExists ./sesh-session-paths.toml
-      then builtins.readFile ./sesh-session-paths.toml
-      else ""
-    )
-    + iconConfig;
+      # session_paths kept in a gitignored local file
+      xdg.configFile."sesh/sesh.toml".text =
+        baseConfig
+        + (
+          if builtins.pathExists ./sesh-session-paths.toml
+          then builtins.readFile ./sesh-session-paths.toml
+          else ""
+        )
+        + iconConfig;
+    };
 }

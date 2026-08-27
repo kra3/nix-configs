@@ -5,7 +5,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    
+    import-tree.url = "github:denful/import-tree";
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -72,7 +73,8 @@
 
         imports = [
           inputs.treefmt-nix.flakeModule
-        ];
+          ./modules/flake-darwin-modules.nix
+        ] ++ (inputs.import-tree ./modules/services/system).imports;
 
         perSystem =
           { pkgs, inputs', ... }:
@@ -102,7 +104,16 @@
             buildEach =
               builder: hostSet:
               lib.mapAttrs (
-                _: h: builder { inherit (h) modules; specialArgs = { inherit inputs; }; }
+                _: h: builder {
+                  inherit (h) modules;
+                  specialArgs = {
+                    inherit inputs;
+                    flakeModules = {
+                      nixos = config.flake.nixosModules;
+                      darwin = config.flake.darwinModules;
+                    };
+                  };
+                }
               ) hostSet;
           in
           {
@@ -119,7 +130,13 @@
                 # here would make the node apply the overlay twice (once via this
                 # prebuilt pkgs' nixpkgsModule, once via the reused module list).
                 nixpkgs = import nixpkgs { inherit (hosts.sutala) system; };
-                specialArgs = { inputs = inputs; };
+                specialArgs = {
+                  inputs = inputs;
+                  flakeModules = {
+                    nixos = config.flake.nixosModules;
+                    darwin = config.flake.darwinModules;
+                  };
+                };
               };
               sutala = {
                 deployment = hosts.sutala.deployment;

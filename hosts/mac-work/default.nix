@@ -1,7 +1,7 @@
-{ lib, inputs, ... }:
+{ lib, inputs, flakeModules, ... }:
 {
   imports = [
-    ../../modules/services/system/nix-defaults-darwin.nix
+    flakeModules.darwin.services-system-nix-defaults-darwin
   ];
 
   # System-level shell setup (nix-darwin requires this for managed shells)

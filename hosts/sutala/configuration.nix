@@ -237,6 +237,7 @@
     useUserPackages = true;
     extraSpecialArgs = {
       inherit inputs flakeModules;
+      # Consumed by home-profiles-wm-desktop-session's selfhosted-menu app
       domain = config.vars.acme.domain;
     };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];

@@ -1,6 +1,7 @@
 {
   flake.homeManagerModules.home-profiles-wm-desktop-session =
   { pkgs, domain, ... }:
+  # domain is threaded from hosts/sutala/configuration.nix's home-manager.extraSpecialArgs
   let
     # Real per-app logos for the selfhosted-menu item picker, from
     # homarr-labs/dashboard-icons (Apache-2.0, https://dashboardicons.com).

@@ -4,7 +4,7 @@
     users.groups.media = {
       gid = 2000;
     };
-  
+
     services.navidrome = {
       enable = true;
       openFirewall = false;
@@ -17,15 +17,15 @@
         "Prometheus.Enabled" = true;
       };
     };
-  
+
     users.users.navidrome = {
       extraGroups = [ "media" ];
     };
-  
+
     systemd.services.navidrome = {
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
     };
-  
+
   };
 }

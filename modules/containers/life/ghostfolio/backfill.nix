@@ -23,7 +23,7 @@
         NoNewPrivileges = true;
       };
     };
-  
+
     systemd.timers.ghostfolio-scraper-backfill = {
       description = "Backfill Ghostfolio market data yearly";
       wantedBy = [ "timers.target" ];

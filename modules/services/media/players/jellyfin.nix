@@ -8,15 +8,15 @@
       intel-vaapi-driver
       libva-utils
     ];
-  
+
     users.groups.media = {
       gid = 2000;
     };
-  
+
     services.declarative-jellyfin = {
       enable = true;
       openFirewall = true;
-  
+
       system = {
         serverName = "sutala";
         trickplayOptions = {
@@ -68,7 +68,7 @@
           }
         ];
       };
-  
+
       network = {
         enableIPv6 = false;
         enableHttps = false;
@@ -78,7 +78,7 @@
           "all=https://jellyfin.${domain}"
         ];
       };
-  
+
       encoding = {
         enableHardwareEncoding = true;
         hardwareAccelerationType = "qsv";
@@ -102,7 +102,7 @@
           "av1"
         ];
       };
-  
+
       libraries = {
         Movies = {
           contentType = "movies";
@@ -125,7 +125,7 @@
           pathInfos = [ "/data/library/homevideos" ];
         };
       };
-  
+
       users = {
         kra3 = {
           mutable = false;
@@ -139,13 +139,13 @@
           hashedPasswordFile = "/run/secrets/media.jellyfin.users.home.password";
         };
       };
-  
+
       apikeys = {
         Seerr = {
           keyPath = "/run/secrets/media.jellyfin.apikeys.seerr";
         };
       };
-  
+
       branding = {
         customCss = ''
           /* using https://github.com/ranaldsgift/KefinTweaks instead gives much more options */
@@ -156,7 +156,7 @@
         '';
       };
     };
-  
+
     users.users.jellyfin = {
       extraGroups = [
         "media"
@@ -164,18 +164,18 @@
         "video"
       ];
     };
-  
+
     systemd.services.jellyfin = {
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
     };
-  
+
     systemd.tmpfiles.rules = [
       "d /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
       "f /var/lib/jellyfin/log/jellyfin.log 0640 jellyfin jellyfin - -"
       "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"
     ];
-  
+
     services.logrotate.settings.jellyfin = {
       files = [
         "/var/lib/jellyfin/log/*.log"
@@ -190,7 +190,7 @@
       copytruncate = true;
       su = "jellyfin jellyfin";
     };
-  
+
     environment.etc."alloy/jellyfin.alloy".text = ''
       loki.source.file "jellyfin" {
         targets = [

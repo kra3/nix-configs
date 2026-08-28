@@ -3,7 +3,7 @@
     imports = [
       flakeModules.nixos.services-media-players-jellyfin
       flakeModules.nixos.services-media-players-navidrome
-      # ./snapserver.nix
+      # flakeModules.nixos.services-media-players-snapserver
     ];
   };
 }

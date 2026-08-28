@@ -36,23 +36,23 @@
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
-  
+
     systemd.tmpfiles.rules = [
       "d /srv/appdata/home-auto/music-assistant 0750 root root - -"
     ];
-  
+
     environment.etc."alloy/music-assistant.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "music-assistant";
       id = "music_assistant";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
       upstream = "http://127.0.0.1:8095";
     };
-  
+
     # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
     services.nginx.virtualHosts."ma-snapcast" = {
       serverName = "ma.${config.vars.acme.domain}";
@@ -71,7 +71,7 @@
         proxyWebsockets = true;
       };
     };
-  
+
     networking.firewall.interfaces.${config.vars.network.lanIf}.allowedTCPPorts = [ 1705 ];
   };
 }

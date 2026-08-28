@@ -5,14 +5,14 @@
   in
   {
     sops.secrets."media.bookshelf.api_key" = { };
-  
+
     sops.templates."media.bookshelf.env" = {
       owner = "root";
       group = "media";
       mode = "0440";
       content = "BOOKSHELF__API_KEY=${config.sops.placeholder."media.bookshelf.api_key"}";
     };
-  
+
     virtualisation.quadlet.containers.bookshelf = {
       containerConfig = {
         image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.20.129";
@@ -31,12 +31,12 @@
         ];
       } // flakeLib.quadlet.mkHealthCheck { port = 8787; };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/bookshelf.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "bookshelf";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."bookshelf.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

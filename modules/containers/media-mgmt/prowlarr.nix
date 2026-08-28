@@ -5,14 +5,14 @@
   in
   {
     sops.secrets."media.prowlarr.api_key" = { };
-  
+
     sops.templates."media.prowlarr.env" = {
       owner = "root";
       group = "media";
       mode = "0440";
       content = "PROWLARR__API_KEY=${config.sops.placeholder."media.prowlarr.api_key"}";
     };
-  
+
     virtualisation.quadlet.containers.prowlarr = {
       containerConfig = {
         image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls156";
@@ -30,12 +30,12 @@
         ];
       } // flakeLib.quadlet.mkHealthCheck { port = 9696; };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/prowlarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "prowlarr";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

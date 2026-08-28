@@ -6,7 +6,7 @@
   {
     sops.secrets."media.sabnzbd.api_key" = { };
     sops.secrets."media.sabnzbd.nzb_key" = { };
-  
+
     sops.templates."media.sabnzbd.env" = {
       owner = "root";
       group = "media";
@@ -16,7 +16,7 @@
         SABNZBD__NZB_KEY=${config.sops.placeholder."media.sabnzbd.nzb_key"}
       '';
     };
-  
+
     virtualisation.quadlet.containers.sabnzbd = {
       containerConfig = {
         image = "lscr.io/linuxserver/sabnzbd:5.1.1-ls267";
@@ -41,12 +41,12 @@
         startPeriod = "60s";
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/sabnzbd.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "sabnzbd";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."sabnzbd.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

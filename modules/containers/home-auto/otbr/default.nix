@@ -43,11 +43,11 @@
       extraAfter = [ "dev-thread.device" ];
       bindsTo = [ "dev-thread.device" ];
     };
-  
+
     systemd.tmpfiles.rules = [
       "d /srv/appdata/home-auto/otbr 0750 root root - -"
     ];
-  
+
     environment.etc."alloy/otbr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "otbr";
       hostName = config.networking.hostName;

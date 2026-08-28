@@ -5,14 +5,14 @@
   in
   {
     sops.secrets."media.lidarr.api_key" = { };
-  
+
     sops.templates."media.lidarr.env" = {
       owner = "root";
       group = "media";
       mode = "0440";
       content = "LIDARR__API_KEY=${config.sops.placeholder."media.lidarr.api_key"}";
     };
-  
+
     virtualisation.quadlet.containers.lidarr = {
       containerConfig = {
         image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls39";
@@ -31,12 +31,12 @@
         ];
       } // flakeLib.quadlet.mkHealthCheck { port = 8686; };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/lidarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "lidarr";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

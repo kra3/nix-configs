@@ -23,12 +23,12 @@
         ];
       } // flakeLib.quadlet.mkHealthCheck { port = 80; path = "healthcheck"; };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/audiobookshelf.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "audiobookshelf";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."audiobookshelf.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

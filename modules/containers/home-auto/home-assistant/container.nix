@@ -61,13 +61,13 @@
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     };
-  
+
     environment.etc."alloy/home-assistant.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "home-assistant";
       id = "home_assistant";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
@@ -79,7 +79,7 @@
         proxy_set_header X-Forwarded-Host $host;
       '';
     };
-  
+
     # TCP proxy so HA pod (and any host-side client) can reach mosquitto in nspawn home-auto
     # via the bridge gw 10.3.2.1:1883 — same pattern as *arr nginx vhosts.
     # LAN clients reach mosquitto via existing DNAT on lanIf (sutala/configuration.nix forwardPorts);
@@ -91,7 +91,7 @@
         proxy_timeout 1h;
       }
     '';
-  
+
     sops.templates."home-assistant/secrets.yaml" = {
       owner = "root";
       group = "root";
@@ -103,19 +103,19 @@
         alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
       '';
     };
-  
+
     sops.secrets."homeassistant.latitude" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."homeassistant.longitude" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."homeassistant.alarm_code" = {
       owner = "root";
       group = "root";

@@ -6,7 +6,7 @@
       networkConfig.ipv6 = false;
       networkConfig.subnets = [ config.vars.network.podmanSubnets.life ];
     };
-  
+
     networking.firewall.interfaces.br-life.allowedUDPPorts = [ 53 ];
   };
 }

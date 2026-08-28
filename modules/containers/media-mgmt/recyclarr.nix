@@ -2,7 +2,7 @@
   flake.nixosModules.containers-media-mgmt-recyclarr = { config, lib, pkgs, flakeLib, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
-  
+
     recyclarrConfig = pkgs.writeText "recyclarr.yml" ''
       radarr:
         movie:
@@ -10,13 +10,13 @@
           api_key: !secret radarr_api_key
           delete_old_custom_formats: true
           replace_existing_custom_formats: true
-  
+
           media_naming:
             folder: jellyfin-tmdb
             movie:
               rename: true
               standard: jellyfin-tmdb
-  
+
           include:
             # Movies
             - template: radarr-quality-definition-movie
@@ -26,12 +26,12 @@
             # Remux + WEB 1080p
             # - template: radarr-quality-profile-remux-web-1080p
             # - template: radarr-custom-formats-remux-web-1080p
-  
+
             # Anime
             - template: radarr-quality-definition-anime
             - template: radarr-quality-profile-anime
             - template: radarr-custom-formats-anime
-  
+
           custom_formats:
             # Audio
             - assign_scores_to:
@@ -51,7 +51,7 @@
                 - 1c1a4c5e823891c75bc50380a6866f73 # DTS
                 # - 240770601cc226190c367ef59aba7463 # AAC
                 # - c2998bd0d90ed5621d8df281e839436e # DD
-  
+
             # Movie Versions (all commented out — uncomment to enable)
             # - assign_scores_to:
             #     - name: UHD Bluray + WEB
@@ -64,7 +64,7 @@
             #     - 957d0f44b592285f26449575e8b1167e # Special Edition
             #     - eecf3a857724171f968a66cb5719e152 # IMAX
             #     - 9f6cbff8cfe4ebbc1bde14c7b7bec0de # IMAX Enhanced
-  
+
             # Optional (all commented out — uncomment to enable)
             # - assign_scores_to:
             #     - name: UHD Bluray + WEB
@@ -75,7 +75,7 @@
             #     - 7357cf5161efbf8c4d5d0c30b4815ee2 # Obfuscated
             #     - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
             #     - f537cf427b64c38c8e36298f657e4828 # Scene
-  
+
             # DV / HDR10+ Boost (all commented out — uncomment to enable)
             # - assign_scores_to:
             #     - name: UHD Bluray + WEB
@@ -84,7 +84,7 @@
             #     - 923b6abef9b17f937fab56cfcf89e1f1 # DV (w/o HDR fallback)
             #     - b337d6812e06c200ec9a2d3cfa9d20a7 # DV Boost
             #     - caa37d0df9c348912df1fb1d88f9273a # HDR10+ Boost
-  
+
             # Optional SDR
             # Only ever use ONE of the following custom formats:
             # SDR - block ALL SDR releases
@@ -94,7 +94,7 @@
               trash_ids:
                 - 9c38ebb7384dada637be8899efa68e6f # SDR
                 # - 25c12f78430a3a23413652cbd1d48d77 # SDR (no WEBDL)
-  
+
             # Anime
             - assign_scores_to:
                 - name: Remux-1080p - Anime
@@ -111,14 +111,14 @@
                   score: 0
               trash_ids:
                 - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
-  
+
       sonarr:
         tv:
           base_url: http://sonarr:8989
           api_key: !secret sonarr_api_key
           delete_old_custom_formats: true
           replace_existing_custom_formats: true
-  
+
           media_naming:
             season: default
             series: jellyfin-tvdb
@@ -127,19 +127,19 @@
               standard: default
               daily: default
               anime: default
-  
+
           include:
             - template: sonarr-quality-definition-series
             # pick one of next 2
             - template: sonarr-v4-quality-profile-web-1080p
             # - template: sonarr-v4-quality-profile-web-1080p-alternative
             - template: sonarr-v4-custom-formats-web-1080p
-  
+
             # Anime
             - template: sonarr-quality-definition-anime
             - template: sonarr-v4-quality-profile-anime
             - template: sonarr-v4-custom-formats-anime
-  
+
           custom_formats:
             - assign_scores_to:
                 - name: WEB-1080p
@@ -149,7 +149,7 @@
                 # - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
                 # - 06d66ab109d4d2eddb2794d21526d140 # Retags
                 # - 1b3994c551cbb92a2c781af061f4ab44 # Scene
-  
+
             # Anime
             - assign_scores_to:
                 - name: Remux-1080p - Anime
@@ -181,7 +181,7 @@
         sonarr_api_key: ${config.sops.placeholder."media.sonarr.api_key"}
       '';
     };
-  
+
     virtualisation.quadlet.containers.recyclarr = {
       containerConfig = {
         image = "ghcr.io/recyclarr/recyclarr:8.6.0";
@@ -202,7 +202,7 @@
       networkServices = [ "media-mgmt-network.service" ];
       restart = "on-failure";
     };
-  
+
     environment.etc."alloy/recyclarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "recyclarr";
       hostName = config.networking.hostName;

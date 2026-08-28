@@ -10,7 +10,7 @@
       isSystemUser = true;
       group = "life";
     };
-  
+
     sops.templates."life.ghostfolio-scraper.env" = {
       owner = "root";
       group = "life";
@@ -19,7 +19,7 @@
         DATABASE_URL=postgresql://ghostfolio:${config.sops.placeholder."db.ghostfolio_password"}@localhost:5432/ghostfolio
       '';
     };
-  
+
     systemd.services.ghostfolio-scraper = {
       description = "Scrape latest Ghostfolio market data";
       after = [ "postgresql.service" "postgresql-set-passwords.service" ];
@@ -37,7 +37,7 @@
         NoNewPrivileges = true;
       };
     };
-  
+
     systemd.timers.ghostfolio-scraper = {
       description = "Run Ghostfolio market data scraper daily";
       wantedBy = [ "timers.target" ];
@@ -47,7 +47,7 @@
         RandomizedDelaySec = "5m";
       };
     };
-  
+
     environment.etc."alloy/ghostfolio-scraper.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "ghostfolio-scraper";
       id = "ghostfolio_scraper";

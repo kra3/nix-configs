@@ -17,7 +17,7 @@
         "d /srv/databases/monitoring/loki 0755 root root - -"
       ])
     ];
-  
+
     # Host nginx reverse proxy for Grafana
     services.nginx.virtualHosts."grafana.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) (
       flakeLib.nginx.mkProxyVhost {
@@ -26,7 +26,7 @@
         upstream = "http://${config.vars.network.containers.monitoring.localAddress}:3001";
       }
     );
-  
+
     # Host secrets for monitoring container
     sops.secrets."monitoring.grafana.admin.user" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
       mode = "0444";
@@ -37,10 +37,10 @@
     sops.secrets."homeassistant.token" = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
       mode = "0444";
     };
-  
+
     # Host Prometheus exporters (scraped by monitoring container)
     services.nginx.statusPage = true;
-  
+
     services.prometheus.exporters = {
       node = {
         enable = true;
@@ -72,7 +72,7 @@
         ];
       };
     };
-  
+
     systemd.services.systemd-exporter = {
       after = [ "container@monitoring.service" "network-online.target" ];
       wants = [ "container@monitoring.service" "network-online.target" ];
@@ -83,7 +83,7 @@
         ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558";
       };
     };
-  
+
     systemd.services.prometheus-node-exporter = {
       after = [ "container@monitoring.service" "network-online.target" ];
       wants = [ "container@monitoring.service" "network-online.target" ];
@@ -117,7 +117,7 @@
         ];
       };
     };
-  
+
     # Host firewall for monitoring container and exporters
     networking.firewall.interfaces = {
       ve-monitoring = {
@@ -135,7 +135,7 @@
         ];
       };
     };
-  
+
     containers.monitoring = ({
       autoStart = true;
       specialArgs = {
@@ -154,7 +154,7 @@
           flakeModules.nixos.containers-common
           flakeModules.nixos.services-monitoring-default
         ];
-  
+
         networking = {
           hostName = "monitoring";
           defaultGateway = config.vars.network.containers.monitoring.hostAddress;
@@ -198,7 +198,7 @@
         };
       };
     });
-  
+
     systemd.services."container@monitoring" =
       flakeLib.container-definition.mkContainerSystemdDeps [ ];
   };

@@ -26,12 +26,12 @@
         startPeriod = "60s";
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/maintainerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "maintainerr";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."maintainerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

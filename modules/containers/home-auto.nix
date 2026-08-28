@@ -20,7 +20,7 @@
         ];
       };
     };
-  
+
     networking.firewall.interfaces.${config.vars.network.lanIf} = {
       allowedTCPPorts = [
         1883 # Mosquitto (DNAT to home-auto container)
@@ -30,20 +30,20 @@
         8555 # go2rtc WebRTC (DNAT to home-auto container)
       ];
     };
-  
+
     users.groups.frigate = {
       gid = 2100;
     };
     users.groups.zigbee2mqtt = {
       gid = config.ids.gids.zigbee2mqtt;
     };
-  
+
     # Firmware tool: https://dongle.sonoff.tech/sonoff-dongle-flasher/
     services.udev.extraRules = ''
       SUBSYSTEM=="tty", ENV{ID_SERIAL}=="Nabu_Casa_SkyConnect_v1.0_80c8f41dd693ed1189fe82f23b20a988", SYMLINK+="zigbee"
       SUBSYSTEM=="tty", ENV{ID_SERIAL}=="Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_3c705f2672d9ee119f42b74c37b89984", SYMLINK+="thread"
     '';
-  
+
     systemd.tmpfiles.rules = [
       "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
       "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
@@ -52,7 +52,7 @@
       "d /srv/surveillance/recordings 2770 root frigate - -"
       "d /srv/surveillance/clips 2770 root frigate - -"
     ];
-  
+
     containers.home-auto = ({
       autoStart = true;
       additionalCapabilities = [ "CAP_PERFMON" ];
@@ -74,7 +74,7 @@
           flakeModules.nixos.services-surveillance-default
           flakeModules.nixos.services-zigbee2mqtt
         ];
-  
+
         # Containers re-evaluate their own nixpkgs.config and don't inherit the
         # host's (only nixpkgs.hostPlatform is inherited) -- this must be
         # restated here, not just in modules/hardware/intel-igpu.nix, or
@@ -82,7 +82,7 @@
         nixpkgs.config.permittedInsecurePackages = [
           "intel-media-sdk-23.2.2"
         ];
-  
+
         networking = {
           hostName = "home-auto";
           defaultGateway = config.vars.network.containers.homeAuto.hostAddress;
@@ -102,7 +102,7 @@
             8555 # go2rtc WebRTC
           ];
         };
-  
+
         hardware.graphics = {
           enable = true;
           extraPackages = with pkgs; [
@@ -113,7 +113,7 @@
             intel-media-sdk
           ];
         };
-  
+
   };
       bindMounts = {
         "/etc/localtime" = {
@@ -188,7 +188,7 @@
         }
       ];
     });
-  
+
     systemd.services."container@home-auto" = (
       flakeLib.container-definition.mkContainerSystemdDeps [ ]
     ) // {
@@ -196,7 +196,7 @@
         "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"
       ];
     };
-  
+
     sops.templates."surveillance-nvr-go2rtc.env" = {
       owner = "root";
       group = "root";
@@ -208,7 +208,7 @@
         RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
       '';
     };
-  
+
     sops.templates."surveillance-nvr-frigate.env" = {
       owner = "root";
       group = "root";
@@ -222,7 +222,7 @@
         FRIGATE_RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
       '';
     };
-  
+
     sops.templates."zigbee2mqtt.env" = {
       owner = "root";
       group = "root";
@@ -234,49 +234,49 @@
         ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY=${config.sops.placeholder."zigbee2mqtt.network_key"}
       '';
     };
-  
+
     sops.secrets."mqtt.password" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."mqtt.user" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."surveillance.go2rtc.ranger_duo.password" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."surveillance.go2rtc.ranger_duo.user" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."surveillance.go2rtc.ranger_uno.password" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."surveillance.go2rtc.ranger_uno.user" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."zigbee2mqtt.frontend.auth_token" = {
       owner = "root";
       group = "root";
       mode = "0400";
     };
-  
+
     sops.secrets."zigbee2mqtt.network_key" = {
       owner = "root";
       group = "root";

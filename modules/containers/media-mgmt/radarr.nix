@@ -5,14 +5,14 @@
   in
   {
     sops.secrets."media.radarr.api_key" = { };
-  
+
     sops.templates."media.radarr.env" = {
       owner = "root";
       group = "media";
       mode = "0440";
       content = "RADARR__API_KEY=${config.sops.placeholder."media.radarr.api_key"}";
     };
-  
+
     virtualisation.quadlet.containers.radarr = {
       containerConfig = {
         image = "lscr.io/linuxserver/radarr:6.3.0.10514-ls313";
@@ -31,12 +31,12 @@
         ];
       } // flakeLib.quadlet.mkHealthCheck { port = 7878; };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/radarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "radarr";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."radarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

@@ -2,7 +2,7 @@
   flake.nixosModules.containers-media-mgmt-storage = { ... }:
   {
     users.groups.media.gid = 2000;
-  
+
     systemd.tmpfiles.rules = [
       "d /srv/media 2775 root media - -"
       "d /srv/media/downloads 2775 root media - -"

@@ -19,12 +19,12 @@
         ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };
-  
+
     environment.etc."alloy/actualbudget.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "actualbudget";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

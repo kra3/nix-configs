@@ -66,7 +66,7 @@
 
   boot = {
     loader = {
-      systemd-boot = { 
+      systemd-boot = {
         enable = true;
         configurationLimit = 5;
       };

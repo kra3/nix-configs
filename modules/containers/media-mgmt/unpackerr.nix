@@ -25,7 +25,7 @@
         UN_WEBSERVER_LISTEN_ADDR=0.0.0.0:5656
       '';
     };
-  
+
     virtualisation.quadlet.containers.unpackerr = {
       containerConfig = {
         image = "ghcr.io/unpackerr/unpackerr:0.15.2";
@@ -49,7 +49,7 @@
         path = "api/v1/health";
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-  
+
     environment.etc."alloy/unpackerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "unpackerr";
       hostName = config.networking.hostName;

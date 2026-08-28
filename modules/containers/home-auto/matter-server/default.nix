@@ -27,11 +27,11 @@
       networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
       extraAfter = [ "otbr.service" ];
     };
-  
+
     systemd.tmpfiles.rules = [
       "d /srv/appdata/home-auto/matter-server 0750 root root - -"
     ];
-  
+
     environment.etc."alloy/matter-server.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "matter-server";
       id = "matter_server";

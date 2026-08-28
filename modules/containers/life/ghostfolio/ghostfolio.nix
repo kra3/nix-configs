@@ -6,7 +6,7 @@
   {
     sops.secrets."life.ghostfolio.access_token" = { };
     sops.secrets."life.ghostfolio.jwt_secret" = { };
-  
+
     sops.templates."life.ghostfolio.env" = {
       owner = "root";
       group = "life";
@@ -26,7 +26,7 @@
         JWT_SECRET_KEY=${config.sops.placeholder."life.ghostfolio.jwt_secret"}
       '';
     };
-  
+
     virtualisation.quadlet.containers.ghostfolio = {
       containerConfig = {
         image = "ghostfolio/ghostfolio:3.54.0";
@@ -49,12 +49,12 @@
       extraAfter = [ "postgresql-set-passwords.service" "redis-default.service" ];
       extraRequires = [ "postgresql-set-passwords.service" "redis-default.service" ];
     };
-  
+
     environment.etc."alloy/ghostfolio.alloy".text = flakeLib.observability.mkAlloyJournalSource {
       name = "ghostfolio";
       hostName = config.networking.hostName;
     };
-  
+
     services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

@@ -5,7 +5,7 @@
     users.groups.media = {
       gid = 2000;
     };
-  
+
     # Host storage for media-play container
     systemd.tmpfiles.rules = lib.mkMerge [
       [
@@ -18,7 +18,7 @@
         "d /srv/appdata/media-play/navidrome 2770 root media - -"
       ])
     ];
-  
+
     # Host nginx reverse proxies for media-play container
     services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) (
       flakeLib.nginx.mkProxyVhost {
@@ -27,7 +27,7 @@
         upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
       }
     );
-  
+
     services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) (
       flakeLib.nginx.mkProxyVhost {
         domain = config.vars.acme.domain;
@@ -35,9 +35,9 @@
         upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
       }
     );
-  
-  
-  
+
+
+
     # Host firewall for media-play container
     networking.firewall = {
       interfaces = {
@@ -55,7 +55,7 @@
         };
       };
     };
-  
+
     containers.media-play = ({
       autoStart = true;
       specialArgs = {
@@ -74,11 +74,11 @@
           inputs.declarative-jellyfin.nixosModules.default
           flakeModules.nixos.services-media-players-default
         ];
-  
+
         nixpkgs.overlays = [
           inputs.self.overlays.default
         ];
-  
+
         # Containers re-evaluate their own nixpkgs.config and don't inherit the
         # host's (only nixpkgs.hostPlatform is inherited) -- this must be
         # restated here, not just in modules/hardware/intel-igpu.nix, or
@@ -86,7 +86,7 @@
         nixpkgs.config.permittedInsecurePackages = [
           "intel-media-sdk-23.2.2"
         ];
-  
+
         networking = {
           hostName = "media-play";
           defaultGateway = config.vars.network.containers.mediaPlay.hostAddress;
@@ -100,7 +100,7 @@
             7359 # Jellyfin client discovery
           ];
         };
-  
+
         hardware.graphics = {
           enable = true;
           extraPackages = with pkgs; [
@@ -141,7 +141,7 @@
           hostPath = "/srv/appdata/media-play/navidrome";
           isReadOnly = false;
         };
-  
+
         "/run/secrets/media.jellyfin.users.kra3.password" = {
           hostPath = "/run/secrets/media.jellyfin.users.kra3.password";
           isReadOnly = true;
@@ -166,15 +166,15 @@
         }
       ];
     });
-  
+
     systemd.services."container@media-play" =
       flakeLib.container-definition.mkContainerSystemdDeps [ ];
-  
+
     # Create jellyfin group on host matching container GID for secret access
     users.groups.jellyfin = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
       gid = 999;
     };
-  
+
     sops.secrets."media.jellyfin.users.kra3.password" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
       mode = "0440";
       group = "jellyfin";

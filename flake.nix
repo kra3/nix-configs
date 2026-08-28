@@ -73,17 +73,7 @@
 
         imports = [
           inputs.treefmt-nix.flakeModule
-          ./modules/flake-darwin-modules.nix
-          ./modules/flake-home-manager-modules.nix
-          ./modules/flake-lib.nix
-          ./modules/vars.nix
-        ] ++ (inputs.import-tree ./modules/services).imports
-          ++ (inputs.import-tree ./modules/home).imports
-          ++ (inputs.import-tree ./modules/lib).imports
-          ++ (inputs.import-tree ./modules/overlays).imports
-          ++ (inputs.import-tree ./modules/containers).imports
-          ++ (inputs.import-tree ./modules/hardware).imports
-          ++ (inputs.import-tree ./modules/users).imports;
+        ] ++ (inputs.import-tree ./modules).imports;
 
         perSystem =
           { pkgs, inputs', ... }:

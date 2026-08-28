@@ -40,7 +40,7 @@
     flakeModules.nixos.containers-home-auto-matter-server-default
     flakeModules.nixos.containers-home-auto-music-assistant-default
     flakeModules.nixos.containers-life-default
-    ../../modules/fail2ban.nix
+    flakeModules.nixos.fail2ban
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-virtualisation-default

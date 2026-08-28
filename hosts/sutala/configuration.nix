@@ -17,8 +17,8 @@
     flakeModules.nixos.services-system-nix-defaults-nixos
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
-    ../../modules/hardware/intel-igpu.nix
-    ../../modules/vars.nix
+    flakeModules.nixos.hardware-intel-igpu
+    flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-acme
     flakeModules.nixos.services-proxy-nginx
     flakeModules.nixos.services-monitoring-alloy-host
@@ -44,8 +44,8 @@
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-virtualisation-default
-    ../../modules/users/root.nix
-    ../../modules/users/kra3.nix
+    flakeModules.nixos.users-root
+    flakeModules.nixos.users-kra3
   ];
 
   vars.network = {

@@ -13,7 +13,10 @@
     };
 
     home-manager.users.root = {
-      imports = [ flakeModules.homeManager.home-shell-bash-default ];
+      imports = [
+        flakeModules.homeManager.home-shell-bash-default
+        flakeModules.homeManager.home-profiles-core
+      ];
       home.stateVersion = lib.mkDefault "25.11";
     };
   };

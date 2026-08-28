@@ -19,18 +19,18 @@
     flakeModules.nixos.services-system-nix-autoupgrade
     ../../modules/hardware/intel-igpu.nix
     ../../modules/vars.nix
-    ../../modules/services/infrastructure/acme.nix
-    ../../modules/services/proxy/nginx.nix
-    ../../modules/services/monitoring/alloy-host.nix
-    ../../modules/services/infrastructure/openssh.nix
-    ../../modules/services/infrastructure/sops.nix
-    ../../modules/services/tailscale.nix
-    ../../modules/services/niri.nix
-    ../../modules/services/dns
-    ../../modules/services/postgres.nix
-    ../../modules/services/redis.nix
-    ../../modules/services/surveillance/proxy.nix
-    ../../modules/services/discovery/avahi.nix
+    flakeModules.nixos.services-infrastructure-acme
+    flakeModules.nixos.services-proxy-nginx
+    flakeModules.nixos.services-monitoring-alloy-host
+    flakeModules.nixos.services-infrastructure-openssh
+    flakeModules.nixos.services-infrastructure-sops
+    flakeModules.nixos.services-tailscale
+    flakeModules.nixos.services-niri
+    flakeModules.nixos.services-dns-default
+    flakeModules.nixos.services-postgres
+    flakeModules.nixos.services-redis
+    flakeModules.nixos.services-surveillance-proxy
+    flakeModules.nixos.services-discovery-avahi
     ../../modules/containers/monitoring.nix
     ../../modules/containers/media-mgmt
     ../../modules/containers/media-play.nix
@@ -43,7 +43,7 @@
     ../../modules/fail2ban.nix
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
-    ../../modules/services/virtualisation
+    flakeModules.nixos.services-virtualisation-default
     ../../modules/users/root.nix
     ../../modules/users/kra3.nix
   ];

@@ -151,7 +151,7 @@
       imports = [
         flakeModules.nixos.services-system-nix-defaults-nixos
         ../containers/common.nix
-        ../services/monitoring
+        flakeModules.nixos.services-monitoring-default
       ];
 
       networking = {

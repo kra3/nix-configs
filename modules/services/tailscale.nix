@@ -1,7 +1,4 @@
-{ config, lib, ... }:
-let
-  serviceLib = import ../lib { inherit lib; };
-in
+{ config, lib, flakeLib, ... }:
 {
   sops.secrets."tailscale.authkey" = { };
 
@@ -22,7 +19,7 @@ in
   };
 
   systemd.services.tailscaled.serviceConfig = lib.mkMerge [
-    (serviceLib.deployment.hardening.mkServiceSandbox {
+    (flakeLib.deployment-hardening.mkServiceSandbox {
       readWritePaths = [
         "/var/lib/tailscale"
         "/run/tailscale"

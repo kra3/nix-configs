@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -29,15 +28,15 @@ in
         "/srv/appdata/media-mgmt/bazarr:/config"
         "/srv/media:/data"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 6767; };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+    } // flakeLib.quadlet.mkHealthCheck { port = 6767; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/bazarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/bazarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "bazarr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."bazarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."bazarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:6767";

@@ -1,10 +1,7 @@
-{ config, lib, ... }:
-let
-  containerLib = import ../../lib { inherit lib; };
-in
+{ config, lib, flakeLib, ... }:
 {
   imports = [
-    (containerLib.observability.mkAlloyAgent {
+    (flakeLib.observability.mkAlloyAgent {
       hostName = config.networking.hostName;
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
       extraGroups =

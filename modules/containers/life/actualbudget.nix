@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.life;
 in
 {
@@ -18,14 +17,14 @@ in
         "/srv/appdata/life/actualbudget:/data"
       ];
     };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };
 
-  environment.etc."alloy/actualbudget.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/actualbudget.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "actualbudget";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:5006";

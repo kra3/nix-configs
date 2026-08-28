@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -44,13 +43,13 @@ in
         "/srv/media:/data"
       ];
     }
-    // containerLib.quadlet.mkHealthCheck {
+    // flakeLib.quadlet.mkHealthCheck {
       port = 5656;
       path = "api/v1/health";
     };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/unpackerr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/unpackerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "unpackerr";
     hostName = config.networking.hostName;
   };

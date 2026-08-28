@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -33,7 +32,7 @@ in
       ];
       addCapabilities = [ "NET_ADMIN" ];
     };
-  } // containerLib.quadlet.mkNetworkDeps {
+  } // flakeLib.quadlet.mkNetworkDeps {
     networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
   };
 
@@ -41,13 +40,13 @@ in
     "d /srv/appdata/home-auto/music-assistant 0750 root root - -"
   ];
 
-  environment.etc."alloy/music-assistant.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/music-assistant.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "music-assistant";
     id = "music_assistant";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."ma.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:8095";
@@ -65,7 +64,7 @@ in
         ssl = true;
       }
     ];
-    extraConfig = containerLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
+    extraConfig = flakeLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
     locations."/" = {
       proxyPass = "http://10.3.2.13:1705";
       proxyWebsockets = true;

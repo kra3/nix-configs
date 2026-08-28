@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -29,15 +28,15 @@ in
         "/srv/appdata/media-mgmt/sonarr:/config"
         "/srv/media:/data"
       ];
-    } // containerLib.quadlet.mkHealthCheck { port = 8989; };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+    } // flakeLib.quadlet.mkHealthCheck { port = 8989; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/sonarr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/sonarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "sonarr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."sonarr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."sonarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:8989";

@@ -1,7 +1,4 @@
-{ config, lib, ... }:
-let
-  containerLib = import ../../lib { inherit lib; };
-in
+{ config, lib, flakeLib, ... }:
 {
   virtualisation.oci-containers.containers.arcane = {
     image = "ghcr.io/getarcaneapp/arcane:v2.4.0";
@@ -26,7 +23,7 @@ in
     ];
   };
 
-  services.nginx.virtualHosts."oci.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."oci.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:3552";

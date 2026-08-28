@@ -1,7 +1,4 @@
-{ config, inputs, pkgs, lib, flakeModules, ... }:
-let
-  containerLib = import ../lib { inherit lib; };
-in
+{ config, inputs, pkgs, lib, flakeModules, flakeLib, ... }:
 {
   # Host group for media files
   users.groups.media = {
@@ -23,7 +20,7 @@ in
 
   # Host nginx reverse proxies for media-play container
   services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) (
-    containerLib.nginx.mkProxyVhost {
+    flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
       upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
@@ -31,7 +28,7 @@ in
   );
 
   services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" = lib.mkIf (config.containers.media-play.config.services.navidrome.enable or false) (
-    containerLib.nginx.mkProxyVhost {
+    flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
       upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
@@ -65,7 +62,7 @@ in
       domain = config.vars.acme.domain;
       monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
     };
-  } // containerLib.container.definition.mkContainerNetwork {
+  } // flakeLib.container-definition.mkContainerNetwork {
     hostAddress = config.vars.network.containers.mediaPlay.hostAddress;
     localAddress = config.vars.network.containers.mediaPlay.localAddress;
   } // {
@@ -170,7 +167,7 @@ in
   });
 
   systemd.services."container@media-play" =
-    containerLib.container.definition.mkContainerSystemdDeps [ ];
+    flakeLib.container-definition.mkContainerSystemdDeps [ ];
 
   # Create jellyfin group on host matching container GID for secret access
   users.groups.jellyfin = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {

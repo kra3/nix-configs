@@ -1,6 +1,5 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, flakeLib, ... }:
 let
-  containerLib = import ../../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.home-auto;
   macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
 in
@@ -23,7 +22,7 @@ in
         TZ = "Europe/Stockholm";
       };
     };
-  } // containerLib.quadlet.mkNetworkDeps {
+  } // flakeLib.quadlet.mkNetworkDeps {
     networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
     extraAfter = [ "otbr.service" ];
   };
@@ -32,7 +31,7 @@ in
     "d /srv/appdata/home-auto/matter-server 0750 root root - -"
   ];
 
-  environment.etc."alloy/matter-server.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/matter-server.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "matter-server";
     id = "matter_server";
     hostName = config.networking.hostName;

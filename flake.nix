@@ -75,8 +75,11 @@
           inputs.treefmt-nix.flakeModule
           ./modules/flake-darwin-modules.nix
           ./modules/flake-home-manager-modules.nix
+          ./modules/flake-lib.nix
         ] ++ (inputs.import-tree ./modules/services/system).imports
-          ++ (inputs.import-tree ./modules/home).imports;
+          ++ (inputs.import-tree ./modules/home).imports
+          ++ (inputs.import-tree ./modules/lib).imports
+          ++ (inputs.import-tree ./modules/overlays).imports;
 
         perSystem =
           { pkgs, inputs', ... }:
@@ -115,12 +118,20 @@
                       darwin = config.flake.darwinModules;
                       homeManager = config.flake.homeManagerModules;
                     };
+                    flakeLib = config.flake.lib;
                   };
                 }
               ) hostSet;
           in
           {
-            overlays.default = import ./modules/overlays;
+            # `overlays.default` writes into the same `config.flake.overlays`
+            # attrset that every individually-registered overlay file writes
+            # into, so composing "all of config.flake.overlays" would include
+            # this value's own (not-yet-computed) result. Excluding "default"
+            # breaks that self-reference.
+            overlays.default = lib.composeManyExtensions (
+              builtins.attrValues (builtins.removeAttrs config.flake.overlays [ "default" ])
+            );
 
             nixosConfigurations = buildEach nixpkgs.lib.nixosSystem (ofClass "nixos");
             darwinConfigurations = buildEach inputs.nix-darwin.lib.darwinSystem (ofClass "darwin");
@@ -140,6 +151,7 @@
                     darwin = config.flake.darwinModules;
                     homeManager = config.flake.homeManagerModules;
                   };
+                  flakeLib = config.flake.lib;
                 };
               };
               sutala = {

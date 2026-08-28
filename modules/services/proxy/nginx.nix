@@ -1,7 +1,6 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  serviceLib = import ../../lib { inherit lib; };
-  allowBlock = serviceLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
+  allowBlock = flakeLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
 in
 {
   users.users.nginx.extraGroups = [ "acme" ];
@@ -43,7 +42,7 @@ in
   };
 
   systemd.services.nginx.serviceConfig = lib.mkMerge [
-    (serviceLib.deployment.hardening.mkServiceSandbox {
+    (flakeLib.deployment-hardening.mkServiceSandbox {
       readWritePaths = [ "/var/log/nginx" ];
       capabilities = [ "CAP_NET_BIND_SERVICE" ];
     })

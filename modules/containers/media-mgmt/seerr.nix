@@ -1,6 +1,5 @@
-{ config, lib, ... }:
+{ config, lib, flakeLib, ... }:
 let
-  containerLib = import ../../lib { inherit lib; };
   network = config.virtualisation.quadlet.networks.media-mgmt;
 in
 {
@@ -29,19 +28,19 @@ in
         "/srv/appdata/media-mgmt/seerr:/app/config"
       ];
     }
-    // containerLib.quadlet.mkHealthCheck {
+    // flakeLib.quadlet.mkHealthCheck {
       port = 5055;
       path = "api/v1/status";
       startPeriod = "60s";
     };
-  } // containerLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+  } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-  environment.etc."alloy/seerr.alloy".text = containerLib.observability.mkAlloyJournalSource {
+  environment.etc."alloy/seerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
     name = "seerr";
     hostName = config.networking.hostName;
   };
 
-  services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = containerLib.nginx.mkProxyVhost {
+  services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
     domain = config.vars.acme.domain;
     cidrs = config.vars.network.nginxAllowCidrs;
     upstream = "http://127.0.0.1:5055";

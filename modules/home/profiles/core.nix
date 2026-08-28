@@ -5,6 +5,7 @@
       flakeModules.homeManager.home-tmux
       flakeModules.homeManager.home-gpg
       flakeModules.homeManager.home-packages
+      flakeModules.homeManager.home-sesh-default
     ];
   };
 }

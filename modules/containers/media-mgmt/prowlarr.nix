@@ -15,7 +15,7 @@
 
     virtualisation.quadlet.containers.prowlarr = {
       containerConfig = {
-        image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls156";
+        image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls157";
         publishPorts = [ "127.0.0.1:9696:9696" ];
         networks = [ network.ref ];
         logDriver = "journald";

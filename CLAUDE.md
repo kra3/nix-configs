@@ -23,6 +23,19 @@ just sops-edit [file]                 # Edit an encrypted secrets file
 
 Run `nix flake check` as the primary validation before committing.
 
+**Home Assistant config changes** (`modules/containers/home-auto/home-assistant/ha-config/`): `just build sutala` only validates that the files wire into the Nix/podman config correctly — it does NOT know Home Assistant's own YAML schemas (e.g. service/action `data` vs `target` fields). A schema-invalid automation builds and deploys fine, then gets silently auto-disabled at HA startup. Validate against HA's real schema before opening a PR, using a throwaway container against the live data dir (read-only, doesn't touch the running service):
+```sh
+podman run --rm \
+  -v /srv/appdata/home-auto/home-assistant/data:/config:ro \
+  -v <repo>/.../ha-config/configuration.yaml:/config/configuration.yaml:ro \
+  -v <repo>/.../ha-config/automations.yaml:/config/automations.yaml:ro \
+  # ...same read-only mounts as container.nix for lovelace/dashboards/packages/blueprints/scripts/scenes...
+  -v /run/secrets/rendered/home-assistant/secrets.yaml:/config/secrets.yaml:ro \
+  --entrypoint python3 ghcr.io/home-assistant/home-assistant:<tag matching container.nix> \
+  -m homeassistant --script check_config --config /config
+```
+A "could not be validated and has been disabled" or "Failed config" line means a real bug; clean output means it's safe to deploy.
+
 ## Architecture
 
 ### Hosts

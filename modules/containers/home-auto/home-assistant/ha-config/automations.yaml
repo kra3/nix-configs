@@ -890,10 +890,10 @@
     minutes: "/30"
   actions:
   - action: homeassistant.reload_config_entry
-    target:
+    data:
       entry_id: 01JE7EG5ZJEQBM1887Q1VCEGCR # PlejD (Salviegatan 4)
   - action: homeassistant.reload_config_entry
-    target:
+    data:
       entry_id: 01JE7F2D803DDWPQ63RP0VY71P # Fresh Intellivent Sky (Fresh kitchen fan)
   mode: single
 

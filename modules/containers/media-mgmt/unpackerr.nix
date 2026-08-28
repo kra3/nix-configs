@@ -46,7 +46,10 @@
       }
       // flakeLib.quadlet.mkHealthCheck {
         port = 5656;
-        path = "api/v1/health";
+        # unpackerr has no /api/v1/health route (confirmed 404 in its access
+        # log); its webserver only serves "/" (200 "Welcome!") and, since
+        # UN_WEBSERVER_METRICS=true above, "/metrics".
+        path = "";
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 

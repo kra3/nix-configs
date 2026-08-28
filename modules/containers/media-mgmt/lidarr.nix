@@ -15,7 +15,7 @@
 
     virtualisation.quadlet.containers.lidarr = {
       containerConfig = {
-        image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls39";
+        image = "lscr.io/linuxserver/lidarr:3.1.0.4875-ls40";
         publishPorts = [ "127.0.0.1:8686:8686" ];
         networks = [ network.ref ];
         logDriver = "journald";

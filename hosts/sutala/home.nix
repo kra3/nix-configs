@@ -6,6 +6,9 @@
     flakeModules.homeManager.home-profiles-dev
     flakeModules.homeManager.home-profiles-shell
     flakeModules.homeManager.home-shell-default
+    flakeModules.homeManager.home-profiles-wm-default
+    flakeModules.homeManager.home-profiles-browsers
+    flakeModules.homeManager.home-profiles-terminal
   ];
 
   catppuccin.enable = true;

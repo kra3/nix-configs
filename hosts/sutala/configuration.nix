@@ -25,7 +25,7 @@
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-tailscale
-    flakeModules.nixos.services-niri
+    flakeModules.nixos.services-niri-default
     flakeModules.nixos.services-dns-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
@@ -235,7 +235,10 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs flakeModules; };
+    extraSpecialArgs = {
+      inherit inputs flakeModules;
+      domain = config.vars.acme.domain;
+    };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
     # Programs like niri write their own default config on first run;
     # back those up instead of failing activation when we start managing them.

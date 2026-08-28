@@ -9,6 +9,7 @@
       jq
       bc
       lesspipe
+      glow
 
       # Fonts
       nerd-fonts.meslo-lg

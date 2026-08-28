@@ -28,6 +28,3 @@ jobs:
         env:
           RENOVATE_REPOSITORIES: '["${{ github.repository }}"]'
           RENOVATE_PLATFORM: github
-          # Lets postUpgradeTasks regenerate drv-lock.json on dependency-bump
-          # branches so refactor-guard doesn't fail on every image update.
-          RENOVATE_ALLOWED_COMMANDS: '["^nix develop --command just drv-lock$"]'

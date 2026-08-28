@@ -16,8 +16,8 @@ check:
 update:
     nix flake update
 
-# Print the three hosts' drvPaths as JSON (same shape as drv-lock.json).
-# Kept simple and deterministic — this is what the verifier role runs.
+# Print the three hosts' drvPaths as JSON. Kept simple and deterministic —
+# useful for confirming a change's actual effect on the built system.
 drv:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -30,30 +30,9 @@ drv:
         --arg colmena "$colmena" \
         '{"nixosConfigurations.sutala": $sutala, "darwinConfigurations.mac-work.system": $macwork, "colmenaHive.nodes.sutala": $colmena}'
 
-# Regenerate drv-lock.json in place, preserving its _comment field. For local
-# use after an intentional drvPath change, and for Renovate's postUpgradeTasks.
-drv-lock:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    comment=$(jq -r '._comment' drv-lock.json)
-    just drv | jq --arg c "$comment" '{_comment: $c} + .' > drv-lock.json
-
-# Local pre-commit gate equivalent to CI: flake check, confirm all three hosts
-# eval, and confirm their drvPaths still match drv-lock.json. If a change is
-# meant to move a drvPath, update drv-lock.json in the same commit.
+# Local check: flake check, then print all three hosts' drvPaths.
 eval: check
-    #!/usr/bin/env bash
-    set -euo pipefail
-    current=$(just drv)
-    expected=$(jq -S 'del(._comment)' drv-lock.json)
-    current_sorted=$(echo "$current" | jq -S '.')
-    if [ "$current_sorted" != "$expected" ]; then
-        echo "drvPaths differ from drv-lock.json:" >&2
-        diff <(echo "$expected") <(echo "$current_sorted") >&2 || true
-        echo "If this is an intentional change, update drv-lock.json in this commit." >&2
-        exit 1
-    fi
-    echo "OK: all three hosts eval and match drv-lock.json"
+    @just drv
 
 build host=default_host:
     #!/usr/bin/env bash

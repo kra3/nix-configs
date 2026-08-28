@@ -92,12 +92,12 @@ See `secrets/README.md` for the full secrets layout.
 ## Adding a New Machine
 
 1. Create `hosts/<hostname>/configuration.nix` (NixOS) or `hosts/<hostname>/darwin-configuration.nix` (macOS)
-2. Add the host to `flake.nix` under `nixosConfigurations` or `darwinConfigurations`
+2. Add an entry for the host to `flake/hosts.nix` (one table, one definition per host — `flake.nix` turns it into `nixosConfigurations`, `darwinConfigurations`, and `colmena` entries)
 3. Import `modules/users/kra3.nix` (or create a new user module) to bring in Home Manager dotfiles
 4. For NixOS: run `nixos-generate-config` on the host to produce `hardware-configuration.nix` and `disko.nix`
 
 ## Notes
 
-- Configs are import-only — no helper functions in Nix
+- Modules self-register into a flat flake-parts registry (see CLAUDE.md for the naming convention); helper functions live in `modules/lib/` and are consumed via `flakeLib`
 - System packages go in host configs or service modules; user packages go in `modules/home/packages.nix`
 - Container stacks live in `modules/containers/` as Podman quadlets

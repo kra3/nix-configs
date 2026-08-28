@@ -1,8 +1,9 @@
 {
-  imports = [
-    ./jellyfin.nix
-    ./navidrome.nix
-    # ./snapserver.nix
-  ];
+  flake.nixosModules.services-media-players-default = { flakeModules, ... }: {
+    imports = [
+      flakeModules.nixos.services-media-players-jellyfin
+      flakeModules.nixos.services-media-players-navidrome
+      # flakeModules.nixos.services-media-players-snapserver
+    ];
+  };
 }
-

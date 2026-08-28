@@ -31,15 +31,15 @@
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-discovery-avahi
-    ../../modules/containers/monitoring.nix
-    ../../modules/containers/media-mgmt
-    ../../modules/containers/media-play.nix
-    ../../modules/containers/home-auto.nix
-    ../../modules/containers/home-auto/home-assistant
-    ../../modules/containers/home-auto/otbr
-    ../../modules/containers/home-auto/matter-server
-    ../../modules/containers/home-auto/music-assistant
-    ../../modules/containers/life
+    flakeModules.nixos.containers-monitoring
+    flakeModules.nixos.containers-media-mgmt-default
+    flakeModules.nixos.containers-media-play
+    flakeModules.nixos.containers-home-auto
+    flakeModules.nixos.containers-home-auto-home-assistant-default
+    flakeModules.nixos.containers-home-auto-otbr-default
+    flakeModules.nixos.containers-home-auto-matter-server-default
+    flakeModules.nixos.containers-home-auto-music-assistant-default
+    flakeModules.nixos.containers-life-default
     ../../modules/fail2ban.nix
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
@@ -66,7 +66,7 @@
 
   boot = {
     loader = {
-      systemd-boot = { 
+      systemd-boot = {
         enable = true;
         configurationLimit = 5;
       };

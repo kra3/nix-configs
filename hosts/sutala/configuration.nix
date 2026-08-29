@@ -46,6 +46,7 @@
     flakeModules.nixos.services-virtualisation-default
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
+    flakeModules.nixos.users-arcane
   ];
 
   vars.network = {

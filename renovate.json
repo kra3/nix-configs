@@ -15,7 +15,7 @@
   "packageRules": [
     {
       "matchDatasources": ["docker"],
-      "allowedVersions": "!/(?i)(nightly|development|edge|canary|alpha|beta|rc\\d*)/"
+      "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*)/"
     },
     {
       "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],

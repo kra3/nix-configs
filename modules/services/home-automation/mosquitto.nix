@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.services-mosquitto =
+  flake.nixosModules.services-home-automation-mosquitto =
   { ... }:
   {
     services.mosquitto = {

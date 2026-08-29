@@ -70,9 +70,9 @@
         imports = [
           flakeModules.nixos.services-system-nix-defaults-nixos
           flakeModules.nixos.containers-common
-          flakeModules.nixos.services-mosquitto
+          flakeModules.nixos.services-home-automation-mosquitto
           flakeModules.nixos.services-surveillance-default
-          flakeModules.nixos.services-zigbee2mqtt
+          flakeModules.nixos.services-home-automation-zigbee2mqtt
         ];
 
         # Containers re-evaluate their own nixpkgs.config and don't inherit the

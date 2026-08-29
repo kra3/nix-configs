@@ -46,6 +46,11 @@
       group = "arcane";
       mode = "0400";
     };
+    sops.secrets."arcane.oidc_client_secret" = {
+      owner = "arcane";
+      group = "arcane";
+      mode = "0400";
+    };
 
     sops.templates."arcane.env" = {
       owner = "arcane";
@@ -54,6 +59,7 @@
       content = ''
         ENCRYPTION_KEY=${config.sops.placeholder."arcane.encryption_key"}
         JWT_SECRET=${config.sops.placeholder."arcane.jwt_secret"}
+        OIDC_CLIENT_SECRET=${config.sops.placeholder."arcane.oidc_client_secret"}
       '';
     };
 
@@ -107,7 +113,10 @@
               APP_URL = "https://oci.${domain}";
               LOG_LEVEL = "info";
               LOG_JSON = "false";
-              OIDC_ENABLED = "false";
+              OIDC_ENABLED = "true";
+              OIDC_CLIENT_ID = "arcane";
+              OIDC_ISSUER_URL = "https://auth.${domain}";
+              OIDC_SCOPES = "openid profile email";
               DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
             };
             environmentFiles = [ arcaneEnvPath ];

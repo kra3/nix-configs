@@ -1,9 +1,11 @@
 {
-  flake.nixosModules.containers-media-mgmt-seerr = { config, lib, flakeLib, ... }:
+  flake.nixosModules.containers-media-mgmt-seerr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
   in
   {
+    imports = [ flakeModules.nixos.services-media-acquisition-seerr ];
+
     sops.secrets."media.seerr.api_key" = { };
 
     sops.templates."media.seerr.env" = {
@@ -15,31 +17,12 @@
 
     virtualisation.quadlet.containers.seerr = {
       containerConfig = {
-        image = "ghcr.io/seerr-team/seerr:v3.4.1";
-        publishPorts = [ "127.0.0.1:5055:5055" ];
         networks = [ network.ref ];
-        logDriver = "journald";
-        environments = {
-          PUID = "1000";
-          PGID = "2000";
-          TZ = "UTC";
-        };
-        environmentFiles = [ config.sops.templates."media.seerr.env".path ];
         volumes = [
           "/srv/appdata/media-mgmt/seerr:/app/config"
         ];
-      }
-      // flakeLib.quadlet.mkHealthCheck {
-        port = 5055;
-        path = "api/v1/status";
-        startPeriod = "60s";
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-
-    environment.etc."alloy/seerr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
-      name = "seerr";
-      hostName = config.networking.hostName;
-    };
 
     services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;

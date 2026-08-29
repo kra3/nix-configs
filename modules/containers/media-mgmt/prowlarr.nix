@@ -1,9 +1,11 @@
 {
-  flake.nixosModules.containers-media-mgmt-prowlarr = { config, lib, flakeLib, ... }:
+  flake.nixosModules.containers-media-mgmt-prowlarr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
   in
   {
+    imports = [ flakeModules.nixos.services-media-acquisition-prowlarr ];
+
     sops.secrets."media.prowlarr.api_key" = { };
 
     sops.templates."media.prowlarr.env" = {
@@ -15,26 +17,12 @@
 
     virtualisation.quadlet.containers.prowlarr = {
       containerConfig = {
-        image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls157";
-        publishPorts = [ "127.0.0.1:9696:9696" ];
         networks = [ network.ref ];
-        logDriver = "journald";
-        environments = {
-          PUID = "1000";
-          PGID = "2000";
-          TZ = "UTC";
-        };
-        environmentFiles = [ config.sops.templates."media.prowlarr.env".path ];
         volumes = [
           "/srv/appdata/media-mgmt/prowlarr:/config"
         ];
-      } // flakeLib.quadlet.mkHealthCheck { port = 9696; };
+      };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-
-    environment.etc."alloy/prowlarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
-      name = "prowlarr";
-      hostName = config.networking.hostName;
-    };
 
     services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;

@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.containers-media-mgmt-recyclarr = { config, lib, pkgs, flakeLib, ... }:
+  flake.nixosModules.containers-media-mgmt-recyclarr = { config, pkgs, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
 
@@ -169,9 +169,12 @@
     '';
   in
   {
+    imports = [ flakeModules.nixos.services-media-acquisition-recyclarr ];
+
     # recyclarr depends on radarr and sonarr api keys, declared in those modules.
-    # recyclarr.yml is a static nix-store file (safe — no secrets).
-    # secrets.yml is a sops template rendered at runtime with the actual API keys.
+    # recyclarr.yml is a static nix-store file (safe — no secrets). secrets.yml is
+    # a sops template rendered at runtime with the actual API keys, and stays here
+    # since it's this deployment's secrets.
     sops.templates."media.recyclarr.secrets.yml" = {
       owner = "root";
       group = "media";
@@ -184,14 +187,7 @@
 
     virtualisation.quadlet.containers.recyclarr = {
       containerConfig = {
-        image = "ghcr.io/recyclarr/recyclarr:8.6.0";
         networks = [ network.ref ];
-        logDriver = "journald";
-        environments = {
-          PUID = "1000";
-          PGID = "2000";
-          TZ = "UTC";
-        };
         volumes = [
           "${recyclarrConfig}:/config/recyclarr.yml:ro"
           "${config.sops.templates."media.recyclarr.secrets.yml".path}:/config/secrets.yml:ro"
@@ -201,11 +197,6 @@
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "media-mgmt-network.service" ];
       restart = "on-failure";
-    };
-
-    environment.etc."alloy/recyclarr.alloy".text = flakeLib.observability.mkAlloyJournalSource {
-      name = "recyclarr";
-      hostName = config.networking.hostName;
     };
   };
 }

@@ -1,9 +1,11 @@
 {
-  flake.nixosModules.containers-life-ghostfolio-ghostfolio = { config, lib, flakeLib, ... }:
+  flake.nixosModules.containers-life-ghostfolio-ghostfolio = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.life;
   in
   {
+    imports = [ flakeModules.nixos.services-finance-ghostfolio-ghostfolio ];
+
     sops.secrets."life.ghostfolio.access_token" = { };
     sops.secrets."life.ghostfolio.jwt_secret" = { };
 
@@ -29,30 +31,12 @@
 
     virtualisation.quadlet.containers.ghostfolio = {
       containerConfig = {
-        image = "ghostfolio/ghostfolio:3.54.0";
-        healthCmd = "curl -sf http://localhost:3333/api/v1/health";
-        healthOnFailure = "none";
-        healthInterval = "30s";
-        healthTimeout = "10s";
-        healthRetries = 3;
-        healthStartPeriod = "60s";
-        publishPorts = [ "127.0.0.1:3333:3333" ];
         networks = [ network.ref ];
-        logDriver = "journald";
-        environments = {
-          TZ = "UTC";
-        };
-        environmentFiles = [ config.sops.templates."life.ghostfolio.env".path ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "life-network.service" ];
       extraAfter = [ "postgresql-set-passwords.service" "redis-default.service" ];
       extraRequires = [ "postgresql-set-passwords.service" "redis-default.service" ];
-    };
-
-    environment.etc."alloy/ghostfolio.alloy".text = flakeLib.observability.mkAlloyJournalSource {
-      name = "ghostfolio";
-      hostName = config.networking.hostName;
     };
 
     services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {

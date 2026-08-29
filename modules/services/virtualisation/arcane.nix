@@ -22,9 +22,18 @@
       '';
     };
 
+    # Deliberately NOT under /srv/appdata: that tree is 2770 root:media
+    # (media-mgmt/storage.nix), which only ever mattered for the rootful
+    # fleet since root bypasses DAC checks entirely. Arcane is the first
+    # non-root consumer, and a POSIX ACL granting it bare traversal turned
+    # out to be a dead end — /srv/appdata's ZFS dataset doesn't have
+    # acltype=posixacl set (disko.nix), so ACL writes there silently no-op.
+    # /srv itself is 0755 root:root and already traversable by anyone, so
+    # a sibling path avoids the whole problem without touching the
+    # media-group boundary the rest of the fleet relies on.
     systemd.tmpfiles.rules = [
-      "d /srv/appdata/arcane 0750 arcane arcane - -"
-      "d /srv/appdata/arcane/projects 0750 arcane arcane - -"
+      "d /srv/arcane 0750 arcane arcane - -"
+      "d /srv/arcane/projects 0750 arcane arcane - -"
     ];
 
     sops.secrets."arcane.encryption_key" = {
@@ -92,7 +101,7 @@
             userns = "keep-id";
             volumes = [
               "%t/podman/podman.sock:/var/run/docker.sock"
-              "/srv/appdata/arcane:/app/data"
+              "/srv/arcane:/app/data"
             ];
             environments = {
               APP_URL = "https://oci.${domain}";

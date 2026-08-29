@@ -56,6 +56,18 @@
           else streamWithCreds prefix cam cam.sub;
       }) { } cameras;
 
+    # Coordinates are normalized (0-1) polygons drawn in the Frigate UI
+    # (Settings > Masks / Zones) to exclude windows/curtains and the
+    # camera timestamp overlay from motion detection.
+    motionMasks = {
+      ranger_duo_fxd = [
+        "0.004,0.006,0.243,0.006,0.243,0.992,0.004,0.992"
+        "0.633,0.012,0.99,0.012,0.99,0.089,0.633,0.089"
+      ];
+      ranger_duo_ptz = "0.706,0.012,0.99,0.012,0.99,0.986,0.706,0.986";
+      ranger_uno = "0.665,0.012,0.99,0.012,0.99,0.095,0.665,0.095";
+    };
+
     frigateCameras = lib.mapAttrs (name: cam: {
       live.streams = {
         Main = name;
@@ -88,6 +100,8 @@
           enabled = false;
         };
       };
+    } // lib.optionalAttrs (motionMasks ? ${name}) {
+      motion.mask = motionMasks.${name};
     }) cameras;
 
   in

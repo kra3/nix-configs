@@ -112,10 +112,10 @@
           enabled = true;
           listen = [
             "fire_alarm"
-            "explosion"
             "glass"
             "shatter"
             "scream"
+            #"explosion"
             #"yell"
             # "speech"
             #"bark"
@@ -133,7 +133,7 @@
           enabled = true;
           width = 640;
           height = 480;
-          fps = 5;
+          fps = 4;
         };
 
         detectors = {

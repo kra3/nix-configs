@@ -47,6 +47,7 @@
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
     flakeModules.nixos.users-arcane
+    flakeModules.nixos.users-authelia
   ];
 
   vars.network = {

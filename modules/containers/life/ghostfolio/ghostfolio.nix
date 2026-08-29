@@ -29,7 +29,7 @@
 
     virtualisation.quadlet.containers.ghostfolio = {
       containerConfig = {
-        image = "ghostfolio/ghostfolio:3.54.0";
+        image = "ghostfolio/ghostfolio:3.63.0";
         healthCmd = "curl -sf http://localhost:3333/api/v1/health";
         healthOnFailure = "none";
         healthInterval = "30s";

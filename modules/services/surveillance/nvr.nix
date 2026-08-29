@@ -138,7 +138,7 @@
 
         birdseye = {
           enabled = true;
-          restream = true;
+          restream = false;
         };
 
         cameras = frigateCameras;
@@ -148,6 +148,14 @@
           width = 640;
           height = 480;
           fps = 4;
+        };
+
+        objects = {
+          track = [
+            "person"
+            "dog"
+            "cat"
+          ];
         };
 
         detectors = {

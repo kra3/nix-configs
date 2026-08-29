@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.services-zigbee2mqtt =
+  flake.nixosModules.services-home-automation-zigbee2mqtt =
   { config, lib, ... }:
   {
     services.zigbee2mqtt = {

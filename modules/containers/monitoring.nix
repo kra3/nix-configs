@@ -28,14 +28,27 @@
     );
 
     # Host secrets for monitoring container
+    # grafana's in-container gid is dynamically allocated (nixpkgs pins its uid
+    # to 196 but not its gid), so unlike jellyfin/prometheus below we can't mirror
+    # a stable host-side group without first reading the live value off sutala
+    # (nixos-container run monitoring -- getent group grafana). Left world-readable
+    # (0444) until that's captured — see host-group-matching pattern below.
     sops.secrets."monitoring.grafana.admin.user" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
       mode = "0444";
     };
     sops.secrets."monitoring.grafana.admin.password" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
       mode = "0444";
     };
+
+    # Create prometheus group on host matching container GID (static, nixpkgs-pinned
+    # uid=gid=255) for secret access, same pattern as media-play.nix's jellyfin group.
+    users.groups.prometheus = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
+      gid = 255;
+    };
+
     sops.secrets."homeassistant.token" = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
-      mode = "0444";
+      mode = "0440";
+      group = "prometheus";
     };
 
     # Host Prometheus exporters (scraped by monitoring container)

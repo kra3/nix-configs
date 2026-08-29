@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.containers-life-ghostfolio-backfill = { config, pkgs, ... }:
+  flake.nixosModules.services-finance-ghostfolio-backfill = { config, pkgs, ... }:
   let
     scraperPython = pkgs.python3.withPackages (ps: [ ps.requests ps.psycopg2 ]);
     scraperScript = ./scraper/scraper.py;

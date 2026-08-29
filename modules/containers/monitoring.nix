@@ -28,16 +28,22 @@
     );
 
     # Host secrets for monitoring container
-    # grafana's in-container gid is dynamically allocated (nixpkgs pins its uid
-    # to 196 but not its gid), so unlike jellyfin/prometheus below we can't mirror
-    # a stable host-side group without first reading the live value off sutala
-    # (nixos-container run monitoring -- getent group grafana). Left world-readable
-    # (0444) until that's captured — see host-group-matching pattern below.
+    # grafana's in-container gid (dynamically allocated by systemd-sysusers,
+    # nixpkgs only pins its uid) turned out to already be 999 on sutala
+    # (confirmed via `nixos-container run monitoring -- getent group grafana`)
+    # — the same number media-play.nix's jellyfin group already owns on the
+    # host, since both containers' independent allocators happened to land
+    # on it. Only one group name can own a given gid, so this reuses that
+    # existing "jellyfin" host group rather than declaring a second, colliding
+    # one; it's not a real jellyfin/grafana relationship, just a coincidence
+    # of allocation order in two unrelated containers.
     sops.secrets."monitoring.grafana.admin.user" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
-      mode = "0444";
+      mode = "0440";
+      group = "jellyfin";
     };
     sops.secrets."monitoring.grafana.admin.password" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
-      mode = "0444";
+      mode = "0440";
+      group = "jellyfin";
     };
 
     # Create prometheus group on host matching container GID (static, nixpkgs-pinned
@@ -167,6 +173,11 @@
           flakeModules.nixos.containers-common
           flakeModules.nixos.services-monitoring-default
         ];
+
+        # Pinned to the gid systemd-sysusers already allocated live (confirmed
+        # via `getent group grafana` on sutala) -- not a change, just stops it
+        # from ever drifting if the container's persistent state is recreated.
+        users.groups.grafana.gid = 999;
 
         networking = {
           hostName = "monitoring";

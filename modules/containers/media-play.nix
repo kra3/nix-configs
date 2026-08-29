@@ -170,7 +170,9 @@
     systemd.services."container@media-play" =
       flakeLib.container-definition.mkContainerSystemdDeps [ ];
 
-    # Create jellyfin group on host matching container GID for secret access
+    # Create jellyfin group on host matching container GID for secret access.
+    # Also reused by monitoring.nix's grafana secrets (coincidentally the same
+    # gid 999) — don't disable declarative-jellyfin without checking that.
     users.groups.jellyfin = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
       gid = 999;
     };

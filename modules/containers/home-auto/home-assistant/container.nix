@@ -1,9 +1,8 @@
 {
   flake.nixosModules.containers-home-auto-home-assistant-container = {
     config,
-    lib,
-    pkgs,
     flakeLib,
+    flakeModules,
     ...
   }:
   let
@@ -11,16 +10,15 @@
     macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
   in
   {
+    imports = [ flakeModules.nixos.services-home-automation-home-assistant ];
+
     virtualisation.quadlet.containers.home-assistant = {
       containerConfig = {
-        image = "ghcr.io/home-assistant/home-assistant:2026.8.2";
-        publishPorts = [ "127.0.0.1:8123:8123" ];
         networks = [
           "${network.ref}:ip=10.3.2.10"
           "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21"
         ];
         dns = [ "10.3.2.1" ];
-        logDriver = "journald";
         # Bypasses macvlan isolation by forcing host domains to the bridge gateway
         addHosts = [
           "ma.${config.vars.acme.domain}:10.3.2.1"
@@ -36,20 +34,16 @@
           "sabnzbd.${config.vars.acme.domain}:10.3.2.1"
           "seerr.${config.vars.acme.domain}:10.3.2.1"
         ];
-        environments = {
-          TZ = "Europe/Stockholm";
-          DBUS_SYSTEM_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
-        };
         volumes = [
           "/srv/appdata/home-auto/home-assistant/data:/config"
-          "${./ha-config/configuration.yaml}:/config/configuration.yaml:ro"
-          "${./ha-config/automations.yaml}:/config/automations.yaml:ro"
-          "${./ha-config/lovelace.yaml}:/config/lovelace.yaml:ro"
-          "${./ha-config/dashboards}:/config/dashboards:ro"
-          "${./ha-config/packages}:/config/packages:ro"
-          "${./ha-config/blueprints}:/config/blueprints:ro"
-          "${./ha-config/scripts.yaml}:/config/scripts.yaml:ro"
-          "${./ha-config/scenes.yaml}:/config/scenes.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/configuration.yaml}:/config/configuration.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/automations.yaml}:/config/automations.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/lovelace.yaml}:/config/lovelace.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/dashboards}:/config/dashboards:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/scenes.yaml}:/config/scenes.yaml:ro"
           "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
           "/run/dbus:/run/dbus:ro"
         ];
@@ -60,12 +54,6 @@
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];
-    };
-
-    environment.etc."alloy/home-assistant.alloy".text = flakeLib.observability.mkAlloyJournalSource {
-      name = "home-assistant";
-      id = "home_assistant";
-      hostName = config.networking.hostName;
     };
 
     services.nginx.virtualHosts."ha.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {

@@ -50,6 +50,8 @@ LAN 192.168.1.0/24
         |
         |-- default podman network (rootful)
               arcane (127.0.0.1:3552) — has /run/podman/podman.sock bind-mounted
+        |-- authelia rootless podman (own dedicated user, uid 2301)
+              authelia (127.0.0.1:9091)
 ```
 
 ## Interfaces and IPs
@@ -153,6 +155,7 @@ Unbound -> DoT upstreams (1.1.1.1:853 family, 9.9.9.11:853 quad9)
 | `nvr.${domain}` | frigate (home-auto nspawn, port 80) |
 | `z2m.${domain}` | zigbee2mqtt (home-auto nspawn, port 8080) |
 | `oci.${domain}` | `127.0.0.1:3552` (arcane) |
+| `auth.${domain}` | `127.0.0.1:9091` (authelia) |
 | `ghostfolio.${domain}` | `127.0.0.1:3333` |
 | `actualbudget.${domain}` | `127.0.0.1:5006` |
 | `radarr` / `sonarr` / `prowlarr` / `sabnzbd` / `bazarr` / `lidarr` / `seerr` / `bookshelf` / `audiobookshelf` / `maintainerr` `.${domain}` | `127.0.0.1:{7878,8989,9696,8080,6767,8686,5055,8787,13378,6246}` respectively |
@@ -208,6 +211,12 @@ a second NIC on `home-auto-macvlan` for LAN-local discovery.
 
 arcane `127.0.0.1:3552` — separately networked from the three zone bridges;
 holds `/run/podman/podman.sock` (rootful) bind-mounted in.
+
+### authelia rootless podman (own dedicated user)
+
+authelia `127.0.0.1:9091` — runs under its own dedicated rootless podman
+instance (uid 2301, `modules/users/authelia.nix`), separately networked from
+the three zone bridges and from arcane's own podman.
 
 ## Discovery and Multicast
 

@@ -5,6 +5,10 @@
     domain = config.vars.acme.domain;
   in
   {
+    # Authelia OIDC identity provider. Runs rootless under its own dedicated
+    # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
+    # does (see modules/services/virtualisation/arcane.nix). Currently wired
+    # to exactly one OIDC client (Arcane) as a pilot.
     services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
       domain = domain;
       cidrs = config.vars.network.nginxAllowCidrs;
@@ -44,7 +48,7 @@
     # re-indentation, which breaks block-scalar parsing for multi-line
     # values. Kept as its own file and pulled into configuration.yml via
     # Authelia's own `secret`/`mindent` config template function instead
-    # (AUTHELIA_CONFIGURATION_FILTERS=template below).
+    # (X_AUTHELIA_CONFIG_FILTERS=template below).
     sops.secrets."authelia.oidc_issuer_private_key" = {
       owner = "authelia";
       group = "authelia";
@@ -84,6 +88,10 @@
             jwt_secret: '${config.sops.placeholder."authelia.reset_password_jwt_secret"}'
 
         authentication_backend:
+          password_reset:
+            disable: true
+          password_change:
+            disable: true
           file:
             path: '/config/users_database.yml'
             password:
@@ -139,7 +147,6 @@
                   - 'email'
                 grant_types:
                   - 'authorization_code'
-                  - 'refresh_token'
                 response_types:
                   - 'code'
       '';
@@ -155,10 +162,12 @@
             disabled: false
             displayname: 'kra3'
             password: '${config.sops.placeholder."authelia.users.kra3.password_hash"}'
+            email: 'kra3@${domain}'
           drpc:
             disabled: false
             displayname: 'drpc'
             password: '${config.sops.placeholder."authelia.users.drpc.password_hash"}'
+            email: 'drpc@${domain}'
       '';
     };
 
@@ -169,33 +178,19 @@
 
         home.stateVersion = lib.mkDefault "25.11";
 
-        systemd.user.sockets.podman = {
-          Unit.Description = "Podman API Socket";
-          Socket = {
-            ListenStream = "%t/podman/podman.sock";
-            SocketMode = "0660";
-          };
-          Install.WantedBy = [ "sockets.target" ];
-        };
-        systemd.user.services.podman = {
-          Unit = {
-            Description = "Podman API Service";
-            Requires = [ "podman.socket" ];
-            After = [ "podman.socket" ];
-          };
-          Service = {
-            Delegate = "true";
-            Type = "exec";
-            KillMode = "process";
-            ExecStart = "${pkgs.podman}/bin/podman system service";
-          };
-        };
-
         virtualisation.quadlet.containers.authelia = {
           autoStart = true;
           containerConfig = {
             image = "ghcr.io/authelia/authelia:4.39.20";
             publishPorts = [ "127.0.0.1:9091:9091" ];
+            # Unlike Arcane, this container never talks to the podman socket
+            # directly, so it doesn't need systemd.user.sockets/services.podman
+            # (see arcane.nix) — quadlet-nix's generated container units work
+            # without it by default.
+            # If keep-id doesn't map cleanly onto Authelia's image the way it
+            # does for Arcane's (proven), Authelia's official image separately
+            # supports PUID/PGID env vars as a fallback, so its entrypoint
+            # chowns /data itself.
             userns = "keep-id";
             volumes = [
               "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"
@@ -204,7 +199,7 @@
               "/srv/authelia:/data"
             ];
             environments = {
-              AUTHELIA_CONFIGURATION_FILTERS = "template";
+              X_AUTHELIA_CONFIG_FILTERS = "template";
             };
           };
         };

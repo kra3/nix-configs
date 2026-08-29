@@ -13,7 +13,7 @@
   {
     virtualisation.quadlet.containers.home-assistant = {
       containerConfig = {
-        image = "ghcr.io/home-assistant/home-assistant:2026.8.2";
+        image = "ghcr.io/home-assistant/home-assistant:2026.10.0.dev202608290223";
         publishPorts = [ "127.0.0.1:8123:8123" ];
         networks = [
           "${network.ref}:ip=10.3.2.10"

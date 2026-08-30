@@ -106,6 +106,24 @@
 
         access_control:
           default_policy: 'one_factor'
+          rules:
+            # These apps' /api paths carry their own API-key auth and are
+            # legitimately called by external clients that don't hold an
+            # Authelia session (mobile companion apps, automation scripts,
+            # etc.) — bypassing Authelia here doesn't weaken anything, it
+            # just stops Authelia from *also* demanding a session cookie on
+            # top of the app's own key. Everything else on these domains
+            # (the UI) still falls through to default_policy above.
+            - domain:
+                - 'radarr.${domain}'
+                - 'sonarr.${domain}'
+                - 'lidarr.${domain}'
+                - 'prowlarr.${domain}'
+                - 'bazarr.${domain}'
+                - 'sabnzbd.${domain}'
+              resources:
+                - '^/api([/?].*)?$'
+              policy: 'bypass'
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'

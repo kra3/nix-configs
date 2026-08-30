@@ -4,7 +4,8 @@
     virtualisation.quadlet.containers.actualbudget = {
       containerConfig = {
         image = "actualbudget/actual-server:26.8.1";
-        publishPorts = [ "127.0.0.1:5006:5006" ];
+        # No publishPorts: see services/media/acquisition/radarr.nix — nginx
+        # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";
         environments = {
           TZ = "UTC";

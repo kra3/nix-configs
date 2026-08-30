@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-audiobookshelf = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.audiobookshelf;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-audiobookshelf ];
@@ -9,8 +10,9 @@
     virtualisation.quadlet.containers.audiobookshelf = {
       containerConfig = {
         # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why.
-        networks = [ "${network.ref}:ip=10.3.1.2" ];
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.audiobookshelf).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/audiobookshelf/config:/config"
           "/srv/appdata/media-mgmt/audiobookshelf/metadata:/metadata"
@@ -28,7 +30,7 @@
       # Container's actual listen port (80), not the old published host
       # port (13378) — those only matched by coincidence of the publish
       # mapping, which no longer exists.
-      upstream = "http://10.3.1.2:80";
+      upstream = "http://${ip}:80";
       forwardAuth = true;
     };
   };

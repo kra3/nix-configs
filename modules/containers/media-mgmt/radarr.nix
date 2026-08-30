@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-radarr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.radarr;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-radarr ];
@@ -21,7 +22,8 @@
         # it directly on the bridge instead of via a host-loopback publish
         # (see services/media/acquisition/radarr.nix) without disturbing
         # whatever already resolves/references this container's address.
-        networks = [ "${network.ref}:ip=10.3.1.13" ];
+        # IP centralized in vars.nix (podmanAddresses.radarr).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/radarr:/config"
           "/srv/media:/data"
@@ -32,7 +34,7 @@
     services.nginx.virtualHosts."radarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://10.3.1.13:7878";
+      upstream = "http://${ip}:7878";
       forwardAuth = true;
     };
   };

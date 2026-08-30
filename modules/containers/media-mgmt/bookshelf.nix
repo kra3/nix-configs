@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-bookshelf = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.bookshelf;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-bookshelf ];
@@ -18,8 +19,9 @@
     virtualisation.quadlet.containers.bookshelf = {
       containerConfig = {
         # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why.
-        networks = [ "${network.ref}:ip=10.3.1.4" ];
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.bookshelf).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/bookshelf:/config"
           "/srv/media:/data"
@@ -30,7 +32,7 @@
     services.nginx.virtualHosts."bookshelf.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://10.3.1.4:8787";
+      upstream = "http://${ip}:8787";
       forwardAuth = true;
     };
   };

@@ -2,6 +2,7 @@
   flake.nixosModules.containers-life-actualbudget = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.life;
+    ip = config.vars.network.podmanAddresses.actualbudget;
   in
   {
     imports = [ flakeModules.nixos.services-finance-actualbudget ];
@@ -9,8 +10,9 @@
     virtualisation.quadlet.containers.actualbudget = {
       containerConfig = {
         # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why.
-        networks = [ "${network.ref}:ip=10.3.0.2" ];
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.actualbudget).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/life/actualbudget:/data"
         ];
@@ -20,7 +22,7 @@
     services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://10.3.0.2:5006";
+      upstream = "http://${ip}:5006";
       forwardAuth = true;
     };
   };

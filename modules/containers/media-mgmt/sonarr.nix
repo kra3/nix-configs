@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-sonarr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.sonarr;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-sonarr ];
@@ -18,8 +19,9 @@
     virtualisation.quadlet.containers.sonarr = {
       containerConfig = {
         # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why.
-        networks = [ "${network.ref}:ip=10.3.1.10" ];
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.sonarr).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/sonarr:/config"
           "/srv/media:/data"
@@ -30,7 +32,7 @@
     services.nginx.virtualHosts."sonarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://10.3.1.10:8989";
+      upstream = "http://${ip}:8989";
       forwardAuth = true;
     };
   };

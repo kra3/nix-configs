@@ -2,6 +2,7 @@
   flake.nixosModules.containers-life-ghostfolio-ghostfolio = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.life;
+    ip = config.vars.network.podmanAddresses.ghostfolio;
   in
   {
     imports = [ flakeModules.nixos.services-finance-ghostfolio-ghostfolio ];
@@ -32,8 +33,9 @@
     virtualisation.quadlet.containers.ghostfolio = {
       containerConfig = {
         # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why.
-        networks = [ "${network.ref}:ip=10.3.0.4" ];
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.ghostfolio).
+        networks = [ "${network.ref}:ip=${ip}" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "life-network.service" ];
@@ -44,7 +46,7 @@
     services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://10.3.0.4:3333";
+      upstream = "http://${ip}:3333";
       forwardAuth = true;
     };
   };

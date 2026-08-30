@@ -599,15 +599,15 @@
   mode: single
 
 - id: sleep_alarmo_arm_home
-  alias: Sleep — Arm Alarmo (home)
+  alias: Sleep — Arm Alarmo (night)
   description: >-
-    Arm Alarmo in home mode when sleep schedule starts.
+    Arm Alarmo in night mode when sleep schedule starts.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   actions:
-  - action: alarm_control_panel.alarm_arm_home
+  - action: alarm_control_panel.alarm_arm_night
     target:
       entity_id: alarm_control_panel.vasudha_secure
   mode: single

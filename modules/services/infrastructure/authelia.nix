@@ -106,7 +106,6 @@
 
         access_control:
           default_policy: 'deny'
-          rules: []
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'

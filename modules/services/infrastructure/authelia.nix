@@ -180,6 +180,30 @@
 
         home.stateVersion = lib.mkDefault "25.11";
 
+        # sops-nix re-renders these paths in place on every switch (the path
+        # itself never changes, so the container's unit file doesn't change
+        # either) — nothing restarts the container on its own. restartUnits
+        # can't help here since it only ever runs a plain (system) `systemctl
+        # restart`, and this is a `systemctl --user` unit under the authelia
+        # user's own instance. Watch the paths directly and restart on
+        # change instead.
+        systemd.user.paths.authelia-config-reload = {
+          Unit.Description = "Watch Authelia's rendered config/secrets for changes";
+          Path.PathChanged = [
+            config.sops.templates."authelia-configuration.yml".path
+            config.sops.templates."authelia-users_database.yml".path
+            config.sops.secrets."authelia.oidc_issuer_private_key".path
+          ];
+          Install.WantedBy = [ "paths.target" ];
+        };
+        systemd.user.services.authelia-config-reload = {
+          Unit.Description = "Restart Authelia after its config changes";
+          Service = {
+            Type = "oneshot";
+            ExecStart = "systemctl --user restart authelia.service";
+          };
+        };
+
         virtualisation.quadlet.containers.authelia = {
           autoStart = true;
           containerConfig = {

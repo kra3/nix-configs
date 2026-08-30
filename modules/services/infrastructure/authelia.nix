@@ -3,78 +3,7 @@
   { config, lib, inputs, flakeLib, ... }:
   let
     domain = config.vars.acme.domain;
-  in
-  {
-    # Authelia OIDC identity provider. Runs rootless under its own dedicated
-    # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
-    # does (see modules/services/virtualisation/arcane.nix). Currently wired
-    # to exactly one OIDC client (Arcane) as a pilot.
-    services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
-      domain = domain;
-      cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:9091";
-    };
-
-    # Sibling of /srv/appdata for the same reason as /srv/arcane (see
-    # modules/services/virtualisation/arcane.nix): /srv/appdata's ZFS
-    # dataset has no acltype=posixacl, so ACLs for a non-root app there
-    # silently no-op.
-    systemd.tmpfiles.rules = [
-      "d /srv/authelia 0750 authelia authelia - -"
-    ];
-
-    sops.secrets."authelia.session_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.storage_encryption_key" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_hmac_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.reset_password_jwt_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    # Not templated like the secrets above: it's a multi-line PEM, and
-    # sops.templates does raw textual substitution with no YAML
-    # re-indentation, which breaks block-scalar parsing for multi-line
-    # values. Kept as its own file and pulled into configuration.yml via
-    # Authelia's own `secret`/`mindent` config template function instead
-    # (X_AUTHELIA_CONFIG_FILTERS=template below).
-    sops.secrets."authelia.oidc_issuer_private_key" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.users.kra3.password_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.users.drpc.password_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-
-    sops.templates."authelia-configuration.yml" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-      content = ''
+    configurationYmlContent = ''
         theme: 'auto'
 
         server:
@@ -168,13 +97,7 @@
                 response_types:
                   - 'code'
       '';
-    };
-
-    sops.templates."authelia-users_database.yml" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-      content = ''
+    usersDatabaseYmlContent = ''
         users:
           kra3:
             disabled: false
@@ -189,6 +112,92 @@
             password: '${config.sops.placeholder."authelia.users.drpc.password_hash"}'
             email: 'drpc@${domain}'
       '';
+    # Neither string above embeds actual secret VALUES (sops placeholders
+    # are stable tokens, substituted after this hash is computed), so this
+    # changes exactly when the YAML content itself changes — not on every
+    # secret rotation, but that's already the narrower, more common case
+    # this exists for (see the container's environments below for why this
+    # is needed at all).
+    configHash = builtins.hashString "sha256" (configurationYmlContent + usersDatabaseYmlContent);
+  in
+  {
+    # Authelia OIDC identity provider. Runs rootless under its own dedicated
+    # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
+    # does (see modules/services/virtualisation/arcane.nix). Currently wired
+    # to exactly one OIDC client (Arcane) as a pilot.
+    services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
+      domain = domain;
+      cidrs = config.vars.network.nginxAllowCidrs;
+      upstream = "http://127.0.0.1:9091";
+    };
+
+    # Sibling of /srv/appdata for the same reason as /srv/arcane (see
+    # modules/services/virtualisation/arcane.nix): /srv/appdata's ZFS
+    # dataset has no acltype=posixacl, so ACLs for a non-root app there
+    # silently no-op.
+    systemd.tmpfiles.rules = [
+      "d /srv/authelia 0750 authelia authelia - -"
+    ];
+
+    sops.secrets."authelia.session_secret" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.storage_encryption_key" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_hmac_secret" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.reset_password_jwt_secret" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    # Not templated like the secrets above: it's a multi-line PEM, and
+    # sops.templates does raw textual substitution with no YAML
+    # re-indentation, which breaks block-scalar parsing for multi-line
+    # values. Kept as its own file and pulled into configuration.yml via
+    # Authelia's own `secret`/`mindent` config template function instead
+    # (X_AUTHELIA_CONFIG_FILTERS=template below).
+    sops.secrets."authelia.oidc_issuer_private_key" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.users.kra3.password_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.users.drpc.password_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+
+    sops.templates."authelia-configuration.yml" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+      content = configurationYmlContent;
+    };
+
+    sops.templates."authelia-users_database.yml" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+      content = usersDatabaseYmlContent;
     };
 
     home-manager.users.authelia =
@@ -197,30 +206,6 @@
         imports = [ inputs.quadlet-nix.homeManagerModules.quadlet ];
 
         home.stateVersion = lib.mkDefault "25.11";
-
-        # sops-nix re-renders these paths in place on every switch (the path
-        # itself never changes, so the container's unit file doesn't change
-        # either) — nothing restarts the container on its own. restartUnits
-        # can't help here since it only ever runs a plain (system) `systemctl
-        # restart`, and this is a `systemctl --user` unit under the authelia
-        # user's own instance. Watch the paths directly and restart on
-        # change instead.
-        systemd.user.paths.authelia-config-reload = {
-          Unit.Description = "Watch Authelia's rendered config/secrets for changes";
-          Path.PathChanged = [
-            config.sops.templates."authelia-configuration.yml".path
-            config.sops.templates."authelia-users_database.yml".path
-            config.sops.secrets."authelia.oidc_issuer_private_key".path
-          ];
-          Install.WantedBy = [ "paths.target" ];
-        };
-        systemd.user.services.authelia-config-reload = {
-          Unit.Description = "Restart Authelia after its config changes";
-          Service = {
-            Type = "oneshot";
-            ExecStart = "systemctl --user restart authelia.service";
-          };
-        };
 
         virtualisation.quadlet.containers.authelia = {
           autoStart = true;
@@ -244,6 +229,19 @@
             ];
             environments = {
               X_AUTHELIA_CONFIG_FILTERS = "template";
+              # Unused by Authelia itself — sops-nix re-renders the config
+              # templates in place at a stable path (see the two
+              # sops.templates above), so the container's own unit file
+              # never changes on a config-only edit and nothing restarts
+              # it. A systemd.user.paths watcher was tried here first, but
+              # home-manager's activation script only ever restarts
+              # changed *.service units, never .path units — it silently
+              # never started at all. Embedding the content hash here
+              # forces this *.service unit's own file to change (and thus
+              # restart, via the same mechanism that already reliably
+              # restarts every other quadlet unit on a real change)
+              # whenever the config content does.
+              RESTART_TRIGGER_CONFIG_HASH = configHash;
             };
           };
         };

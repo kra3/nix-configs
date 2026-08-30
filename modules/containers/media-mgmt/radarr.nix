@@ -17,7 +17,11 @@
 
     virtualisation.quadlet.containers.radarr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP, so nginx can reach
+        # it directly on the bridge instead of via a host-loopback publish
+        # (see services/media/acquisition/radarr.nix) without disturbing
+        # whatever already resolves/references this container's address.
+        networks = [ "${network.ref}:ip=10.3.1.13" ];
         volumes = [
           "/srv/appdata/media-mgmt/radarr:/config"
           "/srv/media:/data"
@@ -28,7 +32,8 @@
     services.nginx.virtualHosts."radarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:7878";
+      upstream = "http://10.3.1.13:7878";
+      forwardAuth = true;
     };
   };
 }

@@ -105,7 +105,7 @@
                 salt_length: 16
 
         access_control:
-          default_policy: 'deny'
+          default_policy: 'one_factor'
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'

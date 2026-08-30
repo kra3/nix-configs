@@ -144,6 +144,7 @@
                   - 'openid'
                   - 'profile'
                   - 'email'
+                  - 'groups'
                 grant_types:
                   - 'authorization_code'
                 response_types:
@@ -162,6 +163,8 @@
             displayname: 'kra3'
             password: '${config.sops.placeholder."authelia.users.kra3.password_hash"}'
             email: 'kra3@${domain}'
+            groups:
+              - 'admin'
           drpc:
             disabled: false
             displayname: 'drpc'

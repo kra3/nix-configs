@@ -126,7 +126,7 @@
               OIDC_ENABLED = "true";
               OIDC_CLIENT_ID = "arcane";
               OIDC_ISSUER_URL = "https://auth.${domain}";
-              OIDC_SCOPES = "openid profile email";
+              OIDC_SCOPES = "openid profile email groups";
               DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
             };
             environmentFiles = [ arcaneEnvPath ];

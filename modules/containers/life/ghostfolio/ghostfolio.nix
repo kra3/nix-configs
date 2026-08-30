@@ -31,7 +31,9 @@
 
     virtualisation.quadlet.containers.ghostfolio = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why.
+        networks = [ "${network.ref}:ip=10.3.0.4" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "life-network.service" ];
@@ -42,7 +44,8 @@
     services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:3333";
+      upstream = "http://10.3.0.4:3333";
+      forwardAuth = true;
     };
   };
 }

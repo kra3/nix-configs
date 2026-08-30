@@ -10,7 +10,8 @@
         healthTimeout = "10s";
         healthRetries = 3;
         healthStartPeriod = "60s";
-        publishPorts = [ "127.0.0.1:3333:3333" ];
+        # No publishPorts: see services/media/acquisition/radarr.nix — nginx
+        # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";
         environments = {
           TZ = "UTC";

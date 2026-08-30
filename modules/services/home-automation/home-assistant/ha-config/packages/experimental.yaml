@@ -1,0 +1,11 @@
+# Writable sandbox for automations created via the HA UI. automations.yaml
+# itself is bind-mounted read-only from the Nix store (see container.nix),
+# so this is the only place the automation editor can actually save to.
+# Points one directory up because packages/ is read-only too — the target
+# file lives directly under /config, seeded once as `[]` by storage.nix and
+# never touched again by deploys.
+#
+# Once an automation here is proven good, port its YAML into
+# ../automations.yaml via a PR, then delete it from here so it isn't
+# defined twice.
+automation: !include ../automations_experimental.yaml

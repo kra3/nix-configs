@@ -17,7 +17,9 @@
 
     virtualisation.quadlet.containers.lidarr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why.
+        networks = [ "${network.ref}:ip=10.3.1.15" ];
         volumes = [
           "/srv/appdata/media-mgmt/lidarr:/config"
           "/srv/media:/data"
@@ -28,7 +30,8 @@
     services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:8686";
+      upstream = "http://10.3.1.15:8686";
+      forwardAuth = true;
     };
   };
 }

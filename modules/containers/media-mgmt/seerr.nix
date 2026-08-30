@@ -17,7 +17,9 @@
 
     virtualisation.quadlet.containers.seerr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why.
+        networks = [ "${network.ref}:ip=10.3.1.11" ];
         volumes = [
           "/srv/appdata/media-mgmt/seerr:/app/config"
         ];
@@ -27,7 +29,8 @@
     services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:5055";
+      upstream = "http://10.3.1.11:5055";
+      forwardAuth = true;
     };
   };
 }

@@ -4,7 +4,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^modules/containers/.*\\.nix$/"],
+      "managerFilePatterns": ["/^modules/.*\\.nix$/"],
       "matchStrings": [
         "image\\s*=\\s*\"(?<depName>[^:\"]+):(?<currentValue>[^\"]+)\"\\s*;"
       ],

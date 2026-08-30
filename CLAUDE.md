@@ -80,7 +80,7 @@ Hosts, containers, and home-manager configs consume registered modules **by name
 ## Commits & PRs
 - Short imperative commit messages scoped to one host or module (e.g. `Add laptop NixOS profile`).
 - PRs: describe what changed, list commands run (e.g. `nix flake check`), call out affected hosts.
-- **Never commit directly to `main`.** Always open a PR. Base every PR on `main` — `release` is cut *from* `main` (not the other way around), so a PR opened against `release` would omit anything merged to `main` since the last cut. Make the change in a git worktree so the primary checkout (which may be mid-use in another terminal, especially on `sutala`) is left untouched.
+- **Never commit directly to `main`.** Always open a PR against `main` — it's protected (PRs + required checks) and is what `sutala`'s nightly auto-upgrade tracks directly. Make the change in a git worktree so the primary checkout (which may be mid-use in another terminal, especially on `sutala`) is left untouched.
 
 ## Verification
 Before asserting file or config state, re-read it and reference the verification. If you cannot verify, say so.

@@ -8,7 +8,9 @@
 
     virtualisation.quadlet.containers.audiobookshelf = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why.
+        networks = [ "${network.ref}:ip=10.3.1.2" ];
         volumes = [
           "/srv/appdata/media-mgmt/audiobookshelf/config:/config"
           "/srv/appdata/media-mgmt/audiobookshelf/metadata:/metadata"
@@ -23,7 +25,11 @@
     services.nginx.virtualHosts."audiobookshelf.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:13378";
+      # Container's actual listen port (80), not the old published host
+      # port (13378) — those only matched by coincidence of the publish
+      # mapping, which no longer exists.
+      upstream = "http://10.3.1.2:80";
+      forwardAuth = true;
     };
   };
 }

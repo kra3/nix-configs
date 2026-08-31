@@ -26,6 +26,9 @@
       HOMEPAGE_VAR_TAILSCALE_DEVICE_ID=${config.sops.placeholder."homepage.tailscale_device_id"}
       HOMEPAGE_VAR_HOMEASSISTANT_TOKEN=${config.sops.placeholder."homepage.homeassistant_token"}
       HOMEPAGE_VAR_ARCANE_KEY=${config.sops.placeholder."homepage.arcane_key"}
+      HOMEPAGE_VAR_NAVIDROME_TOKEN=${config.sops.placeholder."homepage.navidrome_token"}
+      HOMEPAGE_VAR_NAVIDROME_SALT=${config.sops.placeholder."homepage.navidrome_salt"}
+      HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY=${config.sops.placeholder."homepage.audiobookshelf_key"}
     '';
   in
   {
@@ -38,6 +41,9 @@
     sops.secrets."homepage.adguard_password" = { };
     sops.secrets."homepage.homeassistant_token" = { };
     sops.secrets."homepage.arcane_key" = { };
+    sops.secrets."homepage.navidrome_token" = { };
+    sops.secrets."homepage.navidrome_salt" = { };
+    sops.secrets."homepage.audiobookshelf_key" = { };
 
     # restartUnits: EnvironmentFile= points at a stable path sops-nix rewrites in place, so without this a secret-value-only rotation never restarts the service.
     sops.templates."homepage.env" = {
@@ -114,20 +120,30 @@
             }
             {
               Navidrome = {
-                # Link-only: widget needs a Subsonic user/token(md5)/salt, no account to reuse.
                 description = "Music streaming";
                 icon = "navidrome.png";
                 href = "https://navidrome.${domain}";
                 siteMonitor = "https://navidrome.${domain}";
+                widget = {
+                  type = "navidrome";
+                  url = "http://${net.containers.mediaPlay.localAddress}:4533";
+                  user = "homepage";
+                  token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
+                  salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
+                };
               };
             }
             {
               Audiobookshelf = {
-                # Link-only: widget needs an API key from its own admin UI, not in secrets.yaml.
                 description = "Audiobook & podcast server";
                 icon = "audiobookshelf.png";
                 href = "https://audiobookshelf.${domain}";
                 siteMonitor = "https://audiobookshelf.${domain}";
+                widget = {
+                  type = "audiobookshelf";
+                  url = "http://${ip.audiobookshelf}:80";
+                  key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
+                };
               };
             }
             {

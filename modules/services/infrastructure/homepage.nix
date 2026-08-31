@@ -45,9 +45,12 @@
         title = "sutala";
         theme = "dark";
         headerStyle = "clean";
-        # No built-in "color" value matches Catppuccin -- customCSS below
-        # defines a .theme-catppuccin class to back this.
-        color = "catppuccin";
+        # Homepage's frontend does themes[color].dark directly (mobile
+        # browser chrome color), not just a CSS class name -- must be one
+        # of its fixed enum values (src/utils/styles/themes.js) or the page
+        # crashes. "purple" is closest to Catppuccin's mauve/lavender;
+        # customCSS below overrides its actual colors to match Mocha.
+        color = "purple";
         quicklaunch = {
           searchDescriptions = true;
         };
@@ -73,12 +76,14 @@
         }
       ];
 
-      # Catppuccin Mocha (catppuccin.com/palette), mapped onto Homepage's
-      # own 50-900 --color-* scale (src/styles/theme.css upstream) so every
-      # place that scale is used (cards, borders, the dark-mode page
-      # background at --color-800) picks it up, not just hardcoded overrides.
+      # Catppuccin Mocha (catppuccin.com/palette), overriding the built-in
+      # .theme-purple class's --color-* scale (src/styles/theme.css
+      # upstream) so every place that scale is used (cards, borders, the
+      # dark-mode page background at --color-800) picks it up, not just
+      # hardcoded overrides. Must target .theme-purple specifically, not a
+      # made-up class name -- see the settings.color comment above.
       customCSS = ''
-        .theme-catppuccin {
+        .theme-purple {
           --color-50: 205 214 244;   /* text */
           --color-100: 186 194 222;  /* subtext1 */
           --color-200: 166 173 200;  /* subtext0 */

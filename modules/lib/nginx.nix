@@ -6,6 +6,10 @@ let
   # proxying through. Endpoint/headers per Authelia's documented nginx
   # auth_request integration (server.endpoints.authz."auth-request" ships
   # as one of Authelia's built-in defaults, no extra Authelia config needed).
+  # Exported (not just used by mkProxyVhost below) for apps that need
+  # forward-auth on only some locations of a vhost — e.g. a dashboard UI
+  # sharing a host with API paths a non-browser client must reach without
+  # a session cookie. See media-mgmt/aiostreams.nix.
   forwardAuthLocationConfig = ''
     auth_request /internal/authelia/authz;
     auth_request_set $user $upstream_http_remote_user;
@@ -19,9 +23,27 @@ let
     auth_request_set $redirection_url $upstream_http_location;
     error_page 401 =302 $redirection_url;
   '';
+
+  # The internal endpoint forwardAuthLocationConfig's auth_request calls.
+  # Every vhost using forward-auth on any location needs this location once.
+  autheliaAuthzLocation = {
+    extraConfig = ''
+      internal;
+      proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
+      proxy_set_header X-Original-Method $request_method;
+      proxy_set_header X-Original-URL $scheme://$host$request_uri;
+      proxy_set_header X-Forwarded-For $remote_addr;
+      proxy_set_header Content-Length "";
+      proxy_set_header Connection "";
+      proxy_pass_request_body off;
+      proxy_http_version 1.1;
+    '';
+  };
 in
 {
   flake.lib.nginx = {
+    inherit forwardAuthLocationConfig autheliaAuthzLocation;
+
     # CIDR allowlist block for nginx: allow the given CIDRs, deny everything else.
     mkAllowBlock = cidrs: ''
       ${lib.concatStringsSep "\n" (map (cidr: "allow ${cidr};") cidrs)}
@@ -63,19 +85,7 @@ in
             };
           }
           // lib.optionalAttrs forwardAuth {
-            "/internal/authelia/authz" = {
-              extraConfig = ''
-                internal;
-                proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
-                proxy_set_header X-Original-Method $request_method;
-                proxy_set_header X-Original-URL $scheme://$host$request_uri;
-                proxy_set_header X-Forwarded-For $remote_addr;
-                proxy_set_header Content-Length "";
-                proxy_set_header Connection "";
-                proxy_pass_request_body off;
-                proxy_http_version 1.1;
-              '';
-            };
+            "/internal/authelia/authz" = autheliaAuthzLocation;
           };
       };
   };

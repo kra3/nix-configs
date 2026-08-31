@@ -198,6 +198,10 @@
                     };
                   };
                 }
+              ];
+            }
+            {
+              Acquisition = [
                 {
                   # No dedicated Homepage widget for AIOStreams yet, plain link.
                   AIOStreams = {
@@ -207,10 +211,6 @@
                     siteMonitor = "https://aiostreams.${domain}";
                   };
                 }
-              ];
-            }
-            {
-              Acquisition = [
                 {
                   Radarr = {
                     description = "Movie management";

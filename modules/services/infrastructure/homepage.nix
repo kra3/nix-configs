@@ -78,7 +78,7 @@
             };
             Acquisition = {
               style = "row";
-              columns = 4;
+              columns = 3;
             };
           };
           Finance = {

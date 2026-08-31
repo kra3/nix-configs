@@ -68,6 +68,32 @@
         quicklaunch = {
           searchDescriptions = true;
         };
+        layout = {
+          Media = {
+            style = "row";
+            columns = 2;
+            Play = {
+              style = "row";
+              columns = 2;
+            };
+            Acquisition = {
+              style = "row";
+              columns = 4;
+            };
+          };
+          Finance = {
+            style = "row";
+            columns = 2;
+          };
+          Home = {
+            style = "row";
+            columns = 2;
+          };
+          Infra = {
+            style = "row";
+            columns = 3;
+          };
+        };
       };
 
       widgets = [
@@ -94,165 +120,169 @@
         {
           Media = [
             {
-              Jellyfin = {
-                description = "Movie & TV streaming";
-                icon = "jellyfin.png";
-                href = "https://jellyfin.${domain}";
-                siteMonitor = "https://jellyfin.${domain}";
-                widget = {
-                  type = "jellyfin";
-                  url = "http://${net.containers.mediaPlay.localAddress}:8096";
-                  key = "{{HOMEPAGE_VAR_JELLYFIN_KEY}}";
-                };
-              };
+              Play = [
+                {
+                  Jellyfin = {
+                    description = "Movie & TV streaming";
+                    icon = "jellyfin.png";
+                    href = "https://jellyfin.${domain}";
+                    siteMonitor = "https://jellyfin.${domain}";
+                    widget = {
+                      type = "jellyfin";
+                      url = "http://${net.containers.mediaPlay.localAddress}:8096";
+                      key = "{{HOMEPAGE_VAR_JELLYFIN_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Seerr = {
+                    description = "Media requests";
+                    icon = "overseerr.png";
+                    href = "https://seerr.${domain}";
+                    siteMonitor = "https://seerr.${domain}";
+                    widget = {
+                      type = "seerr";
+                      url = "http://${ip.seerr}:5055";
+                      key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Navidrome = {
+                    description = "Music streaming";
+                    icon = "navidrome.png";
+                    href = "https://navidrome.${domain}";
+                    siteMonitor = "https://navidrome.${domain}";
+                    widget = {
+                      type = "navidrome";
+                      url = "http://${net.containers.mediaPlay.localAddress}:4533";
+                      user = "homepage";
+                      token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
+                      salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
+                    };
+                  };
+                }
+                {
+                  Audiobookshelf = {
+                    description = "Audiobook & podcast server";
+                    icon = "audiobookshelf.png";
+                    href = "https://audiobookshelf.${domain}";
+                    siteMonitor = "https://audiobookshelf.${domain}";
+                    widget = {
+                      type = "audiobookshelf";
+                      url = "http://${ip.audiobookshelf}:80";
+                      key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
+                    };
+                  };
+                }
+              ];
             }
             {
-              Seerr = {
-                description = "Media requests";
-                icon = "overseerr.png";
-                href = "https://seerr.${domain}";
-                siteMonitor = "https://seerr.${domain}";
-                widget = {
-                  type = "seerr";
-                  url = "http://${ip.seerr}:5055";
-                  key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
-                };
-              };
-            }
-            {
-              Navidrome = {
-                description = "Music streaming";
-                icon = "navidrome.png";
-                href = "https://navidrome.${domain}";
-                siteMonitor = "https://navidrome.${domain}";
-                widget = {
-                  type = "navidrome";
-                  url = "http://${net.containers.mediaPlay.localAddress}:4533";
-                  user = "homepage";
-                  token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
-                  salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
-                };
-              };
-            }
-            {
-              Audiobookshelf = {
-                description = "Audiobook & podcast server";
-                icon = "audiobookshelf.png";
-                href = "https://audiobookshelf.${domain}";
-                siteMonitor = "https://audiobookshelf.${domain}";
-                widget = {
-                  type = "audiobookshelf";
-                  url = "http://${ip.audiobookshelf}:80";
-                  key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
-                };
-              };
-            }
-            {
-              Bookshelf = {
-                description = "Book tracking";
-                icon = "mdi-book-open-page-variant";
-                href = "https://bookshelf.${domain}";
-                siteMonitor = "https://bookshelf.${domain}";
-                widget = {
-                  type = "readarr";
-                  url = "http://${ip.bookshelf}:8787";
-                  key = "{{HOMEPAGE_VAR_BOOKSHELF_KEY}}";
-                };
-              };
-            }
-          ];
-        }
-        {
-          Acquisition = [
-            {
-              Radarr = {
-                description = "Movie management";
-                icon = "radarr.png";
-                href = "https://radarr.${domain}";
-                siteMonitor = "https://radarr.${domain}";
-                widget = {
-                  type = "radarr";
-                  url = "http://${ip.radarr}:7878";
-                  key = "{{HOMEPAGE_VAR_RADARR_KEY}}";
-                };
-              };
-            }
-            {
-              Sonarr = {
-                description = "TV show management";
-                icon = "sonarr.png";
-                href = "https://sonarr.${domain}";
-                siteMonitor = "https://sonarr.${domain}";
-                widget = {
-                  type = "sonarr";
-                  url = "http://${ip.sonarr}:8989";
-                  key = "{{HOMEPAGE_VAR_SONARR_KEY}}";
-                };
-              };
-            }
-            {
-              Lidarr = {
-                description = "Music management";
-                icon = "lidarr.png";
-                href = "https://lidarr.${domain}";
-                siteMonitor = "https://lidarr.${domain}";
-                widget = {
-                  type = "lidarr";
-                  url = "http://${ip.lidarr}:8686";
-                  key = "{{HOMEPAGE_VAR_LIDARR_KEY}}";
-                };
-              };
-            }
-            {
-              Prowlarr = {
-                description = "Indexer management";
-                icon = "prowlarr.png";
-                href = "https://prowlarr.${domain}";
-                siteMonitor = "https://prowlarr.${domain}";
-                widget = {
-                  type = "prowlarr";
-                  url = "http://${ip.prowlarr}:9696";
-                  key = "{{HOMEPAGE_VAR_PROWLARR_KEY}}";
-                };
-              };
-            }
-            {
-              Bazarr = {
-                description = "Subtitle management";
-                icon = "bazarr.png";
-                href = "https://bazarr.${domain}";
-                siteMonitor = "https://bazarr.${domain}";
-                widget = {
-                  type = "bazarr";
-                  url = "http://${ip.bazarr}:6767";
-                  key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
-                };
-              };
-            }
-            {
-              SABnzbd = {
-                description = "Usenet downloader";
-                icon = "sabnzbd.png";
-                href = "https://sabnzbd.${domain}";
-                siteMonitor = "https://sabnzbd.${domain}";
-                widget = {
-                  type = "sabnzbd";
-                  url = "http://${ip.sabnzbd}:8080";
-                  key = "{{HOMEPAGE_VAR_SABNZBD_KEY}}";
-                };
-              };
-            }
-            {
-              Maintainerr = {
-                description = "Library cleanup automation";
-                icon = "maintainerr.png";
-                href = "https://maintainerr.${domain}";
-                siteMonitor = "https://maintainerr.${domain}";
-                widget = {
-                  type = "maintainerr";
-                  url = "http://${ip.maintainerr}:6246";
-                };
-              };
+              Acquisition = [
+                {
+                  Radarr = {
+                    description = "Movie management";
+                    icon = "radarr.png";
+                    href = "https://radarr.${domain}";
+                    siteMonitor = "https://radarr.${domain}";
+                    widget = {
+                      type = "radarr";
+                      url = "http://${ip.radarr}:7878";
+                      key = "{{HOMEPAGE_VAR_RADARR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Sonarr = {
+                    description = "TV show management";
+                    icon = "sonarr.png";
+                    href = "https://sonarr.${domain}";
+                    siteMonitor = "https://sonarr.${domain}";
+                    widget = {
+                      type = "sonarr";
+                      url = "http://${ip.sonarr}:8989";
+                      key = "{{HOMEPAGE_VAR_SONARR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Lidarr = {
+                    description = "Music management";
+                    icon = "lidarr.png";
+                    href = "https://lidarr.${domain}";
+                    siteMonitor = "https://lidarr.${domain}";
+                    widget = {
+                      type = "lidarr";
+                      url = "http://${ip.lidarr}:8686";
+                      key = "{{HOMEPAGE_VAR_LIDARR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Prowlarr = {
+                    description = "Indexer management";
+                    icon = "prowlarr.png";
+                    href = "https://prowlarr.${domain}";
+                    siteMonitor = "https://prowlarr.${domain}";
+                    widget = {
+                      type = "prowlarr";
+                      url = "http://${ip.prowlarr}:9696";
+                      key = "{{HOMEPAGE_VAR_PROWLARR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Bazarr = {
+                    description = "Subtitle management";
+                    icon = "bazarr.png";
+                    href = "https://bazarr.${domain}";
+                    siteMonitor = "https://bazarr.${domain}";
+                    widget = {
+                      type = "bazarr";
+                      url = "http://${ip.bazarr}:6767";
+                      key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
+                    };
+                  };
+                }
+                {
+                  SABnzbd = {
+                    description = "Usenet downloader";
+                    icon = "sabnzbd.png";
+                    href = "https://sabnzbd.${domain}";
+                    siteMonitor = "https://sabnzbd.${domain}";
+                    widget = {
+                      type = "sabnzbd";
+                      url = "http://${ip.sabnzbd}:8080";
+                      key = "{{HOMEPAGE_VAR_SABNZBD_KEY}}";
+                    };
+                  };
+                }
+                {
+                  Maintainerr = {
+                    description = "Library cleanup automation";
+                    icon = "maintainerr.png";
+                    href = "https://maintainerr.${domain}";
+                    siteMonitor = "https://maintainerr.${domain}";
+                    widget = {
+                      type = "maintainerr";
+                      url = "http://${ip.maintainerr}:6246";
+                    };
+                  };
+                }
+                {
+                  Bookshelf = {
+                    description = "Book tracking";
+                    icon = "mdi-book-open-page-variant";
+                    href = "https://bookshelf.${domain}";
+                    siteMonitor = "https://bookshelf.${domain}";
+                    widget = {
+                      type = "readarr";
+                      url = "http://${ip.bookshelf}:8787";
+                      key = "{{HOMEPAGE_VAR_BOOKSHELF_KEY}}";
+                    };
+                  };
+                }
+              ];
             }
           ];
         }

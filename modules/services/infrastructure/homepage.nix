@@ -21,15 +21,27 @@
       HOMEPAGE_VAR_ADGUARD_USER=${config.sops.placeholder."dns.adguard.username"}
       HOMEPAGE_VAR_ADGUARD_PASSWORD=${config.sops.placeholder."dns.adguard.password"}
       HOMEPAGE_VAR_FRIGATE_PASSWORD=${config.sops.placeholder."homepage.frigate_password"}
+      HOMEPAGE_VAR_GHOSTFOLIO_TOKEN=${config.sops.placeholder."homepage.ghostfolio_token"}
     '';
   in
   {
     # Most secrets above are already declared elsewhere in this host config
     # (media-mgmt/*.nix, media-play.nix, monitoring.nix) -- placeholders
     # work here without redeclaring sops.secrets for them. frigate_password
-    # is homepage-only (a dedicated viewer-role Frigate account), so it
-    # needs its own declaration.
+    # and ghostfolio_token are homepage-only, so they need their own
+    # declarations.
     sops.secrets."homepage.frigate_password" = { };
+    # Bearer token from a manual POST to Ghostfolio's own auth API using its
+    # account Security Token (see docs/widgets/services/ghostfolio.md
+    # upstream) -- expires 2027-02-27. To rotate: grab a fresh Security
+    # Token from Ghostfolio's Settings > Account page, then from this host
+    # (reaches ip.ghostfolio directly):
+    #   curl -s -X POST http://<ip.ghostfolio>:3333/api/v1/auth/anonymous \
+    #     -H 'Content-Type: application/json' \
+    #     -d '{"accessToken": "<security token>"}'
+    # take the `authToken` from the response and:
+    #   sops set secrets/secrets.yaml '["homepage.ghostfolio_token"]' '"<authToken>"'
+    sops.secrets."homepage.ghostfolio_token" = { };
 
     # Default owner (root) is fine: EnvironmentFile= is read by systemd
     # itself before the DynamicUser sandboxed process starts, not by the
@@ -231,14 +243,16 @@
             }
             {
               Ghostfolio = {
-                # Link-only: its widget needs a bearer token minted via a
-                # manual POST to its own auth API, and that token expires
-                # every 6 months -- ongoing manual upkeep, not just a
-                # one-time setup, so deliberately not wired up here.
                 description = "Investment portfolio tracking";
                 icon = "ghostfolio.png";
                 href = "https://ghostfolio.${domain}";
-                siteMonitor = "https://ghostfolio.${domain}";
+                widget = {
+                  type = "ghostfolio";
+                  url = "http://${ip.ghostfolio}:3333";
+                  # Expires 2027-02-27 (see the sops.secrets comment above)
+                  # -- re-run the auth exchange and `sops set` before then.
+                  key = "{{HOMEPAGE_VAR_GHOSTFOLIO_TOKEN}}";
+                };
               };
             }
           ];

@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.otbr = {
       containerConfig = {
-        image = "docker.io/denniswitt/homeassistant-otbr:4.2.2";
+        image = "docker.io/denniswitt/homeassistant-otbr:4.2.3";
         publishPorts = [ "127.0.0.1:8081:8081" ];
         logDriver = "journald";
         environments = {

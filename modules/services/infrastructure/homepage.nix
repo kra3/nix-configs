@@ -134,19 +134,6 @@
                   };
                 }
                 {
-                  Seerr = {
-                    description = "Media requests";
-                    icon = "overseerr.png";
-                    href = "https://seerr.${domain}";
-                    siteMonitor = "https://seerr.${domain}";
-                    widget = {
-                      type = "seerr";
-                      url = "http://${ip.seerr}:5055";
-                      key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
-                    };
-                  };
-                }
-                {
                   Navidrome = {
                     description = "Music streaming";
                     icon = "navidrome.png";
@@ -158,6 +145,19 @@
                       user = "homepage";
                       token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
                       salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
+                    };
+                  };
+                }
+                {
+                  Seerr = {
+                    description = "Media requests";
+                    icon = "overseerr.png";
+                    href = "https://seerr.${domain}";
+                    siteMonitor = "https://seerr.${domain}";
+                    widget = {
+                      type = "seerr";
+                      url = "http://${ip.seerr}:5055";
+                      key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
                     };
                   };
                 }
@@ -341,19 +341,19 @@
               };
             }
             {
-              "Zigbee2MQTT" = {
-                description = "Zigbee device bridge";
-                icon = "zigbee2mqtt.png";
-                href = "https://z2m.${domain}";
-                siteMonitor = "https://z2m.${domain}";
-              };
-            }
-            {
               "Music Assistant" = {
                 description = "Multi-room audio control";
                 icon = "music-assistant.png";
                 href = "https://ma.${domain}";
                 siteMonitor = "https://ma.${domain}";
+              };
+            }
+            {
+              "Zigbee2MQTT" = {
+                description = "Zigbee device bridge";
+                icon = "zigbee2mqtt.png";
+                href = "https://z2m.${domain}";
+                siteMonitor = "https://z2m.${domain}";
               };
             }
           ];
@@ -376,13 +376,16 @@
               };
             }
             {
-              Prometheus = {
-                description = "Metrics collection";
-                icon = "prometheus.png";
-                siteMonitor = "http://${net.containers.monitoring.localAddress}:9090";
+              "AdGuard Home" = {
+                description = "DNS filtering & ad blocking";
+                icon = "adguard-home.png";
+                href = "https://dns.${domain}";
+                siteMonitor = "https://dns.${domain}";
                 widget = {
-                  type = "prometheus";
-                  url = "http://${net.containers.monitoring.localAddress}:9090";
+                  type = "adguard";
+                  url = "https://dns.${domain}";
+                  username = "{{HOMEPAGE_VAR_ADGUARD_USER}}";
+                  password = "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}";
                 };
               };
             }
@@ -401,24 +404,13 @@
               };
             }
             {
-              Authelia = {
-                description = "SSO identity provider";
-                icon = "authelia.png";
-                href = "https://auth.${domain}";
-                siteMonitor = "https://auth.${domain}";
-              };
-            }
-            {
-              "AdGuard Home" = {
-                description = "DNS filtering & ad blocking";
-                icon = "adguard-home.png";
-                href = "https://dns.${domain}";
-                siteMonitor = "https://dns.${domain}";
+              Prometheus = {
+                description = "Metrics collection";
+                icon = "prometheus.png";
+                siteMonitor = "http://${net.containers.monitoring.localAddress}:9090";
                 widget = {
-                  type = "adguard";
-                  url = "https://dns.${domain}";
-                  username = "{{HOMEPAGE_VAR_ADGUARD_USER}}";
-                  password = "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}";
+                  type = "prometheus";
+                  url = "http://${net.containers.monitoring.localAddress}:9090";
                 };
               };
             }
@@ -433,6 +425,14 @@
                   deviceid = "{{HOMEPAGE_VAR_TAILSCALE_DEVICE_ID}}";
                   key = "{{HOMEPAGE_VAR_TAILSCALE_KEY}}";
                 };
+              };
+            }
+            {
+              Authelia = {
+                description = "SSO identity provider";
+                icon = "authelia.png";
+                href = "https://auth.${domain}";
+                siteMonitor = "https://auth.${domain}";
               };
             }
           ];

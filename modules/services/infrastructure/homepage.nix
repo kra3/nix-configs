@@ -15,6 +15,7 @@
       HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}
       HOMEPAGE_VAR_SABNZBD_KEY=${config.sops.placeholder."media.sabnzbd.api_key"}
       HOMEPAGE_VAR_JELLYFIN_KEY=${config.sops.placeholder."media.jellyfin.apikeys.seerr"}
+      HOMEPAGE_VAR_BOOKSHELF_KEY=${config.sops.placeholder."media.bookshelf.api_key"}
       HOMEPAGE_VAR_GRAFANA_USER=${config.sops.placeholder."monitoring.grafana.admin.user"}
       HOMEPAGE_VAR_GRAFANA_PASSWORD=${config.sops.placeholder."monitoring.grafana.admin.password"}
       HOMEPAGE_VAR_SEERR_KEY=${config.sops.placeholder."media.seerr.api_key"}
@@ -152,6 +153,11 @@
                 icon = "mdi-book-open-page-variant";
                 href = "https://bookshelf.${domain}";
                 siteMonitor = "https://bookshelf.${domain}";
+                widget = {
+                  type = "readarr";
+                  url = "http://${ip.bookshelf}:8787";
+                  key = "{{HOMEPAGE_VAR_BOOKSHELF_KEY}}";
+                };
               };
             }
           ];

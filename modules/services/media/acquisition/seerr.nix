@@ -4,7 +4,8 @@
     virtualisation.quadlet.containers.seerr = {
       containerConfig = {
         image = "ghcr.io/seerr-team/seerr:v3.4.1";
-        publishPorts = [ "127.0.0.1:5055:5055" ];
+        # No publishPorts: see services/media/acquisition/radarr.nix — nginx
+        # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";
         environments = {
           PUID = "1000";

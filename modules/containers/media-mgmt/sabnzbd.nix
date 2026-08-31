@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-sabnzbd = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.sabnzbd;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-sabnzbd ];
@@ -21,7 +22,10 @@
 
     virtualisation.quadlet.containers.sabnzbd = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.sabnzbd).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/sabnzbd:/config"
           "/srv/media/downloads:/data/downloads"
@@ -32,7 +36,8 @@
     services.nginx.virtualHosts."sabnzbd.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:8080";
+      upstream = "http://${ip}:8080";
+      forwardAuth = true;
     };
   };
 }

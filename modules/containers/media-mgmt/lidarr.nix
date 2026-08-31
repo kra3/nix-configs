@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-lidarr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.lidarr;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-lidarr ];
@@ -17,7 +18,10 @@
 
     virtualisation.quadlet.containers.lidarr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.lidarr).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/lidarr:/config"
           "/srv/media:/data"
@@ -28,7 +32,8 @@
     services.nginx.virtualHosts."lidarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:8686";
+      upstream = "http://${ip}:8686";
+      forwardAuth = true;
     };
   };
 }

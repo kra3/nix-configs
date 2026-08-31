@@ -8,5 +8,7 @@
     };
 
     networking.firewall.interfaces.br-life.allowedUDPPorts = [ 53 ];
+    # Ghostfolio/Actual Budget call auth.${domain} directly (own OIDC login).
+    networking.firewall.interfaces.br-life.allowedTCPPorts = [ 443 ];
   };
 }

@@ -24,6 +24,7 @@
     flakeModules.nixos.services-monitoring-alloy-host
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
+    flakeModules.nixos.services-infrastructure-authelia
     flakeModules.nixos.services-tailscale
     flakeModules.nixos.services-niri-default
     flakeModules.nixos.services-dns-default
@@ -47,6 +48,7 @@
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
     flakeModules.nixos.users-arcane
+    flakeModules.nixos.users-authelia
   ];
 
   vars.network = {
@@ -58,6 +60,8 @@
       "127.0.0.1"
       config.vars.network.containers.monitoring.localAddress
       config.vars.network.podmanSubnets.homeAuto
+      # Ghostfolio/Actual Budget call auth.${domain} directly (own OIDC login).
+      config.vars.network.podmanSubnets.life
     ];
   };
 

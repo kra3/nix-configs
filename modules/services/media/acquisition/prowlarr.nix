@@ -4,7 +4,8 @@
     virtualisation.quadlet.containers.prowlarr = {
       containerConfig = {
         image = "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls157";
-        publishPorts = [ "127.0.0.1:9696:9696" ];
+        # No publishPorts: see services/media/acquisition/radarr.nix — nginx
+        # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";
         environments = {
           PUID = "1000";

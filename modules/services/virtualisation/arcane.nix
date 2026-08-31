@@ -46,6 +46,11 @@
       group = "arcane";
       mode = "0400";
     };
+    sops.secrets."arcane.oidc_client_secret" = {
+      owner = "arcane";
+      group = "arcane";
+      mode = "0400";
+    };
 
     sops.templates."arcane.env" = {
       owner = "arcane";
@@ -54,6 +59,7 @@
       content = ''
         ENCRYPTION_KEY=${config.sops.placeholder."arcane.encryption_key"}
         JWT_SECRET=${config.sops.placeholder."arcane.jwt_secret"}
+        OIDC_CLIENT_SECRET=${config.sops.placeholder."arcane.oidc_client_secret"}
       '';
     };
 
@@ -99,6 +105,16 @@
             # uid/gid, so /app/data (owned by arcane:arcane above) is
             # writable without the old rootful setup's PUID/PGID dance.
             userns = "keep-id";
+            # Rootless slirp4netns can't hairpin back to the host's own LAN
+            # IP, so DNS-resolving auth.${domain} to 192.168.x.x during OIDC
+            # discovery gets "connection refused" (same class of problem as
+            # home-assistant/container.nix's addHosts, solved there via the
+            # bridge gateway; here there's no bridge, so route via podman's
+            # host-gateway alias, which slirp4netns forwards to the host's
+            # loopback interface instead).
+            addHosts = [
+              "auth.${domain}:host-gateway"
+            ];
             volumes = [
               "%t/podman/podman.sock:/var/run/docker.sock"
               "/srv/arcane:/app/data"
@@ -107,7 +123,10 @@
               APP_URL = "https://oci.${domain}";
               LOG_LEVEL = "info";
               LOG_JSON = "false";
-              OIDC_ENABLED = "false";
+              OIDC_ENABLED = "true";
+              OIDC_CLIENT_ID = "arcane";
+              OIDC_ISSUER_URL = "https://auth.${domain}";
+              OIDC_SCOPES = "openid profile email groups";
               DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
             };
             environmentFiles = [ arcaneEnvPath ];

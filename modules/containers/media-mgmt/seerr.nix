@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-seerr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.seerr;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-seerr ];
@@ -17,7 +18,10 @@
 
     virtualisation.quadlet.containers.seerr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.seerr).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/seerr:/app/config"
         ];
@@ -27,7 +31,8 @@
     services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:5055";
+      upstream = "http://${ip}:5055";
+      forwardAuth = true;
     };
   };
 }

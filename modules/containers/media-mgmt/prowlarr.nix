@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-prowlarr = { config, flakeLib, flakeModules, ... }:
   let
     network = config.virtualisation.quadlet.networks.media-mgmt;
+    ip = config.vars.network.podmanAddresses.prowlarr;
   in
   {
     imports = [ flakeModules.nixos.services-media-acquisition-prowlarr ];
@@ -17,7 +18,10 @@
 
     virtualisation.quadlet.containers.prowlarr = {
       containerConfig = {
-        networks = [ network.ref ];
+        # Pinned to its current dynamically-assigned IP — see
+        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
+        # (podmanAddresses.prowlarr).
+        networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [
           "/srv/appdata/media-mgmt/prowlarr:/config"
         ];
@@ -27,7 +31,8 @@
     services.nginx.virtualHosts."prowlarr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:9696";
+      upstream = "http://${ip}:9696";
+      forwardAuth = true;
     };
   };
 }

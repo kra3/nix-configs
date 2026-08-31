@@ -95,6 +95,74 @@
             };
           };
         };
+        # Pinned br-media-mgmt/br-life bridge IPs for apps wired to Authelia
+        # forward-auth: nginx routes to these directly instead of via a
+        # 127.0.0.1 publish (see media-mgmt/radarr.nix), so the address has
+        # to be stable across deploys rather than left to podman's dynamic
+        # allocation. Centralized here so it's set once, not duplicated
+        # between each app's `networks` and its nginx `upstream`.
+        podmanAddresses = {
+          radarr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.13";
+            description = "Pinned br-media-mgmt IP for radarr";
+          };
+          bazarr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.3";
+            description = "Pinned br-media-mgmt IP for bazarr";
+          };
+          sonarr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.10";
+            description = "Pinned br-media-mgmt IP for sonarr";
+          };
+          prowlarr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.14";
+            description = "Pinned br-media-mgmt IP for prowlarr";
+          };
+          lidarr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.15";
+            description = "Pinned br-media-mgmt IP for lidarr";
+          };
+          sabnzbd = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.12";
+            description = "Pinned br-media-mgmt IP for sabnzbd";
+          };
+          maintainerr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.8";
+            description = "Pinned br-media-mgmt IP for maintainerr";
+          };
+          seerr = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.11";
+            description = "Pinned br-media-mgmt IP for seerr";
+          };
+          bookshelf = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.4";
+            description = "Pinned br-media-mgmt IP for bookshelf";
+          };
+          audiobookshelf = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.2";
+            description = "Pinned br-media-mgmt IP for audiobookshelf";
+          };
+          actualbudget = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.0.2";
+            description = "Pinned br-life IP for actualbudget";
+          };
+          ghostfolio = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.0.4";
+            description = "Pinned br-life IP for ghostfolio";
+          };
+        };
       };
       acme = {
         email = lib.mkOption {

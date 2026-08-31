@@ -5,6 +5,11 @@
     services.grafana = {
       enable = true;
       settings = {
+        auth = {
+          # Works around a Grafana OAuth user-sync bug matching logins to
+          # existing accounts by email (grafana#111139).
+          oauth_allow_insecure_email_lookup = true;
+        };
         security = {
           admin_user = "$__file{/run/secrets/monitoring.grafana.admin.user}";
           admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
@@ -12,6 +17,29 @@
           # (no datasource secrets stored — Prometheus/Loki are unauthenticated,
           # and access is nginx CIDR-allowlisted) keeps decrypting as before.
           secret_key = "SW2YcwTIb9zpOOhoPsMm";
+        };
+        "auth.generic_oauth" = {
+          enabled = true;
+          allow_sign_up = true;
+          name = "Authelia";
+          icon = "signin";
+          client_id = "grafana";
+          client_secret = "$__file{/run/secrets/monitoring.grafana.oidc_client_secret}";
+          scopes = "openid profile email groups";
+          empty_scopes = false;
+          auth_url = "https://auth.${domain}/api/oidc/authorization";
+          token_url = "https://auth.${domain}/api/oidc/token";
+          api_url = "https://auth.${domain}/api/oidc/userinfo";
+          login_attribute_path = "preferred_username";
+          email_attribute_path = "email";
+          groups_attribute_path = "groups";
+          name_attribute_path = "name";
+          use_pkce = true;
+          # Otherwise Grafana intermittently sends creds via POST body,
+          # which Authelia's default (header-based) auth rejects.
+          auth_style = "InHeader";
+          # Authelia's "admin" group -> Grafana Admin, everyone else Viewer.
+          role_attribute_path = "contains(groups[], 'admin') && 'Admin' || 'Viewer'";
         };
         server = {
           http_addr = networkVars.containers.monitoring.localAddress;

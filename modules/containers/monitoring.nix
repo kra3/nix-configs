@@ -45,6 +45,10 @@
       mode = "0440";
       group = "jellyfin";
     };
+    sops.secrets."monitoring.grafana.oidc_client_secret" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) {
+      mode = "0440";
+      group = "jellyfin";
+    };
 
     # Create prometheus group on host matching container GID (static, nixpkgs-pinned
     # uid=gid=255) for secret access, same pattern as media-play.nix's jellyfin group.
@@ -142,6 +146,7 @@
       ve-monitoring = {
         allowedTCPPorts = [
           53 # DNS (if a resolver is enabled in the container)
+          443 # nginx — Grafana's OIDC login calls auth.${domain} directly
           9100 # node-exporter
           9113 # nginx-exporter
           9134 # zfs-exporter
@@ -183,6 +188,9 @@
           hostName = "monitoring";
           defaultGateway = config.vars.network.containers.monitoring.hostAddress;
           nameservers = [ config.vars.network.lanIp ];
+          # OIDC login calls auth.${domain} directly; route via the veth
+          # host address since the LAN/public IP doesn't route back in.
+          extraHosts = "${config.vars.network.containers.monitoring.hostAddress} auth.${config.vars.acme.domain}";
           firewall.allowedTCPPorts = [
             3001 # Grafana
             3100 # Loki
@@ -214,6 +222,10 @@
         };
         "/run/secrets/monitoring.grafana.admin.password" = {
           hostPath = "/run/secrets/monitoring.grafana.admin.password";
+          isReadOnly = true;
+        };
+        "/run/secrets/monitoring.grafana.oidc_client_secret" = {
+          hostPath = "/run/secrets/monitoring.grafana.oidc_client_secret";
           isReadOnly = true;
         };
         "/run/secrets/homeassistant.token" = {

@@ -15,6 +15,9 @@
         logDriver = "journald";
         environments = {
           TZ = "UTC";
+          # Forces a restart on env content changes — see authelia.nix's
+          # RESTART_TRIGGER_CONFIG_HASH for why this is needed.
+          RESTART_TRIGGER_CONFIG_HASH = builtins.hashString "sha256" config.sops.templates."life.ghostfolio.env".content;
         };
         environmentFiles = [ config.sops.templates."life.ghostfolio.env".path ];
       };

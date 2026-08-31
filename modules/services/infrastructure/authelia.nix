@@ -79,6 +79,12 @@
                 algorithm: 'RS256'
                 use: 'sig'
                 key: {{ secret "/config/secrets/oidc_issuer_private_key.pem" | mindent 10 "|" | msquote }}
+            # Grafana reads role_attribute_path from the ID token only, which
+            # is normally userinfo-only for "groups" — so embed it here too.
+            claims_policies:
+              id_token_groups:
+                id_token:
+                  - 'groups'
             clients:
               - client_id: 'arcane'
                 client_name: 'Arcane'
@@ -87,6 +93,54 @@
                 authorization_policy: 'one_factor'
                 redirect_uris:
                   - 'https://oci.${domain}/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+              - client_id: 'grafana'
+                client_name: 'Grafana'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.grafana.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                claims_policy: 'id_token_groups'
+                redirect_uris:
+                  - 'https://grafana.${domain}/login/generic_oauth'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+              - client_id: 'ghostfolio'
+                client_name: 'Ghostfolio'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.ghostfolio.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                # Ghostfolio always sends creds via POST body, not a header.
+                token_endpoint_auth_method: 'client_secret_post'
+                redirect_uris:
+                  - 'https://ghostfolio.${domain}/api/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+              - client_id: 'actualbudget'
+                client_name: 'Actual Budget'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.actualbudget.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                redirect_uris:
+                  - 'https://actualbudget.${domain}/openid/callback'
                 scopes:
                   - 'openid'
                   - 'profile'
@@ -181,6 +235,21 @@
       mode = "0400";
     };
     sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.grafana.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.ghostfolio.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.actualbudget.client_secret_hash" = {
       owner = "authelia";
       group = "authelia";
       mode = "0400";

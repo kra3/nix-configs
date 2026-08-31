@@ -60,6 +60,8 @@
       "127.0.0.1"
       config.vars.network.containers.monitoring.localAddress
       config.vars.network.podmanSubnets.homeAuto
+      # Ghostfolio/Actual Budget call auth.${domain} directly (own OIDC login).
+      config.vars.network.podmanSubnets.life
     ];
   };
 

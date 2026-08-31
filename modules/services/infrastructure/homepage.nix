@@ -20,12 +20,16 @@
       HOMEPAGE_VAR_SEERR_KEY=${config.sops.placeholder."media.seerr.api_key"}
       HOMEPAGE_VAR_ADGUARD_USER=${config.sops.placeholder."dns.adguard.username"}
       HOMEPAGE_VAR_ADGUARD_PASSWORD=${config.sops.placeholder."dns.adguard.password"}
+      HOMEPAGE_VAR_FRIGATE_PASSWORD=${config.sops.placeholder."homepage.frigate_password"}
     '';
   in
   {
-    # These secrets are already declared elsewhere in this host config
+    # Most secrets above are already declared elsewhere in this host config
     # (media-mgmt/*.nix, media-play.nix, monitoring.nix) -- placeholders
-    # work here without redeclaring sops.secrets for them.
+    # work here without redeclaring sops.secrets for them. frigate_password
+    # is homepage-only (a dedicated viewer-role Frigate account), so it
+    # needs its own declaration.
+    sops.secrets."homepage.frigate_password" = { };
 
     # Default owner (root) is fine: EnvironmentFile= is read by systemd
     # itself before the DynamicUser sandboxed process starts, not by the
@@ -45,12 +49,7 @@
         title = "sutala";
         theme = "dark";
         headerStyle = "clean";
-        # Homepage's frontend does themes[color].dark directly (mobile
-        # browser chrome color), not just a CSS class name -- must be one
-        # of its fixed enum values (src/utils/styles/themes.js) or the page
-        # crashes. "purple" is closest to Catppuccin's mauve/lavender;
-        # customCSS below overrides its actual colors to match Mocha.
-        color = "purple";
+        color = "slate";
         quicklaunch = {
           searchDescriptions = true;
         };
@@ -75,29 +74,6 @@
           };
         }
       ];
-
-      # Catppuccin Mocha (catppuccin.com/palette), overriding the built-in
-      # .theme-purple class's --color-* scale (src/styles/theme.css
-      # upstream) so every place that scale is used (cards, borders, the
-      # dark-mode page background at --color-800) picks it up, not just
-      # hardcoded overrides. Must target .theme-purple specifically, not a
-      # made-up class name -- see the settings.color comment above.
-      customCSS = ''
-        .theme-purple {
-          --color-50: 205 214 244;   /* text */
-          --color-100: 186 194 222;  /* subtext1 */
-          --color-200: 166 173 200;  /* subtext0 */
-          --color-300: 147 153 178;  /* overlay2 */
-          --color-400: 127 132 156;  /* overlay1 */
-          --color-500: 108 112 134;  /* overlay0 */
-          --color-600: 88 91 112;    /* surface2 */
-          --color-700: 69 71 90;     /* surface1 */
-          --color-800: 30 30 46;     /* base -- dark-mode page background */
-          --color-900: 17 17 27;     /* crust */
-          --color-logo-start: 203 166 247; /* mauve */
-          --color-logo-stop: 180 190 254;  /* lavender */
-        }
-      '';
 
       services = [
         {
@@ -281,14 +257,17 @@
             }
             {
               Frigate = {
-                # Link-only: Frigate's own built-in auth (enabled by default,
-                # no forwardAuth in front of it -- see surveillance/proxy.nix)
-                # 401s the widget's unauthenticated call; needs an admin
-                # username/password added to secrets.yaml before going live.
                 description = "NVR & object detection";
                 icon = "frigate.png";
                 href = "https://nvr.${domain}";
-                siteMonitor = "https://nvr.${domain}";
+                widget = {
+                  type = "frigate";
+                  url = "http://${net.containers.homeAuto.localAddress}:80";
+                  # Dedicated viewer-role Frigate account -- read-only, no
+                  # config/settings access even with the credential exposed.
+                  username = "homepage";
+                  password = "{{HOMEPAGE_VAR_FRIGATE_PASSWORD}}";
+                };
               };
             }
             {

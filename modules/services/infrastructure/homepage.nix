@@ -30,6 +30,7 @@
       HOMEPAGE_VAR_NAVIDROME_TOKEN=${config.sops.placeholder."homepage.navidrome_token"}
       HOMEPAGE_VAR_NAVIDROME_SALT=${config.sops.placeholder."homepage.navidrome_salt"}
       HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY=${config.sops.placeholder."homepage.audiobookshelf_key"}
+      HOMEPAGE_VAR_FINNHUB_KEY=${config.sops.placeholder."homepage.finnhub_key"}
     '';
   in
   {
@@ -45,6 +46,7 @@
     sops.secrets."homepage.navidrome_token" = { };
     sops.secrets."homepage.navidrome_salt" = { };
     sops.secrets."homepage.audiobookshelf_key" = { };
+    sops.secrets."homepage.finnhub_key" = { };
 
     # restartUnits: EnvironmentFile= points at a stable path sops-nix rewrites in place, so without this a secret-value-only rotation never restarts the service.
     sops.templates."homepage.env" = {
@@ -67,6 +69,9 @@
         statusStyle = "dot";
         quicklaunch = {
           searchDescriptions = true;
+        };
+        providers = {
+          finnhub = "{{HOMEPAGE_VAR_FINNHUB_KEY}}";
         };
         layout = {
           Media = {
@@ -111,6 +116,18 @@
               timeStyle = "short";
               hourCycle = "h23";
             };
+          };
+        }
+        {
+          stocks = {
+            provider = "finnhub";
+            watchlist = [
+              "AAPL"
+              "AMD"
+              "NVDA"
+              "PLTR"
+              "SPY"
+            ];
           };
         }
       ];

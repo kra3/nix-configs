@@ -70,8 +70,7 @@
         };
         layout = {
           Media = {
-            style = "row";
-            columns = 2;
+            style = "column";
             Play = {
               style = "row";
               columns = 2;

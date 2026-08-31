@@ -9,6 +9,7 @@
 
     sops.secrets."media.aiostreams.secret_key" = { };
     sops.secrets."media.aiostreams.auth" = { };
+    sops.secrets."media.aiostreams.oidc_client_secret" = { };
 
     sops.templates."media.aiostreams.env" = {
       owner = "root";
@@ -17,6 +18,7 @@
       content = ''
         SECRET_KEY=${config.sops.placeholder."media.aiostreams.secret_key"}
         AIOSTREAMS_AUTH=${config.sops.placeholder."media.aiostreams.auth"}
+        AIOSTREAMS_OIDC_CLIENT_SECRET=${config.sops.placeholder."media.aiostreams.oidc_client_secret"}
       '';
     };
 
@@ -30,41 +32,15 @@
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-    # Split-auth vhost: AIOStreams mounts its human dashboard at "/" and
-    # "/api/", but serves the Stremio client itself (manifest/stream/catalog)
-    # under "/stremio/", "/builtins/", "/chilllink/", "/seanime/",
-    # "/community/", "/blocklist/", "/static/" — a browser-cookie forward-auth
-    # can only gate the former; the TV's Stremio app can't complete an
-    # Authelia redirect, so those paths stay CIDR-only, same as everything
-    # else in nginxAllowCidrs. mkProxyVhost can't express this per-location
-    # split, so this vhost is built by hand from its shared pieces.
-    services.nginx.virtualHosts."aiostreams.${config.vars.acme.domain}" = {
-      useACMEHost = config.vars.acme.domain;
-      forceSSL = true;
-      extraConfig = flakeLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
-      locations =
-        let
-          upstream = "http://${ip}:3000";
-          public = {
-            proxyPass = upstream;
-          };
-          authed = {
-            proxyPass = upstream;
-            extraConfig = flakeLib.nginx.forwardAuthLocationConfig;
-          };
-        in
-        {
-          "/" = authed;
-          "/api/" = authed;
-          "/stremio" = public;
-          "/builtins" = public;
-          "/chilllink" = public;
-          "/seanime" = public;
-          "/community" = public;
-          "/blocklist" = public;
-          "/static" = public;
-          "/internal/authelia/authz" = flakeLib.nginx.autheliaAuthzLocation;
-        };
+    # No Authelia forward-auth: AIOStreams has native OIDC support scoped to
+    # its own dashboard/config-page login (wired against Authelia in
+    # authelia.nix), which it applies without ever affecting the Stremio
+    # addon paths the TV app hits directly — unlike nginx-layer forward-auth,
+    # which would have needed a per-location split to avoid gating those too.
+    services.nginx.virtualHosts."aiostreams.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
+      domain = config.vars.acme.domain;
+      cidrs = config.vars.network.nginxAllowCidrs;
+      upstream = "http://${ip}:3000";
     };
   };
 }

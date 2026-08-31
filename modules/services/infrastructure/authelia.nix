@@ -223,6 +223,26 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
+              # Dashboard/config-page login only (see aiostreams.nix) — never
+              # gates the Stremio addon URLs. AIOSTREAMS_OIDC_GROUP_PERMISSIONS
+              # maps the admin group to AIOStreams' own "admin" permission;
+              # unmapped groups (family) are refused login by default.
+              - client_id: 'aiostreams'
+                client_name: 'AIOStreams'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                redirect_uris:
+                  - 'https://aiostreams.${domain}/api/v1/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
       '';
     usersDatabaseYmlContent = ''
         users:
@@ -340,6 +360,11 @@
       mode = "0400";
     };
     sops.secrets."authelia.oidc_clients.homeassistant.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.aiostreams.client_secret_hash" = {
       owner = "authelia";
       group = "authelia";
       mode = "0400";

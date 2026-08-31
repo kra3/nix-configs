@@ -53,6 +53,11 @@
               resources:
                 - '^/api([/?].*)?$'
               policy: 'bypass'
+            # Prowlarr's per-indexer download proxy (/<id>/download) carries its own apikey query-param auth but isn't under /api, so it needs its own bypass.
+            - domain: 'prowlarr.${domain}'
+              resources:
+                - '^/[0-9]+/download([/?].*)?$'
+              policy: 'bypass'
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'

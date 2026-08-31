@@ -19,7 +19,7 @@
       HOMEPAGE_VAR_GRAFANA_PASSWORD=${config.sops.placeholder."monitoring.grafana.admin.password"}
       HOMEPAGE_VAR_SEERR_KEY=${config.sops.placeholder."media.seerr.api_key"}
       HOMEPAGE_VAR_ADGUARD_USER=${config.sops.placeholder."dns.adguard.username"}
-      HOMEPAGE_VAR_ADGUARD_PASSWORD=${config.sops.placeholder."dns.adguard.password"}
+      HOMEPAGE_VAR_ADGUARD_PASSWORD=${config.sops.placeholder."homepage.adguard_password"}
       HOMEPAGE_VAR_FRIGATE_PASSWORD=${config.sops.placeholder."homepage.frigate_password"}
       HOMEPAGE_VAR_GHOSTFOLIO_TOKEN=${config.sops.placeholder."homepage.ghostfolio_token"}
       HOMEPAGE_VAR_TAILSCALE_KEY=${config.sops.placeholder."homepage.tailscale_key"}
@@ -33,6 +33,7 @@
     sops.secrets."homepage.ghostfolio_token" = { };
     sops.secrets."homepage.tailscale_key" = { };
     sops.secrets."homepage.tailscale_device_id" = { };
+    sops.secrets."homepage.adguard_password" = { };
 
     # restartUnits: EnvironmentFile= points at a stable path sops-nix rewrites in place, so without this a secret-value-only rotation never restarts the service.
     sops.templates."homepage.env" = {
@@ -52,6 +53,7 @@
         theme = "dark";
         headerStyle = "clean";
         color = "slate";
+        statusStyle = "dot";
         quicklaunch = {
           searchDescriptions = true;
         };

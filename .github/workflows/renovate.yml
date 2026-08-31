@@ -3,8 +3,9 @@ name: Renovate
 
 on:
   schedule:
-    # daily at 05:00 UTC (offset from flake-update.yml's 04:00 UTC)
-    - cron: "0 5 * * *"
+    # 4x/day (offset from flake-update.yml's 04:00 UTC) so the default
+    # prHourlyLimit:2 doesn't strand extra updates for a full day
+    - cron: "0 5,11,17,23 * * *"
   workflow_dispatch: null
 
 permissions:

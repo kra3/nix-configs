@@ -62,6 +62,10 @@
       config.vars.network.podmanSubnets.homeAuto
       # Ghostfolio/Actual Budget call auth.${domain} directly (own OIDC login).
       config.vars.network.podmanSubnets.life
+      # Audiobookshelf/Seerr (media-mgmt) and Jellyfin (media-play) OIDC.
+      config.vars.network.podmanSubnets.mediaMgmt
+      # media-play's actual outbound source is localAddress, not hostAddress.
+      config.vars.network.containers.mediaPlay.localAddress
     ];
   };
 

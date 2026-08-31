@@ -32,6 +32,10 @@ stream:
 prometheus:
   namespace: ha
 
+logger:
+  logs:
+    custom_components.auth_oidc: debug
+
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml

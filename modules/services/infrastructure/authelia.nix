@@ -150,6 +150,79 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
+              # one_factor not two_factor (Authelia's own guide default): no
+              # second factor is configured on this deployment.
+              - client_id: 'audiobookshelf'
+                client_name: 'Audiobookshelf'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.audiobookshelf.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                require_pkce: true
+                pkce_challenge_method: 'S256'
+                redirect_uris:
+                  - 'https://audiobookshelf.${domain}/auth/openid/callback'
+                  - 'https://audiobookshelf.${domain}/auth/openid/mobile-redirect'
+                  # ABS prefixes its own subfolder even though this vhost
+                  # serves it at the root, not /audiobookshelf.
+                  - 'https://audiobookshelf.${domain}/audiobookshelf/auth/openid/callback'
+                  - 'https://audiobookshelf.${domain}/audiobookshelf/auth/openid/mobile-redirect'
+                  - 'audiobookshelf://oauth'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+                access_token_signed_response_alg: 'none'
+                userinfo_signed_response_alg: 'none'
+              # Provider name "authelia", set by hand in the SSO-Auth plugin's
+              # own config (see jellyfin.nix), must match this redirect path.
+              - client_id: 'jellyfin'
+                client_name: 'Jellyfin'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.jellyfin.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                require_pkce: true
+                pkce_challenge_method: 'S256'
+                token_endpoint_auth_method: 'client_secret_post'
+                redirect_uris:
+                  - 'https://jellyfin.${domain}/sso/OID/redirect/authelia'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+                access_token_signed_response_alg: 'none'
+                userinfo_signed_response_alg: 'none'
+              # Requires the hass-oidc-auth HACS integration, installed and
+              # configured by hand in HA's own UI (no declarative path).
+              - client_id: 'homeassistant'
+                client_name: 'Home Assistant'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.homeassistant.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                claims_policy: 'id_token_groups'
+                require_pkce: true
+                pkce_challenge_method: 'S256'
+                token_endpoint_auth_method: 'client_secret_post'
+                redirect_uris:
+                  - 'https://ha.${domain}/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
       '';
     usersDatabaseYmlContent = ''
         users:
@@ -160,11 +233,13 @@
             email: 'kra3@${domain}'
             groups:
               - 'admin'
-          drpc:
+          anjalipc:
             disabled: false
-            displayname: 'drpc'
-            password: '${config.sops.placeholder."authelia.users.drpc.password_hash"}'
-            email: 'drpc@${domain}'
+            displayname: 'anjalipc'
+            password: '${config.sops.placeholder."authelia.users.anjalipc.password_hash"}'
+            email: 'anjalipc@${domain}'
+            groups:
+              - 'family'
       '';
     # Neither string above embeds actual secret VALUES (sops placeholders
     # are stable tokens, substituted after this hash is computed), so this
@@ -229,7 +304,7 @@
       group = "authelia";
       mode = "0400";
     };
-    sops.secrets."authelia.users.drpc.password_hash" = {
+    sops.secrets."authelia.users.anjalipc.password_hash" = {
       owner = "authelia";
       group = "authelia";
       mode = "0400";
@@ -250,6 +325,21 @@
       mode = "0400";
     };
     sops.secrets."authelia.oidc_clients.actualbudget.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.audiobookshelf.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.jellyfin.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.homeassistant.client_secret_hash" = {
       owner = "authelia";
       group = "authelia";
       mode = "0400";

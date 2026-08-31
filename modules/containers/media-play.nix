@@ -1,5 +1,58 @@
 {
   flake.nixosModules.containers-media-play = { config, inputs, pkgs, lib, flakeModules, flakeLib, ... }:
+  let
+    jellyfinSsoAuthXmlContent = ''
+      <?xml version="1.0" encoding="utf-8"?>
+      <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <SamlConfigs />
+        <OidConfigs>
+          <item>
+            <key>
+              <string>authelia</string>
+            </key>
+            <value>
+              <PluginConfiguration>
+                <OidEndpoint>https://auth.${config.vars.acme.domain}</OidEndpoint>
+                <OidClientId>jellyfin</OidClientId>
+                <OidSecret>${config.sops.placeholder."media.jellyfin.oidc_client_secret"}</OidSecret>
+                <Enabled>true</Enabled>
+                <EnableAuthorization>true</EnableAuthorization>
+                <EnableAllFolders>true</EnableAllFolders>
+                <EnabledFolders />
+                <AdminRoles>
+                  <string>admin</string>
+                </AdminRoles>
+                <Roles>
+                  <string>admin</string>
+                  <string>family</string>
+                </Roles>
+                <EnableFolderRoles>false</EnableFolderRoles>
+                <EnableLiveTvRoles>false</EnableLiveTvRoles>
+                <EnableLiveTv>false</EnableLiveTv>
+                <EnableLiveTvManagement>false</EnableLiveTvManagement>
+                <LiveTvRoles />
+                <LiveTvManagementRoles />
+                <FolderRoleMappings />
+                <RoleClaim>groups</RoleClaim>
+                <OidScopes>
+                  <string>groups</string>
+                </OidScopes>
+                <CanonicalLinks></CanonicalLinks>
+                <DisableHttps>false</DisableHttps>
+                <DisablePushedAuthorization>true</DisablePushedAuthorization>
+                <DoNotValidateEndpoints>false</DoNotValidateEndpoints>
+                <DoNotValidateIssuerName>false</DoNotValidateIssuerName>
+                <SchemeOverride>https</SchemeOverride>
+              </PluginConfiguration>
+            </value>
+          </item>
+        </OidConfigs>
+      </PluginConfiguration>
+    '';
+    # No secret values embedded (placeholders are stable tokens) — see
+    # authelia.nix's configHash.
+    jellyfinSsoAuthXmlHash = builtins.hashString "sha256" jellyfinSsoAuthXmlContent;
+  in
   {
     # Host group for media files
     users.groups.media = {
@@ -44,6 +97,7 @@
         ve-media-play = {
           allowedTCPPorts = [
             53 # DNS (if a resolver is enabled in the container)
+            443 # Jellyfin's SSO plugin calls auth.${domain} directly
             4533 # Navidrome
             8096 # Jellyfin
             9100 # node-exporter
@@ -91,6 +145,11 @@
           hostName = "media-play";
           defaultGateway = config.vars.network.containers.mediaPlay.hostAddress;
           nameservers = [ config.vars.network.lanIp ];
+          # Routes OIDC calls to auth.${domain} via the veth gateway — see
+          # life/ghostfolio.nix's addHosts for why.
+          extraHosts = ''
+            ${config.vars.network.containers.mediaPlay.hostAddress} auth.${config.vars.acme.domain}
+          '';
           firewall.allowedTCPPorts = [
             4533 # Navidrome
             8096 # Jellyfin
@@ -119,6 +178,10 @@
           "Z /var/lib/jellyfin/logs/*.log 0640 jellyfin jellyfin - -"
           "Z /var/lib/jellyfin/logs/*.txt 0640 jellyfin jellyfin - -"
         ];
+
+        # Jellyfin only reads SSO-Auth.xml at startup; nothing else here
+        # would trigger a restart on content-only changes.
+        systemd.services.jellyfin.restartTriggers = [ jellyfinSsoAuthXmlHash ];
       };
       bindMounts = {
         "/etc/localtime" = {
@@ -152,6 +215,10 @@
         };
         "/run/secrets/media.jellyfin.apikeys.seerr" = {
           hostPath = "/run/secrets/media.jellyfin.apikeys.seerr";
+          isReadOnly = true;
+        };
+        "/var/lib/jellyfin/plugins/configurations/SSO-Auth.xml" = {
+          hostPath = config.sops.templates."media-play/jellyfin-sso-auth.xml".path;
           isReadOnly = true;
         };
       };
@@ -188,6 +255,17 @@
     sops.secrets."media.jellyfin.apikeys.seerr" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
       mode = "0440";
       group = "jellyfin";
+    };
+
+    sops.secrets."media.jellyfin.oidc_client_secret" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) { };
+
+    # Plugin install itself is still manual (Dashboard -> Plugins ->
+    # Catalog); its provider config is pre-seeded here so nothing else is.
+    sops.templates."media-play/jellyfin-sso-auth.xml" = lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false) {
+      owner = "root";
+      group = "root";
+      mode = "0444";
+      content = jellyfinSsoAuthXmlContent;
     };
   };
 }

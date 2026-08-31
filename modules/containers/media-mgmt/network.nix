@@ -7,6 +7,10 @@
       networkConfig.subnets = [ config.vars.network.podmanSubnets.mediaMgmt ];
     };
 
-    networking.firewall.interfaces.br-media-mgmt.allowedUDPPorts = [ 53 ];
+    networking.firewall.interfaces.br-media-mgmt = {
+      allowedUDPPorts = [ 53 ];
+      # Audiobookshelf/Seerr call auth.${domain} directly (own OIDC login).
+      allowedTCPPorts = [ 443 ];
+    };
   };
 }

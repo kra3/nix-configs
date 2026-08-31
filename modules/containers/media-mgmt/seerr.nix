@@ -28,6 +28,9 @@
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
+    # forwardAuth stays on: this fork (seerr-team/seerr v3.4.1) has no
+    # trusted-header-SSO or OIDC support despite Authelia's own doc
+    # claiming otherwise — `network.trustProxy` is unrelated to auth.
     services.nginx.virtualHosts."seerr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

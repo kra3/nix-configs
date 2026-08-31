@@ -137,6 +137,12 @@
             default = "10.3.1.8";
             description = "Pinned br-media-mgmt IP for maintainerr";
           };
+          aiostreams = lib.mkOption {
+            type = lib.types.str;
+            default = "10.3.1.50";
+            # .16 collided with an existing dynamic lease; .50 clears that range.
+            description = "Pinned br-media-mgmt IP for aiostreams";
+          };
           seerr = lib.mkOption {
             type = lib.types.str;
             default = "10.3.1.11";

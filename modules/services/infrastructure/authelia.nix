@@ -223,6 +223,25 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
+              # Dashboard-only login (see aiostreams.nix), never the Stremio addon URLs.
+              - client_id: 'aiostreams'
+                client_name: 'AIOStreams'
+                client_secret: '${config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"}'
+                public: false
+                authorization_policy: 'one_factor'
+                # AIOStreams posts the client secret in the token body, not a header.
+                token_endpoint_auth_method: 'client_secret_post'
+                redirect_uris:
+                  - 'https://aiostreams.${domain}/api/v1/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
       '';
     usersDatabaseYmlContent = ''
         users:
@@ -340,6 +359,11 @@
       mode = "0400";
     };
     sops.secrets."authelia.oidc_clients.homeassistant.client_secret_hash" = {
+      owner = "authelia";
+      group = "authelia";
+      mode = "0400";
+    };
+    sops.secrets."authelia.oidc_clients.aiostreams.client_secret_hash" = {
       owner = "authelia";
       group = "authelia";
       mode = "0400";

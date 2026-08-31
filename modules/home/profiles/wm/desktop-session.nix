@@ -2,145 +2,6 @@
   flake.homeManagerModules.home-profiles-wm-desktop-session =
   { pkgs, domain, ... }:
   # domain is threaded from hosts/sutala/configuration.nix's home-manager.extraSpecialArgs
-  let
-    # Real per-app logos for the selfhosted-menu item picker, from
-    # homarr-labs/dashboard-icons (Apache-2.0, https://dashboardicons.com).
-    # Pinned to a commit so builds stay reproducible; hashes verify content on fetch.
-    dashboardIconsRev = "0f14e7261df700795a98594f3d51e507c123d27c";
-    dashboardIcon = name: hash: pkgs.fetchurl {
-      url = "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/${dashboardIconsRev}/svg/${name}.svg";
-      inherit hash;
-    };
-    dashboardIcons = {
-      jellyfin = dashboardIcon "jellyfin" "sha256-f1PPCD27MRnsjFrL2AScUDMidhfkYVQPcFkawQkSQwY=";
-      navidrome = dashboardIcon "navidrome" "sha256-zYkRWBwRc8Bpba2usC+bsusf87a99cZMSbkPfLcCdM8=";
-      music-assistant = dashboardIcon "music-assistant" "sha256-Q2A7xPBg88m/RqImohKbMqNZV6/tRgs/7k8IREXUQAM=";
-      sonarr = dashboardIcon "sonarr" "sha256-pd6+VlKB6xa3RtdbnOcuIvL7FcGbT1VCj99iuEvnkwY=";
-      radarr = dashboardIcon "radarr" "sha256-w9B+zfq0MsqX8mzwH+Btv8CZO1y2CTgns94cdCGm+5U=";
-      lidarr = dashboardIcon "lidarr" "sha256-L1X2lFCgygNiHodVDoHsD2eYxKV4tU5LmIqacjSoNkc=";
-      bazarr = dashboardIcon "bazarr" "sha256-tCd37mIt34Ws4V2+mnDUcaLKNk50XHPqRn2joKdYYWI=";
-      prowlarr = dashboardIcon "prowlarr" "sha256-zXc2vO9lUK2FPlnU1yBflunbiuRL6VfKW36ucEb1vGc=";
-      sabnzbd = dashboardIcon "sabnzbd" "sha256-ElP9YuMQ8sfENgAqeGS4E1ZUog02shd+OQBUL8+El7A=";
-      seerr = dashboardIcon "seerr" "sha256-sS5d/WQdlhz7aDYNoz/iiHO5Xqm2TCMjPVuHo3y/pMQ=";
-      maintainerr = dashboardIcon "maintainerr" "sha256-wTMBLA99rRTGaphWwt+YDMwQQ0XkKHPAdoSGNJveWEE=";
-      audiobookshelf = dashboardIcon "audiobookshelf" "sha256-SKU5wme4jjiY+OEn2s7wTmYlpemfjTNMOSqKplZoqOg=";
-      home-assistant = dashboardIcon "home-assistant" "sha256-FGs2a4wJUCdCAlxLyk4Cno5KGyd9uDfVmiO5OUDr4OA=";
-      zigbee2mqtt = dashboardIcon "zigbee2mqtt" "sha256-VoKVJi5MGrqvCi0p9rDMxSKOxioH6O5qyoh5kEigtFs=";
-      frigate = dashboardIcon "frigate" "sha256-LBF2pq9YbnvRSfsxjCJtyGMDO/GI0Hn2qoI8v/zXTJM=";
-      actual-budget = dashboardIcon "actual-budget" "sha256-bsZiGo0LafYi/xDX+VeiKflZ2U1LyMXjWGrr5xySJAc=";
-      ghostfolio = dashboardIcon "ghostfolio" "sha256-nUgTnvQjLA53nR9mYhS6H7KYr8nGSBSvBee1umoTMXU=";
-      grafana = dashboardIcon "grafana" "sha256-jzKJcHPuk1lKsjOUgu8hyjdnBEBV2oniuvkGbSVZLfc=";
-      adguard-home = dashboardIcon "adguard-home" "sha256-SmWyOuFr9wDzUTniwQpfcxoyUw8tuDKr1WEr4lI7H58=";
-      arcane = dashboardIcon "arcane" "sha256-Gu7bc7t4w5LSFvhdsL13MExO1Ff+KWOYM2p8xsD0JMo=";
-    };
-
-    # Two-level fuzzel picker (group, then app) for self-hosted web apps.
-    # Native TUI/GUI clients (jftui, ostui, feishin, actual-client) are deliberately
-    # left out for now — this round only wires the browser-based apps.
-    selfhostedMenu = pkgs.writeShellApplication {
-      name = "selfhosted-menu";
-      runtimeInputs = [ pkgs.fuzzel pkgs.ungoogled-chromium ];
-      text = ''
-        domain="${domain}"
-
-        # Group icons come from adwaita-icon-theme-legacy: modern Adwaita dropped
-        # these old-style category icons, so this restores just enough of them.
-        group_lines() {
-          printf 'Media\0icon\x1fmultimedia-player\n'
-          printf 'Media Management\0icon\x1ffolder-download\n'
-          printf 'Home Automation\0icon\x1fnetwork-workgroup\n'
-          printf 'Life\0icon\x1faccessories-calculator\n'
-          printf 'Admin\0icon\x1fapplications-system\n'
-        }
-
-        # Per-app logos from dashboard-icons; Bookshelf has no icon="" so it
-        # falls back to a plain line (no icon annotation for that entry).
-        item_line() {
-          local name="$1" icon="$2"
-          if [ -n "$icon" ]; then
-            printf '%s\0icon\x1f%s\n' "$name" "$icon"
-          else
-            printf '%s\n' "$name"
-          fi
-        }
-
-        items_for() {
-          case "$1" in
-            Media)
-              item_line Jellyfin "${dashboardIcons.jellyfin}"
-              item_line Navidrome "${dashboardIcons.navidrome}"
-              item_line "Music Assistant" "${dashboardIcons.music-assistant}"
-              ;;
-            "Media Management")
-              item_line Sonarr "${dashboardIcons.sonarr}"
-              item_line Radarr "${dashboardIcons.radarr}"
-              item_line Lidarr "${dashboardIcons.lidarr}"
-              item_line Bazarr "${dashboardIcons.bazarr}"
-              item_line Prowlarr "${dashboardIcons.prowlarr}"
-              item_line SABnzbd "${dashboardIcons.sabnzbd}"
-              item_line Seerr "${dashboardIcons.seerr}"
-              item_line Maintainerr "${dashboardIcons.maintainerr}"
-              item_line Audiobookshelf "${dashboardIcons.audiobookshelf}"
-              item_line Bookshelf ""
-              ;;
-            "Home Automation")
-              item_line "Home Assistant" "${dashboardIcons.home-assistant}"
-              item_line Zigbee2MQTT "${dashboardIcons.zigbee2mqtt}"
-              item_line Frigate "${dashboardIcons.frigate}"
-              ;;
-            Life)
-              item_line ActualBudget "${dashboardIcons.actual-budget}"
-              item_line Ghostfolio "${dashboardIcons.ghostfolio}"
-              ;;
-            Admin)
-              item_line Grafana "${dashboardIcons.grafana}"
-              item_line "AdGuard DNS" "${dashboardIcons.adguard-home}"
-              item_line Arcane "${dashboardIcons.arcane}"
-              ;;
-          esac
-        }
-
-        open() {
-          local subdomain="$1"
-          exec chromium --app="https://$subdomain.$domain"
-        }
-
-        launch() {
-          case "$1" in
-            Jellyfin) open jellyfin ;;
-            Navidrome) open navidrome ;;
-            "Music Assistant") open ma ;;
-            Sonarr) open sonarr ;;
-            Radarr) open radarr ;;
-            Lidarr) open lidarr ;;
-            Bazarr) open bazarr ;;
-            Prowlarr) open prowlarr ;;
-            SABnzbd) open sabnzbd ;;
-            Seerr) open seerr ;;
-            Maintainerr) open maintainerr ;;
-            Audiobookshelf) open audiobookshelf ;;
-            Bookshelf) open bookshelf ;;
-            "Home Assistant") open ha ;;
-            Zigbee2MQTT) open z2m ;;
-            Frigate) open nvr ;;
-            ActualBudget) open actualbudget ;;
-            Ghostfolio) open ghostfolio ;;
-            Grafana) open grafana ;;
-            "AdGuard DNS") open dns ;;
-            Arcane) open oci ;;
-          esac
-        }
-
-        group=$(group_lines | fuzzel --dmenu --icon-theme=AdwaitaLegacy --prompt="apps  ") || exit 0
-        [ -z "$group" ] && exit 0
-
-        item=$(items_for "$group" | fuzzel --dmenu --prompt="$group  ") || exit 0
-        [ -z "$item" ] && exit 0
-
-        launch "$item"
-      '';
-    };
-  in
   {
     home.packages = [
       pkgs.swaybg
@@ -148,10 +9,19 @@
       pkgs.bzmenu # bluetooth picker, Super+Alt+B in niri-config.kdl
       pkgs.pwmenu # audio device picker, Super+Alt+P in niri-config.kdl
       pkgs.wl-clipboard # wl-copy for the cliphist picker, Super+Alt+V in niri-config.kdl
-      selfhostedMenu # self-hosted apps picker, Super+Alt+A in niri-config.kdl
-      pkgs.adwaita-icon-theme-legacy # category icons for selfhosted-menu's group picker
     ];
     home.file.".local/share/wallpapers/wallpaper.png".source = ./wallpapers/wallpaper.png;
+
+    # Single entry point for every self-hosted app, behind Authelia SSO; shows up
+    # in the regular fuzzel app launcher (Mod+D) instead of a dedicated picker.
+    xdg.desktopEntries.homepage-dashboard = {
+      name = "Home Page";
+      genericName = "Self-hosted apps dashboard";
+      exec = ''chromium --app="https://home.${domain}"'';
+      icon = "start-here";
+      terminal = false;
+      categories = [ "Network" ];
+    };
 
     programs.fuzzel.enable = true;
     programs.swaylock = {

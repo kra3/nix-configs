@@ -25,6 +25,7 @@
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-infrastructure-authelia
+    flakeModules.nixos.services-infrastructure-homepage
     flakeModules.nixos.services-tailscale
     flakeModules.nixos.services-niri-default
     flakeModules.nixos.services-dns-default

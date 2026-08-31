@@ -42,7 +42,54 @@
         title = "sutala";
         theme = "dark";
         headerStyle = "clean";
+        # No built-in "color" value matches Catppuccin -- customCSS below
+        # defines a .theme-catppuccin class to back this.
+        color = "catppuccin";
+        quicklaunch = {
+          searchDescriptions = true;
+        };
       };
+
+      widgets = [
+        {
+          resources = {
+            cpu = true;
+            memory = true;
+            disk = "/";
+          };
+        }
+        {
+          datetime = {
+            text_size = "xl";
+            format = {
+              dateStyle = "long";
+              timeStyle = "short";
+              hourCycle = "h23";
+            };
+          };
+        }
+      ];
+
+      # Catppuccin Mocha (catppuccin.com/palette), mapped onto Homepage's
+      # own 50-900 --color-* scale (src/styles/theme.css upstream) so every
+      # place that scale is used (cards, borders, the dark-mode page
+      # background at --color-800) picks it up, not just hardcoded overrides.
+      customCSS = ''
+        .theme-catppuccin {
+          --color-50: 205 214 244;   /* text */
+          --color-100: 186 194 222;  /* subtext1 */
+          --color-200: 166 173 200;  /* subtext0 */
+          --color-300: 147 153 178;  /* overlay2 */
+          --color-400: 127 132 156;  /* overlay1 */
+          --color-500: 108 112 134;  /* overlay0 */
+          --color-600: 88 91 112;    /* surface2 */
+          --color-700: 69 71 90;     /* surface1 */
+          --color-800: 30 30 46;     /* base -- dark-mode page background */
+          --color-900: 17 17 27;     /* crust */
+          --color-logo-start: 203 166 247; /* mauve */
+          --color-logo-stop: 180 190 254;  /* lavender */
+        }
+      '';
 
       services = [
         {
@@ -62,24 +109,28 @@
               Seerr = {
                 icon = "overseerr.png";
                 href = "https://seerr.${domain}";
+                siteMonitor = "https://seerr.${domain}";
               };
             }
             {
               Navidrome = {
                 icon = "navidrome.png";
                 href = "https://navidrome.${domain}";
+                siteMonitor = "https://navidrome.${domain}";
               };
             }
             {
               Audiobookshelf = {
                 icon = "audiobookshelf.png";
                 href = "https://audiobookshelf.${domain}";
+                siteMonitor = "https://audiobookshelf.${domain}";
               };
             }
             {
               Bookshelf = {
                 icon = "mdi-book-open-page-variant";
                 href = "https://bookshelf.${domain}";
+                siteMonitor = "https://bookshelf.${domain}";
               };
             }
           ];
@@ -156,6 +207,7 @@
               Maintainerr = {
                 icon = "maintainerr.png";
                 href = "https://maintainerr.${domain}";
+                siteMonitor = "https://maintainerr.${domain}";
               };
             }
           ];
@@ -166,12 +218,14 @@
               "Actual Budget" = {
                 icon = "actual-budget.png";
                 href = "https://actualbudget.${domain}";
+                siteMonitor = "https://actualbudget.${domain}";
               };
             }
             {
               Ghostfolio = {
                 icon = "ghostfolio.png";
                 href = "https://ghostfolio.${domain}";
+                siteMonitor = "https://ghostfolio.${domain}";
               };
             }
           ];
@@ -184,6 +238,7 @@
                 # yet in secrets.yaml (declaring an unset secret breaks the build).
                 icon = "home-assistant.png";
                 href = "https://ha.${domain}";
+                siteMonitor = "https://ha.${domain}";
               };
             }
             {
@@ -194,18 +249,21 @@
                 # username/password added to secrets.yaml before going live.
                 icon = "frigate.png";
                 href = "https://nvr.${domain}";
+                siteMonitor = "https://nvr.${domain}";
               };
             }
             {
               "Zigbee2MQTT" = {
                 icon = "zigbee2mqtt.png";
                 href = "https://z2m.${domain}";
+                siteMonitor = "https://z2m.${domain}";
               };
             }
             {
               "Music Assistant" = {
                 icon = "music-assistant.png";
                 href = "https://ma.${domain}";
+                siteMonitor = "https://ma.${domain}";
               };
             }
           ];
@@ -238,12 +296,14 @@
               Arcane = {
                 icon = "arcane.png";
                 href = "https://oci.${domain}";
+                siteMonitor = "https://oci.${domain}";
               };
             }
             {
               Authelia = {
                 icon = "authelia.png";
                 href = "https://auth.${domain}";
+                siteMonitor = "https://auth.${domain}";
               };
             }
           ];

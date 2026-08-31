@@ -198,6 +198,15 @@
                     };
                   };
                 }
+                {
+                  # No dedicated Homepage widget for AIOStreams yet, plain link.
+                  AIOStreams = {
+                    description = "Stremio streaming addon";
+                    icon = "mdi-television-play";
+                    href = "https://aiostreams.${domain}";
+                    siteMonitor = "https://aiostreams.${domain}";
+                  };
+                }
               ];
             }
             {

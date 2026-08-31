@@ -33,6 +33,7 @@
           "sonarr.${config.vars.acme.domain}:10.3.2.1"
           "sabnzbd.${config.vars.acme.domain}:10.3.2.1"
           "seerr.${config.vars.acme.domain}:10.3.2.1"
+          "auth.${config.vars.acme.domain}:10.3.2.1"
         ];
         volumes = [
           "/srv/appdata/home-auto/home-assistant/data:/config"
@@ -109,5 +110,8 @@
       group = "root";
       mode = "0400";
     };
+
+    # No bind-mount: pasted by hand into the hass-oidc-auth integration's UI.
+    sops.secrets."homeassistant.oidc_client_secret" = { };
   };
 }

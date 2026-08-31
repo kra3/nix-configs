@@ -147,12 +147,27 @@
       };
 
       branding = {
+        loginDisclaimer = ''
+          <form action="https://jellyfin.${domain}/sso/OID/start/authelia">
+            <button class="raised block emby-button button-submit">
+              Sign in with Authelia
+            </button>
+          </form>
+        '';
         customCss = ''
           /* using https://github.com/ranaldsgift/KefinTweaks instead gives much more options */
           /* @import url("https://cdn.jsdelivr.net/gh/lscambo13/ElegantFin@main/Theme/ElegantFin-jellyfin-theme-build-latest-minified.css"); */
           /* @import url('https://cdn.jsdelivr.net/gh/stpnwf/ZestyTheme@latest/theme.css'); */
           /* cyan is default, others: blue, coral, grey, green, purple, red, yellow */
           /* @import url('https://cdn.jsdelivr.net/gh/stpnwf/ZestyTheme@latest/colorschemes/blue.css'); */
+
+          a.raised.emby-button {
+            padding: 0.9em 1em;
+            color: inherit !important;
+          }
+          .disclaimerContainer {
+            display: block;
+          }
         '';
       };
     };

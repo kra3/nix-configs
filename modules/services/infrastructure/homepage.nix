@@ -61,6 +61,17 @@
       allowedHosts = "home.${domain}";
       environmentFiles = [ config.sops.templates."homepage.env".path ];
 
+      # Read-only fleet visibility via podman-socket-proxy
+      # (modules/services/virtualisation/podman-socket-proxy.nix) — Homepage
+      # only ever issues GET requests, so it can't use the proxy's write
+      # grants regardless of what they allow.
+      docker = {
+        podman-proxy = {
+          host = "127.0.0.1";
+          port = 2375;
+        };
+      };
+
       settings = {
         title = "sutala";
         theme = "dark";
@@ -178,6 +189,8 @@
                     icon = "overseerr.png";
                     href = "https://seerr.${domain}";
                     siteMonitor = "https://seerr.${domain}";
+                    server = "podman-proxy";
+                    container = "seerr";
                     widget = {
                       type = "seerr";
                       url = "http://${ip.seerr}:5055";
@@ -191,6 +204,8 @@
                     icon = "audiobookshelf.png";
                     href = "https://audiobookshelf.${domain}";
                     siteMonitor = "https://audiobookshelf.${domain}";
+                    server = "podman-proxy";
+                    container = "audiobookshelf";
                     widget = {
                       type = "audiobookshelf";
                       url = "http://${ip.audiobookshelf}:80";
@@ -208,6 +223,8 @@
                     icon = "radarr.png";
                     href = "https://radarr.${domain}";
                     siteMonitor = "https://radarr.${domain}";
+                    server = "podman-proxy";
+                    container = "radarr";
                     widget = {
                       type = "radarr";
                       url = "http://${ip.radarr}:7878";
@@ -221,6 +238,8 @@
                     icon = "sonarr.png";
                     href = "https://sonarr.${domain}";
                     siteMonitor = "https://sonarr.${domain}";
+                    server = "podman-proxy";
+                    container = "sonarr";
                     widget = {
                       type = "sonarr";
                       url = "http://${ip.sonarr}:8989";
@@ -234,6 +253,8 @@
                     icon = "lidarr.png";
                     href = "https://lidarr.${domain}";
                     siteMonitor = "https://lidarr.${domain}";
+                    server = "podman-proxy";
+                    container = "lidarr";
                     widget = {
                       type = "lidarr";
                       url = "http://${ip.lidarr}:8686";
@@ -247,6 +268,8 @@
                     icon = "prowlarr.png";
                     href = "https://prowlarr.${domain}";
                     siteMonitor = "https://prowlarr.${domain}";
+                    server = "podman-proxy";
+                    container = "prowlarr";
                     widget = {
                       type = "prowlarr";
                       url = "http://${ip.prowlarr}:9696";
@@ -260,6 +283,8 @@
                     icon = "bazarr.png";
                     href = "https://bazarr.${domain}";
                     siteMonitor = "https://bazarr.${domain}";
+                    server = "podman-proxy";
+                    container = "bazarr";
                     widget = {
                       type = "bazarr";
                       url = "http://${ip.bazarr}:6767";
@@ -273,6 +298,8 @@
                     icon = "sabnzbd.png";
                     href = "https://sabnzbd.${domain}";
                     siteMonitor = "https://sabnzbd.${domain}";
+                    server = "podman-proxy";
+                    container = "sabnzbd";
                     widget = {
                       type = "sabnzbd";
                       url = "http://${ip.sabnzbd}:8080";
@@ -286,6 +313,8 @@
                     icon = "maintainerr.png";
                     href = "https://maintainerr.${domain}";
                     siteMonitor = "https://maintainerr.${domain}";
+                    server = "podman-proxy";
+                    container = "maintainerr";
                     widget = {
                       type = "maintainerr";
                       url = "http://${ip.maintainerr}:6246";
@@ -298,6 +327,8 @@
                     icon = "mdi-book-open-page-variant";
                     href = "https://bookshelf.${domain}";
                     siteMonitor = "https://bookshelf.${domain}";
+                    server = "podman-proxy";
+                    container = "bookshelf";
                     widget = {
                       type = "readarr";
                       url = "http://${ip.bookshelf}:8787";
@@ -317,6 +348,8 @@
                 icon = "actual-budget.png";
                 href = "https://actualbudget.${domain}";
                 siteMonitor = "https://actualbudget.${domain}";
+                server = "podman-proxy";
+                container = "actualbudget";
               };
             }
             {
@@ -325,6 +358,8 @@
                 icon = "ghostfolio.png";
                 href = "https://ghostfolio.${domain}";
                 siteMonitor = "https://ghostfolio.${domain}";
+                server = "podman-proxy";
+                container = "ghostfolio";
                 widget = {
                   type = "ghostfolio";
                   url = "http://${ip.ghostfolio}:3333";
@@ -342,6 +377,8 @@
                 icon = "home-assistant.png";
                 href = "https://ha.${domain}";
                 siteMonitor = "https://ha.${domain}";
+                server = "podman-proxy";
+                container = "home-assistant";
                 widget = {
                   type = "homeassistant";
                   url = "http://127.0.0.1:8123";

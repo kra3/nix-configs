@@ -6,12 +6,18 @@
     arcaneEnvPath = config.sops.templates."arcane.env".path;
   in
   {
-    # Runs under the dedicated "arcane" user's own rootless podman instance
-    # (modules/users/arcane.nix), not the system's rootful one — a compromise
-    # of this container reaches only its own unprivileged podman, not host
-    # root. Isolated by construction from the app fleet's rootful quadlet
-    # networks/storage; it can't see or manage sonarr/radarr/etc, which is
-    # fine since deployment is handled by nix, not by Arcane.
+    # The Arcane process itself runs under the dedicated "arcane" user's own
+    # rootless podman (modules/users/arcane.nix), launched via quadlet-nix's
+    # home-manager integration below — not the system's rootful podman, so a
+    # compromise of the Arcane container itself never gets an unmediated
+    # path to host root.
+    #
+    # What Arcane *monitors* is separate: it talks to the app fleet's
+    # rootful podman only through podman-socket-proxy
+    # (modules/services/virtualisation/podman-socket-proxy.nix), which
+    # grants full container/image/network/volume/exec access (Arcane's
+    # documented "essential for operation" set) but nothing beyond that
+    # socket — no AUTH/SECRETS, no filesystem, no other host capability.
     services.nginx.virtualHosts."oci.${domain}" = flakeLib.nginx.mkProxyVhost {
       domain = domain;
       cidrs = config.vars.network.nginxAllowCidrs;
@@ -73,7 +79,9 @@
         # Rootless podman's API socket (ships in the podman package as
         # share/systemd/user/podman.{socket,service}) isn't enabled by
         # default the way quadlet-nix's own generated container units are —
-        # Arcane needs it explicitly to talk to "its" podman at all.
+        # needed explicitly so quadlet-nix can launch the Arcane container
+        # itself under this user's rootless podman (not used as Arcane's
+        # monitoring target anymore — see DOCKER_HOST below).
         systemd.user.sockets.podman = {
           Unit.Description = "Podman API Socket";
           Socket = {
@@ -106,18 +114,24 @@
             # writable without the old rootful setup's PUID/PGID dance.
             userns = "keep-id";
             # Rootless slirp4netns can't hairpin back to the host's own LAN
-            # IP, so DNS-resolving auth.${domain} to 192.168.x.x during OIDC
-            # discovery gets "connection refused" (same class of problem as
-            # home-assistant/container.nix's addHosts, solved there via the
-            # bridge gateway; here there's no bridge, so route via podman's
-            # host-gateway alias, which slirp4netns forwards to the host's
-            # loopback interface instead).
+            # IP, so DNS-resolving auth.${domain} (OIDC discovery) needs
+            # routing via podman's host-gateway alias instead of a real IP.
             addHosts = [
               "auth.${domain}:host-gateway"
             ];
             volumes = [
-              "%t/podman/podman.sock:/var/run/docker.sock"
               "/srv/arcane:/app/data"
+              # podman-socket-proxy's Unix socket, not its TCP port: TCP
+              # would mean reaching it via host-gateway, which requires
+              # opting this whole network namespace into
+              # slirp4netns:allow_host_loopback=true — and that flag isn't
+              # scoped to one port, it opens every other 127.0.0.1-bound
+              # host service (Prometheus, Alloy, Homepage's own
+              # unauthenticated backend port, etc.) to this container too.
+              # The socket file is owned root:arcane mode 660
+              # (podman-socket-proxy.nix), so only this container can open
+              # it — no network boundary involved at all.
+              "/run/podman-socket-proxy:/run/podman-socket-proxy:ro"
             ];
             environments = {
               APP_URL = "https://oci.${domain}";
@@ -128,6 +142,13 @@
               OIDC_ISSUER_URL = "https://auth.${domain}";
               OIDC_SCOPES = "openid profile email groups";
               DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
+              # Fleet-wide view via podman-socket-proxy's Unix socket
+              # instead of Arcane's own (otherwise empty) rootless podman
+              # instance. Standard Docker/Go client default connection
+              # mode — the same one Arcane used pre-proxy when it mounted
+              # a raw socket at /var/run/docker.sock with no DOCKER_HOST
+              # override at all.
+              DOCKER_HOST = "unix:///run/podman-socket-proxy/proxy.sock";
             };
             environmentFiles = [ arcaneEnvPath ];
           };

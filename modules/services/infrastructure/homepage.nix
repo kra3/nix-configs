@@ -46,9 +46,17 @@
     # Default owner (root) is fine: EnvironmentFile= is read by systemd
     # itself before the DynamicUser sandboxed process starts, not by the
     # service's own runtime UID.
+    #
+    # restartUnits is required, not cosmetic: EnvironmentFile= points at
+    # this template's stable rendered path, which sops-nix updates in place
+    # on every switch -- the path itself never changes, so without this the
+    # activation script has no reason to restart homepage-dashboard when
+    # only a secret's decrypted VALUE rotates (e.g. `sops set` + switch),
+    # and the service keeps running on stale credentials indefinitely.
     sops.templates."homepage.env" = {
       mode = "0400";
       content = envContent;
+      restartUnits = [ "homepage-dashboard.service" ];
     };
 
     services.homepage-dashboard = {

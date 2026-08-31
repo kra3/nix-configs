@@ -24,6 +24,8 @@
       HOMEPAGE_VAR_GHOSTFOLIO_TOKEN=${config.sops.placeholder."homepage.ghostfolio_token"}
       HOMEPAGE_VAR_TAILSCALE_KEY=${config.sops.placeholder."homepage.tailscale_key"}
       HOMEPAGE_VAR_TAILSCALE_DEVICE_ID=${config.sops.placeholder."homepage.tailscale_device_id"}
+      HOMEPAGE_VAR_HOMEASSISTANT_TOKEN=${config.sops.placeholder."homepage.homeassistant_token"}
+      HOMEPAGE_VAR_ARCANE_KEY=${config.sops.placeholder."homepage.arcane_key"}
     '';
   in
   {
@@ -34,6 +36,8 @@
     sops.secrets."homepage.tailscale_key" = { };
     sops.secrets."homepage.tailscale_device_id" = { };
     sops.secrets."homepage.adguard_password" = { };
+    sops.secrets."homepage.homeassistant_token" = { };
+    sops.secrets."homepage.arcane_key" = { };
 
     # restartUnits: EnvironmentFile= points at a stable path sops-nix rewrites in place, so without this a secret-value-only rotation never restarts the service.
     sops.templates."homepage.env" = {
@@ -259,11 +263,15 @@
           Home = [
             {
               "Home Assistant" = {
-                # Link-only: widget needs a long-lived access token, not in secrets.yaml.
                 description = "Home automation hub";
                 icon = "home-assistant.png";
                 href = "https://ha.${domain}";
                 siteMonitor = "https://ha.${domain}";
+                widget = {
+                  type = "homeassistant";
+                  url = "http://127.0.0.1:8123";
+                  key = "{{HOMEPAGE_VAR_HOMEASSISTANT_TOKEN}}";
+                };
               };
             }
             {
@@ -329,11 +337,16 @@
             }
             {
               Arcane = {
-                # Link-only: widget needs a scoped API key from its own UI, not in secrets.yaml.
                 description = "Container management";
                 icon = "arcane.png";
                 href = "https://oci.${domain}";
                 siteMonitor = "https://oci.${domain}";
+                widget = {
+                  type = "arcane";
+                  url = "http://127.0.0.1:3552";
+                  env = 0;
+                  key = "{{HOMEPAGE_VAR_ARCANE_KEY}}";
+                };
               };
             }
             {

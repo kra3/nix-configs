@@ -223,18 +223,13 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
-              # Dashboard/config-page login only (see aiostreams.nix) — never
-              # gates the Stremio addon URLs. AIOSTREAMS_OIDC_GROUP_PERMISSIONS
-              # maps the admin group to AIOStreams' own "admin" permission;
-              # unmapped groups (family) are refused login by default.
+              # Dashboard-only login (see aiostreams.nix), never the Stremio addon URLs.
               - client_id: 'aiostreams'
                 client_name: 'AIOStreams'
                 client_secret: '${config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"}'
                 public: false
                 authorization_policy: 'one_factor'
-                # AIOStreams' OIDC client posts the secret in the token
-                # request body, not an Authorization header — Authelia
-                # rejects that against the client_secret_basic default.
+                # AIOStreams posts the client secret in the token body, not a header.
                 token_endpoint_auth_method: 'client_secret_post'
                 redirect_uris:
                   - 'https://aiostreams.${domain}/api/v1/auth/oidc/callback'

@@ -24,19 +24,14 @@
 
     virtualisation.quadlet.containers.aiostreams = {
       containerConfig = {
-        # Pinned to its current dynamically-assigned IP — see
-        # media-mgmt/radarr.nix for why. IP centralized in vars.nix
-        # (podmanAddresses.aiostreams).
+        # Pinned IP (vars.nix podmanAddresses.aiostreams) — see radarr.nix for why.
         networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-    # No Authelia forward-auth: AIOStreams has native OIDC support scoped to
-    # its own dashboard/config-page login (wired against Authelia in
-    # authelia.nix), which it applies without ever affecting the Stremio
-    # addon paths the TV app hits directly — unlike nginx-layer forward-auth,
-    # which would have needed a per-location split to avoid gating those too.
+    # No forward-auth: AIOStreams' native OIDC (authelia.nix) covers the
+    # dashboard without gating the Stremio paths the TV app hits directly.
     services.nginx.virtualHosts."aiostreams.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
       domain = config.vars.acme.domain;
       cidrs = config.vars.network.nginxAllowCidrs;

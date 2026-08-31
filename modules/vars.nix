@@ -140,9 +140,7 @@
           aiostreams = lib.mkOption {
             type = lib.types.str;
             default = "10.3.1.50";
-            # .16 collided with a dynamic lease already held by an unpinned
-            # container (recyclarr/unpackerr); picked .50 to clear the dense
-            # 2-16 range those dynamic allocations live in.
+            # .16 collided with an existing dynamic lease; .50 clears that range.
             description = "Pinned br-media-mgmt IP for aiostreams";
           };
           seerr = lib.mkOption {

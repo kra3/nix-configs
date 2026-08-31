@@ -125,9 +125,16 @@
               "AAPL"
               "AMD"
               "NVDA"
-              "PLTR"
-              "SPY"
+              "AMZN"
+              "MSFT"
+              "GOOGL"
             ];
+          };
+        }
+        {
+          search = {
+            provider = "duckduckgo";
+            target = "_blank";
           };
         }
       ];

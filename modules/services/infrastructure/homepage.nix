@@ -90,7 +90,7 @@
           };
           Infra = {
             style = "row";
-            columns = 3;
+            columns = 2;
           };
         };
       };
@@ -390,20 +390,6 @@
               };
             }
             {
-              Arcane = {
-                description = "Container management";
-                icon = "arcane.png";
-                href = "https://oci.${domain}";
-                siteMonitor = "https://oci.${domain}";
-                widget = {
-                  type = "arcane";
-                  url = "http://127.0.0.1:3552";
-                  env = 0;
-                  key = "{{HOMEPAGE_VAR_ARCANE_KEY}}";
-                };
-              };
-            }
-            {
               Prometheus = {
                 description = "Metrics collection";
                 icon = "prometheus.png";
@@ -424,6 +410,20 @@
                   type = "tailscale";
                   deviceid = "{{HOMEPAGE_VAR_TAILSCALE_DEVICE_ID}}";
                   key = "{{HOMEPAGE_VAR_TAILSCALE_KEY}}";
+                };
+              };
+            }
+            {
+              Arcane = {
+                description = "Container management";
+                icon = "arcane.png";
+                href = "https://oci.${domain}";
+                siteMonitor = "https://oci.${domain}";
+                widget = {
+                  type = "arcane";
+                  url = "http://127.0.0.1:3552";
+                  env = 0;
+                  key = "{{HOMEPAGE_VAR_ARCANE_KEY}}";
                 };
               };
             }

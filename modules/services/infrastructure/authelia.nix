@@ -232,6 +232,10 @@
                 client_secret: '${config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"}'
                 public: false
                 authorization_policy: 'one_factor'
+                # AIOStreams' OIDC client posts the secret in the token
+                # request body, not an Authorization header — Authelia
+                # rejects that against the client_secret_basic default.
+                token_endpoint_auth_method: 'client_secret_post'
                 redirect_uris:
                   - 'https://aiostreams.${domain}/api/v1/auth/oidc/callback'
                 scopes:

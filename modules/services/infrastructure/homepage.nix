@@ -96,6 +96,7 @@
           Media = [
             {
               Jellyfin = {
+                description = "Movie & TV streaming";
                 icon = "jellyfin.png";
                 href = "https://jellyfin.${domain}";
                 widget = {
@@ -107,6 +108,7 @@
             }
             {
               Seerr = {
+                description = "Media requests";
                 icon = "overseerr.png";
                 href = "https://seerr.${domain}";
                 siteMonitor = "https://seerr.${domain}";
@@ -114,6 +116,7 @@
             }
             {
               Navidrome = {
+                description = "Music streaming";
                 icon = "navidrome.png";
                 href = "https://navidrome.${domain}";
                 siteMonitor = "https://navidrome.${domain}";
@@ -121,6 +124,7 @@
             }
             {
               Audiobookshelf = {
+                description = "Audiobook & podcast server";
                 icon = "audiobookshelf.png";
                 href = "https://audiobookshelf.${domain}";
                 siteMonitor = "https://audiobookshelf.${domain}";
@@ -128,6 +132,7 @@
             }
             {
               Bookshelf = {
+                description = "Book tracking";
                 icon = "mdi-book-open-page-variant";
                 href = "https://bookshelf.${domain}";
                 siteMonitor = "https://bookshelf.${domain}";
@@ -139,6 +144,7 @@
           Acquisition = [
             {
               Radarr = {
+                description = "Movie management";
                 icon = "radarr.png";
                 href = "https://radarr.${domain}";
                 widget = {
@@ -150,6 +156,7 @@
             }
             {
               Sonarr = {
+                description = "TV show management";
                 icon = "sonarr.png";
                 href = "https://sonarr.${domain}";
                 widget = {
@@ -161,6 +168,7 @@
             }
             {
               Lidarr = {
+                description = "Music management";
                 icon = "lidarr.png";
                 href = "https://lidarr.${domain}";
                 widget = {
@@ -172,6 +180,7 @@
             }
             {
               Prowlarr = {
+                description = "Indexer management";
                 icon = "prowlarr.png";
                 href = "https://prowlarr.${domain}";
                 widget = {
@@ -183,6 +192,7 @@
             }
             {
               Bazarr = {
+                description = "Subtitle management";
                 icon = "bazarr.png";
                 href = "https://bazarr.${domain}";
                 widget = {
@@ -194,6 +204,7 @@
             }
             {
               SABnzbd = {
+                description = "Usenet downloader";
                 icon = "sabnzbd.png";
                 href = "https://sabnzbd.${domain}";
                 widget = {
@@ -205,6 +216,7 @@
             }
             {
               Maintainerr = {
+                description = "Library cleanup automation";
                 icon = "maintainerr.png";
                 href = "https://maintainerr.${domain}";
                 siteMonitor = "https://maintainerr.${domain}";
@@ -216,6 +228,7 @@
           Finance = [
             {
               "Actual Budget" = {
+                description = "Personal budgeting";
                 icon = "actual-budget.png";
                 href = "https://actualbudget.${domain}";
                 siteMonitor = "https://actualbudget.${domain}";
@@ -223,6 +236,7 @@
             }
             {
               Ghostfolio = {
+                description = "Investment portfolio tracking";
                 icon = "ghostfolio.png";
                 href = "https://ghostfolio.${domain}";
                 siteMonitor = "https://ghostfolio.${domain}";
@@ -236,6 +250,7 @@
               "Home Assistant" = {
                 # Link-only: its widget needs a long-lived access token not
                 # yet in secrets.yaml (declaring an unset secret breaks the build).
+                description = "Home automation hub";
                 icon = "home-assistant.png";
                 href = "https://ha.${domain}";
                 siteMonitor = "https://ha.${domain}";
@@ -247,6 +262,7 @@
                 # no forwardAuth in front of it -- see surveillance/proxy.nix)
                 # 401s the widget's unauthenticated call; needs an admin
                 # username/password added to secrets.yaml before going live.
+                description = "NVR & object detection";
                 icon = "frigate.png";
                 href = "https://nvr.${domain}";
                 siteMonitor = "https://nvr.${domain}";
@@ -254,6 +270,7 @@
             }
             {
               "Zigbee2MQTT" = {
+                description = "Zigbee device bridge";
                 icon = "zigbee2mqtt.png";
                 href = "https://z2m.${domain}";
                 siteMonitor = "https://z2m.${domain}";
@@ -261,6 +278,7 @@
             }
             {
               "Music Assistant" = {
+                description = "Multi-room audio control";
                 icon = "music-assistant.png";
                 href = "https://ma.${domain}";
                 siteMonitor = "https://ma.${domain}";
@@ -272,6 +290,7 @@
           Infra = [
             {
               Grafana = {
+                description = "Metrics dashboards";
                 icon = "grafana.png";
                 href = "https://grafana.${domain}";
                 widget = {
@@ -285,6 +304,7 @@
             }
             {
               Prometheus = {
+                description = "Metrics collection";
                 icon = "prometheus.png";
                 widget = {
                   type = "prometheus";
@@ -294,6 +314,7 @@
             }
             {
               Arcane = {
+                description = "Container management";
                 icon = "arcane.png";
                 href = "https://oci.${domain}";
                 siteMonitor = "https://oci.${domain}";
@@ -301,6 +322,7 @@
             }
             {
               Authelia = {
+                description = "SSO identity provider";
                 icon = "authelia.png";
                 href = "https://auth.${domain}";
                 siteMonitor = "https://auth.${domain}";

@@ -6,3 +6,6 @@
 .vscode
 .envrc
 .shelf
+
+# Claude Code machine-local settings (never committed)
+**/.claude/settings.local.json

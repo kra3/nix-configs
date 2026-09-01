@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.maintainerr = {
       containerConfig = {
-        image = "ghcr.io/maintainerr/maintainerr:3.23.0";
+        image = "ghcr.io/maintainerr/maintainerr:3.26.0";
         # No publishPorts: see services/media/acquisition/radarr.nix — nginx
         # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";

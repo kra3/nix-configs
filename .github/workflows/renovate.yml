@@ -22,7 +22,7 @@ jobs:
       - uses: cachix/install-nix-action@v31
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v46.2.2
+        uses: renovatebot/github-action@v46.2.4
         with:
           configurationFile: renovate.json
           token: ${{ secrets.GH_PAT }}

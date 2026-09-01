@@ -1,5 +1,5 @@
 {
-  flake.homeManagerModules.home-git-lazygit = { ... }: {
+  flake.homeManagerModules.home-git-lazygit = { config, lib, pkgs, ... }: {
     programs.lazygit = {
       enable = true;
       settings = {
@@ -28,6 +28,25 @@
           skipRewordInEditorWarning = false;
 
           border = "rounded";
+
+          # Catppuccin Mocha (blue accent). catppuccin/nix ships lazygit theme
+          # files (catppuccin-lazygit) but release-25.11 does NOT wire them into
+          # programs.lazygit, so catppuccin.<x>.enable is a no-op for lazygit.
+          # Embed catppuccin's own mocha/blue values (matches both hosts'
+          # accent = blue). Update these if catppuccin.accent changes, or drop
+          # in favour of catppuccin.lazygit.enable once upstream wires it.
+          theme = {
+            activeBorderColor = [ "#89b4fa" "bold" ];
+            inactiveBorderColor = [ "#a6adc8" ];
+            optionsTextColor = [ "#89b4fa" ];
+            selectedLineBgColor = [ "#313244" ];
+            cherryPickedCommitBgColor = [ "#45475a" ];
+            cherryPickedCommitFgColor = [ "#89b4fa" ];
+            unstagedChangesColor = [ "#f38ba8" ];
+            defaultFgColor = [ "#cdd6f4" ];
+            searchingActiveBorderColor = [ "#f9e2af" ];
+          };
+          authorColors = { "*" = "#b4befe"; };
         };
 
         git = {
@@ -108,6 +127,17 @@
 
         notARepository = "prompt";
       };
+    };
+
+    # Darwin: home-manager writes lazygit's config to
+    # ~/Library/Application Support/lazygit/config.yml, but with XDG_CONFIG_HOME
+    # set (see modules/home/shell/common/default.nix) lazygit reads
+    # ~/.config/lazygit/config.yml instead. Mirror the generated (themed) config
+    # to the XDG path so it's actually used. Linux writes to ~/.config/lazygit
+    # directly, so no mirror is needed (and the Library path doesn't exist there).
+    home.file.".config/lazygit/config.yml" = lib.mkIf pkgs.stdenv.isDarwin {
+      source = config.lib.file.mkOutOfStoreSymlink
+        "${config.home.homeDirectory}/Library/Application Support/lazygit/config.yml";
     };
   };
 }

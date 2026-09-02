@@ -98,6 +98,11 @@
     # cross-machine import scenario needing the relaxed hostid check.
     zfs.forceImportRoot = false;
 
+    # QEMU emulation so this host can cross-build aarch64-linux derivations
+    # (hosts/surasa) -- also registers aarch64-linux under
+    # nix.settings.extra-platforms.
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
+
     # Kernel hardening parameters
     # NOTE: kernel.unprivileged_userns_clone NOT set to preserve container compatibility
     # Setting it to 0 would break Podman and potentially systemd-nspawn containers

@@ -34,4 +34,16 @@
       ../hosts/mac-work
     ];
   };
+
+  surasa = {
+    class = "nixos";
+    system = "aarch64-linux";
+    # Built via QEMU emulation on sutala (boot.binfmt.emulatedSystems), not
+    # natively -- see hosts/sutala/configuration.nix.
+    modules = [
+      { nixpkgs.hostPlatform = "aarch64-linux"; }
+      inputs.nixos-hardware.nixosModules.raspberry-pi-3
+      ../hosts/surasa/configuration.nix
+    ];
+  };
 }

@@ -58,6 +58,8 @@
     };
 
     mcp-nixos.url = "github:utensils/mcp-nixos";
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 
   outputs =

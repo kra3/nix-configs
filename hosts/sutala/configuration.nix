@@ -41,6 +41,8 @@
     flakeModules.nixos.containers-home-auto-otbr-default
     flakeModules.nixos.containers-home-auto-matter-server-default
     flakeModules.nixos.containers-home-auto-music-assistant-default
+    flakeModules.nixos.containers-home-auto-wyoming-whisper-default
+    flakeModules.nixos.containers-home-auto-wyoming-piper-default
     flakeModules.nixos.containers-life-default
     flakeModules.nixos.fail2ban
     flakeModules.nixos.services-system-vim

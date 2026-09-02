@@ -33,11 +33,21 @@ prometheus:
   namespace: ha
 
 logger:
-  logs:
-    custom_components.auth_oidc: debug
+
+# Noisy, high-frequency entities already covered by Prometheus/Grafana for
+# long-term graphing — excluded here to keep the recorder DB small.
+recorder:
+  exclude:
+    entity_globs:
+      - sensor.*_illuminance
+      - sensor.*_occupancy_temperature
+      - sensor.*_occupancy_humidity
+      - sensor.average_*
+      - binary_sensor.*_occupancy
+      - switch.ranger_*_detect
+      - switch.ranger_*_audio_detection
 
 automation: !include automations.yaml
 script: !include scripts.yaml
-scene: !include scenes.yaml
 
 lovelace: !include lovelace.yaml

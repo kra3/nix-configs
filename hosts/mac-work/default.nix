@@ -1,11 +1,13 @@
 { lib, inputs, flakeModules, ... }:
 {
-  imports = [
-    flakeModules.darwin.services-system-nix-defaults-darwin
-  ];
-
-  # System-level shell setup (nix-darwin requires this for managed shells)
+  # nix-darwin requires this for managed shells.
   programs.zsh.enable = true;
+
+  # Determinate owns nix on this machine — don't let nix-darwin manage it (nix.conf
+  # clash). REVERSAL if moving off Determinate: set nix.enable=true, re-import
+  # services-system-nix-defaults-darwin, and move the Apple caches from
+  # /etc/nix/nix.custom.conf into nix.settings.
+  nix.enable = false;
 
   home-manager = {
     useGlobalPkgs = true;
@@ -17,7 +19,6 @@
   home-manager.users.akarunagath = {
     imports = [
       flakeModules.homeManager.home-profiles-core
-      flakeModules.homeManager.home-profiles-ai
       flakeModules.homeManager.home-profiles-dev
       flakeModules.homeManager.home-profiles-shell
       flakeModules.homeManager.home-shell-default

@@ -50,6 +50,35 @@
       group = "jellyfin";
     };
 
+    # Telegram alert contact point. bottoken/chatid must go through a
+    # rendered template (not provision.alerting.contactPoints.settings)
+    # since that option's value lands in the world-readable Nix store —
+    # same reasoning as the HA secrets.yaml template in container.nix.
+    sops.secrets."monitoring.grafana.telegram_bot_token" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
+    sops.secrets."monitoring.grafana.telegram_chat_id" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
+    sops.templates."monitoring/grafana-telegram-contactpoint.yaml" =
+      lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false)
+        {
+          owner = "root";
+          group = "jellyfin";
+          mode = "0440";
+          content = ''
+            apiVersion: 1
+            contactPoints:
+              - orgId: 1
+                name: telegram
+                receivers:
+                  - uid: telegram1
+                    type: telegram
+                    disableResolveMessage: false
+                    settings:
+                      chatid: "${config.sops.placeholder."monitoring.grafana.telegram_chat_id"}"
+                      parse_mode: None
+                    secureSettings:
+                      bottoken: "${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}"
+          '';
+        };
+
     # Create prometheus group on host matching container GID (static, nixpkgs-pinned
     # uid=gid=255) for secret access, same pattern as media-play.nix's jellyfin group.
     users.groups.prometheus = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
@@ -94,6 +123,21 @@
           "tank"
         ];
       };
+      # Per-cgroup CPU/memory breakdown — groups every process on the host
+      # by its full cgroup path, which for a quadlet container is its
+      # systemd unit (system.slice/<name>.service). Backs data-driven
+      # `Memory=`/`--cpus=` sizing for individual containers; see
+      # https://github.com/ncabatoff/process-exporter#using-a-config-file-group-name
+      process = {
+        enable = true;
+        listenAddress = config.vars.network.containers.monitoring.hostAddress;
+        settings.process_names = [
+          {
+            name = "{{.Cgroups}}";
+            cmdline = [ ".+" ];
+          }
+        ];
+      };
     };
 
     systemd.services.systemd-exporter = {
@@ -103,7 +147,7 @@
       serviceConfig = {
         DynamicUser = true;
         Restart = "always";
-        ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558";
+        ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558 --systemd.collector.enable-restart-count";
       };
     };
 
@@ -122,6 +166,16 @@
     systemd.services.prometheus-zfs-exporter = {
       after = [ "container@monitoring.service" "network-online.target" ];
       wants = [ "container@monitoring.service" "network-online.target" ];
+    };
+    systemd.services.prometheus-process-exporter = {
+      after = [ "container@monitoring.service" "network-online.target" ];
+      wants = [ "container@monitoring.service" "network-online.target" ];
+      serviceConfig = {
+        # Needs to read /proc/<pid>/smaps_rollup for root-owned container
+        # processes across every uid, not just its own.
+        AmbientCapabilities = [ "CAP_SYS_PTRACE" "CAP_DAC_READ_SEARCH" ];
+        CapabilityBoundingSet = [ "CAP_SYS_PTRACE" "CAP_DAC_READ_SEARCH" ];
+      };
     };
     systemd.services.prometheus-smartctl-exporter = {
       after = [ "container@monitoring.service" "network-online.target" ];
@@ -151,6 +205,7 @@
           9113 # nginx-exporter
           9134 # zfs-exporter
           9167 # unbound-exporter
+          9256 # process-exporter
           9558 # systemd-exporter
           9633 # smartctl-exporter
         ];
@@ -230,6 +285,10 @@
         };
         "/run/secrets/homeassistant.token" = {
           hostPath = "/run/secrets/homeassistant.token";
+          isReadOnly = true;
+        };
+        "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml" = {
+          hostPath = config.sops.templates."monitoring/grafana-telegram-contactpoint.yaml".path;
           isReadOnly = true;
         };
       };

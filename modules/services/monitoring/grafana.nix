@@ -1,6 +1,35 @@
 {
   flake.nixosModules.services-monitoring-grafana =
   { config, lib, domain, networkVars, ... }:
+  let
+    # Podman quadlet containers subject to Memory=/--cpus= limits. Update
+    # when a container.nix is added/removed — same manual-list convention
+    # as the addHosts/firewall-port lists elsewhere in this repo.
+    limitedContainerUnits = [
+      "actualbudget"
+      "aiostreams"
+      "audiobookshelf"
+      "bazarr"
+      "bookshelf"
+      "ghostfolio"
+      "home-assistant"
+      "lidarr"
+      "maintainerr"
+      "matter-server"
+      "music-assistant"
+      "otbr"
+      "prowlarr"
+      "radarr"
+      "recyclarr"
+      "sabnzbd"
+      "seerr"
+      "sonarr"
+      "unpackerr"
+      "wyoming-piper"
+      "wyoming-whisper"
+    ];
+    limitedContainerUnitsRegex = "(${lib.concatStringsSep "|" limitedContainerUnits})\\.service";
+  in
   {
     services.grafana = {
       enable = true;
@@ -60,12 +89,16 @@
               access = "proxy";
               url = "http://${networkVars.containers.monitoring.localAddress}:9090";
               isDefault = true;
+              # Pinned (rather than Grafana's auto-generated one) so alert
+              # rules provisioned below can reference it reliably.
+              uid = "prometheus";
             }
             {
               name = "Loki";
               type = "loki";
               access = "proxy";
               url = "http://${networkVars.containers.monitoring.localAddress}:3100";
+              uid = "loki";
             }
           ];
         };
@@ -80,6 +113,165 @@
               disableDeletion = false;
               editable = false;
               options.path = "/etc/grafana-dashboards";
+            }
+          ];
+        };
+        # No contact point/notification policy configured yet (deliberate —
+        # deferred until a channel, e.g. ntfy/email/webhook, is picked). These
+        # rules will still show as firing/pending in the Alerting UI, they
+        # just won't notify anywhere until a contact point exists.
+        alerting.rules.settings = {
+          apiVersion = 1;
+          groups = [
+            {
+              orgId = 1;
+              name = "container-health";
+              folder = "Sutala";
+              interval = "1m";
+              rules = [
+                {
+                  uid = "container-failed-state";
+                  title = "Container stuck in failed state";
+                  condition = "C";
+                  data = [
+                    {
+                      refId = "A";
+                      relativeTimeRange = {
+                        from = 600;
+                        to = 0;
+                      };
+                      datasourceUid = "prometheus";
+                      model = {
+                        refId = "A";
+                        expr = ''node_systemd_unit_state{state="failed", name=~"${limitedContainerUnitsRegex}"}'';
+                        instant = true;
+                        range = false;
+                        intervalMs = 1000;
+                        maxDataPoints = 43200;
+                      };
+                    }
+                    {
+                      refId = "B";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "B";
+                        type = "reduce";
+                        expression = "A";
+                        reducer = "last";
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                    {
+                      refId = "C";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "C";
+                        type = "threshold";
+                        expression = "B";
+                        conditions = [
+                          {
+                            evaluator = {
+                              type = "gt";
+                              params = [ 0 ];
+                            };
+                            operator.type = "and";
+                            query.params = [ "C" ];
+                            reducer.type = "last";
+                            type = "query";
+                          }
+                        ];
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                  ];
+                  noDataState = "OK";
+                  execErrState = "Error";
+                  for = "0s";
+                  labels.severity = "critical";
+                  annotations = {
+                    summary = "{{ $labels.name }} is in a failed state and systemd has stopped retrying it.";
+                    description = "Likely hit its Memory=/--cpus= cap repeatedly and exceeded systemd's start-rate limit. Needs a manual `systemctl restart` after checking why (and possibly raising the cap).";
+                  };
+                  isPaused = false;
+                }
+                {
+                  uid = "container-restart-flapping";
+                  title = "Container restarting repeatedly";
+                  condition = "C";
+                  data = [
+                    {
+                      refId = "A";
+                      relativeTimeRange = {
+                        from = 900;
+                        to = 0;
+                      };
+                      datasourceUid = "prometheus";
+                      model = {
+                        refId = "A";
+                        expr = ''increase(systemd_service_restart_total{name=~"${limitedContainerUnitsRegex}"}[15m])'';
+                        instant = true;
+                        range = false;
+                        intervalMs = 1000;
+                        maxDataPoints = 43200;
+                      };
+                    }
+                    {
+                      refId = "B";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "B";
+                        type = "reduce";
+                        expression = "A";
+                        reducer = "last";
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                    {
+                      refId = "C";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "C";
+                        type = "threshold";
+                        expression = "B";
+                        conditions = [
+                          {
+                            evaluator = {
+                              type = "gt";
+                              params = [ 1 ];
+                            };
+                            operator.type = "and";
+                            query.params = [ "C" ];
+                            reducer.type = "last";
+                            type = "query";
+                          }
+                        ];
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                  ];
+                  noDataState = "OK";
+                  execErrState = "Error";
+                  for = "0s";
+                  labels.severity = "warning";
+                  annotations = {
+                    summary = "{{ $labels.name }} has restarted more than once in the last 15 minutes.";
+                    description = "Early warning for a possible OOM-restart loop — worth checking before it escalates to the failed-state alert.";
+                  };
+                  isPaused = false;
+                }
+              ];
             }
           ];
         };

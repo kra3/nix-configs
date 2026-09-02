@@ -124,66 +124,13 @@
     Hysteresis darkness state machine for kitchen.
     ON: lux < 30 sustained 2 min AND sun below horizon.
     OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
-  triggers:
-  - entity_id: sensor.hue_pir_kitchen_illuminance
-    below: 30
-    for: "00:02:00"
-    trigger: numeric_state
-    id: dark
-  - entity_id: sun.sun
-    to: below_horizon
-    trigger: state
-    id: dark
-  - entity_id: sensor.hue_pir_kitchen_illuminance
-    above: 120
-    for: "00:02:00"
-    trigger: numeric_state
-    id: bright
-  - entity_id: sun.sun
-    to: above_horizon
-    trigger: state
-    id: bright
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: dark
-      - condition: state
-        entity_id: sun.sun
-        state: below_horizon
-      - condition: numeric_state
-        entity_id: sensor.hue_pir_kitchen_illuminance
-        below: 30
-      sequence:
-      - target:
-          entity_id: input_boolean.kitchen_is_dark
-        action: input_boolean.turn_on
-    - conditions:
-      - condition: trigger
-        id: bright
-      - condition: state
-        entity_id: sun.sun
-        state: above_horizon
-      - condition: numeric_state
-        entity_id: sensor.hue_pir_kitchen_illuminance
-        above: 120
-      sequence:
-      - target:
-          entity_id: input_boolean.kitchen_is_dark
-        action: input_boolean.turn_off
-      - if:
-        - condition: state
-          entity_id: light.kitchen_lights
-          state: "on"
-        then:
-        - wait_for_trigger:
-          - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-            to: "off"
-            trigger: state
-        - target:
-            entity_id: light.kitchen_lights
-          action: light.turn_off
-  mode: restart
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.hue_pir_kitchen_illuminance
+      occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
+      light_entity: light.kitchen_lights
+      dark_boolean: input_boolean.kitchen_is_dark
 
 - id: kitchen_lighting
   alias: Kitchen — Lighting
@@ -283,66 +230,13 @@
     Hysteresis darkness state machine for hall.
     ON: lux < 30 sustained 2 min AND sun below horizon.
     OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
-  triggers:
-  - entity_id: sensor.hue_pir_hallway_illuminance
-    below: 30
-    for: "00:02:00"
-    trigger: numeric_state
-    id: dark
-  - entity_id: sun.sun
-    to: below_horizon
-    trigger: state
-    id: dark
-  - entity_id: sensor.hue_pir_hallway_illuminance
-    above: 120
-    for: "00:02:00"
-    trigger: numeric_state
-    id: bright
-  - entity_id: sun.sun
-    to: above_horizon
-    trigger: state
-    id: bright
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: dark
-      - condition: state
-        entity_id: sun.sun
-        state: below_horizon
-      - condition: numeric_state
-        entity_id: sensor.hue_pir_hallway_illuminance
-        below: 30
-      sequence:
-      - target:
-          entity_id: input_boolean.hall_is_dark
-        action: input_boolean.turn_on
-    - conditions:
-      - condition: trigger
-        id: bright
-      - condition: state
-        entity_id: sun.sun
-        state: above_horizon
-      - condition: numeric_state
-        entity_id: sensor.hue_pir_hallway_illuminance
-        above: 120
-      sequence:
-      - target:
-          entity_id: input_boolean.hall_is_dark
-        action: input_boolean.turn_off
-      - if:
-        - condition: state
-          entity_id: light.hall
-          state: "on"
-        then:
-        - wait_for_trigger:
-          - entity_id: binary_sensor.hue_pir_hallway_occupancy
-            to: "off"
-            trigger: state
-        - target:
-            entity_id: light.hall
-          action: light.turn_off
-  mode: restart
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.hue_pir_hallway_illuminance
+      occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
+      light_entity: light.hall
+      dark_boolean: input_boolean.hall_is_dark
 
 - id: hall_lighting
   alias: Hall — Lighting

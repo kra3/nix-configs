@@ -1,0 +1,92 @@
+blueprint:
+  name: Room darkness detection (hysteresis)
+  description: >-
+    Hysteresis darkness state machine for a room: turns a helper
+    input_boolean on when illuminance drops below 30 lux for 2 min (or the
+    sun goes below the horizon), and off when illuminance rises above 120
+    lux for 2 min (or the sun rises), waiting for the room's occupancy
+    sensor to clear before turning the light off. Factored out of the
+    kitchen/hall automations, which were identical apart from entity names.
+  domain: automation
+  input:
+    illuminance_sensor:
+      name: Illuminance sensor
+      selector:
+        entity:
+          domain: sensor
+    occupancy_sensor:
+      name: Occupancy sensor
+      selector:
+        entity:
+          domain: binary_sensor
+    light_entity:
+      name: Light
+      selector:
+        entity:
+          domain: light
+    dark_boolean:
+      name: '"Is dark" helper'
+      selector:
+        entity:
+          domain: input_boolean
+
+triggers:
+  - entity_id: !input illuminance_sensor
+    below: 30
+    for: "00:02:00"
+    trigger: numeric_state
+    id: dark
+  - entity_id: sun.sun
+    to: below_horizon
+    trigger: state
+    id: dark
+  - entity_id: !input illuminance_sensor
+    above: 120
+    for: "00:02:00"
+    trigger: numeric_state
+    id: bright
+  - entity_id: sun.sun
+    to: above_horizon
+    trigger: state
+    id: bright
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: dark
+          - condition: state
+            entity_id: sun.sun
+            state: below_horizon
+          - condition: numeric_state
+            entity_id: !input illuminance_sensor
+            below: 30
+        sequence:
+          - target:
+              entity_id: !input dark_boolean
+            action: input_boolean.turn_on
+      - conditions:
+          - condition: trigger
+            id: bright
+          - condition: state
+            entity_id: sun.sun
+            state: above_horizon
+          - condition: numeric_state
+            entity_id: !input illuminance_sensor
+            above: 120
+        sequence:
+          - target:
+              entity_id: !input dark_boolean
+            action: input_boolean.turn_off
+          - if:
+              - condition: state
+                entity_id: !input light_entity
+                state: "on"
+            then:
+              - wait_for_trigger:
+                  - entity_id: !input occupancy_sensor
+                    to: "off"
+                    trigger: state
+              - target:
+                  entity_id: !input light_entity
+                action: light.turn_off
+mode: restart

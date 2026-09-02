@@ -1,5 +1,5 @@
 {
-  flake.homeManagerModules.home-git-lazygit = { config, lib, pkgs, ... }: {
+  flake.homeManagerModules.home-git-lazygit = { ... }: {
     programs.lazygit = {
       enable = true;
       settings = {
@@ -112,17 +112,6 @@
 
         notARepository = "prompt";
       };
-    };
-
-    # Darwin: home-manager writes lazygit's config to
-    # ~/Library/Application Support/lazygit/config.yml, but with XDG_CONFIG_HOME
-    # set (see modules/home/shell/common/default.nix) lazygit reads
-    # ~/.config/lazygit/config.yml instead. Mirror the generated (themed) config
-    # to the XDG path so it's actually used. Linux writes to ~/.config/lazygit
-    # directly, so no mirror is needed (and the Library path doesn't exist there).
-    home.file.".config/lazygit/config.yml" = lib.mkIf pkgs.stdenv.isDarwin {
-      source = config.lib.file.mkOutOfStoreSymlink
-        "${config.home.homeDirectory}/Library/Application Support/lazygit/config.yml";
     };
   };
 }

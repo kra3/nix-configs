@@ -50,6 +50,35 @@
       group = "jellyfin";
     };
 
+    # Telegram alert contact point. bottoken/chatid must go through a
+    # rendered template (not provision.alerting.contactPoints.settings)
+    # since that option's value lands in the world-readable Nix store —
+    # same reasoning as the HA secrets.yaml template in container.nix.
+    sops.secrets."monitoring.grafana.telegram_bot_token" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
+    sops.secrets."monitoring.grafana.telegram_chat_id" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
+    sops.templates."monitoring/grafana-telegram-contactpoint.yaml" =
+      lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false)
+        {
+          owner = "root";
+          group = "jellyfin";
+          mode = "0440";
+          content = ''
+            apiVersion: 1
+            contactPoints:
+              - orgId: 1
+                name: telegram
+                receivers:
+                  - uid: telegram1
+                    type: telegram
+                    disableResolveMessage: false
+                    settings:
+                      chatid: "${config.sops.placeholder."monitoring.grafana.telegram_chat_id"}"
+                      parse_mode: None
+                    secureSettings:
+                      bottoken: "${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}"
+          '';
+        };
+
     # Create prometheus group on host matching container GID (static, nixpkgs-pinned
     # uid=gid=255) for secret access, same pattern as media-play.nix's jellyfin group.
     users.groups.prometheus = lib.mkIf (config.containers.monitoring.config.services.prometheus.enable or false) {
@@ -256,6 +285,10 @@
         };
         "/run/secrets/homeassistant.token" = {
           hostPath = "/run/secrets/homeassistant.token";
+          isReadOnly = true;
+        };
+        "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml" = {
+          hostPath = config.sops.templates."monitoring/grafana-telegram-contactpoint.yaml".path;
           isReadOnly = true;
         };
       };

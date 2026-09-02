@@ -116,10 +116,20 @@
             }
           ];
         };
-        # No contact point/notification policy configured yet (deliberate —
-        # deferred until a channel, e.g. ntfy/email/webhook, is picked). These
-        # rules will still show as firing/pending in the Alerting UI, they
-        # just won't notify anywhere until a contact point exists.
+        alerting.contactPoints.path = "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml";
+        # Root/default route — sole contact point, so everything goes to
+        # Telegram. Revisit with nested `routes:` if per-severity routing
+        # (e.g. warning vs critical to different chats) is ever needed.
+        alerting.policies.settings = {
+          apiVersion = 1;
+          policies = [
+            {
+              orgId = 1;
+              receiver = "telegram";
+              group_by = [ "..." ];
+            }
+          ];
+        };
         alerting.rules.settings = {
           apiVersion = 1;
           groups = [

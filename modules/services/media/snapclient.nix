@@ -19,7 +19,7 @@
   # enable-linger` does), and snapclient itself is a per-user unit so it
   # shares that same session's pulse socket.
   flake.nixosModules.services-media-snapclient =
-  { pkgs, ... }:
+  { config, pkgs, ... }:
   {
     hardware.bluetooth = {
       enable = true;
@@ -44,7 +44,7 @@
       wants = [ "pipewire-pulse.service" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.snapcast}/bin/snapclient -h 192.168.1.36 -p pulse";
+        ExecStart = "${pkgs.snapcast}/bin/snapclient -h ${config.vars.network.macvlanAddresses.musicAssistant} -p pulse";
         Restart = "always";
         RestartSec = "5s";
       };

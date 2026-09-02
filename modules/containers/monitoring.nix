@@ -54,6 +54,15 @@
     # rendered template (not provision.alerting.contactPoints.settings)
     # since that option's value lands in the world-readable Nix store —
     # same reasoning as the HA secrets.yaml template in container.nix.
+    #
+    # Both fields go under `settings:` — Grafana's file-provisioning reader
+    # for contact points (ReceiverV1 in
+    # pkg/services/provisioning/alerting/contact_point_types.go) has no
+    # `secureSettings` field at all, only `settings`; putting bottoken under
+    # secureSettings gets it silently dropped ("could not find Bot Token in
+    # settings"). Values are read from disk as plaintext by design (file
+    # provisioning is inherently unencrypted-at-rest from Grafana's POV;
+    # sops is what keeps this file itself protected).
     sops.secrets."monitoring.grafana.telegram_bot_token" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
     sops.secrets."monitoring.grafana.telegram_chat_id" = lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false) { };
     sops.templates."monitoring/grafana-telegram-contactpoint.yaml" =
@@ -72,10 +81,9 @@
                     type: telegram
                     disableResolveMessage: false
                     settings:
+                      bottoken: "${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}"
                       chatid: "${config.sops.placeholder."monitoring.grafana.telegram_chat_id"}"
                       parse_mode: None
-                    secureSettings:
-                      bottoken: "${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}"
           '';
         };
 

@@ -157,7 +157,10 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''node_systemd_unit_state{state="failed", name=~"${limitedContainerUnitsRegex}"}'';
+                        # Backtick-quoted (PromQL raw string) — a double-quoted
+                        # string literal here would treat \. as an invalid
+                        # escape sequence rather than a literal backslash-dot.
+                        expr = ''node_systemd_unit_state{state="failed", name=~`${limitedContainerUnitsRegex}`}'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -228,7 +231,7 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''increase(systemd_service_restart_total{name=~"${limitedContainerUnitsRegex}"}[15m])'';
+                        expr = ''increase(systemd_service_restart_total{name=~`${limitedContainerUnitsRegex}`}[15m])'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;

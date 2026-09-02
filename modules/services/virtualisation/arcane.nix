@@ -99,7 +99,7 @@
         virtualisation.quadlet.containers.arcane = {
           autoStart = true;
           containerConfig = {
-            image = "ghcr.io/getarcaneapp/arcane:v2.9.0";
+            image = "ghcr.io/getarcaneapp/arcane:v2.10.2-next.15";
             publishPorts = [ "127.0.0.1:3552:3552" ];
             # Maps the container's internal user 1:1 onto the host "arcane"
             # uid/gid, so /app/data (owned by arcane:arcane above) is

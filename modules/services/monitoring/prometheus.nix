@@ -102,6 +102,15 @@
           ];
         }
         {
+          job_name = "process";
+          static_configs = [
+            {
+              targets = [ "${hostAddr}:9256" ];
+              labels.instance = "sutala";
+            }
+          ];
+        }
+        {
           job_name = "frigate";
           metrics_path = "/api/metrics";
           static_configs = [

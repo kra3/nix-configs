@@ -94,6 +94,21 @@
           "tank"
         ];
       };
+      # Per-cgroup CPU/memory breakdown — groups every process on the host
+      # by its full cgroup path, which for a quadlet container is its
+      # systemd unit (system.slice/<name>.service). Backs data-driven
+      # `Memory=`/`--cpus=` sizing for individual containers; see
+      # https://github.com/ncabatoff/process-exporter#using-a-config-file-group-name
+      process = {
+        enable = true;
+        listenAddress = config.vars.network.containers.monitoring.hostAddress;
+        settings.process_names = [
+          {
+            name = "{{.Cgroups}}";
+            cmdline = [ ".+" ];
+          }
+        ];
+      };
     };
 
     systemd.services.systemd-exporter = {
@@ -123,6 +138,16 @@
       after = [ "container@monitoring.service" "network-online.target" ];
       wants = [ "container@monitoring.service" "network-online.target" ];
     };
+    systemd.services.prometheus-process-exporter = {
+      after = [ "container@monitoring.service" "network-online.target" ];
+      wants = [ "container@monitoring.service" "network-online.target" ];
+      serviceConfig = {
+        # Needs to read /proc/<pid>/smaps_rollup for root-owned container
+        # processes across every uid, not just its own.
+        AmbientCapabilities = [ "CAP_SYS_PTRACE" "CAP_DAC_READ_SEARCH" ];
+        CapabilityBoundingSet = [ "CAP_SYS_PTRACE" "CAP_DAC_READ_SEARCH" ];
+      };
+    };
     systemd.services.prometheus-smartctl-exporter = {
       after = [ "container@monitoring.service" "network-online.target" ];
       wants = [ "container@monitoring.service" "network-online.target" ];
@@ -151,6 +176,7 @@
           9113 # nginx-exporter
           9134 # zfs-exporter
           9167 # unbound-exporter
+          9256 # process-exporter
           9558 # systemd-exporter
           9633 # smartctl-exporter
         ];

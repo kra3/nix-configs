@@ -29,6 +29,14 @@
       "wyoming-whisper"
     ];
     limitedContainerUnitsRegex = "(${lib.concatStringsSep "|" limitedContainerUnits})\\.service";
+    # Grafana's own auto-generated datasource uid (from `GET /api/datasources`)
+    # — NOT set via provisioning, since giving an already-existing datasource
+    # an explicit `uid:` in datasources.settings breaks Grafana's provisioning
+    # reconciliation (took the whole service down on 2026-09-02: "Datasource
+    # provisioning error: data source not found"). If this Grafana's database
+    # is ever wiped/recreated, re-fetch the new uid from the API and update
+    # this constant.
+    prometheusDatasourceUid = "PBFA97CFB590B2093";
   in
   {
     services.grafana = {
@@ -89,16 +97,12 @@
               access = "proxy";
               url = "http://${networkVars.containers.monitoring.localAddress}:9090";
               isDefault = true;
-              # Pinned (rather than Grafana's auto-generated one) so alert
-              # rules provisioned below can reference it reliably.
-              uid = "prometheus";
             }
             {
               name = "Loki";
               type = "loki";
               access = "proxy";
               url = "http://${networkVars.containers.monitoring.localAddress}:3100";
-              uid = "loki";
             }
           ];
         };
@@ -150,10 +154,13 @@
                         from = 600;
                         to = 0;
                       };
-                      datasourceUid = "prometheus";
+                      datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''node_systemd_unit_state{state="failed", name=~"${limitedContainerUnitsRegex}"}'';
+                        # Backtick-quoted (PromQL raw string) — a double-quoted
+                        # string literal here would treat \. as an invalid
+                        # escape sequence rather than a literal backslash-dot.
+                        expr = ''node_systemd_unit_state{state="failed", name=~`${limitedContainerUnitsRegex}`}'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -221,10 +228,10 @@
                         from = 900;
                         to = 0;
                       };
-                      datasourceUid = "prometheus";
+                      datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''increase(systemd_service_restart_total{name=~"${limitedContainerUnitsRegex}"}[15m])'';
+                        expr = ''increase(systemd_service_restart_total{name=~`${limitedContainerUnitsRegex}`}[15m])'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;

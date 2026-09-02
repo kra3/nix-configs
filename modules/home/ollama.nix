@@ -6,8 +6,7 @@
       ollamaBin = "${config.services.ollama.package}/bin/ollama";
     in
     {
-      # Cross-platform ollama (systemd on Linux, launchd on darwin, both via
-      # services.ollama). Imported directly where wanted, not via home-profiles-ai.
+      # Imported directly where wanted, not via home-profiles-ai.
       options.local.ollama.models = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
@@ -19,10 +18,7 @@
         services.ollama.enable = true; # acceleration=null → Metal on aarch64-darwin
         home.packages = [ config.services.ollama.package ];
 
-        # Reconcile declared models; skip quietly if the server isn't up yet.
-        # Pulls run backgrounded so a missing/large model doesn't block the switch,
-        # and presence is checked per-model via `ollama show` (exact match, no
-        # substring/regex risk from grep'ing `ollama list` output).
+        # Reconcile declared models in the background; skip quietly if the server isn't up.
         home.activation.ollamaPullModels = lib.mkIf (cfg.models != [ ]) (
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             if ${ollamaBin} list >/dev/null 2>&1; then

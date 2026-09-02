@@ -29,9 +29,7 @@
 
           border = "rounded";
 
-          # Theming is handled by catppuccin.lazygit (enabled via catppuccin.enable
-          # on both hosts), which points LG_CONFIG_FILE at its own theme file —
-          # no explicit theme/authorColors block needed here.
+          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE), not an explicit block here.
         };
 
         git = {

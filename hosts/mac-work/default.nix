@@ -3,10 +3,7 @@
   # nix-darwin requires this for managed shells.
   programs.zsh.enable = true;
 
-  # Determinate owns nix on this machine — don't let nix-darwin manage it (nix.conf
-  # clash). REVERSAL if moving off Determinate: set nix.enable=true, re-import
-  # services-system-nix-defaults-darwin, and move the Apple caches from
-  # /etc/nix/nix.custom.conf into nix.settings.
+  # Determinate owns nix on this machine; nix-darwin must not also manage it.
   nix.enable = false;
 
   home-manager = {

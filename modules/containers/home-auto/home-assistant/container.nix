@@ -44,7 +44,6 @@
           "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"
           "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
           "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
-          "${../../../services/home-automation/home-assistant/ha-config/scenes.yaml}:/config/scenes.yaml:ro"
           "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
           "/run/dbus:/run/dbus:ro"
         ];

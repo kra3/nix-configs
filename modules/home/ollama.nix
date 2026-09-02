@@ -20,13 +20,16 @@
         home.packages = [ config.services.ollama.package ];
 
         # Reconcile declared models; skip quietly if the server isn't up yet.
+        # Pulls run backgrounded so a missing/large model doesn't block the switch,
+        # and presence is checked per-model via `ollama show` (exact match, no
+        # substring/regex risk from grep'ing `ollama list` output).
         home.activation.ollamaPullModels = lib.mkIf (cfg.models != [ ]) (
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             if ${ollamaBin} list >/dev/null 2>&1; then
-              present="$(${ollamaBin} list 2>/dev/null)"
-              for m in ${lib.concatStringsSep " " cfg.models}; do
-                if ! printf '%s\n' "$present" | grep -q "$m"; then
-                  run ${ollamaBin} pull "$m" || echo "⚠️  ollama pull $m failed"
+              for m in ${lib.escapeShellArgs cfg.models}; do
+                if ! ${ollamaBin} show "$m" >/dev/null 2>&1; then
+                  ( run ${ollamaBin} pull "$m" || echo "⚠️  ollama pull $m failed" ) >>/tmp/ollama-pull-activation.log 2>&1 &
+                  disown
                 fi
               done
             else

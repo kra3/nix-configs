@@ -29,24 +29,9 @@
 
           border = "rounded";
 
-          # Catppuccin Mocha (blue accent). catppuccin/nix ships lazygit theme
-          # files (catppuccin-lazygit) but release-25.11 does NOT wire them into
-          # programs.lazygit, so catppuccin.<x>.enable is a no-op for lazygit.
-          # Embed catppuccin's own mocha/blue values (matches both hosts'
-          # accent = blue). Update these if catppuccin.accent changes, or drop
-          # in favour of catppuccin.lazygit.enable once upstream wires it.
-          theme = {
-            activeBorderColor = [ "#89b4fa" "bold" ];
-            inactiveBorderColor = [ "#a6adc8" ];
-            optionsTextColor = [ "#89b4fa" ];
-            selectedLineBgColor = [ "#313244" ];
-            cherryPickedCommitBgColor = [ "#45475a" ];
-            cherryPickedCommitFgColor = [ "#89b4fa" ];
-            unstagedChangesColor = [ "#f38ba8" ];
-            defaultFgColor = [ "#cdd6f4" ];
-            searchingActiveBorderColor = [ "#f9e2af" ];
-          };
-          authorColors = { "*" = "#b4befe"; };
+          # Theming is handled by catppuccin.lazygit (enabled via catppuccin.enable
+          # on both hosts), which points LG_CONFIG_FILE at its own theme file —
+          # no explicit theme/authorColors block needed here.
         };
 
         git = {

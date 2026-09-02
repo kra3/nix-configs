@@ -1,11 +1,10 @@
 { lib, inputs, flakeModules, ... }:
 {
-  imports = [
-    flakeModules.darwin.services-system-nix-defaults-darwin
-  ];
-
-  # System-level shell setup (nix-darwin requires this for managed shells)
+  # nix-darwin requires this for managed shells.
   programs.zsh.enable = true;
+
+  # Determinate owns nix on this machine; nix-darwin must not also manage it.
+  nix.enable = false;
 
   home-manager = {
     useGlobalPkgs = true;
@@ -17,7 +16,6 @@
   home-manager.users.akarunagath = {
     imports = [
       flakeModules.homeManager.home-profiles-core
-      flakeModules.homeManager.home-profiles-ai
       flakeModules.homeManager.home-profiles-dev
       flakeModules.homeManager.home-profiles-shell
       flakeModules.homeManager.home-shell-default

@@ -28,6 +28,8 @@
           skipRewordInEditorWarning = false;
 
           border = "rounded";
+
+          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE), not an explicit block here.
         };
 
         git = {

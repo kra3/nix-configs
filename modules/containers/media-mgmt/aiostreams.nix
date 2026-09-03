@@ -28,7 +28,7 @@
         networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "2048Mi";
+        memory = "2048m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };

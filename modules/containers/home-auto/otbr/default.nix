@@ -26,7 +26,7 @@
           "NET_RAW"
         ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "128Mi";
+        memory = "128m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {

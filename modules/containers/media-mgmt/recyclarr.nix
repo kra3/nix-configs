@@ -194,7 +194,7 @@
           "/srv/appdata/media-mgmt/recyclarr:/config"
         ];
         # Floored above the formula: this window likely caught it idle, not mid-sync.
-        memory = "512Mi";
+        memory = "512m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {

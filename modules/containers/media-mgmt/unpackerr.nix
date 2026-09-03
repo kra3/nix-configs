@@ -36,7 +36,7 @@
           "/srv/media:/data"
         ];
         # Floored above the formula: this window likely didn't catch an active extraction.
-        memory = "512Mi";
+        memory = "512m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };

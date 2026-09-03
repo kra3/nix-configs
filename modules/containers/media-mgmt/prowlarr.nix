@@ -26,7 +26,7 @@
           "/srv/appdata/media-mgmt/prowlarr:/config"
         ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "640Mi";
+        memory = "640m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };

@@ -14,7 +14,7 @@
           "/srv/appdata/home-auto/wyoming-piper:/data"
         ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "896Mi";
+        memory = "896m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {

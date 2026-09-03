@@ -27,7 +27,7 @@
           "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
         ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "896Mi";
+        memory = "896m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };

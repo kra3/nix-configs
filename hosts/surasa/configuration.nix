@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   modulesPath,
   flakeModules,
@@ -25,6 +26,17 @@
   # and since it gates sysinit.target, that hang blocks boot entirely -- nothing after it
   # (network, sshd) ever starts. Not essential; grow manually via SSH later if needed.
   sdImage.expandOnBoot = false;
+
+  # Same class of problem as expand-root-partition above: register-nix-paths (nix-store
+  # --load-db for the whole closure) also gates sysinit.target and appears to hang on
+  # this hardware, blocking boot the same way. Its job (pointing the system profile at
+  # the booted generation) gets redone correctly by the first real switch-remote deploy
+  # anyway, so it's safe to stop it from blocking the rest of boot.
+  systemd.services.register-nix-paths.before = lib.mkForce [
+    "shutdown.target"
+    "nix-daemon.socket"
+    "nix-daemon.service"
+  ];
 
   vars.network = {
     lanIf = "wlan0";

@@ -1,4 +1,5 @@
 {
+  config,
   modulesPath,
   flakeModules,
   ...
@@ -15,6 +16,7 @@
 
     flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-openssh
+    flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-dns-rpi-secondary
     flakeModules.nixos.services-media-snapclient
   ];
@@ -50,11 +52,31 @@
     uboot.enable = true;
   };
 
-  # No sops-nix on this host: it holds no secrets (AdGuard's admin login is
-  # set up once via its own web UI, see services-dns-rpi-secondary), so
-  # there's no reason to make it a sops age recipient. SSH-key-only login,
-  # same authorized keys as users-kra3, without that module's sutala-specific
-  # home-manager/sops baggage.
+  # TODO(surasa): sops-nix is declared here but not yet usable -- its age
+  # recipient is derived from THIS host's own ssh_host_ed25519_key, which
+  # doesn't exist until first boot. After first boot:
+  #   1. ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub (on surasa) to get
+  #      its age public key.
+  #   2. Add that as a new `&surasa` entry in .sops.yaml's keys/creation_rules.
+  #   3. sops updatekeys secrets/secrets.yaml (rekeys for the new recipient;
+  #      requires an existing recipient's private key to do the re-encrypt).
+  #   4. sops set 'secrets/secrets.yaml' '["surasa.tailscale.authkey"]'
+  #      '"<value>"' with a freshly generated Tailscale auth key (a fresh key
+  #      per device, not sutala's reused). monitoring.grafana.telegram_bot_token/
+  #      telegram_chat_id already exist -- once surasa is a recipient it can
+  #      decrypt those same values itself, no new key needed there.
+  sops.secrets."surasa.tailscale.authkey" = { };
+
+  # Plain tailnet member, not an exit node/route-advertiser like sutala's own
+  # services-tailscale -- this is here so surasa (and thus SSH) stays
+  # reachable even when sutala is fully down, which is the same reasoning as
+  # services-monitoring-sutala-watchdog above.
+  services.tailscale = {
+    enable = true;
+    authKeyFile = config.sops.secrets."surasa.tailscale.authkey".path;
+    openFirewall = true;
+  };
+
   users.mutableUsers = true;
   users.users.kra3 = {
     isNormalUser = true;

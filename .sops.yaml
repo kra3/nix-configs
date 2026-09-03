@@ -1,3 +1,6 @@
+# TODO(surasa): add a &surasa recipient once its host key exists (first
+# boot generates /etc/ssh/ssh_host_ed25519_key) -- see the TODO in
+# hosts/surasa/configuration.nix for the exact steps.
 keys:
   - &sutala age1damfg7g5hjqg9z76fn3ujh3ve06dxzw0rnz59hanx4y0rhyfcvqszhcrn8
   - &pazham age1s8760vxlj02ymre3620g94ay3nw9ytlspk52dduq0peecsrc65ysxd3zsz

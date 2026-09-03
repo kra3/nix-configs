@@ -50,6 +50,7 @@
                 - 'prowlarr.${domain}'
                 - 'bazarr.${domain}'
                 - 'sabnzbd.${domain}'
+                - 'seerr.${domain}'
               resources:
                 - '^/api([/?].*)?$'
               policy: 'bypass'

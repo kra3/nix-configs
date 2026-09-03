@@ -6,7 +6,7 @@
   # flakeLib.adguard-filters (modules/lib/adguard-filters.nix) so both
   # block the same things.
   flake.nixosModules.services-dns-rpi-secondary =
-  { config, lib, flakeLib, ... }:
+  { config, lib, pkgs, flakeLib, ... }:
   let
     net = config.vars.network;
   in
@@ -62,23 +62,65 @@
       DynamicUser = lib.mkForce false;
       User = "adguardhome";
       Group = "adguardhome";
+      LoadCredential = [
+        "password:${config.sops.secrets."dns.adguard.password".path}"
+        "username:${config.sops.secrets."dns.adguard.username".path}"
+      ];
     };
+
+    # Same admin login as sutala's AdGuard instance -- reuses the exact same
+    # dns.adguard.username/password sops keys (not a copy), so both
+    # instances decrypt the same secret independently once this host is a
+    # sops recipient (see the TODO in hosts/surasa/configuration.nix).
+    sops.secrets."dns.adguard.password" = {
+      owner = "adguardhome";
+      group = "adguardhome";
+      mode = "0440";
+    };
+    sops.secrets."dns.adguard.username" = {
+      owner = "adguardhome";
+      group = "adguardhome";
+      mode = "0440";
+    };
+
+    systemd.services.adguardhome.preStart =
+      let
+        setupScript = pkgs.writeShellScript "adguard-setup" ''
+          set -euo pipefail
+
+          if [ -f "$STATE_DIRECTORY/AdGuardHome.yaml" ]; then
+            # Read credentials from systemd credential directory (secure, not visible in ps)
+            PASSWORD=$(${pkgs.coreutils}/bin/cat "''${CREDENTIALS_DIRECTORY}/password" | ${pkgs.coreutils}/bin/tr -d '\n')
+            USERNAME=$(${pkgs.coreutils}/bin/cat "''${CREDENTIALS_DIRECTORY}/username" | ${pkgs.coreutils}/bin/tr -d '\n')
+
+            # Create temporary sed script to avoid password in command line
+            SCRIPT=$(${pkgs.coreutils}/bin/mktemp)
+            trap "${pkgs.coreutils}/bin/rm -f $SCRIPT" EXIT
+
+            # Write sed commands to temp file (not visible in ps)
+            cat > "$SCRIPT" <<EOF
+          s|__SOPS_DNS_ADGUARD_PASSWORD__|$PASSWORD|
+          s|__SOPS_DNS_ADGUARD_USERNAME__|$USERNAME|
+          EOF
+
+            # Execute sed with script file (no secrets in command line)
+            ${pkgs.gnused}/bin/sed -i -f "$SCRIPT" "$STATE_DIRECTORY/AdGuardHome.yaml"
+          fi
+        '';
+      in
+      lib.mkAfter (toString setupScript);
 
     services.adguardhome = {
       enable = true;
-      # Unlike sutala's instance, no sops secret seeds the admin login here --
-      # this is a LAN-only internal resolver with no TLS/nginx/ACME exposure,
-      # so it's not worth making this host a sops-nix age recipient just for
-      # one login. mutableSettings = true means AdGuard owns its config file
-      # after first boot; set the admin user/password once via the web UI at
-      # http://<pi-ip>:3000.
-      mutableSettings = true;
+      mutableSettings = false;
       allowDHCP = false;
       host = net.lanIp;
       port = 3000;
       openFirewall = false;
 
       settings = {
+        schema_version = config.services.adguardhome.package.schema_version;
+
         dns = {
           bind_hosts = [
             "127.0.0.1"
@@ -101,6 +143,16 @@
         };
 
         filters = flakeLib.adguard-filters;
+
+        # Substituted from sops at runtime by the preStart script above --
+        # these placeholder strings, not real values, are what land in the
+        # Nix store.
+        users = [
+          {
+            name = "__SOPS_DNS_ADGUARD_USERNAME__";
+            password = "__SOPS_DNS_ADGUARD_PASSWORD__";
+          }
+        ];
       };
     };
 

@@ -2,40 +2,9 @@
   flake.nixosModules.services-monitoring-grafana =
   { config, lib, domain, networkVars, ... }:
   let
-    # Podman quadlet containers subject to Memory=/--cpus= limits. Update
-    # when a container.nix is added/removed — same manual-list convention
-    # as the addHosts/firewall-port lists elsewhere in this repo.
-    limitedContainerUnits = [
-      "actualbudget"
-      "aiostreams"
-      "audiobookshelf"
-      "bazarr"
-      "bookshelf"
-      "ghostfolio"
-      "home-assistant"
-      "lidarr"
-      "maintainerr"
-      "matter-server"
-      "music-assistant"
-      "otbr"
-      "prowlarr"
-      "radarr"
-      "recyclarr"
-      "sabnzbd"
-      "seerr"
-      "sonarr"
-      "unpackerr"
-      "wyoming-piper"
-      "wyoming-whisper"
-    ];
-    limitedContainerUnitsRegex = "(${lib.concatStringsSep "|" limitedContainerUnits})\\.service";
-    # Grafana's own auto-generated datasource uid (from `GET /api/datasources`)
-    # — NOT set via provisioning, since giving an already-existing datasource
-    # an explicit `uid:` in datasources.settings breaks Grafana's provisioning
-    # reconciliation (took the whole service down on 2026-09-02: "Datasource
-    # provisioning error: data source not found"). If this Grafana's database
-    # is ever wiped/recreated, re-fetch the new uid from the API and update
-    # this constant.
+    # Known-benign noise excluded from unit-state/restart alerting — scheduled oneshot jobs and unused login/tty scopes, not real problems.
+    noisyUnitsRegex = "(nix-optimise|nixos-rebuild-switch-to-configuration|podman-prune|getty@.+)\\.service";
+    # Grafana's auto-generated datasource uid; setting it explicitly via provisioning breaks reconciliation (broke Grafana 2026-09-02) — re-fetch from the API if the DB is ever recreated.
     prometheusDatasourceUid = "PBFA97CFB590B2093";
   in
   {
@@ -50,9 +19,7 @@
         security = {
           admin_user = "$__file{/run/secrets/monitoring.grafana.admin.user}";
           admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
-          # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB
-          # (no datasource secrets stored — Prometheus/Loki are unauthenticated,
-          # and access is nginx CIDR-allowlisted) keeps decrypting as before.
+          # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB keeps decrypting.
           secret_key = "SW2YcwTIb9zpOOhoPsMm";
         };
         "auth.generic_oauth" = {
@@ -121,9 +88,7 @@
           ];
         };
         alerting.contactPoints.path = "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml";
-        # Root/default route — sole contact point, so everything goes to
-        # Telegram. Revisit with nested `routes:` if per-severity routing
-        # (e.g. warning vs critical to different chats) is ever needed.
+        # Root/default route — sole contact point, everything goes to Telegram.
         alerting.policies.settings = {
           apiVersion = 1;
           policies = [
@@ -145,7 +110,7 @@
               rules = [
                 {
                   uid = "container-failed-state";
-                  title = "Container stuck in failed state";
+                  title = "Systemd unit stuck in failed state";
                   condition = "C";
                   data = [
                     {
@@ -157,10 +122,8 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        # Backtick-quoted (PromQL raw string) — a double-quoted
-                        # string literal here would treat \. as an invalid
-                        # escape sequence rather than a literal backslash-dot.
-                        expr = ''node_systemd_unit_state{state="failed", name=~`${limitedContainerUnitsRegex}`}'';
+                        # node_exporter's systemd collector runs host-wide and inside every nspawn container, so this covers podman containers, host daemons, and nspawn-internal services automatically.
+                        expr = ''node_systemd_unit_state{state="failed", name=~`.+\.service`, name!~`${noisyUnitsRegex}`}'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -209,17 +172,18 @@
                   ];
                   noDataState = "OK";
                   execErrState = "Error";
-                  for = "0s";
+                  # Grace period so a normal deploy-triggered restart doesn't page; only a unit still failed 5m later does.
+                  for = "5m";
                   labels.severity = "critical";
                   annotations = {
-                    summary = "{{ $labels.name }} is in a failed state and systemd has stopped retrying it.";
-                    description = "Likely hit its Memory=/--cpus= cap repeatedly and exceeded systemd's start-rate limit. Needs a manual `systemctl restart` after checking why (and possibly raising the cap).";
+                    summary = "{{ $labels.name }}{{ if $labels.container }} ({{ $labels.container }}){{ end }} is in a failed state and systemd has stopped retrying it.";
+                    description = "Likely hit its memory/CPU cap repeatedly and exceeded systemd's start-rate limit. Needs a manual `systemctl restart` (inside the container, if `container` is set) after checking why — and possibly raising the cap.";
                   };
                   isPaused = false;
                 }
                 {
                   uid = "container-restart-flapping";
-                  title = "Container restarting repeatedly";
+                  title = "Systemd unit restarting repeatedly";
                   condition = "C";
                   data = [
                     {
@@ -231,7 +195,8 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''increase(systemd_service_restart_total{name=~`${limitedContainerUnitsRegex}`}[15m])'';
+                        # Host-only — doesn't reach nspawn-internal services (still covered by the failed-state alert, just not this early warning); round() avoids increase() false-tripping on a single restart's window-edge extrapolation.
+                        expr = ''round(increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m]))'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -280,7 +245,8 @@
                   ];
                   noDataState = "OK";
                   execErrState = "Error";
-                  for = "0s";
+                  # Same deploy-noise grace period as container-failed-state.
+                  for = "5m";
                   labels.severity = "warning";
                   annotations = {
                     summary = "{{ $labels.name }} has restarted more than once in the last 15 minutes.";

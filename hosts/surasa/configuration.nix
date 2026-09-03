@@ -20,7 +20,7 @@
 
   networking.hostName = "surasa";
 
-  # TODO(surasa): placeholder IP -- once reserved, set the real lanIp, wire up wifi SSID/psk (sops secret) declaratively, and add the router DHCP reservation.
+  # TODO(surasa): placeholder IP -- once reserved, set the real lanIp and add the router DHCP reservation.
   vars.network = {
     lanIf = "wlan0";
     lanIp = "192.168.1.20";
@@ -31,8 +31,36 @@
     firewall.enable = true;
     nftables.enable = true;
     nameservers = [ "127.0.0.1" ];
-    # No SSID/psk known yet -- wifi is joined interactively (nmtui/nmcli) until the TODO above is done.
     networkmanager.enable = true;
+  };
+
+  # Can't decrypt until surasa is a sops recipient (same first-boot chicken-and-egg as the tailscale key below),
+  # so this only takes effect once the post-first-boot bootstrap is done -- first boot itself joins via ethernet.
+  sops.secrets."surasa.wifi.ssid" = { };
+  sops.secrets."surasa.wifi.psk" = { };
+  sops.templates."surasa-wifi.env".content = ''
+    WIFI_SSID=${config.sops.placeholder."surasa.wifi.ssid"}
+    WIFI_PSK=${config.sops.placeholder."surasa.wifi.psk"}
+  '';
+  networking.networkmanager.ensureProfiles = {
+    environmentFiles = [ config.sops.templates."surasa-wifi.env".path ];
+    profiles."surasa-wifi" = {
+      connection = {
+        id = "surasa-wifi";
+        type = "wifi";
+        autoconnect = true;
+      };
+      wifi = {
+        mode = "infrastructure";
+        ssid = "$WIFI_SSID";
+      };
+      wifi-security = {
+        key-mgmt = "wpa-psk";
+        psk = "$WIFI_PSK";
+      };
+      ipv4.method = "auto";
+      ipv6.method = "disabled";
+    };
   };
 
   # Repopulate the firmware partition on every switch, not just the initial SD image.
@@ -44,7 +72,7 @@
   # Overrides the profile's vendor kernel (mkDefault): that fork isn't Hydra-built and always compiles from source (hours) -- see https://discourse.nixos.org/t/nixos-26-05-raspberry-pi-4-kernel-cache-missing/78125. Mainline supports the 3B+ fine and this host has no HAT/camera/display need.
   boot.kernelPackages = pkgs.linuxPackages;
 
-  # TODO(surasa): needs its own sops age recipient before this decrypts for real -- after first boot: ssh-to-age its host key, add `&surasa` to .sops.yaml, `sops updatekeys`, then `sops set` a real Tailscale auth key (a fresh key per device).
+  # TODO(surasa): needs its own sops age recipient before this (and surasa-wifi.env above) decrypt for real -- after first boot: ssh-to-age its host key, add `&surasa` to .sops.yaml, `sops updatekeys`, then `sops set` a real Tailscale auth key (a fresh key per device; wifi SSID/psk are already set).
   sops.secrets."surasa.tailscale.authkey" = { };
 
   # Plain tailnet member (not an exit node like sutala's) so surasa/SSH stays reachable even when sutala is down.

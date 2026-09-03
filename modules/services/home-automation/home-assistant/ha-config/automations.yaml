@@ -135,93 +135,15 @@
 - id: kitchen_lighting
   alias: Kitchen — Lighting
   description: >-
-    Dark → on. No motion → progressive dim. Sleep → off.
-    Motion during sleep → brief 15% then off.
-  triggers:
-  - entity_id: input_boolean.kitchen_is_dark
-    to: "on"
-    trigger: state
-    id: became_dark
-  - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-    from: "off"
-    to: "on"
-    trigger: state
-    id: motion
-  - entity_id: schedule.sleep
-    to: "on"
-    trigger: state
-    id: sleep_started
-  conditions:
-  - condition: state
-    entity_id: input_boolean.kitchen_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: sleep_started
-      sequence:
-      - target:
-          entity_id: light.kitchen_lights
-        data:
-          brightness_pct: 15
-          transition: 3
-        action: light.turn_on
-      - delay: "00:00:30"
-      - target:
-          entity_id: light.kitchen_lights
-        data:
-          transition: 2
-        action: light.turn_off
-    - conditions:
-      - condition: trigger
-        id: motion
-      - condition: state
-        entity_id: schedule.sleep
-        state: "on"
-      sequence:
-      - target:
-          entity_id: light.kitchen_lights
-        data:
-          brightness_pct: 15
-          transition: 1
-        action: light.turn_on
-      - wait_for_trigger:
-        - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-          to: "off"
-          trigger: state
-      - delay: "00:01:00"
-      - target:
-          entity_id: light.kitchen_lights
-        data:
-          transition: 1
-        action: light.turn_off
-    default:
-    - target:
-        entity_id: light.kitchen_lights
-      data:
-        brightness_pct: 100
-        transition: 0.8
-      action: light.turn_on
-    - wait_for_trigger:
-      - entity_id: binary_sensor.hue_pir_kitchen_occupancy
-        to: "off"
-        trigger: state
-    - delay: "00:05:00"
-    - target:
-        entity_id: light.kitchen_lights
-      data:
-        brightness_pct: 50
-        transition: 2
-      action: light.turn_on
-    - delay: "00:05:00"
-    - target:
-        entity_id: light.kitchen_lights
-      data:
-        brightness_pct: 15
-        transition: 2
-      action: light.turn_on
-  mode: restart
+    Light follows presence while dark. See room-presence-lighting.yaml
+    blueprint for the design (and why the old timed dim-down was dropped).
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.kitchen_lights
+      occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
+      dark_boolean: input_boolean.kitchen_is_dark
+      on_brightness: 100
 
 # ── Hall ───────────────────────────────────────────────────────
 - id: hall_darkness
@@ -241,86 +163,15 @@
 - id: hall_lighting
   alias: Hall — Lighting
   description: >-
-    Dark → on. No motion → progressive dim. Sleep → off.
-    Motion during sleep → brief 15% then off.
-  triggers:
-  - entity_id: input_boolean.hall_is_dark
-    to: "on"
-    trigger: state
-    id: became_dark
-  - entity_id: binary_sensor.hue_pir_hallway_occupancy
-    from: "off"
-    to: "on"
-    trigger: state
-    id: motion
-  - entity_id: schedule.sleep
-    to: "on"
-    trigger: state
-    id: sleep_started
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: sleep_started
-      sequence:
-      - target:
-          entity_id: light.hall
-        data:
-          brightness_pct: 15
-          transition: 3
-        action: light.turn_on
-      - delay: "00:00:30"
-      - target:
-          entity_id: light.hall
-        data:
-          transition: 2
-        action: light.turn_off
-    - conditions:
-      - condition: trigger
-        id: motion
-      - condition: state
-        entity_id: schedule.sleep
-        state: "on"
-      sequence:
-      - target:
-          entity_id: light.hall
-        data:
-          brightness_pct: 15
-          transition: 0.5
-        action: light.turn_on
-      - wait_for_trigger:
-        - entity_id: binary_sensor.hue_pir_hallway_occupancy
-          to: "off"
-          trigger: state
-      - delay: "00:01:00"
-      - target:
-          entity_id: light.hall
-        data:
-          transition: 1
-        action: light.turn_off
-    default:
-    - target:
-        entity_id: light.hall
-      data:
-        brightness_pct: 55
-        transition: 0.3
-      action: light.turn_on
-    - wait_for_trigger:
-      - entity_id: binary_sensor.hue_pir_hallway_occupancy
-        to: "off"
-        trigger: state
-    - delay: "00:00:10"
-    - target:
-        entity_id: light.hall
-      data:
-        brightness_pct: 15
-        transition: 0.8
-      action: light.turn_on
-  mode: restart
+    Light follows presence while dark. See room-presence-lighting.yaml
+    blueprint for the design.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.hall
+      occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
+      dark_boolean: input_boolean.hall_is_dark
+      on_brightness: 55
 
 # ── Living room ────────────────────────────────────────────────
 - id: living_room_lighting
@@ -488,86 +339,17 @@
 - id: bedroom_lighting
   alias: Bedroom — Lighting
   description: >-
-    Dark → on. No motion → progressive dim. Sleep → off.
-    Motion during sleep → brief 15% then off.
-  triggers:
-  - entity_id: input_boolean.bedroom_is_dark
-    to: "on"
-    trigger: state
-    id: became_dark
-  - entity_id: binary_sensor.bedroom_occupancy_presence
-    from: "off"
-    to: "on"
-    trigger: state
-    id: motion
-  - entity_id: schedule.sleep
-    to: "on"
-    trigger: state
-    id: sleep_started
-  conditions:
-  - condition: state
-    entity_id: input_boolean.bedroom_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: sleep_started
-      sequence:
-      - target:
-          entity_id: light.bedroom_wardrobe_lights
-        data:
-          brightness_pct: 15
-          transition: 3
-        action: light.turn_on
-      - delay: "00:00:30"
-      - target:
-          entity_id: light.bedroom_wardrobe_lights
-        data:
-          transition: 2
-        action: light.turn_off
-    - conditions:
-      - condition: trigger
-        id: motion
-      - condition: state
-        entity_id: schedule.sleep
-        state: "on"
-      sequence:
-      - target:
-          entity_id: light.bedroom_wardrobe_lights
-        data:
-          brightness_pct: 15
-          transition: 0.5
-        action: light.turn_on
-      - wait_for_trigger:
-        - entity_id: binary_sensor.bedroom_occupancy_presence
-          to: "off"
-          trigger: state
-      - delay: "00:01:00"
-      - target:
-          entity_id: light.bedroom_wardrobe_lights
-        data:
-          transition: 1
-        action: light.turn_off
-    default:
-    - target:
-        entity_id: light.bedroom_wardrobe_lights
-      data:
-        brightness_pct: 40
-        transition: 0.3
-      action: light.turn_on
-    - wait_for_trigger:
-      - entity_id: binary_sensor.bedroom_occupancy_presence
-        to: "off"
-        trigger: state
-    - delay: "00:00:10"
-    - target:
-        entity_id: light.bedroom_wardrobe_lights
-      data:
-        brightness_pct: 15
-        transition: 0.8
-      action: light.turn_on
-  mode: restart
+    Light follows presence while dark. Unlike kitchen/hall, doesn't react
+    to motion once sleep hours start — see room-presence-lighting.yaml
+    blueprint's react_during_sleep input for why.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.bedroom_wardrobe_lights
+      occupancy_sensor: binary_sensor.bedroom_occupancy_presence
+      dark_boolean: input_boolean.bedroom_is_dark
+      on_brightness: 40
+      react_during_sleep: false
 
 # ── Sleep routine ──────────────────────────────────────────────
 - id: sleep_tv_off
@@ -811,11 +593,14 @@
         - condition: template
           value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.yale_front_door.last_changed | default(now()))) > 15 }}"
       then:
-        # Street Light: Turn on during sleep hours
+        # Street Light: turn on if it's actually dark. schedule.sleep is a
+        # fixed 20:30-05:00 clock schedule, not sun-relative — in Swedish
+        # summer sunset can be past 22:00, so gating on sleep hours turned
+        # this on in broad daylight. sun.sun tracks real dusk/dawn instead.
         - if:
             - condition: state
-              entity_id: schedule.sleep
-              state: "on"
+              entity_id: sun.sun
+              state: below_horizon
           then:
             - action: switch.turn_on
               target:

@@ -50,16 +50,18 @@ triggers:
     trigger: state
     id: bright
 actions:
+  # Each trigger already encodes its own threshold (numeric_state
+  # below/above, or the sun crossing horizon) — re-checking illuminance
+  # here as well used to AND it back onto the sun-based trigger too,
+  # so a room whose sensor never naturally reads above 120 lux (e.g.
+  # kitchen/hall PIRs mounted away from windows — confirmed via
+  # Prometheus history, both topped out under 100 lux over 7 days)
+  # could never clear dark_boolean even at broad daylight, since the
+  # "sun rises" trigger's own action was still gated on lux > 120.
   - choose:
       - conditions:
           - condition: trigger
             id: dark
-          - condition: state
-            entity_id: sun.sun
-            state: below_horizon
-          - condition: numeric_state
-            entity_id: !input illuminance_sensor
-            below: 30
         sequence:
           - target:
               entity_id: !input dark_boolean
@@ -67,12 +69,6 @@ actions:
       - conditions:
           - condition: trigger
             id: bright
-          - condition: state
-            entity_id: sun.sun
-            state: above_horizon
-          - condition: numeric_state
-            entity_id: !input illuminance_sensor
-            above: 120
         sequence:
           - target:
               entity_id: !input dark_boolean

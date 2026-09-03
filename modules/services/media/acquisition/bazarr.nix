@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.bazarr = {
       containerConfig = {
-        image = "lscr.io/linuxserver/bazarr:v1.6.0-ls362";
+        image = "lscr.io/linuxserver/bazarr:438eee94-ls46";
         # No publishPorts: see services/media/acquisition/radarr.nix — nginx
         # routes to a pinned bridge IP instead (set at the call site).
         logDriver = "journald";

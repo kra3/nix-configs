@@ -198,6 +198,11 @@
     - conditions:
       - condition: trigger
         id: sleep_started
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
       sequence:
       - target:
           entity_id: light.living_room_lights
@@ -298,6 +303,11 @@
     - conditions:
       - condition: trigger
         id: sleep_started
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
       sequence:
       - target:
           entity_id: light.dining_lights
@@ -835,6 +845,108 @@
       title: Waste collection tomorrow
       message: "{{ trigger.calendar_event.summary }}"
   mode: queued
+
+# ── Security ───────────────────────────────────────────────────
+- id: alarm_pending_or_triggered_lights
+  alias: "Security: lights on when alarm pending or triggered"
+  description: >-
+    When Alarmo goes to pending (a registered door/window opened while
+    armed — entry-delay countdown starts) or triggered, turn on every
+    managed light if it's dark. Alarmo's own entry_time (60s for
+    armed_away, configured per-area in its own settings) already is
+    the "delay with a chance to disarm before it fires" — all 8 real
+    door/window contacts are already registered there with
+    use_entry_delay, so nothing custom is needed for that part, just
+    the light response.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - pending
+    - triggered
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.kitchen_lights
+      - light.hall
+      - light.bedroom_wardrobe_lights
+      - light.living_room_lights
+      - light.dining_lights
+      - light.kitchen_dining_lights
+      - light.office_room_light
+  mode: single
+
+# ── Manual mode ────────────────────────────────────────────────
+- id: automations_paused_sync
+  alias: "Manual mode: pause/resume automations"
+  description: >-
+    While input_boolean.automations_paused is on, disables every
+    presence/darkness/media-aware lighting automation, the exterior
+    street light, both alarm-arm-at-sleep and everyone-left-home, TV
+    backlight, and the Adaptive Lighting sleep-mode sync — so lights
+    and the alarm are fully manual until it's switched back off.
+    Matches by alias text, not entity_id: HA appends a numeric suffix
+    on any slug collision (automation.tv_backlight_off_2 already has
+    one), so a hardcoded entity_id list would silently miss entries.
+    Also runs at HA start so a restart while paused doesn't leave
+    things re-enabled.
+
+    Deliberately leaves running regardless: the alarm-pending/triggered
+    security lights (a safety response, not a comfort automation — you
+    still want it if the alarm actually goes off during a party), Frigate
+    detection gating, the BLE reload stopgap, and every pure-notification
+    automation (low battery, leaving-zone, open-exit, waste reminder —
+    none of these actuate anything).
+
+    Limitation: resume force-enables every automation on this list,
+    even one you'd independently disabled before pausing — this is a
+    blunt pause/resume, not per-automation state memory.
+  triggers:
+  - entity_id: input_boolean.automations_paused
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  variables:
+    managed_aliases:
+    - "Kitchen — Darkness detection"
+    - "Kitchen — Lighting"
+    - "Hall — Darkness detection"
+    - "Hall — Lighting"
+    - "Bedroom — Darkness detection"
+    - "Bedroom — Lighting"
+    - "Living room — Lighting"
+    - "Living room — Media-aware lighting"
+    - "Dining room — Lighting"
+    - "TV — Power on + backlight"
+    - "TV — Backlight off"
+    - "Sleep — TV off if idle"
+    - "Sleep — Arm Alarmo (night)"
+    - "Exterior — Front street light (dusk to sleep)"
+    - "Everyone left home"
+    - "Adaptive Lighting: sync sleep mode with schedule.sleep"
+    targets: >-
+      {{ states.automation
+         | selectattr('attributes.friendly_name', 'in', managed_aliases)
+         | map(attribute='entity_id') | list }}
+  actions:
+  - if:
+    - condition: state
+      entity_id: input_boolean.automations_paused
+      state: "on"
+    then:
+    - action: automation.turn_off
+      target:
+        entity_id: "{{ targets }}"
+    else:
+    - action: automation.turn_on
+      target:
+        entity_id: "{{ targets }}"
+  mode: single
 
 # ── Frigate detect/audio gating by alarm state ──────────────────
 # All 3 cameras are interior. Object + audio detection only needs to

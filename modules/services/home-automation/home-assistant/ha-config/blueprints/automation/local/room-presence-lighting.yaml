@@ -18,6 +18,10 @@ blueprint:
     light.turn_on bare, and AL's own intercept supplies the actual
     brightness/color-temp for the time of day. Only set them for a
     light with no Adaptive Lighting entry.
+
+    Both off-paths (occupancy-clear, bedtime) are suppressed while
+    input_boolean.party_mode is on — turning a light on still works,
+    it just won't be auto-switched off until party mode ends.
   domain: automation
   input:
     light_entity:
@@ -105,6 +109,11 @@ actions:
       - conditions:
           - condition: trigger
             id: sleep_started
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
         sequence:
           - target:
               entity_id: !input light_entity
@@ -140,6 +149,11 @@ actions:
       - conditions:
           - condition: trigger
             id: clear
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
         sequence:
           - target:
               entity_id: !input light_entity

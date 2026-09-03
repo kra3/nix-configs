@@ -36,6 +36,12 @@ sensor:
 input_boolean:
   bedroom_is_dark:
     name: Bedroom is dark
+  party_mode:
+    name: Party mode
+    icon: mdi:party-popper
+  automations_paused:
+    name: Automations paused (manual mode)
+    icon: mdi:pause-octagon
 
 template:
   - binary_sensor:

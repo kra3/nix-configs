@@ -193,7 +193,11 @@
                   ];
                   noDataState = "OK";
                   execErrState = "Error";
-                  for = "0s";
+                  # Grace period so a normal service restart during a deploy
+                  # (nixos-rebuild switch applying a config change) doesn't
+                  # page — only a unit still failed 5m later, past systemd's
+                  # own start-rate-limit retry window, does.
+                  for = "5m";
                   labels.severity = "critical";
                   annotations = {
                     summary = "{{ $labels.name }}{{ if $labels.container }} ({{ $labels.container }}){{ end }} is in a failed state and systemd has stopped retrying it.";
@@ -224,8 +228,12 @@
                         # etc.) — the dedicated systemd_exporter this metric
                         # comes from only runs on the host; those services
                         # still get the failed-state alert above, just not
-                        # this earlier warning.
-                        expr = ''increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m])'';
+                        # this earlier warning. round() avoids a false trip
+                        # from a single real restart — increase() extrapolates
+                        # near window edges and can read e.g. 1.009 for one
+                        # actual restart, which would otherwise clear a bare
+                        # `> 1` threshold.
+                        expr = ''round(increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m]))'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -274,7 +282,8 @@
                   ];
                   noDataState = "OK";
                   execErrState = "Error";
-                  for = "0s";
+                  # Same deploy-noise grace period as container-failed-state.
+                  for = "5m";
                   labels.severity = "warning";
                   annotations = {
                     summary = "{{ $labels.name }} has restarted more than once in the last 15 minutes.";

@@ -3,6 +3,7 @@
   config,
   pkgs,
   flakeModules,
+  flakeLib,
   ...
 }:
 {
@@ -248,7 +249,7 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = {
-      inherit inputs flakeModules;
+      inherit inputs flakeModules flakeLib;
       # Consumed by home-profiles-wm-desktop-session's selfhosted-menu app
       domain = config.vars.acme.domain;
     };

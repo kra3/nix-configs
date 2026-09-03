@@ -1,6 +1,12 @@
 {
   flake.homeManagerModules.home-tmux =
-    { pkgs, lib, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      flakeLib,
+      ...
+    }:
     let
       tmux-pomodoro-plus = pkgs.tmuxPlugins.mkTmuxPlugin {
         pluginName = "tmux-pomodoro-plus";
@@ -14,6 +20,17 @@
       };
     in
     {
+      imports = [
+        # Replaces the unreliable @continuum-boot under Nix. Session is unnamed so
+        # resurrect restores over it instead of colliding with "main"; `tmux ls` guards
+        # against stacking empty sessions on reload.
+        (flakeLib.login-autostart.mkLoginAgent {
+          name = "tmux-server";
+          description = "Start tmux server at login (for continuum restore)";
+          script = "${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d";
+        })
+      ];
+
       programs.tmux = {
         enable = true;
 
@@ -28,12 +45,13 @@
         plugins = with pkgs.tmuxPlugins; [
           pain-control
           resurrect
-          continuum
           yank
           open
           battery
           tmux-pomodoro-plus
         ];
+        # continuum isn't listed here — it's sourced manually at the end of extraConfig
+        # instead (ordering matters, see below).
 
         extraConfig = ''
           # ============================================================================
@@ -56,6 +74,7 @@
 
           # Modern tmux 3.2+ features
           set -s extended-keys on
+          set -s extended-keys-format csi-u
           set -s set-clipboard on
           set -g allow-passthrough on
 
@@ -165,20 +184,25 @@
           # Plugin Settings
           # ============================================================================
 
-          # Continuum
-          set -g @continuum-restore 'on'
-          set -g @continuum-boot 'on'
-          set -g @continuum-boot-options 'fullscreen'
-
-          # Resurrect
+          # Resurrect — pin the save dir. The nixpkgs build defaults to ~/.tmux/resurrect
+          # (pre-XDG); pinning survives version bumps and matches existing saves.
+          set -g @resurrect-dir "${config.xdg.dataHome}/tmux/resurrect"
           set -g @resurrect-strategy-vim 'session'
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
 
+          # @continuum-boot dropped — login autostart is declared via the imports above.
+          set -g @continuum-restore 'on'
+
           # Tmux-yank
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
+
+          # Source continuum LAST: catppuccin resets status-right above, which would wipe
+          # continuum's autosave hook if it loaded any earlier. .rtp tracks the plugin's
+          # entry script across upstream layout changes.
+          run-shell ${pkgs.tmuxPlugins.continuum.rtp}
         '';
       };
 

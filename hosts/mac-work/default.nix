@@ -1,4 +1,10 @@
-{ lib, inputs, flakeModules, ... }:
+{
+  lib,
+  inputs,
+  flakeModules,
+  flakeLib,
+  ...
+}:
 {
   # nix-darwin requires this for managed shells.
   programs.zsh.enable = true;
@@ -9,7 +15,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs flakeModules; };
+    extraSpecialArgs = { inherit inputs flakeModules flakeLib; };
     sharedModules = [ inputs.catppuccin.homeModules.catppuccin ];
   };
 

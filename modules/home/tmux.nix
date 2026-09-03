@@ -21,9 +21,9 @@
     in
     {
       imports = [
-        # Login autostart (replaces the unreliable @continuum-boot under Nix). Unnamed
-        # session so resurrect restores over it instead of colliding with a restored
-        # "main"; guarded with `tmux ls` so a reload doesn't stack empty sessions.
+        # Replaces the unreliable @continuum-boot under Nix. Session is unnamed so
+        # resurrect restores over it instead of colliding with "main"; `tmux ls` guards
+        # against stacking empty sessions on reload.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login (for continuum restore)";
@@ -50,8 +50,8 @@
           battery
           tmux-pomodoro-plus
         ];
-        # continuum is sourced at the end of extraConfig, not here: it must load after
-        # catppuccin sets status-right, else its autosave hook gets wiped (see below).
+        # continuum isn't listed here — it's sourced manually at the end of extraConfig
+        # instead (ordering matters, see below).
 
         extraConfig = ''
           # ============================================================================
@@ -199,8 +199,9 @@
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
 
-          # Source continuum LAST — after status-right is finalised — so its autosave
-          # hook survives. .rtp tracks the plugin's entry script across upstream changes.
+          # Source continuum LAST: catppuccin resets status-right above, which would wipe
+          # continuum's autosave hook if it loaded any earlier. .rtp tracks the plugin's
+          # entry script across upstream layout changes.
           run-shell ${pkgs.tmuxPlugins.continuum.rtp}
         '';
       };

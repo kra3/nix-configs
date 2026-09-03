@@ -1,24 +1,19 @@
 { lib, ... }:
 {
   flake.lib.login-autostart = {
-    # Cross-platform "run this once at login" service: a launchd agent on
-    # Darwin, a systemd user service on Linux. Returns a module, so it belongs
-    # in `imports` — that lets the caller's own module evaluation resolve the
-    # mkIf/mkMerge here alongside the rest of its config, instead of every
-    # caller hand-rolling a mkMerge list at the call site.
+    # Cross-platform "run once at login" service: a launchd agent on Darwin, a
+    # systemd user service on Linux. Returns a module — put it in `imports` so
+    # the caller's own module evaluation resolves the mkIf/mkMerge below.
     #
-    # `script` must be idempotent shell (e.g. `foo || bar`): oneshot +
-    # RunAtLoad only guarantees "ran once at login", not "never runs again on
-    # unit restart" — and neither branch ever stops/unloads the unit itself,
-    # so nothing here can tear down what it started.
-    #
-    # `script` is written out via writeShellScript and both platforms point at
-    # the resulting executable directly (no `bash -c '<script>'` string), so
-    # neither side needs to quote `script` into a shell command line.
+    # `script` must be idempotent (e.g. `foo || bar`): RunAtLoad/oneshot only
+    # guarantee it ran once at login, not that it never runs again, and
+    # neither branch stops or unloads the unit on its own.
     mkLoginAgent =
       { name, description, script }:
       { pkgs, ... }:
       let
+        # writeShellScript so both platforms exec the same file directly,
+        # instead of quoting `script` into a `bash -c '<script>'` string.
         scriptPath = pkgs.writeShellScript name script;
       in
       lib.mkMerge [

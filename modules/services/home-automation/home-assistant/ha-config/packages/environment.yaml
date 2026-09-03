@@ -33,6 +33,10 @@ sensor:
       - sensor.laundry_occupancy_illuminance
       - sensor.toilet_occupancy_illuminance
 
+input_boolean:
+  bedroom_is_dark:
+    name: Bedroom is dark
+
 template:
   - binary_sensor:
       - name: "House Exits Open Status"

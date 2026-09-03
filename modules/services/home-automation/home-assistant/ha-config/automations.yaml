@@ -470,6 +470,105 @@
       action: light.turn_on
   mode: restart
 
+# ── Bedroom ────────────────────────────────────────────────────
+- id: bedroom_darkness
+  alias: Bedroom — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for bedroom.
+    ON: lux < 30 sustained 2 min AND sun below horizon.
+    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.bedroom_occupancy_illuminance
+      occupancy_sensor: binary_sensor.bedroom_occupancy_presence
+      light_entity: light.bedroom_wardrobe_lights
+      dark_boolean: input_boolean.bedroom_is_dark
+
+- id: bedroom_lighting
+  alias: Bedroom — Lighting
+  description: >-
+    Dark → on. No motion → progressive dim. Sleep → off.
+    Motion during sleep → brief 15% then off.
+  triggers:
+  - entity_id: input_boolean.bedroom_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: binary_sensor.bedroom_occupancy_presence
+    from: "off"
+    to: "on"
+    trigger: state
+    id: motion
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.bedroom_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: light.bedroom_wardrobe_lights
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.bedroom_wardrobe_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: motion
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - target:
+          entity_id: light.bedroom_wardrobe_lights
+        data:
+          brightness_pct: 15
+          transition: 0.5
+        action: light.turn_on
+      - wait_for_trigger:
+        - entity_id: binary_sensor.bedroom_occupancy_presence
+          to: "off"
+          trigger: state
+      - delay: "00:01:00"
+      - target:
+          entity_id: light.bedroom_wardrobe_lights
+        data:
+          transition: 1
+        action: light.turn_off
+    default:
+    - target:
+        entity_id: light.bedroom_wardrobe_lights
+      data:
+        brightness_pct: 40
+        transition: 0.3
+      action: light.turn_on
+    - wait_for_trigger:
+      - entity_id: binary_sensor.bedroom_occupancy_presence
+        to: "off"
+        trigger: state
+    - delay: "00:00:10"
+    - target:
+        entity_id: light.bedroom_wardrobe_lights
+      data:
+        brightness_pct: 15
+        transition: 0.8
+      action: light.turn_on
+  mode: restart
+
 # ── Sleep routine ──────────────────────────────────────────────
 - id: sleep_tv_off
   alias: Sleep — TV off if idle
@@ -840,6 +939,87 @@
       title: Home
       message: Everyone left — lights off, alarm armed
   mode: single
+
+- id: notify_open_exits_on_leave
+  alias: Notify if door/window left open when leaving
+  description: >-
+    When everyone leaves home and a tracked door/window is still open
+    5 min later, notify both phones which one(s).
+  triggers:
+  - entity_id: binary_sensor.house_exits_open_status
+    to: "on"
+    trigger: state
+  - entity_id:
+    - person.anjalipc
+    - person.arun_karunagath
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - condition: state
+    entity_id: binary_sensor.house_exits_open_status
+    state: "on"
+  actions:
+  - delay: "00:05:00"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - condition: state
+    entity_id: binary_sensor.house_exits_open_status
+    state: "on"
+  - variables:
+      exit_mapping:
+        binary_sensor.yale_front_door_door: Front Door
+        binary_sensor.hallway_door_contact_contact: Hallway Door
+        binary_sensor.patio_door_contact_contact: Patio Door
+        binary_sensor.living_room_window_left_contact_contact: Living Room Window (L)
+        binary_sensor.living_room_window_right_contact_contact: Living Room Window (R)
+        binary_sensor.bedroom_window_left_contact_contact: Bedroom Window (L)
+        binary_sensor.bedroom_window_right_contact_contact: Bedroom Window (R)
+        binary_sensor.kitchen_dining_window_left_contact_contact: Kitchen Dining Window
+      open_exits: >-
+        {%- set ns = namespace(open=[]) -%}
+        {%- for entity, label in exit_mapping.items() -%}
+          {%- if is_state(entity, 'on') -%}
+            {%- set ns.open = ns.open + [label] -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.open | join(', ') }}
+  - action: notify.all_phones
+    data:
+      title: Home
+      message: "Left home with something open: {{ open_exits }}"
+  mode: single
+
+# ── Waste collection ────────────────────────────────────────────
+- id: waste_collection_reminder
+  alias: "Waste collection: evening-before reminder"
+  description: >-
+    Notify both phones the evening before a scheduled waste collection
+    so bins get put out. Triggers off the VA Syd calendar event itself
+    (not the sensor), so it fires once per real collection, no polling.
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.va_syd_sophamntning
+    event: start
+    offset: "-12:00:00"
+  actions:
+  - action: notify.all_phones
+    data:
+      title: Waste collection tomorrow
+      message: "{{ trigger.calendar_event.summary }}"
+  mode: queued
 
 # ── Frigate detect/audio gating by alarm state ──────────────────
 # All 3 cameras are interior. Object + audio detection only needs to

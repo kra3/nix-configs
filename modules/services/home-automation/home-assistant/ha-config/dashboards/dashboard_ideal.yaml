@@ -133,6 +133,11 @@ views:
       show_bypassed_sensors: true
       use_code_dialog: false
       hide_keypad: false
+    - type: button
+      entity: script.alarm_force_arm_night
+      name: Force Arm Night
+      icon: mdi:shield-lock
+      show_state: false
   - type: grid
     cards:
     - type: heading

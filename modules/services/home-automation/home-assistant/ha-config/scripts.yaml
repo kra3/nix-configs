@@ -1,1 +1,12 @@
-{}
+alarm_force_arm_night:
+  alias: "Alarm: force arm night (bypass open sensors)"
+  description: >-
+    Arms night mode via alarmo.arm's force option, which auto-bypasses
+    any currently-open sensor instead of refusing to arm.
+  sequence:
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: night
+      force: true
+      code: !secret alarm_code

@@ -377,7 +377,8 @@
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
   description: >-
-    Arm Alarmo in night mode when sleep schedule starts.
+    Arms at bedtime; Alarmo silently refuses if a sensor's open, so this
+    checks the result and notifies (with a force-arm action) if it failed.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
@@ -388,6 +389,40 @@
       entity_id: alarm_control_panel.vasudha_secure
     data:
       code: !secret alarm_code
+  - delay: "00:00:05"
+  - if:
+    - condition: not
+      conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_night
+    then:
+    - action: notify.all_phones
+      data:
+        title: Alarm not armed
+        message: >-
+          Couldn't arm for the night — still open:
+          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+        data:
+          actions:
+          - action: FORCE_ARM_NIGHT
+            title: Force Arm Anyway
+  mode: single
+
+- id: alarm_force_arm_from_notification
+  alias: "Security: force-arm from notification action"
+  description: Handles the "Force Arm Anyway" button on the failed-arm notification.
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_NIGHT
+  actions:
+  - action: script.alarm_force_arm_night
+  - action: notify.all_phones
+    data:
+      title: Alarm
+      message: Armed for the night (forced — open sensors bypassed).
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
@@ -762,28 +797,12 @@
   - condition: state
     entity_id: binary_sensor.house_exits_open_status
     state: "on"
-  - variables:
-      exit_mapping:
-        binary_sensor.yale_front_door_door: Front Door
-        binary_sensor.hallway_door_contact_contact: Hallway Door
-        binary_sensor.patio_door_contact_contact: Patio Door
-        binary_sensor.living_room_window_left_contact_contact: Living Room Window (L)
-        binary_sensor.living_room_window_right_contact_contact: Living Room Window (R)
-        binary_sensor.bedroom_window_left_contact_contact: Bedroom Window (L)
-        binary_sensor.bedroom_window_right_contact_contact: Bedroom Window (R)
-        binary_sensor.kitchen_dining_window_left_contact_contact: Kitchen Dining Window
-      open_exits: >-
-        {%- set ns = namespace(open=[]) -%}
-        {%- for entity, label in exit_mapping.items() -%}
-          {%- if is_state(entity, 'on') -%}
-            {%- set ns.open = ns.open + [label] -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {{ ns.open | join(', ') }}
   - action: notify.all_phones
     data:
       title: Home
-      message: "Left home with something open: {{ open_exits }}"
+      message: >-
+        Left home with something open:
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
   mode: single
 
 # ── Waste collection ────────────────────────────────────────────

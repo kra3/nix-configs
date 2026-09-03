@@ -1,9 +1,1 @@
-living_room_scenes:
-  alias: living room scenes
-  use_blueprint:
-    path: nilsreiter/ha-scenes.yaml
-    input:
-      target:
-        area_id: living_room
-        entity_id: light.living_room_ceiling_lights
-  description: ''
+{}

@@ -1,27 +1,13 @@
 blueprint:
   name: Room presence lighting (dark + occupied → on)
   description: >-
-    Light follows presence while a room is dark: on while occupied, off
-    once occupancy has been clear for 2 minutes, off immediately at
-    bedtime. No timed dim-down and no wait_for_trigger/delay
-    choreography — the occupancy-clear trigger's own `for: 2min`
-    debounces a flickery sensor at the trigger level, so a stray
-    retrigger can't reset a running sequence back to full brightness
-    (this replaced kitchen/hall automations that did exactly that,
-    confirmed via ~300 occupancy flickers/day in Prometheus).
-    Factored out of kitchen/hall/bedroom, which were identical apart
-    from entity names, brightness levels, and whether motion should
-    do anything once sleep hours start.
-
-    Leave on_brightness/sleep_brightness unset (the default) for a
-    light that Adaptive Lighting manages — this blueprint then calls
-    light.turn_on bare, and AL's own intercept supplies the actual
-    brightness/color-temp for the time of day. Only set them for a
-    light with no Adaptive Lighting entry.
-
-    Both off-paths (occupancy-clear, bedtime) are suppressed while
-    input_boolean.party_mode is on — turning a light on still works,
-    it just won't be auto-switched off until party mode ends.
+    On while occupied and dark, off after occupancy's been clear for 2
+    min (debounced via the trigger's own `for:`, not a timer sequence —
+    a flickery sensor can't reset it back to full brightness), off
+    immediately at bedtime. Leave on_brightness/sleep_brightness unset
+    for a light Adaptive Lighting manages — a bare turn_on lets AL
+    supply brightness/color-temp instead. Both off-paths are suppressed
+    while input_boolean.party_mode is on.
   domain: automation
   input:
     light_entity:

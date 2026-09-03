@@ -98,25 +98,6 @@
     domain: light
   mode: single
 
-# ── Garage ─────────────────────────────────────────────────────
-- id: garage_remote_toggle
-  alias: 'Garage: handheld remote pressed (RF Bridge)'
-  description: ''
-  triggers:
-  - topic: tele/rfbridge/RESULT
-    trigger: mqtt
-  conditions:
-  - condition: template
-    value_template: >-
-      {% set d = (trigger.payload_json.get('RfRaw', {}).get('Data', '')
-                  if trigger.payload_json is defined else '') %}
-      {{ '281818' in d }}
-  actions:
-  - target:
-      entity_id: cover.garage_door
-    action: cover.toggle
-  mode: single
-
 # ── Kitchen ────────────────────────────────────────────────────
 - id: kitchen_darkness
   alias: Kitchen — Darkness detection
@@ -134,11 +115,7 @@
 
 - id: kitchen_lighting
   alias: Kitchen — Lighting
-  description: >-
-    Light follows presence while dark. See room-presence-lighting.yaml
-    blueprint for the design. Brightness/color-temp is left to Adaptive
-    Lighting (light.kitchen_lights is in its "Home" instance) — no
-    on_brightness set here.
+  description: Presence + darkness; brightness left to Adaptive Lighting.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -163,10 +140,7 @@
 
 - id: hall_lighting
   alias: Hall — Lighting
-  description: >-
-    Light follows presence while dark. See room-presence-lighting.yaml
-    blueprint for the design. Brightness/color-temp left to Adaptive
-    Lighting (light.hall is in its "Home" instance).
+  description: Presence + darkness; brightness left to Adaptive Lighting.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -177,9 +151,7 @@
 # ── Living room ────────────────────────────────────────────────
 - id: living_room_lighting
   alias: Living room — Lighting
-  description: >-
-    On when dark, off at sleep. Brightness/color-temp left to Adaptive
-    Lighting (light.living_room_lights is in its "Home" instance).
+  description: On when dark, off at sleep. Brightness left to Adaptive Lighting.
   triggers:
   - entity_id: input_boolean.hall_is_dark
     to: "on"
@@ -283,8 +255,7 @@
   alias: Dining room — Lighting
   description: >-
     On when dark, off at sleep. Manual override via STYRBAR double-tap.
-    Brightness/color-temp left to Adaptive Lighting (light.dining_lights
-    is in its "Home" instance).
+    Brightness left to Adaptive Lighting.
   triggers:
   - entity_id: input_boolean.hall_is_dark
     to: "on"
@@ -346,11 +317,8 @@
 - id: bedroom_lighting
   alias: Bedroom — Lighting
   description: >-
-    Light follows presence while dark. Unlike kitchen/hall, doesn't react
-    to motion once sleep hours start — see room-presence-lighting.yaml
-    blueprint's react_during_sleep input for why. Brightness/color-temp
-    left to Adaptive Lighting (light.bedroom_wardrobe_lights is in its
-    "Home" instance).
+    Presence + darkness, but no motion-reaction once sleep starts
+    (react_during_sleep: false — see blueprint). Brightness left to AL.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -358,18 +326,11 @@
       occupancy_sensor: binary_sensor.bedroom_occupancy_presence
       dark_boolean: input_boolean.bedroom_is_dark
       react_during_sleep: false
-      react_during_sleep: false
 
 # ── Adaptive Lighting ────────────────────────────────────────────
 - id: adaptive_lighting_sleep_mode_sync
   alias: "Adaptive Lighting: sync sleep mode with schedule.sleep"
-  description: >-
-    Mirrors schedule.sleep onto Adaptive Lighting's own sleep-mode
-    switch (the "Home" instance covers every room light), so AL drops
-    to its own low, warm sleep brightness/color-temp during sleep
-    hours instead of each room automation hand-picking a dim value.
-    Also runs at HA start so a restart mid-sleep-window doesn't leave
-    it out of sync.
+  description: Mirrors schedule.sleep onto Adaptive Lighting's sleep-mode switch.
   triggers:
   - entity_id: schedule.sleep
     trigger: state
@@ -633,10 +594,8 @@
         - condition: template
           value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.yale_front_door.last_changed | default(now()))) > 15 }}"
       then:
-        # Street Light: turn on if it's actually dark. schedule.sleep is a
-        # fixed 20:30-05:00 clock schedule, not sun-relative — in Swedish
-        # summer sunset can be past 22:00, so gating on sleep hours turned
-        # this on in broad daylight. sun.sun tracks real dusk/dawn instead.
+        # Was gated on schedule.sleep (fixed clock, not sun-relative) —
+        # turned this on in broad Swedish-summer daylight. Use sun.sun.
         - if:
             - condition: state
               entity_id: sun.sun
@@ -831,9 +790,8 @@
 - id: waste_collection_reminder
   alias: "Waste collection: evening-before reminder"
   description: >-
-    Notify both phones the evening before a scheduled waste collection
-    so bins get put out. Triggers off the VA Syd calendar event itself
-    (not the sensor), so it fires once per real collection, no polling.
+    Evening-before reminder, triggered off the VA Syd calendar event
+    (not the sensor) so it fires once per real collection.
   triggers:
   - trigger: calendar
     entity_id: calendar.va_syd_sophamntning
@@ -850,14 +808,9 @@
 - id: alarm_pending_or_triggered_lights
   alias: "Security: lights on when alarm pending or triggered"
   description: >-
-    When Alarmo goes to pending (a registered door/window opened while
-    armed — entry-delay countdown starts) or triggered, turn on every
-    managed light if it's dark. Alarmo's own entry_time (60s for
-    armed_away, configured per-area in its own settings) already is
-    the "delay with a chance to disarm before it fires" — all 8 real
-    door/window contacts are already registered there with
-    use_entry_delay, so nothing custom is needed for that part, just
-    the light response.
+    Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
+    itself already owns the entry-delay (60s, armed_away) via its own
+    sensor config — this only adds the light response.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
@@ -885,27 +838,15 @@
 - id: automations_paused_sync
   alias: "Manual mode: pause/resume automations"
   description: >-
-    While input_boolean.automations_paused is on, disables every
-    presence/darkness/media-aware lighting automation, the exterior
-    street light, both alarm-arm-at-sleep and everyone-left-home, TV
-    backlight, and the Adaptive Lighting sleep-mode sync — so lights
-    and the alarm are fully manual until it's switched back off.
-    Matches by alias text, not entity_id: HA appends a numeric suffix
-    on any slug collision (automation.tv_backlight_off_2 already has
-    one), so a hardcoded entity_id list would silently miss entries.
-    Also runs at HA start so a restart while paused doesn't leave
-    things re-enabled.
-
-    Deliberately leaves running regardless: the alarm-pending/triggered
-    security lights (a safety response, not a comfort automation — you
-    still want it if the alarm actually goes off during a party), Frigate
-    detection gating, the BLE reload stopgap, and every pure-notification
-    automation (low battery, leaving-zone, open-exit, waste reminder —
-    none of these actuate anything).
-
-    Limitation: resume force-enables every automation on this list,
-    even one you'd independently disabled before pausing — this is a
-    blunt pause/resume, not per-automation state memory.
+    Disables the automations in managed_aliases below while
+    input_boolean.automations_paused is on (re-enables on off) — matched
+    by alias text since HA appends a numeric suffix on any entity_id
+    slug collision (automation.tv_backlight_off_2 already has one), so
+    a hardcoded entity_id list would silently miss entries. Security
+    lights, Frigate gating, and pure-notification automations are
+    intentionally excluded. Blunt pause/resume, not per-automation
+    memory — resume re-enables everything on the list regardless of
+    prior state.
   triggers:
   - entity_id: input_boolean.automations_paused
     trigger: state

@@ -20,10 +20,9 @@
 
   networking.hostName = "surasa";
 
-  # TODO(surasa): placeholder IP -- once reserved, set the real lanIp and add the router DHCP reservation.
   vars.network = {
     lanIf = "wlan0";
-    lanIp = "192.168.1.20";
+    lanIp = "192.168.1.39";
   };
 
   networking = {

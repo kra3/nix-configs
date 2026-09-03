@@ -203,7 +203,6 @@
       missingok = true;
       notifempty = true;
       copytruncate = true;
-      su = "jellyfin jellyfin";
     };
 
     environment.etc."alloy/jellyfin.alloy".text = ''

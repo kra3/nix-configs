@@ -1,0 +1,54 @@
+# ── Manual mode ────────────────────────────────────────────────
+- id: automations_paused_sync
+  alias: "Manual mode: pause/resume automations"
+  description: >-
+    Disables the automations in managed_aliases below while
+    input_boolean.automations_paused is on (re-enables on off) — matched
+    by alias text since HA appends a numeric suffix on any entity_id
+    slug collision (automation.tv_backlight_off_2 already has one), so
+    a hardcoded entity_id list would silently miss entries. Security
+    lights, Frigate gating, and pure-notification automations are
+    intentionally excluded. Blunt pause/resume, not per-automation
+    memory — resume re-enables everything on the list regardless of
+    prior state.
+  triggers:
+  - entity_id: input_boolean.automations_paused
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  variables:
+    managed_aliases:
+    - "Kitchen — Darkness detection"
+    - "Kitchen — Lighting"
+    - "Hall — Darkness detection"
+    - "Hall — Lighting"
+    - "Bedroom — Darkness detection"
+    - "Bedroom — Lighting"
+    - "Living room — Lighting"
+    - "Living room — Media-aware lighting"
+    - "Dining room — Lighting"
+    - "TV — Power on + backlight"
+    - "TV — Backlight off"
+    - "Sleep — TV off if idle"
+    - "Sleep — Arm Alarmo (night)"
+    - "Exterior — Front street light (dusk to sleep)"
+    - "Everyone left home"
+    - "Adaptive Lighting: sync sleep mode with schedule.sleep"
+    targets: >-
+      {{ states.automation
+         | selectattr('attributes.friendly_name', 'in', managed_aliases)
+         | map(attribute='entity_id') | list }}
+  actions:
+  - if:
+    - condition: state
+      entity_id: input_boolean.automations_paused
+      state: "on"
+    then:
+    - action: automation.turn_off
+      target:
+        entity_id: "{{ targets }}"
+    else:
+    - action: automation.turn_on
+      target:
+        entity_id: "{{ targets }}"
+  mode: single

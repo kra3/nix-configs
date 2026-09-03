@@ -1,0 +1,29 @@
+# ── Security ───────────────────────────────────────────────────
+- id: alarm_pending_or_triggered_lights
+  alias: "Security: lights on when alarm pending or triggered"
+  description: >-
+    Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
+    itself already owns the entry-delay (60s, armed_away) via its own
+    sensor config — this only adds the light response.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - pending
+    - triggered
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.kitchen_lights
+      - light.hall
+      - light.bedroom_wardrobe_lights
+      - light.living_room_lights
+      - light.dining_lights
+      - light.kitchen_dining_lights
+      - light.office_room_light
+  mode: single

@@ -38,7 +38,7 @@
         volumes = [
           "/srv/appdata/home-auto/home-assistant/data:/config"
           "${../../../services/home-automation/home-assistant/ha-config/configuration.yaml}:/config/configuration.yaml:ro"
-          "${../../../services/home-automation/home-assistant/ha-config/automations.yaml}:/config/automations.yaml:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/automations}:/config/automations:ro"
           "${../../../services/home-automation/home-assistant/ha-config/lovelace.yaml}:/config/lovelace.yaml:ro"
           "${../../../services/home-automation/home-assistant/ha-config/dashboards}:/config/dashboards:ro"
           "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"

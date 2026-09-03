@@ -1,0 +1,24 @@
+# ── Kitchen ────────────────────────────────────────────────────
+- id: kitchen_darkness
+  alias: Kitchen — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for kitchen.
+    ON: lux < 30 sustained 2 min AND sun below horizon.
+    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.hue_pir_kitchen_illuminance
+      occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
+      light_entity: light.kitchen_lights
+      dark_boolean: input_boolean.kitchen_is_dark
+
+- id: kitchen_lighting
+  alias: Kitchen — Lighting
+  description: Presence + darkness; brightness left to Adaptive Lighting.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.kitchen_lights
+      occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
+      dark_boolean: input_boolean.kitchen_is_dark

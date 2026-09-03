@@ -1,0 +1,130 @@
+# ── Presence notifications ─────────────────────────────────────
+- id: '1733594588791'
+  alias: Neelu left home
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.anjalipc
+      zone_entity: zone.home
+      notify_device: f4da98937625ae764a56ad8144fd2c88
+
+- id: '1733594815974'
+  alias: Kunsu left home
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.arun_karunagath
+      zone_entity: zone.home
+      notify_device: a00372a62748fcca4d78e08dd49b1979
+
+# ── Battery ────────────────────────────────────────────────────
+- id: '1733595301092'
+  alias: Low Battery Notifications & Actions
+  description: ''
+  use_blueprint:
+    path: Blackshome/low-battery-notifications-and-actions.yaml
+    input:
+      include_time: time_disabled
+      time: '20:10:00'
+      include_persistent_notification: enable_persistent_notification
+      include_easy_notify: enable_easy_notify
+      notify_device:
+      - b4c7eb99866347bf5826b5d0d97b4743
+      - a00372a62748fcca4d78e08dd49b1979
+      include_button: disable_button_trigger
+
+# ── Away mode ──────────────────────────────────────────────────
+- id: everyone_left_home
+  alias: Everyone left home
+  description: >-
+    When all tracked persons leave the home zone for 5 min,
+    turn off all lights, arm Alarmo away, and notify both phones.
+  triggers:
+  - entity_id:
+    - person.anjalipc
+    - person.arun_karunagath
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  actions:
+  - delay: "00:05:00"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - action: light.turn_off
+    target:
+      entity_id: all
+  - action: alarm_control_panel.alarm_arm_away
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
+  - action: notify.mobile_app_anjalis_iphone
+    data:
+      title: Home
+      message: Everyone left — lights off, alarm armed
+  - action: notify.mobile_app_iphone
+    data:
+      title: Home
+      message: Everyone left — lights off, alarm armed
+  mode: single
+
+- id: notify_open_exits_on_leave
+  alias: Notify if door/window left open when leaving
+  description: >-
+    When everyone leaves home and a tracked door/window is still open
+    5 min later, notify both phones which one(s).
+  triggers:
+  - entity_id: binary_sensor.house_exits_open_status
+    to: "on"
+    trigger: state
+  - entity_id:
+    - person.anjalipc
+    - person.arun_karunagath
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - condition: state
+    entity_id: binary_sensor.house_exits_open_status
+    state: "on"
+  actions:
+  - delay: "00:05:00"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+  - condition: state
+    entity_id: binary_sensor.house_exits_open_status
+    state: "on"
+  - action: notify.all_phones
+    data:
+      title: Home
+      message: >-
+        Left home with something open:
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+  mode: single

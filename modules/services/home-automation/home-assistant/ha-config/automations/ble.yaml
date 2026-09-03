@@ -1,0 +1,24 @@
+# ── BLE integration reload stopgap ──────────────────────────────
+- id: ble_integrations_periodic_reload
+  alias: "BLE integrations: periodic reload (range/stability stopgap)"
+  description: >-
+    PlejD and Fresh Intellivent Sky both talk to sutala over BLE with
+    marginal range (PlejD mesh measured ~-91dBm; Fresh Intellivent's
+    device isn't even reliably in scan range). Neither integration
+    recovers cleanly from a dropped/stale connection on its own
+    (PlejD: github.com/thomasloven/hass-plejd issues #153/#154/#161).
+    Force a periodic reload of both so they retry a fresh connection
+    instead of getting stuck. This is a stopgap, not a fix for the
+    underlying signal/range issue — consider an ESPHome Bluetooth
+    proxy near the devices if this isn't enough.
+  triggers:
+  - trigger: time_pattern
+    minutes: "/30"
+  actions:
+  - action: homeassistant.reload_config_entry
+    data:
+      entry_id: 01JE7EG5ZJEQBM1887Q1VCEGCR # PlejD (Salviegatan 4)
+  - action: homeassistant.reload_config_entry
+    data:
+      entry_id: 01JE7F2D803DDWPQ63RP0VY71P # Fresh Intellivent Sky (Fresh kitchen fan)
+  mode: single

@@ -28,7 +28,7 @@ Run `nix flake check` as the primary validation before committing.
 podman run --rm \
   -v /srv/appdata/home-auto/home-assistant/data:/config:ro \
   -v <repo>/.../ha-config/configuration.yaml:/config/configuration.yaml:ro \
-  -v <repo>/.../ha-config/automations.yaml:/config/automations.yaml:ro \
+  -v <repo>/.../ha-config/automations:/config/automations:ro \
   # ...same read-only mounts as container.nix for lovelace/dashboards/packages/blueprints/scripts/scenes...
   -v /run/secrets/rendered/home-assistant/secrets.yaml:/config/secrets.yaml:ro \
   --entrypoint python3 ghcr.io/home-assistant/home-assistant:<tag matching container.nix> \

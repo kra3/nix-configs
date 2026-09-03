@@ -19,7 +19,7 @@
         ];
         addCapabilities = [ "NET_ADMIN" ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "384Mi";
+        memory = "384m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {

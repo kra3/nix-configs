@@ -27,7 +27,7 @@
           "/srv/media:/data"
         ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "512Mi";
+        memory = "512m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };

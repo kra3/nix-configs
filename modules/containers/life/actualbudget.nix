@@ -43,7 +43,7 @@
         };
         environmentFiles = [ config.sops.templates."life.actualbudget.env".path ];
         # Sized from ~21h process-exporter peak + safety margin.
-        memory = "256Mi";
+        memory = "256m";
         podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };

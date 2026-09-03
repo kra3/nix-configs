@@ -136,14 +136,15 @@
   alias: Kitchen — Lighting
   description: >-
     Light follows presence while dark. See room-presence-lighting.yaml
-    blueprint for the design (and why the old timed dim-down was dropped).
+    blueprint for the design. Brightness/color-temp is left to Adaptive
+    Lighting (light.kitchen_lights is in its "Home" instance) — no
+    on_brightness set here.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.kitchen_lights
       occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
       dark_boolean: input_boolean.kitchen_is_dark
-      on_brightness: 100
 
 # ── Hall ───────────────────────────────────────────────────────
 - id: hall_darkness
@@ -164,20 +165,21 @@
   alias: Hall — Lighting
   description: >-
     Light follows presence while dark. See room-presence-lighting.yaml
-    blueprint for the design.
+    blueprint for the design. Brightness/color-temp left to Adaptive
+    Lighting (light.hall is in its "Home" instance).
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.hall
       occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
       dark_boolean: input_boolean.hall_is_dark
-      on_brightness: 55
 
 # ── Living room ────────────────────────────────────────────────
 - id: living_room_lighting
   alias: Living room — Lighting
   description: >-
-    On at 30% when dark, off at sleep.
+    On when dark, off at sleep. Brightness/color-temp left to Adaptive
+    Lighting (light.living_room_lights is in its "Home" instance).
   triggers:
   - entity_id: input_boolean.hall_is_dark
     to: "on"
@@ -200,7 +202,6 @@
       - target:
           entity_id: light.living_room_lights
         data:
-          brightness_pct: 15
           transition: 3
         action: light.turn_on
       - delay: "00:00:30"
@@ -213,7 +214,6 @@
     - target:
         entity_id: light.living_room_lights
       data:
-        brightness_pct: 30
         transition: 1
       action: light.turn_on
   mode: restart
@@ -264,13 +264,11 @@
       - target:
           entity_id: light.living_room_lights
         data:
-          brightness_pct: 30
           transition: 60
         action: light.turn_on
       - target:
           entity_id: light.dining_lights
         data:
-          brightness_pct: 20
           transition: 60
         action: light.turn_on
   mode: restart
@@ -279,8 +277,9 @@
 - id: dining_room_lighting
   alias: Dining room — Lighting
   description: >-
-    On at 20% when dark, off at sleep.
-    Manual override via STYRBAR double-tap.
+    On when dark, off at sleep. Manual override via STYRBAR double-tap.
+    Brightness/color-temp left to Adaptive Lighting (light.dining_lights
+    is in its "Home" instance).
   triggers:
   - entity_id: input_boolean.hall_is_dark
     to: "on"
@@ -303,7 +302,6 @@
       - target:
           entity_id: light.dining_lights
         data:
-          brightness_pct: 15
           transition: 3
         action: light.turn_on
       - delay: "00:00:30"
@@ -316,7 +314,6 @@
     - target:
         entity_id: light.dining_lights
       data:
-        brightness_pct: 20
         transition: 1
       action: light.turn_on
   mode: restart
@@ -341,15 +338,48 @@
   description: >-
     Light follows presence while dark. Unlike kitchen/hall, doesn't react
     to motion once sleep hours start — see room-presence-lighting.yaml
-    blueprint's react_during_sleep input for why.
+    blueprint's react_during_sleep input for why. Brightness/color-temp
+    left to Adaptive Lighting (light.bedroom_wardrobe_lights is in its
+    "Home" instance).
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.bedroom_wardrobe_lights
       occupancy_sensor: binary_sensor.bedroom_occupancy_presence
       dark_boolean: input_boolean.bedroom_is_dark
-      on_brightness: 40
       react_during_sleep: false
+      react_during_sleep: false
+
+# ── Adaptive Lighting ────────────────────────────────────────────
+- id: adaptive_lighting_sleep_mode_sync
+  alias: "Adaptive Lighting: sync sleep mode with schedule.sleep"
+  description: >-
+    Mirrors schedule.sleep onto Adaptive Lighting's own sleep-mode
+    switch (the "Home" instance covers every room light), so AL drops
+    to its own low, warm sleep brightness/color-temp during sleep
+    hours instead of each room automation hand-picking a dim value.
+    Also runs at HA start so a restart mid-sleep-window doesn't leave
+    it out of sync.
+  triggers:
+  - entity_id: schedule.sleep
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+    default:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+  mode: single
 
 # ── Sleep routine ──────────────────────────────────────────────
 - id: sleep_tv_off

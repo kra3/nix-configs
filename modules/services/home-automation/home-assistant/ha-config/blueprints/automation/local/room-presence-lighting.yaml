@@ -1,18 +1,23 @@
 blueprint:
   name: Room presence lighting (dark + occupied → on)
   description: >-
-    Light follows presence while a room is dark: on to on_brightness
-    (or sleep_brightness during sleep hours, if react_during_sleep is
-    enabled) while occupied, off once occupancy has been clear for 2
-    minutes, off immediately at bedtime. No timed dim-down and no
-    wait_for_trigger/delay choreography — the occupancy-clear trigger's
-    own `for: 2min` debounces a flickery sensor at the trigger level,
-    so a stray retrigger can't reset a running sequence back to full
-    brightness (this replaced kitchen/hall automations that did exactly
-    that, confirmed via ~300 occupancy flickers/day in Prometheus).
+    Light follows presence while a room is dark: on while occupied, off
+    once occupancy has been clear for 2 minutes, off immediately at
+    bedtime. No timed dim-down and no wait_for_trigger/delay
+    choreography — the occupancy-clear trigger's own `for: 2min`
+    debounces a flickery sensor at the trigger level, so a stray
+    retrigger can't reset a running sequence back to full brightness
+    (this replaced kitchen/hall automations that did exactly that,
+    confirmed via ~300 occupancy flickers/day in Prometheus).
     Factored out of kitchen/hall/bedroom, which were identical apart
     from entity names, brightness levels, and whether motion should
     do anything once sleep hours start.
+
+    Leave on_brightness/sleep_brightness unset (the default) for a
+    light that Adaptive Lighting manages — this blueprint then calls
+    light.turn_on bare, and AL's own intercept supplies the actual
+    brightness/color-temp for the time of day. Only set them for a
+    light with no Adaptive Lighting entry.
   domain: automation
   input:
     light_entity:
@@ -32,6 +37,10 @@ blueprint:
           domain: input_boolean
     on_brightness:
       name: On brightness (%)
+      description: >-
+        Leave unset for a light Adaptive Lighting manages — see the
+        blueprint description.
+      default: null
       selector:
         number:
           min: 1
@@ -50,8 +59,12 @@ blueprint:
         boolean:
     sleep_brightness:
       name: Sleep-hours brightness (%)
-      description: Only used when "React to motion during sleep hours" is on.
-      default: 15
+      description: >-
+        Only used when "React to motion during sleep hours" is on.
+        Leave unset for a light Adaptive Lighting manages — its own
+        sleep-mode switch (wired to schedule.sleep separately) already
+        handles this, with a warmer color temp too, not just dimmer.
+      default: null
       selector:
         number:
           min: 1
@@ -120,10 +133,9 @@ actions:
         sequence:
           - target:
               entity_id: !input light_entity
-            data:
-              brightness_pct: >-
-                {{ sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness }}
-              transition: 1
+            data: >-
+              {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
+              {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
             action: light.turn_on
       - conditions:
           - condition: trigger

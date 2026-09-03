@@ -11,19 +11,22 @@
     # RunAtLoad only guarantees "ran once at login", not "never runs again on
     # unit restart" — and neither branch ever stops/unloads the unit itself,
     # so nothing here can tear down what it started.
+    #
+    # `script` is written out via writeShellScript and both platforms point at
+    # the resulting executable directly (no `bash -c '<script>'` string), so
+    # neither side needs to quote `script` into a shell command line.
     mkLoginAgent =
       { name, description, script }:
       { pkgs, ... }:
+      let
+        scriptPath = pkgs.writeShellScript name script;
+      in
       lib.mkMerge [
         (lib.mkIf pkgs.stdenv.isDarwin {
           launchd.agents.${name} = {
             enable = true;
             config = {
-              ProgramArguments = [
-                "${pkgs.bash}/bin/bash"
-                "-c"
-                script
-              ];
+              ProgramArguments = [ "${scriptPath}" ];
               RunAtLoad = true;
             };
           };
@@ -35,7 +38,7 @@
             Service = {
               Type = "oneshot";
               RemainAfterExit = true;
-              ExecStart = "${pkgs.bash}/bin/bash -c '${script}'";
+              ExecStart = "${scriptPath}";
             };
           };
         })

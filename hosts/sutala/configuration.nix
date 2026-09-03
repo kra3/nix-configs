@@ -98,9 +98,7 @@
     # cross-machine import scenario needing the relaxed hostid check.
     zfs.forceImportRoot = false;
 
-    # QEMU emulation so this host can cross-build aarch64-linux derivations
-    # (hosts/surasa) -- also registers aarch64-linux under
-    # nix.settings.extra-platforms.
+    # QEMU emulation so this host can cross-build aarch64-linux derivations (hosts/surasa).
     binfmt.emulatedSystems = [ "aarch64-linux" ];
 
     # Kernel hardening parameters

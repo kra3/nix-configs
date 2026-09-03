@@ -1,23 +1,12 @@
 {
-  # Independent "is sutala reachable at all" watchdog, deliberately outside
-  # sutala's own Grafana/Prometheus/Alertmanager pipeline -- that pipeline
-  # runs ON sutala, so it can't alert on sutala itself being down. This
-  # checks from surasa instead and pushes straight to the same Telegram bot
-  # sutala's monitoring stack uses (modules/containers/monitoring.nix), so no
-  # new bot/secret is needed -- just this host also being a sops recipient.
-  #
-  # Deliberately a plain script+timer, not a second blackbox_exporter +
-  # Prometheus: this is a 1GB RPi already running DNS + PipeWire/Bluetooth,
-  # and a coarse reachability check doesn't need a metrics pipeline.
+  # Independent "is sutala reachable" watchdog, run from surasa since sutala's own Grafana/Prometheus/Alertmanager can't alert on itself being down. Pushes to the same Telegram bot sutala's stack uses (modules/containers/monitoring.nix). Plain script+timer, not blackbox_exporter+Prometheus -- overkill for a coarse reachability check on a 1GB RPi.
   flake.nixosModules.services-monitoring-sutala-watchdog =
   { config, pkgs, ... }:
   let
     sutalaIp = "192.168.1.10";
     stateFile = "/var/lib/sutala-watchdog/down";
 
-    # Token/chat-id are read into a curl -K config from stdin (heredoc),
-    # never as a curl argv element, so neither shows up in `ps` -- same
-    # care as adguard.nix's preStart credential handling.
+    # Token/chat-id read via curl -K stdin heredoc, never argv, so neither shows up in `ps`.
     checkScript = pkgs.writeShellScript "sutala-watchdog-run" ''
       set -euo pipefail
       mkdir -p "$(dirname ${stateFile})"

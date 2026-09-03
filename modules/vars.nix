@@ -169,10 +169,7 @@
             description = "Pinned br-life IP for ghostfolio";
           };
         };
-        # home-auto-macvlan gives these pods a real LAN address (see
-        # modules/containers/home-auto/*/default.nix); centralized here
-        # since consumers outside that pod's own file need the address too
-        # (e.g. surasa's snapclient reaching MA's bundled Snapcast server).
+        # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's snapclient).
         macvlanAddresses = {
           musicAssistant = lib.mkOption {
             type = lib.types.str;

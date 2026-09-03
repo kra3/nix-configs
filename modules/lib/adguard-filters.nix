@@ -1,7 +1,5 @@
 {
-  # Shared AdGuard Home filter-list subscriptions, used by both sutala's
-  # instance (services-dns-adguard) and surasa's secondary instance
-  # (services-dns-rpi-secondary) so they block the same things.
+  # Shared between sutala's AdGuard instance and surasa's secondary one so both block the same things.
   flake.lib.adguard-filters = [
     {
       enabled = false;

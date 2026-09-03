@@ -1,23 +1,7 @@
 {
-  # Snapcast client, connecting to Music Assistant's bundled Snapcast server
-  # (deployed on sutala, see modules/services/home-automation/music-assistant.nix
-  # + modules/containers/home-auto/music-assistant/default.nix). MA's macvlan
-  # interface gives that server a real LAN address, so no server-side firewall
-  # or publish-port change is needed here -- just an outbound client connection.
-  #
-  # Output is either the onboard 3.5mm jack or a paired Bluetooth speaker, so
-  # this runs on PipeWire (not a fixed ALSA device): WirePlumber's Bluetooth
-  # policy makes a connected A2DP device the default sink automatically,
-  # falling back to the analog jack when none is connected. snapclient talks
-  # to PipeWire's pulse-compatible socket, so it always follows that default
-  # rather than a hardcoded `hw:x,y` name. There is no NixOS
-  # services.snapclient module, hence the manual systemd unit.
-  #
-  # PipeWire/WirePlumber normally only run in a logged-in user session; since
-  # this host never has a graphical login, kra3's session is kept alive via
-  # loginctl linger (the tmpfiles rule below is exactly what `loginctl
-  # enable-linger` does), and snapclient itself is a per-user unit so it
-  # shares that same session's pulse socket.
+  # Snapcast client for Music Assistant's bundled server (sutala, via its macvlan address) -- outbound-only, no server-side change needed.
+  # Runs on PipeWire/WirePlumber (not a fixed ALSA device) so it follows whichever output (jack or a paired A2DP speaker) WirePlumber picks as default sink; no NixOS services.snapclient module exists, hence the manual unit.
+  # The tmpfiles rule below is `loginctl enable-linger` for kra3, since PipeWire only runs in a logged-in session and this host has no graphical login.
   flake.nixosModules.services-media-snapclient =
   { config, pkgs, ... }:
   {

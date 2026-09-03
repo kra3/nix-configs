@@ -1,10 +1,5 @@
 {
-  # Standalone secondary DNS resolver for hosts/surasa -- plain port-53
-  # AdGuard Home + Unbound, no TLS/nginx/ACME and no sutala container-name
-  # rewrites (those are sutala-only concerns, see services-dns-adguard).
-  # Filter-list subscriptions are shared with sutala's instance via
-  # flakeLib.adguard-filters (modules/lib/adguard-filters.nix) so both
-  # block the same things.
+  # Standalone secondary DNS resolver for hosts/surasa -- plain port-53 AdGuard Home + Unbound, no TLS/nginx/ACME (see services-dns-adguard for sutala's version). Filter lists shared via flakeLib.adguard-filters.
   flake.nixosModules.services-dns-rpi-secondary =
   { config, lib, pkgs, flakeLib, ... }:
   let
@@ -68,10 +63,7 @@
       ];
     };
 
-    # Same admin login as sutala's AdGuard instance -- reuses the exact same
-    # dns.adguard.username/password sops keys (not a copy), so both
-    # instances decrypt the same secret independently once this host is a
-    # sops recipient (see the TODO in hosts/surasa/configuration.nix).
+    # Reuses sutala's exact dns.adguard.username/password sops keys -- same admin login on both instances.
     sops.secrets."dns.adguard.password" = {
       owner = "adguardhome";
       group = "adguardhome";
@@ -144,9 +136,7 @@
 
         filters = flakeLib.adguard-filters;
 
-        # Substituted from sops at runtime by the preStart script above --
-        # these placeholder strings, not real values, are what land in the
-        # Nix store.
+        # Placeholders -- substituted from sops at runtime by the preStart script above.
         users = [
           {
             name = "__SOPS_DNS_ADGUARD_USERNAME__";

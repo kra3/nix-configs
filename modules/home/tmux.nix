@@ -1,6 +1,6 @@
 {
   flake.homeManagerModules.home-tmux =
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     let
       tmux-pomodoro-plus = pkgs.tmuxPlugins.mkTmuxPlugin {
         pluginName = "tmux-pomodoro-plus";
@@ -13,7 +13,8 @@
         };
       };
     in
-    {
+    lib.mkMerge [
+      {
       programs.tmux = {
         enable = true;
 
@@ -28,12 +29,13 @@
         plugins = with pkgs.tmuxPlugins; [
           pain-control
           resurrect
-          continuum
           yank
           open
           battery
           tmux-pomodoro-plus
         ];
+        # continuum is sourced at the end of extraConfig, not here: it must load after
+        # catppuccin sets status-right, else its autosave hook gets wiped (see below).
 
         extraConfig = ''
           # ============================================================================
@@ -56,6 +58,7 @@
 
           # Modern tmux 3.2+ features
           set -s extended-keys on
+          set -s extended-keys-format csi-u
           set -s set-clipboard on
           set -g allow-passthrough on
 
@@ -165,20 +168,24 @@
           # Plugin Settings
           # ============================================================================
 
-          # Continuum
-          set -g @continuum-restore 'on'
-          set -g @continuum-boot 'on'
-          set -g @continuum-boot-options 'fullscreen'
-
-          # Resurrect
+          # Resurrect — pin the save dir. The nixpkgs build defaults to ~/.tmux/resurrect
+          # (pre-XDG); pinning survives version bumps and matches existing saves.
+          set -g @resurrect-dir "${config.xdg.dataHome}/tmux/resurrect"
           set -g @resurrect-strategy-vim 'session'
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
 
+          # @continuum-boot dropped — login autostart is declared via launchd/systemd below.
+          set -g @continuum-restore 'on'
+
           # Tmux-yank
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
+
+          # Source continuum LAST — after status-right is finalised — so the autosave
+          # hook it appends to status-right survives.
+          run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
         '';
       };
 
@@ -210,5 +217,30 @@
         set -agF status-right "#{E:@catppuccin_status_battery}"
         set -agF status-right "#{E:@catppuccin_status_date_time}"
       '';
-    };
+      }
+
+      # Login autostart (replaces the unreliable @continuum-boot under Nix): start a
+      # detached tmux server at login so @continuum-restore can fire.
+      (lib.mkIf pkgs.stdenv.isDarwin {
+        launchd.agents.tmux-server = {
+          enable = true;
+          config = {
+            ProgramArguments = [ "${pkgs.tmux}/bin/tmux" "new-session" "-d" "-s" "main" ];
+            RunAtLoad = true;
+          };
+        };
+      })
+
+      (lib.mkIf pkgs.stdenv.isLinux {
+        systemd.user.services.tmux-server = {
+          Unit.Description = "Start tmux server at login (for continuum restore)";
+          Install.WantedBy = [ "default.target" ];
+          Service = {
+            Type = "forking";
+            ExecStart = "${pkgs.tmux}/bin/tmux new-session -d -s main";
+            ExecStop = "${pkgs.tmux}/bin/tmux kill-server";
+          };
+        };
+      })
+    ];
 }

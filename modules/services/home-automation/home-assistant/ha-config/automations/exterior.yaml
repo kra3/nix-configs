@@ -1,0 +1,31 @@
+# ── Exterior lighting ─────────────────────────────────────────
+- id: exterior_front_light
+  alias: Exterior — Front street light (dusk to sleep)
+  description: >-
+    Turn on front street light at sunset, off at sleep schedule.
+  triggers:
+  - entity_id: sun.sun
+    to: below_horizon
+    trigger: state
+    id: dusk
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: dusk
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_on
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_off
+  mode: single

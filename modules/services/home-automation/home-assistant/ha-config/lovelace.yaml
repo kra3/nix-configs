@@ -23,3 +23,10 @@ dashboards:
     icon: mdi:view-dashboard-variant
     show_in_sidebar: true
     require_admin: false
+  dashboard-ideal:
+    mode: yaml
+    filename: dashboards/dashboard_ideal.yaml
+    title: Home (Ideal)
+    icon: mdi:home-lightning-bolt
+    show_in_sidebar: true
+    require_admin: false

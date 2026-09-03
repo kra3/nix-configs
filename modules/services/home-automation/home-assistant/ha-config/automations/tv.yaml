@@ -1,0 +1,62 @@
+# ── Remote control (DISABLED — use Z2M direct binding instead) ──
+# - id: '1733346573361'
+#   alias: Remote control
+#   description: 'Disabled: migrated to Z2M direct binding'
+#
+# - id: '1733346957071'
+#   alias: Hook - Living room ceiling lights
+#   description: 'Disabled: migrated to Z2M direct binding'
+
+# ── TV ─────────────────────────────────────────────────────────
+- id: tv_power_on
+  alias: TV — Power on + backlight
+  description: WoL if TV is off; turn on ambient backlight if dark or overcast
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: webostv
+    type: webostv.turn_on
+    trigger: device
+  actions:
+  - if:
+    - condition: device
+      device_id: 346b2b9e49e306b3d7e24530babb842c
+      domain: media_player
+      entity_id: d82eff522a62e356a89979d2dd74f5df
+      type: is_off
+    then:
+    - action: wake_on_lan.send_magic_packet
+      data:
+        mac: 20:28:bc:b7:ff:3e
+        broadcast_port: 7
+  - if:
+    - condition: or
+      conditions:
+      - condition: template
+        value_template: >-
+          {{ state_attr('sun.sun', 'elevation') | float(0)
+             < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
+      - condition: template
+        value_template: >-
+          {{ state_attr('weather.forecast_vasudha', 'cloud_coverage') | float(0) > 70 }}
+    then:
+    - type: turn_on
+      device_id: 5c2c4c65f834231378af61d835ec513a
+      entity_id: light.tv_backlight
+      domain: light
+  mode: single
+
+- id: tv_backlight_off
+  alias: TV — Backlight off
+  description: Turn off ambient backlight when TV powers off
+  triggers:
+  - device_id: 346b2b9e49e306b3d7e24530babb842c
+    domain: media_player
+    entity_id: d82eff522a62e356a89979d2dd74f5df
+    type: turned_off
+    trigger: device
+  actions:
+  - type: turn_off
+    device_id: 5c2c4c65f834231378af61d835ec513a
+    entity_id: light.tv_backlight
+    domain: light
+  mode: single

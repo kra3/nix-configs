@@ -1,0 +1,27 @@
+# ── Bedroom ────────────────────────────────────────────────────
+- id: bedroom_darkness
+  alias: Bedroom — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for bedroom.
+    ON: lux < 30 sustained 2 min AND sun below horizon.
+    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.bedroom_occupancy_illuminance
+      occupancy_sensor: binary_sensor.bedroom_occupancy_presence
+      light_entity: light.bedroom_wardrobe_lights
+      dark_boolean: input_boolean.bedroom_is_dark
+
+- id: bedroom_lighting
+  alias: Bedroom — Lighting
+  description: >-
+    Presence + darkness, but no motion-reaction once sleep starts
+    (react_during_sleep: false — see blueprint). Brightness left to AL.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.bedroom_wardrobe_lights
+      occupancy_sensor: binary_sensor.bedroom_occupancy_presence
+      dark_boolean: input_boolean.bedroom_is_dark
+      react_during_sleep: false

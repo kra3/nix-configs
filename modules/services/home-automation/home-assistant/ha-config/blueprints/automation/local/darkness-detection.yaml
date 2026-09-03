@@ -50,16 +50,13 @@ triggers:
     trigger: state
     id: bright
 actions:
+  # Trust each trigger's own threshold — re-checking lux here used to
+  # gate the sun-based trigger too, so a sensor that never reads above
+  # 120 lux (kitchen/hall, confirmed via Prometheus) stayed stuck dark.
   - choose:
       - conditions:
           - condition: trigger
             id: dark
-          - condition: state
-            entity_id: sun.sun
-            state: below_horizon
-          - condition: numeric_state
-            entity_id: !input illuminance_sensor
-            below: 30
         sequence:
           - target:
               entity_id: !input dark_boolean
@@ -67,12 +64,6 @@ actions:
       - conditions:
           - condition: trigger
             id: bright
-          - condition: state
-            entity_id: sun.sun
-            state: above_horizon
-          - condition: numeric_state
-            entity_id: !input illuminance_sensor
-            above: 120
         sequence:
           - target:
               entity_id: !input dark_boolean

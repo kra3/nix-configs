@@ -1,0 +1,24 @@
+# ── Adaptive Lighting ────────────────────────────────────────────
+- id: adaptive_lighting_sleep_mode_sync
+  alias: "Adaptive Lighting: sync sleep mode with schedule.sleep"
+  description: Mirrors schedule.sleep onto Adaptive Lighting's sleep-mode switch.
+  triggers:
+  - entity_id: schedule.sleep
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+    default:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+  mode: single

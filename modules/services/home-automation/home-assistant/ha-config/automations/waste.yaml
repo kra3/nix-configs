@@ -1,0 +1,17 @@
+# ── Waste collection ────────────────────────────────────────────
+- id: waste_collection_reminder
+  alias: "Waste collection: evening-before reminder"
+  description: >-
+    Evening-before reminder, triggered off the VA Syd calendar event
+    (not the sensor) so it fires once per real collection.
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.va_syd_sophamntning
+    event: start
+    offset: "-12:00:00"
+  actions:
+  - action: notify.all_phones
+    data:
+      title: Waste collection tomorrow
+      message: "{{ trigger.calendar_event.summary }}"
+  mode: queued

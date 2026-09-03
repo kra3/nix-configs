@@ -1,0 +1,123 @@
+# ── Sleep routine ──────────────────────────────────────────────
+- id: sleep_tv_off
+  alias: Sleep — TV off if idle
+  description: >-
+    Turn off TV when sleep schedule starts, but only if nobody
+    is actively watching (not playing).
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.lg_webos_tv_oled77c35la
+      state: playing
+  actions:
+  - action: media_player.turn_off
+    target:
+      entity_id: media_player.lg_webos_tv_oled77c35la
+  mode: single
+
+- id: sleep_alarmo_arm_home
+  alias: Sleep — Arm Alarmo (night)
+  description: >-
+    Arms at bedtime; Alarmo silently refuses if a sensor's open, so this
+    checks the result and notifies (with a force-arm action) if it failed.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+  actions:
+  - action: alarm_control_panel.alarm_arm_night
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
+  - delay: "00:00:05"
+  - if:
+    - condition: not
+      conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_night
+    then:
+    - action: notify.all_phones
+      data:
+        title: Alarm not armed
+        message: >-
+          Couldn't arm for the night — still open:
+          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+        data:
+          actions:
+          - action: FORCE_ARM_NIGHT
+            title: Force Arm Anyway
+  mode: single
+
+- id: alarm_force_arm_from_notification
+  alias: "Security: force-arm from notification action"
+  description: Handles the "Force Arm Anyway" button on the failed-arm notification.
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_NIGHT
+  actions:
+  - action: script.alarm_force_arm_night
+  - action: notify.all_phones
+    data:
+      title: Alarm
+      message: Armed for the night (forced — open sensors bypassed).
+  mode: single
+
+# ── Wake-up ────────────────────────────────────────────────────
+- id: wakeup_lighting
+  alias: Wake-up — Gradual lighting
+  description: >-
+    When sleep schedule ends, gradually brighten bedroom and hall
+    over 10 minutes. Disarm Alarmo.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "off"
+    trigger: state
+  actions:
+  - action: alarm_control_panel.alarm_disarm
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 5
+      transition: 1
+    action: light.turn_on
+  - delay: "00:02:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 15
+      transition: 60
+    action: light.turn_on
+  - delay: "00:03:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 40
+      transition: 60
+    action: light.turn_on
+  - delay: "00:05:00"
+  - target:
+      entity_id:
+      - light.bedroom_wardrobe_lights
+      - light.hall
+    data:
+      brightness_pct: 60
+      transition: 60
+    action: light.turn_on
+  mode: single

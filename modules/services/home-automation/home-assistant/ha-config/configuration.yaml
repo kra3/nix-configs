@@ -47,7 +47,7 @@ recorder:
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection
 
-automation: !include automations.yaml
+automation: !include_dir_merge_list automations/
 script: !include scripts.yaml
 
 lovelace: !include lovelace.yaml

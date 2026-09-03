@@ -1,0 +1,149 @@
+blueprint:
+  name: Room presence lighting (dark + occupied → on)
+  description: >-
+    On while occupied and dark, off after occupancy's been clear for 2
+    min (debounced via the trigger's own `for:`, not a timer sequence —
+    a flickery sensor can't reset it back to full brightness), off
+    immediately at bedtime. Leave on_brightness/sleep_brightness unset
+    for a light Adaptive Lighting manages — a bare turn_on lets AL
+    supply brightness/color-temp instead. Both off-paths are suppressed
+    while input_boolean.party_mode is on.
+  domain: automation
+  input:
+    light_entity:
+      name: Light
+      selector:
+        entity:
+          domain: light
+    occupancy_sensor:
+      name: Occupancy sensor
+      selector:
+        entity:
+          domain: binary_sensor
+    dark_boolean:
+      name: '"Is dark" helper'
+      selector:
+        entity:
+          domain: input_boolean
+    on_brightness:
+      name: On brightness (%)
+      description: >-
+        Leave unset for a light Adaptive Lighting manages — see the
+        blueprint description.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+    react_during_sleep:
+      name: React to motion during sleep hours
+      description: >-
+        If off, this room's light won't turn on for motion once
+        schedule.sleep starts — it only reacts before bedtime. Use this
+        for a room where the occupancy sensor can't tell "getting up"
+        from "still there" (e.g. a bedroom PIR and someone in bed) —
+        otherwise every shift in bed would flash the light on.
+      default: true
+      selector:
+        boolean:
+    sleep_brightness:
+      name: Sleep-hours brightness (%)
+      description: >-
+        Only used when "React to motion during sleep hours" is on.
+        Leave unset for a light Adaptive Lighting manages — its own
+        sleep-mode switch (wired to schedule.sleep separately) already
+        handles this, with a warmer color temp too, not just dimmer.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+
+triggers:
+  - entity_id: !input occupancy_sensor
+    to: "on"
+    trigger: state
+    id: motion
+  - entity_id: !input dark_boolean
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: !input occupancy_sensor
+    to: "off"
+    for: "00:02:00"
+    trigger: state
+    id: clear
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+
+conditions:
+  - condition: state
+    entity_id: !input dark_boolean
+    state: "on"
+
+variables:
+  on_brightness: !input on_brightness
+  sleep_brightness: !input sleep_brightness
+  react_during_sleep: !input react_during_sleep
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: sleep_started
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 2
+            action: light.turn_off
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: motion
+              - condition: trigger
+                id: became_dark
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "on"
+          - condition: or
+            conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: schedule.sleep
+                    state: "on"
+              - condition: template
+                value_template: "{{ react_during_sleep }}"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data: >-
+              {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
+              {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
+            action: light.turn_on
+      - conditions:
+          - condition: trigger
+            id: clear
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 1
+            action: light.turn_off
+mode: restart

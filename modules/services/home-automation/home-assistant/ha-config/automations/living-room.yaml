@@ -1,0 +1,101 @@
+# ── Living room ────────────────────────────────────────────────
+- id: living_room_lighting
+  alias: Living room — Lighting
+  description: On when dark, off at sleep. Brightness left to Adaptive Lighting.
+  triggers:
+  - entity_id: input_boolean.hall_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.living_room_lights
+        data:
+          transition: 3
+        action: light.turn_on
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.living_room_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    default:
+    - target:
+        entity_id: light.living_room_lights
+      data:
+        transition: 1
+      action: light.turn_on
+  mode: restart
+
+- id: living_room_media_aware
+  alias: Living room — Media-aware lighting
+  description: >-
+    Turn off living + dining lights when watching content on
+    Stremio, Jellyfin, or Apple TV. Restore when stopped.
+  triggers:
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    to: playing
+    trigger: state
+    id: playing
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    from: playing
+    trigger: state
+    id: not_playing
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: playing
+      - condition: template
+        value_template: >-
+          {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
+             in ['Stremio', 'Jellyfin', 'Apple TV'] }}
+      sequence:
+      - target:
+          entity_id:
+          - light.living_room_lights
+          - light.dining_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: not_playing
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      sequence:
+      - delay: "00:00:30"
+      - target:
+          entity_id: light.living_room_lights
+        data:
+          transition: 60
+        action: light.turn_on
+      - target:
+          entity_id: light.dining_lights
+        data:
+          transition: 60
+        action: light.turn_on
+  mode: restart

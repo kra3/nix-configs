@@ -1,0 +1,153 @@
+# ── Frigate detect/audio gating by alarm state ──────────────────
+# All 3 cameras are interior. Object + audio detection only needs to
+# run continuously while armed away; while armed night or disarmed
+# (someone's home) interior person-tracking is redundant, so it's
+# gated off and only re-enabled briefly on actual motion. This is a
+# CPU/GPU optimization (frigate.detector:openvino + per-camera
+# frigate.process were the top consumers per PR #48) built on top of
+# the existing motion-mask/fps tuning in nvr.nix.
+- id: frigate_detect_gate_by_alarm
+  alias: "Frigate: baseline detect/audio by alarm state"
+  description: >-
+    Force full detect+audio on when armed away; force it off when
+    armed night or disarmed. Runs on every alarm state change.
+  triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.vasudha_secure
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_away
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_detect
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_detect
+          - switch.ranger_duo_ptz_audio_detection
+          - switch.ranger_uno_detect
+          - switch.ranger_uno_audio_detection
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state:
+        - disarmed
+        - armed_night
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_detect
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_detect
+          - switch.ranger_duo_ptz_audio_detection
+          - switch.ranger_uno_detect
+          - switch.ranger_uno_audio_detection
+  mode: single
+
+- id: frigate_detect_on_motion_when_home
+  alias: "Frigate: enable detect on motion when armed night/disarmed"
+  description: >-
+    Temporarily re-enable a camera's detect+audio when its (always-on)
+    motion sensor fires while armed night or disarmed.
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.ranger_duo_fxd_motion
+    - binary_sensor.ranger_duo_ptz_motion
+    - binary_sensor.ranger_uno_motion
+    to: "on"
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state:
+    - disarmed
+    - armed_night
+  actions:
+  - variables:
+      cam: "{{ trigger.entity_id.split('.')[1] | regex_replace('_motion$', '') }}"
+  - action: switch.turn_on
+    target:
+      entity_id:
+      - "switch.{{ cam }}_detect"
+      - "switch.{{ cam }}_audio_detection"
+  mode: parallel
+
+- id: frigate_detect_off_after_motion_when_home
+  alias: "Frigate: disable detect after motion cooldown (home)"
+  description: >-
+    Turn a camera's detect+audio back off once its motion sensor has
+    been clear for 5 minutes, while armed night or disarmed.
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.ranger_duo_fxd_motion
+    - binary_sensor.ranger_duo_ptz_motion
+    - binary_sensor.ranger_uno_motion
+    to: "off"
+    for:
+      minutes: 5
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state:
+    - disarmed
+    - armed_night
+  actions:
+  - variables:
+      cam: "{{ trigger.entity_id.split('.')[1] | regex_replace('_motion$', '') }}"
+  - action: switch.turn_off
+    target:
+      entity_id:
+      - "switch.{{ cam }}_detect"
+      - "switch.{{ cam }}_audio_detection"
+  mode: parallel
+
+- id: frigate_detect_resync_on_restart
+  alias: "Frigate: resync detect/audio baseline after restart"
+  description: >-
+    Frigate's detect/audio switches are in-memory only (not persisted
+    across process restarts — every reconnect republishes them ON from
+    the static YAML config). Re-apply the alarm-state baseline as soon
+    as Frigate reconnects to MQTT so a nix deploy or crash doesn't
+    silently leave detection running while armed night/disarmed.
+  triggers:
+  - trigger: mqtt
+    topic: frigate/available
+    payload: online
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_away
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_detect
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_detect
+          - switch.ranger_duo_ptz_audio_detection
+          - switch.ranger_uno_detect
+          - switch.ranger_uno_audio_detection
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state:
+        - disarmed
+        - armed_night
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_detect
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_detect
+          - switch.ranger_duo_ptz_audio_detection
+          - switch.ranger_uno_detect
+          - switch.ranger_uno_audio_detection
+  mode: single

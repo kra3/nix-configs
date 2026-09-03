@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.recyclarr = {
       containerConfig = {
-        image = "ghcr.io/recyclarr/recyclarr:8.7.1";
+        image = "ghcr.io/recyclarr/recyclarr:8.7.2";
         logDriver = "journald";
         environments = {
           PUID = "1000";

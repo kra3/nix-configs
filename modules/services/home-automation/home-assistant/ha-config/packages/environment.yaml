@@ -32,3 +32,17 @@ sensor:
       - sensor.bedroom_occupancy_illuminance
       - sensor.laundry_occupancy_illuminance
       - sensor.toilet_occupancy_illuminance
+
+template:
+  - binary_sensor:
+      - name: "House Exits Open Status"
+        device_class: opening
+        state: >-
+          {{ is_state('binary_sensor.yale_front_door_door', 'on')
+             or is_state('binary_sensor.hallway_door_contact_contact', 'on')
+             or is_state('binary_sensor.patio_door_contact_contact', 'on')
+             or is_state('binary_sensor.living_room_window_left_contact_contact', 'on')
+             or is_state('binary_sensor.living_room_window_right_contact_contact', 'on')
+             or is_state('binary_sensor.bedroom_window_left_contact_contact', 'on')
+             or is_state('binary_sensor.bedroom_window_right_contact_contact', 'on')
+             or is_state('binary_sensor.kitchen_dining_window_left_contact_contact', 'on') }}

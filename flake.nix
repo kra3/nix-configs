@@ -73,7 +73,8 @@
 
         imports = [
           inputs.treefmt-nix.flakeModule
-        ] ++ (inputs.import-tree ./modules).imports;
+          (inputs.import-tree ./modules)
+        ];
 
         perSystem =
           { pkgs, inputs', ... }:

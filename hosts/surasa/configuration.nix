@@ -19,6 +19,7 @@
     flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-dns-rpi-secondary
     flakeModules.nixos.services-media-snapclient
+    flakeModules.nixos.services-monitoring-sutala-watchdog
   ];
 
   networking.hostName = "surasa";

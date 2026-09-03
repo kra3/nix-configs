@@ -193,6 +193,9 @@
           "${config.sops.templates."media.recyclarr.secrets.yml".path}:/config/secrets.yml:ro"
           "/srv/appdata/media-mgmt/recyclarr:/config"
         ];
+        # Floored above the formula: this window likely caught it idle, not mid-sync.
+        memory = "512Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "media-mgmt-network.service" ];

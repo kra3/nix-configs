@@ -30,6 +30,9 @@
           "/srv/appdata/media-mgmt/sabnzbd:/config"
           "/srv/media/downloads:/data/downloads"
         ];
+        # Floored above the formula: this window likely didn't catch an active extraction.
+        memory = "512Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 

@@ -2,33 +2,13 @@
   flake.nixosModules.services-monitoring-grafana =
   { config, lib, domain, networkVars, ... }:
   let
-    # Podman quadlet containers subject to Memory=/--cpus= limits. Update
-    # when a container.nix is added/removed — same manual-list convention
-    # as the addHosts/firewall-port lists elsewhere in this repo.
-    limitedContainerUnits = [
-      "actualbudget"
-      "aiostreams"
-      "audiobookshelf"
-      "bazarr"
-      "bookshelf"
-      "ghostfolio"
-      "home-assistant"
-      "lidarr"
-      "maintainerr"
-      "matter-server"
-      "music-assistant"
-      "otbr"
-      "prowlarr"
-      "radarr"
-      "recyclarr"
-      "sabnzbd"
-      "seerr"
-      "sonarr"
-      "unpackerr"
-      "wyoming-piper"
-      "wyoming-whisper"
-    ];
-    limitedContainerUnitsRegex = "(${lib.concatStringsSep "|" limitedContainerUnits})\\.service";
+    # Excluded from unit-state/restart alerting as known-benign noise, not
+    # because they're unimportant to the system — scheduled oneshot jobs
+    # whose "failed" state just reflects one flaky run (not an ongoing
+    # problem) and per-login SSH session scopes/unused ttys, which aren't
+    # services at all. Everything else (containers, daemons) alerts by
+    # default with no list to maintain.
+    noisyUnitsRegex = "(nix-optimise|nixos-rebuild-switch-to-configuration|podman-prune|getty@.+)\\.service";
     # Grafana's own auto-generated datasource uid (from `GET /api/datasources`)
     # — NOT set via provisioning, since giving an already-existing datasource
     # an explicit `uid:` in datasources.settings breaks Grafana's provisioning
@@ -145,7 +125,7 @@
               rules = [
                 {
                   uid = "container-failed-state";
-                  title = "Container stuck in failed state";
+                  title = "Systemd unit stuck in failed state";
                   condition = "C";
                   data = [
                     {
@@ -157,10 +137,14 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        # Backtick-quoted (PromQL raw string) — a double-quoted
-                        # string literal here would treat \. as an invalid
-                        # escape sequence rather than a literal backslash-dot.
-                        expr = ''node_systemd_unit_state{state="failed", name=~`${limitedContainerUnitsRegex}`}'';
+                        # node_exporter's systemd collector runs host-wide and
+                        # inside every nspawn container (home-auto, media-play,
+                        # monitoring), so restricting to *.service and excluding
+                        # known-benign noise (see noisyUnitsRegex) still covers
+                        # podman quadlet containers, host daemons, and
+                        # nspawn-internal services (frigate, jellyfin, grafana,
+                        # etc.) automatically — no per-service list to maintain.
+                        expr = ''node_systemd_unit_state{state="failed", name=~`.+\.service`, name!~`${noisyUnitsRegex}`}'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;
@@ -212,14 +196,14 @@
                   for = "0s";
                   labels.severity = "critical";
                   annotations = {
-                    summary = "{{ $labels.name }} is in a failed state and systemd has stopped retrying it.";
-                    description = "Likely hit its Memory=/--cpus= cap repeatedly and exceeded systemd's start-rate limit. Needs a manual `systemctl restart` after checking why (and possibly raising the cap).";
+                    summary = "{{ $labels.name }}{{ if $labels.container }} ({{ $labels.container }}){{ end }} is in a failed state and systemd has stopped retrying it.";
+                    description = "Likely hit its memory/CPU cap repeatedly and exceeded systemd's start-rate limit. Needs a manual `systemctl restart` (inside the container, if `container` is set) after checking why — and possibly raising the cap.";
                   };
                   isPaused = false;
                 }
                 {
                   uid = "container-restart-flapping";
-                  title = "Container restarting repeatedly";
+                  title = "Systemd unit restarting repeatedly";
                   condition = "C";
                   data = [
                     {
@@ -231,7 +215,17 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        expr = ''increase(systemd_service_restart_total{name=~`${limitedContainerUnitsRegex}`}[15m])'';
+                        # Auto-covers any current or future host-level unit
+                        # (host services, podman quadlet containers) with no
+                        # list to maintain here, aside from noisyUnitsRegex
+                        # (e.g. an unused getty@tty*.service can legitimately
+                        # flap without a serial console attached). Doesn't
+                        # reach nspawn-internal services (frigate, jellyfin,
+                        # etc.) — the dedicated systemd_exporter this metric
+                        # comes from only runs on the host; those services
+                        # still get the failed-state alert above, just not
+                        # this earlier warning.
+                        expr = ''increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m])'';
                         instant = true;
                         range = false;
                         intervalMs = 1000;

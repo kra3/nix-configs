@@ -20,6 +20,12 @@
 
   networking.hostName = "surasa";
 
+  # The stock expand-root-partition service hangs on real MMC hardware (partprobe can't
+  # notify the kernel of the new boundaries while root is mounted from the same disk),
+  # and since it gates sysinit.target, that hang blocks boot entirely -- nothing after it
+  # (network, sshd) ever starts. Not essential; grow manually via SSH later if needed.
+  sdImage.expandOnBoot = false;
+
   vars.network = {
     lanIf = "wlan0";
     lanIp = "192.168.1.39";

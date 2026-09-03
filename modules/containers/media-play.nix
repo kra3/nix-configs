@@ -182,6 +182,20 @@
         # Jellyfin only reads SSO-Auth.xml at startup; nothing else here
         # would trigger a restart on content-only changes.
         systemd.services.jellyfin.restartTriggers = [ jellyfinSsoAuthXmlHash ];
+
+        # Sized from ~21h process-exporter peaks + safety margin.
+        systemd.services.jellyfin.serviceConfig = {
+          MemoryMax = "1024M";
+          CPUQuota = "100%";
+        };
+        systemd.services.navidrome.serviceConfig = {
+          MemoryMax = "384M";
+          CPUQuota = "100%";
+        };
+        systemd.services.alloy.serviceConfig = {
+          MemoryMax = "512M";
+          CPUQuota = "100%";
+        };
       };
       bindMounts = {
         "/etc/localtime" = {

@@ -26,6 +26,9 @@
           "/srv/appdata/home-auto/music-assistant:/data"
         ];
         addCapabilities = [ "NET_ADMIN" ];
+        # Sized from ~21h process-exporter peak + safety margin.
+        memory = "1408Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "home-auto-network.service" "home-auto-macvlan-network.service" ];

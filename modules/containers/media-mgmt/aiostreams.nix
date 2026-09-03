@@ -27,6 +27,9 @@
         # Pinned IP (vars.nix podmanAddresses.aiostreams) — see radarr.nix for why.
         networks = [ "${network.ref}:ip=${ip}" ];
         volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
+        # Sized from ~21h process-exporter peak + safety margin.
+        memory = "2048Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 

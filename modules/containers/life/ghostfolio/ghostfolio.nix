@@ -48,6 +48,9 @@
         addHosts = [
           "auth.${config.vars.acme.domain}:10.3.0.1"
         ];
+        # Sized from ~21h process-exporter peak (includes a nightly sync) + safety margin.
+        memory = "1536Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps {
       networkServices = [ "life-network.service" ];

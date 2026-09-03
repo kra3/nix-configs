@@ -26,6 +26,9 @@
           "/srv/appdata/media-mgmt/lidarr:/config"
           "/srv/media:/data"
         ];
+        # Sized from ~21h process-exporter peak + safety margin.
+        memory = "640Mi";
+        podmanArgs = [ "--cpus=1" ];
       };
     } // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 

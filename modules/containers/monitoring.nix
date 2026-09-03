@@ -261,6 +261,24 @@
             9100 # node-exporter
           ];
         };
+
+        # Sized from ~21h process-exporter peaks + safety margin.
+        systemd.services.grafana.serviceConfig = {
+          MemoryMax = "768M";
+          CPUQuota = "100%";
+        };
+        systemd.services.prometheus.serviceConfig = {
+          MemoryMax = "768M";
+          CPUQuota = "100%";
+        };
+        systemd.services.loki.serviceConfig = {
+          MemoryMax = "512M";
+          CPUQuota = "100%";
+        };
+        systemd.services.alloy.serviceConfig = {
+          MemoryMax = "512M";
+          CPUQuota = "100%";
+        };
       };
       bindMounts = {
         "/etc/localtime" = {

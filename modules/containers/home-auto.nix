@@ -114,6 +114,35 @@
           ];
         };
 
+        # Sized from ~21h process-exporter peaks. Frigate's memory is a flat
+        # resident baseline (models/buffers), not spiky, hence the smaller
+        # 1.5x margin; its CPU legitimately bursts under real detection
+        # events (observed peak 2.34 cores), so it gets more headroom than
+        # the flat 1-core quota used for the smaller idle-mostly services.
+        systemd.services.frigate.serviceConfig = {
+          MemoryMax = "6G";
+          CPUQuota = "400%";
+        };
+        systemd.services.zigbee2mqtt.serviceConfig = {
+          MemoryMax = "640M";
+          CPUQuota = "100%";
+        };
+        systemd.services.nginx.serviceConfig = {
+          MemoryMax = "256M";
+          CPUQuota = "100%";
+        };
+        systemd.services.go2rtc.serviceConfig = {
+          MemoryMax = "128M";
+          CPUQuota = "100%";
+        };
+        systemd.services.mosquitto.serviceConfig = {
+          MemoryMax = "128M";
+          CPUQuota = "100%";
+        };
+        systemd.services.alloy.serviceConfig = {
+          MemoryMax = "512M";
+          CPUQuota = "100%";
+        };
   };
       bindMounts = {
         "/etc/localtime" = {

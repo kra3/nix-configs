@@ -2,20 +2,9 @@
   flake.nixosModules.services-monitoring-grafana =
   { config, lib, domain, networkVars, ... }:
   let
-    # Excluded from unit-state/restart alerting as known-benign noise, not
-    # because they're unimportant to the system — scheduled oneshot jobs
-    # whose "failed" state just reflects one flaky run (not an ongoing
-    # problem) and per-login SSH session scopes/unused ttys, which aren't
-    # services at all. Everything else (containers, daemons) alerts by
-    # default with no list to maintain.
+    # Known-benign noise excluded from unit-state/restart alerting — scheduled oneshot jobs and unused login/tty scopes, not real problems.
     noisyUnitsRegex = "(nix-optimise|nixos-rebuild-switch-to-configuration|podman-prune|getty@.+)\\.service";
-    # Grafana's own auto-generated datasource uid (from `GET /api/datasources`)
-    # — NOT set via provisioning, since giving an already-existing datasource
-    # an explicit `uid:` in datasources.settings breaks Grafana's provisioning
-    # reconciliation (took the whole service down on 2026-09-02: "Datasource
-    # provisioning error: data source not found"). If this Grafana's database
-    # is ever wiped/recreated, re-fetch the new uid from the API and update
-    # this constant.
+    # Grafana's auto-generated datasource uid; setting it explicitly via provisioning breaks reconciliation (broke Grafana 2026-09-02) — re-fetch from the API if the DB is ever recreated.
     prometheusDatasourceUid = "PBFA97CFB590B2093";
   in
   {
@@ -30,9 +19,7 @@
         security = {
           admin_user = "$__file{/run/secrets/monitoring.grafana.admin.user}";
           admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
-          # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB
-          # (no datasource secrets stored — Prometheus/Loki are unauthenticated,
-          # and access is nginx CIDR-allowlisted) keeps decrypting as before.
+          # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB keeps decrypting.
           secret_key = "SW2YcwTIb9zpOOhoPsMm";
         };
         "auth.generic_oauth" = {
@@ -101,9 +88,7 @@
           ];
         };
         alerting.contactPoints.path = "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml";
-        # Root/default route — sole contact point, so everything goes to
-        # Telegram. Revisit with nested `routes:` if per-severity routing
-        # (e.g. warning vs critical to different chats) is ever needed.
+        # Root/default route — sole contact point, everything goes to Telegram.
         alerting.policies.settings = {
           apiVersion = 1;
           policies = [
@@ -137,13 +122,7 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        # node_exporter's systemd collector runs host-wide and
-                        # inside every nspawn container (home-auto, media-play,
-                        # monitoring), so restricting to *.service and excluding
-                        # known-benign noise (see noisyUnitsRegex) still covers
-                        # podman quadlet containers, host daemons, and
-                        # nspawn-internal services (frigate, jellyfin, grafana,
-                        # etc.) automatically — no per-service list to maintain.
+                        # node_exporter's systemd collector runs host-wide and inside every nspawn container, so this covers podman containers, host daemons, and nspawn-internal services automatically.
                         expr = ''node_systemd_unit_state{state="failed", name=~`.+\.service`, name!~`${noisyUnitsRegex}`}'';
                         instant = true;
                         range = false;
@@ -193,10 +172,7 @@
                   ];
                   noDataState = "OK";
                   execErrState = "Error";
-                  # Grace period so a normal service restart during a deploy
-                  # (nixos-rebuild switch applying a config change) doesn't
-                  # page — only a unit still failed 5m later, past systemd's
-                  # own start-rate-limit retry window, does.
+                  # Grace period so a normal deploy-triggered restart doesn't page; only a unit still failed 5m later does.
                   for = "5m";
                   labels.severity = "critical";
                   annotations = {
@@ -219,20 +195,7 @@
                       datasourceUid = prometheusDatasourceUid;
                       model = {
                         refId = "A";
-                        # Auto-covers any current or future host-level unit
-                        # (host services, podman quadlet containers) with no
-                        # list to maintain here, aside from noisyUnitsRegex
-                        # (e.g. an unused getty@tty*.service can legitimately
-                        # flap without a serial console attached). Doesn't
-                        # reach nspawn-internal services (frigate, jellyfin,
-                        # etc.) — the dedicated systemd_exporter this metric
-                        # comes from only runs on the host; those services
-                        # still get the failed-state alert above, just not
-                        # this earlier warning. round() avoids a false trip
-                        # from a single real restart — increase() extrapolates
-                        # near window edges and can read e.g. 1.009 for one
-                        # actual restart, which would otherwise clear a bare
-                        # `> 1` threshold.
+                        # Host-only — doesn't reach nspawn-internal services (still covered by the failed-state alert, just not this early warning); round() avoids increase() false-tripping on a single restart's window-edge extrapolation.
                         expr = ''round(increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m]))'';
                         instant = true;
                         range = false;

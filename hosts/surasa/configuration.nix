@@ -27,16 +27,12 @@
   # (network, sshd) ever starts. Not essential; grow manually via SSH later if needed.
   sdImage.expandOnBoot = false;
 
-  # Same class of problem as expand-root-partition above: register-nix-paths (nix-store
-  # --load-db for the whole closure) also gates sysinit.target and appears to hang on
-  # this hardware, blocking boot the same way. Its job (pointing the system profile at
-  # the booted generation) gets redone correctly by the first real switch-remote deploy
-  # anyway, so it's safe to stop it from blocking the rest of boot.
-  systemd.services.register-nix-paths.before = lib.mkForce [
-    "shutdown.target"
-    "nix-daemon.socket"
-    "nix-daemon.service"
-  ];
+  # nix-store --load-db for the whole closure saturates this hardware's SD I/O badly enough
+  # that it stalls the entire system, not just units ordered after it -- deprioritizing it
+  # (removing it from sysinit.target's Before=) wasn't enough, so disable it outright. Its
+  # job (registering paths, pointing the system profile at the booted generation) gets
+  # redone correctly by the first real switch-remote deploy anyway.
+  systemd.services.register-nix-paths.enable = lib.mkForce false;
 
   vars.network = {
     lanIf = "wlan0";
@@ -86,8 +82,12 @@
     uboot.enable = true;
   };
 
-  # Overrides the profile's vendor kernel (mkDefault): that fork isn't Hydra-built and always compiles from source (hours) -- see https://discourse.nixos.org/t/nixos-26-05-raspberry-pi-4-kernel-cache-missing/78125. Mainline supports the 3B+ fine and this host has no HAT/camera/display need.
-  boot.kernelPackages = pkgs.linuxPackages;
+  # Tried overriding to pkgs.linuxPackages (mainline) to avoid the vendor kernel's uncached
+  # multi-hour compiles -- see https://discourse.nixos.org/t/nixos-26-05-raspberry-pi-4-kernel-cache-missing/78125.
+  # Reverted: mainline's dwc2 USB controller driver got stuck in probe on this hardware
+  # ("raspberrypi-power soc:power: sync_state() pending due to 3f980000.usb" in the kernel
+  # log), so USB ethernet/wifi never came up and the board was never network-reachable.
+  # Back to the profile's vendor linux-rpi kernel (mkDefault), slow first build and all.
 
   # TODO(surasa): needs its own sops age recipient before this (and surasa-wifi.env above) decrypt for real -- after first boot: ssh-to-age its host key, add `&surasa` to .sops.yaml, `sops updatekeys`, then `sops set` a real Tailscale auth key (a fresh key per device; wifi SSID/psk are already set).
   sops.secrets."surasa.tailscale.authkey" = { };

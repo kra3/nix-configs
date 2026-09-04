@@ -163,7 +163,7 @@ views:
       heading_style: title
       badges:
       - type: entity
-        entity: lock.yale_front_door
+        entity: lock.front_door
       - type: entity
         entity: binary_sensor.house_exits_open_status
     - type: vertical-stack
@@ -246,7 +246,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: lock.yale_front_door
+    entity: lock.front_door
   - type: entity
     show_name: false
     show_state: true

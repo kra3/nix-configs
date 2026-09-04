@@ -13,12 +13,12 @@
     # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
     - if:
         - condition: state
-          entity_id: binary_sensor.yale_front_door_door
+          entity_id: binary_sensor.front_door_open
           state: "off"
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.yale_front_door_door.last_changed)) > 15 }}"
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.yale_front_door.last_changed | default(now()))) > 15 }}"
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
       then:
         # Determine Presence
         - variables:
@@ -112,12 +112,12 @@
     # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
     - if:
         - condition: state
-          entity_id: binary_sensor.yale_front_door_door
+          entity_id: binary_sensor.front_door_open
           state: "off"
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.yale_front_door_door.last_changed)) > 15 }}"
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.yale_front_door.last_changed | default(now()))) > 15 }}"
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
       then:
         # Was gated on schedule.sleep (fixed clock, not sun-relative) —
         # turned this on in broad Swedish-summer daylight. Use sun.sun.
@@ -147,7 +147,7 @@
         # Auto-off logic
         - wait_for_trigger:
             - platform: state
-              entity_id: binary_sensor.yale_front_door_door
+              entity_id: binary_sensor.front_door_open
               to: "on"
           timeout: "00:10:00"
 
@@ -165,7 +165,7 @@
             # Door was opened! Now wait for it to be closed.
             - wait_for_trigger:
                 - platform: state
-                  entity_id: binary_sensor.yale_front_door_door
+                  entity_id: binary_sensor.front_door_open
                   to: "off"
             # 10 min delay after door close before turning off
             - delay: "00:10:00"

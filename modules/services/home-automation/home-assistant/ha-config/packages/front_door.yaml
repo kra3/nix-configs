@@ -1,0 +1,55 @@
+# Canonical front door state: yalexs_ble (local Bluetooth) is authoritative
+# when it's actually connected, falling back to the yale cloud integration
+# when it isn't. Automations/dashboards should reference these, not the raw
+# yalexs_ble or yale entities directly.
+template:
+  - binary_sensor:
+      - name: "Front Door Open"
+        unique_id: front_door_open_canonical
+        device_class: door
+        state: >-
+          {%- set ble = states('binary_sensor.yale_front_door_door') -%}
+          {{ ble if ble in ['on', 'off'] else states('binary_sensor.front_front_door_nw_door') }}
+        attributes:
+          source: >-
+            {{ 'ble' if states('binary_sensor.yale_front_door_door') in ['on', 'off'] else 'cloud' }}
+
+      - name: "Front Door BLE Degraded"
+        unique_id: front_door_ble_degraded
+        device_class: problem
+        state: >-
+          {{ states('binary_sensor.yale_front_door_door') not in ['on', 'off']
+             or states('lock.yale_front_door') not in ['locked', 'unlocked'] }}
+
+  - lock:
+      - name: "Front Door"
+        unique_id: front_door_lock_canonical
+        state: >-
+          {%- set ble = states('lock.yale_front_door') -%}
+          {{ ble if ble in ['locked', 'unlocked'] else states('lock.front_front_door_nw') }}
+        lock:
+          choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ states('lock.yale_front_door') in ['locked', 'unlocked'] }}"
+              sequence:
+                - action: lock.lock
+                  target:
+                    entity_id: lock.yale_front_door
+          default:
+            - action: lock.lock
+              target:
+                entity_id: lock.front_front_door_nw
+        unlock:
+          choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ states('lock.yale_front_door') in ['locked', 'unlocked'] }}"
+              sequence:
+                - action: lock.unlock
+                  target:
+                    entity_id: lock.yale_front_door
+          default:
+            - action: lock.unlock
+              target:
+                entity_id: lock.front_front_door_nw

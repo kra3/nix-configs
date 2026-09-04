@@ -56,17 +56,19 @@ template:
         device_class: problem
         state: >-
           {%- set curated = [
-            'lock.yale_front_door',
             'alarm_control_panel.vasudha_secure',
           ] -%}
-          {{ curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 }}
+          {{ (curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0)
+             or is_state('binary_sensor.front_door_ble_degraded', 'on') }}
         attributes:
           unavailable_names: >-
             {%- set mapping = {
-              'lock.yale_front_door': 'Front Door Lock',
               'alarm_control_panel.vasudha_secure': 'Alarm Panel',
             } -%}
             {%- set ns = namespace(names=[]) -%}
+            {%- if is_state('binary_sensor.front_door_ble_degraded', 'on') -%}
+              {%- set ns.names = ns.names + ['Front Door (BLE down, on cloud fallback)'] -%}
+            {%- endif -%}
             {%- for entity, label in mapping.items() -%}
               {%- if states(entity) in ['unavailable', 'unknown'] -%}
                 {%- set ns.names = ns.names + [label] -%}

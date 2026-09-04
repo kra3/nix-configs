@@ -19,10 +19,106 @@
 
 - id: hall_lighting
   alias: Hall — Lighting
-  description: Presence + darkness; brightness left to Adaptive Lighting.
-  use_blueprint:
-    path: local/room-presence-lighting.yaml
-    input:
-      light_entity: light.hall
-      occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
-      dark_boolean: input_boolean.hall_is_dark
+  description: >-
+    Motion-tiered brightness instead of Adaptive Lighting's brightness
+    curve: hall is a transit space, not somewhere to linger, so it
+    doesn't need AL's daytime-brightness levels at night. 55% on
+    motion, 80% if occupancy stays continuously on for 2 min
+    (lingering, not passing through), 15% ambient instead of fully off
+    once occupancy's been clear for 2 min — including immediately at
+    dusk if already unoccupied. Off immediately at bedtime. Both
+    dim-down paths suppressed during input_boolean.party_mode, same as
+    the room-presence-lighting blueprint this replaces.
+  triggers:
+  - entity_id: binary_sensor.hue_pir_hallway_occupancy
+    to: "on"
+    trigger: state
+    id: motion
+  - entity_id: binary_sensor.hue_pir_hallway_occupancy
+    to: "on"
+    for: "00:02:00"
+    trigger: state
+    id: persistent
+  - entity_id: input_boolean.hall_is_dark
+    to: "on"
+    trigger: state
+    id: became_dark
+  - entity_id: binary_sensor.hue_pir_hallway_occupancy
+    to: "off"
+    for: "00:02:00"
+    trigger: state
+    id: clear
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_started
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hall_is_dark
+    state: "on"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_started
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: persistent
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 80
+          transition: 1
+        action: light.turn_on
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: motion
+        - condition: trigger
+          id: became_dark
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 55
+          transition: 1
+        action: light.turn_on
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: clear
+        - condition: trigger
+          id: became_dark
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+  mode: restart

@@ -511,22 +511,6 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
-- title: Lights
-  icon: mdi:lightbulb-group
-  strategy:
-    type: light
-- title: Security
-  icon: mdi:shield-home
-  strategy:
-    type: security
-- title: Climate
-  icon: mdi:thermostat
-  strategy:
-    type: climate
-- title: Maintenance
-  icon: mdi:wrench
-  strategy:
-    type: maintenance
 - title: Cameras
   icon: mdi:cctv
   sections:
@@ -544,6 +528,9 @@ views:
         live_provider: go2rtc
         go2rtc:
           mode: webrtc
+      live:
+        display:
+          mode: grid
       view:
         dim: true
       menu:
@@ -556,6 +543,27 @@ views:
         mode: camera
       grid_options:
         columns: full
+    - type: heading
+      heading: Person detected
+      heading_style: subtitle
+    - type: tile
+      entity: binary_sensor.ranger_duo_fxd_person_occupancy
+      name: Living Room
+      area: living_room
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.ranger_duo_ptz_person_occupancy
+      name: Dining Room
+      area: dining_room
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.ranger_uno_person_occupancy
+      name: Office Room
+      area: office
+      grid_options:
+        columns: 4
 - title: Media
   icon: mdi:play-circle
   sections:
@@ -567,3 +575,54 @@ views:
       entity: media_player.home_theater
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+  - type: grid
+    cards:
+    - type: heading
+      heading: Media Acquisition
+      heading_style: title
+    - type: tile
+      entity: sensor.media_play_active_clients
+      name: Jellyfin watching
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sonarr_upcoming
+      name: Sonarr upcoming
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.radarr_health
+      name: Radarr health
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.radarr_disk_space_movies
+      name: Movies disk space
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_queue
+      name: SABnzbd queue
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.sabnzbd_karunagath_in_warnings
+      name: SABnzbd warnings
+      grid_options:
+        columns: 4
+- title: Lights
+  icon: mdi:lightbulb-group
+  strategy:
+    type: light
+- title: Security
+  icon: mdi:shield-home
+  strategy:
+    type: security
+- title: Climate
+  icon: mdi:thermostat
+  strategy:
+    type: climate
+- title: Maintenance
+  icon: mdi:wrench
+  strategy:
+    type: maintenance

@@ -211,6 +211,8 @@ views:
       line_width: 2
       show:
         extrema: true
+      grid_options:
+        columns: 4
     - type: custom:mini-graph-card
       entities:
         - sensor.average_humidity
@@ -221,6 +223,8 @@ views:
       line_width: 2
       show:
         extrema: true
+      grid_options:
+        columns: 4
     - type: custom:mini-graph-card
       entities:
         - sensor.average_illuminance
@@ -231,6 +235,8 @@ views:
       line_width: 2
       show:
         extrema: true
+      grid_options:
+        columns: 4
   - type: grid
     cards:
     - type: heading

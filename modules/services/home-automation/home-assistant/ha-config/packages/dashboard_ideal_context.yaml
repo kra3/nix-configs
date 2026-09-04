@@ -60,6 +60,19 @@ template:
             'alarm_control_panel.vasudha_secure',
           ] -%}
           {{ curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 }}
+        attributes:
+          unavailable_names: >-
+            {%- set mapping = {
+              'lock.yale_front_door': 'Front Door Lock',
+              'alarm_control_panel.vasudha_secure': 'Alarm Panel',
+            } -%}
+            {%- set ns = namespace(names=[]) -%}
+            {%- for entity, label in mapping.items() -%}
+              {%- if states(entity) in ['unavailable', 'unknown'] -%}
+                {%- set ns.names = ns.names + [label] -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {{ ns.names | join(', ') }}
 
       - name: "Dashboard Alert: Override Active"
         unique_id: dashboard_alert_override_active

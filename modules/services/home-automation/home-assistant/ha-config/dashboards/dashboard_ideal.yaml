@@ -201,40 +201,31 @@ views:
         - condition: state
           entity: binary_sensor.dashboard_alert_crisis
           state: "off"
-    - type: custom:mini-graph-card
-      entities:
-        - sensor.average_temperature
+    - type: sensor
+      graph: line
+      entity: sensor.average_temperature
       name: Temperature
       icon: mdi:thermometer
+      detail: 2
       hours_to_show: 24
-      points_per_hour: 4
-      line_width: 2
-      show:
-        extrema: true
       grid_options:
         columns: 4
-    - type: custom:mini-graph-card
-      entities:
-        - sensor.average_humidity
+    - type: sensor
+      graph: line
+      entity: sensor.average_humidity
       name: Humidity
       icon: mdi:water-percent
+      detail: 2
       hours_to_show: 24
-      points_per_hour: 4
-      line_width: 2
-      show:
-        extrema: true
       grid_options:
         columns: 4
-    - type: custom:mini-graph-card
-      entities:
-        - sensor.average_illuminance
+    - type: sensor
+      graph: line
+      entity: sensor.average_illuminance
       name: Illuminance
       icon: mdi:brightness-6
+      detail: 2
       hours_to_show: 24
-      points_per_hour: 4
-      line_width: 2
-      show:
-        extrema: true
       grid_options:
         columns: 4
   - type: grid

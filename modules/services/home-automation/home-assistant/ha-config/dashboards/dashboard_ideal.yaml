@@ -170,15 +170,36 @@ views:
         - condition: state
           entity: binary_sensor.house_exits_open_status
           state: "off"
-    - type: entity
-      entity: sensor.average_temperature
+    - type: custom:mini-graph-card
+      entities:
+        - sensor.average_temperature
       name: Temperature
-    - type: entity
-      entity: sensor.average_humidity
+      icon: mdi:thermometer
+      hours_to_show: 24
+      points_per_hour: 4
+      line_width: 2
+      show:
+        extrema: true
+    - type: custom:mini-graph-card
+      entities:
+        - sensor.average_humidity
       name: Humidity
-    - type: entity
-      entity: sensor.average_illuminance
+      icon: mdi:water-percent
+      hours_to_show: 24
+      points_per_hour: 4
+      line_width: 2
+      show:
+        extrema: true
+    - type: custom:mini-graph-card
+      entities:
+        - sensor.average_illuminance
       name: Illuminance
+      icon: mdi:brightness-6
+      hours_to_show: 24
+      points_per_hour: 4
+      line_width: 2
+      show:
+        extrema: true
   - type: grid
     cards:
     - type: heading

@@ -21,13 +21,18 @@
     in
     {
       imports = [
-        # Replaces the unreliable @continuum-boot under Nix. Session is unnamed so
-        # resurrect restores over it instead of colliding with "main"; `tmux ls` guards
-        # against stacking empty sessions on reload.
+        # Replaces the unreliable @continuum-boot under Nix. flock avoids a
+        # second concurrent invocation racing a duplicate bare session; PATH is
+        # set because resurrect/continuum's own scripts call bare `tmux`, which
+        # fails silently under launchd's minimal default PATH.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login (for continuum restore)";
-          script = "${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d";
+          script = ''
+            export PATH="${pkgs.tmux}/bin:$PATH"
+            lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
+            ${pkgs.flock}/bin/flock "$lock" sh -c '${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d'
+          '';
         })
       ];
 

@@ -43,7 +43,7 @@
         selection=$(
           cliphist list \
             | awk -F'\t' -v OFS='\t' '
-                NR == FNR { count[$2] = $1; next }
+                ARGIND == 1 { count[$2] = $1; next }
                 { print ($2 in count ? count[$2] : 0), $1, $2 }
               ' "$usage_file" - \
             | sort -t $'\t' -k1,1nr -k2,2nr \

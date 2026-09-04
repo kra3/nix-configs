@@ -145,12 +145,9 @@
       "flakes"
     ];
     # Lets switch-remote's build-on-sutala-copy-to-surasa path work without the ephemeral
-    # /run systemd drop-in this session used to bootstrap it -- surasa itself has no other
-    # trusted signer to check against, so this is as safe as sutala's own single-user setup.
-    trusted-users = [
-      "root"
-      "kra3"
-    ];
+    # /run systemd drop-in this session used to bootstrap it. root is trusted by default
+    # (NixOS's own nix module already includes it), so only kra3 needs adding here.
+    trusted-users = [ "kra3" ];
   };
 
   system.stateVersion = "26.05";

@@ -403,23 +403,26 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Media Server
+      heading: Media
       heading_style: title
-      badges:
-      - type: entity
-        entity: media_player.lg_webos_tv_oled77c35la
-      - type: entity
-        entity: media_player.home_theater_2
-      icon: mdi:plex
-    - type: media-control
+    - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
-      grid_options:
-        columns: full
-        rows: 2
-    - type: media-control
+      visibility:
+      - condition: state
+        entity: sensor.dashboard_active_media_player
+        state: media_player.lg_webos_tv_oled77c35la
+    - type: custom:mini-media-player
       entity: media_player.home_theater
-    - type: media-control
+      visibility:
+      - condition: state
+        entity: sensor.dashboard_active_media_player
+        state: media_player.home_theater
+    - type: custom:mini-media-player
       entity: media_player.home_theater_2
+      visibility:
+      - condition: state
+        entity: sensor.dashboard_active_media_player
+        state: media_player.home_theater_2
   - type: grid
     cards:
     - type: todo-list
@@ -508,3 +511,59 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
+- title: Lights
+  icon: mdi:lightbulb-group
+  strategy:
+    type: light
+- title: Security
+  icon: mdi:shield-home
+  strategy:
+    type: security
+- title: Climate
+  icon: mdi:thermostat
+  strategy:
+    type: climate
+- title: Maintenance
+  icon: mdi:wrench
+  strategy:
+    type: maintenance
+- title: Cameras
+  icon: mdi:cctv
+  sections:
+  - type: grid
+    cards:
+    - type: custom:advanced-camera-card
+      cameras:
+      - camera_entity: camera.ranger_duo_fxd
+        live_provider: go2rtc
+      - camera_entity: camera.ranger_duo_ptz
+        live_provider: go2rtc
+        go2rtc:
+          mode: webrtc
+      - camera_entity: camera.ranger_uno
+        live_provider: go2rtc
+        go2rtc:
+          mode: webrtc
+      view:
+        dim: true
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+      status_bar:
+        style: overlay
+      image:
+        mode: camera
+      grid_options:
+        columns: full
+- title: Media
+  icon: mdi:play-circle
+  sections:
+  - type: grid
+    cards:
+    - type: custom:mini-media-player
+      entity: media_player.lg_webos_tv_oled77c35la
+    - type: custom:mini-media-player
+      entity: media_player.home_theater
+    - type: custom:mini-media-player
+      entity: media_player.home_theater_2

@@ -39,8 +39,11 @@
 - id: everyone_left_home
   alias: Everyone left home
   description: >-
-    When all tracked persons leave the home zone for 5 min,
-    turn off all lights, arm Alarmo away, and notify both phones.
+    When all tracked persons leave the home zone for 5 min, turn off all
+    lights and arm Alarmo away. Alarmo silently refuses if a sensor's
+    open (same as the bedtime arm in sleep.yaml), so this checks the
+    result and notifies either way — don't claim "alarm armed" if it
+    didn't.
   triggers:
   - entity_id:
     - person.anjalipc
@@ -73,16 +76,24 @@
       entity_id: alarm_control_panel.vasudha_secure
     data:
       code: !secret alarm_code
-  - action: notify.send_message
-    target: { entity_id: notify.anjalis_iphone }
-    data:
-      title: Home
-      message: Everyone left — lights off, alarm armed
-  - action: notify.send_message
-    target: { entity_id: notify.iphone }
-    data:
-      title: Home
-      message: Everyone left — lights off, alarm armed
+  - delay: "00:00:05"
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_away
+      sequence:
+      - action: script.notify_all_phones
+        data:
+          title: Home
+          message: Everyone left — lights off, alarm armed
+    default:
+    - action: script.notify_all_phones
+      data:
+        title: Home
+        message: >-
+          Everyone left, lights off — but the alarm didn't arm, still
+          open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
   mode: single
 
 - id: notify_open_exits_on_leave

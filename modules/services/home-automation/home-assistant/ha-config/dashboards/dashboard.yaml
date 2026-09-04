@@ -513,6 +513,117 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
+- title: Cameras
+  icon: mdi:cctv
+  sections:
+  - type: grid
+    cards:
+    - type: custom:advanced-camera-card
+      cameras:
+      - camera_entity: camera.ranger_duo_fxd
+        live_provider: go2rtc
+      - camera_entity: camera.ranger_duo_ptz
+        live_provider: go2rtc
+      - camera_entity: camera.ranger_uno
+        live_provider: go2rtc
+      live:
+        display:
+          mode: grid
+      view:
+        dim: true
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+      status_bar:
+        style: overlay
+      image:
+        mode: camera
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Person detected
+      heading_style: subtitle
+    - type: tile
+      entity: binary_sensor.ranger_duo_fxd_person_occupancy
+      name: Living Room
+      area: living_room
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.ranger_duo_ptz_person_occupancy
+      name: Dining Room
+      area: dining_room
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.ranger_uno_person_occupancy
+      name: Office Room
+      area: office
+      grid_options:
+        columns: 4
+- title: Media
+  icon: mdi:play-circle
+  sections:
+  - type: grid
+    cards:
+    - type: custom:mini-media-player
+      entity: media_player.lg_webos_tv_oled77c35la
+    - type: custom:mini-media-player
+      entity: media_player.home_theater
+    - type: custom:mini-media-player
+      entity: media_player.home_theater_2
+  - type: grid
+    cards:
+    - type: heading
+      heading: Media Acquisition
+      heading_style: title
+    - type: tile
+      entity: sensor.media_play_active_clients
+      name: Jellyfin watching
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sonarr_upcoming
+      name: Sonarr upcoming
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.radarr_health
+      name: Radarr health
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.radarr_disk_space_movies
+      name: Movies disk space
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_queue
+      name: SABnzbd queue
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: binary_sensor.sabnzbd_karunagath_in_warnings
+      name: SABnzbd warnings
+      grid_options:
+        columns: 4
+- title: Overview
+  icon: mdi:view-dashboard
+  strategy:
+    type: original-states
+- title: Lights
+  icon: mdi:lightbulb-group
+  strategy:
+    type: light
+- title: Security
+  icon: mdi:shield-home
+  strategy:
+    type: security
+- title: Climate
+  icon: mdi:thermostat
+  strategy:
+    type: climate
 - type: sections
   title: System Health
   icon: mdi:server
@@ -655,57 +766,6 @@ views:
         rows: auto
   - type: grid
     cards:
-    - type: entities
-      entities:
-      - entity: sensor.system_monitor_ipv4_address_eth0
-        name: Podman Bridge
-        icon: mdi:lan
-        secondary_info: last-updated
-      - entity: sensor.system_monitor_ipv4_address_eth1
-        name: Macvlan (LAN)
-        icon: mdi:ethernet
-        secondary_info: last-updated
-      grid_options:
-        columns: 18
-        rows: auto
-    - square: true
-      type: grid
-      cards:
-      - chart_type: line
-        period: day
-        type: statistics-graph
-        entities:
-        - sensor.cloudflare_speed_test_90th_percentile_down
-        - sensor.cloudflare_speed_test_25mb_down
-        - sensor.cloudflare_speed_test_10mb_down
-        - sensor.cloudflare_speed_test_1mb_down
-        - sensor.cloudflare_speed_test_100kb_down
-        stat_types:
-        - max
-        title: Download
-      - chart_type: line
-        period: day
-        type: statistics-graph
-        entities:
-        - sensor.cloudflare_speed_test_90th_percentile_up
-        - sensor.cloudflare_speed_test_10mb_up
-        - sensor.cloudflare_speed_test_1mb_up
-        - sensor.cloudflare_speed_test_100kb_up
-        stat_types:
-        - max
-        title: Upload
-      - chart_type: line
-        period: day
-        type: statistics-graph
-        entities:
-        - sensor.cloudflare_speed_test_latency
-        - sensor.cloudflare_speed_test_jitter
-        stat_types:
-        - min
-        title: Ping
-      title: Speed
-  - type: grid
-    cards:
     - type: heading
       heading: Power Monitor
       heading_style: title
@@ -725,113 +785,6 @@ views:
       entity: switch.power_monitor_1_child_lock
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
-- title: Cameras
-  icon: mdi:cctv
-  sections:
-  - type: grid
-    cards:
-    - type: custom:advanced-camera-card
-      cameras:
-      - camera_entity: camera.ranger_duo_fxd
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_duo_ptz
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_uno
-        live_provider: go2rtc
-      live:
-        display:
-          mode: grid
-      view:
-        dim: true
-      menu:
-        buttons:
-          microphone:
-            enabled: true
-      status_bar:
-        style: overlay
-      image:
-        mode: camera
-      grid_options:
-        columns: full
-    - type: heading
-      heading: Person detected
-      heading_style: subtitle
-    - type: tile
-      entity: binary_sensor.ranger_duo_fxd_person_occupancy
-      name: Living Room
-      area: living_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_duo_ptz_person_occupancy
-      name: Dining Room
-      area: dining_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_uno_person_occupancy
-      name: Office Room
-      area: office
-      grid_options:
-        columns: 4
-- title: Media
-  icon: mdi:play-circle
-  sections:
-  - type: grid
-    cards:
-    - type: custom:mini-media-player
-      entity: media_player.lg_webos_tv_oled77c35la
-    - type: custom:mini-media-player
-      entity: media_player.home_theater
-    - type: custom:mini-media-player
-      entity: media_player.home_theater_2
-  - type: grid
-    cards:
-    - type: heading
-      heading: Media Acquisition
-      heading_style: title
-    - type: tile
-      entity: sensor.media_play_active_clients
-      name: Jellyfin watching
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sonarr_upcoming
-      name: Sonarr upcoming
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.radarr_health
-      name: Radarr health
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.radarr_disk_space_movies
-      name: Movies disk space
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_queue
-      name: SABnzbd queue
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.sabnzbd_karunagath_in_warnings
-      name: SABnzbd warnings
-      grid_options:
-        columns: 4
-- title: Lights
-  icon: mdi:lightbulb-group
-  strategy:
-    type: light
-- title: Security
-  icon: mdi:shield-home
-  strategy:
-    type: security
-- title: Climate
-  icon: mdi:thermostat
-  strategy:
-    type: climate
 - title: Maintenance
   icon: mdi:wrench
   strategy:

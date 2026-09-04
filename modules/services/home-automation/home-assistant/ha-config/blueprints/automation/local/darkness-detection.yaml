@@ -29,10 +29,38 @@ blueprint:
       selector:
         entity:
           domain: input_boolean
+    dark_below:
+      name: Dark threshold (lux)
+      description: >-
+        Illuminance below this, sustained 2 min, counts as dark. Default
+        30 fits a room with a real window (confirmed via Prometheus
+        history); a room whose sensor never reads much above its own
+        ambient floor (e.g. hall/kitchen's Hue PIR units, which top out
+        around 70 lux even at midday) needs this lowered, or every
+        daytime motion event reads as dark.
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
+    bright_above:
+      name: Bright threshold (lux)
+      description: >-
+        Illuminance above this, sustained 2 min, counts as bright.
+        Default 120. In practice sun.sun crossing above_horizon usually
+        drives the day-side transition; this only matters for rooms
+        whose sensor can reliably exceed it.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
 
 triggers:
   - entity_id: !input illuminance_sensor
-    below: 30
+    below: !input dark_below
     for: "00:02:00"
     trigger: numeric_state
     id: dark
@@ -41,7 +69,7 @@ triggers:
     trigger: state
     id: dark
   - entity_id: !input illuminance_sensor
-    above: 120
+    above: !input bright_above
     for: "00:02:00"
     trigger: numeric_state
     id: bright

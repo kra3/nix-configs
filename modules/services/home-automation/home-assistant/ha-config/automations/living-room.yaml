@@ -1,49 +1,20 @@
 # ── Living room ────────────────────────────────────────────────
 - id: living_room_lighting
   alias: Living room — Lighting
-  description: On when dark, off at sleep. Brightness left to Adaptive Lighting.
-  triggers:
-  - entity_id: input_boolean.hall_is_dark
-    to: "on"
-    trigger: state
-    id: became_dark
-  - entity_id: schedule.sleep
-    to: "on"
-    trigger: state
-    id: sleep_started
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: sleep_started
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: input_boolean.party_mode
-          state: "on"
-      sequence:
-      - target:
-          entity_id: light.living_room_lights
-        data:
-          transition: 3
-        action: light.turn_on
-      - delay: "00:00:30"
-      - target:
-          entity_id: light.living_room_lights
-        data:
-          transition: 2
-        action: light.turn_off
-    default:
-    - target:
-        entity_id: light.living_room_lights
-      data:
-        transition: 1
-      action: light.turn_on
-  mode: restart
+  description: >-
+    Presence + darkness via ranger_duo_fxd's Frigate person detection.
+    KNOWN ISSUE: ranger_duo_fxd's motion sensor is barely firing (verified
+    2026-09-04 — one event all day despite confirmed presence), so
+    Frigate's detect-on-motion gate rarely enables long enough for
+    person_occupancy to populate. Needs a Frigate motion-mask/sensitivity
+    tuning pass before this reliably turns lights on; shipped anyway
+    since darkness-edge-only was equally unreliable.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.living_room_lights
+      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
+      dark_boolean: input_boolean.hall_is_dark
 
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting

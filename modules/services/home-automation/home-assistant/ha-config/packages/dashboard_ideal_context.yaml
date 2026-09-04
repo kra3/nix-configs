@@ -82,3 +82,15 @@ template:
         state: >-
           {{ is_state('input_boolean.party_mode', 'on')
              or is_state('input_boolean.automations_paused', 'on') }}
+
+      - name: "Dashboard Alert: Crisis"
+        unique_id: dashboard_alert_crisis
+        device_class: safety
+        state: >-
+          {{ is_state('binary_sensor.krisinformation_malmo_krisinformation_aktiva_vma_malmo', 'on')
+             or states('sensor.krisinformation_malmo_notices') | int(0) > 0 }}
+        attributes:
+          headlines: >-
+            {%- set vma = state_attr('binary_sensor.krisinformation_malmo_krisinformation_aktiva_vma_malmo', 'alerts') or [] -%}
+            {%- set notices = state_attr('sensor.krisinformation_malmo_notices', 'items') or [] -%}
+            {{ (vma + notices) | map(attribute='headline') | list | join(', ') }}

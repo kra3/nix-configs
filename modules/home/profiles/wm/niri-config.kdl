@@ -357,7 +357,7 @@ binds {
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
-    Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+    Mod+D hotkey-overlay-title="Run an Application: rofi" { spawn "rofi" "-show" "drun"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
@@ -369,10 +369,10 @@ binds {
     Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn-sh "cliphist-picker"; }
 
     // Bluetooth pairing picker; complements waybar's power-only toggle.
-    Super+Alt+B hotkey-overlay-title="Bluetooth Devices: bzmenu" { spawn "bzmenu" "--launcher" "fuzzel" "--icon" "xdg"; }
+    Super+Alt+B hotkey-overlay-title="Bluetooth Devices: bzmenu" { spawn "bzmenu" "--launcher" "rofi" "--icon" "xdg"; }
 
     // Audio device picker, lighter than opening the full pwvucontrol mixer.
-    Super+Alt+P hotkey-overlay-title="Audio Devices: pwmenu" { spawn "pwmenu" "--launcher" "fuzzel" "--icon" "xdg"; }
+    Super+Alt+P hotkey-overlay-title="Audio Devices: pwmenu" { spawn "pwmenu" "--launcher" "rofi" "--icon" "xdg"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.

@@ -2,47 +2,12 @@
 - id: dining_room_lighting
   alias: Dining room — Lighting
   description: >-
-    On when dark, off at sleep. Manual override via STYRBAR double-tap.
-    Brightness left to Adaptive Lighting.
-  triggers:
-  - entity_id: input_boolean.hall_is_dark
-    to: "on"
-    trigger: state
-    id: became_dark
-  - entity_id: schedule.sleep
-    to: "on"
-    trigger: state
-    id: sleep_started
-  conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: sleep_started
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: input_boolean.party_mode
-          state: "on"
-      sequence:
-      - target:
-          entity_id: light.dining_lights
-        data:
-          transition: 3
-        action: light.turn_on
-      - delay: "00:00:30"
-      - target:
-          entity_id: light.dining_lights
-        data:
-          transition: 2
-        action: light.turn_off
-    default:
-    - target:
-        entity_id: light.dining_lights
-      data:
-        transition: 1
-      action: light.turn_on
-  mode: restart
+    Presence + darkness via ranger_duo_ptz's Frigate person detection
+    (was hall_is_dark-only edge-triggered; motion PIR/PTZ verified firing
+    reliably for this camera). Manual override via STYRBAR double-tap.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.dining_lights
+      occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
+      dark_boolean: input_boolean.hall_is_dark

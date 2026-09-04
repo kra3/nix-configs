@@ -365,8 +365,8 @@ binds {
     // For example, this is a standard bind to toggle the screen reader (orca).
     Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
-    // Clipboard history picker (cliphist + fuzzel).
-    Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn-sh "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
+    // Clipboard history picker, ranked by most-used then most-recent (desktop-session.nix).
+    Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn-sh "cliphist-picker"; }
 
     // Bluetooth pairing picker; complements waybar's power-only toggle.
     Super+Alt+B hotkey-overlay-title="Bluetooth Devices: bzmenu" { spawn "bzmenu" "--launcher" "fuzzel" "--icon" "xdg"; }

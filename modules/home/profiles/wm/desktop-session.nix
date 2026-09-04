@@ -1,14 +1,80 @@
 {
   flake.homeManagerModules.home-profiles-wm-desktop-session =
-  { pkgs, domain, ... }:
+  { pkgs, lib, config, domain, ... }:
   # domain is threaded from hosts/sutala/configuration.nix's home-manager.extraSpecialArgs
+  let
+    cliphistPkg = config.services.cliphist.package;
+    wlClipboardPkg = config.services.cliphist.clipboardPackage;
+    cliphistExtraOptions = lib.escapeShellArgs config.services.cliphist.extraOptions;
+
+    # KeePassXC/Bitwarden/1Password tag password copies with this MIME hint; wl-paste
+    # itself doesn't know about it, so drop those events before they reach cliphist store.
+    cliphist-store-filtered = pkgs.writeShellApplication {
+      name = "cliphist-store-filtered";
+      runtimeInputs = [
+        wlClipboardPkg
+        cliphistPkg
+        pkgs.gnugrep
+      ];
+      text = ''
+        if wl-paste --list-types | grep -qx 'x-kde-passwordManagerHint'; then
+          cat >/dev/null
+          exit 0
+        fi
+        exec cliphist ${cliphistExtraOptions} store
+      '';
+    };
+
+    # Super+Alt+V picker: ranks cliphist's history by picker-selection count (most-used
+    # first), falling back to cliphist's own id (most recent first) for ties/unused items.
+    cliphist-picker = pkgs.writeShellApplication {
+      name = "cliphist-picker";
+      runtimeInputs = [
+        cliphistPkg
+        pkgs.gawk
+        pkgs.fuzzel
+        wlClipboardPkg
+      ];
+      text = ''
+        usage_file="''${XDG_STATE_HOME:-$HOME/.local/state}/cliphist/usage.tsv"
+        mkdir -p "$(dirname "$usage_file")"
+        touch "$usage_file"
+
+        selection=$(
+          cliphist list \
+            | awk -F'\t' -v OFS='\t' '
+                NR == FNR { count[$2] = $1; next }
+                { print ($2 in count ? count[$2] : 0), $1, $2 }
+              ' "$usage_file" - \
+            | sort -t $'\t' -k1,1nr -k2,2nr \
+            | cut -f2- \
+            | fuzzel --dmenu
+        )
+
+        [ -n "$selection" ] || exit 0
+
+        id=''${selection%%$'\t'*}
+        preview=''${selection#*$'\t'}
+
+        printf '%s\t%s\n' "$id" "$preview" | cliphist decode | wl-copy
+
+        awk -F'\t' -v OFS='\t' -v target="$preview" '
+          $2 == target { print $1 + 1, $2; found = 1; next }
+          { print }
+          END { if (!found) print 1, target }
+        ' "$usage_file" > "$usage_file.tmp"
+        mv "$usage_file.tmp" "$usage_file"
+      '';
+    };
+  in
   {
     home.packages = [
       pkgs.swaybg
       pkgs.pwvucontrol # audio mixer, waybar pulseaudio right-click
       pkgs.bzmenu # bluetooth picker, Super+Alt+B in niri-config.kdl
       pkgs.pwmenu # audio device picker, Super+Alt+P in niri-config.kdl
-      pkgs.wl-clipboard # wl-copy for the cliphist picker, Super+Alt+V in niri-config.kdl
+      pkgs.wl-clipboard # wl-copy/wl-paste general CLI use
+      cliphist-picker # Super+Alt+V in niri-config.kdl
     ];
     home.file.".local/share/wallpapers/wallpaper.png".source = ./wallpapers/wallpaper.png;
 
@@ -289,6 +355,11 @@
 
     services.mako.enable = true;
     services.cliphist.enable = true;
+    # Route both watchers through the password-manager-hint filter above.
+    systemd.user.services.cliphist.Service.ExecStart =
+      lib.mkForce "${wlClipboardPkg}/bin/wl-paste --watch ${cliphist-store-filtered}/bin/cliphist-store-filtered";
+    systemd.user.services.cliphist-images.Service.ExecStart =
+      lib.mkForce "${wlClipboardPkg}/bin/wl-paste --type image --watch ${cliphist-store-filtered}/bin/cliphist-store-filtered";
     services.polkit-gnome.enable = true;
 
     # Night-light; lat/long approximate Copenhagen since sutala's own tz is UTC.

@@ -1,4 +1,4 @@
-# Derived state for the "Home (Ideal)" dashboard (dashboards/dashboard_ideal.yaml).
+# Derived state for the "Home" dashboard (dashboards/dashboard.yaml).
 # Computed once here so dashboard cards can reference plain entity state via
 # native `visibility:` conditions instead of duplicating Jinja per-card.
 template:

@@ -27,7 +27,7 @@
     checks the result and notifies if it failed. No actionable button on
     the notification (mobile_app's entity-based notify doesn't support
     one) — force-arming a failed attempt is a button on the dashboard
-    instead (dashboard_ideal.yaml), next to the Dashboard Alert: Security
+    instead (dashboard.yaml), next to the Dashboard Alert: Security
     row that lights up for this same case.
   triggers:
   - entity_id: schedule.sleep

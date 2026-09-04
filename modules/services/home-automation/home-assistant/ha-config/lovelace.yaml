@@ -16,17 +16,10 @@ dashboards:
     icon: mdi:map
     show_in_sidebar: true
     require_admin: false
-  dashboard-wip:
+  dashboard-home:
     mode: yaml
-    filename: dashboards/dashboard_wip.yaml
+    filename: dashboards/dashboard.yaml
     title: Dashboard
-    icon: mdi:view-dashboard-variant
-    show_in_sidebar: true
-    require_admin: false
-  dashboard-ideal:
-    mode: yaml
-    filename: dashboards/dashboard_ideal.yaml
-    title: Home (Ideal)
     icon: mdi:home-lightning-bolt
     show_in_sidebar: true
     require_admin: false

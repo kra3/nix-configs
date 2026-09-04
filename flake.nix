@@ -59,7 +59,7 @@
 
     mcp-nixos.url = "github:utensils/mcp-nixos";
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
   };
 
   outputs =
@@ -110,6 +110,8 @@
                   inherit (h) modules;
                   specialArgs = {
                     inherit inputs;
+                    # Their board modules destructure `nixos-raspberrypi` directly, not via `inputs`.
+                    nixos-raspberrypi = inputs.nixos-raspberrypi;
                     flakeModules = {
                       nixos = config.flake.nixosModules;
                       darwin = config.flake.darwinModules;

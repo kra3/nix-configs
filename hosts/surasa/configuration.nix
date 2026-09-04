@@ -1,16 +1,12 @@
 {
   config,
   lib,
-  pkgs,
-  modulesPath,
   flakeModules,
   ...
 }:
 {
   imports = [
-    # Board profile (kernel/config.txt/bootloader) is imported in flake/hosts.nix; this supplies the SD-image build machinery.
-    (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
-
+    # Board profile, sd-image module, cache trust, and overlays are all imported in flake/hosts.nix.
     flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
@@ -20,6 +16,16 @@
   ];
 
   networking.hostName = "surasa";
+
+  # The sd-image module's own disabledModules entry for profiles/all-hardware.nix has a path
+  # bug (missing a "/"), so it doesn't actually take effect -- that profile's broad
+  # supportedFilesystems (btrfs/cifs/f2fs/ntfs/xfs/zfs) leaks in and, since zfs's kernel
+  # module comes from a different nixpkgs pin than its userspace tools here, trips a version
+  # mismatch assertion. Surasa needs none of this; override to what the SD card actually uses.
+  boot.supportedFilesystems = lib.mkForce [
+    "vfat"
+    "ext4"
+  ];
 
   # The stock expand-root-partition service hangs on real MMC hardware (partprobe can't
   # notify the kernel of the new boundaries while root is mounted from the same disk),
@@ -46,6 +52,11 @@
     nameservers = [ "127.0.0.1" ];
     networkmanager.enable = true;
   };
+
+  # services-infrastructure-openssh only opens port 22 on vars.network.lanIf (wlan0) -- fine
+  # for sutala's single interface, but surasa's first boot (and sops bootstrap) happens over
+  # eth0, before wifi is even configured, so SSH needs to be reachable there too.
+  networking.firewall.interfaces.eth0.allowedTCPPorts = [ 22 ];
 
   # Can't decrypt until surasa is a sops recipient (same first-boot chicken-and-egg as the tailscale key below),
   # so this only takes effect once the post-first-boot bootstrap is done -- first boot itself joins via ethernet.
@@ -76,18 +87,8 @@
     };
   };
 
-  # Repopulate the firmware partition on every switch, not just the initial SD image.
-  hardware.raspberry-pi.firmware = {
-    enable = true;
-    uboot.enable = true;
-  };
-
-  # Tried overriding to pkgs.linuxPackages (mainline) to avoid the vendor kernel's uncached
-  # multi-hour compiles -- see https://discourse.nixos.org/t/nixos-26-05-raspberry-pi-4-kernel-cache-missing/78125.
-  # Reverted: mainline's dwc2 USB controller driver got stuck in probe on this hardware
-  # ("raspberrypi-power soc:power: sync_state() pending due to 3f980000.usb" in the kernel
-  # log), so USB ethernet/wifi never came up and the board was never network-reachable.
-  # Back to the profile's vendor linux-rpi kernel (mkDefault), slow first build and all.
+  # Firmware/bootloader (config.txt, /boot/firmware sync) and kernel package are all handled
+  # by the raspberry-pi-3.base module (flake/hosts.nix) via mkDefault, cached on cachix.
 
   # TODO(surasa): needs its own sops age recipient before this (and surasa-wifi.env above) decrypt for real -- after first boot: ssh-to-age its host key, add `&surasa` to .sops.yaml, `sops updatekeys`, then `sops set` a real Tailscale auth key (a fresh key per device; wifi SSID/psk are already set).
   sops.secrets."surasa.tailscale.authkey" = { };

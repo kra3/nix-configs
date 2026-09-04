@@ -139,10 +139,19 @@
     "216.239.35.12"
   ];
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+    # Lets switch-remote's build-on-sutala-copy-to-surasa path work without the ephemeral
+    # /run systemd drop-in this session used to bootstrap it -- surasa itself has no other
+    # trusted signer to check against, so this is as safe as sutala's own single-user setup.
+    trusted-users = [
+      "root"
+      "kra3"
+    ];
+  };
 
   system.stateVersion = "26.05";
 }

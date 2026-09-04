@@ -21,20 +21,10 @@
     in
     {
       imports = [
-        # Replaces the unreliable @continuum-boot under Nix. Session is unnamed so
-        # resurrect restores over it instead of colliding with "main"; `tmux ls` guards
-        # against stacking empty sessions on reload. flock serializes the check+create
-        # so a second concurrent invocation (e.g. a terminal app reopening several
-        # windows at login) waits for the first instead of racing it into creating a
-        # second bare session that fights continuum's restore.
-        #
-        # PATH matters here beyond just finding `tmux` to exec: the process that
-        # starts the server has its environment captured as tmux's global
-        # environment, which `run-shell` (continuum) and every pane inherit.
-        # resurrect/continuum's own scripts call bare `tmux`/`ps`/etc, not
-        # absolute paths — under launchd's minimal default PATH (no nix paths),
-        # those calls fail silently and restore never runs, leaving a bare
-        # session. Prepending tmux's store path here fixes it at the source.
+        # Replaces the unreliable @continuum-boot under Nix. flock avoids a
+        # second concurrent invocation racing a duplicate bare session; PATH is
+        # set because resurrect/continuum's own scripts call bare `tmux`, which
+        # fails silently under launchd's minimal default PATH.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login (for continuum restore)";

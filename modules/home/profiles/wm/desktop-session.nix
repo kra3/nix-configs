@@ -32,7 +32,7 @@
       runtimeInputs = [
         cliphistPkg
         pkgs.gawk
-        pkgs.fuzzel
+        pkgs.rofi
         wlClipboardPkg
       ];
       text = ''
@@ -48,7 +48,7 @@
               ' "$usage_file" - \
             | sort -t $'\t' -k1,1nr -k2,2nr \
             | cut -f2- \
-            | fuzzel --dmenu
+            | rofi -dmenu -display-columns 2 -p "Clipboard"
         )
 
         [ -n "$selection" ] || exit 0
@@ -79,7 +79,7 @@
     home.file.".local/share/wallpapers/wallpaper.png".source = ./wallpapers/wallpaper.png;
 
     # Single entry point for every self-hosted app, behind Authelia SSO; shows up
-    # in the regular fuzzel app launcher (Mod+D) instead of a dedicated picker.
+    # in the regular rofi app launcher (Mod+D) instead of a dedicated picker.
     xdg.desktopEntries.homepage-dashboard = {
       name = "Home Page";
       genericName = "Self-hosted apps dashboard";
@@ -89,7 +89,7 @@
       categories = [ "Network" ];
     };
 
-    programs.fuzzel.enable = true;
+    programs.rofi.enable = true;
     programs.swaylock = {
       enable = true;
       # swaylock-effects for blur/clock/grace; catppuccin.swaylock's colors still merge in.

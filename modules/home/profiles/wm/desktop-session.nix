@@ -27,12 +27,14 @@
 
     # Super+Alt+V picker: ranks cliphist's history by picker-selection count (most-used
     # first), falling back to cliphist's own id (most recent first) for ties/unused items.
+    # Runs in a terminal (fzf, not rofi/fuzzel) so it gets fzf's live preview pane — no
+    # dmenu-protocol tool (dmenu, rofi -dmenu, wofi, bemenu, tofi, fuzzel) supports one.
     cliphist-picker = pkgs.writeShellApplication {
       name = "cliphist-picker";
       runtimeInputs = [
         cliphistPkg
         pkgs.gawk
-        pkgs.rofi
+        pkgs.fzf
         wlClipboardPkg
       ];
       text = ''
@@ -48,7 +50,9 @@
               ' "$usage_file" - \
             | sort -t $'\t' -k1,1nr -k2,2nr \
             | cut -f2- \
-            | rofi -dmenu -display-columns 2 -p "Clipboard"
+            | fzf --delimiter=$'\t' --with-nth=2 \
+                --preview='cliphist decode {1}' --preview-window=bottom:60%:wrap \
+                --prompt='Clipboard> '
         )
 
         [ -n "$selection" ] || exit 0
@@ -56,7 +60,7 @@
         id=''${selection%%$'\t'*}
         preview=''${selection#*$'\t'}
 
-        printf '%s\t%s\n' "$id" "$preview" | cliphist decode | wl-copy
+        cliphist decode "$id" | wl-copy
 
         awk -F'\t' -v OFS='\t' -v target="$preview" '
           $2 == target { print $1 + 1, $2; found = 1; next }

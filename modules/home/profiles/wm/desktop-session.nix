@@ -355,6 +355,14 @@
 
     services.mako.enable = true;
     services.cliphist.enable = true;
+    # 500 items of unranked history is unusable; 50 keeps the picker relevant, and
+    # dedupe-search matches it so a duplicate anywhere in history is caught, not just recent ones.
+    services.cliphist.extraOptions = [
+      "-max-dedupe-search"
+      "50"
+      "-max-items"
+      "50"
+    ];
     # Route both watchers through the password-manager-hint filter above.
     systemd.user.services.cliphist.Service.ExecStart =
       lib.mkForce "${wlClipboardPkg}/bin/wl-paste --watch ${cliphist-store-filtered}/bin/cliphist-store-filtered";

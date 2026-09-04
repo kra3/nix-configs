@@ -95,8 +95,11 @@
           s|__SOPS_DNS_ADGUARD_USERNAME__|$USERNAME|
           EOF
 
-            # Execute sed with script file (no secrets in command line)
-            ${pkgs.gnused}/bin/sed -i -f "$SCRIPT" "$STATE_DIRECTORY/AdGuardHome.yaml"
+            # sed -i's internal fchown is blocked by this service's SystemCallFilter=~@privileged
+            # on aarch64 (real hardware, not the QEMU emulation used to build/test this); write to
+            # a temp file and move it instead of relying on in-place editing.
+            ${pkgs.gnused}/bin/sed -f "$SCRIPT" "$STATE_DIRECTORY/AdGuardHome.yaml" > "$STATE_DIRECTORY/AdGuardHome.yaml.tmp"
+            ${pkgs.coreutils}/bin/mv "$STATE_DIRECTORY/AdGuardHome.yaml.tmp" "$STATE_DIRECTORY/AdGuardHome.yaml"
           fi
         '';
       in

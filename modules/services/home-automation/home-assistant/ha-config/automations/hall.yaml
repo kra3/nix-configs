@@ -3,8 +3,11 @@
   alias: Hall — Darkness detection
   description: >-
     Hysteresis darkness state machine for hall.
-    ON: lux < 30 sustained 2 min AND sun below horizon.
+    ON: lux < 10 sustained 2 min AND sun below horizon.
     OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
+    dark_below lowered from the blueprint's 30 default - this room's Hue
+    PIR sensor tops out around 70 lux even at midday (confirmed via
+    Prometheus history), so 30 read as dark almost all day.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -12,6 +15,7 @@
       occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
       light_entity: light.hall
       dark_boolean: input_boolean.hall_is_dark
+      dark_below: 10
 
 - id: hall_lighting
   alias: Hall — Lighting

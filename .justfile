@@ -64,6 +64,12 @@ switch-remote host=default_host target=default_host build_host=target:
     fi
     nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{build_host}} --use-remote-sudo --ask-sudo-password
 
+# surasa has no DNS entry and its weak CPU can't reliably build its own closure --
+# always build on sutala and target its LAN IP directly. Override target for the
+# ethernet bootstrap IP instead of its normal wifi one when needed.
+switch-surasa target="kra3@192.168.1.39":
+    just switch-remote surasa {{target}} localhost
+
 deploy host=default_host:
     colmena apply --on {{host}}
 

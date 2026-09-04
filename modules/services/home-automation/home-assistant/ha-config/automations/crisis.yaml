@@ -1,0 +1,18 @@
+# ── Crisis information ─────────────────────────────────────────
+- id: krisinformation_vma_notify
+  alias: "Crisis: notify on VMA activation"
+  description: >-
+    VMA (Viktigt Meddelande till Allmänheten) is Sweden's siren-level
+    public emergency alert - notify immediately when one is active.
+  triggers:
+  - entity_id: binary_sensor.krisinformation_malmo_krisinformation_aktiva_vma_malmo
+    to: "on"
+    trigger: state
+  actions:
+  - action: notify.all_phones
+    data:
+      title: "VMA active"
+      message: >-
+        {{ (state_attr('binary_sensor.krisinformation_malmo_krisinformation_aktiva_vma_malmo', 'alerts') or [])
+           | map(attribute='headline') | list | join(', ') or 'Check Krisinformation for details' }}
+  mode: single

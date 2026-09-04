@@ -64,6 +64,13 @@ views:
         - condition: state
           entity: binary_sensor.dashboard_alert_override_active
           state: "on"
+      - type: entity
+        entity: binary_sensor.dashboard_alert_crisis
+        show_state: false
+        visibility:
+        - condition: state
+          entity: binary_sensor.dashboard_alert_crisis
+          state: "on"
     - type: entities
       title: Needs attention
       show_header_toggle: false
@@ -81,6 +88,9 @@ views:
           state: "on"
         - condition: state
           entity: binary_sensor.house_exits_open_status
+          state: "on"
+        - condition: state
+          entity: binary_sensor.dashboard_alert_crisis
           state: "on"
       entities:
       - type: conditional
@@ -153,6 +163,24 @@ views:
           state: "on"
         row:
           entity: input_boolean.automations_paused
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.dashboard_alert_crisis
+          state: "on"
+        row:
+          entity: binary_sensor.dashboard_alert_crisis
+          name: Crisis information
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.dashboard_alert_crisis
+          state: "on"
+        row:
+          type: attribute
+          entity: binary_sensor.dashboard_alert_crisis
+          attribute: headlines
+          name: Which
     - type: markdown
       content: "Nothing needs attention right now."
       visibility:
@@ -169,6 +197,9 @@ views:
           state: "off"
         - condition: state
           entity: binary_sensor.house_exits_open_status
+          state: "off"
+        - condition: state
+          entity: binary_sensor.dashboard_alert_crisis
           state: "off"
     - type: custom:mini-graph-card
       entities:

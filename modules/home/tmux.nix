@@ -92,6 +92,9 @@
           # Force Vi status keys (keyMode only sets mode-keys)
           set -g status-keys vi
 
+          # Let panes/apps (vim autoread, clipboard sync, etc.) see terminal focus in/out
+          set -g focus-events on
+
           # ============================================================================
           # Key Bindings
           # ============================================================================

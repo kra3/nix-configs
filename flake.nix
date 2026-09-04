@@ -31,11 +31,6 @@
       url = "github:Sveske-Juice/declarative-jellyfin";
     };
 
-    colmena = {
-      url = "github:zhaofengli/colmena";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     quadlet-nix = {
       url = "github:SEIAROTg/quadlet-nix";
     };
@@ -79,13 +74,12 @@
         ];
 
         perSystem =
-          { pkgs, inputs', ... }:
+          { pkgs, ... }:
           {
             treefmt.projectRootFile = "flake.nix";
             devShells.default = pkgs.mkShell {
               packages = [
                 pkgs.age
-                inputs'.colmena.packages.colmena
                 pkgs.just
                 pkgs.nixos-rebuild
                 pkgs.nixfmt
@@ -106,7 +100,8 @@
             buildEach =
               builder: hostSet:
               lib.mapAttrs (
-                _: h: builder {
+                _: h:
+                builder {
                   inherit (h) modules;
                   specialArgs = {
                     inherit inputs;
@@ -134,50 +129,6 @@
 
             nixosConfigurations = buildEach nixpkgs.lib.nixosSystem (ofClass "nixos");
             darwinConfigurations = buildEach inputs.nix-darwin.lib.darwinSystem (ofClass "darwin");
-
-            colmenaHive = inputs.colmena.lib.makeHive config.flake.colmena;
-            colmena = {
-              meta = {
-                # No overlays here: hosts.sutala.modules (reused verbatim below)
-                # already carries `{ nixpkgs.overlays = [...]; }`. Setting it again
-                # here would make the node apply the overlay twice (once via this
-                # prebuilt pkgs' nixpkgsModule, once via the reused module list).
-                nixpkgs = import nixpkgs { inherit (hosts.sutala) system; };
-                specialArgs = {
-                  inputs = inputs;
-                  flakeModules = {
-                    nixos = config.flake.nixosModules;
-                    darwin = config.flake.darwinModules;
-                    homeManager = config.flake.homeManagerModules;
-                  };
-                  flakeLib = config.flake.lib;
-                };
-              };
-              sutala = {
-                deployment = hosts.sutala.deployment;
-                imports = hosts.sutala.modules ++ [
-                  {
-                    # Colmena builds each node via nixpkgs' nixos/lib/eval-config.nix
-                    # directly (src/nix/hive/eval.nix), bypassing the flake's own
-                    # `nixosSystem` wrapper. That wrapper is what normally injects the
-                    # flake-extended `lib` (nixpkgs's own lib/flake-version-info.nix
-                    # overlay, only present on the `nixpkgs.lib` flake output) which
-                    # stamps `system.nixos.versionSuffix`/`system.nixos.revision` from
-                    # self.lastModifiedDate/self.shortRev/self.rev. Without it, colmena
-                    # falls back to eval-config.nix's plain `lib ? import ../../lib`,
-                    # whose versionSuffix is always "pre-git" and revision always null
-                    # -- the actual cause of colmenaHive.nodes.sutala's drvPath
-                    # diverging from nixosConfigurations.sutala's (it also changes the
-                    # `nixos-version` package embedded in environment.systemPackages,
-                    # since it bakes in `config.system.nixos.revision`). Reproduce both
-                    # effects explicitly so this node's drv converges.
-                    nixpkgs.flake.source = inputs.nixpkgs.outPath;
-                    system.nixos.versionSuffix = inputs.nixpkgs.lib.trivial.versionSuffix;
-                    system.nixos.revision = inputs.nixpkgs.lib.trivial.revisionWithDefault null;
-                  }
-                ];
-              };
-            };
           };
       }
     );

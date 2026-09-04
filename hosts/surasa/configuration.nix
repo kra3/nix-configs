@@ -17,6 +17,13 @@
 
   networking.hostName = "surasa";
 
+  # The minimal profiles/base.nix this board's sd-image imports doesn't add systemd's own
+  # package to services.dbus.packages (a standard-profile default), so systemd's D-Bus policy
+  # (granting root/wheel access to org.freedesktop.systemd1) never gets included -- breaking
+  # switch-to-configuration's live activation ("Sender is not authorized to send message"
+  # when subscribing to job-completion signals) and even `systemctl reboot`.
+  services.dbus.packages = [ config.systemd.package ];
+
   # The sd-image module's own disabledModules entry for profiles/all-hardware.nix has a path
   # bug (missing a "/"), so it doesn't actually take effect -- that profile's broad
   # supportedFilesystems (btrfs/cifs/f2fs/ntfs/xfs/zfs) leaks in and, since zfs's kernel

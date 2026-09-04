@@ -3,6 +3,60 @@ views:
   sections:
   - type: grid
     cards:
+    - type: custom:mushroom-template-card
+      primary: >-
+        {%- if is_state('sensor.dashboard_presence_state', 'away') -%}
+          Away
+        {%- elif is_state('sensor.dashboard_presence_state', 'home_both') -%}
+          Everyone's home
+        {%- else -%}
+          Home
+        {%- endif -%}
+      secondary: >-
+        {{ states('sensor.dashboard_time_period') | title }}{% if states('sensor.dashboard_eta') not in ['none', 'unknown', 'unavailable'] %} · {{ states('sensor.dashboard_eta') }}{% endif %}
+      icon: >-
+        {% if is_state('sensor.dashboard_presence_state', 'away') %}mdi:home-export-outline{% else %}mdi:home-heart{% endif %}
+      grid_options:
+        columns: full
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+    - type: custom:mushroom-template-card
+      primary: >-
+        {%- if is_state('sensor.dashboard_presence_state', 'away') -%}
+          Away
+        {%- elif is_state('sensor.dashboard_presence_state', 'home_both') -%}
+          Everyone's home
+        {%- else -%}
+          Home
+        {%- endif -%}
+      secondary: >-
+        {{ states('sensor.dashboard_time_period') | title }}{% if states('sensor.dashboard_eta') not in ['none', 'unknown', 'unavailable'] %} · {{ states('sensor.dashboard_eta') }}{% endif %}
+      icon: >-
+        {% if is_state('sensor.dashboard_presence_state', 'away') %}mdi:home-export-outline{% else %}mdi:home-heart{% endif %}
+      grid_options:
+        columns: full
+      visibility:
+      - condition: user
+        users:
+        - 6edcc5a09c3144d684077ee362e7394a
+    - type: custom:mushroom-template-card
+      primary: "Vasudha"
+      secondary: >-
+        {{ states('sensor.dashboard_presence_state') | replace('_', ' ') | title }} · {{ states('sensor.dashboard_time_period') | title }}
+      icon: mdi:home
+      grid_options:
+        columns: full
+      visibility:
+      - condition: not
+        conditions:
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+          - 6edcc5a09c3144d684077ee362e7394a
+  - type: grid
+    cards:
     - type: heading
       heading: Rooms
       heading_style: title

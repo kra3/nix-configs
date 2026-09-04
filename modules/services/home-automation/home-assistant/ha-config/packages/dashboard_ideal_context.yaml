@@ -1,0 +1,69 @@
+# Derived state for the "Home (Ideal)" dashboard (dashboards/dashboard_ideal.yaml).
+# Computed once here so dashboard cards can reference plain entity state via
+# native `visibility:` conditions instead of duplicating Jinja per-card.
+template:
+  - sensor:
+      - name: "Dashboard Time Period"
+        unique_id: dashboard_time_period
+        state: >-
+          {%- if is_state('schedule.sleep', 'on') -%}
+            night
+          {%- elif is_state('sun.sun', 'above_horizon') -%}
+            day
+          {%- else -%}
+            evening
+          {%- endif -%}
+
+      - name: "Dashboard Presence State"
+        unique_id: dashboard_presence_state
+        state: >-
+          {%- set arun_home = is_state('person.arun_karunagath', 'home') -%}
+          {%- set anjali_home = is_state('person.anjalipc', 'home') -%}
+          {%- if arun_home and anjali_home -%}
+            home_both
+          {%- elif arun_home -%}
+            home_arun
+          {%- elif anjali_home -%}
+            home_anjali
+          {%- else -%}
+            away
+          {%- endif -%}
+
+      - name: "Dashboard ETA"
+        unique_id: dashboard_eta
+        state: >-
+          {%- set people = {'person.arun_karunagath': 'Arun', 'person.anjalipc': 'Anjali'} -%}
+          {%- set ns = namespace(parts=[]) -%}
+          {%- for entity_id, label in people.items() -%}
+            {%- set st = states(entity_id) -%}
+            {%- if st not in ['home', 'not_home', 'unknown', 'unavailable'] -%}
+              {%- set ns.parts = ns.parts + [label ~ ' near ' ~ st] -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ ns.parts | join(', ') if ns.parts else 'none' }}
+
+  - binary_sensor:
+      - name: "Dashboard Alert: Security"
+        unique_id: dashboard_alert_security
+        device_class: safety
+        state: >-
+          {{ is_state('alarm_control_panel.vasudha_secure', 'triggered')
+             or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
+                 and is_state('binary_sensor.house_exits_open_status', 'on')) }}
+
+      - name: "Dashboard Alert: Device Health"
+        unique_id: dashboard_alert_device_health
+        device_class: problem
+        state: >-
+          {%- set curated = [
+            'lock.yale_front_door',
+            'alarm_control_panel.vasudha_secure',
+          ] -%}
+          {{ curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 }}
+
+      - name: "Dashboard Alert: Override Active"
+        unique_id: dashboard_alert_override_active
+        device_class: running
+        state: >-
+          {{ is_state('input_boolean.party_mode', 'on')
+             or is_state('input_boolean.automations_paused', 'on') }}

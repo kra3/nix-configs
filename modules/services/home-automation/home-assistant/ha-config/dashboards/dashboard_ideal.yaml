@@ -22,24 +22,6 @@ views:
       - condition: user
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
-    - type: custom:mushroom-template-card
-      primary: >-
-        {%- if is_state('sensor.dashboard_presence_state', 'away') -%}
-          Away
-        {%- elif is_state('sensor.dashboard_presence_state', 'home_both') -%}
-          Everyone's home
-        {%- else -%}
-          Home
-        {%- endif -%}
-      secondary: >-
-        {{ states('sensor.dashboard_time_period') | title }}{% if states('sensor.dashboard_eta') not in ['none', 'unknown', 'unavailable'] %} · {{ states('sensor.dashboard_eta') }}{% endif %}
-      icon: >-
-        {% if is_state('sensor.dashboard_presence_state', 'away') %}mdi:home-export-outline{% else %}mdi:home-heart{% endif %}
-      grid_options:
-        columns: full
-      visibility:
-      - condition: user
-        users:
         - 6edcc5a09c3144d684077ee362e7394a
     - type: custom:mushroom-template-card
       primary: "Vasudha"
@@ -55,133 +37,6 @@ views:
           users:
           - a1d4401b8b714ebb83f07c5316ab399c
           - 6edcc5a09c3144d684077ee362e7394a
-  - type: grid
-    cards:
-    - type: heading
-      heading: Active Rooms
-      heading_style: title
-    - type: tile
-      entity: light.kitchen_light_1
-      area: kitchen
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.kitchen_occupancy_status
-          state: "on"
-        - condition: state
-          entity: light.kitchen_light_1
-          state: "on"
-        - condition: user
-          users:
-          - 6edcc5a09c3144d684077ee362e7394a
-    - type: tile
-      entity: light.kitchen_dining_light_1
-      area: kitchen_dining_room
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: state
-        entity: light.kitchen_dining_light_1
-        state: "on"
-    - type: tile
-      entity: light.dining_room_light_1
-      area: dining_room
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.dining_room_occupancy_status
-          state: "on"
-        - condition: state
-          entity: light.dining_room_light_1
-          state: "on"
-    - type: tile
-      entity: light.tv_backlight
-      area: living_room
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.living_room_occupancy_status
-          state: "on"
-        - condition: state
-          entity: light.tv_backlight
-          state: "on"
-        - condition: state
-          entity: media_player.lg_webos_tv_oled77c35la
-          state: playing
-        - condition: user
-          users:
-          - 6edcc5a09c3144d684077ee362e7394a
-    - type: tile
-      entity: light.hall
-      area: hall
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.hallway_occupancy_status
-          state: "on"
-        - condition: state
-          entity: light.hall
-          state: "on"
-    - type: tile
-      entity: light.bedroom_wardrobe_light_1
-      area: bedroom
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.bed_room_occupancy_status
-          state: "on"
-        - condition: state
-          entity: light.bedroom_wardrobe_light_1
-          state: "on"
-    - type: tile
-      entity: light.office_room_light
-      area: office
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: light.office_room_light
-          state: "on"
-        - condition: user
-          users:
-          - a1d4401b8b714ebb83f07c5316ab399c
-    - type: tile
-      entity: sensor.average_temperature
-      area: bathroom
-      visibility:
-      - condition: state
-        entity: binary_sensor.bathroom_occupancy_status
-        state: "on"
-    - type: tile
-      entity: sensor.average_temperature
-      area: laundry
-      visibility:
-      - condition: state
-        entity: binary_sensor.laundry_room_occupancy_status
-        state: "on"
-    - type: tile
-      entity: lock.yale_front_door
-      area: front
-    - type: tile
-      entity: sensor.average_temperature
-      area: toilet
   - type: grid
     cards:
     - type: heading
@@ -225,33 +80,53 @@ views:
           entity: binary_sensor.dashboard_alert_override_active
           state: "on"
       entities:
-      - entity: binary_sensor.house_exits_open_status
-        name: Open door/window
-        visibility:
+      - type: conditional
+        conditions:
         - condition: state
           entity: binary_sensor.dashboard_alert_security
           state: "on"
-      - entity: alarm_control_panel.vasudha_secure
-        visibility:
+        row:
+          entity: binary_sensor.house_exits_open_status
+          name: Open door/window
+      - type: conditional
+        conditions:
         - condition: state
           entity: binary_sensor.dashboard_alert_security
           state: "on"
-      - entity: binary_sensor.dashboard_alert_device_health
-        name: Device unavailable
-        visibility:
+        row:
+          type: attribute
+          entity: binary_sensor.house_exits_open_status
+          attribute: open_names
+          name: Which
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.dashboard_alert_security
+          state: "on"
+        row:
+          entity: alarm_control_panel.vasudha_secure
+      - type: conditional
+        conditions:
         - condition: state
           entity: binary_sensor.dashboard_alert_device_health
           state: "on"
-      - entity: input_boolean.party_mode
-        visibility:
+        row:
+          entity: binary_sensor.dashboard_alert_device_health
+          name: Device unavailable
+      - type: conditional
+        conditions:
         - condition: state
           entity: binary_sensor.dashboard_alert_override_active
           state: "on"
-      - entity: input_boolean.automations_paused
-        visibility:
+        row:
+          entity: input_boolean.party_mode
+      - type: conditional
+        conditions:
         - condition: state
           entity: binary_sensor.dashboard_alert_override_active
           state: "on"
+        row:
+          entity: input_boolean.automations_paused
     - type: markdown
       content: "Nothing needs attention right now."
       visibility:
@@ -275,6 +150,144 @@ views:
     - type: entity
       entity: sensor.average_illuminance
       name: Illuminance
+  - type: grid
+    cards:
+    - type: heading
+      heading: Active Rooms
+      heading_style: title
+    - type: tile
+      entity: light.kitchen_lights
+      name: Kitchen
+      area: kitchen
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.kitchen_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.kitchen_lights
+          state: "on"
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - type: tile
+      entity: light.kitchen_dining_lights
+      name: Kitchen Dining
+      area: kitchen_dining_room
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: state
+        entity: light.kitchen_dining_lights
+        state: "on"
+    - type: tile
+      entity: light.dining_lights
+      name: Dining Room
+      area: dining_room
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.dining_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.dining_lights
+          state: "on"
+    - type: tile
+      entity: light.living_room_lights
+      name: Living Room
+      area: living_room
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.living_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.living_room_lights
+          state: "on"
+        - condition: state
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - type: tile
+      entity: light.hall
+      name: Hall
+      area: hall
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.hallway_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.hall
+          state: "on"
+    - type: tile
+      entity: light.bedroom_wardrobe_lights
+      name: Bedroom
+      area: bedroom
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.bed_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.bedroom_wardrobe_lights
+          state: "on"
+    - type: tile
+      entity: light.office_room_light
+      name: Office
+      area: office
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: light.office_room_light
+          state: "on"
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+    - type: tile
+      entity: sensor.bathroom_occupancy_temperature
+      name: Bathroom
+      area: bathroom
+      visibility:
+      - condition: state
+        entity: binary_sensor.bathroom_occupancy_status
+        state: "on"
+    - type: tile
+      entity: sensor.laundry_occupancy_temperature
+      name: Laundry
+      area: laundry
+      visibility:
+      - condition: state
+        entity: binary_sensor.laundry_room_occupancy_status
+        state: "on"
+    - type: tile
+      entity: lock.yale_front_door
+      name: Front
+      area: front
+    - type: tile
+      entity: sensor.toilet_occupancy_temperature
+      name: Toilet
+      area: toilet
   - type: grid
     cards:
     - type: heading

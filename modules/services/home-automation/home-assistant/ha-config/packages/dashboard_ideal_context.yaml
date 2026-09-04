@@ -58,9 +58,6 @@ template:
           {%- set curated = [
             'lock.yale_front_door',
             'alarm_control_panel.vasudha_secure',
-            'media_player.lg_webos_tv_oled77c35la',
-            'media_player.home_theater',
-            'media_player.home_theater_2',
           ] -%}
           {{ curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 }}
 

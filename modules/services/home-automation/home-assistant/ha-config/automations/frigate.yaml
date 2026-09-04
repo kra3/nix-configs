@@ -15,37 +15,7 @@
   - trigger: state
     entity_id: alarm_control_panel.vasudha_secure
   actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state: armed_away
-      sequence:
-      - action: switch.turn_on
-        target:
-          entity_id:
-          - switch.ranger_duo_fxd_detect
-          - switch.ranger_duo_fxd_audio_detection
-          - switch.ranger_duo_ptz_detect
-          - switch.ranger_duo_ptz_audio_detection
-          - switch.ranger_uno_detect
-          - switch.ranger_uno_audio_detection
-    - conditions:
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state:
-        - disarmed
-        - armed_night
-      sequence:
-      - action: switch.turn_off
-        target:
-          entity_id:
-          - switch.ranger_duo_fxd_detect
-          - switch.ranger_duo_fxd_audio_detection
-          - switch.ranger_duo_ptz_detect
-          - switch.ranger_duo_ptz_audio_detection
-          - switch.ranger_uno_detect
-          - switch.ranger_uno_audio_detection
+  - action: script.frigate_sync_detect_to_alarm_state
   mode: single
 
 - id: frigate_detect_on_motion_when_home
@@ -119,37 +89,7 @@
     topic: frigate/available
     payload: online
   actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state: armed_away
-      sequence:
-      - action: switch.turn_on
-        target:
-          entity_id:
-          - switch.ranger_duo_fxd_detect
-          - switch.ranger_duo_fxd_audio_detection
-          - switch.ranger_duo_ptz_detect
-          - switch.ranger_duo_ptz_audio_detection
-          - switch.ranger_uno_detect
-          - switch.ranger_uno_audio_detection
-    - conditions:
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state:
-        - disarmed
-        - armed_night
-      sequence:
-      - action: switch.turn_off
-        target:
-          entity_id:
-          - switch.ranger_duo_fxd_detect
-          - switch.ranger_duo_fxd_audio_detection
-          - switch.ranger_duo_ptz_detect
-          - switch.ranger_duo_ptz_audio_detection
-          - switch.ranger_uno_detect
-          - switch.ranger_uno_audio_detection
+  - action: script.frigate_sync_detect_to_alarm_state
   mode: single
 
 - id: frigate_motion_staleness_watchdog

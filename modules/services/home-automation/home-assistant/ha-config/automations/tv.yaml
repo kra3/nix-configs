@@ -1,12 +1,3 @@
-# ── Remote control (DISABLED — use Z2M direct binding instead) ──
-# - id: '1733346573361'
-#   alias: Remote control
-#   description: 'Disabled: migrated to Z2M direct binding'
-#
-# - id: '1733346957071'
-#   alias: Hook - Living room ceiling lights
-#   description: 'Disabled: migrated to Z2M direct binding'
-
 # ── TV ─────────────────────────────────────────────────────────
 - id: tv_power_on
   alias: TV — Power on + backlight

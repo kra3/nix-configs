@@ -28,7 +28,9 @@
     once occupancy's been clear for 2 min — including immediately at
     dusk if already unoccupied. Off immediately at bedtime. Both
     dim-down paths suppressed during input_boolean.party_mode, same as
-    the room-presence-lighting blueprint this replaces.
+    the room-presence-lighting blueprint this replaces. Suppressed
+    entirely while Alarmo is pending/triggered so it can't undo
+    security.yaml's alarm-response lighting on the next motion event.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
     to: "on"
@@ -56,6 +58,13 @@
   - condition: state
     entity_id: input_boolean.hall_is_dark
     state: "on"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state:
+      - pending
+      - triggered
   actions:
   - choose:
     - conditions:

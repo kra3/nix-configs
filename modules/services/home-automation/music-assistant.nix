@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.music-assistant = {
       containerConfig = {
-        image = "ghcr.io/music-assistant/server:2.10.1";
+        image = "ghcr.io/music-assistant/server:2.10.2";
         publishPorts = [
           "127.0.0.1:8095:8095"
         ];

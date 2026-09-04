@@ -38,7 +38,7 @@
     to: triggered
     trigger: state
   actions:
-  - action: notify.all_phones
+  - action: script.notify_all_phones
     data:
       title: "Alarm triggered"
       message: >-
@@ -81,7 +81,7 @@
   - action: alarm_control_panel.alarm_disarm
     target:
       entity_id: alarm_control_panel.vasudha_secure
-  - action: notify.all_phones
+  - action: script.notify_all_phones
     data:
       title: "Alarm auto-disarmed"
       message: "Front door opened right after a resident arrived home - disarmed automatically."

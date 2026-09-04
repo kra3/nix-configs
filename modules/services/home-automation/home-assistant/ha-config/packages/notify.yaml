@@ -1,6 +1,0 @@
-notify:
-  - name: all_phones
-    platform: group
-    services:
-      - service: mobile_app_anjalis_iphone
-      - service: mobile_app_iphone

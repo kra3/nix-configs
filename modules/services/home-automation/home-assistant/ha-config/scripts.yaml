@@ -1,3 +1,30 @@
+notify_all_phones:
+  alias: "Notify: all phones"
+  description: >-
+    Fan out a plain notification to both phones via notify.send_message.
+    The old per-device notify.mobile_app_* services were removed by the
+    mobile_app integration's move to entity-based notify (HA 2026.9), and
+    the replacement doesn't support actionable buttons (data.actions) —
+    anything needing a tappable action belongs on the dashboard instead.
+  fields:
+    title:
+      required: false
+      selector:
+        text:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - action: notify.send_message
+    target:
+      entity_id:
+      - notify.iphone
+      - notify.anjalis_iphone
+    data:
+      title: "{{ title | default(omit) }}"
+      message: "{{ message }}"
+
 frigate_sync_detect_to_alarm_state:
   alias: "Frigate: sync detect/audio switches to alarm state"
   description: >-

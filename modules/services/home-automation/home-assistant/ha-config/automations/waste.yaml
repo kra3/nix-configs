@@ -10,7 +10,7 @@
     event: start
     offset: "-12:00:00"
   actions:
-  - action: notify.all_phones
+  - action: script.notify_all_phones
     data:
       title: Waste collection tomorrow
       message: "{{ trigger.calendar_event.summary }}"

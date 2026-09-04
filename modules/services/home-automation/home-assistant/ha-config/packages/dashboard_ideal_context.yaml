@@ -60,7 +60,9 @@ template:
         state: >-
           {{ is_state('alarm_control_panel.vasudha_secure', 'triggered')
              or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
-                 and is_state('binary_sensor.house_exits_open_status', 'on')) }}
+                 and is_state('binary_sensor.house_exits_open_status', 'on'))
+             or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
+                 and is_state('schedule.sleep', 'on')) }}
 
       - name: "Dashboard Alert: Device Health"
         unique_id: dashboard_alert_device_health

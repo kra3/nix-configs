@@ -74,18 +74,20 @@
                 - condition: template
                   value_template: "{{ anjali_home }}"
               then:
-                - action: notify.mobile_app_anjalis_iphone
+                - action: notify.send_message
+                  target: { entity_id: notify.anjalis_iphone }
                   data: { title: "Front Door", message: "Someone is knocking at the front door." }
             - if:
                 - condition: template
                   value_template: "{{ arun_home }}"
               then:
-                - action: notify.mobile_app_iphone
+                - action: notify.send_message
+                  target: { entity_id: notify.iphone }
                   data: { title: "Front Door", message: "Someone is knocking at the front door." }
 
           # If no one home: Notify all phones
           else:
-            - action: notify.all_phones
+            - action: script.notify_all_phones
               data: { title: "Front Door", message: "Someone is knocking at the front door." }
 
         # Cooldown delay to prevent rapid back-to-back announcements

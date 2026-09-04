@@ -1,3 +1,11 @@
+# LOCAL PATCH (not upstream): the plain-notify branches (no action buttons)
+# were switched from the removed notify.mobile_app_* services to
+# notify.send_message, since HA 2026.9's entity-based mobile_app notify
+# dropped the legacy per-device services. The action-button branches
+# (notify_action_buttons != disabled) are left broken — send_message has
+# no equivalent for data.actions — but this repo's only configured
+# instance (presence.yaml) uses the default disabled_notify_action_buttons,
+# so they're unreachable here. Reapply this patch after any upstream update.
 blueprint:
   name: Low Battery Notifications & Actions
   description: "# \U0001FAAB Low Battery Notifications & Actions\n**Version: 2.7**\n\n\U0001F680
@@ -898,12 +906,12 @@ action:
                 - '{{ notify_action_buttons == ''disabled_notify_action_buttons''
                   }}'
                 sequence:
-                - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') |
-                    slugify }}
+                - action: notify.send_message
+                  target:
+                    entity_id: notify.{{ device_attr(repeat.item, 'name') | slugify }}
                   data:
                     title: !input notify_title
                     message: '{{easy_notify_message}}'
-                    data: '{{ device_message_data }}'
               - alias: Easy notify with action button
                 conditions:
                 - '{{ notify_action_buttons != ''disabled_notify_action_buttons''
@@ -920,12 +928,12 @@ action:
             - '{{ easy_notify_message == '''' }}'
             - '{{ include_easy_notify == ''enable_easy_okay_notify'' }}'
             sequence:
-            - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify
-                }}
+            - action: notify.send_message
+              target:
+                entity_id: notify.{{ device_attr(repeat.item, 'name') | slugify }}
               data:
                 title: !input notify_title
                 message: !input notify_okay_message
-                data: '{{ device_message_data }}'
 - choose:
   - alias: Use the easy notify persistent notification options
     conditions:

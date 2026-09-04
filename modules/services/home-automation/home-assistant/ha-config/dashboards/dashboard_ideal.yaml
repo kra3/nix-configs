@@ -325,7 +325,7 @@ views:
         entity: binary_sensor.laundry_room_occupancy_status
         state: "on"
     - type: tile
-      entity: lock.yale_front_door
+      entity: lock.front_door
       name: Front
       area: front
     - type: tile
@@ -405,7 +405,7 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: lock.yale_front_door
+    entity: lock.front_door
   - type: entity
     show_name: false
     show_state: true

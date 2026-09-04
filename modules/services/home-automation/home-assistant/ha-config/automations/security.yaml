@@ -50,30 +50,33 @@
   description: >-
     A triggered alarm otherwise only clears via the wakeup_lighting
     schedule boundary (sleep.yaml), which can leave it triggered for
-    up to the length of the sleep window. If the front door opened
-    because someone actually walked in - not because someone already
-    inside opened it - auto-clear immediately. "Just walked in" is
-    approximated per-device (not via the aggregated person entity,
-    which can stay "home" the whole time if a resident's other device
-    never left) as any one of a resident's linked device_trackers
-    having transitioned to home within the last 5 minutes.
+    up to the length of the sleep window. Auto-clears if either a
+    resident's device just arrived home, or the front door was
+    unlocked via keypad (a valid code is stronger proof of legitimate
+    entry than phone geofencing, which can lag or drift).
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
     trigger: state
   conditions:
-  - condition: template
-    value_template: >-
-      {%- set window = 300 -%}
-      {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
-                        + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
-      {%- set ns = namespace(recent_arrival=false) -%}
-      {%- for t in trackers -%}
-        {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
-          {%- set ns.recent_arrival = true -%}
-        {%- endif -%}
-      {%- endfor -%}
-      {{ ns.recent_arrival }}
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: >-
+        {%- set window = 300 -%}
+        {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
+                          + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
+        {%- set ns = namespace(recent_arrival=false) -%}
+        {%- for t in trackers -%}
+          {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
+            {%- set ns.recent_arrival = true -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.recent_arrival }}
+    - condition: template
+      value_template: >-
+        {{ state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
+           and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < 300 }}
   actions:
   - action: alarm_control_panel.alarm_disarm
     target:

@@ -48,7 +48,7 @@ template:
       - name: "House Exits Open Status"
         device_class: opening
         state: >-
-          {{ is_state('binary_sensor.yale_front_door_door', 'on')
+          {{ is_state('binary_sensor.front_door_open', 'on')
              or is_state('binary_sensor.hallway_door_contact_contact', 'on')
              or is_state('binary_sensor.patio_door_contact_contact', 'on')
              or is_state('binary_sensor.living_room_window_left_contact_contact', 'on')
@@ -59,7 +59,7 @@ template:
         attributes:
           open_names: >-
             {%- set mapping = {
-              'binary_sensor.yale_front_door_door': 'Front Door',
+              'binary_sensor.front_door_open': 'Front Door',
               'binary_sensor.hallway_door_contact_contact': 'Hallway Door',
               'binary_sensor.patio_door_contact_contact': 'Patio Door',
               'binary_sensor.living_room_window_left_contact_contact': 'Living Room Window (L)',

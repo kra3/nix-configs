@@ -128,6 +128,17 @@
 
   time.timeZone = "UTC";
 
+  # This board has no RTC, so it boots with a stale clock -- and our DNS resolver forwards
+  # exclusively over DoT (see services-dns-rpi-secondary), which fails TLS validation until the
+  # clock is right. NTP's default servers are hostnames, which need DNS to resolve, deadlocking
+  # cold boot entirely. Bootstrap the clock via IP so NTP never depends on our own DNS resolver.
+  networking.timeServers = [
+    "216.239.35.0"
+    "216.239.35.4"
+    "216.239.35.8"
+    "216.239.35.12"
+  ];
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"

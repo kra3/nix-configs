@@ -41,3 +41,32 @@ template:
             {%- endif -%}
           {%- endfor -%}
           {{ ns.parts | join(', ') if ns.parts else 'none' }}
+
+  - binary_sensor:
+      - name: "Dashboard Alert: Security"
+        unique_id: dashboard_alert_security
+        device_class: safety
+        state: >-
+          {{ is_state('alarm_control_panel.vasudha_secure', 'triggered')
+             or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
+                 and is_state('binary_sensor.house_exits_open_status', 'on')) }}
+
+      - name: "Dashboard Alert: Device Health"
+        unique_id: dashboard_alert_device_health
+        device_class: problem
+        state: >-
+          {%- set curated = [
+            'lock.yale_front_door',
+            'alarm_control_panel.vasudha_secure',
+            'media_player.lg_webos_tv_oled77c35la',
+            'media_player.home_theater',
+            'media_player.home_theater_2',
+          ] -%}
+          {{ curated | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 }}
+
+      - name: "Dashboard Alert: Override Active"
+        unique_id: dashboard_alert_override_active
+        device_class: running
+        state: >-
+          {{ is_state('input_boolean.party_mode', 'on')
+             or is_state('input_boolean.automations_paused', 'on') }}

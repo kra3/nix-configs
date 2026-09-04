@@ -1,23 +1,35 @@
 # ── Presence notifications ─────────────────────────────────────
-- id: '1733594588791'
+# Replaces the core notify_leaving_zone blueprint, which addresses the
+# phone by device_id and resolves the notify call through the same
+# legacy mobile_app service-name path that broke everything else in
+# this file — entity targeting sidesteps both problems.
+- id: neelu_left_home
   alias: Neelu left home
-  description: ''
-  use_blueprint:
-    path: homeassistant/notify_leaving_zone.yaml
-    input:
-      person_entity: person.anjalipc
-      zone_entity: zone.home
-      notify_device: f4da98937625ae764a56ad8144fd2c88
+  description: Notify Arun when Anjali leaves home.
+  triggers:
+  - entity_id: person.anjalipc
+    from: home
+    trigger: state
+  actions:
+  - action: notify.send_message
+    target: { entity_id: notify.iphone }
+    data:
+      message: "{{ state_attr('person.anjalipc', 'friendly_name') }} has left Home"
+  mode: single
 
-- id: '1733594815974'
+- id: kunsu_left_home
   alias: Kunsu left home
-  description: ''
-  use_blueprint:
-    path: homeassistant/notify_leaving_zone.yaml
-    input:
-      person_entity: person.arun_karunagath
-      zone_entity: zone.home
-      notify_device: b5b637523ec9028be8de65b52f617c0d
+  description: Notify Anjali when Arun leaves home.
+  triggers:
+  - entity_id: person.arun_karunagath
+    from: home
+    trigger: state
+  actions:
+  - action: notify.send_message
+    target: { entity_id: notify.anjalis_iphone }
+    data:
+      message: "{{ state_attr('person.arun_karunagath', 'friendly_name') }} has left Home"
+  mode: single
 
 # ── Battery ────────────────────────────────────────────────────
 - id: '1733595301092'

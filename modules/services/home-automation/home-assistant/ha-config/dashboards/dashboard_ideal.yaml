@@ -522,12 +522,8 @@ views:
         live_provider: go2rtc
       - camera_entity: camera.ranger_duo_ptz
         live_provider: go2rtc
-        go2rtc:
-          mode: webrtc
       - camera_entity: camera.ranger_uno
         live_provider: go2rtc
-        go2rtc:
-          mode: webrtc
       live:
         display:
           mode: grid

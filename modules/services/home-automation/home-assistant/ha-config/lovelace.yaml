@@ -2,8 +2,6 @@ resource_mode: yaml
 resources:
   - url: /hacsfiles/lovelace-mushroom/mushroom.js
     type: module
-  - url: /webrtc/webrtc-camera.js
-    type: module
   - url: /hacsfiles/advanced-camera-card/advanced-camera-card.js
     type: module
   - url: /hacsfiles/alarmo-card/alarmo-card.js

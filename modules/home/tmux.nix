@@ -27,10 +27,19 @@
         # so a second concurrent invocation (e.g. a terminal app reopening several
         # windows at login) waits for the first instead of racing it into creating a
         # second bare session that fights continuum's restore.
+        #
+        # PATH matters here beyond just finding `tmux` to exec: the process that
+        # starts the server has its environment captured as tmux's global
+        # environment, which `run-shell` (continuum) and every pane inherit.
+        # resurrect/continuum's own scripts call bare `tmux`/`ps`/etc, not
+        # absolute paths — under launchd's minimal default PATH (no nix paths),
+        # those calls fail silently and restore never runs, leaving a bare
+        # session. Prepending tmux's store path here fixes it at the source.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login (for continuum restore)";
           script = ''
+            export PATH="${pkgs.tmux}/bin:$PATH"
             lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
             ${pkgs.flock}/bin/flock "$lock" sh -c '${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d'
           '';

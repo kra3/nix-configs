@@ -58,31 +58,130 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Rooms
+      heading: Active Rooms
       heading_style: title
-      badges: []
-    - type: area
+    - type: tile
+      entity: light.kitchen_light_1
       area: kitchen
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.kitchen_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.kitchen_light_1
+          state: "on"
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - type: tile
+      entity: light.kitchen_dining_light_1
       area: kitchen_dining_room
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: state
+        entity: light.kitchen_dining_light_1
+        state: "on"
+    - type: tile
+      entity: light.dining_room_light_1
       area: dining_room
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.dining_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.dining_room_light_1
+          state: "on"
+    - type: tile
+      entity: light.tv_backlight
       area: living_room
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.living_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.tv_backlight
+          state: "on"
+        - condition: state
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - type: tile
+      entity: light.hall
       area: hall
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.hallway_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.hall
+          state: "on"
+    - type: tile
+      entity: light.bedroom_wardrobe_light_1
       area: bedroom
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.bed_room_occupancy_status
+          state: "on"
+        - condition: state
+          entity: light.bedroom_wardrobe_light_1
+          state: "on"
+    - type: tile
+      entity: light.office_room_light
       area: office
-    - type: area
-      area: front
-    - type: area
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: light.office_room_light
+          state: "on"
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+    - type: tile
+      entity: sensor.average_temperature
       area: bathroom
-    - type: area
-      area: toilet
-    - type: area
+      visibility:
+      - condition: state
+        entity: binary_sensor.bathroom_occupancy_status
+        state: "on"
+    - type: tile
+      entity: sensor.average_temperature
       area: laundry
+      visibility:
+      - condition: state
+        entity: binary_sensor.laundry_room_occupancy_status
+        state: "on"
+    - type: tile
+      entity: lock.yale_front_door
+      area: front
+    - type: tile
+      entity: sensor.average_temperature
+      area: toilet
   - type: grid
     cards:
     - type: heading

@@ -73,11 +73,13 @@
       entity_id: alarm_control_panel.vasudha_secure
     data:
       code: !secret alarm_code
-  - action: notify.mobile_app_anjalis_iphone
+  - action: notify.send_message
+    target: { entity_id: notify.anjalis_iphone }
     data:
       title: Home
       message: Everyone left — lights off, alarm armed
-  - action: notify.mobile_app_iphone
+  - action: notify.send_message
+    target: { entity_id: notify.iphone }
     data:
       title: Home
       message: Everyone left — lights off, alarm armed
@@ -121,7 +123,7 @@
   - condition: state
     entity_id: binary_sensor.house_exits_open_status
     state: "on"
-  - action: notify.all_phones
+  - action: script.notify_all_phones
     data:
       title: Home
       message: >-

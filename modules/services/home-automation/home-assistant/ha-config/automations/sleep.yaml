@@ -24,7 +24,11 @@
   alias: Sleep — Arm Alarmo (night)
   description: >-
     Arms at bedtime; Alarmo silently refuses if a sensor's open, so this
-    checks the result and notifies (with a force-arm action) if it failed.
+    checks the result and notifies if it failed. No actionable button on
+    the notification (mobile_app's entity-based notify doesn't support
+    one) — force-arming a failed attempt is a button on the dashboard
+    instead (dashboard_ideal.yaml), next to the Dashboard Alert: Security
+    row that lights up for this same case.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
@@ -43,32 +47,13 @@
         entity_id: alarm_control_panel.vasudha_secure
         state: armed_night
     then:
-    - action: notify.all_phones
+    - action: script.notify_all_phones
       data:
         title: Alarm not armed
         message: >-
           Couldn't arm for the night — still open:
-          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-        data:
-          actions:
-          - action: FORCE_ARM_NIGHT
-            title: Force Arm Anyway
-  mode: single
-
-- id: alarm_force_arm_from_notification
-  alias: "Security: force-arm from notification action"
-  description: Handles the "Force Arm Anyway" button on the failed-arm notification.
-  triggers:
-  - trigger: event
-    event_type: mobile_app_notification_action
-    event_data:
-      action: FORCE_ARM_NIGHT
-  actions:
-  - action: script.alarm_force_arm_night
-  - action: notify.all_phones
-    data:
-      title: Alarm
-      message: Armed for the night (forced — open sensors bypassed).
+          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
+          Force-arm from the dashboard if needed.
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────

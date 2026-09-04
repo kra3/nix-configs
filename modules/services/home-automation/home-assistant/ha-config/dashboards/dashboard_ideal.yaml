@@ -121,6 +121,23 @@ views:
       - type: conditional
         conditions:
         - condition: state
+          entity: binary_sensor.dashboard_alert_security
+          state: "on"
+        - condition: state
+          entity: alarm_control_panel.vasudha_secure
+          state: disarmed
+        row:
+          type: button
+          name: Force arm for the night
+          icon: mdi:shield-lock
+          tap_action:
+            action: call-service
+            service: script.alarm_force_arm_night
+            confirmation:
+              text: Force-arm for the night, bypassing any open sensors?
+      - type: conditional
+        conditions:
+        - condition: state
           entity: binary_sensor.house_exits_open_status
           state: "on"
         - condition: state

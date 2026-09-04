@@ -366,7 +366,8 @@ binds {
     Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
     // Clipboard history picker, ranked by most-used then most-recent (desktop-session.nix).
-    Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn-sh "cliphist-picker"; }
+    // Runs in a terminal since it's fzf-based (for the live preview pane), not a dmenu popup.
+    Super+Alt+V hotkey-overlay-title="Clipboard History: cliphist" { spawn "alacritty" "--class" "cliphist-picker" "-e" "cliphist-picker"; }
 
     // Bluetooth pairing picker; complements waybar's power-only toggle.
     Super+Alt+B hotkey-overlay-title="Bluetooth Devices: bzmenu" { spawn "bzmenu" "--launcher" "rofi" "--icon" "xdg"; }

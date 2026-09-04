@@ -321,6 +321,15 @@ window-rule {
     open-floating true
 }
 
+// cliphist-picker (Super+Alt+V) opens in its own alacritty window (--class cliphist-picker);
+// float it centered, sized close to rofi's default popup (50% width/height).
+window-rule {
+    match app-id=r#"^cliphist-picker$"#
+    open-floating true
+    default-column-width { proportion 0.5; }
+    default-window-height { proportion 0.5; }
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {

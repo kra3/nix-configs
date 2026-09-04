@@ -2,7 +2,7 @@ keys:
   - &sutala age1damfg7g5hjqg9z76fn3ujh3ve06dxzw0rnz59hanx4y0rhyfcvqszhcrn8
   - &pazham age1s8760vxlj02ymre3620g94ay3nw9ytlspk52dduq0peecsrc65ysxd3zsz
   - &kra3-sutala age1ran3uu576kmjx5m5v3up2aen2xgk2yrrytjuresqg4hez07exdhscxg3hv
-  - &surasa age14zhrp0fj95dwgq7687xl2r5g58pq6j2095l7pwhkmkn64gmnpezsgwq7mx
+  - &surasa age1qpfkq5txmfz50fr6hljuuz2hgm65ktwsvzkqyj2mrrf3v33rkaks9uujv8
 creation_rules:
   - path_regex: secrets/[^/]+(\.(yaml|json|env|ini|conf))?$
     age:

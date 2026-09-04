@@ -55,8 +55,10 @@
 
   # services-infrastructure-openssh only opens port 22 on vars.network.lanIf (wlan0) -- fine
   # for sutala's single interface, but surasa's first boot (and sops bootstrap) happens over
-  # eth0, before wifi is even configured, so SSH needs to be reachable there too.
-  networking.firewall.interfaces.eth0.allowedTCPPorts = [ 22 ];
+  # ethernet, before wifi is even configured. Predictable interface naming means the USB
+  # ethernet chip isn't actually "eth0", so open globally rather than guess its real name --
+  # no real security loss since SSH is already key-only auth-gated.
+  networking.firewall.allowedTCPPorts = [ 22 ];
 
   # Can't decrypt until surasa is a sops recipient (same first-boot chicken-and-egg as the tailscale key below),
   # so this only takes effect once the post-first-boot bootstrap is done -- first boot itself joins via ethernet.
@@ -99,6 +101,12 @@
     authKeyFile = config.sops.secrets."surasa.tailscale.authkey".path;
     openFirewall = true;
   };
+
+  # kra3 has no password set on surasa, so sudo (needed by switch-remote) can never succeed by
+  # default. SSH is already key-only (services-infrastructure-openssh sets
+  # PasswordAuthentication = false), so a sudo password isn't adding real security here --
+  # possessing an authorized key already grants full account control.
+  security.sudo.wheelNeedsPassword = false;
 
   users.mutableUsers = true;
   users.users.kra3 = {

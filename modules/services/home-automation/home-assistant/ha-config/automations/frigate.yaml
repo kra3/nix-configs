@@ -151,3 +151,49 @@
           - switch.ranger_uno_detect
           - switch.ranger_uno_audio_detection
   mode: single
+
+- id: frigate_motion_staleness_watchdog
+  alias: "Frigate: alert on stale motion sensor"
+  description: >-
+    A per-camera motion sensor can silently stop updating while
+    everything else (stream, MQTT, detect switches) still looks fine —
+    seen 2026-09-04 on ranger_duo_fxd_motion, frozen for 3.5+ hours
+    through a live-verified motion event; reloading the MQTT
+    integration alone didn't clear it, only a host-level restart did.
+    Dining/living room lighting now depends on person_occupancy (built
+    on this same motion signal), so a stuck sensor silently breaks
+    presence-based lighting. The fix is a host-side systemctl restart
+    HA has no built-in way to trigger, so this just notifies with the
+    exact command rather than attempting the restart itself.
+  triggers:
+  - trigger: time_pattern
+    hours: "/1"
+  actions:
+  - repeat:
+      for_each:
+      - binary_sensor.ranger_duo_fxd_motion
+      - binary_sensor.ranger_duo_ptz_motion
+      - binary_sensor.ranger_uno_motion
+      sequence:
+      - variables:
+          stale_hours: >-
+            {{ ((now() - states[repeat.item].last_changed).total_seconds() / 3600) | round(1) }}
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: "{{ stale_hours | float > 4 }}"
+          sequence:
+          - action: persistent_notification.create
+            data:
+              notification_id: "frigate_stale_{{ repeat.item }}"
+              title: "Frigate motion sensor stuck"
+              message: >-
+                {{ repeat.item }} hasn't changed state in
+                {{ stale_hours }}h (last: {{ states[repeat.item].last_changed }}).
+                On sutala: machinectl shell home-auto /bin/sh -c
+                "systemctl restart frigate"
+        default:
+        - action: persistent_notification.dismiss
+          data:
+            notification_id: "frigate_stale_{{ repeat.item }}"
+  mode: single

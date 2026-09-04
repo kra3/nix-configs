@@ -9,26 +9,48 @@ views:
       badges: []
     - type: area
       area: kitchen
+      grid_options:
+        rows: 2
     - type: area
       area: kitchen_dining_room
+      grid_options:
+        rows: 2
     - type: area
       area: dining_room
+      grid_options:
+        rows: 2
     - type: area
       area: living_room
+      grid_options:
+        rows: 2
     - type: area
       area: hall
+      grid_options:
+        rows: 2
     - type: area
       area: bedroom
+      grid_options:
+        rows: 2
     - type: area
       area: office
+      grid_options:
+        rows: 2
     - type: area
       area: front
+      grid_options:
+        rows: 2
     - type: area
       area: bathroom
+      grid_options:
+        rows: 2
     - type: area
       area: toilet
+      grid_options:
+        rows: 2
     - type: area
       area: laundry
+      grid_options:
+        rows: 2
   - type: grid
     cards:
     - type: heading

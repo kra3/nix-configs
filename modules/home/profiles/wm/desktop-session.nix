@@ -66,6 +66,68 @@
         mv "$usage_file.tmp" "$usage_file"
       '';
     };
+
+    # Custom rofi script mode: type a query, Enter opens it on DuckDuckGo.
+    # Protocol: https://github.com/davatorium/rofi/blob/next/doc/rofi-script.5.markdown
+    rofi-websearch = pkgs.writeShellApplication {
+      name = "rofi-websearch";
+      runtimeInputs = [
+        pkgs.jq
+        pkgs.xdg-utils
+      ];
+      text = ''
+        query="''${1:-}"
+        if [ -n "$query" ]; then
+          encoded=$(printf '%s' "$query" | jq -sRr @uri)
+          xdg-open "https://duckduckgo.com/?q=$encoded" >/dev/null 2>&1 &
+          exit 0
+        fi
+        echo "Type a search query and press Enter"
+      '';
+    };
+
+    # Custom rofi script mode: "<amount> <FROM> <TO>" (e.g. "100 usd eur"), Enter shows the
+    # converted amount as a result row; Enter again copies just the number to the clipboard.
+    rofi-currency = pkgs.writeShellApplication {
+      name = "rofi-currency";
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.gnused
+        wlClipboardPkg
+      ];
+      text = ''
+        query="''${1:-}"
+
+        if [[ "$query" =~ ^([0-9.]+)\ ([A-Za-z]{3})\ =\ ([0-9.]+)\ ([A-Za-z]{3})$ ]]; then
+          printf '%s' "''${BASH_REMATCH[3]}" | wl-copy
+          exit 0
+        fi
+
+        if [ -z "$query" ]; then
+          echo "Type: <amount> <FROM> <TO>, e.g. 100 usd eur"
+          exit 0
+        fi
+
+        read -r amount from to _ <<<"$(echo "$query" | sed -E 's/\bto\b//I')"
+        from=''${from^^}
+        to=''${to^^}
+
+        if ! [[ "$amount" =~ ^[0-9.]+$ ]] || [ -z "$from" ] || [ -z "$to" ]; then
+          echo "Format: <amount> <FROM> <TO>, e.g. 100 usd eur"
+          exit 0
+        fi
+
+        result=$(curl -s "https://api.frankfurter.dev/v1/latest?amount=$amount&from=$from&to=$to" | jq -r --arg to "$to" '.rates[$to] // "error"')
+
+        if [ "$result" = "error" ] || [ -z "$result" ]; then
+          echo "Couldn't convert $from to $to — check the currency codes"
+          exit 0
+        fi
+
+        echo "$amount $from = $result $to"
+      '';
+    };
   in
   {
     home.packages = [
@@ -89,7 +151,33 @@
       categories = [ "Network" ];
     };
 
-    programs.rofi.enable = true;
+    programs.rofi = {
+      enable = true;
+      package = pkgs.rofi.override {
+        plugins = [
+          pkgs.rofi-calc
+          pkgs.rofi-file-browser
+        ];
+      };
+      # Mod+D opens on "drun"; Tab/Shift+Tab cycle the rest of this list inline
+      # (rofi's built-in mode-switcher) instead of needing a keybind per mode.
+      modes = [
+        "drun"
+        "window"
+        "run"
+        "ssh"
+        "calc"
+        "filebrowser"
+        {
+          name = "websearch";
+          path = "${rofi-websearch}/bin/rofi-websearch";
+        }
+        {
+          name = "currency";
+          path = "${rofi-currency}/bin/rofi-currency";
+        }
+      ];
+    };
     programs.swaylock = {
       enable = true;
       # swaylock-effects for blur/clock/grace; catppuccin.swaylock's colors still merge in.

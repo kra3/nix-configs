@@ -6,38 +6,38 @@ template:
       - name: "Dashboard Time Period"
         unique_id: dashboard_time_period
         state: >-
-          {%- if is_state('schedule.sleep', 'on') %}
+          {%- if is_state('schedule.sleep', 'on') -%}
             night
-          {%- elif is_state('sun.sun', 'above_horizon') %}
+          {%- elif is_state('sun.sun', 'above_horizon') -%}
             day
-          {%- else %}
+          {%- else -%}
             evening
-          {%- endif %}
+          {%- endif -%}
 
       - name: "Dashboard Presence State"
         unique_id: dashboard_presence_state
         state: >-
-          {%- set arun_home = is_state('person.arun_karunagath', 'home') %}
-          {%- set anjali_home = is_state('person.anjalipc', 'home') %}
-          {%- if arun_home and anjali_home %}
+          {%- set arun_home = is_state('person.arun_karunagath', 'home') -%}
+          {%- set anjali_home = is_state('person.anjalipc', 'home') -%}
+          {%- if arun_home and anjali_home -%}
             home_both
-          {%- elif arun_home %}
+          {%- elif arun_home -%}
             home_arun
-          {%- elif anjali_home %}
+          {%- elif anjali_home -%}
             home_anjali
-          {%- else %}
+          {%- else -%}
             away
-          {%- endif %}
+          {%- endif -%}
 
       - name: "Dashboard ETA"
         unique_id: dashboard_eta
         state: >-
-          {%- set people = {'person.arun_karunagath': 'Arun', 'person.anjalipc': 'Anjali'} %}
-          {%- set ns = namespace(parts=[]) %}
-          {%- for entity_id, label in people.items() %}
-            {%- set st = states(entity_id) %}
-            {%- if st not in ['home', 'not_home', 'unknown', 'unavailable'] %}
-              {%- set ns.parts = ns.parts + [label ~ ' near ' ~ st] %}
-            {%- endif %}
-          {%- endfor %}
+          {%- set people = {'person.arun_karunagath': 'Arun', 'person.anjalipc': 'Anjali'} -%}
+          {%- set ns = namespace(parts=[]) -%}
+          {%- for entity_id, label in people.items() -%}
+            {%- set st = states(entity_id) -%}
+            {%- if st not in ['home', 'not_home', 'unknown', 'unavailable'] -%}
+              {%- set ns.parts = ns.parts + [label ~ ' near ' ~ st] -%}
+            {%- endif -%}
+          {%- endfor -%}
           {{ ns.parts | join(', ') if ns.parts else 'none' }}

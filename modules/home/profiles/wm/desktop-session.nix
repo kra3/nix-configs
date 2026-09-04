@@ -163,8 +163,12 @@
           pkgs.rofi-file-browser
         ];
       };
-      # Mod+D opens on "drun"; Tab/Shift+Tab cycle the rest of this list inline
-      # (rofi's built-in mode-switcher) instead of needing a keybind per mode.
+      # Mod+D opens on "drun"; Ctrl+Tab/Ctrl+Shift+Tab cycle the rest of this list inline
+      # (rofi's default kb-mode-next/kb-mode-previous) instead of needing a keybind per mode.
+      extraConfig = {
+        show-icons = true;
+        icon-theme = "Papirus-Dark";
+      };
       modes = [
         "drun"
         "window"

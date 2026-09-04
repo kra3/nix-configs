@@ -23,11 +23,17 @@
       imports = [
         # Replaces the unreliable @continuum-boot under Nix. Session is unnamed so
         # resurrect restores over it instead of colliding with "main"; `tmux ls` guards
-        # against stacking empty sessions on reload.
+        # against stacking empty sessions on reload. flock serializes the check+create
+        # so a second concurrent invocation (e.g. a terminal app reopening several
+        # windows at login) waits for the first instead of racing it into creating a
+        # second bare session that fights continuum's restore.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login (for continuum restore)";
-          script = "${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d";
+          script = ''
+            lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
+            ${pkgs.flock}/bin/flock "$lock" sh -c '${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d'
+          '';
         })
       ];
 

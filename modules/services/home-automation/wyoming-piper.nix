@@ -3,7 +3,7 @@
   {
     virtualisation.quadlet.containers.wyoming-piper = {
       containerConfig = {
-        image = "docker.io/rhasspy/wyoming-piper:2.4.2";
+        image = "docker.io/rhasspy/wyoming-piper:2.4.3";
         exec = "--voice en_US-lessac-medium --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data";
         logDriver = "journald";
         environments = {

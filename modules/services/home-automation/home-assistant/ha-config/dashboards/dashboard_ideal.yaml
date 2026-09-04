@@ -246,7 +246,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.kitchen_occupancy_status
+          entity: binary_sensor.hue_pir_kitchen_occupancy
           state: "on"
         - condition: state
           entity: light.kitchen_lights
@@ -274,7 +274,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.dining_room_occupancy_status
+          entity: binary_sensor.ranger_duo_ptz_person_occupancy
           state: "on"
         - condition: state
           entity: light.dining_lights
@@ -289,7 +289,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.living_room_occupancy_status
+          entity: binary_sensor.ranger_duo_fxd_person_occupancy
           state: "on"
         - condition: state
           entity: light.living_room_lights
@@ -325,7 +325,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.hallway_occupancy_status
+          entity: binary_sensor.hue_pir_hallway_occupancy
           state: "on"
         - condition: state
           entity: light.hall
@@ -340,7 +340,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.bed_room_occupancy_status
+          entity: binary_sensor.bedroom_occupancy_presence
           state: "on"
         - condition: state
           entity: light.bedroom_wardrobe_lights
@@ -366,7 +366,7 @@ views:
       area: bathroom
       visibility:
       - condition: state
-        entity: binary_sensor.bathroom_occupancy_status
+        entity: binary_sensor.bathroom_occupancy_presence
         state: "on"
     - type: tile
       entity: sensor.laundry_occupancy_temperature
@@ -374,7 +374,7 @@ views:
       area: laundry
       visibility:
       - condition: state
-        entity: binary_sensor.laundry_room_occupancy_status
+        entity: binary_sensor.laundry_occupancy_presence
         state: "on"
     - type: tile
       entity: lock.front_door

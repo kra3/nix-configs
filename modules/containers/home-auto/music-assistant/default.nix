@@ -11,7 +11,7 @@
       containerConfig = {
         networks = [
           "${network.ref}:ip=10.3.2.13"
-          "${macvlan.ref}:ip=192.168.1.36,mac=02:42:c0:a8:01:24"
+          "${macvlan.ref}:ip=${config.vars.network.macvlanAddresses.musicAssistant},mac=02:42:c0:a8:01:24"
         ];
         # Bypasses macvlan isolation by forcing host domains to the bridge gateway
         addHosts = [

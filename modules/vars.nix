@@ -169,6 +169,14 @@
             description = "Pinned br-life IP for ghostfolio";
           };
         };
+        # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's snapclient).
+        macvlanAddresses = {
+          musicAssistant = lib.mkOption {
+            type = lib.types.str;
+            default = "192.168.1.36";
+            description = "Pinned home-auto-macvlan IP for music-assistant";
+          };
+        };
       };
       acme = {
         email = lib.mkOption {

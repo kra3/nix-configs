@@ -43,8 +43,8 @@ build host=default_host:
         nixos-rebuild build --flake .#{{host}}
     fi
 
-build-remote host=default_host target=default_host:
-    nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{target}}
+build-remote host=default_host target=default_host build_host=target:
+    nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
 
 switch host=default_host:
     #!/usr/bin/env bash
@@ -55,14 +55,14 @@ switch host=default_host:
         nixos-rebuild switch --flake .#{{host}}
     fi
 
-switch-remote host=default_host target=default_host:
+switch-remote host=default_host target=default_host build_host=target:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{ host }}" = "mac-work" ]; then
         echo "switch-remote is not supported for darwin hosts (darwin-rebuild has no --target-host/--build-host equivalent); run 'just switch {{ host }}' on the host directly." >&2
         exit 1
     fi
-    nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{target}} --use-remote-sudo --ask-sudo-password
+    nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{build_host}} --use-remote-sudo --ask-sudo-password
 
 deploy host=default_host:
     colmena apply --on {{host}}

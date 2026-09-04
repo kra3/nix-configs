@@ -34,4 +34,20 @@
       ../hosts/mac-work
     ];
   };
+
+  surasa = {
+    class = "nixos";
+    system = "aarch64-linux";
+    # Built via QEMU emulation on sutala, not natively -- see hosts/sutala/configuration.nix.
+    # nixos-raspberrypi (not nixos-hardware): its vendor kernel is cached on cachix, avoiding
+    # both nixos-hardware's uncached multi-hour compile and mainline's dwc2 USB probe hang.
+    modules = [
+      { nixpkgs.hostPlatform = "aarch64-linux"; }
+      inputs.nixos-raspberrypi.nixosModules.raspberry-pi-3.base
+      inputs.nixos-raspberrypi.nixosModules.sd-image
+      inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches
+      inputs.nixos-raspberrypi.lib.inject-overlays
+      ../hosts/surasa/configuration.nix
+    ];
+  };
 }

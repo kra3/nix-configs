@@ -98,6 +98,9 @@
     # cross-machine import scenario needing the relaxed hostid check.
     zfs.forceImportRoot = false;
 
+    # QEMU emulation so this host can cross-build aarch64-linux derivations (hosts/surasa).
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
+
     # Kernel hardening parameters
     # NOTE: kernel.unprivileged_userns_clone NOT set to preserve container compatibility
     # Setting it to 0 would break Podman and potentially systemd-nspawn containers
@@ -119,6 +122,13 @@
       "net.ipv4.conf.all.send_redirects" = 0;           # Don't send ICMP redirects
       "net.ipv4.conf.default.send_redirects" = 0;
     };
+  };
+
+  # Trust nixos-raspberrypi's cache so cross-building surasa's kernel/firmware pulls from
+  # cachix instead of compiling under QEMU emulation.
+  nix.settings = {
+    substituters = [ "https://nixos-raspberrypi.cachix.org" ];
+    trusted-public-keys = [ "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" ];
   };
 
   networking = {

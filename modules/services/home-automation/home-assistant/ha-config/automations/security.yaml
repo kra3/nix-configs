@@ -27,3 +27,59 @@
       - light.kitchen_dining_lights
       - light.office_room_light
   mode: single
+
+- id: alarm_triggered_notify
+  alias: "Security: notify on alarm triggered"
+  description: >-
+    Alarmo has no notification action of its own - this is the only
+    alert a triggered alarm produces.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: triggered
+    trigger: state
+  actions:
+  - action: notify.all_phones
+    data:
+      title: "Alarm triggered"
+      message: >-
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown sensor' }}
+  mode: single
+
+- id: alarm_triggered_auto_disarm_on_arrival
+  alias: "Security: auto-disarm on triggered if a resident just arrived"
+  description: >-
+    A triggered alarm otherwise only clears via the wakeup_lighting
+    schedule boundary (sleep.yaml), which can leave it triggered for
+    up to the length of the sleep window. If the front door opened
+    because someone actually walked in - not because someone already
+    inside opened it - auto-clear immediately. "Just walked in" is
+    approximated per-device (not via the aggregated person entity,
+    which can stay "home" the whole time if a resident's other device
+    never left) as any one of a resident's linked device_trackers
+    having transitioned to home within the last 5 minutes.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: triggered
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: >-
+      {%- set window = 300 -%}
+      {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
+                        + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
+      {%- set ns = namespace(recent_arrival=false) -%}
+      {%- for t in trackers -%}
+        {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
+          {%- set ns.recent_arrival = true -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.recent_arrival }}
+  actions:
+  - action: alarm_control_panel.alarm_disarm
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+  - action: notify.all_phones
+    data:
+      title: "Alarm auto-disarmed"
+      message: "Front door opened right after a resident arrived home - disarmed automatically."
+  mode: single

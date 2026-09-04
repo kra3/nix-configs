@@ -17,7 +17,7 @@
     input:
       person_entity: person.arun_karunagath
       zone_entity: zone.home
-      notify_device: a00372a62748fcca4d78e08dd49b1979
+      notify_device: b5b637523ec9028be8de65b52f617c0d
 
 # ── Battery ────────────────────────────────────────────────────
 - id: '1733595301092'
@@ -31,8 +31,8 @@
       include_persistent_notification: enable_persistent_notification
       include_easy_notify: enable_easy_notify
       notify_device:
-      - b4c7eb99866347bf5826b5d0d97b4743
-      - a00372a62748fcca4d78e08dd49b1979
+      - 7d2ced08f79e7e4330780e78d679c86a
+      - b5b637523ec9028be8de65b52f617c0d
       include_button: disable_button_trigger
 
 # ── Away mode ──────────────────────────────────────────────────

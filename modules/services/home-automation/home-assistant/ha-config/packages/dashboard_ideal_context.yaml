@@ -42,6 +42,17 @@ template:
           {%- endfor -%}
           {{ ns.parts | join(', ') if ns.parts else 'none' }}
 
+      - name: "Dashboard Active Media Player"
+        unique_id: dashboard_active_media_player
+        state: >-
+          {%- set players = [
+            'media_player.lg_webos_tv_oled77c35la',
+            'media_player.home_theater',
+            'media_player.home_theater_2',
+          ] -%}
+          {%- set playing = players | select('is_state', 'playing') | list -%}
+          {{ playing[0] if playing else players[0] }}
+
   - binary_sensor:
       - name: "Dashboard Alert: Security"
         unique_id: dashboard_alert_security

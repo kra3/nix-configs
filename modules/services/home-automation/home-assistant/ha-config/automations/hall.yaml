@@ -5,15 +5,8 @@
     Hysteresis darkness state machine for hall.
     ON: lux < 10 sustained 2 min AND sun below horizon.
     OFF: lux > 30 sustained 2 min AND sun above horizon; turns off light.
-    Both thresholds lowered from the blueprint's 30/120 defaults - this
-    room's Hue PIR sensor tops out around 70 lux even at midday
-    (confirmed via Prometheus history), so the 120 bright threshold was
-    unreachable. That left "is_dark" recoverable only via the once-daily
-    sun-above-horizon edge - if the boolean was already dark when that
-    edge fired (e.g. restored "on" across a restart after sunrise), it
-    stayed stuck dark for the rest of the day. 30 sits below the day
-    median (18-22) but above night's ceiling (~7), so it's reachable on
-    an ordinary day and gives the lux path a real recovery route too.
+    Thresholds lowered from the blueprint's 30/120 defaults - this room's
+    Hue PIR tops out around 70 lux even at midday, so 120 was unreachable.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:

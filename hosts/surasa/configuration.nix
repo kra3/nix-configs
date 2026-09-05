@@ -133,8 +133,7 @@
   users.mutableUsers = true;
   users.users.kra3 = {
     isNormalUser = true;
-    # /dev/snd/* is group-owned "audio" (crw-rw----); without this, WirePlumber's ALSA monitor
-    # can't open the onboard bcm2835 headphone/HDMI cards and falls back to a dummy sink only.
+    # /dev/snd/* is group-owned "audio"; without it, WirePlumber can't open the onboard headphone/HDMI cards.
     extraGroups = [ "wheel" "audio" ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDpvhVfQVKDNfVyl4GJux/lfzjkm683EW4MAESX/JKQA sutala kra3"

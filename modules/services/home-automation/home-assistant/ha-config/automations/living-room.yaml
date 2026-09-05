@@ -1,4 +1,22 @@
 # ── Living room ────────────────────────────────────────────────
+- id: living_darkness
+  alias: Living room — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for living room, using the
+    house-wide average illuminance (living room has no illuminance
+    sensor of its own) rather than hall_is_dark — same fix as
+    dining_darkness, for the same reason: living room is one of the
+    brightest rooms, so gating it on the hall's dim interior PIR
+    turned its lights on in broad daylight. Blueprint's 30/120 lux
+    defaults fit sensor.average_illuminance.
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.average_illuminance
+      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
+      light_entity: light.living_room_lights
+      dark_boolean: input_boolean.living_room_is_dark
+
 - id: living_room_lighting
   alias: Living room — Lighting
   description: >-
@@ -14,7 +32,7 @@
     input:
       light_entity: light.living_room_lights
       occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
-      dark_boolean: input_boolean.hall_is_dark
+      dark_boolean: input_boolean.living_room_is_dark
 
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
@@ -27,6 +45,9 @@
     again. Only skips on a definite "off"; unknown/unavailable still
     restores, since the underlying Frigate person_occupancy sensors
     are known to false-negative (see living_room_lighting's KNOWN ISSUE).
+    Darkness gate is either room's own boolean now (was hall_is_dark) -
+    living and dining each have their own since both moved to
+    sensor.average_illuminance.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -37,9 +58,14 @@
     trigger: state
     id: not_playing
   conditions:
-  - condition: state
-    entity_id: input_boolean.hall_is_dark
-    state: "on"
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: input_boolean.living_room_is_dark
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.dining_is_dark
+      state: "on"
   actions:
   - choose:
     - conditions:

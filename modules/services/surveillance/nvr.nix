@@ -248,6 +248,7 @@
     systemd.tmpfiles.rules = [
       "d /var/cache/nginx 0750 nginx nginx - -"
       "d /var/cache/nginx/frigate 0750 nginx nginx - -"
+      "d /run/frigate-motion-watchdog 0750 root root - -"
     ];
 
     systemd.services = {
@@ -263,6 +264,63 @@
           EnvironmentFile = "/run/secrets/surveillance-nvr-go2rtc.env";
           StateDirectory = lib.mkForce [ ];
         };
+      };
+
+      # ranger_duo_fxd's motion sensor has been seen going silently stale
+      # (camera/go2rtc stream freezes but frigate itself stays healthy, so
+      # nothing errors) with only a full `systemctl restart frigate` clearing
+      # it. Neither Frigate nor go2rtc expose a narrower per-camera/stream
+      # restart API (upstream: blakeblackshear/frigate#15725, closed
+      # not-planned; AlexxIT/go2rtc#1136, open) -- a full restart is the only
+      # available lever, so this watches just that one camera and applies it
+      # automatically instead of waiting on the hourly HA notification.
+      frigate-motion-watch = {
+        description = "Track ranger_duo_fxd motion-state changes for the stale-motion watchdog";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "mosquitto.service" ];
+        wants = [ "mosquitto.service" ];
+        serviceConfig = {
+          EnvironmentFile = "/run/secrets/surveillance-nvr-frigate.env";
+          ExecStart = pkgs.writeShellScript "frigate-motion-watch" ''
+            set -eu
+            touch /run/frigate-motion-watchdog/ranger_duo_fxd.stamp
+            ${pkgs.mosquitto}/bin/mosquitto_sub -h localhost -p 1883 \
+              -u "$FRIGATE_MQTT_USER" -P "$FRIGATE_MQTT_PASSWORD" \
+              -t frigate/ranger_duo_fxd/motion |
+            while IFS= read -r _; do
+              touch /run/frigate-motion-watchdog/ranger_duo_fxd.stamp
+            done
+          '';
+          Restart = "always";
+          RestartSec = 10;
+        };
+      };
+    };
+
+    systemd.services.frigate-restart-on-stale-motion = {
+      description = "Restart frigate if ranger_duo_fxd's motion sensor has gone stale";
+      serviceConfig.Type = "oneshot";
+      path = [ pkgs.coreutils pkgs.systemd ];
+      script = ''
+        stamp=/run/frigate-motion-watchdog/ranger_duo_fxd.stamp
+        if [ ! -e "$stamp" ]; then
+          echo "no stamp yet, skipping"
+          exit 0
+        fi
+        age=$(( $(date +%s) - $(stat -c %Y "$stamp") ))
+        if [ "$age" -gt $(( 4 * 3600 )) ]; then
+          echo "ranger_duo_fxd motion stale for ''${age}s, restarting frigate"
+          systemctl restart frigate.service
+          touch "$stamp"
+        fi
+      '';
+    };
+
+    systemd.timers.frigate-restart-on-stale-motion = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "30min";
+        OnUnitActiveSec = "15min";
       };
     };
   };

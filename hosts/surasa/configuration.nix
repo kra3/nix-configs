@@ -62,6 +62,12 @@
     networkmanager.enable = true;
   };
 
+  # The bootstrap ethernet adapter staying plugged in on the same LAN as wlan0 causes ARP flux, silently missing `iifname "wlan0"` firewall rules.
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.all.arp_ignore" = 1;
+    "net.ipv4.conf.all.arp_announce" = 2;
+  };
+
   # Loki's container address isn't routable off sutala's host -- push via the loki.<domain> vhost instead.
   services.monitoringAlloyHost.lokiUrl = "https://loki.${config.vars.acme.domain}/loki/api/v1/push";
 

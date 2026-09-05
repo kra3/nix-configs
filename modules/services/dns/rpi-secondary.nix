@@ -10,6 +10,9 @@
     }:
     let
       net = config.vars.network;
+      domain = config.vars.acme.domain;
+      # Sutala's LAN IP, not a shared var; same literal used by services-monitoring-sutala-watchdog.
+      sutalaIp = "192.168.1.10";
     in
     {
       services.unbound = {
@@ -141,6 +144,14 @@
           filtering = {
             filtering_enabled = true;
             protection_enabled = true;
+            # Mirrors sutala's own rewrite -- surasa's resolver otherwise can't resolve *.${domain} at all.
+            rewrites = [
+              {
+                domain = "*.${domain}";
+                answer = sutalaIp;
+                enabled = true;
+              }
+            ];
           };
 
           # Drop the 3 largest lists (HaGeZi Threat Intel Feeds: 2.17M rules, HaGeZi Gambling: 461K,

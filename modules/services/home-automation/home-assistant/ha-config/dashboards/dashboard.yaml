@@ -1,5 +1,6 @@
 views:
 - title: Home
+  path: home
   sections:
   - type: grid
     cards:
@@ -514,6 +515,7 @@ views:
     entity: sensor.season
   cards: []
 - title: Cameras
+  path: cameras
   icon: mdi:cctv
   sections:
   - type: grid
@@ -563,6 +565,7 @@ views:
       grid_options:
         columns: 4
 - title: Media
+  path: media
   icon: mdi:play-circle
   sections:
   - type: grid
@@ -609,23 +612,28 @@ views:
       grid_options:
         columns: 4
 - title: Overview
+  path: dash-overview
   icon: mdi:view-dashboard
   strategy:
     type: original-states
 - title: Lights
+  path: dash-lights
   icon: mdi:lightbulb-group
   strategy:
     type: light
 - title: Security
+  path: dash-security
   icon: mdi:shield-home
   strategy:
     type: security
 - title: Climate
+  path: dash-climate
   icon: mdi:thermostat
   strategy:
     type: climate
 - type: sections
   title: System Health
+  path: system-health
   icon: mdi:server
   cards: []
   sections:
@@ -786,6 +794,7 @@ views:
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - title: Maintenance
+  path: dash-maintenance
   icon: mdi:wrench
   strategy:
     type: maintenance

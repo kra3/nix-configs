@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   flakeModules,
   ...
 }:
@@ -76,7 +77,25 @@
     enabledCollectors = [ "systemd" ];
     openFirewall = false;
   };
-  networking.firewall.interfaces.wlan0.allowedTCPPorts = [ 9100 ];
+
+  # HTTP-level probe target for sutala's monitoring container -- catches failures ping/node_exporter
+  # can't (cert expired, backend crashed behind nginx) that sutala-watchdog's reachability check misses.
+  services.prometheus.exporters.blackbox = {
+    enable = true;
+    openFirewall = false;
+    configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
+      modules.http_2xx = {
+        prober = "http";
+        timeout = "5s";
+        http.preferred_ip_protocol = "ip4";
+      };
+    };
+  };
+
+  networking.firewall.interfaces.wlan0.allowedTCPPorts = [
+    9100
+    9115
+  ];
 
   # Logs already ship to Loki via Alloy above -- skip persisting them locally too, to cut SD card writes.
   services.journald.storage = "volatile";

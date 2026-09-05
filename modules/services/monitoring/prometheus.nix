@@ -1,6 +1,6 @@
 {
   flake.nixosModules.services-monitoring-prometheus =
-  { networkVars, ... }:
+  { networkVars, domain, ... }:
   let
     hostAddr = networkVars.containers.monitoring.hostAddress;
     monAddr = networkVars.containers.monitoring.localAddress;
@@ -138,6 +138,34 @@
               targets = [ "${mediaAddr}:4533" ];
               labels.container = "media-play";
               labels.instance = "media-play";
+            }
+          ];
+        }
+        {
+          # surasa's blackbox exporter probing sutala from an independent LAN vantage point --
+          # catches HTTP-level failures (expired cert, backend crashed behind nginx) that
+          # sutala-watchdog's plain ICMP check can't see.
+          job_name = "blackbox-http";
+          metrics_path = "/probe";
+          params.module = [ "http_2xx" ];
+          static_configs = [
+            {
+              targets = [ "https://auth.${domain}" ];
+              labels.instance = "auth";
+            }
+          ];
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              source_labels = [ "__param_target" ];
+              target_label = "instance";
+            }
+            {
+              target_label = "__address__";
+              replacement = "192.168.1.39:9115";
             }
           ];
         }

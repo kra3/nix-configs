@@ -256,6 +256,86 @@
                 }
               ];
             }
+            {
+              orgId = 1;
+              name = "external-probes";
+              folder = "Sutala";
+              interval = "1m";
+              rules = [
+                {
+                  uid = "blackbox-http-probe-failed";
+                  title = "External HTTP probe failing";
+                  condition = "C";
+                  data = [
+                    {
+                      refId = "A";
+                      relativeTimeRange = {
+                        from = 600;
+                        to = 0;
+                      };
+                      datasourceUid = prometheusDatasourceUid;
+                      model = {
+                        refId = "A";
+                        expr = ''probe_success{job="blackbox-http"}'';
+                        instant = true;
+                        range = false;
+                        intervalMs = 1000;
+                        maxDataPoints = 43200;
+                      };
+                    }
+                    {
+                      refId = "B";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "B";
+                        type = "reduce";
+                        expression = "A";
+                        reducer = "last";
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                    {
+                      refId = "C";
+                      datasourceUid = "__expr__";
+                      model = {
+                        refId = "C";
+                        type = "threshold";
+                        expression = "B";
+                        conditions = [
+                          {
+                            evaluator = {
+                              type = "lt";
+                              params = [ 1 ];
+                            };
+                            operator.type = "and";
+                            query.params = [ "C" ];
+                            reducer.type = "last";
+                            type = "query";
+                          }
+                        ];
+                        datasource = {
+                          type = "__expr__";
+                          uid = "__expr__";
+                        };
+                      };
+                    }
+                  ];
+                  noDataState = "Alerting";
+                  execErrState = "Error";
+                  # Probed from surasa, scraped by sutala -- a few minutes' grace for transient LAN/wifi blips.
+                  for = "5m";
+                  labels.severity = "warning";
+                  annotations = {
+                    summary = "{{ $labels.instance }} HTTP probe (from surasa) is failing.";
+                    description = "sutala is reachable (sutala-watchdog would have paged separately if not), but this vhost isn't responding with 2xx -- check nginx, the backend service, and cert validity.";
+                  };
+                  isPaused = false;
+                }
+              ];
+            }
           ];
         };
       };

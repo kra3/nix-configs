@@ -89,6 +89,17 @@
         timeout = "5s";
         http.preferred_ip_protocol = "ip4";
       };
+      # Resolves a real external name against AdGuard -- catches "process running but not actually answering queries" (bad upstream, hung filter reload) that node_exporter/systemd can't see.
+      modules.dns_udp = {
+        prober = "dns";
+        timeout = "5s";
+        dns = {
+          query_name = "google.com";
+          query_type = "A";
+          transport_protocol = "udp";
+          preferred_ip_protocol = "ip4";
+        };
+      };
     };
   };
 

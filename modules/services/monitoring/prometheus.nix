@@ -170,6 +170,33 @@
           ];
         }
         {
+          # Same independent-vantage-point idea as blackbox-http, but resolves a real query against
+          # sutala's AdGuard -- catches "running but not actually answering" that no unit-state check can see.
+          job_name = "blackbox-dns";
+          metrics_path = "/probe";
+          params.module = [ "dns_udp" ];
+          static_configs = [
+            {
+              targets = [ "192.168.1.10:53" ];
+              labels.instance = "adguard-sutala";
+            }
+          ];
+          relabel_configs = [
+            {
+              source_labels = [ "__address__" ];
+              target_label = "__param_target";
+            }
+            {
+              source_labels = [ "__param_target" ];
+              target_label = "instance";
+            }
+            {
+              target_label = "__address__";
+              replacement = "192.168.1.39:9115";
+            }
+          ];
+        }
+        {
           job_name = "homeassistant";
           metrics_path = "/api/prometheus";
           authorization = {

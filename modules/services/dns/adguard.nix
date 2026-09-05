@@ -229,8 +229,8 @@
             "||metric.gstatic.com^$important"
             "||mmstat.com^$important"
             "||statcounter.com^$important"
-            # thexem.info: legit Sonarr/Radarr scene-numbering API, false-positive blocklist hit
-            "@@||thexem.info^"
+            # thexem.info: legit Sonarr/Radarr scene-numbering API; needs $important to beat a blocklist rule that also has it.
+            "@@||thexem.info^$important"
           ];
 
           querylog = {

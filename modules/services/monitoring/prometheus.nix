@@ -22,7 +22,7 @@
           job_name = "prometheus";
           static_configs = [
             {
-              targets = [ "127.0.0.1:9090" ];
+              targets = [ "${monAddr}:9090" ];
               labels.instance = "monitoring";
             }
           ];

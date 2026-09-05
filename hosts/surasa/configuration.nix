@@ -68,6 +68,12 @@
     "net.ipv4.conf.all.arp_announce" = 2;
   };
 
+  # No regdomain is set otherwise, leaving cfg80211 in the restrictive default "00" world
+  # domain -- which rejects 5GHz DFS channels (brcmf_set_channel fails with reason -52) until
+  # the AP's own beacon happens to override it. Raspberry Pi OS bakes this in via raspi-config;
+  # NixOS doesn't, so set it explicitly.
+  boot.kernelParams = [ "cfg80211.ieee80211_regdom=SE" ];
+
   # Loki's container address isn't routable off sutala's host -- push via the loki.<domain> vhost instead.
   services.monitoringAlloyHost.lokiUrl = "https://loki.${config.vars.acme.domain}/loki/api/v1/push";
 

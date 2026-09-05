@@ -27,6 +27,16 @@
       }
     );
 
+    # Host nginx reverse proxy for Loki -- lets hosts outside sutala (e.g. surasa) push
+    # logs over the LAN/tailnet, since the container's veth address isn't otherwise routable.
+    services.nginx.virtualHosts."loki.${config.vars.acme.domain}" = lib.mkIf (config.containers.monitoring.config.services.loki.enable or false) (
+      flakeLib.nginx.mkProxyVhost {
+        domain = config.vars.acme.domain;
+        cidrs = config.vars.network.nginxAllowCidrs;
+        upstream = "http://${config.vars.network.containers.monitoring.localAddress}:3100";
+      }
+    );
+
     # Host secrets for monitoring container
     # grafana's in-container gid (dynamically allocated by systemd-sysusers,
     # nixpkgs only pins its uid) turned out to already be 999 on sutala

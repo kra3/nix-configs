@@ -32,7 +32,7 @@
     mkAlloyAgent =
       {
         hostName,
-        monitoringLocalAddress,
+        lokiUrl,
         roleLabel ? "host",
         extraGroups ? [ ],
       }:
@@ -57,7 +57,7 @@
         environment.etc."alloy/base.alloy".text = ''
           loki.write "default" {
             endpoint {
-              url = "http://${monitoringLocalAddress}:3100/loki/api/v1/push"
+              url = "${lokiUrl}"
             }
           }
 

@@ -266,14 +266,7 @@
         };
       };
 
-      # ranger_duo_fxd's motion sensor has been seen going silently stale
-      # (camera/go2rtc stream freezes but frigate itself stays healthy, so
-      # nothing errors) with only a full `systemctl restart frigate` clearing
-      # it. Neither Frigate nor go2rtc expose a narrower per-camera/stream
-      # restart API (upstream: blakeblackshear/frigate#15725, closed
-      # not-planned; AlexxIT/go2rtc#1136, open) -- a full restart is the only
-      # available lever, so this watches just that one camera and applies it
-      # automatically instead of waiting on the hourly HA notification.
+      # No narrower per-camera/stream restart exists upstream (frigate#15725 closed not-planned, go2rtc#1136 open), so a full restart is the only remediation.
       frigate-motion-watch = {
         description = "Track ranger_duo_fxd motion-state changes for the stale-motion watchdog";
         wantedBy = [ "multi-user.target" ];

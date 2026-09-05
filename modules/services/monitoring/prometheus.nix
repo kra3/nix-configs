@@ -37,6 +37,15 @@
           ];
         }
         {
+          job_name = "node-surasa";
+          static_configs = [
+            {
+              targets = [ "192.168.1.39:9100" ];
+              labels.instance = "surasa";
+            }
+          ];
+        }
+        {
           job_name = "node-containers";
           static_configs = [
             {

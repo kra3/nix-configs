@@ -13,6 +13,7 @@
     flakeModules.nixos.services-dns-rpi-secondary
     flakeModules.nixos.services-media-snapclient
     flakeModules.nixos.services-monitoring-sutala-watchdog
+    flakeModules.nixos.services-monitoring-alloy-host
   ];
 
   networking.hostName = "surasa";
@@ -59,6 +60,20 @@
     nameservers = [ "127.0.0.1" ];
     networkmanager.enable = true;
   };
+
+  # Loki's container address isn't routable off sutala's host -- push via the loki.<domain> vhost instead.
+  services.monitoringAlloyHost.lokiUrl = "https://loki.${config.vars.acme.domain}/loki/api/v1/push";
+
+  services.prometheus.exporters.node = {
+    enable = true;
+    enabledCollectors = [ "systemd" ];
+    openFirewall = false;
+  };
+  networking.firewall.interfaces.wlan0.allowedTCPPorts = [ 9100 ];
+
+  # Logs already ship to Loki via Alloy above -- skip persisting them locally too, to cut SD card writes.
+  services.journald.storage = "volatile";
+  services.journald.extraConfig = "RuntimeMaxUse=32M";
 
   # services-infrastructure-openssh only opens port 22 on vars.network.lanIf (wlan0) -- fine
   # for sutala's single interface, but surasa's first boot (and sops bootstrap) happens over

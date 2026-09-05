@@ -15,7 +15,7 @@
       port = 9090;
       retentionTime = "2y";
       globalConfig = {
-        scrape_interval = "15s";
+        scrape_interval = "30s";
       };
       scrapeConfigs = [
         {

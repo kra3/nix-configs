@@ -48,6 +48,7 @@
     flakeModules.nixos.fail2ban
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
+    flakeModules.nixos.services-system-power-tuning
     flakeModules.nixos.services-virtualisation-default
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3

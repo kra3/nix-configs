@@ -2,6 +2,11 @@
 # when it's actually connected, falling back to the yale cloud integration
 # when it isn't. Automations/dashboards should reference these, not the raw
 # yalexs_ble or yale entities directly.
+input_text:
+  doorbell_return_source:
+    name: Doorbell return source
+    icon: mdi:doorbell
+
 template:
   - binary_sensor:
       - name: "Front Door Open"

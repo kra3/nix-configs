@@ -40,12 +40,55 @@ input_boolean:
     name: Dining is dark
   living_room_is_dark:
     name: Living room is dark
+  hall_is_dark:
+    name: Hall is dark
+  kitchen_is_dark:
+    name: Kitchen is dark
   party_mode:
     name: Party mode
     icon: mdi:party-popper
   automations_paused:
     name: Automations paused (manual mode)
     icon: mdi:pause-octagon
+
+input_number:
+  light_on_sun_elevation_threshold:
+    name: Light-on sun elevation threshold
+    icon: mdi:weather-sunset
+    min: -10
+    max: 10
+    step: 0.5
+    initial: 4
+    unit_of_measurement: "°"
+
+schedule:
+  sleep:
+    name: Sleep
+    icon: mdi:sleep
+    # HA schedule ranges can't cross midnight, so overnight windows are split into a morning tail + evening start.
+    monday: &weekday_night
+      - from: "00:00:00"
+        to: "07:00:00"
+      - from: "22:30:00"
+        to: "23:59:59"
+    tuesday: *weekday_night
+    wednesday: *weekday_night
+    thursday: *weekday_night
+    friday:
+      - from: "00:00:00"
+        to: "07:00:00"
+      - from: "23:00:00"
+        to: "23:59:59"
+    saturday:
+      - from: "00:00:00"
+        to: "08:30:00"
+      - from: "23:00:00"
+        to: "23:59:59"
+    sunday:
+      - from: "00:00:00"
+        to: "08:30:00"
+      - from: "22:30:00"
+        to: "23:59:59"
 
 template:
   - binary_sensor:

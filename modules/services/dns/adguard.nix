@@ -229,6 +229,8 @@
             "||metric.gstatic.com^$important"
             "||mmstat.com^$important"
             "||statcounter.com^$important"
+            # thexem.info: legit Sonarr/Radarr scene-numbering API, false-positive blocklist hit
+            "@@||thexem.info^"
           ];
 
           querylog = {

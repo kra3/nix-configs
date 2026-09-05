@@ -16,21 +16,19 @@ check:
 update:
     nix flake update
 
-# Print the three hosts' drvPaths as JSON. Kept simple and deterministic —
+# Print the hosts' drvPaths as JSON. Kept simple and deterministic —
 # useful for confirming a change's actual effect on the built system.
 drv:
     #!/usr/bin/env bash
     set -euo pipefail
     sutala=$(nix eval --raw .#nixosConfigurations.sutala.config.system.build.toplevel.drvPath)
     macwork=$(nix eval --raw .#darwinConfigurations.mac-work.system.drvPath)
-    colmena=$(nix eval --raw .#colmenaHive.nodes.sutala.config.system.build.toplevel.drvPath)
     jq -n \
         --arg sutala "$sutala" \
         --arg macwork "$macwork" \
-        --arg colmena "$colmena" \
-        '{"nixosConfigurations.sutala": $sutala, "darwinConfigurations.mac-work.system": $macwork, "colmenaHive.nodes.sutala": $colmena}'
+        '{"nixosConfigurations.sutala": $sutala, "darwinConfigurations.mac-work.system": $macwork}'
 
-# Local check: flake check, then print all three hosts' drvPaths.
+# Local check: flake check, then print the hosts' drvPaths.
 eval: check
     @just drv
 
@@ -69,13 +67,6 @@ switch-remote host=default_host target=default_host build_host=target:
 # for the ethernet bootstrap IP instead of its normal wifi one when needed.
 switch-surasa target="surasa":
     just switch-remote surasa {{target}} localhost
-
-deploy host=default_host:
-    colmena apply --on {{host}}
-
-deploy-stop-first host=default_host:
-    ssh {{host}}-root "systemctl stop 'podman-*.service' 2>/dev/null || true"
-    colmena apply --on {{host}}
 
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}

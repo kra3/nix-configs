@@ -59,7 +59,6 @@ All dotfiles are managed declaratively via Home Manager:
 ```bash
 nixos-rebuild switch --flake .#sutala
 # Remote deploy:
-just deploy          # colmena apply
 just switch-remote   # nixos-rebuild over SSH
 ```
 
@@ -92,7 +91,7 @@ See `secrets/README.md` for the full secrets layout.
 ## Adding a New Machine
 
 1. Create `hosts/<hostname>/configuration.nix` (NixOS) or `hosts/<hostname>/darwin-configuration.nix` (macOS)
-2. Add an entry for the host to `flake/hosts.nix` (one table, one definition per host — `flake.nix` turns it into `nixosConfigurations`, `darwinConfigurations`, and `colmena` entries)
+2. Add an entry for the host to `flake/hosts.nix` (one table, one definition per host — `flake.nix` turns it into `nixosConfigurations` and `darwinConfigurations` entries)
 3. Import `modules/users/kra3.nix` (or create a new user module) to bring in Home Manager dotfiles
 4. For NixOS: run `nixos-generate-config` on the host to produce `hardware-configuration.nix` and `disko.nix`
 

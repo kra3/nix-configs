@@ -31,15 +31,12 @@ jobs:
 
       - uses: cachix/install-nix-action@v31
 
-      - name: Evaluate all three hosts' drvPaths
+      - name: Evaluate hosts' drvPaths
         run: |
           echo "nixosConfigurations.sutala:"
           nix eval --raw .#nixosConfigurations.sutala.config.system.build.toplevel.drvPath
           echo
           echo "darwinConfigurations.mac-work.system:"
           nix eval --raw .#darwinConfigurations.mac-work.system.drvPath
-          echo
-          echo "colmenaHive.nodes.sutala:"
-          nix eval --raw .#colmenaHive.nodes.sutala.config.system.build.toplevel.drvPath
           echo
 

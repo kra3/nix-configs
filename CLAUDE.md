@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Commands
 
-Enter the devShell first for access to `age`, `colmena`, `just`, `nixos-rebuild`, `sops`, `ssh-to-age`:
+Enter the devShell first for access to `age`, `just`, `nixos-rebuild`, `sops`, `ssh-to-age`:
 ```sh
 nix develop
 ```
@@ -17,7 +17,6 @@ just update                           # Update flake.lock inputs
 just build [host]                     # Build host config (default: sutala)
 just switch [host]                    # Apply config locally (nixos-rebuild / darwin-rebuild)
 just switch-remote [host] [target]    # Apply via SSH with sudo
-just deploy [host]                    # Deploy using colmena
 just sops-edit [file]                 # Edit an encrypted secrets file
 ```
 
@@ -39,16 +38,16 @@ A "could not be validated and has been disabled" or "Failed config" line means a
 ## Architecture
 
 ### Hosts
-- **`hosts/sutala/`** — NixOS x86_64-linux home server (192.168.1.10, LAN if `enp2s0`). Media, home-automation, DNS, monitoring, surveillance. Disk layout via `disko.nix`; deployed both as a `nixosConfigurations` entry and as the sole `colmena` node (`flake.nix`).
+- **`hosts/sutala/`** — NixOS x86_64-linux home server (192.168.1.10, LAN if `enp2s0`). Media, home-automation, DNS, monitoring, surveillance. Disk layout via `disko.nix`; deployed via `just switch sutala` (or `switch-remote` from elsewhere).
 - **`hosts/mac-work/`** — nix-darwin aarch64-darwin laptop, single `default.nix` (no separate `darwin-configuration.nix`). Home Manager user `akarunagath`, imports `modules/home/work.nix`.
-- **`hosts/surasa/`** — NixOS aarch64-linux Raspberry Pi 3B+, wifi-only, secondary DNS resolver (AdGuard Home + Unbound) + Snapcast client. Cross-built from sutala via `boot.binfmt.emulatedSystems`, not natively; not a colmena node — deployed via `just switch-remote surasa surasa sutala-root`.
+- **`hosts/surasa/`** — NixOS aarch64-linux Raspberry Pi 3B+, wifi-only, secondary DNS resolver (AdGuard Home + Unbound) + Snapcast client. Cross-built from sutala via `boot.binfmt.emulatedSystems`, not natively; deployed via `just switch-remote surasa <target>` (its weak CPU can't reliably build its own closure — always build on sutala).
 
 ### Module Layout
 This repo follows the **dendritic pattern**: every `.nix` file under `modules/` is itself a flake-parts module that self-registers into a flat registry — `flake.nixosModules.<name>` / `flake.darwinModules.<name>` / `flake.homeManagerModules.<name>` / `flake.lib.<name>` / `flake.overlays.<name>` — rather than being pulled in via a hand-maintained `imports` list. `flake.nix` walks the whole tree with a single `(inputs.import-tree ./modules).imports` call; nothing under `modules/` is referenced from `flake.nix` by literal path. **Exception:** `modules/flake-lib.nix`, `modules/flake-darwin-modules.nix`, and `modules/flake-home-manager-modules.nix` declare the `flake.lib` / `flake.darwinModules` / `flake.homeManagerModules` registries themselves (the latter two also carry the `apply` wrapper that stamps `_class`/`_file`) — they don't register as entries in one. (`flake.nixosModules` is flake-parts' own built-in registry, not something this repo declares.)
 
 **Naming rule (load-bearing — follow exactly when adding a file):** a module's registered name is flat — its path relative to `modules/`, with `/` replaced by `-` and `.nix` stripped, no special-casing of `default.nix`. E.g. `modules/services/system/nix-allow-unfree.nix` → `flake.nixosModules.services-system-nix-allow-unfree`; `modules/home/git/delta.nix` → `flake.homeManagerModules.home-git-delta`. **Exception:** `flake.lib` and `flake.overlays` name relative to their *own* directory instead (to avoid stuttering, since the registry name already equals the directory name) — `modules/lib/container/definition.nix` → `flake.lib.container-definition`, not `flake.lib.lib-container-definition`.
 
-Hosts, containers, and home-manager configs consume registered modules **by name only**, never by literal path — `flakeModules.nixos.<name>` / `flakeModules.darwin.<name>` / `flakeModules.homeManager.<name>` (and `flakeLib.<name>` for lib helpers), threaded in via `specialArgs` (top-level host and colmena), `containers.<name>.specialArgs` (podman/nspawn containers — never inherited automatically from the host, must be explicitly re-threaded), or `home-manager.extraSpecialArgs`.
+Hosts, containers, and home-manager configs consume registered modules **by name only**, never by literal path — `flakeModules.nixos.<name>` / `flakeModules.darwin.<name>` / `flakeModules.homeManager.<name>` (and `flakeLib.<name>` for lib helpers), threaded in via `specialArgs` (top-level host), `containers.<name>.specialArgs` (podman/nspawn containers — never inherited automatically from the host, must be explicitly re-threaded), or `home-manager.extraSpecialArgs`.
 
 - **`modules/home/`** — Home Manager dotfiles shared across hosts (git, vim, tmux, fzf, zoxide, sesh, gh, claude-code, mcp-nixos, etc.), as flat leaf modules. `modules/home/profiles/` aggregates these into purpose-based bundles registered as `flake.homeManagerModules.home-profiles-<name>`: `core`, `ai`, `dev`, `shell`, `browsers`, `terminal`, and `wm/default.nix` (which itself aggregates `wm/niri.nix` + `wm/desktop-session.nix`); hosts/users now import profiles instead of (only) individual leaves. Each host also sets Catppuccin/`home.stateVersion` itself (`hosts/sutala/home.nix`, `hosts/mac-work/default.nix`). `work.nix` (git `~/.gitconfig.work` include, ripgrep credential-file exclusions) is opt-in per host.
 - **`modules/services/`** — NixOS system services, one subdir per concern: `proxy/` (nginx), `dns/` (AdGuard Home + Unbound), `monitoring/` (Prometheus/Grafana/Loki), `infrastructure/` (ACME, OpenSSH, sops), `discovery/` (Avahi), `surveillance/` (NVR + proxy), `virtualisation/` (Podman, Arcane), `system/` (nix.conf, sysadmin, vim), plus `tailscale.nix`, `postgres.nix`, `redis.nix`, `mosquitto.nix`, `zigbee2mqtt.nix`, `niri/`.

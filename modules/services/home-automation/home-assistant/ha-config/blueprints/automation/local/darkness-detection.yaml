@@ -77,6 +77,15 @@ triggers:
     to: above_horizon
     trigger: state
     id: bright
+  # Native trigger instead of a wait_for_trigger inside the bright branch —
+  # an in-flight wait doesn't survive an HA restart, stranding the light on.
+  - entity_id: !input occupancy_sensor
+    to: "off"
+    trigger: state
+    id: occupancy_clear
+  - trigger: homeassistant
+    event: start
+    id: startup
 actions:
   # Trust each trigger's own threshold — re-checking lux here used to
   # gate the sun-based trigger too, so a sensor that never reads above
@@ -98,14 +107,32 @@ actions:
             action: input_boolean.turn_off
           - if:
               - condition: state
+                entity_id: !input occupancy_sensor
+                state: "off"
+              - condition: state
                 entity_id: !input light_entity
                 state: "on"
             then:
-              - wait_for_trigger:
-                  - entity_id: !input occupancy_sensor
-                    to: "off"
-                    trigger: state
               - target:
                   entity_id: !input light_entity
                 action: light.turn_off
+      # occupancy_clear covers the live case (bright already, occupancy
+      # just cleared); startup re-checks the same thing once on every HA
+      # restart in case a prior clear was missed mid-restart.
+      - conditions:
+          - condition: trigger
+            id: [occupancy_clear, startup]
+          - condition: state
+            entity_id: !input dark_boolean
+            state: "off"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            action: light.turn_off
 mode: restart

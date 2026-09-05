@@ -1,0 +1,15 @@
+{#-
+  Shared by the startup-catchup branches added for restart hardening
+  (see room-presence-lighting.yaml, hall.yaml, front-door.yaml) — they
+  can't rely on a state trigger's `for:`, which only arms on a fresh
+  transition and won't retroactively fire for a duration that already
+  elapsed before HA (re)started.
+-#}
+
+{%- macro elapsed_since(entity_id) -%}
+{{ as_timestamp(now()) - as_timestamp(states[entity_id].last_changed) }}
+{%- endmacro -%}
+
+{%- macro elapsed_ge(entity_id, seconds) -%}
+{{ elapsed_since(entity_id) | float >= seconds }}
+{%- endmacro -%}

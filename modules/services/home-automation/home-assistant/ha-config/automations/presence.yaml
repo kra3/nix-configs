@@ -61,6 +61,14 @@
     - person.anjalipc
     - person.arun_karunagath
     trigger: state
+    id: left
+  # An HA restart during the 5-min wait loses it — nobody re-triggers
+  # this since presence already settled, so the house would stay
+  # unarmed indefinitely. Skip straight to arming since we already know
+  # (from the conditions below) that everyone's away right now.
+  - trigger: homeassistant
+    event: start
+    id: startup
   conditions:
   - condition: not
     conditions:
@@ -71,15 +79,19 @@
       entity_id: person.arun_karunagath
       state: home
   actions:
-  - delay: "00:05:00"
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.anjalipc
-      state: home
-    - condition: state
-      entity_id: person.arun_karunagath
-      state: home
+  - if:
+      - condition: trigger
+        id: left
+    then:
+      - delay: "00:05:00"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: person.anjalipc
+          state: home
+        - condition: state
+          entity_id: person.arun_karunagath
+          state: home
   - action: light.turn_off
     target:
       entity_id: all
@@ -117,10 +129,18 @@
   - entity_id: binary_sensor.house_exits_open_status
     to: "on"
     trigger: state
+    id: exit_open
   - entity_id:
     - person.anjalipc
     - person.arun_karunagath
     trigger: state
+    id: left
+  # An HA restart during the 5-min wait loses it and nothing re-triggers
+  # this — skip straight to notifying since the conditions below already
+  # confirm everyone's away with something still open right now.
+  - trigger: homeassistant
+    event: start
+    id: startup
   conditions:
   - condition: not
     conditions:
@@ -134,18 +154,24 @@
     entity_id: binary_sensor.house_exits_open_status
     state: "on"
   actions:
-  - delay: "00:05:00"
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.anjalipc
-      state: home
-    - condition: state
-      entity_id: person.arun_karunagath
-      state: home
-  - condition: state
-    entity_id: binary_sensor.house_exits_open_status
-    state: "on"
+  - if:
+      - condition: not
+        conditions:
+        - condition: trigger
+          id: startup
+    then:
+      - delay: "00:05:00"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: person.anjalipc
+          state: home
+        - condition: state
+          entity_id: person.arun_karunagath
+          state: home
+      - condition: state
+        entity_id: binary_sensor.house_exits_open_status
+        state: "on"
   - action: script.notify_all_phones
     data:
       title: Home

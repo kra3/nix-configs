@@ -101,68 +101,106 @@
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration
       to: "on"
+      id: knock
+    # An HA restart mid-sequence (waiting on motion, door-open, or the
+    # final off-delay) loses that wait entirely, stranding a switch on
+    # with nothing left to turn it off. Doesn't try to reconstruct which
+    # stage was interrupted — just falls back to the same close-then-
+    # delay safety net a normal completed knock would end with.
+    - platform: homeassistant
+      event: start
+      id: startup
   action:
-    # 1. Wait 2 seconds to let contact/lock sensor state settle
-    - delay: "00:00:02"
-
-    # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
-    - if: *valid_knock_check
-      then:
-        # Was gated on schedule.sleep (fixed clock, not sun-relative) —
-        # turned this on in broad Swedish-summer daylight. Use sun.sun.
-        - if:
-            - condition: state
-              entity_id: sun.sun
-              state: below_horizon
-          then:
-            - action: switch.turn_on
-              target:
-                entity_id: switch.front_entrance_double_switch_right
-
-        # Entrance Light: Turn on only if motion detected after knock (someone going to the door)
-        - wait_for_trigger:
-            - platform: state
-              entity_id: binary_sensor.hue_pir_hallway_occupancy
-              to: "on"
-          timeout: "00:02:00"
-        - if:
-            - condition: template
-              value_template: "{{ wait.trigger is not none }}"
-          then:
-            - action: switch.turn_on
-              target:
-                entity_id: switch.front_entrance_double_switch_left
-
-        # Auto-off logic
-        - wait_for_trigger:
-            - platform: state
-              entity_id: binary_sensor.front_door_open
-              to: "on"
-          timeout: "00:10:00"
-
-        - if:
-            - condition: template
-              value_template: "{{ wait.trigger is none }}"
-          then:
-            # No door open within 10 mins of knock - turn off both lights
-            - action: switch.turn_off
-              target:
-                entity_id:
-                  - switch.front_entrance_double_switch_right
-                  - switch.front_entrance_double_switch_left
-          else:
-            # Door was opened! Now wait for it to be closed.
-            - wait_for_trigger:
-                - platform: state
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: startup
+            - condition: or
+              conditions:
+                - condition: state
+                  entity_id: switch.front_entrance_double_switch_left
+                  state: "on"
+                - condition: state
+                  entity_id: switch.front_entrance_double_switch_right
+                  state: "on"
+          sequence:
+            - if:
+                - condition: state
                   entity_id: binary_sensor.front_door_open
-                  to: "off"
-            # 10 min delay after door close before turning off
+                  state: "on"
+              then:
+                - wait_for_trigger:
+                    - platform: state
+                      entity_id: binary_sensor.front_door_open
+                      to: "off"
             - delay: "00:10:00"
             - action: switch.turn_off
               target:
                 entity_id:
                   - switch.front_entrance_double_switch_right
                   - switch.front_entrance_double_switch_left
+      default:
+        # 1. Wait 2 seconds to let contact/lock sensor state settle
+        - delay: "00:00:02"
+
+        # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
+        - if: *valid_knock_check
+          then:
+            # Was gated on schedule.sleep (fixed clock, not sun-relative) —
+            # turned this on in broad Swedish-summer daylight. Use sun.sun.
+            - if:
+                - condition: state
+                  entity_id: sun.sun
+                  state: below_horizon
+              then:
+                - action: switch.turn_on
+                  target:
+                    entity_id: switch.front_entrance_double_switch_right
+
+            # Entrance Light: Turn on only if motion detected after knock (someone going to the door)
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.hue_pir_hallway_occupancy
+                  to: "on"
+              timeout: "00:02:00"
+            - if:
+                - condition: template
+                  value_template: "{{ wait.trigger is not none }}"
+              then:
+                - action: switch.turn_on
+                  target:
+                    entity_id: switch.front_entrance_double_switch_left
+
+            # Auto-off logic
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.front_door_open
+                  to: "on"
+              timeout: "00:10:00"
+
+            - if:
+                - condition: template
+                  value_template: "{{ wait.trigger is none }}"
+              then:
+                # No door open within 10 mins of knock - turn off both lights
+                - action: switch.turn_off
+                  target:
+                    entity_id:
+                      - switch.front_entrance_double_switch_right
+                      - switch.front_entrance_double_switch_left
+              else:
+                # Door was opened! Now wait for it to be closed.
+                - wait_for_trigger:
+                    - platform: state
+                      entity_id: binary_sensor.front_door_open
+                      to: "off"
+                # 10 min delay after door close before turning off
+                - delay: "00:10:00"
+                - action: switch.turn_off
+                  target:
+                    entity_id:
+                      - switch.front_entrance_double_switch_right
+                      - switch.front_entrance_double_switch_left
   mode: restart
 
 - id: front_door_open_entrance_light
@@ -181,25 +219,71 @@
   - entity_id: binary_sensor.front_door_open
     to: "on"
     trigger: state
-  conditions:
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: sun.sun
-      state: below_horizon
-    - condition: numeric_state
-      entity_id: sensor.toilet_occupancy_illuminance
-      below: 30
+    id: door_open
+  # An HA restart mid-wait (door still open, or mid off-delay after it
+  # closed) loses that wait entirely, stranding the light on with
+  # nothing left to turn it off — resume from whichever state we're in.
+  - trigger: homeassistant
+    event: start
+    id: startup
   actions:
-  - action: switch.turn_on
-    target:
-      entity_id: switch.front_entrance_double_switch_left
-  - wait_for_trigger:
-    - entity_id: binary_sensor.front_door_open
-      to: "off"
-      trigger: state
-  - delay: "00:10:00"
-  - action: switch.turn_off
-    target:
-      entity_id: switch.front_entrance_double_switch_left
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: door_open
+          - condition: or
+            conditions:
+            - condition: state
+              entity_id: sun.sun
+              state: below_horizon
+            - condition: numeric_state
+              entity_id: sensor.toilet_occupancy_illuminance
+              below: 30
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.front_entrance_double_switch_left
+          - wait_for_trigger:
+            - entity_id: binary_sensor.front_door_open
+              to: "off"
+              trigger: state
+          - delay: "00:10:00"
+          - action: switch.turn_off
+            target:
+              entity_id: switch.front_entrance_double_switch_left
+      - conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: binary_sensor.front_door_open
+            state: "on"
+        sequence:
+          # Door was already open when HA restarted — resume waiting for
+          # it to close, then the usual 10-min delay before off.
+          - wait_for_trigger:
+            - entity_id: binary_sensor.front_door_open
+              to: "off"
+              trigger: state
+          - delay: "00:10:00"
+          - action: switch.turn_off
+            target:
+              entity_id: switch.front_entrance_double_switch_left
+      - conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: binary_sensor.front_door_open
+            state: "off"
+          - condition: state
+            entity_id: switch.front_entrance_double_switch_left
+            state: "on"
+        sequence:
+          # Door already closed before restart — resume the remaining
+          # off-delay instead of waiting a fresh 10 minutes.
+          - delay: >-
+              {%- from 'elapsed.jinja' import elapsed_since -%}
+              {{ [0, 600 - elapsed_since('binary_sensor.front_door_open')] | max }}
+          - action: switch.turn_off
+            target:
+              entity_id: switch.front_entrance_double_switch_left
   mode: restart

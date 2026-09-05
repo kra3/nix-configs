@@ -76,15 +76,15 @@
       loki.relabel "journal" {
         forward_to = [loki.write.default.receiver]
         rule {
-          source_labels = ["__journal__UNIT"]
+          source_labels = ["__journal__systemd_unit"]
           target_label = "systemd_unit"
         }
         rule {
-          source_labels = ["__journal__SYSLOG_IDENTIFIER"]
+          source_labels = ["__journal__syslog_identifier"]
           target_label = "syslog_identifier"
         }
         rule {
-          source_labels = ["__journal__COMM"]
+          source_labels = ["__journal__comm"]
           target_label = "comm"
         }
       }

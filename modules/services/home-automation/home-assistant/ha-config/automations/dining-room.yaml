@@ -1,4 +1,23 @@
 # ── Dining room ────────────────────────────────────────────────
+- id: dining_darkness
+  alias: Dining room — Darkness detection
+  description: >-
+    Hysteresis darkness state machine for dining, using the house-wide
+    average illuminance (dining has no illuminance sensor of its own)
+    rather than hall_is_dark — dining is one of the brightest rooms, so
+    gating it on the hall's dim interior PIR reading (which can read
+    dark at midday, see hall.yaml) turned dining lights on in broad
+    daylight. Blueprint's 30/120 lux defaults fit sensor.average_illuminance
+    (drops to ~4 lux overnight, thousands of lux midday - confirmed via
+    Prometheus history).
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      illuminance_sensor: sensor.average_illuminance
+      occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
+      light_entity: light.dining_lights
+      dark_boolean: input_boolean.dining_is_dark
+
 - id: dining_room_lighting
   alias: Dining room — Lighting
   description: >-
@@ -10,4 +29,4 @@
     input:
       light_entity: light.dining_lights
       occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
-      dark_boolean: input_boolean.hall_is_dark
+      dark_boolean: input_boolean.dining_is_dark

@@ -22,7 +22,7 @@
   description: >-
     Motion-tiered brightness instead of Adaptive Lighting's brightness
     curve: hall is a transit space, not somewhere to linger, so it
-    doesn't need AL's daytime-brightness levels at night. 55% on
+    doesn't need AL's daytime-brightness levels at night. 45% on
     motion, 80% if occupancy stays continuously on for 2 min
     (lingering, not passing through), 15% ambient instead of fully off
     once occupancy's been clear for 2 min — including immediately at
@@ -105,7 +105,7 @@
       - target:
           entity_id: light.hall
         data:
-          brightness_pct: 55
+          brightness_pct: 45
           transition: 1
         action: light.turn_on
     - conditions:

@@ -168,7 +168,7 @@
     },
     {
       "datasource": "Prometheus",
-      "description": "Cameras with detection enabled",
+      "description": "Cameras currently producing object-detection frames (frigate_detection_enabled doesn't exist upstream -- this counts cameras with nonzero detection FPS instead)",
       "fieldConfig": {
         "defaults": {
           "unit": "none"
@@ -198,12 +198,12 @@
       },
       "targets": [
         {
-          "expr": "sum(frigate_detection_enabled{instance=~\"$instance\"})",
-          "legendFormat": "enabled",
+          "expr": "count(frigate_detection_fps{instance=~\"$instance\", camera_name=~\"$camera\"} > 0)",
+          "legendFormat": "detecting",
           "refId": "A"
         }
       ],
-      "title": "Detection Enabled",
+      "title": "Cameras Detecting",
       "type": "stat"
     },
     {
@@ -401,7 +401,7 @@
       },
       "targets": [
         {
-          "expr": "increase(frigate_camera_events{instance=~\"$instance\", camera=~\"$camera\"}[1h])",
+          "expr": "sum by (camera) (increase(frigate_camera_events_total{instance=~\"$instance\", camera=~\"$camera\"}[1h]))",
           "legendFormat": "{{camera}}",
           "refId": "A"
         }

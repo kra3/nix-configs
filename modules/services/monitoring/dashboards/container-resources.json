@@ -1,0 +1,243 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Per-cgroup CPU/memory from the host process-exporter (grouped by full cgroup path, which for a quadlet container or a host service is its systemd unit) -- the same data used to size Memory=/CPUQuota= for individual containers.",
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "description": "Resident memory (RSS) by systemd unit, top 20",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "topk(20, namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*\\.service\\]\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top Memory by Unit",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "memtype": true,
+              "groupname": false,
+              "Value": false
+            },
+            "renameByName": {
+              "Value": "resident_bytes",
+              "groupname": "unit"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "resident_bytes"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "CPU time by systemd unit over the last 5m, top 20 (percent of one core)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 2,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "topk(20, 100 * sum by (groupname) (rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*\\.service\\]\"}[5m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top CPU by Unit",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "groupname": false,
+              "Value": false
+            },
+            "renameByName": {
+              "Value": "cpu_percent",
+              "groupname": "unit"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "cpu_percent"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Open file descriptors by systemd unit, top 15 -- watch for leaks",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "topk(15, namedprocess_namegroup_open_filedesc{instance=~\"$instance\", groupname=~\".*\\.service\\]\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top Open File Descriptors by Unit",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "groupname": false,
+              "Value": false
+            },
+            "renameByName": {
+              "Value": "open_fds",
+              "groupname": "unit"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "open_fds"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "monitoring",
+    "containers"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "sutala",
+          "value": "sutala"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(namedprocess_namegroup_num_procs, instance)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Instance",
+        "multi": false,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(namedprocess_namegroup_num_procs, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Container Resources",
+  "uid": "container-resources",
+  "version": 1
+}

@@ -22,12 +22,114 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "0=ONLINE, 1=DEGRADED, 2=FAULTED, 3=OFFLINE, 4=UNAVAIL, 5=REMOVED, 6=SUSPENDED",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "ONLINE", "color": "green" },
+                "1": { "text": "DEGRADED", "color": "orange" },
+                "2": { "text": "FAULTED", "color": "red" },
+                "3": { "text": "OFFLINE", "color": "orange" },
+                "4": { "text": "UNAVAIL", "color": "red" },
+                "5": { "text": "REMOVED", "color": "red" },
+                "6": { "text": "SUSPENDED", "color": "red" }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "zfs_pool_health",
+          "legendFormat": "{{pool}}",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Pool Health",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Pool fragmentation",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "zfs_pool_fragmentation_ratio",
+          "legendFormat": "{{pool}}",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Pool Fragmentation",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Deduplication ratio (1 = no dedup savings)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "zfs_pool_deduplication_ratio",
+          "legendFormat": "{{pool}}",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Dedup Ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
       "description": "Pool size and allocation",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 1,
       "targets": [
@@ -53,11 +155,18 @@
     {
       "datasource": "Prometheus",
       "description": "Pool usage percent",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 12
       },
       "id": 2,
       "targets": [
@@ -69,6 +178,95 @@
       ],
       "title": "ZFS Pool Usage (%)",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "ARC cache hit ratio -- how often reads are served from RAM instead of disk",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "100 * sum(rate(node_zfs_arc_hits{instance=\"sutala\"}[5m])) / (sum(rate(node_zfs_arc_hits{instance=\"sutala\"}[5m])) + sum(rate(node_zfs_arc_misses{instance=\"sutala\"}[5m])))",
+          "legendFormat": "ARC hit ratio",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS ARC Hit Ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Space used per dataset",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "zfs_dataset_used_bytes",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS Dataset Usage",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true,
+              "pool": false,
+              "name": false,
+              "type": false,
+              "Value": false
+            },
+            "renameByName": {
+              "Value": "used_bytes"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "used_bytes"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "refresh": "30s",

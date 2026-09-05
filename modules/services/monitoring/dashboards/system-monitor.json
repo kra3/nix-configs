@@ -252,7 +252,15 @@
         }
       ],
       "title": "CPU Usage (%)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -302,7 +310,15 @@
         }
       ],
       "title": "Memory Usage (%)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -327,7 +343,13 @@
         }
       ],
       "title": "Disk Throughput (bytes/s)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -352,7 +374,13 @@
         }
       ],
       "title": "Network Throughput (bytes/s)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -411,7 +439,13 @@
         }
       ],
       "title": "Network Errors (errors/s)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -436,7 +470,13 @@
         }
       ],
       "title": "Network Drops (drops/s)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",
@@ -456,7 +496,15 @@
         }
       ],
       "title": "Disk IO Utilization (%)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
     },
     {
       "datasource": "Prometheus",

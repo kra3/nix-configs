@@ -1,0 +1,359 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Surasa (Raspberry Pi 3B+ secondary DNS resolver + Snapcast client) -- node_exporter metrics plus the systemd-journal logs it now pushes to Loki via the loki.<domain> vhost.",
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Health",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Is surasa's node-exporter reachable",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "targets": [
+        { "expr": "up{instance=\"surasa\"}", "refId": "A" }
+      ],
+      "title": "Node Exporter Up",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Time since last boot",
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "targets": [
+        { "expr": "time() - node_boot_time_seconds{instance=\"surasa\"}", "refId": "A" }
+      ],
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "1-minute load average",
+      "fieldConfig": { "defaults": { "unit": "none" } },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "targets": [
+        { "expr": "node_load1{instance=\"surasa\"}", "refId": "A" }
+      ],
+      "title": "Load (1m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Raspberry Pi under-voltage alarm -- a common cause of SD-card corruption and random resets on this hardware",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "OK", "color": "green" },
+                "1": { "text": "UNDER-VOLTAGE", "color": "red" }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        { "expr": "node_hwmon_in_lcrit_alarm_volts{instance=\"surasa\"}", "refId": "A" }
+      ],
+      "title": "Under-voltage Alarm",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "panels": [],
+      "title": "Resources",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "CPU usage",
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 7 },
+      "id": 5,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        { "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"surasa\"}[5m])) * 100)", "refId": "A" }
+      ],
+      "title": "CPU Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Memory usage -- this board runs with 1GB RAM, tight given AdGuard's filter lists",
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 7 },
+      "id": 6,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        { "expr": "100 * (1 - (node_memory_MemAvailable_bytes{instance=\"surasa\"} / node_memory_MemTotal_bytes{instance=\"surasa\"}))", "refId": "A" }
+      ],
+      "title": "Memory Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Root filesystem usage (SD card)",
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 7 },
+      "id": 7,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        { "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=\"surasa\", mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"surasa\", mountpoint=\"/\"}))", "refId": "A" }
+      ],
+      "title": "Disk Usage (/)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 102,
+      "panels": [],
+      "title": "Trends",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "CPU and memory usage over time",
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "id": 8,
+      "targets": [
+        { "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=\"surasa\"}[5m])) * 100)", "legendFormat": "CPU", "refId": "A" },
+        { "expr": "100 * (1 - (node_memory_MemAvailable_bytes{instance=\"surasa\"} / node_memory_MemTotal_bytes{instance=\"surasa\"}))", "legendFormat": "Memory", "refId": "B" }
+      ],
+      "title": "CPU / Memory Usage (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "SoC temperature",
+      "fieldConfig": { "defaults": { "unit": "celsius" } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "id": 9,
+      "targets": [
+        { "expr": "node_hwmon_temp_celsius{instance=\"surasa\"}", "legendFormat": "{{chip}} {{sensor}}", "refId": "A" }
+      ],
+      "title": "SoC Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Wifi network throughput (wlan0 is surasa's only interface)",
+      "fieldConfig": { "defaults": { "unit": "Bps" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "id": 10,
+      "targets": [
+        { "expr": "rate(node_network_receive_bytes_total{instance=\"surasa\", device=\"wlan0\"}[5m])", "legendFormat": "receive", "refId": "A" },
+        { "expr": "rate(node_network_transmit_bytes_total{instance=\"surasa\", device=\"wlan0\"}[5m])", "legendFormat": "transmit", "refId": "B" }
+      ],
+      "title": "Network Throughput (wlan0)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "id": 103,
+      "panels": [],
+      "title": "Services",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Key surasa services",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "↓" },
+                "1": { "text": "↑" }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "color": { "mode": "thresholds" },
+          "custom": { "displayMode": "color-text" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 31 },
+      "id": 11,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "label_replace(node_systemd_unit_state{instance=\"surasa\",state=\"active\",name=~\"(adguardhome|unbound|tailscaled|alloy|sutala-watchdog|NetworkManager|wpa_supplicant)[.]service\"},\"service\",\"$1\",\"name\",\"(.*)[.]service\")",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "title": "Services",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "name": true,
+              "type": true,
+              "state": true
+            },
+            "renameByName": {
+              "service": "Service",
+              "Value": "Status"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [{ "field": "Service", "desc": false }]
+          }
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "id": 104,
+      "panels": [],
+      "title": "Logs",
+      "type": "row"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Log rate by systemd unit",
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 40 },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "sum by (systemd_unit) (rate({job=\"systemd-journal\", host=\"surasa\"}[5m]))",
+          "legendFormat": "{{systemd_unit}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Log Rate by Unit (Loki)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Recent errors from surasa",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 46 },
+      "id": 13,
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "expr": "{job=\"systemd-journal\", host=\"surasa\"} |~ \"(?i)error|fail|panic\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Errors (Loki)",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "monitoring",
+    "surasa"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Surasa",
+  "uid": "surasa",
+  "version": 1
+}

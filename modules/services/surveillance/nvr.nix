@@ -209,10 +209,7 @@
       };
     };
 
-    # auth_request off skips the Authelia SSO check (irrelevant for a
-    # non-browser scrape); Frigate's own proxy-auth still requires a
-    # Remote-User header from the upstream proxy, so set one rather than
-    # disabling Frigate's auth.
+    # auth_request off only skips Authelia; Frigate's own proxy-auth still needs a Remote-User header or it 401s.
     services.nginx.virtualHosts."${config.services.frigate.hostname}" = {
       serverAliases = [
         containerLocalAddress

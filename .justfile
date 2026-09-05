@@ -44,10 +44,7 @@ build host=default_host:
 build-remote host=default_host target=default_host build_host=target:
     nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
 
-# Pre-pull any podman quadlet images referenced by a built closure (result_path),
-# on the given target (empty = localhost). Run before switch/switch-remote so a
-# container's own restart doesn't stall mid-pull -- that stall is what has been
-# causing nixos-rebuild switch to time out and report failure on the first try.
+# Pre-pulls quadlet images from a built closure so a container restart during switch never stalls on a network pull.
 _prepull-images result_path target="":
     #!/usr/bin/env bash
     set -euo pipefail

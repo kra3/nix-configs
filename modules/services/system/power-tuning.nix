@@ -1,6 +1,5 @@
 {
-  # sutala-specific: PCI/USB bus addresses below are tied to this board's topology
-  # (Dell 0HMF7C, Comet Lake). Verified against `powertop --html` output 2026-09-05.
+  # sutala-specific: PCI/USB bus addresses below are tied to this board's topology (Dell 0HMF7C, Comet Lake).
   flake.nixosModules.services-system-power-tuning = { lib, ... }:
   {
     # Batch dirty-page writeback instead of flushing every 5s (default 500 centisecs).
@@ -9,9 +8,7 @@
     # Covers all 6 AHCI ports; host0/host3 already negotiate this via firmware default.
     boot.kernelParams = [ "libata.link_power_management_policy=med_power_with_dipm" ];
 
-    # Runtime PM ("auto") for devices with no reliability history under it on this board.
-    # Excluded: enp2s0 (active LAN NIC, PCI 02:00.0) -- Realtek runtime PM has a history
-    # of link drops, and this is the only network path in/out of the house.
+    # Excludes enp2s0 (active LAN NIC) -- Realtek runtime PM has a history of link drops.
     services.udev.extraRules = ''
       # NVMe SSD (rpool)
       SUBSYSTEM=="pci", KERNEL=="0000:01:00.0", ATTR{power/control}="auto"
@@ -30,8 +27,7 @@
       # wlp3s0 (Intel AX200 WiFi) -- unused, LAN-only setup
       SUBSYSTEM=="pci", KERNEL=="0000:03:00.0", ATTR{power/control}="auto"
 
-      # WD My Passport (USB backup target, idVendor:idProduct 1058:0827) -- autosuspend
-      # is safe since it's only active during scheduled backups.
+      # WD My Passport -- backup target only, safe to autosuspend when idle.
       SUBSYSTEM=="usb", ATTR{idVendor}=="1058", ATTR{idProduct}=="0827", ATTR{power/control}="auto"
     '';
   };

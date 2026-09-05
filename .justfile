@@ -62,5 +62,11 @@ switch-remote host=default_host target=default_host build_host=target:
     fi
     nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{build_host}} --use-remote-sudo --ask-sudo-password
 
+# surasa has no DNS entry (relies on the "surasa" alias in ~/.ssh/config) and its weak
+# CPU can't reliably build its own closure -- always build on sutala. Override target
+# for the ethernet bootstrap IP instead of its normal wifi one when needed.
+switch-surasa target="surasa":
+    just switch-remote surasa {{target}} localhost
+
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}

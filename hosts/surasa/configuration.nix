@@ -119,7 +119,13 @@
         key-mgmt = "wpa-psk";
         psk = "$WIFI_PSK";
       };
+      # wlan0 and the bootstrap ethernet adapter share the same /24, and enu1u1u1's lower
+      # route metric always wins the on-link route -- so replies to anything that arrived on
+      # wlan0 (e.g. SSH to its IP) went out via ethernet instead and got dropped upstream as
+      # spoofed. Route wlan0's own traffic through a separate table so it stays symmetric.
       ipv4.method = "auto";
+      ipv4.route-table = 100;
+      ipv4.routing-rule1 = "priority 100 from ${config.vars.network.lanIp} table 100";
       ipv6.method = "disabled";
     };
   };

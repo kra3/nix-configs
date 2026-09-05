@@ -229,8 +229,10 @@
             "||metric.gstatic.com^$important"
             "||mmstat.com^$important"
             "||statcounter.com^$important"
-            # thexem.info: legit Sonarr/Radarr scene-numbering API, false-positive blocklist hit
-            "@@||thexem.info^"
+            # thexem.info: legit Sonarr/Radarr scene-numbering API, false-positive
+            # blocklist hit; plain @@ loses to a blocklist rule carrying $important
+            # (confirmed still blocked live), so this exception needs $important too.
+            "@@||thexem.info^$important"
           ];
 
           querylog = {

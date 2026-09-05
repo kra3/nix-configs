@@ -209,7 +209,10 @@
       };
     };
 
-    # to allow peometheus to parse metrics. without it is failing 401.
+    # auth_request off skips the Authelia SSO check (irrelevant for a
+    # non-browser scrape); Frigate's own proxy-auth still requires a
+    # Remote-User header from the upstream proxy, so set one rather than
+    # disabling Frigate's auth.
     services.nginx.virtualHosts."${config.services.frigate.hostname}" = {
       serverAliases = [
         containerLocalAddress
@@ -220,6 +223,7 @@
         recommendedProxySettings = true;
         extraConfig = ''
           auth_request off;
+          proxy_set_header Remote-User "prometheus";
           access_log off;
           add_header Cache-Control "no-store";
         '';

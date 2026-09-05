@@ -54,6 +54,13 @@
     to: "on"
     trigger: state
     id: sleep_started
+  # Re-derives whichever branch below should currently apply — the
+  # persistent/clear triggers' `for: 2m` only arm on a fresh transition,
+  # so an HA restart landing mid-state would otherwise strand the
+  # brightness at whatever it was until the next occupancy change.
+  - trigger: homeassistant
+    event: start
+    id: startup
   conditions:
   - condition: state
     entity_id: input_boolean.hall_is_dark
@@ -118,6 +125,73 @@
       - condition: state
         entity_id: binary_sensor.hue_pir_hallway_occupancy
         state: "off"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 15
+          transition: 3
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.hue_pir_hallway_occupancy.last_changed)) >= 120 }}
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 80
+          transition: 1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "on"
+      sequence:
+      - target:
+          entity_id: light.hall
+        data:
+          brightness_pct: 45
+          transition: 1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
+      - condition: template
+        value_template: >-
+          {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.hue_pir_hallway_occupancy.last_changed)) >= 120 }}
       - condition: not
         conditions:
         - condition: state

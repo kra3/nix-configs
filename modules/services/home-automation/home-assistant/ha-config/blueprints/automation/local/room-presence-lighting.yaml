@@ -79,6 +79,14 @@ triggers:
     to: "on"
     trigger: state
     id: sleep_started
+  # Re-derives whichever branch below should currently apply — the
+  # "clear" trigger's `for: 2m` only arms on a fresh transition, so an
+  # HA restart landing while occupancy is already clear (or already
+  # sleep/motion) would otherwise strand the light until the next
+  # transition instead of just fixing it now.
+  - trigger: homeassistant
+    event: start
+    id: startup
 
 conditions:
   - condition: state
@@ -89,6 +97,7 @@ variables:
   on_brightness: !input on_brightness
   sleep_brightness: !input sleep_brightness
   react_during_sleep: !input react_during_sleep
+  occupancy_sensor: !input occupancy_sensor
 
 actions:
   - choose:
@@ -135,6 +144,65 @@ actions:
       - conditions:
           - condition: trigger
             id: clear
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 1
+            action: light.turn_off
+      - conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: schedule.sleep
+            state: "on"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 2
+            action: light.turn_off
+      - conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "on"
+          - condition: or
+            conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: schedule.sleep
+                    state: "on"
+              - condition: template
+                value_template: "{{ react_during_sleep }}"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data: >-
+              {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
+              {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
+            action: light.turn_on
+      - conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: template
+            value_template: >-
+              {{ (as_timestamp(now()) - as_timestamp(states[occupancy_sensor].last_changed)) >= 120 }}
           - condition: not
             conditions:
               - condition: state

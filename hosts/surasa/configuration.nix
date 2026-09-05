@@ -61,8 +61,7 @@
     networkmanager.enable = true;
   };
 
-  # Loki's container address (10.3.255.2) isn't routable off sutala's own host, so push
-  # over the LAN/tailnet via the loki.<domain> nginx vhost instead.
+  # Loki's container address isn't routable off sutala's host -- push via the loki.<domain> vhost instead.
   services.monitoringAlloyHost.lokiUrl = "https://loki.${config.vars.acme.domain}/loki/api/v1/push";
 
   services.prometheus.exporters.node = {
@@ -72,9 +71,7 @@
   };
   networking.firewall.interfaces.wlan0.allowedTCPPorts = [ 9100 ];
 
-  # SD card has no wear-leveling headroom to spare -- journald's continuous small
-  # fsync'd writes are meaningful wear on this board, and logs are already shipped to
-  # Loki via Alloy above, so there's nothing gained by also persisting them locally.
+  # Logs already ship to Loki via Alloy above -- skip persisting them locally too, to cut SD card writes.
   services.journald.storage = "volatile";
   services.journald.extraConfig = "RuntimeMaxUse=32M";
 

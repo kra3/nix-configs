@@ -275,6 +275,8 @@
       "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
       "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
       "grafana-dashboards/smart.json".source = ./dashboards/smart.json;
+      "grafana-dashboards/container-resources.json".source = ./dashboards/container-resources.json;
+      "grafana-dashboards/surasa.json".source = ./dashboards/surasa.json;
     };
 
     systemd.tmpfiles.rules = [

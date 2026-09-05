@@ -234,12 +234,65 @@
       "type": "stat"
     },
     {
+      "datasource": "Prometheus",
+      "description": "smartctl's own read exit status per device (0 = smartctl read the device successfully)",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "smartctl_device_smartctl_exit_status{instance=~\"$instance\"}",
+          "legendFormat": "{{device}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Smartctl Exit Status",
+      "type": "stat"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 11
       },
       "id": 6,
       "panels": [],
@@ -278,7 +331,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 7
+        "y": 12
       },
       "id": 7,
       "options": {
@@ -334,7 +387,7 @@
         "h": 6,
         "w": 6,
         "x": 6,
-        "y": 7
+        "y": 12
       },
       "id": 8,
       "options": {
@@ -384,7 +437,7 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 7
+        "y": 12
       },
       "id": 9,
       "options": {
@@ -424,7 +477,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 7
+        "y": 12
       },
       "id": 10,
       "targets": [
@@ -443,12 +496,65 @@
       "type": "timeseries"
     },
     {
+      "datasource": "Prometheus",
+      "description": "NVMe critical warning bitfield (0 = no warnings; nonzero flags temperature, spare space, reliability, read-only, or volatile-memory-backup issues)",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "smartctl_device_critical_warning{instance=~\"$instance\"}",
+          "legendFormat": "{{device}}",
+          "refId": "A"
+        }
+      ],
+      "title": "NVMe Critical Warning",
+      "type": "stat"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 23
       },
       "id": 11,
       "panels": [],
@@ -481,7 +587,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 14
+        "y": 24
       },
       "id": 12,
       "options": {
@@ -534,7 +640,7 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 14
+        "y": 24
       },
       "id": 13,
       "options": {
@@ -587,7 +693,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 14
+        "y": 24
       },
       "id": 14,
       "options": {

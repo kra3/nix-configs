@@ -22,12 +22,50 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "Is the unbound exporter reachable",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "unbound_up",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Unbound Up",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
       "description": "Queries per second",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 1,
       "targets": [
@@ -43,11 +81,16 @@
     {
       "datasource": "Prometheus",
       "description": "Cache hit/miss rates",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 11
       },
       "id": 2,
       "targets": [
@@ -68,11 +111,16 @@
     {
       "datasource": "Prometheus",
       "description": "95th percentile response time",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 11
       },
       "id": 3,
       "targets": [
@@ -86,18 +134,53 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
-      "description": "Unbound log rate from systemd journal",
+      "datasource": "Prometheus",
+      "description": "Queries dropped because unbound's request list was full or a slot got overwritten -- an early sign of overload",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        }
+      },
       "gridPos": {
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 19
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "rate(unbound_request_list_exceeded_total[5m])",
+          "legendFormat": "exceeded {{instance}}",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(unbound_request_list_overwritten_total[5m])",
+          "legendFormat": "overwritten {{instance}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Unbound Overload Drops",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Unbound log rate from systemd journal",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 25
       },
       "id": 4,
       "targets": [
         {
-          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\"} |= \"unbound\"[5m]))",
+          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\", systemd_unit=\"unbound.service\"}[5m]))",
           "legendFormat": "unbound logs",
           "refId": "A"
         }
@@ -112,7 +195,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 31
       },
       "id": 5,
       "options": {
@@ -121,7 +204,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"systemd-journal\", host=\"sutala\"} |= \"unbound\" |~ \"(?i)error|fail|panic\"",
+          "expr": "{job=\"systemd-journal\", host=\"sutala\", systemd_unit=\"unbound.service\"} |~ \"(?i)error|fail|panic\"",
           "refId": "A"
         }
       ],

@@ -385,7 +385,7 @@
       },
       "targets": [
         {
-          "expr": "label_replace(label_replace(node_systemd_unit_state{instance=~\"$instance\",state=\"active\",name=~\"(frigate|go2rtc|mosquitto|grafana|prometheus|loki|jellyfin|navidrome|music-assistant|snapcast|radarr|sonarr|prowlarr|lidarr|bazarr|sabnzbd|seerr|recyclarr|node-exporter)[.]service\"},\"service\",\"$1\",\"name\",\"(.*)\"),\"group\",\"$1\",\"instance\",\"(.*)\")",
+          "expr": "label_replace(label_replace(node_systemd_unit_state{instance=~\"$instance\",state=\"active\",name=~\"(actualbudget|adguardhome|aiostreams|audiobookshelf|bazarr|bookshelf|container@home-auto|container@media-play|container@monitoring|fail2ban|frigate|ghostfolio|go2rtc|grafana|home-assistant|jellyfin|lidarr|loki|maintainerr|matter-server|mosquitto|music-assistant|navidrome|nginx|otbr|postgresql|prometheus|prowlarr|radarr|recyclarr|redis-default|sabnzbd|seerr|sonarr|tailscaled|unbound|unpackerr|wyoming-piper|wyoming-whisper|zigbee2mqtt)[.]service\"},\"service\",\"$1\",\"name\",\"(.*)\"),\"group\",\"$1\",\"instance\",\"(.*)\")",
           "refId": "A",
           "format": "table",
           "instant": true

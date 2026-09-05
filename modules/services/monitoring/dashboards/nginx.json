@@ -22,12 +22,50 @@
   "panels": [
     {
       "datasource": "Prometheus",
+      "description": "Is the nginx exporter reachable",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "nginx_up",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginx Up",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
       "description": "Requests per second",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 1,
       "targets": [
@@ -47,7 +85,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 11
       },
       "id": 2,
       "targets": [
@@ -76,18 +114,48 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
-      "description": "Nginx log rate from systemd journal",
+      "datasource": "Prometheus",
+      "description": "Connections dropped before nginx could accept them (accepted - handled)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        }
+      },
       "gridPos": {
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 19
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "rate(nginx_connections_accepted[5m]) - rate(nginx_connections_handled[5m])",
+          "legendFormat": "dropped {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginx Dropped Connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Nginx log rate from systemd journal",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 25
       },
       "id": 3,
       "targets": [
         {
-          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\"} |= \"nginx\"[5m]))",
+          "expr": "sum(rate({job=\"systemd-journal\", host=\"sutala\", systemd_unit=\"nginx.service\"}[5m]))",
           "legendFormat": "nginx logs",
           "refId": "A"
         }
@@ -102,7 +170,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 31
       },
       "id": 4,
       "options": {
@@ -111,7 +179,7 @@
       },
       "targets": [
         {
-          "expr": "{job=\"systemd-journal\", host=\"sutala\"} |= \"nginx\" |~ \"(?i)error|fail|panic\"",
+          "expr": "{job=\"systemd-journal\", host=\"sutala\", systemd_unit=\"nginx.service\"} |~ \"(?i)error|fail|panic\"",
           "refId": "A"
         }
       ],

@@ -108,6 +108,8 @@
       port = 9100;
       openFirewall = true;
       enabledCollectors = [ "systemd" ];
+      # thermal_zone never has data inside an nspawn container -- fails every scrape otherwise.
+      disabledCollectors = [ "thermal_zone" ];
     };
   };
 }

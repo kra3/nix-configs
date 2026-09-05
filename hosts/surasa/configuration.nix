@@ -14,6 +14,7 @@
     flakeModules.nixos.services-media-snapclient
     flakeModules.nixos.services-monitoring-sutala-watchdog
     flakeModules.nixos.services-monitoring-alloy-host
+    flakeModules.nixos.services-system-nix-defaults-nixos
   ];
 
   networking.hostName = "surasa";
@@ -156,15 +157,20 @@
   ];
 
   nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
     # Lets switch-remote's build-on-sutala-copy-to-surasa path work without the ephemeral
     # /run systemd drop-in this session used to bootstrap it. root is trusted by default
     # (NixOS's own nix module already includes it), so only kra3 needs adding here.
     trusted-users = [ "kra3" ];
   };
+
+  # services-system-nix-defaults-nixos's weekly/7d gc and 5-generation systemd-boot limit are
+  # tuned for sutala's disk; this SD card is both far smaller and wears out on write volume, so
+  # collect more often and keep fewer generations around as gcroots.
+  nix.gc = {
+    dates = lib.mkForce "daily";
+    options = lib.mkForce "--delete-older-than 3d";
+  };
+  boot.loader.generic-extlinux-compatible.configurationLimit = 3;
 
   system.stateVersion = "26.05";
 }

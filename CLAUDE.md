@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Before debugging anything on a host**, read [`docs/INVENTORY.md`](docs/INVENTORY.md) — per-host role/hardware/network/services with which nix file defines each, plus the logs/metrics-to-Grafana pipeline. For network topology, ports, and firewall rules specifically, see [`docs/network-diagram.md`](docs/network-diagram.md).
+
 ## Common Commands
 
 Enter the devShell first for access to `age`, `just`, `nixos-rebuild`, `sops`, `ssh-to-age`:

@@ -117,7 +117,9 @@
         psk = "$WIFI_PSK";
       };
       # wlan0 and the bootstrap ethernet adapter share the same /24; enu1u1u1's lower metric always won the on-link route, so wlan0-received traffic replied out the wrong interface and got dropped upstream as spoofed.
-      ipv4.method = "auto";
+      ipv4.method = "manual";
+      ipv4.address1 = "${config.vars.network.lanIp}/24";
+      ipv4.gateway = "192.168.1.1";
       ipv4.route-table = 100;
       ipv4.routing-rule1 = "priority 100 from ${config.vars.network.lanIp} table 100";
       ipv6.method = "disabled";

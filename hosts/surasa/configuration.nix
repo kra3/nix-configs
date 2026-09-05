@@ -68,10 +68,7 @@
     "net.ipv4.conf.all.arp_announce" = 2;
   };
 
-  # No regdomain is set otherwise, leaving cfg80211 in the restrictive default "00" world
-  # domain -- which rejects 5GHz DFS channels (brcmf_set_channel fails with reason -52) until
-  # the AP's own beacon happens to override it. Raspberry Pi OS bakes this in via raspi-config;
-  # NixOS doesn't, so set it explicitly.
+  # Unlike Raspberry Pi OS's raspi-config, NixOS never sets a regdomain, leaving 5GHz DFS channels rejected until an AP's beacon happens to override it.
   boot.kernelParams = [ "cfg80211.ieee80211_regdom=SE" ];
 
   # Loki's container address isn't routable off sutala's host -- push via the loki.<domain> vhost instead.
@@ -119,10 +116,7 @@
         key-mgmt = "wpa-psk";
         psk = "$WIFI_PSK";
       };
-      # wlan0 and the bootstrap ethernet adapter share the same /24, and enu1u1u1's lower
-      # route metric always wins the on-link route -- so replies to anything that arrived on
-      # wlan0 (e.g. SSH to its IP) went out via ethernet instead and got dropped upstream as
-      # spoofed. Route wlan0's own traffic through a separate table so it stays symmetric.
+      # wlan0 and the bootstrap ethernet adapter share the same /24; enu1u1u1's lower metric always won the on-link route, so wlan0-received traffic replied out the wrong interface and got dropped upstream as spoofed.
       ipv4.method = "auto";
       ipv4.route-table = 100;
       ipv4.routing-rule1 = "priority 100 from ${config.vars.network.lanIp} table 100";

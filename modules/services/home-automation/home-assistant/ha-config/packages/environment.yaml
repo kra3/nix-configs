@@ -36,6 +36,10 @@ sensor:
 input_boolean:
   bedroom_is_dark:
     name: Bedroom is dark
+  dining_is_dark:
+    name: Dining is dark
+  living_room_is_dark:
+    name: Living room is dark
   party_mode:
     name: Party mode
     icon: mdi:party-popper

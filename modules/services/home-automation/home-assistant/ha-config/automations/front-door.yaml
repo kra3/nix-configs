@@ -164,3 +164,42 @@
                   - switch.front_entrance_double_switch_right
                   - switch.front_entrance_double_switch_left
   mode: restart
+
+- id: front_door_open_entrance_light
+  alias: "Front Door: Entrance light on open (dark)"
+  description: >-
+    Turns on the interior entrance light whenever the front door opens
+    and it's dark - sun below horizon OR sensor.toilet_occupancy_illuminance
+    reading low (that sensor's range - near 0 lux at night, hundreds to
+    thousands in daylight, confirmed via Prometheus history - also
+    catches overcast daytime dimness sun.sun alone would miss). Stays
+    on for as long as the door is open: the 10-min countdown only
+    starts once the door closes, so propping it open holds the light
+    rather than racing it off. mode: restart so a fresh door-open
+    cancels any pending off and starts the wait over.
+  triggers:
+  - entity_id: binary_sensor.front_door_open
+    to: "on"
+    trigger: state
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: sun.sun
+      state: below_horizon
+    - condition: numeric_state
+      entity_id: sensor.toilet_occupancy_illuminance
+      below: 30
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.front_entrance_double_switch_left
+  - wait_for_trigger:
+    - entity_id: binary_sensor.front_door_open
+      to: "off"
+      trigger: state
+  - delay: "00:10:00"
+  - action: switch.turn_off
+    target:
+      entity_id: switch.front_entrance_double_switch_left
+  mode: restart

@@ -21,6 +21,7 @@
             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDpvhVfQVKDNfVyl4GJux/lfzjkm683EW4MAESX/JKQA sutala kra3"
             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOFHJcFS3rx+AoqmqhHSjMbWpe8KqcLTmX/xgcf7/lTn nixos-deploy"
             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmRf86XKYHd45ZmhhjyXFSgl88nH91dcSvRVNhVwn91 kra3@sutala github"
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBsFDX6538hbMO6C/JtV3fJQPu3bY/LXSwnwl7OVxrqI kra3@surasa recovery"
           ];
           hashedPasswordFile = config.sops.secrets."users.kra3.password".path;
 

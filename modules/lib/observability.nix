@@ -61,14 +61,17 @@
             }
           }
 
+          // Alloy drops __journal_* internal labels before forward_to, so a downstream
+          // loki.relabel component never sees them -- they only exist inside
+          // loki.source.journal's own relabel_rules argument.
           loki.relabel "journal" {
-            forward_to = [loki.write.default.receiver]
+            forward_to = []
             rule {
               source_labels = ["__journal__systemd_unit"]
               target_label = "systemd_unit"
             }
             rule {
-              source_labels = ["__journal__syslog_identifier"]
+              source_labels = ["__journal_syslog_identifier"]
               target_label = "syslog_identifier"
             }
             rule {
@@ -78,7 +81,8 @@
           }
 
           loki.source.journal "systemd" {
-            forward_to = [loki.relabel.journal.receiver]
+            relabel_rules = loki.relabel.journal.rules
+            forward_to = [loki.write.default.receiver]
             labels = {
               job = "systemd-journal",
               host = "${hostName}",

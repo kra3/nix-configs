@@ -73,9 +73,7 @@
         }
       }
 
-      // Alloy drops __journal_* internal labels before forward_to, so a downstream
-      // loki.relabel component never sees them -- they only exist inside
-      // loki.source.journal's own relabel_rules argument.
+      // __journal_* labels only exist inside relabel_rules -- Alloy drops them before forward_to.
       loki.relabel "journal" {
         forward_to = []
         rule {

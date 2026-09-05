@@ -162,7 +162,8 @@
         state: "on"
       - condition: template
         value_template: >-
-          {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.hue_pir_hallway_occupancy.last_changed)) >= 120 }}
+          {%- from 'elapsed.jinja' import elapsed_ge -%}
+          {{ elapsed_ge('binary_sensor.hue_pir_hallway_occupancy', 120) }}
       sequence:
       - target:
           entity_id: light.hall
@@ -191,7 +192,8 @@
         state: "off"
       - condition: template
         value_template: >-
-          {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.hue_pir_hallway_occupancy.last_changed)) >= 120 }}
+          {%- from 'elapsed.jinja' import elapsed_ge -%}
+          {{ elapsed_ge('binary_sensor.hue_pir_hallway_occupancy', 120) }}
       - condition: not
         conditions:
         - condition: state

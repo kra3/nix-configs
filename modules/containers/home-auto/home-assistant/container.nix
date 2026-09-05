@@ -43,6 +43,7 @@
           "${../../../services/home-automation/home-assistant/ha-config/dashboards}:/config/dashboards:ro"
           "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"
           "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
+          "${../../../services/home-automation/home-assistant/ha-config/custom_templates}:/config/custom_templates:ro"
           "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
           "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
           "/run/dbus:/run/dbus:ro"

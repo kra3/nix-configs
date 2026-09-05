@@ -281,7 +281,8 @@
           # Door already closed before restart — resume the remaining
           # off-delay instead of waiting a fresh 10 minutes.
           - delay: >-
-              {{ [0, 600 - (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed))] | max }}
+              {%- from 'elapsed.jinja' import elapsed_since -%}
+              {{ [0, 600 - elapsed_since('binary_sensor.front_door_open')] | max }}
           - action: switch.turn_off
             target:
               entity_id: switch.front_entrance_double_switch_left

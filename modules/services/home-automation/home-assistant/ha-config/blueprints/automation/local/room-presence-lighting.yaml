@@ -202,7 +202,8 @@ actions:
             state: "off"
           - condition: template
             value_template: >-
-              {{ (as_timestamp(now()) - as_timestamp(states[occupancy_sensor].last_changed)) >= 120 }}
+              {%- from 'elapsed.jinja' import elapsed_ge -%}
+              {{ elapsed_ge(occupancy_sensor, 120) }}
           - condition: not
             conditions:
               - condition: state

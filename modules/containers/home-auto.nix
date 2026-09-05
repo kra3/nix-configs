@@ -221,9 +221,16 @@
     systemd.services."container@home-auto" = (
       flakeLib.container-definition.mkContainerSystemdDeps [ ]
     ) // {
-      serviceConfig.ExecStartPre = lib.mkAfter [
-        "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"
-      ];
+      serviceConfig = {
+        ExecStartPre = lib.mkAfter [
+          "${pkgs.bash}/bin/bash -c 'for i in $(seq 1 30); do [ -e /dev/zigbee ] && exit 0; sleep 1; done; exit 1'"
+        ];
+        # Frigate can take up to its own ~90s TimeoutStopSec to shut down
+        # cleanly (flushing recordings) -- give the outer container extra
+        # headroom so it isn't SIGKILLed mid-shutdown while frigate is still
+        # exiting cleanly.
+        TimeoutStopSec = "3min";
+      };
     };
 
     sops.templates."surveillance-nvr-go2rtc.env" = {

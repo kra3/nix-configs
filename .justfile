@@ -44,12 +44,35 @@ build host=default_host:
 build-remote host=default_host target=default_host build_host=target:
     nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
 
+# Pre-pull any podman quadlet images referenced by a built closure (result_path),
+# on the given target (empty = localhost). Run before switch/switch-remote so a
+# container's own restart doesn't stall mid-pull -- that stall is what has been
+# causing nixos-rebuild switch to time out and report failure on the first try.
+_prepull-images result_path target="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    images=$(grep -h '^Image=' {{result_path}}/etc/containers/systemd/*.container 2>/dev/null | sed 's/^Image=//' | sort -u)
+    if [ -z "$images" ]; then
+        exit 0
+    fi
+    while IFS= read -r img; do
+        if [ -z "{{target}}" ]; then
+            echo "pre-pulling $img"
+            sudo podman pull "$img"
+        else
+            echo "pre-pulling $img on {{target}}"
+            ssh {{target}} sudo podman pull "$img"
+        fi
+    done <<< "$images"
+
 switch host=default_host:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{ host }}" = "mac-work" ]; then
         darwin-rebuild switch --flake .#{{host}}
     else
+        nixos-rebuild build --flake .#{{host}}
+        just _prepull-images ./result
         nixos-rebuild switch --flake .#{{host}}
     fi
 
@@ -60,6 +83,8 @@ switch-remote host=default_host target=default_host build_host=target:
         echo "switch-remote is not supported for darwin hosts (darwin-rebuild has no --target-host/--build-host equivalent); run 'just switch {{ host }}' on the host directly." >&2
         exit 1
     fi
+    nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
+    just _prepull-images ./result {{target}}
     nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{build_host}} --use-remote-sudo --ask-sudo-password
 
 # surasa has no DNS entry (relies on the "surasa" alias in ~/.ssh/config) and its weak

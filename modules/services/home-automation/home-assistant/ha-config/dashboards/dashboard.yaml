@@ -611,11 +611,6 @@ views:
       name: SABnzbd warnings
       grid_options:
         columns: 4
-- title: Overview
-  path: dash-overview
-  icon: mdi:view-dashboard
-  strategy:
-    type: original-states
 - title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group

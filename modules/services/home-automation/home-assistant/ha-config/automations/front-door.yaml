@@ -282,7 +282,7 @@
           # off-delay instead of waiting a fresh 10 minutes.
           - delay: >-
               {%- from 'elapsed.jinja' import elapsed_since -%}
-              {{ [0, 600 - elapsed_since('binary_sensor.front_door_open')] | max }}
+              {{ [0, 600 - (elapsed_since('binary_sensor.front_door_open') | float)] | max }}
           - action: switch.turn_off
             target:
               entity_id: switch.front_entrance_double_switch_left

@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "remote=$(git config --get remote.origin.url 2>/dev/null); branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$branch\" = \"main\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Commits to main are blocked in nix-configs -- create a worktree + branch and open a PR instead (see CLAUDE.md Workflow Rules).\"}}'; fi"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "remote=$(git config --get remote.origin.url 2>/dev/null); gitdir=$(git rev-parse --path-format=absolute --git-dir 2>/dev/null); commondir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$gitdir\" = \"$commondir\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"git push from the primary nix-configs checkout is blocked -- all work happens in a worktree (see CLAUDE.md Workflow Rules).\"}}'; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(jq -r '.tool_response.filePath // .tool_input.file_path' 2>/dev/null); if [ -n \"$file\" ] && [ \"${file##*.}\" = \"nix\" ]; then root=$(git -C \"$(dirname \"$file\")\" rev-parse --show-toplevel 2>/dev/null); if [ -n \"$root\" ]; then (cd \"$root\" && nix fmt -- \"$file\") >/dev/null 2>&1 || true; fi; fi",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

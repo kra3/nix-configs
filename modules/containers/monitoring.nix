@@ -114,6 +114,7 @@
                       settings:
                         bottoken: "${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}"
                         chatid: "${config.sops.placeholder."monitoring.grafana.telegram_chat_id"}"
+                        message_thread_id: "3"
                         parse_mode: None
                         message: |
                           {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} {{ .CommonLabels.alertname }} — {{ .CommonLabels.name }}{{ if .CommonLabels.container }} ({{ .CommonLabels.container }}){{ end }}

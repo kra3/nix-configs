@@ -1,6 +1,11 @@
 {
   flake.homeManagerModules.home-ollama =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.local.ollama;
       ollamaBin = "${config.services.ollama.package}/bin/ollama";

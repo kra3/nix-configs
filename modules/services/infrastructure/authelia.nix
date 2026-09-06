@@ -1,9 +1,15 @@
 {
   flake.nixosModules.services-infrastructure-authelia =
-  { config, lib, inputs, flakeLib, ... }:
-  let
-    domain = config.vars.acme.domain;
-    configurationYmlContent = ''
+    {
+      config,
+      lib,
+      inputs,
+      flakeLib,
+      ...
+    }:
+    let
+      domain = config.vars.acme.domain;
+      configurationYmlContent = ''
         theme: 'auto'
 
         server:
@@ -94,7 +100,9 @@
             clients:
               - client_id: 'arcane'
                 client_name: 'Arcane'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.arcane.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.arcane.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 redirect_uris:
@@ -110,7 +118,9 @@
                   - 'code'
               - client_id: 'grafana'
                 client_name: 'Grafana'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.grafana.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.grafana.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 claims_policy: 'id_token_groups'
@@ -127,7 +137,9 @@
                   - 'code'
               - client_id: 'ghostfolio'
                 client_name: 'Ghostfolio'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.ghostfolio.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.ghostfolio.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 # Ghostfolio always sends creds via POST body, not a header.
@@ -142,7 +154,9 @@
                   - 'code'
               - client_id: 'actualbudget'
                 client_name: 'Actual Budget'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.actualbudget.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.actualbudget.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 redirect_uris:
@@ -160,7 +174,9 @@
               # second factor is configured on this deployment.
               - client_id: 'audiobookshelf'
                 client_name: 'Audiobookshelf'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.audiobookshelf.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.audiobookshelf.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 require_pkce: true
@@ -188,7 +204,9 @@
               # own config (see jellyfin.nix), must match this redirect path.
               - client_id: 'jellyfin'
                 client_name: 'Jellyfin'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.jellyfin.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.jellyfin.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 require_pkce: true
@@ -211,7 +229,9 @@
               # configured by hand in HA's own UI (no declarative path).
               - client_id: 'homeassistant'
                 client_name: 'Home Assistant'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.homeassistant.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.homeassistant.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 claims_policy: 'id_token_groups'
@@ -232,7 +252,9 @@
               # Dashboard-only login (see aiostreams.nix), never the Stremio addon URLs.
               - client_id: 'aiostreams'
                 client_name: 'AIOStreams'
-                client_secret: '${config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"}'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"
+                }'
                 public: false
                 authorization_policy: 'one_factor'
                 # AIOStreams posts the client secret in the token body, not a header.
@@ -249,7 +271,7 @@
                 response_types:
                   - 'code'
       '';
-    usersDatabaseYmlContent = ''
+      usersDatabaseYmlContent = ''
         users:
           kra3:
             disabled: false
@@ -266,174 +288,176 @@
             groups:
               - 'family'
       '';
-    # Neither string above embeds actual secret VALUES (sops placeholders
-    # are stable tokens, substituted after this hash is computed), so this
-    # changes exactly when the YAML content itself changes — not on every
-    # secret rotation, but that's already the narrower, more common case
-    # this exists for (see the container's environments below for why this
-    # is needed at all).
-    configHash = builtins.hashString "sha256" (configurationYmlContent + usersDatabaseYmlContent);
-  in
-  {
-    # Authelia OIDC identity provider. Runs rootless under its own dedicated
-    # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
-    # does (see modules/services/virtualisation/arcane.nix). Currently wired
-    # to exactly one OIDC client (Arcane) as a pilot.
-    services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
-      domain = domain;
-      cidrs = config.vars.network.nginxAllowCidrs;
-      upstream = "http://127.0.0.1:9091";
-    };
+      # Neither string above embeds actual secret VALUES (sops placeholders
+      # are stable tokens, substituted after this hash is computed), so this
+      # changes exactly when the YAML content itself changes — not on every
+      # secret rotation, but that's already the narrower, more common case
+      # this exists for (see the container's environments below for why this
+      # is needed at all).
+      configHash = builtins.hashString "sha256" (configurationYmlContent + usersDatabaseYmlContent);
+    in
+    {
+      # Authelia OIDC identity provider. Runs rootless under its own dedicated
+      # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
+      # does (see modules/services/virtualisation/arcane.nix). Currently wired
+      # to exactly one OIDC client (Arcane) as a pilot.
+      services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
+        domain = domain;
+        cidrs = config.vars.network.nginxAllowCidrs;
+        upstream = "http://127.0.0.1:9091";
+      };
 
-    # Sibling of /srv/appdata for the same reason as /srv/arcane (see
-    # modules/services/virtualisation/arcane.nix): /srv/appdata's ZFS
-    # dataset has no acltype=posixacl, so ACLs for a non-root app there
-    # silently no-op.
-    systemd.tmpfiles.rules = [
-      "d /srv/authelia 0750 authelia authelia - -"
-    ];
+      # Sibling of /srv/appdata for the same reason as /srv/arcane (see
+      # modules/services/virtualisation/arcane.nix): /srv/appdata's ZFS
+      # dataset has no acltype=posixacl, so ACLs for a non-root app there
+      # silently no-op.
+      systemd.tmpfiles.rules = [
+        "d /srv/authelia 0750 authelia authelia - -"
+      ];
 
-    sops.secrets."authelia.session_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.storage_encryption_key" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_hmac_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.reset_password_jwt_secret" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    # Not templated like the secrets above: it's a multi-line PEM, and
-    # sops.templates does raw textual substitution with no YAML
-    # re-indentation, which breaks block-scalar parsing for multi-line
-    # values. Kept as its own file and pulled into configuration.yml via
-    # Authelia's own `secret`/`mindent` config template function instead
-    # (X_AUTHELIA_CONFIG_FILTERS=template below).
-    sops.secrets."authelia.oidc_issuer_private_key" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.users.kra3.password_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.users.anjalipc.password_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.grafana.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.ghostfolio.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.actualbudget.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.audiobookshelf.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.jellyfin.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.homeassistant.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
-    sops.secrets."authelia.oidc_clients.aiostreams.client_secret_hash" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-    };
+      sops.secrets."authelia.session_secret" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.storage_encryption_key" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_hmac_secret" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.reset_password_jwt_secret" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      # Not templated like the secrets above: it's a multi-line PEM, and
+      # sops.templates does raw textual substitution with no YAML
+      # re-indentation, which breaks block-scalar parsing for multi-line
+      # values. Kept as its own file and pulled into configuration.yml via
+      # Authelia's own `secret`/`mindent` config template function instead
+      # (X_AUTHELIA_CONFIG_FILTERS=template below).
+      sops.secrets."authelia.oidc_issuer_private_key" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.users.kra3.password_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.users.anjalipc.password_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.grafana.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.ghostfolio.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.actualbudget.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.audiobookshelf.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.jellyfin.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.homeassistant.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.aiostreams.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
 
-    sops.templates."authelia-configuration.yml" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-      content = configurationYmlContent;
-    };
+      sops.templates."authelia-configuration.yml" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+        content = configurationYmlContent;
+      };
 
-    sops.templates."authelia-users_database.yml" = {
-      owner = "authelia";
-      group = "authelia";
-      mode = "0400";
-      content = usersDatabaseYmlContent;
-    };
+      sops.templates."authelia-users_database.yml" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+        content = usersDatabaseYmlContent;
+      };
 
-    home-manager.users.authelia =
-      { pkgs, ... }:
-      {
-        imports = [ inputs.quadlet-nix.homeManagerModules.quadlet ];
+      home-manager.users.authelia =
+        { pkgs, ... }:
+        {
+          imports = [ inputs.quadlet-nix.homeManagerModules.quadlet ];
 
-        home.stateVersion = lib.mkDefault "25.11";
+          home.stateVersion = lib.mkDefault "25.11";
 
-        virtualisation.quadlet.containers.authelia = {
-          autoStart = true;
-          containerConfig = {
-            image = "ghcr.io/authelia/authelia:4.39.22";
-            publishPorts = [ "127.0.0.1:9091:9091" ];
-            # Unlike Arcane, this container never talks to the podman socket
-            # directly, so it doesn't need systemd.user.sockets/services.podman
-            # (see arcane.nix) — quadlet-nix's generated container units work
-            # without it by default.
-            # If keep-id doesn't map cleanly onto Authelia's image the way it
-            # does for Arcane's (proven), Authelia's official image separately
-            # supports PUID/PGID env vars as a fallback, so its entrypoint
-            # chowns /data itself.
-            userns = "keep-id";
-            volumes = [
-              "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"
-              "${config.sops.templates."authelia-users_database.yml".path}:/config/users_database.yml:ro"
-              "${config.sops.secrets."authelia.oidc_issuer_private_key".path}:/config/secrets/oidc_issuer_private_key.pem:ro"
-              "/srv/authelia:/data"
-            ];
-            environments = {
-              X_AUTHELIA_CONFIG_FILTERS = "template";
-              # Unused by Authelia itself — sops-nix re-renders the config
-              # templates in place at a stable path (see the two
-              # sops.templates above), so the container's own unit file
-              # never changes on a config-only edit and nothing restarts
-              # it. A systemd.user.paths watcher was tried here first, but
-              # home-manager's activation script only ever restarts
-              # changed *.service units, never .path units — it silently
-              # never started at all. Embedding the content hash here
-              # forces this *.service unit's own file to change (and thus
-              # restart, via the same mechanism that already reliably
-              # restarts every other quadlet unit on a real change)
-              # whenever the config content does.
-              RESTART_TRIGGER_CONFIG_HASH = configHash;
+          virtualisation.quadlet.containers.authelia = {
+            autoStart = true;
+            containerConfig = {
+              image = "ghcr.io/authelia/authelia:4.39.22";
+              publishPorts = [ "127.0.0.1:9091:9091" ];
+              # Unlike Arcane, this container never talks to the podman socket
+              # directly, so it doesn't need systemd.user.sockets/services.podman
+              # (see arcane.nix) — quadlet-nix's generated container units work
+              # without it by default.
+              # If keep-id doesn't map cleanly onto Authelia's image the way it
+              # does for Arcane's (proven), Authelia's official image separately
+              # supports PUID/PGID env vars as a fallback, so its entrypoint
+              # chowns /data itself.
+              userns = "keep-id";
+              volumes = [
+                "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"
+                "${config.sops.templates."authelia-users_database.yml".path}:/config/users_database.yml:ro"
+                "${
+                  config.sops.secrets."authelia.oidc_issuer_private_key".path
+                }:/config/secrets/oidc_issuer_private_key.pem:ro"
+                "/srv/authelia:/data"
+              ];
+              environments = {
+                X_AUTHELIA_CONFIG_FILTERS = "template";
+                # Unused by Authelia itself — sops-nix re-renders the config
+                # templates in place at a stable path (see the two
+                # sops.templates above), so the container's own unit file
+                # never changes on a config-only edit and nothing restarts
+                # it. A systemd.user.paths watcher was tried here first, but
+                # home-manager's activation script only ever restarts
+                # changed *.service units, never .path units — it silently
+                # never started at all. Embedding the content hash here
+                # forces this *.service unit's own file to change (and thus
+                # restart, via the same mechanism that already reliably
+                # restarts every other quadlet unit on a real change)
+                # whenever the config content does.
+                RESTART_TRIGGER_CONFIG_HASH = configHash;
+              };
             };
           };
         };
-      };
-  };
+    };
 }

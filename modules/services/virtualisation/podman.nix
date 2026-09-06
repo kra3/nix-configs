@@ -1,16 +1,16 @@
 {
   flake.nixosModules.services-virtualisation-podman =
-  { ... }:
-  {
-    virtualisation.podman = {
-      enable = true;
-      autoPrune = {
+    { ... }:
+    {
+      virtualisation.podman = {
         enable = true;
-        flags = [ "--all" ];
-        dates = "daily";
+        autoPrune = {
+          enable = true;
+          flags = [ "--all" ];
+          dates = "daily";
+        };
       };
-    };
 
-    virtualisation.oci-containers.backend = "podman";
-  };
+      virtualisation.oci-containers.backend = "podman";
+    };
 }

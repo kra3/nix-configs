@@ -20,8 +20,9 @@
       programs.git = {
         enable = true;
 
-        ignores = builtins.filter (s: s != "" && !(lib.hasPrefix "#" s))
-          (lib.splitString "\n" (builtins.readFile ./gitignore_global));
+        ignores = builtins.filter (s: s != "" && !(lib.hasPrefix "#" s)) (
+          lib.splitString "\n" (builtins.readFile ./gitignore_global)
+        );
 
         includes = [
           { path = "~/.gitconfig.local"; }

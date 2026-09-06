@@ -107,20 +107,20 @@
     # Setting it to 0 would break Podman and potentially systemd-nspawn containers
     kernel.sysctl = {
       # Kernel hardening
-      "kernel.kptr_restrict" = 2;              # Hide kernel pointers in /proc
-      "kernel.dmesg_restrict" = 1;             # Restrict dmesg to root only
-      "kernel.yama.ptrace_scope" = 2;          # Restrict ptrace to admin only
+      "kernel.kptr_restrict" = 2; # Hide kernel pointers in /proc
+      "kernel.dmesg_restrict" = 1; # Restrict dmesg to root only
+      "kernel.yama.ptrace_scope" = 2; # Restrict ptrace to admin only
 
       # Network hardening
-      "net.ipv4.tcp_syncookies" = 1;                    # SYN flood protection
-      "net.ipv4.conf.all.rp_filter" = 1;                # Reverse path filtering (anti-spoofing)
+      "net.ipv4.tcp_syncookies" = 1; # SYN flood protection
+      "net.ipv4.conf.all.rp_filter" = 1; # Reverse path filtering (anti-spoofing)
       "net.ipv4.conf.default.rp_filter" = 1;
-      "net.ipv4.icmp_echo_ignore_broadcasts" = 1;       # Ignore broadcast pings
-      "net.ipv4.conf.all.accept_redirects" = 0;         # Disable ICMP redirects
+      "net.ipv4.icmp_echo_ignore_broadcasts" = 1; # Ignore broadcast pings
+      "net.ipv4.conf.all.accept_redirects" = 0; # Disable ICMP redirects
       "net.ipv4.conf.default.accept_redirects" = 0;
-      "net.ipv4.conf.all.secure_redirects" = 0;         # Disable secure ICMP redirects
+      "net.ipv4.conf.all.secure_redirects" = 0; # Disable secure ICMP redirects
       "net.ipv4.conf.default.secure_redirects" = 0;
-      "net.ipv4.conf.all.send_redirects" = 0;           # Don't send ICMP redirects
+      "net.ipv4.conf.all.send_redirects" = 0; # Don't send ICMP redirects
       "net.ipv4.conf.default.send_redirects" = 0;
     };
   };
@@ -129,7 +129,9 @@
   # cachix instead of compiling under QEMU emulation.
   nix.settings = {
     substituters = [ "https://nixos-raspberrypi.cachix.org" ];
-    trusted-public-keys = [ "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" ];
+    trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
   };
 
   networking = {
@@ -143,48 +145,50 @@
       logRefusedPackets = true;
       logRefusedUnicastsOnly = true;
       # Default-deny inter-zone FORWARD policy with explicit allows
-      extraForwardRules = let
-        c     = config.vars.network.containers;
-        p     = config.vars.network.podmanSubnets;
-        mon   = c.monitoring.localAddress;
-        mp    = c.mediaPlay.localAddress;
-        ha    = c.homeAuto.localAddress;
-        haNet = p.homeAuto;
-        mmNet = p.mediaMgmt;
-        liNet = p.life;
-        lan   = config.vars.network.lanCidr;
-      in ''
-        # Allow established and related traffic (replies to allowed connections)
-        ct state established,related accept
+      extraForwardRules =
+        let
+          c = config.vars.network.containers;
+          p = config.vars.network.podmanSubnets;
+          mon = c.monitoring.localAddress;
+          mp = c.mediaPlay.localAddress;
+          ha = c.homeAuto.localAddress;
+          haNet = p.homeAuto;
+          mmNet = p.mediaMgmt;
+          liNet = p.life;
+          lan = config.vars.network.lanCidr;
+        in
+        ''
+          # Allow established and related traffic (replies to allowed connections)
+          ct state established,related accept
 
-        # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
-        ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
-        # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
-        ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
-        # 3. monitoring → HA pod: scrape Home Assistant Prometheus endpoint
-        ip saddr ${mon} ip daddr ${haNet} tcp dport 8123 accept
-        # 4. home-auto → monitoring: ship logs via Alloy → Loki
-        ip saddr ${ha} ip daddr ${mon} tcp dport 3100 accept
-        # 5. media-play → monitoring: ship logs via Alloy → Loki
-        ip saddr ${mp} ip daddr ${mon} tcp dport 3100 accept
-        # 6. HA pod → home-auto: HA talks to MQTT + Frigate
-        ip saddr ${haNet} ip daddr ${ha} tcp dport { 1883, 5000 } accept
-        # 6a. home-auto → HA pod: MQTT return traffic (Fixes 'Connection Reset')
-        ip saddr ${ha} ip daddr ${haNet} tcp sport 1883 accept
-        # 7. home-auto → HA pod: Frigate notifications / automations
-        ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
-        # 8. HA pod → media-play: HA media_player integration (Jellyfin)
-        ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
-        # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
-        ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
-        # 10. LAN → home-auto: DNAT for MQTT + WebRTC
-        ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
-        ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
-        # 11. Podman subnets → internet (outbound NAT)
-        ip saddr ${liNet} accept comment "life pods outbound"
-        ip saddr ${mmNet} accept comment "media-mgmt pods outbound"
-        ip saddr ${haNet} accept comment "home-auto pods outbound"
-      '';
+          # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
+          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
+          # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
+          ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
+          # 3. monitoring → HA pod: scrape Home Assistant Prometheus endpoint
+          ip saddr ${mon} ip daddr ${haNet} tcp dport 8123 accept
+          # 4. home-auto → monitoring: ship logs via Alloy → Loki
+          ip saddr ${ha} ip daddr ${mon} tcp dport 3100 accept
+          # 5. media-play → monitoring: ship logs via Alloy → Loki
+          ip saddr ${mp} ip daddr ${mon} tcp dport 3100 accept
+          # 6. HA pod → home-auto: HA talks to MQTT + Frigate
+          ip saddr ${haNet} ip daddr ${ha} tcp dport { 1883, 5000 } accept
+          # 6a. home-auto → HA pod: MQTT return traffic (Fixes 'Connection Reset')
+          ip saddr ${ha} ip daddr ${haNet} tcp sport 1883 accept
+          # 7. home-auto → HA pod: Frigate notifications / automations
+          ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
+          # 8. HA pod → media-play: HA media_player integration (Jellyfin)
+          ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
+          # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
+          ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
+          # 10. LAN → home-auto: DNAT for MQTT + WebRTC
+          ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
+          ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
+          # 11. Podman subnets → internet (outbound NAT)
+          ip saddr ${liNet} accept comment "life pods outbound"
+          ip saddr ${mmNet} accept comment "media-mgmt pods outbound"
+          ip saddr ${haNet} accept comment "home-auto pods outbound"
+        '';
     };
     nftables.enable = true;
     nameservers = [ config.vars.network.lanIp ];
@@ -222,7 +226,6 @@
       }
     ];
   };
-
 
   time.timeZone = "UTC";
 

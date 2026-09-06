@@ -55,6 +55,12 @@
     mcp-nixos.url = "github:utensils/mcp-nixos";
 
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
+
+    # rtk isn't packaged in a stable nixpkgs channel yet (only nixpkgs-unstable); switch to that once it graduates.
+    rtk-nix = {
+      url = "github:farwydi/rtk-nix";
+      flake = false;
+    };
   };
 
   outputs =

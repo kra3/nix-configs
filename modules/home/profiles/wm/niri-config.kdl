@@ -616,11 +616,6 @@ binds {
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
 
-    // No physical Print key on this keyboard; same actions on Mod+S.
-    Mod+S { screenshot; }
-    Mod+Shift+S { screenshot-screen; }
-    Mod+Ctrl+S { screenshot-window; }
-
     // Applications such as remote-desktop clients and software KVM switches may
     // request that niri stops processing the keyboard shortcuts defined here
     // so they may, for example, forward the key presses as-is to a remote machine.

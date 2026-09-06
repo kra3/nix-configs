@@ -574,8 +574,25 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "quadlet-nix": "quadlet-nix",
+        "rtk-nix": "rtk-nix",
         "sops-nix": "sops-nix",
         "treefmt-nix": "treefmt-nix_4"
+      }
+    },
+    "rtk-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788602575,
+        "narHash": "sha256-2eI94Yr5bQ87tsVe57G0/nILuyBHGhjrcZ+xqUB3dL4=",
+        "owner": "farwydi",
+        "repo": "rtk-nix",
+        "rev": "14970177446ea825df5ef1559d63e24b3dda21ba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "farwydi",
+        "repo": "rtk-nix",
+        "type": "github"
       }
     },
     "sops-nix": {

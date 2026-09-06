@@ -8,6 +8,7 @@
     }:
     let
       network = config.virtualisation.quadlet.networks.media-mgmt;
+      ip = config.vars.network.podmanAddresses.unpackerr;
     in
     {
       imports = [ flakeModules.nixos.services-media-acquisition-unpackerr ];
@@ -36,7 +37,7 @@
 
       virtualisation.quadlet.containers.unpackerr = {
         containerConfig = {
-          networks = [ network.ref ];
+          networks = [ "${network.ref}:ip=${ip}" ];
           volumes = [
             "/srv/appdata/media-mgmt/unpackerr:/config"
             "/srv/media:/data"

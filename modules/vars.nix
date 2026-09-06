@@ -158,6 +158,16 @@
               default = "10.3.1.2";
               description = "Pinned br-media-mgmt IP for audiobookshelf";
             };
+            unpackerr = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.6";
+              description = "Pinned br-media-mgmt IP for unpackerr";
+            };
+            recyclarr = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.7";
+              description = "Pinned br-media-mgmt IP for recyclarr";
+            };
             actualbudget = lib.mkOption {
               type = lib.types.str;
               default = "10.3.0.2";

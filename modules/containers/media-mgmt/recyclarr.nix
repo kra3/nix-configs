@@ -9,6 +9,7 @@
     }:
     let
       network = config.virtualisation.quadlet.networks.media-mgmt;
+      ip = config.vars.network.podmanAddresses.recyclarr;
 
       recyclarrConfig = pkgs.writeText "recyclarr.yml" ''
         radarr:
@@ -194,7 +195,7 @@
 
       virtualisation.quadlet.containers.recyclarr = {
         containerConfig = {
-          networks = [ network.ref ];
+          networks = [ "${network.ref}:ip=${ip}" ];
           volumes = [
             "${recyclarrConfig}:/config/recyclarr.yml:ro"
             "${config.sops.templates."media.recyclarr.secrets.yml".path}:/config/secrets.yml:ro"

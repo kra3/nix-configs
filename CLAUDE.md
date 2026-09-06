@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Before debugging anything on a host**, read [`docs/INVENTORY.md`](docs/INVENTORY.md) — per-host role/hardware/network/services with which nix file defines each, plus the logs/metrics-to-Grafana pipeline. For network topology, ports, and firewall rules specifically, see [`docs/network-diagram.md`](docs/network-diagram.md).
+
+## Workflow Rules
+
+- **Never commit directly to `main`.** Always work in a git worktree + branch, open a PR, wait for green CI, then merge — see "Commits & PRs" below for why.
+- **Fixes belong in the declarative config, not on the live host.** Every change ships as a Nix (or repo config file) edit — never a manual command run against a host's live state. If a manual step genuinely seems necessary, stop and ask instead of doing it.
+- **Verify empirically before asserting.** Re-query Loki/Prometheus/systemd or the live host and cite the actual output. Never say something is "verified," "fixed," or "deployed" without pasting the evidence.
+
 ## Common Commands
 
 Enter the devShell first for access to `age`, `just`, `nixos-rebuild`, `sops`, `ssh-to-age`:
@@ -80,7 +88,4 @@ Hosts, containers, and home-manager configs consume registered modules **by name
 ## Commits & PRs
 - Short imperative commit messages scoped to one host or module (e.g. `Add laptop NixOS profile`).
 - PRs: describe what changed, list commands run (e.g. `nix flake check`), call out affected hosts.
-- **Never commit directly to `main`.** Always open a PR against `main` — it's protected (PRs + required checks) and is what `sutala`'s nightly auto-upgrade tracks directly. Make the change in a git worktree so the primary checkout (which may be mid-use in another terminal, especially on `sutala`) is left untouched.
-
-## Verification
-Before asserting file or config state, re-read it and reference the verification. If you cannot verify, say so.
+- `main` is protected (PRs + required checks) and is what `sutala`'s nightly auto-upgrade tracks directly — see the branch/PR rule under "Workflow Rules" above. Make the change in a git worktree so the primary checkout (which may be mid-use in another terminal, especially on `sutala`) is left untouched.

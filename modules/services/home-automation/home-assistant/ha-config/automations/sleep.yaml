@@ -60,10 +60,7 @@
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Kept separate from wakeup_lighting so a fault in the lighting sequence
-    (mode: single wedged by an action-step exception, e.g.) can't also
-    block the disarm. Also re-checked on restart in case a boot lands
-    after today's wake time but the disarm never happened.
+    Kept separate from wakeup_lighting so a fault there can't also block the disarm.
   triggers:
   - id: schedule_off
     entity_id: schedule.sleep
@@ -98,9 +95,7 @@
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting
   description: >-
-    When sleep schedule ends, gradually brighten bedroom and hall over 10
-    minutes. mode: restart so one wedged run (e.g. an action-step exception)
-    can't silently block every future morning.
+    When sleep schedule ends, gradually brighten bedroom and hall over 10 minutes.
   triggers:
   - entity_id: schedule.sleep
     to: "off"

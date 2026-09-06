@@ -3,7 +3,11 @@
   flake.lib.quadlet = {
     # Healthcheck for the common "wget the app's local HTTP endpoint" pattern.
     mkHealthCheck =
-      { port, path ? "ping", startPeriod ? "60s" }:
+      {
+        port,
+        path ? "ping",
+        startPeriod ? "60s",
+      }:
       {
         healthCmd = "wget -qO- http://localhost:${toString port}/${path}";
         healthOnFailure = "kill";

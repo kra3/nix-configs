@@ -33,9 +33,10 @@
       xdg.configFile."sesh/sesh.toml".text =
         baseConfig
         + (
-          if builtins.pathExists ./sesh-session-paths.toml
-          then builtins.readFile ./sesh-session-paths.toml
-          else ""
+          if builtins.pathExists ./sesh-session-paths.toml then
+            builtins.readFile ./sesh-session-paths.toml
+          else
+            ""
         )
         + iconConfig;
     };

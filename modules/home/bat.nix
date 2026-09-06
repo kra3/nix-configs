@@ -15,9 +15,9 @@
         tabs = "4";
 
         map-syntax = [
-          "*.h:C++"           # Use C++ syntax for .h header files
-          "*.tf:Terraform"    # Use Terraform syntax for .tf files
-          "*.yml:YAML"        # Use YAML syntax for .yml files
+          "*.h:C++" # Use C++ syntax for .h header files
+          "*.tf:Terraform" # Use Terraform syntax for .tf files
+          "*.yml:YAML" # Use YAML syntax for .yml files
         ];
       };
     };

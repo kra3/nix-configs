@@ -29,9 +29,10 @@
     xdg.configFile."gh-dash/config.yml".text =
       (builtins.readFile ./gh-dash-config.yml)
       + (
-        if builtins.pathExists ./gh-dash-repo-paths.yml
-        then builtins.readFile ./gh-dash-repo-paths.yml
-        else ""
+        if builtins.pathExists ./gh-dash-repo-paths.yml then
+          builtins.readFile ./gh-dash-repo-paths.yml
+        else
+          ""
       );
   };
 }

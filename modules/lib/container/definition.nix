@@ -6,11 +6,13 @@
       requires = [
         "zfs-mount.service"
         "systemd-tmpfiles-resetup.service"
-      ] ++ extraDeps;
+      ]
+      ++ extraDeps;
       after = [
         "zfs-mount.service"
         "systemd-tmpfiles-resetup.service"
-      ] ++ extraDeps;
+      ]
+      ++ extraDeps;
     };
 
     # Standard container network configuration

@@ -9,7 +9,11 @@
     # guarantee it ran once at login, not that it never runs again, and
     # neither branch stops or unloads the unit on its own.
     mkLoginAgent =
-      { name, description, script }:
+      {
+        name,
+        description,
+        script,
+      }:
       { pkgs, ... }:
       let
         # writeShellScript so both platforms exec the same file directly,

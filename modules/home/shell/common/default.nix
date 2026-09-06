@@ -28,13 +28,15 @@
       home.sessionPath = [
         "$HOME/bin"
         "$HOME/.local/bin"
-      ] ++ lib.optionals isDarwin [
+      ]
+      ++ lib.optionals isDarwin [
         "/opt/homebrew/bin"
         "/opt/homebrew/sbin"
         "/opt/homebrew/opt/libpq/bin"
         "$HOME/Library/Application Support/Coursier/bin"
         "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
-      ] ++ lib.optionals (!isDarwin) [
+      ]
+      ++ lib.optionals (!isDarwin) [
         "$HOME/.local/share/coursier/bin"
         "$HOME/.local/share/JetBrains/Toolbox/scripts"
       ];
@@ -77,7 +79,8 @@
         today = ''date +"%d-%m-%Y"'';
         mount = "mount | column -t";
         g = "git";
-      } // lib.optionalAttrs isDarwin {
+      }
+      // lib.optionalAttrs isDarwin {
         brewup = "brew update; brew upgrade; brew cleanup; brew doctor";
         macjava = "/usr/libexec/java_home -V";
       };

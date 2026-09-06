@@ -71,26 +71,6 @@
         "type": "github"
       }
     },
-    "claude-desktop-nix-flake": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1783426229,
-        "narHash": "sha256-VySKDRnS8KlOCBpIH2LLS8f1FkD3NjB5lQGAg9rrYww=",
-        "owner": "poeck",
-        "repo": "claude-desktop-nix-flake",
-        "rev": "6a5669b709e7273ea14e24998ea4169e729e87c1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "poeck",
-        "repo": "claude-desktop-nix-flake",
-        "type": "github"
-      }
-    },
     "declarative-jellyfin": {
       "inputs": {
         "nix-fast-build": "nix-fast-build",
@@ -561,7 +541,6 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
-        "claude-desktop-nix-flake": "claude-desktop-nix-flake",
         "declarative-jellyfin": "declarative-jellyfin",
         "disko": "disko",
         "flake-parts": "flake-parts_2",

@@ -1,13 +1,13 @@
 {
   flake.nixosModules.services-niri-default =
-    { pkgs, ... }:
+    { inputs, pkgs, ... }:
     {
       programs.niri = {
         enable = true;
         useNautilus = false;
       };
 
-      programs.claude-desktop.enable = true;
+      environment.systemPackages = [ inputs.llm-agents.packages.${pkgs.system}.claude-desktop ];
 
       # Secret Service backend for Claude Desktop's credentials, auto-unlocked by PAM on TTY login.
       services.gnome.gnome-keyring.enable = true;

@@ -57,19 +57,50 @@
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
+- id: sleep_alarmo_disarm_morning
+  alias: Sleep — Disarm Alarmo (morning)
+  description: >-
+    Kept separate from wakeup_lighting so a fault there can't also block the disarm.
+  triggers:
+  - id: schedule_off
+    entity_id: schedule.sleep
+    to: "off"
+    trigger: state
+  - id: startup
+    trigger: homeassistant
+    event: start
+  conditions:
+  - condition: or
+    conditions:
+    - condition: trigger
+      id: schedule_off
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_night
+  actions:
+  - action: alarm_control_panel.alarm_disarm
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
+  mode: single
+
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting
   description: >-
-    When sleep schedule ends, gradually brighten bedroom and hall
-    over 10 minutes. Disarm Alarmo.
+    When sleep schedule ends, gradually brighten bedroom and hall over 10 minutes.
   triggers:
   - entity_id: schedule.sleep
     to: "off"
     trigger: state
   actions:
-  - action: alarm_control_panel.alarm_disarm
-    target:
-      entity_id: alarm_control_panel.vasudha_secure
   - target:
       entity_id:
       - light.bedroom_wardrobe_lights
@@ -105,4 +136,4 @@
       brightness_pct: 60
       transition: 60
     action: light.turn_on
-  mode: single
+  mode: restart

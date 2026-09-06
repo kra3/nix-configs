@@ -48,12 +48,12 @@
 - id: alarm_triggered_auto_disarm_on_arrival
   alias: "Security: auto-disarm on triggered if a resident just arrived"
   description: >-
-    A triggered alarm otherwise only clears via the wakeup_lighting
-    schedule boundary (sleep.yaml), which can leave it triggered for
-    up to the length of the sleep window. Auto-clears if either a
-    resident's device just arrived home, or the front door was
-    unlocked via keypad (a valid code is stronger proof of legitimate
-    entry than phone geofencing, which can lag or drift).
+    A triggered alarm otherwise only clears via sleep_alarmo_disarm_morning
+    (sleep.yaml), which can leave it triggered for up to the length of the
+    sleep window. Auto-clears if either a resident's device just arrived
+    home, or the front door was unlocked via keypad (a valid code is
+    stronger proof of legitimate entry than phone geofencing, which can
+    lag or drift).
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered

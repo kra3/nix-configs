@@ -7,12 +7,12 @@
           {
             "type": "command",
             "if": "Bash(git commit*)",
-            "command": "remote=$(git config --get remote.origin.url 2>/dev/null); branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$branch\" = \"main\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Commits to main are blocked in nix-configs -- create a worktree + branch and open a PR instead (see CLAUDE.md Workflow Rules).\"}}'; fi"
+            "command": "cmd=$(cat | jq -r '.tool_input.command // empty'); dir=$(printf '%s' \"$cmd\" | grep -oP '(?<=-C )\\S+' | head -1); if [ -z \"$dir\" ]; then dir=$(printf '%s' \"$cmd\" | grep -oP '^\\s*cd \\K\\S+' | head -1); fi; dir=\"${dir:-.}\"; remote=$(git -C \"$dir\" config --get remote.origin.url 2>/dev/null); branch=$(git -C \"$dir\" rev-parse --abbrev-ref HEAD 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$branch\" = \"main\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Commits to main are blocked in nix-configs -- create a worktree + branch and open a PR instead (see CLAUDE.md Workflow Rules).\"}}'; fi"
           },
           {
             "type": "command",
             "if": "Bash(git push*)",
-            "command": "remote=$(git config --get remote.origin.url 2>/dev/null); gitdir=$(git rev-parse --path-format=absolute --git-dir 2>/dev/null); commondir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$gitdir\" = \"$commondir\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"git push from the primary nix-configs checkout is blocked -- all work happens in a worktree (see CLAUDE.md Workflow Rules).\"}}'; fi"
+            "command": "cmd=$(cat | jq -r '.tool_input.command // empty'); dir=$(printf '%s' \"$cmd\" | grep -oP '(?<=-C )\\S+' | head -1); if [ -z \"$dir\" ]; then dir=$(printf '%s' \"$cmd\" | grep -oP '^\\s*cd \\K\\S+' | head -1); fi; dir=\"${dir:-.}\"; remote=$(git -C \"$dir\" config --get remote.origin.url 2>/dev/null); gitdir=$(git -C \"$dir\" rev-parse --path-format=absolute --git-dir 2>/dev/null); commondir=$(git -C \"$dir\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); if echo \"$remote\" | grep -qi 'nix-configs' && [ \"$gitdir\" = \"$commondir\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"git push from the primary nix-configs checkout is blocked -- all work happens in a worktree (see CLAUDE.md Workflow Rules).\"}}'; fi"
           }
         ]
       }

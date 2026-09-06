@@ -18,6 +18,7 @@
           curl -sS --max-time 10 -K - <<CURLCFG
         url = "https://api.telegram.org/bot$token/sendMessage"
         data = "chat_id=$chatid"
+        data = "message_thread_id=3"
         data-urlencode = "text=$1"
         CURLCFG
         }

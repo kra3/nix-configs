@@ -6,6 +6,7 @@ result-*
 .direnv
 
 .claude/*
+!.claude/settings.json
 
 # Local dotfile overrides (sensitive, machine-specific)
 modules/home/gh/gh-dash-repo-paths.yml

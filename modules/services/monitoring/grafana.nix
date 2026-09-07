@@ -202,7 +202,7 @@
                         model = {
                           refId = "A";
                           # Host-only — doesn't reach nspawn-internal services (still covered by the failed-state alert, just not this early warning); round() avoids increase() false-tripping on a single restart's window-edge extrapolation.
-                          expr = "round(increase(systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m]))";
+                          expr = "round(increase(node_systemd_service_restart_total{name!~`${noisyUnitsRegex}`}[15m]))";
                           instant = true;
                           range = false;
                           intervalMs = 1000;

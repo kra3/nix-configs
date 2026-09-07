@@ -148,6 +148,8 @@
           enabledCollectors = [
             "systemd"
           ];
+          # Replaces the standalone systemd_exporter's restart-count metric.
+          extraFlags = [ "--collector.systemd.enable-restarts-metrics" ];
         };
         smartctl = {
           enable = true;
@@ -179,29 +181,14 @@
         process = {
           enable = true;
           listenAddress = config.vars.network.containers.monitoring.hostAddress;
+          # Sizing only needs per-cgroup totals; thread breakdown was most of this exporter's cardinality.
+          extraFlags = [ "-threads=false" ];
           settings.process_names = [
             {
               name = "{{.Cgroups}}";
               cmdline = [ ".+" ];
             }
           ];
-        };
-      };
-
-      systemd.services.systemd-exporter = {
-        after = [
-          "container@monitoring.service"
-          "network-online.target"
-        ];
-        wants = [
-          "container@monitoring.service"
-          "network-online.target"
-        ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          DynamicUser = true;
-          Restart = "always";
-          ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558 --systemd.collector.enable-restart-count";
         };
       };
 
@@ -302,7 +289,6 @@
             9134 # zfs-exporter
             9167 # unbound-exporter
             9256 # process-exporter
-            9558 # systemd-exporter
             9633 # smartctl-exporter
           ];
           allowedUDPPorts = [

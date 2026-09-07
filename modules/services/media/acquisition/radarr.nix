@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.radarr = {
         containerConfig = {
-          image = "lscr.io/linuxserver/radarr:6.3.0.10514-ls314";
+          image = "lscr.io/linuxserver/radarr:6.3.0.10514-ls315";
           # No publishPorts: nginx runs on the host and already routes to the
           # br-media-mgmt subnet directly (a static IP, set at the call site),
           # so a host-loopback port isn't needed and would let any host-local

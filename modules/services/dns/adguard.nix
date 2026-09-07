@@ -27,13 +27,8 @@
 
         systemd.tmpfiles.rules = [
           # Real storage; remapped onto the hardcoded /var/lib/AdGuardHome via BindPaths below.
-          "d /srv/appdata/dns/adguard 0750 adguardhome adguardhome - -"
+          "d /srv/appdata/dns/adguard 0700 adguardhome adguardhome - -"
           "Z /srv/appdata/dns/adguard - adguardhome adguardhome - -"
-          # data/ needs group-traversal for alloy; only the files it actually tails (*.log/*.json)
-          # need group-read -- sessions.db/leases.json/stats.db keep AdGuardHome's own tighter defaults.
-          "z /srv/appdata/dns/adguard/data 0750 adguardhome adguardhome - -"
-          "z /srv/appdata/dns/adguard/data/*.log 0640 adguardhome adguardhome - -"
-          "z /srv/appdata/dns/adguard/data/*.json 0640 adguardhome adguardhome - -"
         ];
 
         systemd.services.adguardhome.serviceConfig = lib.mkMerge [
@@ -311,25 +306,6 @@
           copytruncate = true;
           su = "adguardhome adguardhome";
         };
-        environment.etc."alloy/adguardhome.alloy".text = ''
-          loki.source.file "adguardhome" {
-            targets = [
-              {
-                __path__ = "/srv/appdata/dns/adguard/data/*.log",
-                job = "adguardhome",
-                host = "${config.networking.hostName}",
-                role = "${if config.boot.isContainer then "container" else "host"}",
-              },
-              {
-                __path__ = "/srv/appdata/dns/adguard/data/*.json",
-                job = "adguardhome",
-                host = "${config.networking.hostName}",
-                role = "${if config.boot.isContainer then "container" else "host"}",
-              },
-            ]
-            forward_to = [loki.write.default.receiver]
-          }
-        '';
       };
     };
 }

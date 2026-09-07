@@ -17,9 +17,7 @@
         (flakeLib.observability.mkAlloyAgent {
           hostName = config.networking.hostName;
           lokiUrl = config.services.monitoringAlloyHost.lokiUrl;
-          extraGroups =
-            lib.optionals (config.services.nginx.enable or false) [ "nginx" ]
-            ++ lib.optionals (config.services.adguardhome.enable or false) [ "adguardhome" ];
+          extraGroups = lib.optionals (config.services.nginx.enable or false) [ "nginx" ];
         })
       ];
     };

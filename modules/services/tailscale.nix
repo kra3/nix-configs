@@ -38,9 +38,7 @@
           readWritePaths = [
             "/var/lib/tailscale"
             "/run/tailscale"
-            # tailscaled always clears its own resolvconf entry on start/stop
-            # regardless of --accept-dns; ProtectSystem=strict blocked the write.
-            "/run/resolvconf"
+            "/run/resolvconf" # tailscaled clears its resolvconf entry on start/stop regardless of --accept-dns
           ];
           capabilities = [
             "CAP_NET_ADMIN"

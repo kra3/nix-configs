@@ -56,7 +56,6 @@
       systemd.tmpfiles.rules = [
         "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
         "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
-        "d /srv/appdata/home-auto/go2rtc 0750 root root - -"
         "d /srv/appdata/home-auto/zigbee2mqtt 2770 root zigbee2mqtt - -"
         "d /srv/surveillance/recordings 2770 root frigate - -"
         "d /srv/surveillance/clips 2770 root frigate - -"

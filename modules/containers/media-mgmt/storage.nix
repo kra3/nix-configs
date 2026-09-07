@@ -27,7 +27,10 @@
         "d /srv/media/library/anime/tv 2775 root media - -"
         "d /srv/media/library/audiobooks 2775 root media - -"
         "d /srv/media/library/homevideos 2775 root media - -"
-        "d /srv/appdata 2770 root media - -"
+        # 0755, not 2770: only traversal (subdir *names* visible), letting
+        # non-media-group consumers (e.g. arcane) reach their own subdir.
+        # Each app's own directory keeps its stricter mode below.
+        "d /srv/appdata 0755 root media - -"
         "d /srv/appdata/media-mgmt 2770 root media - -"
         "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"

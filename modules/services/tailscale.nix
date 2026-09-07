@@ -25,7 +25,17 @@
         ];
       };
 
+      # tailscaled's shipped unit hardcodes --state=/var/lib/tailscale/tailscaled.state
+      # -- real storage lives under /srv/appdata (ZFS-snapshotted) and is
+      # remapped in via BindPaths.
+      systemd.tmpfiles.rules = [
+        "d /srv/appdata/tailscale 0700 root root - -"
+      ];
+
       systemd.services.tailscaled.serviceConfig = lib.mkMerge [
+        {
+          BindPaths = [ "/srv/appdata/tailscale:/var/lib/tailscale" ];
+        }
         (flakeLib.deployment-hardening.mkServiceSandbox {
           readWritePaths = [
             "/var/lib/tailscale"

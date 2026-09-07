@@ -104,10 +104,10 @@
             block_auth_min = 15;
 
             dns = {
+              # Wildcard, not per-interface IPs: a named IP must already exist to bind, so tailscaled being down took DNS down with it; firewall below still scopes exposure.
               bind_hosts = [
-                "127.0.0.1"
-                lanIp
-                "100.119.26.45"
+                "0.0.0.0"
+                "::"
               ];
               port = 53;
               anonymize_client_ip = true;

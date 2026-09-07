@@ -148,8 +148,11 @@
           enabledCollectors = [
             "systemd"
           ];
-          # Replaces the standalone systemd_exporter's restart-count metric.
-          extraFlags = [ "--collector.systemd.enable-restarts-metrics" ];
+          # unit-exclude adds podman's per-invocation healthcheck transient units to the upstream default.
+          extraFlags = [
+            "--collector.systemd.enable-restarts-metrics"
+            ''--collector.systemd.unit-exclude=.+\.(automount|device|mount|scope|slice)|[0-9a-f]{64}-[0-9a-f]{16}\.service''
+          ];
         };
         smartctl = {
           enable = true;

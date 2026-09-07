@@ -28,10 +28,7 @@
         '';
       };
 
-      # Under /srv/appdata (ZFS-snapshotted) for backup coverage. Traversal
-      # for arcane (non-root, not in the "media" group) works because
-      # /srv/appdata's own top-level mode is 0755 (media-mgmt/storage.nix) --
-      # each app's subdirectory still enforces its own stricter permissions.
+      # Traversal works despite arcane not being in "media": /srv/appdata's own mode is 0755 (media-mgmt/storage.nix).
       systemd.tmpfiles.rules = [
         "d /srv/appdata/arcane 0750 arcane arcane - -"
         "d /srv/appdata/arcane/projects 0750 arcane arcane - -"

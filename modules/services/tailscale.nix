@@ -25,9 +25,7 @@
         ];
       };
 
-      # tailscaled's shipped unit hardcodes --state=/var/lib/tailscale/tailscaled.state
-      # -- real storage lives under /srv/appdata (ZFS-snapshotted) and is
-      # remapped in via BindPaths.
+      # Real storage; remapped onto the hardcoded --state=/var/lib/tailscale/... via BindPaths below.
       systemd.tmpfiles.rules = [
         "d /srv/appdata/tailscale 0700 root root - -"
       ];

@@ -26,10 +26,7 @@
         };
 
         systemd.tmpfiles.rules = [
-          # AdGuardHome's upstream unit hardcodes /var/lib/AdGuardHome in its
-          # --work-dir/--config flags -- real storage lives under /srv/appdata
-          # (ZFS-snapshotted) and is remapped in via BindPaths below, so
-          # tmpfiles here manages the real path, not the in-sandbox one.
+          # Real storage; remapped onto the hardcoded /var/lib/AdGuardHome via BindPaths below.
           "d /srv/appdata/dns/adguard 0750 adguardhome adguardhome - -"
           "Z /srv/appdata/dns/adguard - adguardhome adguardhome - -"
           # AdGuardHome creates data/ (and the query log/stats files in it)

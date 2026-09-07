@@ -26,13 +26,9 @@
         };
 
         systemd.tmpfiles.rules = [
-          "d /var/lib/AdGuardHome 0750 adguardhome adguardhome - -"
-          "Z /var/lib/AdGuardHome - adguardhome adguardhome - -"
-          # AdGuardHome creates data/ (and the query log/stats files in it)
-          # itself at 0700, which blocks the alloy user's "adguardhome" group
-          # membership from reading the query log for log shipping; recursively
-          # re-widen it to group-readable on every activation.
-          "Z /var/lib/AdGuardHome/data 0750 adguardhome adguardhome - -"
+          # Real storage; remapped onto the hardcoded /var/lib/AdGuardHome via BindPaths below.
+          "d /srv/appdata/dns/adguard 0700 adguardhome adguardhome - -"
+          "Z /srv/appdata/dns/adguard - adguardhome adguardhome - -"
         ];
 
         systemd.services.adguardhome.serviceConfig = lib.mkMerge [
@@ -45,6 +41,7 @@
               "password:${config.sops.secrets."dns.adguard.password".path}"
               "username:${config.sops.secrets."dns.adguard.username".path}"
             ];
+            BindPaths = [ "/srv/appdata/dns/adguard:/var/lib/AdGuardHome" ];
           }
           (flakeLib.deployment-hardening.mkServiceSandbox {
             readWritePaths = [ "/var/lib/AdGuardHome" ];
@@ -296,9 +293,9 @@
 
         services.logrotate.settings.adguardhome = {
           files = [
-            "/var/lib/AdGuardHome/data/*.log"
-            "/var/lib/AdGuardHome/data/querylog.json"
-            "/var/lib/AdGuardHome/data/stats.json"
+            "/srv/appdata/dns/adguard/data/*.log"
+            "/srv/appdata/dns/adguard/data/querylog.json"
+            "/srv/appdata/dns/adguard/data/stats.json"
           ];
           rotate = 1;
           frequency = "hourly";
@@ -309,25 +306,6 @@
           copytruncate = true;
           su = "adguardhome adguardhome";
         };
-        environment.etc."alloy/adguardhome.alloy".text = ''
-          loki.source.file "adguardhome" {
-            targets = [
-              {
-                __path__ = "/var/lib/AdGuardHome/data/*.log",
-                job = "adguardhome",
-                host = "${config.networking.hostName}",
-                role = "${if config.boot.isContainer then "container" else "host"}",
-              },
-              {
-                __path__ = "/var/lib/AdGuardHome/data/*.json",
-                job = "adguardhome",
-                host = "${config.networking.hostName}",
-                role = "${if config.boot.isContainer then "container" else "host"}",
-              },
-            ]
-            forward_to = [loki.write.default.receiver]
-          }
-        '';
       };
     };
 }

@@ -25,11 +25,20 @@
         ];
       };
 
+      # Real storage; remapped onto the hardcoded --state=/var/lib/tailscale/... via BindPaths below.
+      systemd.tmpfiles.rules = [
+        "d /srv/appdata/tailscale 0700 root root - -"
+      ];
+
       systemd.services.tailscaled.serviceConfig = lib.mkMerge [
+        {
+          BindPaths = [ "/srv/appdata/tailscale:/var/lib/tailscale" ];
+        }
         (flakeLib.deployment-hardening.mkServiceSandbox {
           readWritePaths = [
             "/var/lib/tailscale"
             "/run/tailscale"
+            "/run/resolvconf" # tailscaled clears its resolvconf entry on start/stop regardless of --accept-dns
           ];
           capabilities = [
             "CAP_NET_ADMIN"

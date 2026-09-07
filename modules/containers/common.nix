@@ -118,5 +118,8 @@
         # thermal_zone never has data inside an nspawn container -- fails every scrape otherwise.
         disabledCollectors = [ "thermal_zone" ];
       };
+
+      # /nix/var/nix/db is bind-mounted read-only here, so nix-gc can never lock the store.
+      nix.gc.automatic = lib.mkForce false;
     };
 }

@@ -28,11 +28,18 @@
     the notification (mobile_app's entity-based notify doesn't support
     one) — force-arming a failed attempt is a button on the dashboard
     instead (dashboard.yaml), next to the Dashboard Alert: Security
-    row that lights up for this same case.
+    row that lights up for this same case. Exits early if already armed
+    for the night, so it doesn't re-trigger the entry-delay/notify dance.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state: armed_night
   actions:
   - action: alarm_control_panel.alarm_arm_night
     target:
@@ -60,7 +67,9 @@
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Kept separate from wakeup_lighting so a fault there can't also block the disarm.
+    Kept separate from wakeup_lighting so a fault there can't also block
+    the disarm. Only disarms if someone's actually home — an empty house
+    shouldn't lose its alarm just because the sleep schedule ended.
   triggers:
   - id: schedule_off
     entity_id: schedule.sleep
@@ -70,6 +79,14 @@
     trigger: homeassistant
     event: start
   conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
   - condition: or
     conditions:
     - condition: trigger

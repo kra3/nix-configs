@@ -29,11 +29,11 @@
           # Real storage; remapped onto the hardcoded /var/lib/AdGuardHome via BindPaths below.
           "d /srv/appdata/dns/adguard 0750 adguardhome adguardhome - -"
           "Z /srv/appdata/dns/adguard - adguardhome adguardhome - -"
-          # AdGuardHome creates data/ (and the query log/stats files in it)
-          # itself at 0700, which blocks the alloy user's "adguardhome" group
-          # membership from reading the query log for log shipping; recursively
-          # re-widen it to group-readable on every activation.
-          "Z /srv/appdata/dns/adguard/data 0750 adguardhome adguardhome - -"
+          # data/ needs group-traversal for alloy; only the files it actually tails (*.log/*.json)
+          # need group-read -- sessions.db/leases.json/stats.db keep AdGuardHome's own tighter defaults.
+          "z /srv/appdata/dns/adguard/data 0750 adguardhome adguardhome - -"
+          "z /srv/appdata/dns/adguard/data/*.log 0640 adguardhome adguardhome - -"
+          "z /srv/appdata/dns/adguard/data/*.json 0640 adguardhome adguardhome - -"
         ];
 
         systemd.services.adguardhome.serviceConfig = lib.mkMerge [

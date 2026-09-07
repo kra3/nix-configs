@@ -148,9 +148,7 @@
           enabledCollectors = [
             "systemd"
           ];
-          # Restart counts, not the standalone systemd_exporter -- node_exporter already covers
-          # unit state (used by dashboards/alerts) and its systemd collector excludes
-          # scopes/mounts/etc by default, so nothing else was needed from that second exporter.
+          # Replaces the standalone systemd_exporter's restart-count metric.
           extraFlags = [ "--collector.systemd.enable-restarts-metrics" ];
         };
         smartctl = {
@@ -183,9 +181,7 @@
         process = {
           enable = true;
           listenAddress = config.vars.network.containers.monitoring.hostAddress;
-          # Per-thread metrics off: sizing only needs per-cgroup totals, and thread
-          # breakdown was most of this exporter's cardinality (desktop app launches
-          # on sutala each get their own cgroup, multiplied by every thread in them).
+          # Sizing only needs per-cgroup totals; thread breakdown was most of this exporter's cardinality.
           extraFlags = [ "-threads=false" ];
           settings.process_names = [
             {

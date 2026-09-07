@@ -13,8 +13,7 @@
         checkConfig = false; # Disable build-time validation (secrets not available at build time)
         listenAddress = monAddr;
         port = 9090;
-        # HA's own recorder keeps long-term statistics independently and indefinitely --
-        # this only bounds how far back Grafana can chart Prometheus-scraped metrics.
+        # HA's own recorder keeps long-term statistics independently of this.
         retentionTime = "180d";
         globalConfig = {
           scrape_interval = "30s";

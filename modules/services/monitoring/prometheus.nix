@@ -13,7 +13,9 @@
         checkConfig = false; # Disable build-time validation (secrets not available at build time)
         listenAddress = monAddr;
         port = 9090;
-        retentionTime = "2y";
+        # HA's own recorder keeps long-term statistics independently and indefinitely --
+        # this only bounds how far back Grafana can chart Prometheus-scraped metrics.
+        retentionTime = "180d";
         globalConfig = {
           scrape_interval = "30s";
         };
@@ -88,15 +90,6 @@
             static_configs = [
               {
                 targets = [ "${hostAddr}:9134" ];
-                labels.instance = "sutala";
-              }
-            ];
-          }
-          {
-            job_name = "systemd";
-            static_configs = [
-              {
-                targets = [ "${hostAddr}:9558" ];
                 labels.instance = "sutala";
               }
             ];

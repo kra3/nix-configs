@@ -148,6 +148,10 @@
           enabledCollectors = [
             "systemd"
           ];
+          # Restart counts, not the standalone systemd_exporter -- node_exporter already covers
+          # unit state (used by dashboards/alerts) and its systemd collector excludes
+          # scopes/mounts/etc by default, so nothing else was needed from that second exporter.
+          extraFlags = [ "--collector.systemd.enable-restarts-metrics" ];
         };
         smartctl = {
           enable = true;
@@ -179,29 +183,16 @@
         process = {
           enable = true;
           listenAddress = config.vars.network.containers.monitoring.hostAddress;
+          # Per-thread metrics off: sizing only needs per-cgroup totals, and thread
+          # breakdown was most of this exporter's cardinality (desktop app launches
+          # on sutala each get their own cgroup, multiplied by every thread in them).
+          extraFlags = [ "-threads=false" ];
           settings.process_names = [
             {
               name = "{{.Cgroups}}";
               cmdline = [ ".+" ];
             }
           ];
-        };
-      };
-
-      systemd.services.systemd-exporter = {
-        after = [
-          "container@monitoring.service"
-          "network-online.target"
-        ];
-        wants = [
-          "container@monitoring.service"
-          "network-online.target"
-        ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          DynamicUser = true;
-          Restart = "always";
-          ExecStart = "${pkgs.prometheus-systemd-exporter}/bin/systemd_exporter --web.listen-address=${config.vars.network.containers.monitoring.hostAddress}:9558 --systemd.collector.enable-restart-count";
         };
       };
 
@@ -302,7 +293,6 @@
             9134 # zfs-exporter
             9167 # unbound-exporter
             9256 # process-exporter
-            9558 # systemd-exporter
             9633 # smartctl-exporter
           ];
           allowedUDPPorts = [

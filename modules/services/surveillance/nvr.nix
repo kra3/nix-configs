@@ -268,7 +268,11 @@
           environment = {
             LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
           };
-          serviceConfig.EnvironmentFile = "/run/secrets/surveillance-nvr-frigate.env";
+          serviceConfig = {
+            EnvironmentFile = "/run/secrets/surveillance-nvr-frigate.env";
+            # frigate ignores SIGTERM, so it was stalling every switch for the full 90s default.
+            TimeoutStopSec = 20;
+          };
         };
 
         go2rtc = {

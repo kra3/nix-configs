@@ -7,9 +7,8 @@
     rather than hall_is_dark — dining is one of the brightest rooms, so
     gating it on the hall's dim interior PIR reading (which can read
     dark at midday, see hall.yaml) turned dining lights on in broad
-    daylight. Blueprint's 30/120 lux defaults fit sensor.average_illuminance
-    (drops to ~4 lux overnight, thousands of lux midday - confirmed via
-    Prometheus history).
+    daylight. dark_below raised to 45 — blueprint's 30 default was slow to
+    trip on cloudy-evening drops (stuck above 30 at 44 lux, occupied).
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -17,6 +16,7 @@
       occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
       light_entity: light.dining_lights
       dark_boolean: input_boolean.dining_is_dark
+      dark_below: 45
 
 - id: dining_room_lighting
   alias: Dining room — Lighting

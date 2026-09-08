@@ -1,6 +1,12 @@
 set nocompatible
 set encoding=utf-8
 
+" vim-lsp-settings reads g:lsp_settings during plug#end(), so overrides must be set before it, not further down.
+" vimwiki gives .md files filetype 'vimwiki', which marksman's default allowlist doesn't cover.
+let g:lsp_settings = {
+    \ 'marksman': {'allowlist': ['markdown', 'vimwiki']},
+    \ }
+
 " ===> Plugins - vim-plug  {{{
 " Plugin manager configuration
 
@@ -634,7 +640,7 @@ if PluginAvailable('vim-lsp')
 
         " Language-specific server configurations
         " Python: pyright (fast, accurate type checking)
-        let g:lsp_settings = {
+        call extend(g:lsp_settings, {
             \ 'pyright-langserver': {
             \   'workspace_config': {
             \     'python': {
@@ -647,7 +653,7 @@ if PluginAvailable('vim-lsp')
             \     }
             \   }
             \ },
-            \ }
+            \ })
     endif
 
     " Asyncomplete integration

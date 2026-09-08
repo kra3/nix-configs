@@ -14,6 +14,7 @@
       # Fonts
       nerd-fonts.meslo-lg
       nerd-fonts.fira-code
+      nerd-fonts.inconsolata
     ];
   };
 }

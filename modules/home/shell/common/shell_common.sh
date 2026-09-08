@@ -29,7 +29,7 @@ ts() {
     if [ -z "$1" ]; then
         if command -v sesh &> /dev/null && command -v fzf &> /dev/null; then
             local session
-            session=$(sesh list -i | perl -pe 's/\\u\{([0-9a-f]+)\}/chr(hex($1))/gie' | fzf --height 40% --reverse --border --prompt '⚡ ' \
+            session=$(sesh list -i | perl -pe 's/\\u\{([0-9a-f]+)\}/chr(hex($1))/gie' | fzf --ansi --height 40% --reverse --border --prompt '⚡ ' \
                 --color 'fg:#cdd6f4,bg:#1e1e2e,hl:#cba6f7' \
                 --color 'fg+:#cdd6f4,bg+:#313244,hl+:#cba6f7' \
                 --color 'info:#89b4fa,prompt:#cba6f7,pointer:#f38ba8')

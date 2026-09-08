@@ -2,7 +2,11 @@
 - id: exterior_front_light
   alias: Exterior — Front street light (dusk to sleep)
   description: >-
-    Turn on front street light at sunset, off at sleep schedule.
+    Turn on front street light at sunset, off at sleep schedule. Both
+    triggers are edges (sun crossing, schedule turning on) — an HA restart
+    exactly at sleep_started would miss the off edge and strand the light
+    on all night, so startup re-derives whichever state should currently
+    apply from sun.sun/schedule.sleep instead of only reacting to changes.
   triggers:
   - entity_id: sun.sun
     to: below_horizon
@@ -12,6 +16,9 @@
     to: "on"
     trigger: state
     id: sleep_started
+  - trigger: homeassistant
+    event: start
+    id: startup
   actions:
   - choose:
     - conditions:
@@ -28,4 +35,27 @@
       - target:
           entity_id: switch.front_entrance_double_switch_right
         action: switch.turn_off
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_off
+    - conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_on
   mode: single

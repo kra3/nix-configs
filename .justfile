@@ -44,7 +44,7 @@ build host=default_host:
 build-remote host=default_host target=default_host build_host=target:
     nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
 
-# Pre-pulls quadlet images from a built closure so a container restart during switch never stalls on a network pull.
+# Pre-pulls quadlet images from a built closure so a container restart during switch never stalls on a network pull; skips images already present locally, since tags here are pinned exact versions.
 _prepull-images result_path target="":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -54,11 +54,19 @@ _prepull-images result_path target="":
     fi
     while IFS= read -r img; do
         if [ -z "{{target}}" ]; then
-            echo "pre-pulling $img"
-            sudo podman pull "$img"
+            if sudo podman image exists "$img"; then
+                echo "already present: $img"
+            else
+                echo "pre-pulling $img"
+                sudo podman pull "$img"
+            fi
         else
-            echo "pre-pulling $img on {{target}}"
-            ssh {{target}} sudo podman pull "$img"
+            if ssh {{target}} sudo podman image exists "$img"; then
+                echo "already present on {{target}}: $img"
+            else
+                echo "pre-pulling $img on {{target}}"
+                ssh {{target}} sudo podman pull "$img"
+            fi
         fi
     done <<< "$images"
 

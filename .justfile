@@ -88,8 +88,9 @@ switch-remote host=default_host target=default_host build_host=target:
         echo "switch-remote is not supported for darwin hosts (darwin-rebuild has no --target-host/--build-host equivalent); run 'just switch {{ host }}' on the host directly." >&2
         exit 1
     fi
-    nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}}
-    just _prepull-images ./result {{target}}
+    # --build-host means nixos-rebuild never writes a ./result symlink here, so capture the store path from stdout instead (it prints only that, by design, for scripting).
+    result=$(nixos-rebuild build --flake .#{{host}} --target-host {{target}} --build-host {{build_host}})
+    just _prepull-images "$result" {{target}}
     nixos-rebuild switch --flake .#{{host}} --target-host {{target}} --build-host {{build_host}} --use-remote-sudo --ask-sudo-password
 
 # surasa has no DNS entry (relies on the "surasa" alias in ~/.ssh/config) and its weak

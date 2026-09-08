@@ -7,9 +7,8 @@
     rather than hall_is_dark — dining is one of the brightest rooms, so
     gating it on the hall's dim interior PIR reading (which can read
     dark at midday, see hall.yaml) turned dining lights on in broad
-    daylight. dark_below raised to 45 (blueprint default 30 was slow to
-    trip on cloudy-evening drops, e.g. staying above 30 at 44 lux with
-    occupancy present); bright_above stays at the 120 default.
+    daylight. dark_below raised to 45 — blueprint's 30 default was slow to
+    trip on cloudy-evening drops (stuck above 30 at 44 lux, occupied).
   use_blueprint:
     path: local/darkness-detection.yaml
     input:

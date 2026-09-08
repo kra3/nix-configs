@@ -48,10 +48,12 @@ build-remote host=default_host target=default_host build_host=target:
 _prepull-images result_path target="":
     #!/usr/bin/env bash
     set -euo pipefail
-    images=$(grep -h '^Image=' {{result_path}}/etc/containers/systemd/*.container 2>/dev/null | sed 's/^Image=//' | sort -u)
-    if [ -z "$images" ]; then
+    shopt -s nullglob
+    files=( {{result_path}}/etc/containers/systemd/*.container )
+    if [ ${#files[@]} -eq 0 ]; then
         exit 0
     fi
+    images=$(grep -h '^Image=' "${files[@]}" | sed 's/^Image=//' | sort -u)
     while IFS= read -r img; do
         if [ -z "{{target}}" ]; then
             if sudo podman image exists "$img"; then

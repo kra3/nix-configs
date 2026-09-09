@@ -91,6 +91,15 @@
                 editable = false;
                 options.path = "/etc/grafana-dashboards";
               }
+              {
+                name = "surasa";
+                orgId = 1;
+                folder = "Surasa";
+                type = "file";
+                disableDeletion = false;
+                editable = false;
+                options.path = "/etc/grafana-dashboards-surasa";
+              }
             ];
           };
           alerting.contactPoints.path = "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml";
@@ -890,7 +899,7 @@
         "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
         "grafana-dashboards/smart.json".source = ./dashboards/smart.json;
         "grafana-dashboards/container-resources.json".source = ./dashboards/container-resources.json;
-        "grafana-dashboards/surasa.json".source = ./dashboards/surasa.json;
+        "grafana-dashboards-surasa/surasa.json".source = ./dashboards/surasa.json;
       };
 
       systemd.tmpfiles.rules = [

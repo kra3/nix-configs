@@ -42,7 +42,7 @@
       },
       "targets": [
         {
-          "expr": "topk(20, namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*\\.service\\]\"})",
+          "expr": "topk(20, namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*\\\\.service\\\\]\"})",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -104,7 +104,7 @@
       },
       "targets": [
         {
-          "expr": "topk(20, 100 * sum by (groupname) (rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*\\.service\\]\"}[5m])))",
+          "expr": "topk(20, 100 * sum by (groupname) (rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*\\\\.service\\\\]\"}[5m])))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -162,7 +162,7 @@
       },
       "targets": [
         {
-          "expr": "topk(15, namedprocess_namegroup_open_filedesc{instance=~\"$instance\", groupname=~\".*\\.service\\]\"})",
+          "expr": "topk(15, namedprocess_namegroup_open_filedesc{instance=~\"$instance\", groupname=~\".*\\\\.service\\\\]\"})",
           "format": "table",
           "instant": true,
           "refId": "A"

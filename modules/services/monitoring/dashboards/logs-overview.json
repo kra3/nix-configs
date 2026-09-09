@@ -21,7 +21,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Log volume by job",
       "gridPos": {
         "h": 8,
@@ -41,7 +41,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Log volume by instance",
       "gridPos": {
         "h": 8,
@@ -61,7 +61,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Recent error logs",
       "gridPos": {
         "h": 10,
@@ -98,7 +98,7 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "Loki",
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
         "definition": "label_values({job=~\".+\"}, job)",
         "hide": 0,
         "includeAll": true,
@@ -117,7 +117,7 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "Loki",
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
         "definition": "label_values({job=~\"$job\"}, instance)",
         "hide": 0,
         "includeAll": true,

@@ -198,6 +198,7 @@
         "ve-monitoring"
         "ve-media-play"
         "ve-home-auto"
+        "tailscale0"
       ];
       forwardPorts = [
         {

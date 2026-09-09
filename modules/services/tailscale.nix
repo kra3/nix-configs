@@ -18,10 +18,13 @@
           "--advertise-routes=192.168.1.10/32"
           "--advertise-exit-node"
           "--accept-dns=false"
+          # tailscaled's self-managed iptables rules (firewallmode=ipt-default) don't take effect on this nftables-only host; forwarding is handled declaratively via networking.nat.internalInterfaces instead.
+          "--netfilter-mode=off"
         ];
         extraSetFlags = [
           "--advertise-routes=192.168.1.10/32"
           "--advertise-exit-node"
+          "--netfilter-mode=off"
         ];
       };
 
@@ -57,7 +60,5 @@
         ];
         allowedUDPPorts = [ 53 ];
       };
-
-      networking.firewall.trustedInterfaces = [ "tailscale0" ];
     };
 }

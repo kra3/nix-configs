@@ -606,7 +606,7 @@
       },
       "targets": [
         {
-          "expr": "node_load1{instance=~\"$instance\"} / count by (instance) (node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"})",
+          "expr": "node_load1{instance=~\"$instance\"} / on(instance) count by (instance) (node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"})",
           "legendFormat": "{{instance}}",
           "refId": "A"
         }

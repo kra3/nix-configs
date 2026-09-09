@@ -58,9 +58,6 @@
         allowedUDPPorts = [ 53 ];
       };
 
-      # Exit-node/subnet-route traffic is forwarded (not destined for this host), so the
-      # per-interface allow list above doesn't cover it — the nixos-fw forward chain drops it
-      # before it ever reaches Tailscale's own masquerade rule unless tailscale0 is trusted.
       networking.firewall.trustedInterfaces = [ "tailscale0" ];
     };
 }

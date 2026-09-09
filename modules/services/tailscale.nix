@@ -57,5 +57,7 @@
         ];
         allowedUDPPorts = [ 53 ];
       };
+
+      networking.firewall.trustedInterfaces = [ "tailscale0" ];
     };
 }

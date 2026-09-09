@@ -163,7 +163,7 @@
   sops.secrets."surasa.tailscale.authkey" = { };
 
   # Plain tailnet member (not an exit node like sutala's) so surasa/SSH stays reachable even when sutala is down.
-  # Advertises its own LAN IP as a /32 route so tailnet clients can reach its AdGuard resolver as a DNS fallback, same pattern as sutala's.
+  # advertise-routes mirrors sutala's /32 pattern so AdGuard here can serve as a tailnet DNS fallback.
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets."surasa.tailscale.authkey".path;
@@ -172,7 +172,7 @@
     extraSetFlags = [ "--advertise-routes=192.168.1.39/32" ];
   };
 
-  # AdGuard's DNS port isn't reachable over the tailnet otherwise -- openFirewall above only opens the wireguard transport port, not tailscale0 traffic in general.
+  # openFirewall above only opens the wireguard transport port, not general tailscale0 traffic -- DNS needs its own allow.
   networking.firewall.interfaces.tailscale0 = {
     allowedTCPPorts = [ 53 ];
     allowedUDPPorts = [ 53 ];

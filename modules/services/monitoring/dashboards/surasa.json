@@ -305,7 +305,7 @@
       "type": "row"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Log rate by systemd unit",
       "fieldConfig": { "defaults": { "unit": "ops" } },
       "gridPos": { "h": 6, "w": 24, "x": 0, "y": 40 },
@@ -321,7 +321,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Recent errors from surasa",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 46 },
       "id": 13,

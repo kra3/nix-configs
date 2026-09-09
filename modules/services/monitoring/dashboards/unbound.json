@@ -164,7 +164,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Unbound log rate from systemd journal",
       "fieldConfig": {
         "defaults": {
@@ -189,7 +189,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Recent unbound errors",
       "gridPos": {
         "h": 10,

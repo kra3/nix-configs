@@ -71,6 +71,7 @@
                 url = "http://${networkVars.containers.monitoring.localAddress}:9090";
                 isDefault = true;
               }
+              # uid P8E80F9AEF21F6940 is hardcoded into dashboards/*.json's datasource fields (not Nix-templated) — re-fetch via the API if this datasource is ever recreated.
               {
                 name = "Loki";
                 type = "loki";

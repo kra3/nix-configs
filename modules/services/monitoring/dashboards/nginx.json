@@ -139,7 +139,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Nginx log rate from systemd journal",
       "fieldConfig": {
         "defaults": {
@@ -164,7 +164,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "description": "Recent nginx errors",
       "gridPos": {
         "h": 10,

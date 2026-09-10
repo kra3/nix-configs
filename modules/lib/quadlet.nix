@@ -9,10 +9,11 @@
         startPeriod ? "60s",
       }:
       {
-        healthCmd = "wget -qO- http://localhost:${toString port}/${path}";
+        # Retries internally so podman's immediate first probe (before the app's port is up) doesn't fail nixos-rebuild switch.
+        healthCmd = "i=0; while [ $i -lt 12 ]; do wget -qO- http://localhost:${toString port}/${path} && exit 0; sleep 2; i=$((i+1)); done; exit 1";
         healthOnFailure = "kill";
         healthInterval = "60s";
-        healthTimeout = "10s";
+        healthTimeout = "55s";
         healthRetries = 3;
         healthStartPeriod = startPeriod;
       };

@@ -421,7 +421,7 @@
           virtualisation.quadlet.containers.authelia = {
             autoStart = true;
             containerConfig = {
-              image = "ghcr.io/authelia/authelia:4.39.24";
+              image = "ghcr.io/authelia/authelia:4.39.25";
               publishPorts = [ "127.0.0.1:9091:9091" ];
               # Unlike Arcane, this container never talks to the podman socket
               # directly, so it doesn't need systemd.user.sockets/services.podman

@@ -54,9 +54,7 @@
     to: playing
     trigger: state
     id: playing
-  # Genuine-stop states only — was `from: playing`, which also fired on a
-  # transient pause/buffering blip (common with Stremio rebuffering) and
-  # restored the lights mid-movie after the 30s grace period below.
+  # Genuine-stop states only — `from: playing` also caught pause/buffering blips.
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to:
     - "off"

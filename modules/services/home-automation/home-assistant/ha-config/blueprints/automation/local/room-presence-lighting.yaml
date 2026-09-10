@@ -63,10 +63,8 @@ blueprint:
     media_player_entity:
       name: Defer to media player (optional)
       description: >-
-        If set, motion/darkness won't turn this light on while this media
-        player is playing/paused/buffering — e.g. don't re-light the room
-        on presence while a movie is running on the TV in it. Turn-off
-        branches (clear, sleep, bedtime) are unaffected.
+        If set, skips turn-on (not turn-off) while this player is
+        playing/paused/buffering.
       default: ""
       selector:
         entity:

@@ -33,6 +33,7 @@
       light_entity: light.living_room_lights
       occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
       dark_boolean: input_boolean.living_room_is_dark
+      media_player_entity: media_player.lg_webos_tv_oled77c35la
 
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
@@ -53,8 +54,14 @@
     to: playing
     trigger: state
     id: playing
+  # Genuine-stop states only — was `from: playing`, which also fired on a
+  # transient pause/buffering blip (common with Stremio rebuffering) and
+  # restored the lights mid-movie after the 30s grace period below.
   - entity_id: media_player.lg_webos_tv_oled77c35la
-    from: playing
+    to:
+    - "off"
+    - idle
+    - standby
     trigger: state
     id: not_playing
   conditions:

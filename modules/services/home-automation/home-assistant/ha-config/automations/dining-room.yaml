@@ -30,3 +30,4 @@
       light_entity: light.dining_lights
       occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
       dark_boolean: input_boolean.dining_is_dark
+      media_player_entity: media_player.lg_webos_tv_oled77c35la

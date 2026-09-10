@@ -60,6 +60,17 @@ blueprint:
           min: 1
           max: 100
           unit_of_measurement: "%"
+    media_player_entity:
+      name: Defer to media player (optional)
+      description: >-
+        If set, motion/darkness won't turn this light on while this media
+        player is playing/paused/buffering — e.g. don't re-light the room
+        on presence while a movie is running on the TV in it. Turn-off
+        branches (clear, sleep, bedtime) are unaffected.
+      default: ""
+      selector:
+        entity:
+          domain: media_player
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -98,6 +109,7 @@ variables:
   sleep_brightness: !input sleep_brightness
   react_during_sleep: !input react_during_sleep
   occupancy_sensor: !input occupancy_sensor
+  media_player_entity: !input media_player_entity
 
 actions:
   - choose:
@@ -134,6 +146,10 @@ actions:
                     state: "on"
               - condition: template
                 value_template: "{{ react_during_sleep }}"
+          - condition: template
+            value_template: >-
+              {{ media_player_entity in [none, ''] or
+                 is_state(media_player_entity, ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
         sequence:
           - target:
               entity_id: !input light_entity
@@ -187,6 +203,10 @@ actions:
                     state: "on"
               - condition: template
                 value_template: "{{ react_during_sleep }}"
+          - condition: template
+            value_template: >-
+              {{ media_player_entity in [none, ''] or
+                 is_state(media_player_entity, ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
         sequence:
           - target:
               entity_id: !input light_entity

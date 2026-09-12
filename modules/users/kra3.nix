@@ -26,6 +26,9 @@
         content = ''
           acoustid:
             apikey: ${config.sops.placeholder."music.acoustid_api_key"}
+          spotify:
+            client_id: ${config.sops.placeholder."music.spotify_client_id"}
+            client_secret: ${config.sops.placeholder."music.spotify_client_secret"}
         '';
       };
 

@@ -119,7 +119,12 @@
       home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
-        directory: /srv/media/library/music
+        # music.new is the staged tree Task 11's cutover renames to music/ -- items
+        # living outside this directory (e.g. under the old music/ tree) won't
+        # auto-relocate on tag-driven moves (beets only moves items inside their
+        # own configured directory), so this must track the same value the
+        # runbook's --directory overrides always point at.
+        directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         plugins: spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit
         lastgenre:

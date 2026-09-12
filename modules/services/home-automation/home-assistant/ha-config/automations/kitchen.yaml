@@ -28,4 +28,5 @@
     input:
       light_entity: light.kitchen_lights
       occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
+      motion_sensor: binary_sensor.hue_pir_kitchen_occupancy
       dark_boolean: input_boolean.kitchen_is_dark

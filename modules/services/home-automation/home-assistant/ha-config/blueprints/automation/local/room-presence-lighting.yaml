@@ -1,13 +1,19 @@
 blueprint:
   name: Room presence lighting (dark + occupied → on)
   description: >-
-    On while occupied and dark, off after occupancy's been clear for 2
-    min (debounced via the trigger's own `for:`, not a timer sequence —
-    a flickery sensor can't reset it back to full brightness), off
-    immediately at bedtime. Leave on_brightness/sleep_brightness unset
-    for a light Adaptive Lighting manages — a bare turn_on lets AL
-    supply brightness/color-temp instead. Both off-paths are suppressed
-    while input_boolean.party_mode is on.
+    On while occupied and dark, off after both occupancy_sensor and
+    motion_sensor have been clear for 2 min (debounced via the triggers'
+    own `for:`, not a timer sequence — a flickery sensor can't reset it
+    back to full brightness), off immediately at bedtime. motion_sensor
+    exists to stop a strict/classified occupancy_sensor (e.g. Frigate
+    person detection) from cutting the light while someone's sitting
+    mostly still — pass a broader, more readily-tripped motion signal
+    there (occupancy_sensor itself is fine if the room has no such
+    signal, making this a no-op); it only ever suppresses the off, never
+    causes an on. Leave on_brightness/sleep_brightness unset for a light
+    Adaptive Lighting manages — a bare turn_on lets AL supply
+    brightness/color-temp instead. Both off-paths are suppressed while
+    input_boolean.party_mode is on.
   domain: automation
   input:
     light_entity:
@@ -17,6 +23,17 @@ blueprint:
           domain: light
     occupancy_sensor:
       name: Occupancy sensor
+      selector:
+        entity:
+          domain: binary_sensor
+    motion_sensor:
+      name: Motion sensor (off-inhibitor)
+      description: >-
+        Broader/more sensitive motion signal than occupancy_sensor — the
+        light's off-timer only fires once both this and occupancy_sensor
+        have been clear for 2 min. Pass the same entity as
+        occupancy_sensor for a room with no separate raw-motion signal;
+        checking one entity's state twice is a no-op.
       selector:
         entity:
           domain: binary_sensor
@@ -84,6 +101,11 @@ triggers:
     for: "00:02:00"
     trigger: state
     id: clear
+  - entity_id: !input motion_sensor
+    to: "off"
+    for: "00:02:00"
+    trigger: state
+    id: motion_clear
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
@@ -107,6 +129,7 @@ variables:
   sleep_brightness: !input sleep_brightness
   react_during_sleep: !input react_during_sleep
   occupancy_sensor: !input occupancy_sensor
+  motion_sensor: !input motion_sensor
   media_player_entity: !input media_player_entity
 
 actions:
@@ -157,7 +180,13 @@ actions:
             action: light.turn_on
       - conditions:
           - condition: trigger
-            id: clear
+            id: [clear, motion_clear]
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
           - condition: not
             conditions:
               - condition: state
@@ -218,10 +247,13 @@ actions:
           - condition: state
             entity_id: !input occupancy_sensor
             state: "off"
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
           - condition: template
             value_template: >-
               {%- from 'elapsed.jinja' import elapsed_ge -%}
-              {{ elapsed_ge(occupancy_sensor, 120) }}
+              {{ elapsed_ge(occupancy_sensor, 120) and elapsed_ge(motion_sensor, 120) }}
           - condition: not
             conditions:
               - condition: state

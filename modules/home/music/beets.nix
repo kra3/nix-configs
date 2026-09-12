@@ -123,7 +123,7 @@
           move: yes
           write: yes
         paths:
-          default: "$albumartist/$album ($year)/$track - $title"
+          default: "%the{$albumartist}/$album ($year)/$track - $title"
       '';
     };
 }

@@ -7,6 +7,16 @@ input_text:
     name: Doorbell return source
     icon: mdi:doorbell
 
+# restore: true so a pending auto-off survives an HA restart instead of
+# needing hand-rolled elapsed-time recovery in the automation itself.
+timer:
+  front_door_entrance_light_off:
+    duration: "00:10:00"
+    restore: true
+  front_door_knock_auto_off:
+    duration: "00:10:00"
+    restore: true
+
 template:
   - binary_sensor:
       - name: "Front Door Open"

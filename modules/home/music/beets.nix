@@ -109,9 +109,12 @@
       # "music/beets-secrets.yaml" template).
       home.shellAliases.beet = "beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
-      # Second beets profile for Indian film soundtracks: invoked explicitly via
-      # `beet -c ~/.config/beets/indian-film.yaml <command>`, not through programs.beets.
-      home.file.".config/beets/indian-film.yaml".text = ''
+      # Second beets profile for Indian film soundtracks: invoked via `beet-indian-film
+      # <command>`, which points BEETSDIR at a separate config dir instead of layering
+      # `--config` on top of the Western profile (which would inherit e.g. paths.comp).
+      home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
+
+      home.file.".config/beets-indian-film/config.yaml".text = ''
         directory: /srv/media/library/music
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         plugins: spotify jiosaavn fetchart embedart zero duplicates fromfilename edit
@@ -123,7 +126,8 @@
           move: yes
           write: yes
         paths:
-          default: "%the{$albumartist}/$album ($year)/$track - $title"
+          default: "$albumartist/$album ($year)/$track - $title"
+          singleton: "$albumartist/$album ($year)/$track - $title"
       '';
     };
 }

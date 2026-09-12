@@ -17,9 +17,6 @@
             "fromfilename"
             "edit"
           ];
-          acoustid = {
-            apikey = "@ACOUSTID_API_KEY@";
-          };
           lastgenre = {
             source = "track";
             count = 1;
@@ -40,6 +37,10 @@
           };
         };
       };
+
+      # acoustid.apikey lives outside this tracked config, in the sops-rendered overlay
+      # this alias points `beet` at (see modules/users/kra3.nix's "music/beets-secrets.yaml" template).
+      home.shellAliases.beet = "beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
       # Second beets profile for Indian film soundtracks: invoked explicitly via
       # `beet -c ~/.config/beets/indian-film.yaml <command>`, not through programs.beets.

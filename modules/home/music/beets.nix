@@ -72,7 +72,9 @@
           }
         );
         settings = {
-          directory = "/srv/media/library/music/Western";
+          # music.new is the staged tree Task 11's cutover renames to music/ -- Western
+          # must land here too, alongside Classical/Devotional/Indian-film content.
+          directory = "/srv/media/library/music.new/Western";
           library = "${config.home.homeDirectory}/.config/beets/western.db";
           plugins = [
             "chroma"

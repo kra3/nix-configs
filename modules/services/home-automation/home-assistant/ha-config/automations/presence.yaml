@@ -70,28 +70,18 @@
     event: start
     id: startup
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.anjalipc
-      state: home
-    - condition: state
-      entity_id: person.arun_karunagath
-      state: home
+  - condition: numeric_state
+    entity_id: zone.home
+    below: 1
   actions:
   - if:
       - condition: trigger
         id: left
     then:
       - delay: "00:05:00"
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: person.anjalipc
-          state: home
-        - condition: state
-          entity_id: person.arun_karunagath
-          state: home
+      - condition: numeric_state
+        entity_id: zone.home
+        below: 1
   - action: light.turn_off
     target:
       entity_id: all
@@ -142,14 +132,9 @@
     event: start
     id: startup
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.anjalipc
-      state: home
-    - condition: state
-      entity_id: person.arun_karunagath
-      state: home
+  - condition: numeric_state
+    entity_id: zone.home
+    below: 1
   - condition: state
     entity_id: binary_sensor.house_exits_open_status
     state: "on"
@@ -161,14 +146,9 @@
           id: startup
     then:
       - delay: "00:05:00"
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: person.anjalipc
-          state: home
-        - condition: state
-          entity_id: person.arun_karunagath
-          state: home
+      - condition: numeric_state
+        entity_id: zone.home
+        below: 1
       - condition: state
         entity_id: binary_sensor.house_exits_open_status
         state: "on"

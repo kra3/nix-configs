@@ -28,5 +28,6 @@
     input:
       light_entity: light.bedroom_wardrobe_lights
       occupancy_sensor: binary_sensor.bedroom_occupancy_presence
+      motion_sensor: binary_sensor.bedroom_occupancy_presence
       dark_boolean: input_boolean.bedroom_is_dark
       react_during_sleep: false

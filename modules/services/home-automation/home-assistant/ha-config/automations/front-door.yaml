@@ -149,6 +149,7 @@
                         entity_id: switch.front_entrance_double_switch_right
 
                 # Entrance Light: Turn on only if motion detected after knock (someone going to the door)
+                # and someone's actually home to be going to answer it.
                 - wait_for_trigger:
                     - platform: state
                       entity_id: binary_sensor.hue_pir_hallway_occupancy
@@ -157,6 +158,9 @@
                 - if:
                     - condition: template
                       value_template: "{{ wait.trigger is not none }}"
+                    - condition: numeric_state
+                      entity_id: zone.home
+                      above: 0
                   then:
                     - action: switch.turn_on
                       target:

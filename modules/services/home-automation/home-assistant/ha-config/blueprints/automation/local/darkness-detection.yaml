@@ -7,6 +7,10 @@ blueprint:
     lux for 2 min (or the sun rises), waiting for the room's occupancy
     sensor to clear before turning the light off. Factored out of the
     kitchen/hall automations, which were identical apart from entity names.
+    The dark-below threshold/sustain tightens automatically (dark_below_daytime/
+    dark_sustain_daytime) when the sun is up and weather.forecast_vasudha
+    doesn't corroborate real cloud cover, so a clear-daytime sensor blip
+    doesn't read as dark; unset, the tier is a no-op.
   domain: automation
   input:
     illuminance_sensor:
@@ -57,13 +61,57 @@ blueprint:
           min: 0
           max: 1000
           unit_of_measurement: lx
+    dark_below_daytime:
+      name: Dark threshold during clear daytime (lux)
+      description: >-
+        Stricter illuminance-below threshold used instead of dark_below
+        when the sun is above the horizon and the forecast doesn't
+        corroborate real cloud cover (see cloud_coverage_threshold) - guards
+        against a daytime sensor blip (interior PIR briefly reading low
+        with the sun clearly up) being treated as genuine darkness. Leave
+        at the default to disable the daytime-specific tier entirely.
+      default: 1000
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
+    dark_sustain_daytime:
+      name: Dark sustain duration during clear daytime
+      description: >-
+        How long illuminance must stay below dark_below_daytime before
+        counting as dark under the same clear-daytime condition. Default
+        matches the always-on 2 min sustain, so rooms that don't override
+        dark_below_daytime see no behavior change.
+      default: "00:02:00"
+      selector:
+        duration: {}
+    cloud_coverage_threshold:
+      name: Cloud coverage corroboration threshold (%)
+      description: >-
+        weather.forecast_vasudha cloud coverage above this, while the sun
+        is up, is treated as corroborating real daytime overcast/rain -
+        keeps the lenient dark_below/2 min response instead of the
+        stricter daytime tier. Same convention as automations/tv.yaml's
+        backlight-on-overcast check.
+      default: 70
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
 
 triggers:
   - entity_id: !input illuminance_sensor
     below: !input dark_below
     for: "00:02:00"
     trigger: numeric_state
-    id: dark
+    id: dark_lux_lenient
+  - entity_id: !input illuminance_sensor
+    below: !input dark_below_daytime
+    for: !input dark_sustain_daytime
+    trigger: numeric_state
+    id: dark_lux_strict
   - entity_id: sun.sun
     to: below_horizon
     trigger: state
@@ -87,13 +135,45 @@ triggers:
     event: start
     id: startup
 actions:
-  # Trust each trigger's own threshold — re-checking lux here used to
-  # gate the sun-based trigger too, so a sensor that never reads above
-  # 120 lux (kitchen/hall, confirmed via Prometheus) stayed stuck dark.
+  # Trust each trigger's own threshold for sun.sun/bright — re-checking lux
+  # there used to gate the sun-based trigger too, so a sensor that never
+  # reads above 120 lux (kitchen/hall, confirmed via Prometheus) stayed
+  # stuck dark. The two lux-based dark triggers instead gate here. HA's
+  # trigger schema has no inline per-trigger condition, so night-or-
+  # overcast vs. clear-daytime tiering has to live in this choose branch
+  # rather than on the trigger itself.
   - choose:
       - conditions:
-          - condition: trigger
-            id: dark
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: dark
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: dark_lux_lenient
+                  - condition: or
+                    conditions:
+                      - condition: state
+                        entity_id: sun.sun
+                        state: below_horizon
+                      - condition: numeric_state
+                        entity_id: weather.forecast_vasudha
+                        attribute: cloud_coverage
+                        above: !input cloud_coverage_threshold
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: dark_lux_strict
+                  - condition: state
+                    entity_id: sun.sun
+                    state: above_horizon
+                  - condition: not
+                    conditions:
+                      - condition: numeric_state
+                        entity_id: weather.forecast_vasudha
+                        attribute: cloud_coverage
+                        above: !input cloud_coverage_threshold
         sequence:
           - target:
               entity_id: !input dark_boolean

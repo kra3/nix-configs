@@ -33,6 +33,24 @@ sensor:
       - sensor.laundry_occupancy_illuminance
       - sensor.toilet_occupancy_illuminance
 
+  # Outlier filter absorbs single-sample dips (a hand/door briefly blocking
+  # the PIR) before they reach the darkness-detection blueprint's trigger.
+  - platform: filter
+    name: "Hall Illuminance Filtered"
+    entity_id: sensor.hue_pir_hallway_illuminance
+    filters:
+      - filter: outlier
+        window_size: 4
+        radius: 20
+
+  - platform: filter
+    name: "Kitchen Illuminance Filtered"
+    entity_id: sensor.hue_pir_kitchen_illuminance
+    filters:
+      - filter: outlier
+        window_size: 4
+        radius: 20
+
 input_boolean:
   bedroom_is_dark:
     name: Bedroom is dark

@@ -79,6 +79,16 @@ input_number:
     initial: 4
     unit_of_measurement: "°"
 
+# restore: true so a pending "everyone left" confirmation survives an HA
+# restart instead of needing a startup-trigger workaround in the automation.
+timer:
+  everyone_left_home_confirm:
+    duration: "00:05:00"
+    restore: true
+  exit_open_notify:
+    duration: "00:05:00"
+    restore: true
+
 schedule:
   sleep:
     name: Sleep

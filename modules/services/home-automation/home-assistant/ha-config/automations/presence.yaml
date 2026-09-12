@@ -51,70 +51,76 @@
 - id: everyone_left_home
   alias: Everyone left home
   description: >-
-    When all tracked persons leave the home zone for 5 min, turn off all
-    lights and arm Alarmo away. Alarmo silently refuses if a sensor's
-    open (same as the bedtime arm in sleep.yaml), so this checks the
-    result and notifies either way — don't claim "alarm armed" if it
-    didn't.
+    When all tracked persons leave the home zone, wait out
+    timer.everyone_left_home_confirm (5 min, restore: true) before turning
+    off all lights and arming Alarmo away — an HA restart mid-countdown
+    just resumes instead of needing a startup-trigger workaround. Alarmo
+    silently refuses if a sensor's open (same as the bedtime arm in
+    sleep.yaml), so this checks the result and notifies either way —
+    don't claim "alarm armed" if it didn't.
   triggers:
   - entity_id:
     - person.anjalipc
     - person.arun_karunagath
     trigger: state
     id: left
-  # An HA restart during the 5-min wait loses it — nobody re-triggers
-  # this since presence already settled, so the house would stay
-  # unarmed indefinitely. Skip straight to arming since we already know
-  # (from the conditions below) that everyone's away right now.
-  - trigger: homeassistant
-    event: start
-    id: startup
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.everyone_left_home_confirm
+    id: timer_finished
   conditions:
   - condition: numeric_state
     entity_id: zone.home
     below: 1
   actions:
-  - if:
-      - condition: trigger
-        id: left
-    then:
-      - delay: "00:05:00"
-      - condition: numeric_state
-        entity_id: zone.home
-        below: 1
-  - action: light.turn_off
-    target:
-      entity_id: all
-  - action: alarm_control_panel.alarm_arm_away
-    target:
-      entity_id: alarm_control_panel.vasudha_secure
-    data:
-      code: !secret alarm_code
-  - delay: "00:00:05"
   - choose:
     - conditions:
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state: armed_away
+      - condition: trigger
+        id: left
       sequence:
-      - action: script.notify_all_phones
+      - action: timer.start
+        target:
+          entity_id: timer.everyone_left_home_confirm
+    - conditions:
+      - condition: trigger
+        id: timer_finished
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: all
+      - action: alarm_control_panel.alarm_arm_away
+        target:
+          entity_id: alarm_control_panel.vasudha_secure
         data:
-          title: Home
-          message: Everyone left — lights off, alarm armed
-    default:
-    - action: script.notify_all_phones
-      data:
-        title: Home
-        message: >-
-          Everyone left, lights off — but the alarm didn't arm, still
-          open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-  mode: single
+          code: !secret alarm_code
+      - delay: "00:00:05"
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: alarm_control_panel.vasudha_secure
+            state: armed_away
+          sequence:
+          - action: script.notify_all_phones
+            data:
+              title: Home
+              message: Everyone left — lights off, alarm armed
+        default:
+        - action: script.notify_all_phones
+          data:
+            title: Home
+            message: >-
+              Everyone left, lights off — but the alarm didn't arm, still
+              open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+  mode: restart
 
 - id: notify_open_exits_on_leave
   alias: Notify if door/window left open when leaving
   description: >-
-    When everyone leaves home and a tracked door/window is still open
-    5 min later, notify both phones which one(s).
+    When everyone leaves home and a tracked door/window is still open,
+    wait out timer.exit_open_notify (5 min, restore: true) before
+    notifying both phones which one(s) — an HA restart mid-countdown just
+    resumes instead of needing a startup-trigger workaround.
   triggers:
   - entity_id: binary_sensor.house_exits_open_status
     to: "on"
@@ -125,12 +131,11 @@
     - person.arun_karunagath
     trigger: state
     id: left
-  # An HA restart during the 5-min wait loses it and nothing re-triggers
-  # this — skip straight to notifying since the conditions below already
-  # confirm everyone's away with something still open right now.
-  - trigger: homeassistant
-    event: start
-    id: startup
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.exit_open_notify
+    id: timer_finished
   conditions:
   - condition: numeric_state
     entity_id: zone.home
@@ -139,23 +144,19 @@
     entity_id: binary_sensor.house_exits_open_status
     state: "on"
   actions:
-  - if:
-      - condition: not
-        conditions:
-        - condition: trigger
-          id: startup
-    then:
-      - delay: "00:05:00"
-      - condition: numeric_state
-        entity_id: zone.home
-        below: 1
-      - condition: state
-        entity_id: binary_sensor.house_exits_open_status
-        state: "on"
-  - action: script.notify_all_phones
-    data:
-      title: Home
-      message: >-
-        Left home with something open:
-        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-  mode: single
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: timer_finished
+      sequence:
+      - action: script.notify_all_phones
+        data:
+          title: Home
+          message: >-
+            Left home with something open:
+            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+    default:
+    - action: timer.start
+      target:
+        entity_id: timer.exit_open_notify
+  mode: restart

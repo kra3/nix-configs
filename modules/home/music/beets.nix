@@ -44,12 +44,14 @@
         ];
         # _get_track() already fetches JioSaavn's 'music' (composer) field as an artist
         # fallback but never surfaces it as beets' own composer field — add that here.
+        # language falls back to more_info like _get_track()'s own duration lookup does.
         postPatch = ''
           substituteInPlace beetsplug/jiosaavn.py \
             --replace-fail \
               "jiosaavn_updated=time.time()," \
               "jiosaavn_updated=time.time(),
-            composer=track_data.get('music'),"
+            composer=track_data.get('music'),
+            language=track_data.get('language') or track_data.get('more_info', {}).get('language'),"
         '';
         doCheck = false;
       };
@@ -117,7 +119,10 @@
       home.file.".config/beets-indian-film/config.yaml".text = ''
         directory: /srv/media/library/music
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: spotify jiosaavn fetchart embedart zero duplicates fromfilename edit
+        plugins: spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit
+        lastgenre:
+          source: track
+          count: 1
         zero:
           fields: comments
         embedart:

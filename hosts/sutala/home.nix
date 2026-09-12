@@ -10,6 +10,8 @@
     flakeModules.homeManager.home-profiles-wm-default
     flakeModules.homeManager.home-profiles-browsers
     flakeModules.homeManager.home-profiles-terminal
+    flakeModules.homeManager.home-music-beets
+    flakeModules.homeManager.home-music-picard
   ];
 
   catppuccin.enable = true;

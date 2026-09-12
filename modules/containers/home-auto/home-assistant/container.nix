@@ -128,5 +128,10 @@
 
       # No bind-mount: pasted by hand into the hass-oidc-auth integration's UI.
       sops.secrets."homeassistant.oidc_client_secret" = { };
+
+      # No bind-mount: pasted by hand into the OpenWeatherMap integration's UI
+      # (config-flow only, YAML setup was removed upstream) -- kept here as an
+      # encrypted backup of the key.
+      sops.secrets."homeassistant.openweathermap_api_key" = { };
     };
 }

@@ -28,7 +28,7 @@
              < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
       - condition: template
         value_template: >-
-          {{ state_attr('weather.forecast_vasudha', 'cloud_coverage') | float(0) > 70 }}
+          {{ states('sensor.openweathermap_cloud_coverage') | float(0) > 70 }}
     then:
     - type: turn_on
       device_id: 5c2c4c65f834231378af61d835ec513a

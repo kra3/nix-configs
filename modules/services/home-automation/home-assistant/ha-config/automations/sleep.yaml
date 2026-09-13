@@ -2,18 +2,19 @@
 - id: sleep_tv_off
   alias: Sleep — TV off if idle
   description: >-
-    Turn off TV when sleep schedule starts, but only if nobody
-    is actively watching (not playing).
+    Turn off TV when sleep schedule starts, but only if it hasn't been
+    playing anything for the last 15 minutes (a momentary non-playing
+    state, e.g. between episodes, shouldn't trigger a shutdown).
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: media_player.lg_webos_tv_oled77c35la
-      state: playing
+  - condition: template
+    value_template: >-
+      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
+         and now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
+             >= timedelta(minutes=15) }}
   actions:
   - action: media_player.turn_off
     target:

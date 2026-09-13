@@ -68,8 +68,12 @@
         # instructor's default tool-calling mode forces tool_choice, which current Deepseek
         # models reject while their "thinking" mode is on (the plugin has no config knob for
         # that). JSON mode gets structured output without tool_choice, sidestepping it.
+        #
+        # beets 2.13.1 renamed Item's `genre` field to `genres`; the plugin still writes
+        # `item.genre`, crashing metadata_cleanup's apply_to_items on every candidate.
         postPatch = ''
           sed -i '/base_url=provider\["api_base_url"\],/{n;s/^        )$/        ),\n        mode=instructor.Mode.JSON,/}' beetsplug/aisauce/ai.py
+          sed -i 's/item\.genre\b/item.genres/g' beetsplug/aisauce/types.py
         '';
         doCheck = false;
       };

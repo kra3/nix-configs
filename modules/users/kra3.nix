@@ -20,6 +20,9 @@
       sops.secrets."music.deepseek_api_key" = {
         owner = "kra3";
       };
+      sops.secrets."music.fanarttv_api_key" = {
+        owner = "kra3";
+      };
 
       # beets' own config.yaml (tracked in Nix) never holds this key; `beet` is
       # aliased (see home-music-beets) to overlay this file via `--config` at invocation time.
@@ -38,6 +41,8 @@
                 model: deepseek-flash
                 api_base_url: https://api.deepseek.com
                 api_key: ${config.sops.placeholder."music.deepseek_api_key"}
+          fetchart:
+            fanarttv_key: ${config.sops.placeholder."music.fanarttv_api_key"}
         '';
       };
 
@@ -61,6 +66,8 @@
                 model: deepseek-flash
                 api_base_url: https://api.deepseek.com
                 api_key: ${config.sops.placeholder."music.deepseek_api_key"}
+          fetchart:
+            fanarttv_key: ${config.sops.placeholder."music.fanarttv_api_key"}
         '';
       };
 

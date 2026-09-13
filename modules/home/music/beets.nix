@@ -126,6 +126,17 @@
             ];
           };
           embedart.maxwidth = 1000;
+          # fanarttv_key (secret) lives in the beets-secrets.yaml overlay; this just
+          # opts the source into the default list, which omits it otherwise.
+          fetchart.sources = [
+            "filesystem"
+            "coverart"
+            "itunes"
+            "amazon"
+            "albumart"
+            "cover_art_url"
+            "fanarttv"
+          ];
           import = {
             move = true;
             write = true;
@@ -166,6 +177,15 @@
           fields: comments
         embedart:
           maxwidth: 1000
+        fetchart:
+          sources:
+            - filesystem
+            - coverart
+            - itunes
+            - amazon
+            - albumart
+            - cover_art_url
+            - fanarttv
         import:
           move: yes
           write: yes

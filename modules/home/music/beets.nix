@@ -139,15 +139,12 @@
       # BEETSDIR keeps this profile separate from Western's paths.comp etc.
       home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
-      # aisauce.mode is single-valued (metadata_source XOR metadata_cleanup); this overlay
-      # switches an existing `beet`/`beet-indian-film` invocation to the cleanup pass, e.g.
-      # `beet-cleanup -L <query>` to scrub junk tags/filenames across the whole library.
-      home.file.".config/beets/aisauce-cleanup.yaml".text = ''
-        aisauce:
-          mode: metadata_cleanup
-      '';
-      home.shellAliases.beet-cleanup = "beet --config ${config.home.homeDirectory}/.config/beets/aisauce-cleanup.yaml";
-      home.shellAliases.beet-indian-film-cleanup = "beet-indian-film --config ${config.home.homeDirectory}/.config/beets/aisauce-cleanup.yaml";
+      # aisauce.mode is single-valued (metadata_source XOR metadata_cleanup); these use a
+      # separate sops template (beets-cleanup-secrets.yaml) rather than a small overlay
+      # file, since beets' --config doesn't stack (last one wins) and a partial overlay
+      # would silently drop the providers list set by the metadata_source template.
+      home.shellAliases.beet-cleanup = "beet --config /run/secrets/rendered/music/beets-cleanup-secrets.yaml";
+      home.shellAliases.beet-indian-film-cleanup = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-cleanup-secrets.yaml";
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
         # music.new is the staged tree Task 11's cutover renames to music/; beets only

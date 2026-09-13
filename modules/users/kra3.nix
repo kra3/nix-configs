@@ -8,6 +8,40 @@
         mode = "0640";
       };
 
+      sops.secrets."music.acoustid_api_key" = {
+        owner = "kra3";
+      };
+      sops.secrets."music.spotify_client_id" = {
+        owner = "kra3";
+      };
+      sops.secrets."music.spotify_client_secret" = {
+        owner = "kra3";
+      };
+
+      # beets' own config.yaml (tracked in Nix) never holds this key; `beet` is
+      # aliased (see home-music-beets) to overlay this file via `--config` at invocation time.
+      sops.templates."music/beets-secrets.yaml" = {
+        owner = "kra3";
+        mode = "0400";
+        content = ''
+          acoustid:
+            apikey: ${config.sops.placeholder."music.acoustid_api_key"}
+          spotify:
+            client_id: ${config.sops.placeholder."music.spotify_client_id"}
+            client_secret: ${config.sops.placeholder."music.spotify_client_secret"}
+        '';
+      };
+
+      sops.templates."music/api-keys.env" = {
+        owner = "kra3";
+        mode = "0400";
+        content = ''
+          ACOUSTID_API_KEY=${config.sops.placeholder."music.acoustid_api_key"}
+          SPOTIFY_CLIENT_ID=${config.sops.placeholder."music.spotify_client_id"}
+          SPOTIFY_CLIENT_SECRET=${config.sops.placeholder."music.spotify_client_secret"}
+        '';
+      };
+
       users = {
         mutableUsers = false;
 
@@ -19,6 +53,7 @@
             extraGroups = [
               "wheel"
               "podman"
+              "media"
             ];
             openssh.authorizedKeys.keys = [
               "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDpvhVfQVKDNfVyl4GJux/lfzjkm683EW4MAESX/JKQA sutala kra3"

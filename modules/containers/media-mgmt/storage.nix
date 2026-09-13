@@ -21,12 +21,17 @@
         "d /srv/media/library/movies 2775 root media - -"
         "d /srv/media/library/tv 2775 root media - -"
         "d /srv/media/library/music 2775 root media - -"
+        # Migration staging tree for the music-library reorg (Task 8 runbook).
+        "d /srv/media/library/music.new 2775 root media - -"
         "d /srv/media/library/books 2775 root media - -"
         "d /srv/media/library/anime 2775 root media - -"
         "d /srv/media/library/anime/movies 2775 root media - -"
         "d /srv/media/library/anime/tv 2775 root media - -"
         "d /srv/media/library/audiobooks 2775 root media - -"
         "d /srv/media/library/homevideos 2775 root media - -"
+        # Ringtone-extraction destination for the music-library reorg (Task 8 runbook).
+        "d /srv/media/bkup 2775 root media - -"
+        "d /srv/media/bkup/Ringtones 2775 root media - -"
         # 0755 not 2770: traversal only, so non-media consumers (e.g. arcane) can reach their own subdir.
         "d /srv/appdata 0755 root media - -"
         "d /srv/appdata/media-mgmt 2770 root media - -"

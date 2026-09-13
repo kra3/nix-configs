@@ -101,6 +101,7 @@
           directory = "/srv/media/library/music.new/Western";
           library = "${config.home.homeDirectory}/.config/beets/western.db";
           plugins = [
+            "musicbrainz"
             "chroma"
             "spotify"
             "aisauce"
@@ -125,6 +126,17 @@
             ];
           };
           embedart.maxwidth = 1000;
+          # fanarttv_key (secret) lives in the beets-secrets.yaml overlay; this just
+          # opts the source into the default list, which omits it otherwise.
+          fetchart.sources = [
+            "filesystem"
+            "coverart"
+            "itunes"
+            "amazon"
+            "albumart"
+            "cover_art_url"
+            "fanarttv"
+          ];
           import = {
             move = true;
             write = true;
@@ -155,7 +167,7 @@
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: musicbrainz spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
         aisauce:
           mode: metadata_source
         lastgenre:
@@ -165,6 +177,15 @@
           fields: comments
         embedart:
           maxwidth: 1000
+        fetchart:
+          sources:
+            - filesystem
+            - coverart
+            - itunes
+            - amazon
+            - albumart
+            - cover_art_url
+            - fanarttv
         import:
           move: yes
           write: yes

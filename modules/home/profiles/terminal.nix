@@ -17,6 +17,7 @@
     ];
     programs.alacritty.settings.window.opacity = 0.96;
     programs.alacritty.settings.selection.save_to_clipboard = true;
+    programs.alacritty.settings.window.option_as_alt = "Both";
     programs.alacritty.settings.font.normal.family = "Inconsolata Nerd Font Mono";
     programs.alacritty.settings.font.size = 12;
   };

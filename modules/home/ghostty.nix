@@ -15,6 +15,8 @@
         ];
         background-opacity = 0.96;
         copy-on-select = "clipboard";
+        macos-option-as-alt = true;
+        macos-titlebar-style = "hidden";
         keybind = [
           "shift+enter=text:\n"
         ];

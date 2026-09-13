@@ -41,6 +41,29 @@
         '';
       };
 
+      # Separate from beets-secrets.yaml (not just an aisauce.mode overlay) because beets'
+      # --config flag doesn't stack: only the last one wins, so a partial overlay silently
+      # drops the providers list. This template duplicates the full secrets so the
+      # beet-cleanup alias's single --config is self-contained.
+      sops.templates."music/beets-cleanup-secrets.yaml" = {
+        owner = "kra3";
+        mode = "0400";
+        content = ''
+          acoustid:
+            apikey: ${config.sops.placeholder."music.acoustid_api_key"}
+          spotify:
+            client_id: ${config.sops.placeholder."music.spotify_client_id"}
+            client_secret: ${config.sops.placeholder."music.spotify_client_secret"}
+          aisauce:
+            mode: metadata_cleanup
+            providers:
+              - id: deepseek
+                model: deepseek-flash
+                api_base_url: https://api.deepseek.com
+                api_key: ${config.sops.placeholder."music.deepseek_api_key"}
+        '';
+      };
+
       sops.templates."music/api-keys.env" = {
         owner = "kra3";
         mode = "0400";

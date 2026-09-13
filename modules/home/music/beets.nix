@@ -32,19 +32,14 @@
           hash = "sha256-Vnwl596L+lx0DEM1iDUHys65b6jFtQvBgq3bkjwmlZM=";
         };
         build-system = [ pkgs.python3.pkgs.setuptools ];
-        # beets-minimal (not a `dependencies` entry) satisfies the runtime-deps-check hook's
-        # `beets>=1.6.0` requirement without propagating a second `beets` into the closure of
-        # the overridden beets this plugin gets installed into (nixpkgs' own beets-alternatives
-        # package uses this exact same pattern for the same reason).
+        # beets-minimal satisfies the runtime beets>=1.6.0 check without a second beets in the closure.
         nativeBuildInputs = [ pkgs.python3.pkgs.beets-minimal ];
         dependencies = [
           pkgs.python3.pkgs.requests
           pkgs.python3.pkgs.pillow
           musicapy
         ];
-        # _get_track() already fetches JioSaavn's 'music' (composer) field as an artist
-        # fallback but never surfaces it as beets' own composer field — add that here.
-        # language falls back to more_info like _get_track()'s own duration lookup does.
+        # Surfaces JioSaavn's 'music'/'language' fields as beets' own composer/language.
         postPatch = ''
           substituteInPlace beetsplug/jiosaavn.py \
             --replace-fail \
@@ -59,8 +54,7 @@
     {
       programs.beets = {
         enable = true;
-        # pkgs.beets is just `toPythonApplication python3.pkgs.beets`; pluginOverrides only
-        # exists on the underlying python3.pkgs.beets derivation, so override there and rewrap.
+        # pluginOverrides only exists on python3.pkgs.beets, so override there and rewrap.
         package = pkgs.python3.pkgs.toPythonApplication (
           pkgs.python3.pkgs.beets.override {
             pluginOverrides = {
@@ -72,8 +66,7 @@
           }
         );
         settings = {
-          # music.new is the staged tree Task 11's cutover renames to music/ -- Western
-          # must land here too, alongside Classical/Devotional/Indian-film content.
+          # music.new is the staged tree Task 11's cutover renames to music/.
           directory = "/srv/media/library/music.new/Western";
           library = "${config.home.homeDirectory}/.config/beets/western.db";
           plugins = [
@@ -108,22 +101,15 @@
         };
       };
 
-      # acoustid.apikey and spotify.client_id/client_secret live outside this tracked config,
-      # in the sops-rendered overlay this alias points `beet` at (see modules/users/kra3.nix's
-      # "music/beets-secrets.yaml" template).
+      # acoustid/spotify credentials live in the sops-rendered overlay this points at.
       home.shellAliases.beet = "beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
-      # Second beets profile for Indian film soundtracks: invoked via `beet-indian-film
-      # <command>`, which points BEETSDIR at a separate config dir instead of layering
-      # `--config` on top of the Western profile (which would inherit e.g. paths.comp).
+      # BEETSDIR keeps this profile separate from Western's paths.comp etc.
       home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
-        # music.new is the staged tree Task 11's cutover renames to music/ -- items
-        # living outside this directory (e.g. under the old music/ tree) won't
-        # auto-relocate on tag-driven moves (beets only moves items inside their
-        # own configured directory), so this must track the same value the
-        # runbook's --directory overrides always point at.
+        # music.new is the staged tree Task 11's cutover renames to music/; beets only
+        # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         plugins: spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit

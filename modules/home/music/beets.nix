@@ -101,6 +101,7 @@
           directory = "/srv/media/library/music.new/Western";
           library = "${config.home.homeDirectory}/.config/beets/western.db";
           plugins = [
+            "musicbrainz"
             "chroma"
             "spotify"
             "aisauce"
@@ -155,7 +156,7 @@
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: musicbrainz spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
         aisauce:
           mode: metadata_source
         lastgenre:

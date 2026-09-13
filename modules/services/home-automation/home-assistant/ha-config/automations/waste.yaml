@@ -2,16 +2,27 @@
 - id: waste_collection_reminder
   alias: "Waste collection: evening-before reminder"
   description: >-
-    Evening-before reminder, triggered off the VA Syd calendar event
-    (not the sensor) so it fires once per real collection.
+    HA-start trigger is a catch-up for restarts landing on the T-12h
+    moment (calendar trigger's schedule is one-shot and silently drops
+    it); worst case is a duplicate notification, not a silent miss.
   triggers:
   - trigger: calendar
     entity_id: calendar.va_syd_sophamntning
     event: start
     offset: "-12:00:00"
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.platform == 'calendar' or
+         (as_datetime(state_attr('calendar.va_syd_sophamntning', 'start_time')).date()
+          - now().date()).days == 1 }}
   actions:
   - action: script.notify_all_phones
     data:
       title: Waste collection tomorrow
-      message: "{{ trigger.calendar_event.summary }}"
+      message: >-
+        {{ trigger.calendar_event.summary if trigger.platform == 'calendar'
+           else state_attr('calendar.va_syd_sophamntning', 'message') }}
   mode: queued

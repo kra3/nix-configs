@@ -17,6 +17,9 @@
       sops.secrets."music.spotify_client_secret" = {
         owner = "kra3";
       };
+      sops.secrets."music.deepseek_api_key" = {
+        owner = "kra3";
+      };
 
       # beets' own config.yaml (tracked in Nix) never holds this key; `beet` is
       # aliased (see home-music-beets) to overlay this file via `--config` at invocation time.
@@ -29,6 +32,12 @@
           spotify:
             client_id: ${config.sops.placeholder."music.spotify_client_id"}
             client_secret: ${config.sops.placeholder."music.spotify_client_secret"}
+          aisauce:
+            providers:
+              - id: deepseek
+                model: deepseek-flash
+                api_base_url: https://api.deepseek.com
+                api_key: ${config.sops.placeholder."music.deepseek_api_key"}
         '';
       };
 

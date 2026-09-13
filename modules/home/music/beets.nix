@@ -50,6 +50,23 @@
         '';
         doCheck = false;
       };
+
+      beets-aisauce = pkgs.python3.pkgs.buildPythonPackage {
+        pname = "beets-aisauce";
+        version = "0.2.1";
+        pyproject = true;
+        src = pkgs.fetchurl {
+          url = "https://files.pythonhosted.org/packages/0c/eb/6cf25702a430bc7227091689990f18be290cff4b7f142df6af8eb1782d03/beets_aisauce-0.2.1.tar.gz";
+          hash = "sha256-K+TmweC5qBxogDFMC9ekC0z6A97Cqj9OKYjB1eH6RKA=";
+        };
+        build-system = [ pkgs.python3.pkgs.setuptools ];
+        nativeBuildInputs = [ pkgs.python3.pkgs.beets-minimal ];
+        dependencies = [
+          pkgs.python3.pkgs.openai
+          pkgs.python3.pkgs.instructor
+        ];
+        doCheck = false;
+      };
     in
     {
       programs.beets = {
@@ -62,6 +79,10 @@
                 enable = true;
                 propagatedBuildInputs = [ beets-jiosaavn ];
               };
+              aisauce = {
+                enable = true;
+                propagatedBuildInputs = [ beets-aisauce ];
+              };
             };
           }
         );
@@ -72,6 +93,7 @@
           plugins = [
             "chroma"
             "spotify"
+            "aisauce"
             "fetchart"
             "embedart"
             "lastgenre"
@@ -80,6 +102,9 @@
             "fromfilename"
             "edit"
           ];
+          # aisauce.providers (with the deepseek API key) lives in the secrets overlay this
+          # profile's `beet` alias loads via --config; mode is the only non-secret setting.
+          aisauce.mode = "metadata_source";
           lastgenre = {
             source = "track";
             count = 1;
@@ -97,6 +122,7 @@
           paths = {
             default = "$albumartist/$album ($year)/$track - $title";
             comp = "$albumartist/$album ($year)/$track - $title";
+            singleton = "$albumartist/$album ($year)/$track - $title";
           };
         };
       };
@@ -107,12 +133,24 @@
       # BEETSDIR keeps this profile separate from Western's paths.comp etc.
       home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
+      # aisauce.mode is single-valued (metadata_source XOR metadata_cleanup); this overlay
+      # switches an existing `beet`/`beet-indian-film` invocation to the cleanup pass, e.g.
+      # `beet-cleanup -L <query>` to scrub junk tags/filenames across the whole library.
+      home.file.".config/beets/aisauce-cleanup.yaml".text = ''
+        aisauce:
+          mode: metadata_cleanup
+      '';
+      home.shellAliases.beet-cleanup = "beet --config ${config.home.homeDirectory}/.config/beets/aisauce-cleanup.yaml";
+      home.shellAliases.beet-indian-film-cleanup = "beet-indian-film --config ${config.home.homeDirectory}/.config/beets/aisauce-cleanup.yaml";
+
       home.file.".config/beets-indian-film/config.yaml".text = ''
         # music.new is the staged tree Task 11's cutover renames to music/; beets only
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        aisauce:
+          mode: metadata_source
         lastgenre:
           source: track
           count: 1

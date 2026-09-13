@@ -3,6 +3,7 @@
     programs.ghostty = {
       enable = true;
       enableZshIntegration = true;
+      enableBashIntegration = true;
       settings = {
         font-family = "FiraCode Nerd Font Mono";
         font-size = 12;

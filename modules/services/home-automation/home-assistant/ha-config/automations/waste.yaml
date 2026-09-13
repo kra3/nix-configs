@@ -1,30 +1,28 @@
 # ── Waste collection ────────────────────────────────────────────
 - id: waste_collection_reminder
-  alias: "Waste collection: day-before reminder"
+  alias: "Waste collection: evening-before reminder"
   description: >-
-    Polls the VA Syd calendar's next event instead of using a calendar
-    offset trigger — that trigger computes its fire time once at reload,
-    so a HA restart landing on the exact T-12h moment (e.g. a nixos-rebuild
-    switch) silently drops the reminder with no error. Polling across a
-    wide daytime window self-heals across any single restart.
+    HA-start trigger is a catch-up for restarts landing on the T-12h
+    moment (calendar trigger's schedule is one-shot and silently drops
+    it); worst case is a duplicate notification, not a silent miss.
   triggers:
-  - trigger: time_pattern
-    minutes: "/15"
+  - trigger: calendar
+    entity_id: calendar.va_syd_sophamntning
+    event: start
+    offset: "-12:00:00"
+  - trigger: homeassistant
+    event: start
   conditions:
-  - condition: time
-    after: "08:00:00"
-    before: "22:00:00"
   - condition: template
     value_template: >-
-      {{ this.attributes.last_triggered is none or
-         as_datetime(this.attributes.last_triggered).astimezone(now().tzinfo).date() != now().date() }}
-  - condition: template
-    value_template: >-
-      {{ state_attr('calendar.va_syd_sophamntning', 'start_time') is not none and
-         (as_datetime(state_attr('calendar.va_syd_sophamntning', 'start_time')).date() - now().date()).days == 1 }}
+      {{ trigger.platform == 'calendar' or
+         (as_datetime(state_attr('calendar.va_syd_sophamntning', 'start_time')).date()
+          - now().date()).days == 1 }}
   actions:
   - action: script.notify_all_phones
     data:
       title: Waste collection tomorrow
-      message: "{{ state_attr('calendar.va_syd_sophamntning', 'message') }}"
-  mode: single
+      message: >-
+        {{ trigger.calendar_event.summary if trigger.platform == 'calendar'
+           else state_attr('calendar.va_syd_sophamntning', 'message') }}
+  mode: queued

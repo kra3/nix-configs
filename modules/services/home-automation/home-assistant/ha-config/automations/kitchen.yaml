@@ -3,11 +3,13 @@
   alias: Kitchen — Darkness detection
   description: >-
     Hysteresis darkness state machine for kitchen.
-    ON: lux < 10 sustained 2 min (or < 5 sustained 15 min if sun is up and
+    ON: lux < 10 sustained 2 min (or < 15 sustained 15 min if sun is up and
     the forecast doesn't corroborate overcast). OFF: lux > 30 sustained
     2 min AND sun above horizon; turns off light.
     Thresholds lowered from the blueprint's 30/120 defaults - this room's
     Hue PIR tops out around 70 lux even at midday, so 120 was unreachable.
+    dark_below_daytime raised 5→15 — a genuinely dim afternoon held at
+    10-19 lux without ever dipping under 5, so it never tripped.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -17,7 +19,7 @@
       dark_boolean: input_boolean.kitchen_is_dark
       dark_below: 10
       bright_above: 30
-      dark_below_daytime: 5
+      dark_below_daytime: 15
       dark_sustain_daytime: "00:15:00"
 
 - id: kitchen_lighting

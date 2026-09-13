@@ -9,6 +9,8 @@
     dark at midday, see hall.yaml) turned dining lights on in broad
     daylight. dark_below raised to 45 — blueprint's 30 default was slow to
     trip on cloudy-evening drops (stuck above 30 at 44 lux, occupied).
+    dark_below_daytime pinned to 45 too — left at the blueprint's 1000
+    default, it read normal daytime dips in average_illuminance as dark.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -17,6 +19,8 @@
       light_entity: light.dining_lights
       dark_boolean: input_boolean.dining_is_dark
       dark_below: 45
+      dark_below_daytime: 45
+      dark_sustain_daytime: "00:15:00"
 
 - id: dining_room_lighting
   alias: Dining room — Lighting

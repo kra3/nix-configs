@@ -65,6 +65,12 @@
           pkgs.python3.pkgs.openai
           pkgs.python3.pkgs.instructor
         ];
+        # instructor's default tool-calling mode forces tool_choice, which current Deepseek
+        # models reject while their "thinking" mode is on (the plugin has no config knob for
+        # that). JSON mode gets structured output without tool_choice, sidestepping it.
+        postPatch = ''
+          sed -i '/base_url=provider\["api_base_url"\],/{n;s/^        )$/        ),\n        mode=instructor.Mode.JSON,/}' beetsplug/aisauce/ai.py
+        '';
         doCheck = false;
       };
     in

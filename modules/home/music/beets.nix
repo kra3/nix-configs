@@ -171,7 +171,7 @@
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: musicbrainz spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
         aisauce:
           mode: metadata_source
         # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.

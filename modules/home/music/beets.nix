@@ -116,6 +116,10 @@
           # aisauce.providers (with the deepseek API key) lives in the secrets overlay this
           # profile's `beet` alias loads via --config; mode is the only non-secret setting.
           aisauce.mode = "metadata_source";
+          # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
+          musicbrainz.ratelimit_interval = 1.5;
+          # Outweigh Spotify's default match-distance penalty so MusicBrainz wins ties for mb_trackid.
+          spotify.data_source_mismatch_penalty = 2.0;
           lastgenre = {
             source = "track";
             count = 1;
@@ -167,9 +171,12 @@
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: musicbrainz spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
         aisauce:
           mode: metadata_source
+        # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
+        musicbrainz:
+          ratelimit_interval: 1.5
         lastgenre:
           source: track
           count: 1
@@ -192,6 +199,10 @@
         paths:
           default: "$albumartist/$album ($year)/$track - $title"
           singleton: "$albumartist/$album ($year)/$track - $title"
+          comp: "$albumartist/$album ($year)/$track - $title"
+        # VA-flagged soundtracks add distance penalty; default 0.04 demotes correct matches to skip.
+        match:
+          strong_rec_thresh: 0.15
       '';
     };
 }

@@ -195,6 +195,9 @@
           default: "$albumartist/$album ($year)/$track - $title"
           singleton: "$albumartist/$album ($year)/$track - $title"
           comp: "$albumartist/$album ($year)/$track - $title"
+        # VA-flagged soundtracks add distance penalty; default 0.04 demotes correct matches to skip.
+        match:
+          strong_rec_thresh: 0.15
       '';
     };
 }

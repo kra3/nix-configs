@@ -116,11 +116,7 @@
           # aisauce.providers (with the deepseek API key) lives in the secrets overlay this
           # profile's `beet` alias loads via --config; mode is the only non-secret setting.
           aisauce.mode = "metadata_source";
-          # Every metadata-source plugin gets the same default match-distance penalty (0.5,
-          # weighted 2.0), so Spotify can out-score a weaker MusicBrainz candidate and get its
-          # track ID written into mb_trackid (the field name isn't source-specific). Penalize
-          # Spotify matches so MusicBrainz wins whenever it has any real candidate, falling
-          # back to Spotify only when MusicBrainz has nothing.
+          # Outweigh Spotify's default match-distance penalty so MusicBrainz wins ties for mb_trackid.
           spotify.data_source_mismatch_penalty = 2.0;
           lastgenre = {
             source = "track";

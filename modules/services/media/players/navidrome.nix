@@ -13,7 +13,7 @@
         settings = {
           Address = "0.0.0.0";
           Port = 4533;
-          MusicFolder = "/data/library/music";
+          MusicFolder = "/data/library/music/Western";
           DataFolder = "/var/lib/navidrome/data";
           "Prometheus.Enabled" = true;
         };

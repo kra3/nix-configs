@@ -194,6 +194,7 @@
         paths:
           default: "$albumartist/$album ($year)/$track - $title"
           singleton: "$albumartist/$album ($year)/$track - $title"
+          comp: "$albumartist/$album ($year)/$track - $title"
       '';
     };
 }

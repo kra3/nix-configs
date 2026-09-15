@@ -26,6 +26,7 @@
       flakeModules.homeManager.home-profiles-shell
       flakeModules.homeManager.home-shell-default
       flakeModules.homeManager.home-work
+      flakeModules.homeManager.home-ghostty
     ];
 
     home.username = "akarunagath";

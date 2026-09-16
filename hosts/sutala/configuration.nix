@@ -48,6 +48,7 @@
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-system-power-tuning
+    flakeModules.nixos.services-system-chromium
     flakeModules.nixos.services-virtualisation-default
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3

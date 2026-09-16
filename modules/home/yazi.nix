@@ -11,6 +11,7 @@
           ffmpegthumbnailer
           poppler
           imagemagick
+          mpv
         ];
       };
     };

@@ -13,6 +13,15 @@
           imagemagick
           mpv
         ];
+        # yazi's default "play" opener shells out to xdg-open, which has no
+        # registered handler here; call mpv directly instead.
+        settings.opener.play = [
+          {
+            run = ''mpv "$@"'';
+            orphan = true;
+            for = "unix";
+          }
+        ];
       };
     };
 }

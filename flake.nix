@@ -49,6 +49,8 @@
 
     mcp-nixos.url = "github:utensils/mcp-nixos";
 
+    nur.url = "github:nix-community/NUR";
+
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     # rtk isn't packaged in a stable nixpkgs channel yet (only nixpkgs-unstable); switch to that once it graduates.

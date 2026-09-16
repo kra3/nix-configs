@@ -13,14 +13,6 @@
           imagemagick
           mpv
         ];
-        # default "play" opener shells out to xdg-open; call mpv directly instead.
-        settings.opener.play = [
-          {
-            run = ''mpv "$@"'';
-            orphan = true;
-            for = "unix";
-          }
-        ];
       };
     };
 }

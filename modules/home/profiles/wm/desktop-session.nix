@@ -77,6 +77,22 @@
         '';
       };
 
+      # waybar pulseaudio module middle-click/scroll: flip default sink to the other
+      # one (built-in vs bluetooth). Only handles 2 sinks; picks the first non-default.
+      waybar-toggle-sink = pkgs.writeShellApplication {
+        name = "waybar-toggle-sink";
+        runtimeInputs = [
+          pkgs.wireplumber
+          pkgs.gnugrep
+        ];
+        text = ''
+          sinks=$(wpctl status | sed -n '/Sinks:/,/Sources:/p')
+          default=$(echo "$sinks" | grep -oP '\*\s*\K[0-9]+(?=\.)')
+          next=$(echo "$sinks" | grep -oP '^\s*[│ ]*\K[0-9]+(?=\.)' | grep -vx "$default" | head -1)
+          [ -n "$next" ] && wpctl set-default "$next"
+        '';
+      };
+
       # Custom rofi script mode: type a query, Enter opens it on DuckDuckGo.
       # Protocol: https://github.com/davatorium/rofi/blob/next/doc/rofi-script.5.markdown
       rofi-websearch = pkgs.writeShellApplication {
@@ -147,6 +163,7 @@
         pkgs.pwmenu # audio device picker, Super+Alt+P in niri-config.kdl
         pkgs.wl-clipboard # wl-copy/wl-paste general CLI use
         cliphist-picker # Super+Alt+V in niri-config.kdl
+        waybar-toggle-sink # waybar pulseaudio module middle-click/scroll
       ];
       home.file.".local/share/wallpapers/wallpaper.png".source = ./wallpapers/wallpaper.png;
 
@@ -323,9 +340,11 @@
                 ""
               ];
             };
-            scroll-step = 5;
             on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+            on-click-middle = "waybar-toggle-sink";
             on-click-right = "pwvucontrol";
+            on-scroll-up = "waybar-toggle-sink";
+            on-scroll-down = "waybar-toggle-sink";
             tooltip-format = "{desc}: {volume}%";
           };
 

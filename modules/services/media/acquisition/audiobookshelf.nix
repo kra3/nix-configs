@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.audiobookshelf = {
         containerConfig = {
-          image = "ghcr.io/advplyr/audiobookshelf:2.36.0";
+          image = "ghcr.io/advplyr/audiobookshelf:2.36.1";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

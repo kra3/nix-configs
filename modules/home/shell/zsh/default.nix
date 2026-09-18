@@ -135,6 +135,16 @@
             zle -N down-line-or-beginning-search
             bindkey '^[[A' up-line-or-beginning-search
             bindkey '^[[B' down-line-or-beginning-search
+
+            # ============================================================================
+            # Magic Widgets
+            # ============================================================================
+
+            autoload -Uz url-quote-magic
+            zle -N self-insert url-quote-magic
+
+            autoload -Uz bracketed-paste-magic
+            zle -N bracketed-paste bracketed-paste-magic
           ''
         ];
       };

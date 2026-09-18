@@ -100,6 +100,26 @@ blueprint:
           min: 0
           max: 100
           unit_of_measurement: "%"
+    corroborating_bright_sensor:
+      name: Corroborating "definitely bright" sensor (optional)
+      description: >-
+        A wider-range illuminance sensor (e.g. a house-wide average) that
+        blocks the daytime-strict tier from firing when it reads clearly
+        bright - guards a narrow-range/shaded sensor from a false trip.
+        Leave unset to skip.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    corroborating_bright_above:
+      name: Corroboration bright threshold (lx)
+      description: If corroborating_bright_sensor reads above this, the daytime-strict tier won't fire.
+      default: 500
+      selector:
+        number:
+          min: 0
+          max: 100000
+          unit_of_measurement: lx
 
 triggers:
   - entity_id: !input illuminance_sensor
@@ -134,6 +154,11 @@ triggers:
   - trigger: homeassistant
     event: start
     id: startup
+
+variables:
+  corroborating_bright_sensor: !input corroborating_bright_sensor
+  corroborating_bright_above: !input corroborating_bright_above
+
 actions:
   # Trust each trigger's own threshold for sun.sun/bright — re-checking lux
   # there used to gate the sun-based trigger too, so a sensor that never
@@ -172,6 +197,11 @@ actions:
                       - condition: numeric_state
                         entity_id: sensor.openweathermap_cloud_coverage
                         above: !input cloud_coverage_threshold
+                  - condition: template
+                    value_template: >-
+                      {{ corroborating_bright_sensor in [none, ''] or
+                         states(corroborating_bright_sensor) | float(0)
+                         <= corroborating_bright_above }}
         sequence:
           - target:
               entity_id: !input dark_boolean

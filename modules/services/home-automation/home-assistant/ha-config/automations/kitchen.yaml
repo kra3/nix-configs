@@ -9,7 +9,10 @@
     Thresholds lowered from the blueprint's 30/120 defaults - this room's
     Hue PIR tops out around 70 lux even at midday, so 120 was unreachable.
     dark_below_daytime raised 5→15 — a genuinely dim afternoon held at
-    10-19 lux without ever dipping under 5, so it never tripped.
+    10-19 lux without ever dipping under 5, so it never tripped. That
+    also caught bright mornings (PIR drifts to 10-17 lux for 15+ min at
+    midday); corroborating_bright_sensor guards against it via the
+    house-wide average.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -21,6 +24,8 @@
       bright_above: 30
       dark_below_daytime: 15
       dark_sustain_daytime: "00:15:00"
+      corroborating_bright_sensor: sensor.average_illuminance
+      corroborating_bright_above: 500
 
 - id: kitchen_lighting
   alias: Kitchen — Lighting

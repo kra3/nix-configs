@@ -7,8 +7,12 @@
     sensor of its own) rather than hall_is_dark — same fix as
     dining_darkness, for the same reason: living room is one of the
     brightest rooms, so gating it on the hall's dim interior PIR
-    turned its lights on in broad daylight. Blueprint's 30/120 lux
-    defaults fit sensor.average_illuminance.
+    turned its lights on in broad daylight. dark_below/dark_below_daytime
+    pinned to 45, matching dining_darkness (same sensor) — left at the
+    blueprint's 1000 default, normal daytime dips in average_illuminance
+    read as dark and got stuck on (bright_above's trigger needs a fresh
+    below→above crossing to clear it, which lux never dropped low enough
+    to produce).
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -16,6 +20,9 @@
       occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
       light_entity: light.living_room_lights
       dark_boolean: input_boolean.living_room_is_dark
+      dark_below: 45
+      dark_below_daytime: 45
+      dark_sustain_daytime: "00:15:00"
 
 - id: living_room_lighting
   alias: Living room — Lighting

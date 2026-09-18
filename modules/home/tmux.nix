@@ -19,16 +19,11 @@
         };
       };
 
-      # tmux-continuum self-installs its boot unit imperatively (writes
-      # ~/.config/systemd/user/tmux.service outside Home Manager's management,
-      # bakes in a `command -v tmux` path that goes stale on package bumps, and
-      # its ExecStop kills the server on logout). Drive resurrect's save/restore
-      # scripts directly instead, wired through Nix like everything else here.
+      # Drives resurrect's scripts directly instead of tmux-continuum, which self-installs an unmanaged systemd/launchd unit.
       resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
       resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
 
-      # resurrect's scripts shell out to bare `tmux`; PATH/TMUX_TMPDIR must be
-      # set explicitly since these run outside any tmux client context.
+      # resurrect's scripts shell out to bare `tmux`, so PATH/TMUX_TMPDIR must be set explicitly outside a tmux client context.
       tmuxEnvExports = ''
         export PATH="${pkgs.tmux}/bin:$PATH"
         ${lib.optionalString pkgs.stdenv.isLinux ''export TMUX_TMPDIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"''}
@@ -58,9 +53,7 @@
     in
     {
       imports = [
-        # flock avoids a second concurrent invocation racing a duplicate bare
-        # session; restore only runs the first time the server is started
-        # (tmux ls fails), matching what @continuum-boot would have done.
+        # flock avoids racing a duplicate session; restore only runs when the server is actually starting fresh.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login and restore last session";
@@ -238,8 +231,7 @@
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
-          # Periodic save and restore-at-login are handled outside tmux — see the
-          # tmux-resurrect-save timer and tmux-server login agent below.
+          # Periodic save and restore-at-login are handled outside tmux — see tmux-resurrect-save and tmux-server below.
 
           # Tmux-yank
           set -g @yank_selection 'primary'
@@ -247,8 +239,7 @@
         '';
       };
 
-      # Periodic resurrect save — replaces tmux-continuum's status-bar-polled
-      # autosave with a plain timer/agent, matching the login-agent pattern above.
+      # Periodic resurrect save, replacing tmux-continuum's status-bar-polled autosave.
       systemd.user.services.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
         Unit.Description = "Save tmux session state (tmux-resurrect)";
         Service = {

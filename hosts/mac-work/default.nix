@@ -31,6 +31,9 @@
       flakeModules.homeManager.home-shell-default
       flakeModules.homeManager.home-work
       flakeModules.homeManager.home-ghostty
+      flakeModules.homeManager.home-aerospace
+      flakeModules.homeManager.home-jankyborders
+      flakeModules.homeManager.home-sketchybar
     ];
 
     home.username = "akarunagath";

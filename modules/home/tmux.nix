@@ -54,19 +54,14 @@
     in
     {
       imports = [
-        # flock avoids racing a duplicate session; restore only runs when the server is actually starting fresh.
+        # flock avoids racing a duplicate session; restore is a tmux-level hook below, not here.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
-          description = "Start tmux server at login and restore last session";
+          description = "Start tmux server at login";
           script = ''
             ${tmuxEnvExports}
             lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
-            ${pkgs.flock}/bin/flock "$lock" sh -c '
-              tmux ls >/dev/null 2>&1 || {
-                tmux new-session -d
-                "${resurrectRestore}"
-              }
-            '
+            ${pkgs.flock}/bin/flock "$lock" sh -c 'tmux ls >/dev/null 2>&1 || tmux new-session -d'
           '';
         })
       ];
@@ -232,7 +227,10 @@
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
-          # Periodic save and restore-at-login are handled outside tmux — see tmux-resurrect-save and tmux-server below.
+          # Periodic save is handled outside tmux — see tmux-resurrect-save below.
+
+          # Fires on any fresh server boot (not a config reload) — guards on server age, not the trigger.
+          run-shell -b 'if [ $(( $(date +%s) - $(tmux display-message -p "#{start_time}") )) -lt 5 ]; then "${resurrectRestore}"; fi'
 
           # Rebind C-s so manual saves also update the status indicator's timestamp.
           bind-key C-s run-shell "${resurrectSave}"

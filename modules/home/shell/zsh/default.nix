@@ -125,16 +125,8 @@
             zle -N edit-command-line
             bindkey -M vicmd '^V' edit-command-line
 
-            # Better history search (Ctrl+R/S for incremental search)
-            bindkey '^R' history-incremental-search-backward
+            # Ctrl+S for incremental search; Ctrl+R and up-arrow are owned by Atuin
             bindkey '^S' history-incremental-search-forward
-
-            # Up/Down arrow search history based on typed prefix (like .inputrc)
-            autoload -U up-line-or-beginning-search down-line-or-beginning-search
-            zle -N up-line-or-beginning-search
-            zle -N down-line-or-beginning-search
-            bindkey '^[[A' up-line-or-beginning-search
-            bindkey '^[[B' down-line-or-beginning-search
 
             # ============================================================================
             # Magic Widgets

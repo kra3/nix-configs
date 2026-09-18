@@ -57,10 +57,18 @@
           alt-k = "focus up";
           alt-l = "focus right";
 
-          alt-shift-h = "move left";
-          alt-shift-j = "move down";
-          alt-shift-k = "move up";
-          alt-shift-l = "move right";
+          # Ctrl for "move" matches niri's convention on sutala (Mod+Ctrl+hjkl).
+          alt-ctrl-h = "move left";
+          alt-ctrl-j = "move down";
+          alt-ctrl-k = "move up";
+          alt-ctrl-l = "move right";
+
+          # Shift for monitor-focus matches niri's convention (Mod+Shift+hjkl);
+          # both hosts are multi-monitor.
+          alt-shift-h = "focus-monitor left";
+          alt-shift-j = "focus-monitor down";
+          alt-shift-k = "focus-monitor up";
+          alt-shift-l = "focus-monitor right";
 
           alt-minus = "resize smart -50";
           alt-equal = "resize smart +50";
@@ -80,15 +88,15 @@
           alt-8 = "workspace 8";
           alt-9 = "workspace 9";
 
-          alt-shift-1 = "move-node-to-workspace 1";
-          alt-shift-2 = "move-node-to-workspace 2";
-          alt-shift-3 = "move-node-to-workspace 3";
-          alt-shift-4 = "move-node-to-workspace 4";
-          alt-shift-5 = "move-node-to-workspace 5";
-          alt-shift-6 = "move-node-to-workspace 6";
-          alt-shift-7 = "move-node-to-workspace 7";
-          alt-shift-8 = "move-node-to-workspace 8";
-          alt-shift-9 = "move-node-to-workspace 9";
+          alt-ctrl-1 = "move-node-to-workspace 1";
+          alt-ctrl-2 = "move-node-to-workspace 2";
+          alt-ctrl-3 = "move-node-to-workspace 3";
+          alt-ctrl-4 = "move-node-to-workspace 4";
+          alt-ctrl-5 = "move-node-to-workspace 5";
+          alt-ctrl-6 = "move-node-to-workspace 6";
+          alt-ctrl-7 = "move-node-to-workspace 7";
+          alt-ctrl-8 = "move-node-to-workspace 8";
+          alt-ctrl-9 = "move-node-to-workspace 9";
 
           alt-tab = "workspace-back-and-forth";
           alt-shift-tab = "move-workspace-to-monitor --wrap-around next";

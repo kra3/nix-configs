@@ -19,6 +19,7 @@
         ];
         background-opacity = 0.96;
         copy-on-select = "clipboard";
+        app-notifications = false;
         macos-option-as-alt = true;
         macos-titlebar-style = "hidden";
         keybind = [

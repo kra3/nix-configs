@@ -18,20 +18,54 @@
           sha256 = "sha256-QsA4i5QYOanYW33eMIuCtud9WD97ys4zQUT/RNUmGes=";
         };
       };
+
+      # Drives resurrect's scripts directly instead of tmux-continuum, which self-installs an unmanaged systemd/launchd unit.
+      resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
+      resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
+
+      # resurrect's scripts shell out to bare `tmux`, so PATH/TMUX_TMPDIR must be set explicitly outside a tmux client context.
+      tmuxEnvExports = ''
+        export PATH="${pkgs.tmux}/bin:$PATH"
+        ${lib.optionalString pkgs.stdenv.isLinux ''export TMUX_TMPDIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"''}
+      '';
+
+      resurrectSave = pkgs.writeShellScript "tmux-resurrect-save" ''
+        ${tmuxEnvExports}
+        "${resurrectScripts}/save.sh" quiet && {
+          mkdir -p "$(dirname "${resurrectLastSaveFile}")"
+          date +%s > "${resurrectLastSaveFile}"
+        }
+      '';
+
+      resurrectRestore = pkgs.writeShellScript "tmux-resurrect-restore" ''
+        ${tmuxEnvExports}
+        "${resurrectScripts}/restore.sh"
+      '';
+
+      resurrectStatus = pkgs.writeShellScript "tmux-resurrect-status" ''
+        if [ -f "${resurrectLastSaveFile}" ]; then
+          elapsed=$(( ($(date +%s) - $(cat "${resurrectLastSaveFile}")) / 60 ))
+          echo "💾 ''${elapsed}m"
+        else
+          echo "💾 --"
+        fi
+      '';
     in
     {
       imports = [
-        # Replaces the unreliable @continuum-boot under Nix. flock avoids a
-        # second concurrent invocation racing a duplicate bare session; PATH is
-        # set because resurrect/continuum's own scripts call bare `tmux`, which
-        # fails silently under launchd's minimal default PATH.
+        # flock avoids racing a duplicate session; restore only runs when the server is actually starting fresh.
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
-          description = "Start tmux server at login (for continuum restore)";
+          description = "Start tmux server at login and restore last session";
           script = ''
-            export PATH="${pkgs.tmux}/bin:$PATH"
+            ${tmuxEnvExports}
             lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
-            ${pkgs.flock}/bin/flock "$lock" sh -c '${pkgs.tmux}/bin/tmux ls >/dev/null 2>&1 || ${pkgs.tmux}/bin/tmux new-session -d'
+            ${pkgs.flock}/bin/flock "$lock" sh -c '
+              tmux ls >/dev/null 2>&1 || {
+                tmux new-session -d
+                "${resurrectRestore}"
+              }
+            '
           '';
         })
       ];
@@ -55,8 +89,6 @@
           battery
           tmux-pomodoro-plus
         ];
-        # continuum isn't listed here — it's sourced manually at the end of extraConfig
-        # instead (ordering matters, see below).
 
         extraConfig = ''
           # ============================================================================
@@ -199,19 +231,36 @@
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
-
-          # @continuum-boot dropped — login autostart is declared via the imports above.
-          set -g @continuum-restore 'on'
+          # Periodic save and restore-at-login are handled outside tmux — see tmux-resurrect-save and tmux-server below.
 
           # Tmux-yank
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
-
-          # Source continuum LAST: catppuccin resets status-right above, which would wipe
-          # continuum's autosave hook if it loaded any earlier. .rtp tracks the plugin's
-          # entry script across upstream layout changes.
-          run-shell ${pkgs.tmuxPlugins.continuum.rtp}
         '';
+      };
+
+      # Periodic resurrect save, replacing tmux-continuum's status-bar-polled autosave.
+      systemd.user.services.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
+        Unit.Description = "Save tmux session state (tmux-resurrect)";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${resurrectSave}";
+        };
+      };
+      systemd.user.timers.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
+        Unit.Description = "Periodic tmux-resurrect save";
+        Timer = {
+          OnStartupSec = "5m";
+          OnUnitActiveSec = "15m";
+        };
+        Install.WantedBy = [ "timers.target" ];
+      };
+      launchd.agents.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isDarwin {
+        enable = true;
+        config = {
+          ProgramArguments = [ "${resurrectSave}" ];
+          StartInterval = 15 * 60;
+        };
       };
 
       # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources).
@@ -238,6 +287,7 @@
         set -ag status-left "#{E:@catppuccin_status_directory}"
 
         set -g status-right " "
+        set -ag status-right "#(${resurrectStatus}) "
         set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
         set -agF status-right "#{E:@catppuccin_status_battery}"
         set -agF status-right "#{E:@catppuccin_status_date_time}"

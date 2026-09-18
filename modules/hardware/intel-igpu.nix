@@ -3,10 +3,12 @@
     # Intel iGPU support (VAAPI/QSV/OpenCL), scoped to hosts that actually have
     # one. sutala-only: import this from a host's configuration.nix, not from a
     # generic/global module -- it was previously applied to every host
-    # (including aarch64-darwin mac-work) via the flake-wide overlay.
+    # (including aarch64-darwin mac-work) via the flake-wide overlay. Only
+    # pulls its own overlay, not `overlays.default` -- general-purpose
+    # overlays are applied separately, see modules/nixpkgs-overlays-nixos.nix.
     { inputs, pkgs, ... }:
     {
-      nixpkgs.overlays = [ inputs.self.overlays.default ];
+      nixpkgs.overlays = [ inputs.self.overlays.intel-media-sdk-cxx17 ];
 
       nixpkgs.config.permittedInsecurePackages = [
         "intel-media-sdk-23.2.2"

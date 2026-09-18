@@ -15,6 +15,12 @@
       nerd-fonts.meslo-lg
       nerd-fonts.fira-code
       nerd-fonts.inconsolata
+      smc-manjari
+      smc-chilanka
+      smc-meera
+      smc-rachana
+      smc-anjalioldlipi
+      smc-karumbi
     ];
   };
 }

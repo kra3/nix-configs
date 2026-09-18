@@ -29,9 +29,10 @@
         ${lib.optionalString pkgs.stdenv.isLinux ''export TMUX_TMPDIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"''}
       '';
 
+      # "$@" lets the timer pass "quiet" while the manual C-s keybind keeps resurrect's spinner feedback.
       resurrectSave = pkgs.writeShellScript "tmux-resurrect-save" ''
         ${tmuxEnvExports}
-        "${resurrectScripts}/save.sh" quiet && {
+        "${resurrectScripts}/save.sh" "$@" && {
           mkdir -p "$(dirname "${resurrectLastSaveFile}")"
           date +%s > "${resurrectLastSaveFile}"
         }
@@ -233,6 +234,9 @@
           set -g @resurrect-processes '~claude ~aider'
           # Periodic save and restore-at-login are handled outside tmux — see tmux-resurrect-save and tmux-server below.
 
+          # Rebind C-s so manual saves also update the status indicator's timestamp.
+          bind-key C-s run-shell "${resurrectSave}"
+
           # Tmux-yank
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
@@ -244,7 +248,7 @@
         Unit.Description = "Save tmux session state (tmux-resurrect)";
         Service = {
           Type = "oneshot";
-          ExecStart = "${resurrectSave}";
+          ExecStart = "${resurrectSave} quiet";
         };
       };
       systemd.user.timers.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
@@ -258,7 +262,10 @@
       launchd.agents.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isDarwin {
         enable = true;
         config = {
-          ProgramArguments = [ "${resurrectSave}" ];
+          ProgramArguments = [
+            "${resurrectSave}"
+            "quiet"
+          ];
           StartInterval = 15 * 60;
         };
       };

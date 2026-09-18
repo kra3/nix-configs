@@ -6,6 +6,10 @@
   ...
 }:
 {
+  imports = [
+    flakeModules.darwin.nixpkgs-overlays-darwin
+  ];
+
   # nix-darwin requires this for managed shells.
   programs.zsh.enable = true;
 

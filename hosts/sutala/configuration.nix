@@ -18,6 +18,7 @@
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
     flakeModules.nixos.hardware-intel-igpu
+    flakeModules.nixos.nixpkgs-overlays-nixos
     flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-acme
     flakeModules.nixos.services-proxy-nginx

@@ -119,7 +119,11 @@
             # Key Bindings
             # ============================================================================
 
-            bindkey -e
+            bindkey -v
+
+            autoload -U edit-command-line
+            zle -N edit-command-line
+            bindkey -M vicmd '^V' edit-command-line
 
             # Better history search (Ctrl+R/S for incremental search)
             bindkey '^R' history-incremental-search-backward

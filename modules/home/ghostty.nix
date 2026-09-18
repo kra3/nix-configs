@@ -9,7 +9,7 @@
       settings = {
         font-family = "FiraCode Nerd Font Mono";
         # retina renders smaller at the same point size.
-        font-size = if pkgs.stdenv.isDarwin then 13 else 11;
+        font-size = if pkgs.stdenv.isDarwin then 13 else 10;
         font-feature = [
           "calt"
           "liga"

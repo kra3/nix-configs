@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# ~/.config/sketchybar/sketchybarrc
+# Catppuccin Mocha color scheme + AeroSpace workspace integration
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+# ── Catppuccin Mocha palette ──────────────────────────────────────────────────
+# base:    0xff1e1e2e   crust:   0xff11111b   surface1: 0xff313244
+# text:    0xffcdd6f4   subtext: 0xffa6adc8   overlay:  0xff6c7086
+# lavender:0xffb4befe   blue:    0xff89b4fa   pink:     0xfff5c2e7
+# green:   0xffa6e3a1   yellow:  0xfff9e2af   red:      0xfff38ba8
+# mauve:   0xffcba6f7
+
+# ── Bar appearance ────────────────────────────────────────────────────────────
+sketchybar --bar \
+    position=top          \
+    height=36             \
+    margin=8              \
+    y_offset=4            \
+    corner_radius=10      \
+    blur_radius=20        \
+    color=0xcc1e1e2e      \
+    border_width=1        \
+    border_color=0x44cdd6f4 \
+    shadow=on             \
+    topmost=window        \
+    padding_left=12       \
+    padding_right=12
+
+# ── Global item defaults ──────────────────────────────────────────────────────
+sketchybar --default \
+    padding_left=4                              \
+    padding_right=4                             \
+    icon.font="HackNerdFont-Bold:Bold:15.0"     \
+    label.font="HackNerdFont-Bold:Bold:13.0"    \
+    icon.color=0xffcdd6f4                       \
+    label.color=0xffcdd6f4                      \
+    icon.padding_left=6                         \
+    icon.padding_right=4                        \
+    label.padding_left=4                        \
+    label.padding_right=6
+
+# ── LEFT: AeroSpace workspace indicators ──────────────────────────────────────
+sketchybar --add event aerospace_workspace_change
+
+COLOR=0xff89b4fa
+for sid in $(seq 1 9); do
+    sketchybar --add item space.$sid left \
+        --subscribe space.$sid aerospace_workspace_change \
+        --set space.$sid \
+            background.color=0x00000000              \
+            background.corner_radius=6               \
+            background.height=24                     \
+            background.drawing=off                   \
+            label="$sid"                             \
+            label.font="HackNerdFont-Bold:Bold:12.0" \
+            label.color=$COLOR                       \
+            icon.drawing=off                         \
+            padding_left=3                           \
+            padding_right=3                          \
+            click_script="aerospace workspace $sid"  \
+            script="$PLUGIN_DIR/aerospace.sh $sid $COLOR"
+done
+
+# Group workspace items under a shared background pill
+sketchybar --add bracket workspaces '/space\..*/' \
+    --set workspaces \
+        background.color=0x33313244     \
+        background.corner_radius=8      \
+        background.height=28            \
+        background.border_width=1       \
+        background.border_color=0x33cdd6f4
+
+# ── LEFT: Frontmost app name ──────────────────────────────────────────────────
+sketchybar --add item front_app left \
+    --set front_app \
+        icon.drawing=off                                    \
+        label.font="HackNerdFont-Bold:Bold:13.0"            \
+        label.color=0xffa6adc8                              \
+        padding_left=10                                     \
+        script="$PLUGIN_DIR/front_app.sh"                   \
+    --subscribe front_app front_app_switched
+
+# ── RIGHT: Clock ──────────────────────────────────────────────────────────────
+sketchybar --add item clock right \
+    --set clock \
+        icon=""                     \
+        icon.color=0xff89b4fa       \
+        icon.padding_left=0         \
+        label.color=0xffcdd6f4      \
+        padding_left=4              \
+        padding_right=4             \
+        update_freq=10              \
+        script="$PLUGIN_DIR/clock.sh"
+
+# ── RIGHT: Battery ────────────────────────────────────────────────────────────
+sketchybar --add item battery right \
+    --set battery \
+        label.color=0xffcdd6f4      \
+        update_freq=120             \
+        script="$PLUGIN_DIR/battery.sh" \
+    --subscribe battery system_woke power_source_change
+
+# ── RIGHT: Volume ─────────────────────────────────────────────────────────────
+sketchybar --add item volume right \
+    --set volume \
+        label.color=0xffcdd6f4      \
+        script="$PLUGIN_DIR/volume.sh" \
+    --subscribe volume volume_change
+
+# ── RIGHT: CPU ───────────────────────────────────────────────────────────────
+sketchybar --add item cpu right \
+    --set cpu \
+        icon="󰻠"                   \
+        icon.font="HackNerdFont-Bold:Bold:15.0" \
+        icon.color=0xffa6e3a1       \
+        label.color=0xffcdd6f4      \
+        update_freq=10              \
+        script="$PLUGIN_DIR/cpu.sh"
+
+# ── RIGHT: Memory ─────────────────────────────────────────────────────────────
+sketchybar --add item memory right \
+    --set memory \
+        label.color=0xffcdd6f4      \
+        update_freq=10              \
+        script="$PLUGIN_DIR/memory.sh"
+
+# ── Trigger initial update ────────────────────────────────────────────────────
+sketchybar --update

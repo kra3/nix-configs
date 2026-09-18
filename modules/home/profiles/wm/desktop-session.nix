@@ -478,6 +478,27 @@
       };
 
       services.mako.enable = true;
+      # Base colors come from catppuccin.enable's own mako theme (hosts/sutala/home.nix).
+      services.mako.settings = {
+        anchor = "top-right";
+        margin = "10";
+        padding = "10";
+        border-size = 2;
+        border-radius = 8;
+        font = "FiraCode Nerd Font 13";
+        default-timeout = 8000;
+        max-visible = 3;
+        group-by = "app-name";
+        "urgency=low" = {
+          border-color = "#6c7086";
+          text-color = "#a6adc8";
+          default-timeout = 4000;
+        };
+        "urgency=critical" = {
+          border-color = "#f38ba8";
+          default-timeout = 0;
+        };
+      };
       services.cliphist.enable = true;
       # 500 items of unranked history is unusable; 50 keeps the picker relevant, and
       # dedupe-search matches it so a duplicate anywhere in history is caught, not just recent ones.

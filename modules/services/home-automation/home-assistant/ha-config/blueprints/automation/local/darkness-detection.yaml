@@ -202,13 +202,50 @@ actions:
                       {{ corroborating_bright_sensor in [none, ''] or
                          states(corroborating_bright_sensor) | float(0)
                          <= corroborating_bright_above }}
+              # Restart reconciliation: dark_boolean is restored as-is from
+              # the recorder, not recomputed, so a restart otherwise strands
+              # a stale "off" through an already-dark room.
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: startup
+                  - condition: state
+                    entity_id: !input dark_boolean
+                    state: "off"
+                  - condition: or
+                    conditions:
+                      - condition: numeric_state
+                        entity_id: !input illuminance_sensor
+                        below: !input dark_below
+                      - condition: state
+                        entity_id: sun.sun
+                        state: below_horizon
         sequence:
           - target:
               entity_id: !input dark_boolean
             action: input_boolean.turn_on
       - conditions:
-          - condition: trigger
-            id: bright
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: bright
+              # Same restart reconciliation, for a stale "on" through an
+              # already-bright room (the bug that motivated this branch).
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: startup
+                  - condition: state
+                    entity_id: !input dark_boolean
+                    state: "on"
+                  - condition: or
+                    conditions:
+                      - condition: numeric_state
+                        entity_id: !input illuminance_sensor
+                        above: !input bright_above
+                      - condition: state
+                        entity_id: sun.sun
+                        state: above_horizon
         sequence:
           - target:
               entity_id: !input dark_boolean

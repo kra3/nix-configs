@@ -1,9 +1,11 @@
 {
   flake.homeManagerModules.home-profiles-shell = { flakeModules, ... }: {
     imports = [
+      flakeModules.homeManager.home-atuin
       flakeModules.homeManager.home-bat
       flakeModules.homeManager.home-colordiff-default
       flakeModules.homeManager.home-eza
+      flakeModules.homeManager.home-fastfetch
       flakeModules.homeManager.home-fd
       flakeModules.homeManager.home-fzf
       flakeModules.homeManager.home-ripgrep

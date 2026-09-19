@@ -36,6 +36,15 @@ template:
           {{ states('binary_sensor.yale_front_door_door') not in ['on', 'off']
              or states('lock.yale_front_door') not in ['locked', 'unlocked'] }}
 
+      # sun.sun alone misses overcast daytime dimness; illuminance alone
+      # misses briefly-shaded readings around sunset/sunrise. Used by the
+      # entrance-light automations so the OR isn't duplicated per trigger.
+      - name: "Front Door Area Dark"
+        unique_id: front_door_area_dark
+        state: >-
+          {{ is_state('sun.sun', 'below_horizon')
+             or states('sensor.toilet_occupancy_illuminance') | float(999) < 30 }}
+
   - lock:
       - name: "Front Door"
         unique_id: front_door_lock_canonical

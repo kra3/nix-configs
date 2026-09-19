@@ -208,14 +208,18 @@
   alias: "Front Door: Entrance light on open (dark)"
   description: >-
     Turns on the interior entrance light whenever the front door opens
-    and it's dark - sun below horizon OR sensor.toilet_occupancy_illuminance
-    reading low (that sensor's range - near 0 lux at night, hundreds to
-    thousands in daylight, confirmed via Prometheus history - also
-    catches overcast daytime dimness sun.sun alone would miss). Stays
-    on for as long as the door is open: the 10-min countdown (via
+    and binary_sensor.front_door_area_dark is on. Stays on for as long
+    as the door is open: the 10-min countdown (via
     timer.front_door_entrance_light_off, restore: true) only starts
     once the door closes, so propping it open holds the light rather
     than racing it off, and an HA restart mid-countdown just resumes.
+    While binary_sensor.front_door_ble_degraded is on, binary_sensor.front_door_open
+    falls back to the Yale cloud door sensor, which has been observed to
+    miss real open events (confirmed via Prometheus: an unlock/lock cycle
+    on lock.front_front_door_nw with no corresponding door-open state
+    change). In that case an unlock is treated as a proxy for door-open,
+    and the off-timer starts immediately since there's no trustworthy
+    close signal to wait for.
   triggers:
   - entity_id: binary_sensor.front_door_open
     to: "on"
@@ -230,19 +234,18 @@
     event_data:
       entity_id: timer.front_door_entrance_light_off
     id: timer_finished
+  - entity_id: lock.front_front_door_nw
+    to: "unlocked"
+    trigger: state
+    id: unlock_fallback
   actions:
   - choose:
       - conditions:
           - condition: trigger
             id: door_open
-          - condition: or
-            conditions:
-            - condition: state
-              entity_id: sun.sun
-              state: below_horizon
-            - condition: numeric_state
-              entity_id: sensor.toilet_occupancy_illuminance
-              below: 30
+          - condition: state
+            entity_id: binary_sensor.front_door_area_dark
+            state: "on"
         sequence:
           - action: timer.cancel
             target:
@@ -250,6 +253,22 @@
           - action: switch.turn_on
             target:
               entity_id: switch.front_entrance_double_switch_left
+      - conditions:
+          - condition: trigger
+            id: unlock_fallback
+          - condition: state
+            entity_id: binary_sensor.front_door_ble_degraded
+            state: "on"
+          - condition: state
+            entity_id: binary_sensor.front_door_area_dark
+            state: "on"
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.front_entrance_double_switch_left
+          - action: timer.start
+            target:
+              entity_id: timer.front_door_entrance_light_off
       - conditions:
           - condition: trigger
             id: door_close

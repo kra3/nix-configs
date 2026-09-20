@@ -12,7 +12,7 @@
     trigger: state
   actions:
   - action: notify.send_message
-    target: { entity_id: notify.iphone }
+    target: { entity_id: notify.meghanadha }
     data:
       message: "{{ state_attr('person.anjalipc', 'friendly_name') }} has left Home"
   mode: single
@@ -51,18 +51,23 @@
 - id: everyone_left_home
   alias: Everyone left home
   description: >-
-    When all tracked persons leave the home zone, wait out
+    When the last tracked person leaves the home zone, notify immediately
+    if an exit is already open, then wait out
     timer.everyone_left_home_confirm (5 min, restore: true) before turning
     off all lights and arming Alarmo away — an HA restart mid-countdown
-    just resumes instead of needing a startup-trigger workaround. Alarmo
-    silently refuses if a sensor's open (same as the bedtime arm in
-    sleep.yaml), so this checks the result and notifies either way —
-    don't claim "alarm armed" if it didn't.
+    just resumes instead of needing a startup-trigger workaround. Trigger
+    is zone.home crossing below 1, not a raw person-entity state trigger —
+    the latter fires on every GPS/attribute update even while already
+    away, and combined with mode: restart that kept resetting the confirm
+    timer for hours before it ever got to run. Alarmo silently refuses to
+    arm if a sensor's open (same as the bedtime arm in sleep.yaml), so
+    this checks the result and notifies either way — don't claim "alarm
+    armed" if it didn't. Force-arm is a dashboard button (dashboard.yaml)
+    for that case.
   triggers:
-  - entity_id:
-    - person.anjalipc
-    - person.arun_karunagath
-    trigger: state
+  - trigger: numeric_state
+    entity_id: zone.home
+    below: 1
     id: left
   - trigger: event
     event_type: timer.finished
@@ -82,6 +87,18 @@
       - action: timer.start
         target:
           entity_id: timer.everyone_left_home_confirm
+      - if:
+        - condition: state
+          entity_id: binary_sensor.house_exits_open_status
+          state: "on"
+        then:
+        - action: script.notify_all_phones
+          data:
+            title: Home
+            message: >-
+              Everyone left — won't auto-arm, still open:
+              {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
+              Force-arm from the dashboard if needed.
     - conditions:
       - condition: trigger
         id: timer_finished
@@ -112,51 +129,4 @@
             message: >-
               Everyone left, lights off — but the alarm didn't arm, still
               open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-  mode: restart
-
-- id: notify_open_exits_on_leave
-  alias: Notify if door/window left open when leaving
-  description: >-
-    When everyone leaves home and a tracked door/window is still open,
-    wait out timer.exit_open_notify (5 min, restore: true) before
-    notifying both phones which one(s) — an HA restart mid-countdown just
-    resumes instead of needing a startup-trigger workaround.
-  triggers:
-  - entity_id: binary_sensor.house_exits_open_status
-    to: "on"
-    trigger: state
-    id: exit_open
-  - entity_id:
-    - person.anjalipc
-    - person.arun_karunagath
-    trigger: state
-    id: left
-  - trigger: event
-    event_type: timer.finished
-    event_data:
-      entity_id: timer.exit_open_notify
-    id: timer_finished
-  conditions:
-  - condition: numeric_state
-    entity_id: zone.home
-    below: 1
-  - condition: state
-    entity_id: binary_sensor.house_exits_open_status
-    state: "on"
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: timer_finished
-      sequence:
-      - action: script.notify_all_phones
-        data:
-          title: Home
-          message: >-
-            Left home with something open:
-            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-    default:
-    - action: timer.start
-      target:
-        entity_id: timer.exit_open_notify
   mode: restart

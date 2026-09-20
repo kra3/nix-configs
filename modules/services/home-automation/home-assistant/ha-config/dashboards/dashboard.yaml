@@ -288,6 +288,9 @@ views:
         - condition: state
           entity: alarm_control_panel.vasudha_secure
           state: disarmed
+        - condition: state
+          entity: schedule.sleep
+          state: "on"
         card:
           type: custom:mushroom-template-card
           primary: Force arm for the night
@@ -298,6 +301,27 @@ views:
             service: script.alarm_force_arm_night
             confirmation:
               text: Force-arm for the night, bypassing any open sensors?
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: binary_sensor.dashboard_alert_security
+          state: "on"
+        - condition: state
+          entity: alarm_control_panel.vasudha_secure
+          state: disarmed
+        - condition: numeric_state
+          entity: zone.home
+          below: 1
+        card:
+          type: custom:mushroom-template-card
+          primary: Force arm away
+          icon: mdi:shield-lock
+          icon_color: amber
+          tap_action:
+            action: call-service
+            service: script.alarm_force_arm_away
+            confirmation:
+              text: Force-arm away, bypassing any open sensors?
       - type: conditional
         conditions:
         - condition: state

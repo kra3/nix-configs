@@ -85,9 +85,6 @@ timer:
   everyone_left_home_confirm:
     duration: "00:05:00"
     restore: true
-  exit_open_notify:
-    duration: "00:05:00"
-    restore: true
 
 schedule:
   sleep:

@@ -82,7 +82,7 @@
                   value_template: "{{ arun_home }}"
               then:
                 - action: notify.send_message
-                  target: { entity_id: notify.iphone }
+                  target: { entity_id: notify.meghanadha }
                   data: { title: "Front Door", message: "Someone is knocking at the front door." }
 
           # If no one home: Notify all phones

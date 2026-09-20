@@ -19,7 +19,7 @@ notify_all_phones:
   - action: notify.send_message
     target:
       entity_id:
-      - notify.iphone
+      - notify.meghanadha
       - notify.anjalis_iphone
     data:
       title: "{{ title | default(omit) }}"
@@ -74,5 +74,18 @@ alarm_force_arm_night:
     data:
       entity_id: alarm_control_panel.vasudha_secure
       mode: night
+      force: true
+      code: !secret alarm_code
+
+alarm_force_arm_away:
+  alias: "Alarm: force arm away (bypass open sensors)"
+  description: >-
+    Arms away mode via alarmo.arm's force option, which auto-bypasses
+    any currently-open sensor instead of refusing to arm.
+  sequence:
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: away
       force: true
       code: !secret alarm_code

@@ -62,7 +62,9 @@ template:
              or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
                  and is_state('binary_sensor.house_exits_open_status', 'on'))
              or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
-                 and is_state('schedule.sleep', 'on')) }}
+                 and is_state('schedule.sleep', 'on'))
+             or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
+                 and states('zone.home') | int(0) < 1) }}
 
       - name: "Dashboard Alert: Device Health"
         unique_id: dashboard_alert_device_health

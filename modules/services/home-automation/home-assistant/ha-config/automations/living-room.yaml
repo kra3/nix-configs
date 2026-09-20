@@ -56,7 +56,13 @@
     are known to false-negative (see living_room_lighting's KNOWN ISSUE).
     Darkness gate is either room's own boolean now (was hall_is_dark) -
     living and dining each have their own since both moved to
-    sensor.average_illuminance.
+    sensor.average_illuminance. Pause dims living room lights to 20%
+    after a 38s buffer (avoids flicker on brief pause/buffering) rather
+    than restoring full brightness, and hands the light to Adaptive
+    Lighting's manual_control so it doesn't immediately re-adapt the
+    brightness back up; AL reclaims it automatically on the light's
+    next off->on transition (i.e. when not_playing's plain turn_on
+    fires on a genuine stop).
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -70,6 +76,10 @@
     - standby
     trigger: state
     id: not_playing
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    to: paused
+    trigger: state
+    id: paused
   conditions:
   - condition: or
     conditions:
@@ -128,4 +138,34 @@
           data:
             transition: 60
           action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: paused
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      sequence:
+      - delay: "00:00:38"
+      - if:
+        - condition: state
+          entity_id: light.living_room_lights
+          state: "off"
+        - condition: not
+          conditions:
+          - condition: state
+            entity_id: binary_sensor.ranger_duo_fxd_person_occupancy
+            state: "off"
+        then:
+        - target:
+            entity_id: light.living_room_lights
+          data:
+            brightness_pct: 20
+            transition: 10
+          action: light.turn_on
+        - target:
+            entity_id: switch.home_adaptive_lighting_home
+          data:
+            lights: light.living_room_lights
+            manual_control: true
+          action: adaptive_lighting.set_manual_control
   mode: restart

@@ -34,8 +34,8 @@
             inner.vertical = 8;
             outer.left = 8;
             outer.bottom = 8;
-            # Static gap for the SketchyBar bar (topmost=window draws over any overlap).
-            outer.top = 42;
+            # Static gap below the SketchyBar bar (notch display: usable frame already excludes the top strip).
+            outer.top = 18;
             outer.right = 8;
           };
 

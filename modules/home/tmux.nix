@@ -21,6 +21,7 @@
 
       # Drives resurrect's scripts directly instead of tmux-continuum, which self-installs an unmanaged systemd/launchd unit.
       resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
+      resurrectDir = "${config.xdg.dataHome}/tmux/resurrect";
       resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
 
       # resurrect's scripts shell out to bare `tmux`, so PATH/TMUX_TMPDIR must be set explicitly outside a tmux client context.
@@ -32,10 +33,17 @@
       # "$@" lets the timer pass "quiet" while the manual C-s keybind keeps resurrect's spinner feedback.
       resurrectSave = pkgs.writeShellScript "tmux-resurrect-save" ''
         ${tmuxEnvExports}
-        "${resurrectScripts}/save.sh" "$@" && {
-          mkdir -p "$(dirname "${resurrectLastSaveFile}")"
-          date +%s > "${resurrectLastSaveFile}"
-        }
+        prev="$(readlink "${resurrectDir}/last" 2>/dev/null || true)"
+        "${resurrectScripts}/save.sh" "$@" || exit $?
+        # Don't let save.sh repoint `last` to a paneless dump (trivial server) — restore would lose the workspace.
+        new="$(readlink "${resurrectDir}/last" 2>/dev/null || true)"
+        if [ -n "$new" ] && ! grep -q '^pane' "${resurrectDir}/$new" 2>/dev/null; then
+          rm -f "${resurrectDir}/$new"
+          [ -n "$prev" ] && ln -sfn "$prev" "${resurrectDir}/last"
+          exit 0
+        fi
+        mkdir -p "$(dirname "${resurrectLastSaveFile}")"
+        date +%s > "${resurrectLastSaveFile}"
       '';
 
       resurrectRestore = pkgs.writeShellScript "tmux-resurrect-restore" ''
@@ -222,15 +230,15 @@
 
           # Resurrect — pin the save dir. The nixpkgs build defaults to ~/.tmux/resurrect
           # (pre-XDG); pinning survives version bumps and matches existing saves.
-          set -g @resurrect-dir "${config.xdg.dataHome}/tmux/resurrect"
+          set -g @resurrect-dir "${resurrectDir}"
           set -g @resurrect-strategy-vim 'session'
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
           # Periodic save is handled outside tmux — see tmux-resurrect-save below.
 
-          # Fires on any fresh server boot (not a config reload) — guards on server age, not the trigger.
-          run-shell -b 'if [ $(( $(date +%s) - $(tmux display-message -p "#{start_time}") )) -lt 5 ]; then "${resurrectRestore}"; fi'
+          # Restore only on a fresh headless server (server age + no attached client) — skip the interactive attach, which restore.sh would tear down.
+          run-shell -b 'sleep 1; if [ $(( $(date +%s) - $(tmux display-message -p "#{start_time}") )) -lt 5 ] && [ -z "$(tmux list-clients 2>/dev/null)" ]; then "${resurrectRestore}"; fi'
 
           # Rebind C-s so manual saves also update the status indicator's timestamp.
           bind-key C-s run-shell "${resurrectSave}"

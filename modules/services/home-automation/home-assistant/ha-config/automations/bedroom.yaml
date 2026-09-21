@@ -17,6 +17,8 @@
       light_entity: light.bedroom_wardrobe_lights
       dark_boolean: input_boolean.bedroom_is_dark
       dark_below: 50
+      dark_below_daytime: 50
+      dark_sustain_daytime: "00:15:00"
 
 - id: bedroom_lighting
   alias: Bedroom — Lighting

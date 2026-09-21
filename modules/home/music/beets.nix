@@ -77,6 +77,18 @@
         '';
         doCheck = false;
       };
+
+      # Local plugin: normalizes artist/albumartist initials ("S.P." -> "SP") and unifies
+      # the multi-credit separator to ", " on every future import/write, matching the
+      # library-wide cleanup pass done manually on the existing Indian-film buckets.
+      beets-normalize-names = pkgs.python3.pkgs.buildPythonPackage {
+        pname = "beets-normalize-names";
+        version = "0.1.0";
+        pyproject = true;
+        src = ./beets-plugins;
+        build-system = [ pkgs.python3.pkgs.setuptools ];
+        doCheck = false;
+      };
     in
     {
       programs.beets = {
@@ -92,6 +104,10 @@
               aisauce = {
                 enable = true;
                 propagatedBuildInputs = [ beets-aisauce ];
+              };
+              normalize_names = {
+                enable = true;
+                propagatedBuildInputs = [ beets-normalize-names ];
               };
             };
           }
@@ -112,6 +128,7 @@
             "duplicates"
             "fromfilename"
             "edit"
+            "normalize_names"
           ];
           # aisauce.providers (with the deepseek API key) lives in the secrets overlay this
           # profile's `beet` alias loads via --config; mode is the only non-secret setting.
@@ -171,7 +188,7 @@
         # auto-relocates items inside their own configured directory.
         directory: /srv/media/library/music.new
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit
+        plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
         aisauce:
           mode: metadata_source
         # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.

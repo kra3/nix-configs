@@ -32,6 +32,7 @@
     flakeModules.nixos.services-dns-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
+    flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-discovery-avahi
     flakeModules.nixos.containers-monitoring

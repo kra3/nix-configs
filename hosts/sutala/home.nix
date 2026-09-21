@@ -12,6 +12,7 @@
     flakeModules.homeManager.home-profiles-terminal
     flakeModules.homeManager.home-music-beets
     flakeModules.homeManager.home-music-picard
+    flakeModules.homeManager.home-music-lidarr-beets-retag
   ];
 
   catppuccin.enable = true;

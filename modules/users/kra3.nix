@@ -49,11 +49,15 @@
       # Separate from beets-secrets.yaml (not just an aisauce.mode overlay) because beets'
       # --config flag doesn't stack: only the last one wins, so a partial overlay silently
       # drops the providers list. This template duplicates the full secrets so the
-      # beet-cleanup alias's single --config is self-contained.
+      # beet-cleanup alias's single --config is self-contained. aisauce is disabled in the
+      # base plugins list (opt-in helper, not run on regular imports), so this also
+      # re-enables it via its own `plugins:` key -- the union of both profiles' plugin
+      # lists, since this one file backs both beet-cleanup and beet-indian-film-cleanup.
       sops.templates."music/beets-cleanup-secrets.yaml" = {
         owner = "kra3";
         mode = "0400";
         content = ''
+          plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
           acoustid:
             apikey: ${config.sops.placeholder."music.acoustid_api_key"}
           spotify:

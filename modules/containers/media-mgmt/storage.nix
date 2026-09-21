@@ -21,8 +21,6 @@
         "d /srv/media/library/movies 2775 root media - -"
         "d /srv/media/library/tv 2775 root media - -"
         "d /srv/media/library/music 2775 root media - -"
-        # Migration staging tree for the music-library reorg (Task 8 runbook).
-        "d /srv/media/library/music.new 2775 root media - -"
         "d /srv/media/library/books 2775 root media - -"
         "d /srv/media/library/anime 2775 root media - -"
         "d /srv/media/library/anime/movies 2775 root media - -"

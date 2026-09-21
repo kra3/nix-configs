@@ -19,6 +19,8 @@
         ProgramArguments = [ "${pkgs.sketchybar}/bin/sketchybar" ];
         RunAtLoad = true;
         KeepAlive = true;
+        # launchd's minimal PATH lacks sketchybar/aerospace; plugins call them bare.
+        EnvironmentVariables.PATH = "${pkgs.sketchybar}/bin:${pkgs.aerospace}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
     };
   };

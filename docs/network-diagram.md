@@ -195,6 +195,10 @@ from LAN), node-exporter `9100`.
 radarr `7878`, sonarr `8989`, prowlarr `9696`, sabnzbd `8080`, bazarr `6767`,
 lidarr `8686`, seerr `5055`, bookshelf `8787`, audiobookshelf `13378`→80,
 maintainerr `6246`, unpackerr `5656` — all published to `127.0.0.1` only.
+lidarr's On Track Retag Custom Script reaches the host's
+`lidarr-beets-webhook` (port `8942`, `networking.firewall.interfaces.
+br-media-mgmt.allowedTCPPorts`) via `host.containers.internal`, same
+reachability pattern as ghostfolio → postgres/redis below.
 
 ### br-life pods (10.3.0.0/24)
 

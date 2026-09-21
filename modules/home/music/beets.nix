@@ -113,14 +113,12 @@
           }
         );
         settings = {
-          # music.new is the staged tree Task 11's cutover renames to music/.
-          directory = "/srv/media/library/music.new/Western";
+          directory = "/srv/media/library/music/Western";
           library = "${config.home.homeDirectory}/.config/beets/western.db";
           plugins = [
             "musicbrainz"
             "chroma"
             "spotify"
-            "aisauce"
             "fetchart"
             "embedart"
             "lastgenre"
@@ -130,13 +128,12 @@
             "edit"
             "normalize_names"
           ];
-          # aisauce.providers (with the deepseek API key) lives in the secrets overlay this
-          # profile's `beet` alias loads via --config; mode is the only non-secret setting.
-          aisauce.mode = "metadata_source";
+          # aisauce is opt-in (see beet-cleanup/beet-indian-film-cleanup), not run on every
+          # regular import -- it's an LLM-backed helper, not needed for routine matches.
           # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
           musicbrainz.ratelimit_interval = 1.5;
-          # Outweigh Spotify's default match-distance penalty so MusicBrainz wins ties for mb_trackid.
-          spotify.data_source_mismatch_penalty = 2.0;
+          # Max out Spotify's match-distance penalty (valid range is 0.0-1.0) so MusicBrainz wins ties for mb_trackid.
+          spotify.data_source_mismatch_penalty = 1.0;
           lastgenre = {
             source = "track";
             count = 1;
@@ -184,13 +181,10 @@
       home.shellAliases.beet-indian-film-cleanup = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-cleanup-secrets.yaml";
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
-        # music.new is the staged tree Task 11's cutover renames to music/; beets only
-        # auto-relocates items inside their own configured directory.
-        directory: /srv/media/library/music.new
+        directory: /srv/media/library/music
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
-        plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
-        aisauce:
-          mode: metadata_source
+        # aisauce is opt-in (see beet-indian-film-cleanup), not run on every regular import.
+        plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
         # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
         musicbrainz:
           ratelimit_interval: 1.5

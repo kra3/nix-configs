@@ -643,9 +643,12 @@ if PluginAvailable('vim-lsp')
         let g:lsp_settings_enable_suggestions = 1
 
         " Language-specific server configurations
-        " Python: pyright (fast, accurate type checking)
+        " Python: basedpyright (maintained pyright superset) for types/nav/hover.
+        " Lint + format is handled by ruff via ALE, not the LSP (see ALE section).
+        " basedpyright honours the python.analysis.* namespace for compatibility.
+        let g:lsp_settings_filetype_python = ['basedpyright']
         call extend(g:lsp_settings, {
-            \ 'pyright-langserver': {
+            \ 'basedpyright': {
             \   'workspace_config': {
             \     'python': {
             \       'analysis': {
@@ -890,12 +893,16 @@ endif
             \ 'sh': []
             \ }
         
-        " Python linters
-        if HasExecutable('flake8')
-            call add(g:ale_linters.python, 'flake8')
-        endif
-        if HasExecutable('pylint')
-            call add(g:ale_linters.python, 'pylint')
+        " Python linters - ruff (fast, replaces flake8 + pylint); fall back if absent
+        if HasExecutable('ruff')
+            call add(g:ale_linters.python, 'ruff')
+        else
+            if HasExecutable('flake8')
+                call add(g:ale_linters.python, 'flake8')
+            endif
+            if HasExecutable('pylint')
+                call add(g:ale_linters.python, 'pylint')
+            endif
         endif
         
         " JavaScript/TypeScript linters
@@ -928,7 +935,7 @@ endif
         
         " Configure fixers
         let g:ale_fixers = {
-            \ 'python': ['black', 'isort'],
+            \ 'python': ['ruff', 'ruff_format'],
             \ 'javascript': ['prettier', 'eslint'],
             \ 'typescript': ['prettier', 'eslint'],
             \ 'sql': ['pgformatter'],
@@ -1516,8 +1523,10 @@ augroup python_settings
   autocmd FileType python setlocal colorcolumn=88
   autocmd FileType python nnoremap <buffer> <Leader>r :update<CR>:exec '!python3' shellescape(@%, 1)<CR>
   autocmd FileType python nnoremap <buffer> <Leader>i :update<CR>:exec '!python3 -i' shellescape(@%, 1)<CR>
-  " Linting/formatting if available
-  if executable('black')
+  " Formatting shortcut - prefer ruff, fall back to black
+  if executable('ruff')
+    autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !ruff format % && ruff check --fix %<CR>:e<CR>
+  elseif executable('black')
     autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !black %<CR>:e<CR>
   endif
   autocmd FileType python call SetupDevEnvironment()

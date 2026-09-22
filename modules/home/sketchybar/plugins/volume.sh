@@ -24,26 +24,29 @@ set_icon() {
 }
 
 populate_devices() {
-    sketchybar --remove '/volume\.dev\..*/' 2>/dev/null
-    command -v SwitchAudioSource >/dev/null 2>&1 || return 0
-    local cur key mark col
-    sketchybar --add item volume.dev.hdr popup."$NAME" \
-        --set volume.dev.hdr icon.drawing=off label="Output" \
-            label.font="Helvetica Neue:Bold:13.0" label.color=0xfff9e2af label.align=left \
-            width=220 label.padding_left=10 \
-            background.drawing=on background.color=0x22313244 background.height=20 background.corner_radius=4
+    command -v SwitchAudioSource >/dev/null 2>&1 || { sketchybar --remove '/volume\.dev\..*/' 2>/dev/null; return 0; }
+    local cur key mark col dev
+    # One sketchybar call for the whole device list (see rdar.sh — batching
+    # avoids one --add process per row).
+    local VOL_ARGS=(--remove '/volume\.dev\..*/'
+        --add item volume.dev.hdr popup."$NAME"
+        --set volume.dev.hdr icon.drawing=off label="Output"
+            label.font="Helvetica Neue:Bold:13.0" label.color=0xfff9e2af label.align=left
+            width=220 label.padding_left=10
+            background.drawing=on background.color=0x22313244 background.height=20 background.corner_radius=4)
     cur="$(SwitchAudioSource -c -t output 2>/dev/null)"
-    SwitchAudioSource -a -t output 2>/dev/null | while IFS= read -r dev; do
+    while IFS= read -r dev; do
         [ -n "$dev" ] || continue
         key="$(printf '%s' "$dev" | tr -c 'A-Za-z0-9' '_')"
         if [ "$dev" = "$cur" ]; then mark="󰄬"; col=0xffa6e3a1; else mark=""; col=0xffa6adc8; fi
-        sketchybar --add item "volume.dev.$key" popup."$NAME" \
-            --set "volume.dev.$key" icon="$mark" icon.color=0xffa6e3a1 icon.font="MesloLGS Nerd Font:Bold:12.0" \
-                label="$dev" label.color="$col" label.font="Helvetica Neue:Regular:13.0" label.max_chars=24 \
-                label.align=left width=220 label.padding_left=4 \
-                background.drawing=on background.color=0x00000000 background.height=22 \
-                click_script="SwitchAudioSource -s \"$dev\" >/dev/null 2>&1; $CONFIG_DIR/plugins/volume.sh; sketchybar --set $NAME popup.drawing=off"
-    done
+        VOL_ARGS+=(--add item "volume.dev.$key" popup."$NAME"
+            --set "volume.dev.$key" icon="$mark" icon.color=0xffa6e3a1 icon.font="MesloLGS Nerd Font:Bold:12.0"
+                label="$dev" label.color="$col" label.font="Helvetica Neue:Regular:13.0" label.max_chars=24
+                label.align=left width=220 label.padding_left=4
+                background.drawing=on background.color=0x00000000 background.height=22
+                click_script="SwitchAudioSource -s \"$dev\" >/dev/null 2>&1; $CONFIG_DIR/plugins/volume.sh; sketchybar --set $NAME popup.drawing=off")
+    done < <(SwitchAudioSource -a -t output 2>/dev/null)
+    sketchybar "${VOL_ARGS[@]}"
 }
 
 # Pointer left the item and its popup → dismiss (auto-close on focus loss).

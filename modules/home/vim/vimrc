@@ -199,7 +199,6 @@ set updatetime=300
 
 " More responsive UI
 set lazyredraw          " Don't redraw while executing macros
-set ttyfast             " Faster terminal connection
 set synmaxcol=200       " Only syntax highlight first 200 columns for performance
 
 " Check for file changes more efficiently
@@ -285,9 +284,12 @@ augroup MyAutoCmd
   autocmd WinEnter,BufRead * setlocal cursorcolumn
 augroup END
 
-" Spell checking
-set spell
+" Spell checking - only in prose filetypes, not code
 set spelllang=en
+augroup spell_prose
+  autocmd!
+  autocmd FileType markdown,gitcommit,text,vimwiki setlocal spell
+augroup END
 
 " ========================================
 " Editor Behavior
@@ -309,13 +311,12 @@ set fileformat=unix
 au BufNewFile * set fileformat=unix
 
 " Spacing and indenting
-set tabstop=4           " A tab is 4 spaces
-set softtabstop=4       " Insert 4 spaces when Tab is pressed
-set shiftwidth=4        " An indent is 4 spaces
+set tabstop=2           " A tab is 2 spaces
+set softtabstop=2       " Insert 2 spaces when Tab is pressed
+set shiftwidth=2        " An indent is 2 spaces
 set shiftround          " Round spaces to nearest shiftwidth multiple
 set expandtab           " Use spaces instead of tabs
 set nojoinspaces        " Don't convert spaces to tabs
-set smartindent         " Smart auto-indenting
 
 " ========================================
 " Search Settings
@@ -1499,13 +1500,11 @@ function! SetupDevEnvironment()
   " Common coding settings
   setlocal number
   setlocal autoindent
-  setlocal smartindent
 endfunction
 
 " Python settings
 augroup python_settings
   autocmd!
-  autocmd FileType python setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
   autocmd FileType python setlocal textwidth=88  " Black formatter default
   autocmd FileType python setlocal colorcolumn=88
   autocmd FileType python nnoremap <buffer> <Leader>r :update<CR>:exec '!python3' shellescape(@%, 1)<CR>
@@ -1520,7 +1519,6 @@ augroup END
 " Java settings
 augroup java_settings
   autocmd!
-  autocmd FileType java setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
   autocmd FileType java nnoremap <buffer> <F9> :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
   autocmd FileType java nnoremap <buffer> <Leader>r :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
   autocmd FileType java call SetupDevEnvironment()
@@ -1541,7 +1539,6 @@ augroup END
 " Scala settings - with Metals LSP and Gradle support
 augroup scala_settings
   autocmd!
-  autocmd FileType scala setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
 
   " Gradle/Build commands (Space + m prefix to avoid conflicts)
   autocmd FileType scala nnoremap <buffer> <Leader>mc :!gw compileScala<CR>
@@ -1574,10 +1571,7 @@ augroup END
 " TypeScript/JavaScript settings
 augroup js_ts_settings
   autocmd!
-  " Common settings for JS/TS files
-  autocmd FileType javascript,typescript,javascriptreact,typescriptreact 
-    \ setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
-  
+
   " JavaScript execution
   autocmd FileType javascript nnoremap <buffer> <Leader>r :update<CR>:exec '!node "%"'<CR>
   
@@ -1600,7 +1594,6 @@ augroup END
 " SQL settings
 augroup sql_settings
   autocmd!
-  autocmd FileType sql setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
   autocmd FileType sql setlocal commentstring=--\ %s
   
   " SQL formatting if sqlformat is available
@@ -1632,7 +1625,6 @@ augroup END
 " Shell script settings
 augroup sh_settings
   autocmd!
-  autocmd FileType sh setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
   autocmd FileType sh setlocal commentstring=#\ %s
   autocmd FileType sh nnoremap <buffer> <Leader>r :update<CR>:exec '!bash "%"'<CR>
   
@@ -1650,7 +1642,6 @@ augroup END
 " Markdown settings
 augroup markdown_settings
   autocmd!
-  autocmd FileType markdown setlocal spell
   autocmd FileType markdown setlocal textwidth=80
   
   " Preview markdown in browser

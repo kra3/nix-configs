@@ -122,15 +122,44 @@
             alt-8 = "workspace 8";
             alt-9 = "workspace 9";
 
-            alt-ctrl-1 = "move-node-to-workspace 1";
-            alt-ctrl-2 = "move-node-to-workspace 2";
-            alt-ctrl-3 = "move-node-to-workspace 3";
-            alt-ctrl-4 = "move-node-to-workspace 4";
-            alt-ctrl-5 = "move-node-to-workspace 5";
-            alt-ctrl-6 = "move-node-to-workspace 6";
-            alt-ctrl-7 = "move-node-to-workspace 7";
-            alt-ctrl-8 = "move-node-to-workspace 8";
-            alt-ctrl-9 = "move-node-to-workspace 9";
+            # Move window + nudge SketchyBar (moves don't change the focused
+            # workspace, so exec-on-workspace-change wouldn't fire otherwise).
+            alt-ctrl-1 = [
+              "move-node-to-workspace 1"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-2 = [
+              "move-node-to-workspace 2"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-3 = [
+              "move-node-to-workspace 3"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-4 = [
+              "move-node-to-workspace 4"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-5 = [
+              "move-node-to-workspace 5"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-6 = [
+              "move-node-to-workspace 6"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-7 = [
+              "move-node-to-workspace 7"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-8 = [
+              "move-node-to-workspace 8"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-9 = [
+              "move-node-to-workspace 9"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
 
             alt-tab = "workspace-back-and-forth";
             alt-shift-tab = "move-workspace-to-monitor --wrap-around next";

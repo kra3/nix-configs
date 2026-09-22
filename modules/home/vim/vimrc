@@ -17,7 +17,6 @@ call plug#begin('~/.vim/plugged')
 "==============================================================================
 " Startup & Sessions
 Plug 'tpope/vim-obsession', { 'on': 'Obsession' }    " Session management
-Plug 'editorconfig/editorconfig-vim'                 " EditorConfig support
 
 "==============================================================================
 " NAVIGATION & SEARCH
@@ -27,12 +26,12 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'                              " FZF integration for vim
 
 " File Navigation - NERDTree preferred over built-in netrw
-Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTree', 'NERDTreeFind'] }
+Plug 'preservim/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTree', 'NERDTreeFind'] }
   \ | Plug 'Xuyuanp/nerdtree-git-plugin'            " File explorer with git integration
 Plug 'airblade/vim-rooter'                          " Change working dir to project root
 
 " Code Navigation
-Plug 'easymotion/vim-easymotion'                " Efficient text navigation
+Plug 'justinmk/vim-sneak'                       " Efficient 2-char motion navigation
 
 "==============================================================================
 " VERSION CONTROL & COLLABORATION
@@ -51,7 +50,7 @@ Plug 'tpope/vim-repeat'                             " Enable repeating supported
 Plug 'tpope/vim-commentary'                          " Comment stuff out
 Plug 'tpope/vim-abolish', { 'on': ['Abolish', 'Subvert'] } " Search/substitute/abbreviate variants
 Plug 'tpope/vim-unimpaired'                         " Pairs of handy bracket mappings
-Plug 'jiangmiao/auto-pairs'                         " Insert/delete brackets in pairs
+Plug 'LunarWatcher/auto-pairs'                      " Insert/delete brackets in pairs (maintained fork)
 
 " Clipboard & History
 Plug 'junegunn/vim-peekaboo'                        " Preview registers
@@ -64,7 +63,6 @@ Plug 'michaeljsmith/vim-indent-object'              " Text objects for indented 
 " WINDOW & BUFFER MANAGEMENT
 "==============================================================================
 Plug 'schickling/vim-bufonly', { 'on': 'BufOnly' }  " Delete all buffers except current
-Plug 'gioele/vim-autoswap'                          " Handle swap files intelligently
 Plug 'moll/vim-bbye', { 'on': ['Bdelete', 'Bwipeout'] } " Better buffer closing
 Plug 'christoomey/vim-tmux-navigator'               " Seamless vim/tmux navigation
 
@@ -98,18 +96,23 @@ Plug 'dense-analysis/ale', { 'for': ['python', 'javascript', 'typescript', 'css'
 "==============================================================================
 " LSP & COMPLETION
 "==============================================================================
+" This whole stack is lazy-loaded per-buffer for coding filetypes only, so
+" plain-editing sessions (config, notes) stay fast. Neovim will own coding later.
+let g:coding_langs = ['python', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact',
+    \ 'scala', 'java', 'sh', 'sql', 'css', 'html', 'json', 'yaml', 'markdown', 'vimwiki']
+
 " Language Server Protocol Support
-Plug 'prabirshrestha/vim-lsp'                " Vim LSP client
-Plug 'mattn/vim-lsp-settings'                " Auto configurations for LSP
+Plug 'prabirshrestha/vim-lsp', { 'for': g:coding_langs }                " Vim LSP client
+Plug 'mattn/vim-lsp-settings', { 'for': g:coding_langs }                " Auto configurations for LSP
 
 " Async Completion
-Plug 'prabirshrestha/asyncomplete.vim'       " Async completion framework
-Plug 'prabirshrestha/asyncomplete-lsp.vim'   " LSP source for asyncomplete
+Plug 'prabirshrestha/asyncomplete.vim', { 'for': g:coding_langs }       " Async completion framework
+Plug 'prabirshrestha/asyncomplete-lsp.vim', { 'for': g:coding_langs }   " LSP source for asyncomplete
 
 " Snippet Support
-Plug 'hrsh7th/vim-vsnip'                     " Snippet engine (VSCode format)
-Plug 'hrsh7th/vim-vsnip-integ'               " Integration with asyncomplete
-Plug 'rafamadriz/friendly-snippets'          " Collection of community snippets
+Plug 'hrsh7th/vim-vsnip', { 'for': g:coding_langs }                     " Snippet engine (VSCode format)
+Plug 'hrsh7th/vim-vsnip-integ', { 'for': g:coding_langs }               " Integration with asyncomplete
+Plug 'rafamadriz/friendly-snippets', { 'for': g:coding_langs }          " Collection of community snippets
 
 "==============================================================================
 " PRODUCTIVITY & UTILITIES
@@ -703,7 +706,8 @@ endif
 
 " FZF {{{
     " Replaces CtrlP functionality
-    let g:fzf_layout = { 'down': '~40%' }
+    " Floating popup window (Vim 8.2+ / modern terminals like alacritty, ghostty)
+    let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
     let g:fzf_action = {
       \ 'ctrl-t': 'tab split',
       \ 'ctrl-s': 'split',
@@ -750,19 +754,22 @@ endif
     let g:undotree_HelpLine = 0
 " }}}
 
-" EasyMotion {{{
-    let g:EasyMotion_do_mapping = 0  " Disable default mappings
-    let g:EasyMotion_smartcase = 1   " Turn on case-insensitive feature
-    let g:EasyMotion_smartsign_us = 1
-    
-    " Jump to anywhere with 2-character search
-    nmap <Leader><Leader> <Plug>(easymotion-s2)
-    " Jump to anywhere with n-character search
-    nmap <Leader>s <Plug>(easymotion-sn)
-    
-    " JK motions: Line motions
-    map <Leader>ej <Plug>(easymotion-j)
-    map <Leader>ek <Plug>(easymotion-k)
+" vim-sneak {{{
+    " 2-char motion: bare `s{char}{char}` forward, `S` backward.
+    let g:sneak#label = 1        " label matches (easymotion-style jump target)
+    let g:sneak#use_ic_scs = 1   " respect ignorecase/smartcase
+    let g:sneak#s_next = 1       " repeat s/S to hop to next/prev match
+
+    " Preserve old easymotion muscle-memory entry point
+    map <Leader><Leader> <Plug>Sneak_s
+    map <Leader>S        <Plug>Sneak_S
+
+    " Clever f/t: repeatable with f/F/t/T instead of ;/,
+    map f <Plug>Sneak_f
+    map F <Plug>Sneak_F
+    map t <Plug>Sneak_t
+    map T <Plug>Sneak_T
+    " NOTE: no n-char search or vertical j/k label-jump in sneak (easymotion-only).
 " }}}
 
 

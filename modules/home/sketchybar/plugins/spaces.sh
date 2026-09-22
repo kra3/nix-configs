@@ -9,32 +9,37 @@ export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/ho
 
 COLOR="${1:-0xff89b4fa}"
 PERSISTENT=" 1 2 3 "
+# Only aerospace_workspace_change passes FOCUSED_WORKSPACE; front_app_switched /
+# display_change / manual runs don't — query it so the highlight is never lost.
+FOCUSED_WORKSPACE="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused 2>/dev/null)}"
 
-# App name → Nerd Font glyph (FontAwesome range — stable across Nerd Fonts).
-# Tweak here if any app shows the wrong/blank glyph.
+# App name → Nerd Font glyph, emitted as explicit UTF-8 bytes (printf \x..) so
+# the codepoint is unambiguous regardless of how this file is edited. These are
+# the FontAwesome range (U+F0xx–F2xx), present in MesloLGS Nerd Font. Tweak here
+# if an app shows the wrong/blank glyph.
 __icon() {
     case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
-        *ghostty* | *terminal* | *iterm* | *alacritty* | *kitty* | *wezterm*) printf '' ;;
-        *safari*) printf '' ;;
-        *chrome* | *chromium* | *brave* | *edge*) printf '' ;;
-        *firefox*) printf '' ;;
-        *arc*) printf '' ;;
-        *xcode*) printf '' ;;
-        *code* | *cursor* | *sublime* | *zed* | *nova*) printf '' ;;
-        *finder*) printf '' ;;
-        *mail* | *outlook* | *spark*) printf '' ;;
-        *slack*) printf '' ;;
-        *message* | *whatsapp* | *telegram* | *signal*) printf '' ;;
-        *calendar* | *fantastical*) printf '' ;;
-        *spotify*) printf '' ;;
-        *music*) printf '' ;;
-        *note* | *obsidian* | *bear*) printf '' ;;
-        *zoom* | *webex* | *facetime* | *teams*) printf '' ;;
-        *intellij* | *pycharm* | *goland* | *webstorm* | *idea* | *"android studio"*) printf '' ;;
-        *preview* | *pdf* | *acrobat*) printf '' ;;
-        *setting* | *preference*) printf '' ;;
-        *docker*) printf '' ;;
-        *) printf '' ;; # default: window
+        *ghostty* | *terminal* | *iterm* | *alacritty* | *kitty* | *wezterm*) printf '\xef\x84\xa0' ;; # terminal
+        *safari*) printf '\xef\x89\xa7' ;;                                                             # safari
+        *chrome* | *chromium* | *brave* | *edge*) printf '\xef\x89\xa8' ;;                             # chrome
+        *firefox*) printf '\xef\x89\xa9' ;;                                                            # firefox
+        *arc*) printf '\xef\x82\xac' ;;                                                                # globe
+        *xcode*) printf '\xef\x85\xb9' ;;                                                              # apple
+        *code* | *cursor* | *sublime* | *zed* | *nova*) printf '\xef\x84\xa1' ;;                       # code
+        *finder*) printf '\xef\x81\xbb' ;;                                                             # folder
+        *mail* | *outlook* | *spark*) printf '\xef\x83\xa0' ;;                                         # envelope
+        *slack*) printf '\xef\x86\x98' ;;                                                              # slack
+        *message* | *whatsapp* | *telegram* | *signal*) printf '\xef\x82\x86' ;;                       # comments
+        *calendar* | *fantastical*) printf '\xef\x81\xb3' ;;                                           # calendar
+        *spotify*) printf '\xef\x86\xbc' ;;                                                            # spotify
+        *music*) printf '\xef\x80\x81' ;;                                                              # music
+        *note* | *obsidian* | *bear*) printf '\xef\x89\x89' ;;                                         # sticky-note
+        *zoom* | *webex* | *facetime* | *teams*) printf '\xef\x80\xbd' ;;                              # video-camera
+        *intellij* | *pycharm* | *goland* | *webstorm* | *idea* | *"android studio"*) printf '\xef\x83\xb4' ;; # coffee
+        *preview* | *pdf* | *acrobat*) printf '\xef\x87\x81' ;;                                        # file-pdf
+        *setting* | *preference*) printf '\xef\x80\x93' ;;                                             # cog
+        *docker*) printf '\xef\x86\xb2' ;;                                                             # cube
+        *) printf '\xef\x8b\x90' ;;                                                                    # window (default)
     esac
 }
 
@@ -63,7 +68,7 @@ done
 ARGS=()
 for sid in 1 2 3 4 5 6 7 8 9; do
     disp="${DISP[$sid]:-1}"; mon="${MON[$sid]}"; glyphs="${APPS[$sid]}"; glyphs="${glyphs% }"
-    focus="${VIS[$mon]:-$FOCUSED_WORKSPACE}"
+    if [ -n "$mon" ]; then focus="${VIS[$mon]:-$FOCUSED_WORKSPACE}"; else focus="$FOCUSED_WORKSPACE"; fi
     if [ -z "$glyphs" ] && [[ "$PERSISTENT" != *" $sid "* ]]; then
         ARGS+=(--set "space.$sid" drawing=off)
         continue

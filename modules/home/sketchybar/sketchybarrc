@@ -55,28 +55,40 @@ sketchybar --default \
     popup.blur_radius=50
 
 # ── LEFT: AeroSpace workspace indicators ──────────────────────────────────────
+# icon = workspace number, label = app glyphs of its windows. A single hidden
+# updater (spaces_ctl) refreshes all of them in one pass; the items themselves
+# carry no script. Left-click focuses, right-click moves the focused window here.
 sketchybar --add event aerospace_workspace_change
 
 COLOR=0xff89b4fa
 for sid in $(seq 1 9); do
     sketchybar --add item space.$sid left \
-        --subscribe space.$sid aerospace_workspace_change display_change \
         --set space.$sid \
             background.color=0x00000000              \
             background.corner_radius=6               \
             background.height=24                     \
             background.drawing=off                   \
-            label="$sid"                             \
-            label.font="MesloLGS Nerd Font:Bold:12.0" \
+            icon="$sid"                              \
+            icon.font="Helvetica Neue:Bold:12.0"      \
+            icon.color=$COLOR                        \
+            icon.padding_left=7                      \
+            icon.padding_right=4                     \
+            label=""                                 \
+            label.font="MesloLGS Nerd Font:Regular:14.0" \
             label.color=$COLOR                       \
-            icon.drawing=off                         \
-            padding_left=3                           \
-            padding_right=3                          \
-            click_script="aerospace workspace $sid"  \
-            script="$PLUGIN_DIR/aerospace.sh $sid $COLOR"
+            label.padding_right=7                    \
+            padding_left=2                           \
+            padding_right=2                          \
+            click_script="case \$BUTTON in right) aerospace move-node-to-workspace $sid ;; *) aerospace workspace $sid ;; esac"
 done
 
-sketchybar --add bracket workspaces '/space\..*/' \
+# Single-pass updater: one hidden item refreshes every space.* in one sketchybar
+# call on workspace/app/display changes (a per-space script ×9 would lag).
+sketchybar --add item spaces_ctl left \
+    --set spaces_ctl drawing=off script="$PLUGIN_DIR/spaces.sh $COLOR" \
+    --subscribe spaces_ctl aerospace_workspace_change front_app_switched display_change
+
+sketchybar --add bracket workspaces '/space\.[0-9]/' \
     --set workspaces \
         background.color=$PILL_BG        \
         background.corner_radius=8       \

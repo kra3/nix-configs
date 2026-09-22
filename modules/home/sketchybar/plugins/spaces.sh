@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Single-pass workspace updater (AeroSpace). One hidden `spaces_ctl` item runs
+# this on workspace/app/display changes; it refreshes ALL space.* items in one
+# sketchybar call (a per-space script ×9 would re-introduce lag). For each
+# workspace: show its windows' app glyphs, highlight the visible one, pin it to
+# the right monitor's sketchybar display, and hide empty non-persistent ones.
+#   $1 = accent color   $FOCUSED_WORKSPACE = set by aerospace_workspace_change
+export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+COLOR="${1:-0xff89b4fa}"
+PERSISTENT=" 1 2 3 "
+
+# App name → Nerd Font glyph (FontAwesome range — stable across Nerd Fonts).
+# Tweak here if any app shows the wrong/blank glyph.
+__icon() {
+    case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+        *ghostty* | *terminal* | *iterm* | *alacritty* | *kitty* | *wezterm*) printf '' ;;
+        *safari*) printf '' ;;
+        *chrome* | *chromium* | *brave* | *edge*) printf '' ;;
+        *firefox*) printf '' ;;
+        *arc*) printf '' ;;
+        *xcode*) printf '' ;;
+        *code* | *cursor* | *sublime* | *zed* | *nova*) printf '' ;;
+        *finder*) printf '' ;;
+        *mail* | *outlook* | *spark*) printf '' ;;
+        *slack*) printf '' ;;
+        *message* | *whatsapp* | *telegram* | *signal*) printf '' ;;
+        *calendar* | *fantastical*) printf '' ;;
+        *spotify*) printf '' ;;
+        *music*) printf '' ;;
+        *note* | *obsidian* | *bear*) printf '' ;;
+        *zoom* | *webex* | *facetime* | *teams*) printf '' ;;
+        *intellij* | *pycharm* | *goland* | *webstorm* | *idea* | *"android studio"*) printf '' ;;
+        *preview* | *pdf* | *acrobat*) printf '' ;;
+        *setting* | *preference*) printf '' ;;
+        *docker*) printf '' ;;
+        *) printf '' ;; # default: window
+    esac
+}
+
+# One call: all windows grouped by workspace (dedupe apps per workspace).
+declare -A APPS SEEN DISP MON
+while IFS='|' read -r ws app; do
+    [ -n "$ws" ] || continue
+    case " ${SEEN[$ws]-} " in *" $app "*) continue ;; esac
+    SEEN[$ws]+=" $app "
+    APPS[$ws]+="$(__icon "$app") "
+done < <(aerospace list-windows --all --format '%{workspace}|%{app-name}' 2>/dev/null)
+
+# Workspace → monitor-id + sketchybar display (NSScreen order).
+while IFS='|' read -r ws mon ns; do
+    [ -n "$ws" ] || continue
+    MON[$ws]="$mon"; DISP[$ws]="$ns"
+done < <(aerospace list-workspaces --all --format '%{workspace}|%{monitor-id}|%{monitor-appkit-nsscreen-screens-id}' 2>/dev/null)
+
+# Visible (focused) workspace per monitor.
+declare -A VIS
+for m in $(printf '%s\n' "${MON[@]}" | sort -u); do
+    [ -n "$m" ] || continue
+    VIS[$m]="$(aerospace list-workspaces --monitor "$m" --visible --format '%{workspace}' 2>/dev/null)"
+done
+
+ARGS=()
+for sid in 1 2 3 4 5 6 7 8 9; do
+    disp="${DISP[$sid]:-1}"; mon="${MON[$sid]}"; glyphs="${APPS[$sid]}"; glyphs="${glyphs% }"
+    focus="${VIS[$mon]:-$FOCUSED_WORKSPACE}"
+    if [ -z "$glyphs" ] && [[ "$PERSISTENT" != *" $sid "* ]]; then
+        ARGS+=(--set "space.$sid" drawing=off)
+        continue
+    fi
+    # --animate: color/background transitions ease in (motion) on switch.
+    if [ "$sid" = "$focus" ]; then
+        ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
+            background.drawing=on background.color="$COLOR"
+            icon.color=0xff1e1e2e label.color=0xff1e1e2e label="$glyphs")
+    else
+        ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
+            background.drawing=off icon.color="$COLOR" label.color="$COLOR" label="$glyphs")
+    fi
+done
+sketchybar "${ARGS[@]}"

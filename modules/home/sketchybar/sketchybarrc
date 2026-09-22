@@ -57,7 +57,8 @@ sketchybar --default \
 # ── LEFT: AeroSpace workspace indicators ──────────────────────────────────────
 # icon = workspace number, label = app glyphs of its windows. A single hidden
 # updater (spaces_ctl) refreshes all of them in one pass; the items themselves
-# carry no script. Left-click focuses, right-click moves the focused window here.
+# carry no script. Left-click focuses, ⌥-click moves the focused window here
+# (right-click isn't delivered to sketchybar on this setup, so ⌥ is the gesture).
 sketchybar --add event aerospace_workspace_change
 
 COLOR=0xff89b4fa
@@ -79,7 +80,7 @@ for sid in $(seq 1 9); do
             label.padding_right=7                    \
             padding_left=2                           \
             padding_right=2                          \
-            click_script="case \$BUTTON in right) aerospace move-node-to-workspace $sid ;; *) aerospace workspace $sid ;; esac"
+            click_script="case \$MODIFIER in *alt*) aerospace move-node-to-workspace $sid ;; *) aerospace workspace $sid ;; esac"
 done
 
 # Single-pass updater: one hidden item refreshes every space.* in one sketchybar

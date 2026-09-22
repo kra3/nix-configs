@@ -10,6 +10,7 @@
       bc
       lesspipe
       glow
+      switchaudio-osx # audio output switching for the sketchybar volume popup
 
       # Fonts
       nerd-fonts.meslo-lg

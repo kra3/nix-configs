@@ -69,7 +69,7 @@ ARGS=()
 for sid in 1 2 3 4 5 6 7 8 9; do
     disp="${DISP[$sid]:-1}"; mon="${MON[$sid]}"; glyphs="${APPS[$sid]}"; glyphs="${glyphs% }"
     if [ -n "$mon" ]; then focus="${VIS[$mon]:-$FOCUSED_WORKSPACE}"; else focus="$FOCUSED_WORKSPACE"; fi
-    if [ -z "$glyphs" ] && [[ "$PERSISTENT" != *" $sid "* ]]; then
+    if [ -z "$glyphs" ] && [[ "$PERSISTENT" != *" $sid "* ]] && [ "$sid" != "$focus" ]; then
         ARGS+=(--set "space.$sid" drawing=off)
         continue
     fi

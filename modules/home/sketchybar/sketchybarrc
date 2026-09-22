@@ -80,7 +80,7 @@ for sid in $(seq 1 9); do
             label.padding_right=7                    \
             padding_left=2                           \
             padding_right=2                          \
-            click_script="case \$MODIFIER in *alt*) aerospace move-node-to-workspace $sid ;; *) aerospace workspace $sid ;; esac"
+            click_script="case \$MODIFIER in *alt*) aerospace move-node-to-workspace $sid; sketchybar --trigger aerospace_workspace_change ;; *) aerospace workspace $sid ;; esac"
 done
 
 # Single-pass updater: one hidden item refreshes every space.* in one sketchybar

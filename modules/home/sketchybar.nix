@@ -10,6 +10,8 @@
       "sketchybar/plugins/cpu.sh".source = ./sketchybar/plugins/cpu.sh;
       "sketchybar/plugins/front_app.sh".source = ./sketchybar/plugins/front_app.sh;
       "sketchybar/plugins/memory.sh".source = ./sketchybar/plugins/memory.sh;
+      "sketchybar/plugins/mic.sh".source = ./sketchybar/plugins/mic.sh;
+      "sketchybar/plugins/network.sh".source = ./sketchybar/plugins/network.sh;
       "sketchybar/plugins/volume.sh".source = ./sketchybar/plugins/volume.sh;
     };
 

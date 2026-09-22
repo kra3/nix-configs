@@ -84,8 +84,10 @@ done
 
 # Single-pass updater: one hidden item refreshes every space.* in one sketchybar
 # call on workspace/app/display changes (a per-space script ×9 would lag).
+# updates=on is REQUIRED: a hidden (drawing=off) item inherits updates=when_shown
+# from --default and would be paused, never processing the events.
 sketchybar --add item spaces_ctl left \
-    --set spaces_ctl drawing=off script="$PLUGIN_DIR/spaces.sh $COLOR" \
+    --set spaces_ctl drawing=off updates=on script="$PLUGIN_DIR/spaces.sh $COLOR" \
     --subscribe spaces_ctl aerospace_workspace_change front_app_switched display_change
 
 sketchybar --add bracket workspaces '/space\.[0-9]/' \

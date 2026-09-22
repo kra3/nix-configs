@@ -758,21 +758,15 @@ endif
 " }}}
 
 " vim-sneak {{{
-    " 2-char motion: bare `s{char}{char}` forward, `S` backward.
+    " Labeled 2-char jump, triggered via <Leader> so standard s/S/f/t stay intact.
+    " Mapping <Leader><Leader> to Sneak_s also makes sneak skip its default
+    " auto-hijack of bare s/S (it sees a Sneak_s mapping already exists).
     let g:sneak#label = 1        " label matches (easymotion-style jump target)
     let g:sneak#use_ic_scs = 1   " respect ignorecase/smartcase
-    let g:sneak#s_next = 1       " repeat s/S to hop to next/prev match
 
-    " Preserve old easymotion muscle-memory entry point
-    map <Leader><Leader> <Plug>Sneak_s
-    map <Leader>S        <Plug>Sneak_S
-
-    " Clever f/t: repeatable with f/F/t/T instead of ;/,
-    map f <Plug>Sneak_f
-    map F <Plug>Sneak_F
-    map t <Plug>Sneak_t
-    map T <Plug>Sneak_T
-    " NOTE: no n-char search or vertical j/k label-jump in sneak (easymotion-only).
+    map <Leader><Leader> <Plug>Sneak_s   " forward 2-char jump
+    map <Leader>S        <Plug>Sneak_S   " backward 2-char jump
+    " No n-char search or vertical j/k label-jump — those were easymotion-only.
 " }}}
 
 

@@ -22,10 +22,10 @@ sketchybar --bar \
     margin=8              \
     y_offset=4            \
     corner_radius=10      \
-    blur_radius=30        \
-    color=0x991e1e2e      \
+    blur_radius=45        \
+    color=0x33181825      \
     border_width=1        \
-    border_color=0x33cdd6f4 \
+    border_color=0x22cdd6f4 \
     shadow=on             \
     topmost=window        \
     padding_left=10       \
@@ -33,6 +33,7 @@ sketchybar --bar \
 
 # ── Global item defaults ──────────────────────────────────────────────────────
 sketchybar --default \
+    updates=when_shown                          \
     padding_left=2                              \
     padding_right=2                             \
     icon.font="MesloLGS Nerd Font:Bold:15.0"     \
@@ -104,7 +105,7 @@ sketchybar --add item clock right \
         icon.color=0xff89b4fa        \
         icon.padding_left=0          \
         label.color=0xffcdd6f4       \
-        update_freq=10               \
+        update_freq=30               \
         script="$PLUGIN_DIR/clock.sh"
 
 # System group: battery, cpu, memory
@@ -118,12 +119,12 @@ sketchybar --add item cpu right \
     --set cpu \
         icon="󰻠"                    \
         icon.color=0xffa6e3a1        \
-        update_freq=10               \
+        update_freq=30               \
         script="$PLUGIN_DIR/cpu.sh"
 
 sketchybar --add item memory right \
     --set memory \
-        update_freq=10              \
+        update_freq=30              \
         script="$PLUGIN_DIR/memory.sh"
 
 # Media group: volume, mic, network
@@ -134,12 +135,13 @@ sketchybar --add item volume right \
 
 sketchybar --add item mic right \
     --set mic \
-        update_freq=3               \
+        label.drawing=off           \
+        update_freq=15              \
         script="$PLUGIN_DIR/mic.sh"
 
 sketchybar --add item network right \
     --set network \
-        update_freq=10              \
+        update_freq=30              \
         click_script="open /System/Library/PreferencePanes/Network.prefPane" \
         script="$PLUGIN_DIR/network.sh"
 

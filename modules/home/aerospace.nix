@@ -1,13 +1,36 @@
 {
   flake.homeManagerModules.home-aerospace =
-    { pkgs, ... }:
     {
-      programs.aerospace = {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    {
+      # Extension points for downstream configs (e.g. the work overlay) to pin
+      # machine-specific apps/workspaces without conflicting on the freeform
+      # settings TOML (list values there don't merge across modules).
+      options.local.aerospace = {
+        windowRules = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+          description = "Extra on-window-detected rules, appended after the generic ones.";
+        };
+        workspaceMonitorAssignment = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = { };
+          description = "workspace -> monitor-pattern force-assignment.";
+        };
+      };
+
+      config.programs.aerospace = {
         enable = true;
 
         launchd.enable = true;
 
         settings = {
+          config-version = 2;
+
           automatically-unhide-macos-hidden-apps = true;
 
           accordion-padding = 30;
@@ -17,7 +40,14 @@
           enable-normalization-flatten-containers = true;
           enable-normalization-opposite-orientation-for-nested-containers = true;
 
-          on-focused-monitor-changed = [ ];
+          persistent-workspaces = [
+            "1"
+            "2"
+            "3"
+          ];
+          workspace-to-monitor-force-assignment = config.local.aerospace.workspaceMonitorAssignment;
+
+          on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
           on-focus-changed = [ ];
 
           # Notify SketchyBar on switch; absolute path — aerospace's agent PATH lacks it.
@@ -34,8 +64,12 @@
             inner.vertical = 8;
             outer.left = 8;
             outer.bottom = 8;
-            # Static gap below the SketchyBar bar (notch display: usable frame already excludes the top strip).
-            outer.top = 18;
+            # Per-monitor top gap below the bar: built-in's usable frame already
+            # excludes the notch strip; externals have no reservation.
+            outer.top = [
+              { monitor."built-in retina display" = 16; }
+              46
+            ];
             outer.right = 8;
           };
 
@@ -48,7 +82,8 @@
               "if"."app-id" = "com.apple.calculator";
               run = "layout floating";
             }
-          ];
+          ]
+          ++ config.local.aerospace.windowRules;
 
           mode.main.binding = {
             alt-h = "focus left";
@@ -105,6 +140,8 @@
 
             alt-shift-semicolon = "mode service";
             alt-r = "mode resize";
+
+            alt-shift-s = "exec-and-forget screencapture -i -c";
 
             cmd-h = [ ];
             cmd-alt-h = [ ];

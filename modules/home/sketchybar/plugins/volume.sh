@@ -27,8 +27,7 @@ set_icon() {
 populate_devices() {
     command -v SwitchAudioSource >/dev/null 2>&1 || { sketchybar --remove '/volume\.dev\..*/' 2>/dev/null; return 0; }
     local cur key mark col dev
-    # One sketchybar call for the whole device list (see rdar.sh — batching
-    # avoids one --add process per row).
+    # One sketchybar call for the whole device list.
     local VOL_ARGS=(--remove '/volume\.dev\..*/'
         --add item volume.dev.hdr popup."$NAME"
         --set volume.dev.hdr icon.drawing=off label="Output"
@@ -69,8 +68,7 @@ fi
 
 case "$1" in
     slider)
-        # Only change volume on a real click/drag ($PERCENTAGE set). On forced/
-        # routine runs (e.g. bar restart) PERCENTAGE is empty — do NOT reset to 0.
+        # Only set volume on a real drag ($PERCENTAGE set), not on forced refresh.
         [ -n "$PERCENTAGE" ] && osascript -e "set volume output volume $PERCENTAGE" 2>/dev/null
         vol="$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)"
         sketchybar --set volume.slider slider.percentage="${vol:-0}"

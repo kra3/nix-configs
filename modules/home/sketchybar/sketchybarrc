@@ -32,9 +32,7 @@ sketchybar --bar \
     padding_right=10
 
 # ── Global item defaults ──────────────────────────────────────────────────────
-# Popup look is centralised here so no popup needs its own background styling —
-# semi-transparent crust + blur reads as a native macOS vibrancy panel. Popup
-# rows set their own width (see plugins) so nothing collapses to content width.
+# Centralised popup look (bg + blur) so popups need no per-item styling.
 sketchybar --default \
     updates=when_shown                          \
     padding_left=2                              \
@@ -55,10 +53,8 @@ sketchybar --default \
     popup.blur_radius=50
 
 # ── LEFT: AeroSpace workspace indicators ──────────────────────────────────────
-# icon = workspace number, label = app glyphs of its windows. A single hidden
-# updater (spaces_ctl) refreshes all of them in one pass; the items themselves
-# carry no script. Left-click focuses, ⌥-click moves the focused window here
-# (right-click isn't delivered to sketchybar on this setup, so ⌥ is the gesture).
+# Number + window app-glyphs. Left-click focuses, ⌥-click moves the focused
+# window (right-click isn't delivered to sketchybar here).
 sketchybar --add event aerospace_workspace_change
 
 COLOR=0xff89b4fa
@@ -83,10 +79,7 @@ for sid in $(seq 1 9); do
             click_script="case \$MODIFIER in *alt*) aerospace move-node-to-workspace $sid; sketchybar --trigger aerospace_workspace_change ;; *) aerospace workspace $sid ;; esac"
 done
 
-# Single-pass updater: one hidden item refreshes every space.* in one sketchybar
-# call on workspace/app/display changes (a per-space script ×9 would lag).
-# updates=on is REQUIRED: a hidden (drawing=off) item inherits updates=when_shown
-# from --default and would be paused, never processing the events.
+# Hidden single-pass updater; updates=on so it isn't paused while drawing=off.
 sketchybar --add item spaces_ctl left \
     --set spaces_ctl drawing=off updates=on script="$PLUGIN_DIR/spaces.sh $COLOR" \
     --subscribe spaces_ctl aerospace_workspace_change front_app_switched display_change

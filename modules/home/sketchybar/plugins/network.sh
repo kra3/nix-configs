@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# Link type + VPN glyph, with a click popup of connection details.
-#   icon  = Wi-Fi / wired / offline  (detected by the Wi-Fi device being active,
-#           so a VPN tunnel's utun default route isn't mistaken for wired)
-#   label = VPN shield when any NC connection is up
-#   left-click → popup: SSID / IP / Subnet / Router, each click-to-copy
-#   right-click → Network preference pane
+# Link type + VPN glyph. Left-click → SSID/IP/Subnet/Router popup (click-to-copy);
+# right-click → Network prefs. Wi-Fi detected by device active (not utun route).
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 PW=240
 

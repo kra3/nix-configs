@@ -1,22 +1,14 @@
 #!/usr/bin/env bash
-# Single-pass workspace updater (AeroSpace). One hidden `spaces_ctl` item runs
-# this on workspace/app/display changes; it refreshes ALL space.* items in one
-# sketchybar call (a per-space script ×9 would re-introduce lag). For each
-# workspace: show its windows' app glyphs, highlight the visible one, pin it to
-# the right monitor's sketchybar display, and hide empty non-persistent ones.
-#   $1 = accent color   $FOCUSED_WORKSPACE = set by aerospace_workspace_change
+# Single-pass workspace updater (AeroSpace): refreshes all space.* items in one
+# sketchybar call. $1 = accent color.
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 COLOR="${1:-0xff89b4fa}"
 PERSISTENT=" 1 2 3 "
-# Only aerospace_workspace_change passes FOCUSED_WORKSPACE; front_app_switched /
-# display_change / manual runs don't — query it so the highlight is never lost.
+# front_app_switched/display_change/manual runs don't pass it — resolve it.
 FOCUSED_WORKSPACE="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused 2>/dev/null)}"
 
-# App name → Nerd Font glyph, emitted as explicit UTF-8 bytes (printf \x..) so
-# the codepoint is unambiguous regardless of how this file is edited. These are
-# the FontAwesome range (U+F0xx–F2xx), present in MesloLGS Nerd Font. Tweak here
-# if an app shows the wrong/blank glyph.
+# App name → Nerd Font glyph as explicit UTF-8 bytes (FontAwesome range).
 __icon() {
     case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
         *ghostty* | *terminal* | *iterm* | *alacritty* | *kitty* | *wezterm*) printf '\xef\x84\xa0' ;; # terminal
@@ -73,7 +65,6 @@ for sid in 1 2 3 4 5 6 7 8 9; do
         ARGS+=(--set "space.$sid" drawing=off)
         continue
     fi
-    # --animate: color/background transitions ease in (motion) on switch.
     if [ "$sid" = "$focus" ]; then
         ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
             background.drawing=on background.color="$COLOR"

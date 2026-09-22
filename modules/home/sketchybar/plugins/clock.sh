@@ -5,10 +5,7 @@
 #   clock.sh toggle  → click: toggle popup, populate calendar + events
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-# Shared popup style. Explicit width on every row is what stops content from
-# collapsing/clipping; SF Pro/SF Mono have normal line metrics (Nerd Font's are
-# tall, which is what bloated the row spacing). Popup background/blur come from
-# the bar's --default, so rows carry no background of their own.
+# Shared popup style; explicit row width prevents clipping. Menlo aligns columns.
 PW=240
 F_HEAD="Helvetica Neue:Bold:13.0"
 F_MONO="Menlo:Regular:12.0"
@@ -23,13 +20,10 @@ add_header() { # $1=id-suffix  $2=text ; appends to CLK_ARGS
 }
 
 populate() {
-    # Build the whole popup in ONE sketchybar call — one --add process per row
-    # (the old loop) is what made the popup lag.
+    # Build the whole popup in one sketchybar call (fast).
     local CLK_ARGS=(--remove '/clock\.pop\..*/')
 
-    # Month grid: one row per line of BSD /usr/bin/cal (nix's util-linux `cal`
-    # shadows it in PATH). Menlo keeps the columns aligned. A transparent
-    # fixed-height background compacts the row (else rows floor to bar height).
+    # Month grid via BSD /usr/bin/cal (nix's util-linux cal shadows it in PATH).
     local i=0 line
     while IFS= read -r line; do
         CLK_ARGS+=(--add item "clock.pop.cal$i" popup."$NAME"

@@ -122,8 +122,7 @@
             alt-8 = "workspace 8";
             alt-9 = "workspace 9";
 
-            # Move window + nudge SketchyBar (moves don't change the focused
-            # workspace, so exec-on-workspace-change wouldn't fire otherwise).
+            # Move window, then nudge SketchyBar (a move doesn't fire exec-on-workspace-change).
             alt-ctrl-1 = [
               "move-node-to-workspace 1"
               "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# System volume: speaker glyph + %. Popup (on click) has a draggable volume
-# slider and a list of output devices to switch between.
+# System volume: speaker glyph + %. Popup (left-click) has a draggable slider +
+# output-device list; scroll to change volume; right-click opens Sound prefs.
 #   volume.sh          → routine/volume_change: refresh icon + slider
-#   volume.sh toggle   → click on the item: toggle popup, populate devices
+#   volume.sh toggle   → click: left toggles popup, right opens Sound prefs
 #   volume.sh slider   → mouse.clicked on the slider: set volume to $PERCENTAGE
+#   (SENDER=mouse.scrolled) → wheel over the item: nudge volume ±5 (±1 w/ mod)
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 set_icon() {
@@ -55,6 +56,17 @@ if [ "$SENDER" = "mouse.exited.global" ]; then
     exit 0
 fi
 
+# Scroll over the item → change volume (±5, or ±1 with a modifier held).
+if [ "$SENDER" = "mouse.scrolled" ]; then
+    step=5; case "$MODIFIER" in *ctrl* | *shift*) step=1 ;; esac
+    cur="$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)"; cur="${cur:-0}"
+    new="$(awk -v c="$cur" -v d="${SCROLL_DELTA:-0}" -v s="$step" \
+        'BEGIN { n = c + (d > 0 ? s : -s); if (n > 100) n = 100; if (n < 0) n = 0; print int(n) }')"
+    osascript -e "set volume output volume $new" 2>/dev/null
+    set_icon
+    exit 0
+fi
+
 case "$1" in
     slider)
         # Only change volume on a real click/drag ($PERCENTAGE set). On forced/
@@ -65,6 +77,11 @@ case "$1" in
         exit 0
         ;;
     toggle)
+        # Right-click → open the Sound preference pane instead of the popup.
+        if [ "$BUTTON" = "right" ]; then
+            open /System/Library/PreferencePanes/Sound.prefPane
+            exit 0
+        fi
         if [ "$(sketchybar --query "$NAME" 2>/dev/null | jq -r '.popup.drawing' 2>/dev/null)" = "on" ]; then
             sketchybar --set "$NAME" popup.drawing=off
         else

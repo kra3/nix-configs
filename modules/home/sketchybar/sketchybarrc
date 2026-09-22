@@ -144,9 +144,9 @@ sketchybar --add item volume right \
     --set volume \
         click_script="$PLUGIN_DIR/volume.sh toggle" \
         script="$PLUGIN_DIR/volume.sh" \
-    --subscribe volume volume_change mouse.exited.global
+    --subscribe volume volume_change mouse.exited.global mouse.scrolled
 
-sketchybar --add slider volume.slider popup.volume 120 \
+sketchybar --add slider volume.slider popup.volume 220 \
     --set volume.slider \
         slider.highlight_color=0xff89b4fa       \
         slider.background.height=6              \
@@ -166,8 +166,10 @@ sketchybar --add item mic right \
 sketchybar --add item network right \
     --set network \
         update_freq=30              \
-        click_script="open /System/Library/PreferencePanes/Network.prefPane" \
-        script="$PLUGIN_DIR/network.sh"
+        popup.align=center          \
+        click_script="$PLUGIN_DIR/network.sh toggle" \
+        script="$PLUGIN_DIR/network.sh" \
+    --subscribe network mouse.exited.global
 
 sketchybar --add bracket sys battery cpu memory \
     --set sys \

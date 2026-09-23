@@ -1,13 +1,36 @@
 {
   flake.homeManagerModules.home-aerospace =
-    { pkgs, ... }:
     {
-      programs.aerospace = {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    {
+      # Extension points for downstream configs (e.g. the work overlay) to pin
+      # machine-specific apps/workspaces without conflicting on the freeform
+      # settings TOML (list values there don't merge across modules).
+      options.local.aerospace = {
+        windowRules = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+          description = "Extra on-window-detected rules, appended after the generic ones.";
+        };
+        workspaceMonitorAssignment = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = { };
+          description = "workspace -> monitor-pattern force-assignment.";
+        };
+      };
+
+      config.programs.aerospace = {
         enable = true;
 
         launchd.enable = true;
 
         settings = {
+          config-version = 2;
+
           automatically-unhide-macos-hidden-apps = true;
 
           accordion-padding = 30;
@@ -17,7 +40,14 @@
           enable-normalization-flatten-containers = true;
           enable-normalization-opposite-orientation-for-nested-containers = true;
 
-          on-focused-monitor-changed = [ ];
+          persistent-workspaces = [
+            "1"
+            "2"
+            "3"
+          ];
+          workspace-to-monitor-force-assignment = config.local.aerospace.workspaceMonitorAssignment;
+
+          on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
           on-focus-changed = [ ];
 
           # Notify SketchyBar on switch; absolute path — aerospace's agent PATH lacks it.
@@ -34,8 +64,12 @@
             inner.vertical = 8;
             outer.left = 8;
             outer.bottom = 8;
-            # Static gap below the SketchyBar bar (notch display: usable frame already excludes the top strip).
-            outer.top = 18;
+            # Per-monitor top gap below the bar: built-in's usable frame already
+            # excludes the notch strip; externals have no reservation.
+            outer.top = [
+              { monitor."built-in retina display" = 16; }
+              46
+            ];
             outer.right = 8;
           };
 
@@ -48,7 +82,8 @@
               "if"."app-id" = "com.apple.calculator";
               run = "layout floating";
             }
-          ];
+          ]
+          ++ config.local.aerospace.windowRules;
 
           mode.main.binding = {
             alt-h = "focus left";
@@ -87,15 +122,43 @@
             alt-8 = "workspace 8";
             alt-9 = "workspace 9";
 
-            alt-ctrl-1 = "move-node-to-workspace 1";
-            alt-ctrl-2 = "move-node-to-workspace 2";
-            alt-ctrl-3 = "move-node-to-workspace 3";
-            alt-ctrl-4 = "move-node-to-workspace 4";
-            alt-ctrl-5 = "move-node-to-workspace 5";
-            alt-ctrl-6 = "move-node-to-workspace 6";
-            alt-ctrl-7 = "move-node-to-workspace 7";
-            alt-ctrl-8 = "move-node-to-workspace 8";
-            alt-ctrl-9 = "move-node-to-workspace 9";
+            # Move window, then nudge SketchyBar (a move doesn't fire exec-on-workspace-change).
+            alt-ctrl-1 = [
+              "move-node-to-workspace 1"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-2 = [
+              "move-node-to-workspace 2"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-3 = [
+              "move-node-to-workspace 3"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-4 = [
+              "move-node-to-workspace 4"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-5 = [
+              "move-node-to-workspace 5"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-6 = [
+              "move-node-to-workspace 6"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-7 = [
+              "move-node-to-workspace 7"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-8 = [
+              "move-node-to-workspace 8"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
+            alt-ctrl-9 = [
+              "move-node-to-workspace 9"
+              "exec-and-forget ${pkgs.sketchybar}/bin/sketchybar --trigger aerospace_workspace_change"
+            ];
 
             alt-tab = "workspace-back-and-forth";
             alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
@@ -105,6 +168,8 @@
 
             alt-shift-semicolon = "mode service";
             alt-r = "mode resize";
+
+            alt-shift-s = "exec-and-forget screencapture -i -c";
 
             cmd-h = [ ];
             cmd-alt-h = [ ];

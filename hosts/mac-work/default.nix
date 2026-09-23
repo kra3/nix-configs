@@ -34,6 +34,7 @@
       flakeModules.homeManager.home-aerospace
       flakeModules.homeManager.home-jankyborders
       flakeModules.homeManager.home-sketchybar
+      flakeModules.homeManager.home-wallpaper-darwin
     ];
 
     home.username = "akarunagath";

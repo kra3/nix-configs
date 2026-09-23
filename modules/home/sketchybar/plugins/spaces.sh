@@ -1,9 +1,11 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Single-pass workspace updater (AeroSpace): refreshes all space.* items in one
 # sketchybar call. $1 = accent color.
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+source "$(dirname "$0")/../theme.sh"
 
-COLOR="${1:-0xff89b4fa}"
+COLOR="${1:-$ACCENT}"          # space number (icon) — white accent
+GLYPH="${2:-$GLYPH}"           # window app-glyphs (label)
 PERSISTENT=" 1 2 3 "
 # front_app_switched/display_change/manual runs don't pass it — resolve it.
 FOCUSED_WORKSPACE="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused 2>/dev/null)}"
@@ -67,11 +69,11 @@ for sid in 1 2 3 4 5 6 7 8 9; do
     fi
     if [ "$sid" = "$focus" ]; then
         ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
-            background.drawing=on background.color="$COLOR"
-            icon.color=0xff1e1e2e label.color=0xff1e1e2e label="$glyphs")
+            background.drawing=on background.color="$FOCUSED"
+            icon.color="$FOCUS_FG" label.color="$FOCUS_FG" label="$glyphs")
     else
         ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
-            background.drawing=off icon.color="$COLOR" label.color="$COLOR" label="$glyphs")
+            background.drawing=off icon.color="$COLOR" label.color="$GLYPH" label="$glyphs")
     fi
 done
 sketchybar "${ARGS[@]}"

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Focused app name. $INFO is set by front_app_switched; on first load it's empty,
 # so fall back to querying AeroSpace's focused window.
 APP="$INFO"

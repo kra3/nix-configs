@@ -11,7 +11,7 @@ if [ -z "$PERCENTAGE" ]; then
 fi
 
 if [ -n "$CHARGING" ]; then
-    ICON="󰂄"                    # charging
+    ICON="󰚥"                    # plugged in (AC power)
     COLOR=0xffa6e3a1            # green
 elif [ "$PERCENTAGE" -ge 80 ]; then
     ICON="󰁹" COLOR=0xffcdd6f4   # full

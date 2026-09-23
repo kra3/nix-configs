@@ -43,6 +43,7 @@ IC=(icalBuddy -nc -nrd -nnr " " -b "" -ps "|\t|" -tf "%H:%M" -df "")
 # tighten them; y_offset pulls each wrapped line + the detail up within its slot
 # so a multi-line event reads as one unit. SHIFT ~= slot - desired line spacing.
 SHIFT=8
+MAX_LATER=4 # cap "Later today" rows (popup can't scroll); overflow → "+N more"
 
 add_header() { # $1=id-suffix  $2=text ; appends to CLK_ARGS
     CLK_ARGS+=(--add item "clock.pop.$1" popup."$NAME"
@@ -79,7 +80,7 @@ emit_event() {
     off=$((n * SHIFT))
     CLK_ARGS+=(--add item "clock.pop.$pre${idx}_d" popup."$NAME"
         --set "clock.pop.$pre${idx}_d" label="$det" y_offset="$off"
-            label.font="$F_DET" label.color="$C_DIM" label.align=left
+            label.font="$F_DET" label.color="$C_DIM" label.align=left label.max_chars=30
             width="$PW" background.drawing=on background.color="$bg" background.height="$H_DET")
     if [ -n "$webex" ]; then
         CLK_ARGS+=(icon="$G_WEBEX" icon.font="$F_GLYPH" icon.color="$C_BLUE" icon.padding_left="$PL" label.padding_left=6 click_script="$click")
@@ -161,8 +162,15 @@ populate() {
             add_header laterhdr "Later today"
             k=0
             for rec in "${LATER_RECS[@]}"; do
+                [ "$k" -ge "$MAX_LATER" ] && break
                 IFS="$US" read -r s e t l w <<<"$rec"; emit_event lt "$k" "$s" "$e" "$t" "$l" "$w"; k=$((k + 1))
             done
+            if [ "${#LATER_RECS[@]}" -gt "$MAX_LATER" ]; then
+                CLK_ARGS+=(--add item clock.pop.ltmore popup."$NAME"
+                    --set clock.pop.ltmore icon.drawing=off label="+$((${#LATER_RECS[@]} - MAX_LATER)) more…"
+                        label.color="$SECONDARY" label.font="$F_HEAD" label.align=left width="$PW" label.padding_left="$PL"
+                        background.drawing=on background.color=0x00000000 background.height="$H_ROW")
+            fi
         fi
 
         # Tasks due within 3 months (overdue included). icalBuddy marks overdue

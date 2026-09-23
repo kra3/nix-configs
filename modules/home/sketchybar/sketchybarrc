@@ -35,6 +35,14 @@ sketchybar --default \
     label.font="MesloLGS Nerd Font:Bold:11.0"    \
     icon.color=$BAR_TEXT                        \
     label.color=$BAR_TEXT                       \
+    icon.shadow.drawing=on                      \
+    icon.shadow.color=$SHADOW                   \
+    icon.shadow.distance=2                      \
+    icon.shadow.angle=270                       \
+    label.shadow.drawing=on                     \
+    label.shadow.color=$SHADOW                  \
+    label.shadow.distance=2                     \
+    label.shadow.angle=270                      \
     icon.padding_left=3                         \
     icon.padding_right=4                        \
     label.padding_left=4                        \

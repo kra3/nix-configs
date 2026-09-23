@@ -29,6 +29,7 @@ case "$THEME" in
         OK=0xffa6e3a1          # status: good (green)
         WARN=0xfff9e2af        # status: warning (yellow)
         CRIT=0xfff38ba8        # status: critical (red)
+        SHADOW=0x00000000      # no text shadow on the dark bar
         ZEBRA_A=0x00000000
         ZEBRA_B=0x11ffffff
         ;;
@@ -52,6 +53,7 @@ case "$THEME" in
         OK=0xffa6e3a1          # status: good (green)
         WARN=0xfff9e2af        # status: warning (yellow)
         CRIT=0xfff38ba8        # status: critical (red)
+        SHADOW=0xd0000000      # dark text shadow → legible on glass over any wallpaper
         ZEBRA_A=0x00000000
         ZEBRA_B=0x14ffffff
         ;;

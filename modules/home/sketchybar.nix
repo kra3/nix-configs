@@ -4,6 +4,7 @@
 
     xdg.configFile = {
       "sketchybar/sketchybarrc".source = ./sketchybar/sketchybarrc;
+      "sketchybar/theme.sh".source = ./sketchybar/theme.sh;
       "sketchybar/plugins/battery.sh".source = ./sketchybar/plugins/battery.sh;
       "sketchybar/plugins/clock.sh".source = ./sketchybar/plugins/clock.sh;
       "sketchybar/plugins/cpu.sh".source = ./sketchybar/plugins/cpu.sh;

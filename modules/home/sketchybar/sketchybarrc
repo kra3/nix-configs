@@ -5,15 +5,13 @@
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 
-# ── Catppuccin Mocha palette ──────────────────────────────────────────────────
-# base:    0xff1e1e2e   crust:   0xff11111b   surface1: 0xff313244
-# text:    0xffcdd6f4   subtext: 0xffa6adc8   overlay:  0xff6c7086
-# lavender:0xffb4befe   blue:    0xff89b4fa   pink:     0xfff5c2e7
-# green:   0xffa6e3a1   yellow:  0xfff9e2af   red:      0xfff38ba8
+# Liquid-glass palette (BAR_COLOR, ACCENT, SECONDARY, FOCUSED, GLASS_BG/BORDER,
+# POPUP_BG/BORDER, BAR_TEXT, …) — single source of truth for all colors.
+source "${CONFIG_DIR:-$HOME/.config/sketchybar}/theme.sh"
 
-# Group-pill style: darker crust glass so groups read below the bar glass.
-PILL_BG=0xcc11111b
-PILL_BORDER=0x22cdd6f4
+# Group-pill: translucent glass so each widget group reads below the bar glass.
+PILL_BG="$GLASS_BG"
+PILL_BORDER="$GLASS_BORDER"
 
 # ── Bar appearance ────────────────────────────────────────────────────────────
 sketchybar --bar \
@@ -23,9 +21,9 @@ sketchybar --bar \
     y_offset=4            \
     corner_radius=10      \
     blur_radius=45        \
-    color=0x991e1e2e      \
+    color=$BAR_COLOR      \
     border_width=1        \
-    border_color=0x22cdd6f4 \
+    border_color=$GLASS_BORDER \
     shadow=on             \
     topmost=window        \
     padding_left=10       \
@@ -39,16 +37,16 @@ sketchybar --default \
     padding_right=2                             \
     icon.font="MesloLGS Nerd Font:Bold:13.0"     \
     label.font="MesloLGS Nerd Font:Bold:11.0"    \
-    icon.color=0xffcdd6f4                       \
-    label.color=0xffcdd6f4                      \
+    icon.color=$BAR_TEXT                        \
+    label.color=$BAR_TEXT                       \
     icon.padding_left=3                         \
     icon.padding_right=4                        \
     label.padding_left=4                        \
     label.padding_right=3                       \
-    popup.background.color=0xdd11111b           \
+    popup.background.color=$POPUP_BG            \
     popup.background.corner_radius=10           \
     popup.background.border_width=1             \
-    popup.background.border_color=0x33cdd6f4    \
+    popup.background.border_color=$POPUP_BORDER \
     popup.background.shadow.drawing=on          \
     popup.blur_radius=50
 
@@ -57,8 +55,8 @@ sketchybar --default \
 # window (right-click isn't delivered to sketchybar here).
 sketchybar --add event aerospace_workspace_change
 
-COLOR=0xff89b4fa       # accent — space number (icon)
-GLYPH_COLOR=0xffa6adc8 # neutral subtext — window app-glyphs (label)
+COLOR="$ACCENT"          # space number (icon) — white accent
+GLYPH_COLOR="$SECONDARY" # window app-glyphs (label) — pale blue
 ML=(൦ ൧ ൨ ൩ ൪ ൫ ൬ ൭ ൮ ൯) # Malayalam digits 0–9 (array index avoids byte-substring under C locale)
 for sid in $(seq 1 9); do
     sketchybar --add item space.$sid left \

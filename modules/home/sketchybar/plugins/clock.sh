@@ -7,6 +7,7 @@ export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/ho
 # launchd starts us with no locale (C), which makes bash substring / fold / icalBuddy
 # byte-wise and can split multibyte chars into invalid UTF-8. Force UTF-8.
 export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+source "$(dirname "$0")/../theme.sh" # liquid-glass palette
 
 PW=200
 WRAP=26 # conservative word-wrap width for the proportional title font
@@ -15,14 +16,13 @@ F_MONO="Menlo:Regular:12.0"
 F_ROW="Helvetica Neue:Regular:12.0"
 F_DET="Helvetica Neue:Regular:11.0"
 F_GLYPH="MesloLGS Nerd Font:Regular:12.0"
-C_TEXT=0xffcdd6f4
-C_DIM=0xffa6adc8
-C_MUTE=0xff6c7086
-C_RED=0xfff38ba8
-C_GREEN=0xffa6e3a1
-C_BLUE=0xff89b4fa
-ZEBRA_A=0x00000000
-ZEBRA_B=0x11ffffff
+C_TEXT="$POPUP_TEXT"
+C_DIM="$POPUP_DIM"
+C_MUTE="$DISABLED"
+C_RED=0xfff38ba8   # overdue task (kept)
+C_GREEN=0xffa6e3a1 # running meeting (kept)
+C_BLUE="$SECONDARY"
+# ZEBRA_A / ZEBRA_B come from theme.sh
 US=$'\037' # record field separator: non-whitespace so empty fields aren't collapsed by read
 H_HEAD=18  # section header row height
 H_ROW=8   # standard row (calendar, tasks, world clocks)
@@ -47,7 +47,7 @@ SHIFT=8
 add_header() { # $1=id-suffix  $2=text ; appends to CLK_ARGS
     CLK_ARGS+=(--add item "clock.pop.$1" popup."$NAME"
         --set "clock.pop.$1" icon.drawing=off label="$2"
-            label.font="$F_HEAD" label.color=0xfff9e2af label.align=left
+            label.font="$F_HEAD" label.color="$POPUP_HEAD" label.align=left
             width="$PW" label.padding_left="$PL"
             background.drawing=on background.color=0x22313244 background.height="$H_HEAD" background.corner_radius=4)
 }

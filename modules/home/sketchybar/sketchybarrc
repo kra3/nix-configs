@@ -5,13 +5,9 @@
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 
-# Liquid-glass palette (BAR_COLOR, ACCENT, SECONDARY, FOCUSED, GLASS_BG/BORDER,
-# POPUP_BG/BORDER, BAR_TEXT, …) — single source of truth for all colors.
+# Theme palette (roles: BAR_COLOR PILL_BG PILL_BORDER BAR_TEXT ACCENT GLYPH
+# FOCUSED FOCUS_FG POPUP_BG/BORDER …). Switch the whole bar in theme.sh.
 source "${CONFIG_DIR:-$HOME/.config/sketchybar}/theme.sh"
-
-# Group-pill: translucent glass so each widget group reads below the bar glass.
-PILL_BG="$GLASS_BG"
-PILL_BORDER="$GLASS_BORDER"
 
 # ── Bar appearance ────────────────────────────────────────────────────────────
 sketchybar --bar \
@@ -23,7 +19,7 @@ sketchybar --bar \
     blur_radius=45        \
     color=$BAR_COLOR      \
     border_width=1        \
-    border_color=$GLASS_BORDER \
+    border_color=$PILL_BORDER \
     shadow=on             \
     topmost=window        \
     padding_left=10       \
@@ -56,7 +52,7 @@ sketchybar --default \
 sketchybar --add event aerospace_workspace_change
 
 COLOR="$ACCENT"          # space number (icon) — white accent
-GLYPH_COLOR="$SECONDARY" # window app-glyphs (label) — pale blue
+GLYPH_COLOR="$GLYPH"   # window app-glyphs (label)
 ML=(൦ ൧ ൨ ൩ ൪ ൫ ൬ ൭ ൮ ൯) # Malayalam digits 0–9 (array index avoids byte-substring under C locale)
 for sid in $(seq 1 9); do
     sketchybar --add item space.$sid left \

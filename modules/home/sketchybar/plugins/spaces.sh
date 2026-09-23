@@ -5,7 +5,7 @@ export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/ho
 source "$(dirname "$0")/../theme.sh"
 
 COLOR="${1:-$ACCENT}"          # space number (icon) — white accent
-GLYPH="${2:-$SECONDARY}"       # window app-glyphs (label) — pale blue
+GLYPH="${2:-$GLYPH}"           # window app-glyphs (label)
 PERSISTENT=" 1 2 3 "
 # front_app_switched/display_change/manual runs don't pass it — resolve it.
 FOCUSED_WORKSPACE="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused 2>/dev/null)}"

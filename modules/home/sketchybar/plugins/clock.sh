@@ -19,8 +19,8 @@ F_GLYPH="MesloLGS Nerd Font:Regular:12.0"
 C_TEXT="$POPUP_TEXT"
 C_DIM="$POPUP_DIM"
 C_MUTE="$DISABLED"
-C_RED=0xfff38ba8   # overdue task (kept)
-C_GREEN=0xffa6e3a1 # running meeting (kept)
+C_RED="$CRIT"   # overdue task (kept)
+C_GREEN="$OK" # running meeting (kept)
 C_BLUE="$SECONDARY"
 # ZEBRA_A / ZEBRA_B come from theme.sh
 US=$'\037' # record field separator: non-whitespace so empty fields aren't collapsed by read
@@ -49,7 +49,7 @@ add_header() { # $1=id-suffix  $2=text ; appends to CLK_ARGS
         --set "clock.pop.$1" icon.drawing=off label="$2"
             label.font="$F_HEAD" label.color="$POPUP_HEAD" label.align=left
             width="$PW" label.padding_left="$PL"
-            background.drawing=on background.color=0x22313244 background.height="$H_HEAD" background.corner_radius=4)
+            background.drawing=on background.color="$HEADER_BG" background.height="$H_HEAD" background.corner_radius=4)
 }
 
 # Emit one event as a group: word-wrapped title lines + a detail line, all sharing
@@ -230,7 +230,7 @@ icon=""; icol="$C_GREEN"
 if [ "${tcount:-0}" -gt 0 ] 2>/dev/null; then
     [ -n "$icon" ] && icon="$icon  "
     icon="$icon$G_TASK $tcount"
-    [ "${running:-0}" -gt 0 ] 2>/dev/null || icol=0xfffab387 # peach when tasks only
+    [ "${running:-0}" -gt 0 ] 2>/dev/null || icol="$WARN" # peach when tasks only
 fi
 if [ -n "$icon" ]; then
     sketchybar --set "$NAME" icon="$icon" icon.font="MesloLGS Nerd Font:Regular:14.0" icon.color="$icol" icon.padding_left=8 icon.drawing=on label="│ $date_s"

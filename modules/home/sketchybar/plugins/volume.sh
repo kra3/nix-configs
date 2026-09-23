@@ -1,4 +1,5 @@
 #!/run/current-system/sw/bin/bash
+source "${0%/*}/../theme.sh"
 # System volume: speaker glyph + %. Popup (click) has a draggable slider +
 # output-device list.
 #   volume.sh          → routine/volume_change: refresh icon + slider
@@ -11,13 +12,13 @@ set_icon() {
     vol="$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)"
     muted="$(osascript -e 'output muted of (get volume settings)' 2>/dev/null)"
     if [ "$muted" = "true" ] || [ "$vol" = "0" ]; then
-        icon="󰝟"; color=0xff6c7086
+        icon="󰝟"; color="$DISABLED"
     elif [ "$vol" -lt 34 ]; then
-        icon="󰕿"; color=0xffcdd6f4
+        icon="󰕿"; color="$BAR_TEXT"
     elif [ "$vol" -lt 67 ]; then
-        icon="󰖀"; color=0xffcdd6f4
+        icon="󰖀"; color="$BAR_TEXT"
     else
-        icon="󰕾"; color=0xffcdd6f4
+        icon="󰕾"; color="$BAR_TEXT"
     fi
     sketchybar --set "$NAME" icon="$icon" icon.color="$color" label="${vol}%"
     sketchybar --set volume.slider slider.percentage="${vol:-0}" 2>/dev/null
@@ -30,16 +31,16 @@ populate_devices() {
     local VOL_ARGS=(--remove '/volume\.dev\..*/'
         --add item volume.dev.hdr popup."$NAME"
         --set volume.dev.hdr icon.drawing=off label="Output"
-            label.font="Helvetica Neue:Bold:13.0" label.color=0xfff9e2af label.align=left
+            label.font="Helvetica Neue:Bold:13.0" label.color="$POPUP_HEAD" label.align=left
             width=220 label.padding_left=10
-            background.drawing=on background.color=0x22313244 background.height=20 background.corner_radius=4)
+            background.drawing=on background.color="$HEADER_BG" background.height=20 background.corner_radius=4)
     cur="$(SwitchAudioSource -c -t output 2>/dev/null)"
     while IFS= read -r dev; do
         [ -n "$dev" ] || continue
         key="$(printf '%s' "$dev" | tr -c 'A-Za-z0-9' '_')"
-        if [ "$dev" = "$cur" ]; then mark="󰄬"; col=0xffa6e3a1; else mark=""; col=0xffa6adc8; fi
+        if [ "$dev" = "$cur" ]; then mark="󰄬"; col="$OK"; else mark=""; col="$POPUP_DIM"; fi
         VOL_ARGS+=(--add item "volume.dev.$key" popup."$NAME"
-            --set "volume.dev.$key" icon="$mark" icon.color=0xffa6e3a1 icon.font="MesloLGS Nerd Font:Bold:12.0"
+            --set "volume.dev.$key" icon="$mark" icon.color="$OK" icon.font="MesloLGS Nerd Font:Bold:12.0"
                 label="$dev" label.color="$col" label.font="Helvetica Neue:Regular:13.0" label.max_chars=24
                 label.align=left width=220 label.padding_left=4
                 background.drawing=on background.color=0x00000000 background.height=22

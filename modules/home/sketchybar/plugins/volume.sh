@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# System volume: speaker glyph + %. Popup (left-click) has a draggable slider +
-# output-device list; scroll to change volume; right-click opens Sound prefs.
+# System volume: speaker glyph + %. Popup (click) has a draggable slider +
+# output-device list.
 #   volume.sh          → routine/volume_change: refresh icon + slider
-#   volume.sh toggle   → click: left toggles popup, right opens Sound prefs
+#   volume.sh toggle   → click: toggle popup (right-click opens Sound prefs)
 #   volume.sh slider   → mouse.clicked on the slider: set volume to $PERCENTAGE
-#   (SENDER=mouse.scrolled) → wheel over the item: nudge volume ±5 (±1 w/ mod)
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 set_icon() {
@@ -52,17 +51,6 @@ populate_devices() {
 # Pointer left the item and its popup → dismiss (auto-close on focus loss).
 if [ "$SENDER" = "mouse.exited.global" ]; then
     sketchybar --set "$NAME" popup.drawing=off
-    exit 0
-fi
-
-# Scroll over the item → change volume (±5, or ±1 with a modifier held).
-if [ "$SENDER" = "mouse.scrolled" ]; then
-    step=5; case "$MODIFIER" in *ctrl* | *shift*) step=1 ;; esac
-    cur="$(osascript -e 'output volume of (get volume settings)' 2>/dev/null)"; cur="${cur:-0}"
-    new="$(awk -v c="$cur" -v d="${SCROLL_DELTA:-0}" -v s="$step" \
-        'BEGIN { n = c + (d > 0 ? s : -s); if (n > 100) n = 100; if (n < 0) n = 0; print int(n) }')"
-    osascript -e "set volume output volume $new" 2>/dev/null
-    set_icon
     exit 0
 fi
 

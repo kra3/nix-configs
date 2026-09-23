@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # System volume: speaker glyph + %. Popup (click) has a draggable slider +
 # output-device list.
 #   volume.sh          → routine/volume_change: refresh icon + slider

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Link type + VPN glyph. Left-click → SSID/IP/Subnet/Router popup (click-to-copy);
 # right-click → Network prefs. Wi-Fi detected by device active (not utun route).
 export PATH="/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"

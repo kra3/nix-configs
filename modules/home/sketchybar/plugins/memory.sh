@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Show memory usage percentage with color-coded Nerd Font icon.
 
 TOTAL=$(sysctl -n hw.memsize)

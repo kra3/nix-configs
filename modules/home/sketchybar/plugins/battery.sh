@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Show battery percentage with a Nerd Font icon.
 PERCENTAGE=$(pmset -g batt | grep -Eo '[0-9]+%' | tr -d '%')
 CHARGING=$(pmset -g batt | grep 'AC Power')

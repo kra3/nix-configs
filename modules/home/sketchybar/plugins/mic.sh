@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/run/current-system/sw/bin/bash
 # Mic state glyph from the default input volume (0 = muted/off).
 IN="$(osascript -e 'input volume of (get volume settings)' 2>/dev/null)"
 

@@ -19,6 +19,14 @@ add_header() { # $1=id-suffix  $2=text ; appends to CLK_ARGS
             background.drawing=on background.color=0x22313244 background.height=20 background.corner_radius=4)
 }
 
+add_event() { # $1=id-suffix  $2=label  $3=color (default text) ; appends to CLK_ARGS
+    CLK_ARGS+=(--add item "clock.pop.$1" popup."$NAME"
+        --set "clock.pop.$1" icon.drawing=off label="$2"
+            label.font="$F_ROW" label.color="${3:-0xffcdd6f4}" label.max_chars=40
+            label.align=left width="$PW" label.padding_left=16
+            background.drawing=on background.color=0x00000000 background.height=22)
+}
+
 populate() {
     # Build the whole popup in one sketchybar call (fast).
     local CLK_ARGS=(--remove '/clock\.pop\..*/')
@@ -46,34 +54,47 @@ populate() {
         z=$((z + 1))
     done
 
-    # Today's agenda (needs Calendar access granted to sketchybar on first run).
+    # Today's agenda in two sections: the next upcoming event (not yet started),
+    # then everything else still to come (in-progress or later). Finished events
+    # are dropped. icalBuddy emits "START - END<TAB>Title" sorted by start; "..."
+    # marks a bound outside today. (Needs Calendar access granted on first run.)
     if command -v icalBuddy >/dev/null 2>&1; then
-        add_header hdr "Today"
-        local j=0 ev
-        while IFS= read -r ev; do
-            [ -n "$ev" ] || continue
-            CLK_ARGS+=(--add item "clock.pop.ev$j" popup."$NAME"
-                --set "clock.pop.ev$j" icon.drawing=off label="${ev:0:40}"
-                    label.font="$F_ROW" label.color=0xffcdd6f4 label.max_chars=40
-                    label.align=left width="$PW" label.padding_left=16
-                    background.drawing=on background.color=0x00000000 background.height=22)
-            j=$((j + 1))
-        done < <(icalBuddy -nc -nrd -eep "notes,url,location,attendees" -b "• " -ps "|  |" eventsToday 2>/dev/null)
-        [ "$j" -eq 0 ] && CLK_ARGS+=(--add item "clock.pop.ev0" popup."$NAME"
-            --set "clock.pop.ev0" icon.drawing=off label="No events" label.color=0xff6c7086
-                label.font="$F_ROW" label.align=left width="$PW" label.padding_left=16
-                background.drawing=on background.color=0x00000000 background.height=22)
+        local now_min range title start end sm em disp next_row k row
+        local rest_rows=()
+        now_min=$((10#$(date +%H) * 60 + 10#$(date +%M)))
+        next_row=""
+        while IFS=$'\t' read -r range title; do
+            [ -n "$title" ] || continue
+            start="${range%% - *}"; end="${range##* - }"
+            case "$start" in [0-9][0-9]:[0-9][0-9]) sm=$((10#${start%%:*} * 60 + 10#${start##*:})) ;; *) sm=-1 ;; esac
+            case "$end" in [0-9][0-9]:[0-9][0-9]) em=$((10#${end%%:*} * 60 + 10#${end##*:})) ;; *) em=-1 ;; esac
+            { [ "$em" -ge 0 ] && [ "$em" -le "$now_min" ]; } && continue # already ended
+            case "$start" in [0-9][0-9]:[0-9][0-9]) disp="$start  $title" ;; *) disp="$title" ;; esac
+            if [ "$sm" -gt "$now_min" ] && [ -z "$next_row" ]; then
+                next_row="$disp" # soonest not-yet-started event
+            else
+                rest_rows+=("$disp") # in-progress, all-day, or later upcoming
+            fi
+        done < <(icalBuddy -nc -nrd -po "datetime,title" -iep "datetime,title" -b "" -ps "|\t|" -tf "%H:%M" -df "" eventsToday 2>/dev/null)
+
+        add_header nexthdr "Next event"
+        if [ -n "$next_row" ]; then add_event next0 "$next_row"; else add_event next0 "Nothing upcoming" 0xff6c7086; fi
+
+        add_header resthdr "Remaining today"
+        if [ "${#rest_rows[@]}" -gt 0 ]; then
+            k=0
+            for row in "${rest_rows[@]}"; do add_event "rest$k" "$row"; k=$((k + 1)); done
+        else
+            add_event rest0 "None" 0xff6c7086
+        fi
     fi
 
     sketchybar "${CLK_ARGS[@]}"
 }
 
-# Pointer left the item and its popup → dismiss (auto-close on focus loss).
-if [ "$SENDER" = "mouse.exited.global" ]; then
-    sketchybar --set "$NAME" popup.drawing=off
-    exit 0
-fi
-
+# Click (passes "toggle") handled before the SENDER dismiss below: sketchybar
+# leaks the last event's SENDER into click_script, so a click can arrive as
+# mouse.exited.global and be swallowed. The event script passes no arg.
 if [ "$1" = "toggle" ]; then
     if [ "$(sketchybar --query "$NAME" 2>/dev/null | jq -r '.popup.drawing' 2>/dev/null)" = "on" ]; then
         sketchybar --set "$NAME" popup.drawing=off
@@ -81,6 +102,12 @@ if [ "$1" = "toggle" ]; then
         populate
         sketchybar --set "$NAME" popup.drawing=on
     fi
+    exit 0
+fi
+
+# Pointer left the item and its popup → dismiss (auto-close on focus loss).
+if [ "$SENDER" = "mouse.exited.global" ]; then
+    sketchybar --set "$NAME" popup.drawing=off
     exit 0
 fi
 

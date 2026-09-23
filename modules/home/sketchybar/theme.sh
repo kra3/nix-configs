@@ -14,7 +14,7 @@ case "$THEME" in
         PILL_BG=0xcc11111b     # crust glass group-pill
         PILL_BORDER=0x22cdd6f4 # bar + pill border
         BAR_TEXT=0xffcdd6f4    # text on the bar
-        ACCENT=0xff89b4fa      # blue — space number
+        ACCENT=0xff89b4fa      # blue — single accent
         GLYPH=0xffa6adc8       # subtext — window app-glyphs
         SECONDARY=0xff89b4fa   # blue — links / "+N more" / webex glyph
         FOCUSED=0xff89b4fa     # focused-space pill (blue)
@@ -29,6 +29,7 @@ case "$THEME" in
         OK=0xffa6e3a1          # status: good (green)
         WARN=0xfff9e2af        # status: warning (yellow)
         CRIT=0xfff38ba8        # status: critical (red)
+        SHADOW=0x00000000      # no text shadow on the dark bar
         ZEBRA_A=0x00000000
         ZEBRA_B=0x11ffffff
         ;;
@@ -37,11 +38,11 @@ case "$THEME" in
         PILL_BG=0x20ffffff     # translucent-white group-pill
         PILL_BORDER=0x40ffffff
         BAR_TEXT=0xffffffff    # white text on the bar
-        ACCENT=0xffffffff      # white — space number
-        GLYPH=0xffd6eaf8       # pale blue — window app-glyphs
+        ACCENT=0xfffab387      # peach — single accent: numbers, focused pill, labels, calendar, clock
+        GLYPH=0xffcdd6f4       # neutral soft-white — window app-glyphs
         SECONDARY=0xffd6eaf8   # pale blue — links / "+N more" / webex glyph
-        FOCUSED=0xff00f3ff     # glowing cyan focused-space pill
-        FOCUS_FG=0xff00171a    # dark text on the cyan pill
+        FOCUSED=0xfffab387     # peach focused-space pill
+        FOCUS_FG=0xff11111b    # dark text on the peach pill
         DISABLED=0xff777777
         POPUP_BG=0xee1a1d1e    # dark-glass popup
         POPUP_BORDER=0x80ffffff
@@ -52,6 +53,7 @@ case "$THEME" in
         OK=0xffa6e3a1          # status: good (green)
         WARN=0xfff9e2af        # status: warning (yellow)
         CRIT=0xfff38ba8        # status: critical (red)
+        SHADOW=0xd0000000      # dark text shadow → legible on glass over any wallpaper
         ZEBRA_A=0x00000000
         ZEBRA_B=0x14ffffff
         ;;

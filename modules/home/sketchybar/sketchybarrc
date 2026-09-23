@@ -12,9 +12,9 @@ source "${CONFIG_DIR:-$HOME/.config/sketchybar}/theme.sh"
 # ── Bar appearance ────────────────────────────────────────────────────────────
 sketchybar --bar \
     position=top          \
-    height=36             \
+    height=30             \
     margin=8              \
-    y_offset=4            \
+    y_offset=8            \
     corner_radius=10      \
     blur_radius=45        \
     color=$BAR_COLOR      \
@@ -35,6 +35,14 @@ sketchybar --default \
     label.font="MesloLGS Nerd Font:Bold:11.0"    \
     icon.color=$BAR_TEXT                        \
     label.color=$BAR_TEXT                       \
+    icon.shadow.drawing=on                      \
+    icon.shadow.color=$SHADOW                   \
+    icon.shadow.distance=2                      \
+    icon.shadow.angle=270                       \
+    label.shadow.drawing=on                     \
+    label.shadow.color=$SHADOW                  \
+    label.shadow.distance=2                     \
+    label.shadow.angle=270                      \
     icon.padding_left=3                         \
     icon.padding_right=4                        \
     label.padding_left=4                        \
@@ -93,7 +101,7 @@ sketchybar --add item front_app left \
     --set front_app \
         icon.drawing=off                                    \
         label.font="MesloLGS Nerd Font:Bold:12.0"            \
-        label.color=0xffa6adc8                              \
+        label.color=$ACCENT                                \
         padding_left=8                                      \
         padding_right=8                                     \
         script="$PLUGIN_DIR/front_app.sh"                   \

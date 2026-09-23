@@ -8,7 +8,7 @@
     {
       home.packages = [ pkgs.desktoppr ];
       home.activation.wallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.desktoppr}/bin/desktoppr ${./profiles/wm/wallpapers/wallpaper.png}
+        run ${pkgs.desktoppr}/bin/desktoppr ${./profiles/wm/wallpapers/mac-desktop.jpg}
       '';
     };
 }

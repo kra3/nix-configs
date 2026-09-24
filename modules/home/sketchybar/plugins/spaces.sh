@@ -68,12 +68,16 @@ for sid in 1 2 3 4 5 6 7 8 9; do
         continue
     fi
     if [ "$sid" = "$focus" ]; then
+        # Solid pill → no text shadow (it doubles the glyphs); see theme SHADOW.
         ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
             background.drawing=on background.color="$FOCUSED"
+            icon.shadow.drawing=off label.shadow.drawing=off
             icon.color="$FOCUS_FG" label.color="$FOCUS_FG" label="$glyphs")
     else
+        # On glass → keep the shadow for legibility.
         ARGS+=(--animate tanh 12 --set "space.$sid" drawing=on display="$disp"
-            background.drawing=off icon.color="$COLOR" label.color="$GLYPH" label="$glyphs")
+            background.drawing=off icon.shadow.drawing=on label.shadow.drawing=on
+            icon.color="$COLOR" label.color="$GLYPH" label="$glyphs")
     fi
 done
 sketchybar "${ARGS[@]}"

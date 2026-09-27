@@ -1,12 +1,21 @@
 # ── TV ─────────────────────────────────────────────────────────
 - id: tv_power_on
-  alias: TV — Power on + backlight
-  description: WoL if TV is off; turn on ambient backlight if dark or overcast
+  alias: TV — Power on + backlight + HT
+  description: >-
+    WoL if TV is off; turn on ambient backlight if dark or overcast; turn on
+    the home theater and switch it to TV audio.
   triggers:
+  # webostv.turn_on only fires when HA's own turn_on service is called (confirmed
+  # against webostv/media_player.py) -- never on remote/CEC power-on, so the
+  # backlight never followed real-world use. This state trigger covers that.
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: webostv
     type: webostv.turn_on
     trigger: device
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    from: "off"
+    to: "on"
+    trigger: state
   actions:
   - if:
     - condition: device
@@ -34,11 +43,26 @@
       device_id: 5c2c4c65f834231378af61d835ec513a
       entity_id: light.tv_backlight
       domain: light
+  - action: media_player.turn_on
+    target:
+      entity_id: media_player.home_theater_2
+  # Denon needs a moment after power-on before it accepts a source select
+  # (same slow-to-respond behavior already worked around in front-door.yaml).
+  - delay: "00:00:03"
+  - action: media_player.select_source
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      source: TV Audio
   mode: single
 
 - id: tv_backlight_off
-  alias: TV — Backlight off
-  description: Turn off ambient backlight when TV powers off
+  alias: TV — Backlight off + HT
+  description: >-
+    Turn off ambient backlight when TV powers off; also turn off the home
+    theater, but only if it was actually playing TV audio (PS5 passthrough
+    counts as TV audio here too) -- otherwise it's doing something
+    unrelated (Music Assistant/Spotify direct) and shouldn't be touched.
   triggers:
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: media_player
@@ -50,4 +74,13 @@
     device_id: 5c2c4c65f834231378af61d835ec513a
     entity_id: light.tv_backlight
     domain: light
+  - if:
+    - condition: template
+      value_template: >-
+        {{ state_attr('media_player.home_theater_2', 'source')
+           in ['PlayStation 5', 'TV Audio'] }}
+    then:
+    - action: media_player.turn_off
+      target:
+        entity_id: media_player.home_theater_2
   mode: single

@@ -19,6 +19,7 @@
         HOMEPAGE_VAR_PROWLARR_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
         HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}
         HOMEPAGE_VAR_SABNZBD_KEY=${config.sops.placeholder."media.sabnzbd.api_key"}
+        HOMEPAGE_VAR_SLSKD_KEY=${config.sops.placeholder."media.slskd.api_key"}
         HOMEPAGE_VAR_JELLYFIN_KEY=${config.sops.placeholder."media.jellyfin.apikeys.seerr"}
         HOMEPAGE_VAR_BOOKSHELF_KEY=${config.sops.placeholder."media.bookshelf.api_key"}
         HOMEPAGE_VAR_GRAFANA_USER=${config.sops.placeholder."monitoring.grafana.admin.user"}
@@ -252,6 +253,23 @@
                         type = "lidarr";
                         url = "http://${ip.lidarr}:8686";
                         key = "{{HOMEPAGE_VAR_LIDARR_KEY}}";
+                      };
+                    };
+                  }
+                  {
+                    Slskd = {
+                      description = "Soulseek client";
+                      icon = "slskd.png";
+                      href = "https://slskd.${domain}";
+                      siteMonitor = "https://slskd.${domain}";
+                      widget = {
+                        type = "slskd";
+                        url = "http://${ip.slskd}:5030";
+                        key = "{{HOMEPAGE_VAR_SLSKD_KEY}}";
+                        fields = [
+                          "downloads"
+                          "uploads"
+                        ];
                       };
                     };
                   }

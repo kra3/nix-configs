@@ -14,13 +14,13 @@
         transfers:
           upload:
             speed_limit: 25000
-        groups:
-          leechers:
-            thresholds:
-              files: 1
-              directories: 1
-            upload:
-              speed_limit: 3000
+          groups:
+            leechers:
+              thresholds:
+                files: 1
+                directories: 1
+              upload:
+                speed_limit: 3000
       '';
     in
     {

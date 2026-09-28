@@ -17,7 +17,9 @@
       script = pkgs.writeText "lidarr-beets-webhook.py" ''
         import http.server
         import os
+        import queue
         import subprocess
+        import threading
         import urllib.parse
 
         PORT = ${toString port}
@@ -25,6 +27,21 @@
         CONTAINER_ROOT = "${containerMusicRoot}"
         BEETS_BASE = "${beetsBase}"
         OVERLAY = "${overlay}"
+
+        # Retag events can arrive in bursts (e.g. a bulk library refresh) much
+        # faster than `beet import` can process them one at a time; queuing
+        # keeps do_POST fast so wget doesn't time out waiting its turn.
+        work_queue = queue.Queue()
+
+        def worker():
+            while True:
+                album_dir, env = work_queue.get()
+                result = subprocess.run(
+                    ["beet", "--config", BEETS_BASE, "--config", OVERLAY, "import", album_dir],
+                    env=env, capture_output=True, text=True,
+                )
+                if result.returncode != 0:
+                    print(album_dir, result.stdout, result.stderr)
 
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
@@ -50,18 +67,14 @@
                     self.end_headers()
                     return
 
-                result = subprocess.run(
-                    ["beet", "--config", BEETS_BASE, "--config", OVERLAY, "import", album_dir],
-                    env=env, capture_output=True, text=True,
-                )
-                self.send_response(200 if result.returncode == 0 else 500)
+                work_queue.put((album_dir, env))
+                self.send_response(202)
                 self.end_headers()
-                if result.returncode != 0:
-                    print(result.stdout, result.stderr)
 
             def log_message(self, fmt, *args):
                 print(fmt % args)
 
+        threading.Thread(target=worker, daemon=True).start()
         http.server.HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
       '';
     in

@@ -53,15 +53,15 @@
           networks = [ "${network.ref}:ip=${ip}" ];
           volumes = [
             "/srv/appdata/media-mgmt/slskd:/app"
-            "/srv/media/downloads/slskd:/downloads"
+            "/srv/media/downloads/slskd:/data/downloads/slskd"
             # Shared read-only so slskd can upload to the Soulseek network —
             # reciprocity matters there for download speed/queue priority.
             "/srv/media/library/music:/music:ro"
             "${slskdYaml}:/app/slskd.yml:ro"
           ];
           environments = {
-            SLSKD_DOWNLOADS_DIR = "/downloads/complete";
-            SLSKD_INCOMPLETE_DIR = "/downloads/incomplete";
+            SLSKD_DOWNLOADS_DIR = "/data/downloads/slskd/complete";
+            SLSKD_INCOMPLETE_DIR = "/data/downloads/slskd/incomplete";
             SLSKD_SHARED_DIR = "/music";
           };
           memory = "512m";

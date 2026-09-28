@@ -2,6 +2,7 @@
   flake.nixosModules.containers-media-mgmt-slskd =
     {
       config,
+      pkgs,
       flakeLib,
       flakeModules,
       ...
@@ -9,6 +10,22 @@
     let
       network = config.virtualisation.quadlet.networks.media-mgmt;
       ip = config.vars.network.podmanAddresses.slskd;
+      # Global cap ~70% of sutala's 300Mbps upload, leaving headroom for
+      # everything else on the line. Leechers (share nothing) get throttled
+      # hard rather than denied outright; thresholds match slskd's own
+      # upstream defaults, declared explicitly rather than left implicit.
+      slskdYaml = pkgs.writeText "slskd.yml" ''
+        transfers:
+          upload:
+            speed_limit: 25000
+        groups:
+          leechers:
+            thresholds:
+              files: 1
+              directories: 1
+            upload:
+              speed_limit: 3000
+      '';
     in
     {
       imports = [ flakeModules.nixos.services-media-acquisition-slskd ];
@@ -44,6 +61,7 @@
             # Shared read-only so slskd can upload to the Soulseek network —
             # reciprocity matters there for download speed/queue priority.
             "/srv/media/library/music:/music:ro"
+            "${slskdYaml}:/app/slskd.yml:ro"
           ];
           environments = {
             SLSKD_DOWNLOADS_DIR = "/downloads/complete";

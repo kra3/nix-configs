@@ -29,10 +29,6 @@
         '';
       };
 
-      # linuxserver's image ships no ffmpeg; Tubifarry's YouTube source needs
-      # it. A static Nix build isn't an option (nixpkgs marks static ffmpeg
-      # an unsupported platform), so install the Alpine-native package at
-      # container startup via LSIO's custom-cont-init.d hook instead.
       installFfmpeg = pkgs.writeTextFile {
         name = "install-ffmpeg.sh";
         executable = true;

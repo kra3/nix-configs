@@ -56,13 +56,14 @@
             "/srv/media/downloads/slskd:/data/downloads/slskd"
             # Shared read-only so slskd can upload to the Soulseek network —
             # reciprocity matters there for download speed/queue priority.
-            "/srv/media/library/music:/music:ro"
+            "/srv/media/library/music/Western:/music/Western:ro"
+            "/srv/media/library/music/Indian:/music/Indian:ro"
             "${slskdYaml}:/app/slskd.yml:ro"
           ];
           environments = {
             SLSKD_DOWNLOADS_DIR = "/data/downloads/slskd/complete";
             SLSKD_INCOMPLETE_DIR = "/data/downloads/slskd/incomplete";
-            SLSKD_SHARED_DIR = "/music";
+            SLSKD_SHARED_DIR = "/music/Western;/music/Indian";
           };
           memory = "512m";
           podmanArgs = [ "--cpus=1" ];

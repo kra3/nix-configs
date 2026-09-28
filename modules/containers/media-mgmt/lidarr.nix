@@ -28,6 +28,17 @@
           wget -qO- --post-data="path=$lidarr_trackfile_path" "http://host.containers.internal:8942/retag"
         '';
       };
+
+      installFfmpeg = pkgs.writeTextFile {
+        name = "install-ffmpeg.sh";
+        executable = true;
+        text = ''
+          #!/bin/sh
+          set -eu
+          command -v ffmpeg >/dev/null 2>&1 && exit 0
+          apk add --no-cache ffmpeg
+        '';
+      };
     in
     {
       imports = [ flakeModules.nixos.services-media-acquisition-lidarr ];
@@ -51,6 +62,7 @@
             "/srv/appdata/media-mgmt/lidarr:/config"
             "/srv/media:/data"
             "${retagTrigger}:/scripts/lidarr-retag-trigger.sh:ro"
+            "${installFfmpeg}:/custom-cont-init.d/install-ffmpeg.sh:ro"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "640m";

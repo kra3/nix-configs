@@ -17,6 +17,7 @@
       flakeModules.nixos.containers-media-mgmt-unpackerr
       flakeModules.nixos.containers-media-mgmt-maintainerr
       flakeModules.nixos.containers-media-mgmt-aiostreams
+      flakeModules.nixos.containers-media-mgmt-slskd
     ];
   };
 }

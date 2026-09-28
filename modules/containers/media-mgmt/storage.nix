@@ -17,6 +17,7 @@
         "d /srv/media/downloads/torrent 2775 root media - -"
         "d /srv/media/downloads/torrent/incomplete 2775 root media - -"
         "d /srv/media/downloads/torrent/complete 2775 root media - -"
+        "d /srv/media/downloads/youtube 2775 root media - -"
         "d /srv/media/library 2775 root media - -"
         "d /srv/media/library/movies 2775 root media - -"
         "d /srv/media/library/tv 2775 root media - -"

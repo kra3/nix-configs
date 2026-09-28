@@ -29,14 +29,13 @@
         '';
       };
 
-      installFfmpeg = pkgs.writeTextFile {
-        name = "install-ffmpeg.sh";
+      installTubifarryDeps = pkgs.writeTextFile {
+        name = "install-tubifarry-deps.sh";
         executable = true;
         text = ''
           #!/bin/sh
           set -eu
-          command -v ffmpeg >/dev/null 2>&1 && exit 0
-          apk add --no-cache ffmpeg
+          apk add --no-cache ffmpeg nodejs
         '';
       };
     in
@@ -44,6 +43,11 @@
       imports = [ flakeModules.nixos.services-media-acquisition-lidarr ];
 
       sops.secrets."media.lidarr.api_key" = { };
+      sops.secrets."media.lidarr.youtube_cookies" = {
+        owner = "root";
+        group = "media";
+        mode = "0440";
+      };
 
       sops.templates."media.lidarr.env" = {
         owner = "root";
@@ -62,7 +66,8 @@
             "/srv/appdata/media-mgmt/lidarr:/config"
             "/srv/media:/data"
             "${retagTrigger}:/scripts/lidarr-retag-trigger.sh:ro"
-            "${installFfmpeg}:/custom-cont-init.d/install-ffmpeg.sh:ro"
+            "${installTubifarryDeps}:/custom-cont-init.d/install-tubifarry-deps.sh:ro"
+            "${config.sops.secrets."media.lidarr.youtube_cookies".path}:/config/cookies.txt:ro"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "640m";

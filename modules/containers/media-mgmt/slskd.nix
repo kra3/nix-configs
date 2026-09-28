@@ -52,9 +52,9 @@
           };
           memory = "512m";
           podmanArgs = [ "--cpus=1" ];
-        }
-        // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
-      };
+        };
+      }
+      // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
       # Soulseek P2P listen port must be reachable from the router's forward —
       # traffic arrives on the LAN interface, unlike the bridge-only ports

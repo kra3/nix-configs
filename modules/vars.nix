@@ -168,6 +168,11 @@
               default = "10.3.1.7";
               description = "Pinned br-media-mgmt IP for recyclarr";
             };
+            slskd = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.17";
+              description = "Pinned br-media-mgmt IP for slskd";
+            };
             actualbudget = lib.mkOption {
               type = lib.types.str;
               default = "10.3.0.2";

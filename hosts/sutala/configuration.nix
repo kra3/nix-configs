@@ -192,9 +192,6 @@
         '';
     };
     nftables.enable = true;
-    # surasa (192.168.1.39) as fallback: sutala is its own resolver, so a restart of
-    # adguardhome.service (e.g. mid nixos-upgrade activation) otherwise leaves the host
-    # with zero DNS until it's back up, breaking any container image pull racing it.
     nameservers = [
       config.vars.network.lanIp
       "192.168.1.39"

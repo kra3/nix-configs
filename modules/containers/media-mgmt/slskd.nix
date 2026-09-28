@@ -10,10 +10,6 @@
     let
       network = config.virtualisation.quadlet.networks.media-mgmt;
       ip = config.vars.network.podmanAddresses.slskd;
-      # Global cap ~70% of sutala's 300Mbps upload, leaving headroom for
-      # everything else on the line. Leechers (share nothing) get throttled
-      # hard rather than denied outright; thresholds match slskd's own
-      # upstream defaults, declared explicitly rather than left implicit.
       slskdYaml = pkgs.writeText "slskd.yml" ''
         transfers:
           upload:

@@ -56,7 +56,6 @@
             "/srv/media/downloads/slskd:/data/downloads/slskd"
             # Shared read-only so slskd can upload to the Soulseek network —
             # reciprocity matters there for download speed/queue priority.
-            # Western/Indian only — Classical and Devotional stay unshared.
             "/srv/media/library/music/Western:/music/Western:ro"
             "/srv/media/library/music/Indian:/music/Indian:ro"
             "${slskdYaml}:/app/slskd.yml:ro"

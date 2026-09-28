@@ -24,6 +24,10 @@
     {
       "matchPackageNames": ["lscr.io/linuxserver/lidarr"],
       "allowedVersions": "/^nightly-[\\w.]+-ls\\d+$/"
+    },
+    {
+      "matchPackageNames": ["slskd/slskd"],
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"
     }
   ]
 }

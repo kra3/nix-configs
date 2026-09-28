@@ -20,6 +20,10 @@
     {
       "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],
       "allowedVersions": "/^[\\w.]+-ls\\d+$/"
+    },
+    {
+      "matchPackageNames": ["lscr.io/linuxserver/lidarr"],
+      "allowedVersions": "/^nightly-[\\w.]+-ls\\d+$/"
     }
   ]
 }

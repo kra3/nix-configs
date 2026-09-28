@@ -28,6 +28,21 @@
           wget -qO- --post-data="path=$lidarr_trackfile_path" "http://host.containers.internal:8942/retag"
         '';
       };
+
+      # linuxserver's image ships no ffmpeg; Tubifarry's YouTube source needs
+      # it. A static Nix build isn't an option (nixpkgs marks static ffmpeg
+      # an unsupported platform), so install the Alpine-native package at
+      # container startup via LSIO's custom-cont-init.d hook instead.
+      installFfmpeg = pkgs.writeTextFile {
+        name = "install-ffmpeg.sh";
+        executable = true;
+        text = ''
+          #!/bin/sh
+          set -eu
+          command -v ffmpeg >/dev/null 2>&1 && exit 0
+          apk add --no-cache ffmpeg
+        '';
+      };
     in
     {
       imports = [ flakeModules.nixos.services-media-acquisition-lidarr ];
@@ -51,6 +66,7 @@
             "/srv/appdata/media-mgmt/lidarr:/config"
             "/srv/media:/data"
             "${retagTrigger}:/scripts/lidarr-retag-trigger.sh:ro"
+            "${installFfmpeg}:/custom-cont-init.d/install-ffmpeg.sh:ro"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "640m";

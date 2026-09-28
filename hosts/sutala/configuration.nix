@@ -192,7 +192,10 @@
         '';
     };
     nftables.enable = true;
-    nameservers = [ config.vars.network.lanIp ];
+    nameservers = [
+      config.vars.network.lanIp
+      "192.168.1.39"
+    ];
     nat = {
       enable = true;
       externalInterface = config.vars.network.lanIf;

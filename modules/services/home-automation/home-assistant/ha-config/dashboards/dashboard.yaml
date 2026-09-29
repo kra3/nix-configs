@@ -625,6 +625,97 @@ views:
       name: SABnzbd warnings
       grid_options:
         columns: 4
+- type: sections
+  title: Health
+  path: health
+  icon: mdi:scale-bathroom
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Arun
+      heading_style: title
+    - type: tile
+      entity: sensor.withings_arun_weight
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.withings_arun_weight_to_goal
+      name: To goal
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: input_datetime.withings_arun_last_weigh_in
+      name: Last weigh-in
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.withings_arun_fat_ratio
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Weight
+      entities: [sensor.withings_arun_weight]
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Fat and muscle mass
+      entities:
+      - sensor.withings_arun_fat_mass
+      - sensor.withings_arun_muscle_mass
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Anjali
+      heading_style: title
+    - type: tile
+      entity: sensor.withings_weight
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: input_datetime.withings_anjali_last_weigh_in
+      name: Last weigh-in
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.withings_fat_ratio
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.withings_muscle_mass
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Weight
+      entities: [sensor.withings_weight]
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Fat and muscle mass
+      entities:
+      - sensor.withings_fat_mass
+      - sensor.withings_muscle_mass
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
 - title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group

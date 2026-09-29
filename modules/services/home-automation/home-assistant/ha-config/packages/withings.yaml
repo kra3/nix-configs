@@ -1,0 +1,80 @@
+input_datetime:
+  withings_arun_last_weigh_in:
+    name: Arun last weigh-in
+    has_date: true
+    has_time: true
+  withings_anjali_last_weigh_in:
+    name: Anjali last weigh-in
+    has_date: true
+    has_time: true
+
+template:
+  - sensor:
+      - name: "Withings Arun weight to goal"
+        unique_id: withings_arun_weight_to_goal
+        device_class: weight
+        unit_of_measurement: kg
+        state_class: measurement
+        availability: >-
+          {{ has_value('sensor.withings_arun_weight') and has_value('sensor.withings_arun_weight_goal') }}
+        state: >-
+          {{ (states('sensor.withings_arun_weight') | float - states('sensor.withings_arun_weight_goal') | float) | round(1) }}
+
+automation:
+  - id: withings_record_weigh_in
+    alias: Withings — record weigh-in time
+    triggers:
+    - trigger: state
+      entity_id: sensor.withings_arun_weight
+      not_from: [unavailable, unknown]
+      not_to: [unavailable, unknown]
+      id: arun
+    - trigger: state
+      entity_id: sensor.withings_weight
+      not_from: [unavailable, unknown]
+      not_to: [unavailable, unknown]
+      id: anjali
+    actions:
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: "input_datetime.withings_{{ trigger.id }}_last_weigh_in"
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    mode: queued
+
+  - id: withings_weigh_in_reminder
+    alias: Withings — weigh-in reminder
+    description: >-
+      Daily nudge to whoever is home and hasn't weighed in for over 2 days.
+    triggers:
+    - trigger: time
+      at: "09:00:00"
+    variables:
+      people:
+      - person: person.arun_karunagath
+        notify: notify.meghanadha
+        since: input_datetime.withings_arun_last_weigh_in
+      - person: person.anjalipc
+        notify: notify.anjalis_iphone
+        since: input_datetime.withings_anjali_last_weigh_in
+    actions:
+    - repeat:
+        for_each: "{{ people }}"
+        sequence:
+        - variables:
+            days: >-
+              {{ ((now().timestamp() - state_attr(repeat.item.since, 'timestamp')) / 86400) | int
+                 if has_value(repeat.item.since) else none }}
+        - if:
+          - condition: template
+            value_template: >-
+              {{ is_state(repeat.item.person, 'home') and (days is none or days >= 2) }}
+          then:
+          - action: notify.send_message
+            target:
+              entity_id: "{{ repeat.item.notify }}"
+            data:
+              title: Weigh-in
+              message: >-
+                {{ 'No weigh-in recorded yet.' if days is none else 'No weigh-in for ' ~ days ~ ' days.' }}
+    mode: single

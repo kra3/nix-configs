@@ -67,6 +67,8 @@
       # from status-right below without loading the rest of continuum's plugin.
       continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
       catppuccinStatusModule = "${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/utils/status_module.conf";
+      batteryScripts = "${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/scripts";
+      pomodoroScript = "${tmux-pomodoro-plus}/share/tmux-plugins/tmux-pomodoro-plus/scripts/pomodoro.sh";
     in
     {
       imports = [
@@ -261,14 +263,9 @@
         '';
       };
 
-      # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources). This extraConfig
-      # renders before catppuccin.tmux's own run-shell in the generated tmux.conf, so @thm_* isn't
-      # defined yet here — hence the resurrect module's hardcoded mocha-green hex below (flavor is
-      # pinned to mocha above) instead of "#{E:@thm_*}", and no -F on the status-right appends
-      # (which would freeze in empty values); deferring to render time via #{E:...} works once loaded.
-      # Built-in modules (application/directory/pomodoro/battery/date_time) keep their own default
-      # accent colors — overriding those would hit the same not-yet-defined-@thm_* problem, since
-      # they're consumed inside catppuccin's own run-shell alongside the theme.
+      # catppuccin.tmux loads the catppuccin plugin. This extraConfig renders before catppuccin's own
+      # run-shell, so @thm_* isn't defined yet here (hence resurrect's hardcoded mocha-green hex, and
+      # no -F on the status-right appends, which would freeze in empty values before it's ready).
       catppuccin.tmux.extraConfig = ''
         set -g @catppuccin_window_status_style "rounded"
         set -g @catppuccin_window_text "#W"
@@ -276,6 +273,14 @@
         set -g @catppuccin_window_flags "icon"
         set -g @catppuccin_status_left_separator ""
         set -g @catppuccin_status_right_separator " "
+
+        # battery/pomodoro-plus normally interpolate their #{battery_icon}/#{pomodoro_status}
+        # placeholders by rewriting status-right at their own (earlier) plugin load time, before
+        # catppuccin has written those placeholders in — so it never fires. Set the resolved
+        # #() calls directly instead; catppuccin's -ogq defaults then leave these alone.
+        set -ogq @catppuccin_battery_icon "#(${batteryScripts}/battery_icon.sh) "
+        set -ogq @catppuccin_battery_text " #(${batteryScripts}/battery_percentage.sh)"
+        set -ogq @catppuccin_pomodoro_plus_text " #(${pomodoroScript})"
 
         # ============================================================================
         # Status Line

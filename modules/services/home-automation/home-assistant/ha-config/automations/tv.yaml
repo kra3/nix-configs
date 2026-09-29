@@ -59,6 +59,32 @@
       source: TV Audio
   mode: single
 
+- id: tv_ht_on_when_playing
+  alias: TV — HT on when playback starts
+  description: >-
+    Turn the home theater back on with TV Audio when the TV starts playing
+    while it is off (it powers off with the TV, and a resume does not always
+    go through the TV's off state).
+  triggers:
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    to: playing
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: media_player.home_theater_2
+    state: "off"
+  actions:
+  - action: media_player.turn_on
+    target:
+      entity_id: media_player.home_theater_2
+  - delay: "00:00:03"
+  - action: media_player.select_source
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      source: TV Audio
+  mode: single
+
 - id: tv_backlight_off
   alias: TV — Backlight off + HT
   description: >-

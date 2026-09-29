@@ -101,18 +101,11 @@
           data:
             transition: 60
           action: light.turn_on
-      - if:
-        - condition: not
-          conditions:
-          - condition: state
-            entity_id: binary_sensor.ranger_duo_ptz_person_occupancy
-            state: "off"
-        then:
-        - target:
-            entity_id: light.dining_lights
-          data:
-            transition: 60
-          action: light.turn_on
+      - target:
+          entity_id: light.dining_lights
+        data:
+          transition: 60
+        action: light.turn_on
     - conditions:
       - condition: trigger
         id: paused
@@ -121,28 +114,34 @@
         state: "off"
       sequence:
       - delay: "00:00:15"
-      - if:
-        - condition: state
-          entity_id: light.living_room_lights
-          state: "off"
-        then:
-        - target:
-            entity_id: light.living_room_lights
-          data:
-            brightness_pct: 20
-            transition: 10
-          action: light.turn_on
-        - target:
-            entity_id: switch.home_adaptive_lighting_home
-          data:
-            lights: light.living_room_lights
-            manual_control: true
-          action: adaptive_lighting.set_manual_control
+      - repeat:
+          for_each:
+          - light.living_room_lights
+          - light.dining_lights
+          sequence:
+          - if:
+            - condition: template
+              value_template: "{{ is_state(repeat.item, 'off') }}"
+            then:
+            - target:
+                entity_id: "{{ repeat.item }}"
+              data:
+                brightness_pct: 20
+                transition: 10
+              action: light.turn_on
+            - target:
+                entity_id: switch.home_adaptive_lighting_home
+              data:
+                lights: "{{ repeat.item }}"
+                manual_control: true
+              action: adaptive_lighting.set_manual_control
       - delay: "00:00:23"
       - target:
           entity_id: switch.home_adaptive_lighting_home
         data:
-          lights: light.living_room_lights
+          lights:
+          - light.living_room_lights
+          - light.dining_lights
           manual_control: false
         action: adaptive_lighting.set_manual_control
   mode: restart

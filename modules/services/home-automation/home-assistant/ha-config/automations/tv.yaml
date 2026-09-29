@@ -14,7 +14,10 @@
     trigger: device
   - entity_id: media_player.lg_webos_tv_oled77c35la
     from: "off"
-    to: "on"
+    not_to:
+    - "off"
+    - unavailable
+    - unknown
     trigger: state
   actions:
   - if:

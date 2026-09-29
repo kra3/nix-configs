@@ -70,24 +70,11 @@
       batteryScripts = "${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/scripts";
       pomodoroScript = "${tmux-pomodoro-plus}/share/tmux-plugins/tmux-pomodoro-plus/scripts/pomodoro.sh";
 
-      # One shared neutral pill background/text color (mocha surface_0/fg) instead of each module's
-      # own accent background — only the icon glyph keeps its accent, as color now instead of bg.
-      # session is left out — it stays red while the prefix key is held.
-      neutralBg = "#313244";
-      neutralFg = "#cdd6f4";
-      builtinModuleAccents = {
-        application = "#eba0ac"; # maroon
-        directory = "#f5e0dc"; # rosewater
-        pomodoro_plus = "#fab387"; # peach
-        battery = "#b4befe"; # lavender
-        date_time = "#74c7ec"; # sapphire
-      };
-      neutralModuleColors = lib.concatStrings (
-        lib.mapAttrsToList (m: accent: ''
-          set -g @catppuccin_${m}_color "${neutralBg}"
-          set -ogq "@catppuccin_status_${m}_icon_fg" "${accent}"
-        '') builtinModuleAccents
-      );
+      # catppuccin's own default text pill color (mocha surface_0/fg) — built-in modules resolve
+      # this themselves once loaded, but resurrect runs inline before that, so it's hardcoded here
+      # to match what they'd all land on anyway.
+      moduleTextBg = "#313244";
+      moduleTextFg = "#cdd6f4";
 
       # sutala/surasa are battery-less servers; mac-work is a laptop that always has one.
       hasBatteryScript = pkgs.writeShellScript "tmux-has-battery" (
@@ -298,8 +285,9 @@
         set -g @catppuccin_window_text "#W"
         set -g @catppuccin_window_current_text "#W"
         set -g @catppuccin_window_flags "icon"
-        set -g @catppuccin_status_left_separator ""
-        set -g @catppuccin_status_right_separator " "
+        # Rounded pill caps, matching @catppuccin_window_status_style above.
+        set -g @catppuccin_status_left_separator ""
+        set -g @catppuccin_status_right_separator ""
 
         # battery/pomodoro-plus normally interpolate their #{battery_icon}/#{pomodoro_status}
         # placeholders by rewriting status-right at their own (earlier) plugin load time, before
@@ -309,7 +297,6 @@
         set -ogq @catppuccin_battery_text " #(${batteryScripts}/battery_percentage.sh)"
         set -ogq @catppuccin_pomodoro_plus_text " #(${pomodoroScript})"
 
-        ${neutralModuleColors}
         # ============================================================================
         # Status Line
         # ============================================================================
@@ -325,11 +312,11 @@
 
         %hidden MODULE_NAME="resurrect"
         set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
-        set -ogq "@catppuccin_''${MODULE_NAME}_color" "${neutralBg}"
+        set -ogq "@catppuccin_''${MODULE_NAME}_color" "#a6e3a1"
         set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#a6e3a1"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "${neutralFg}"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "${neutralBg}"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#11111b"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "${moduleTextFg}"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "${moduleTextBg}"
         source-file "${catppuccinStatusModule}"
 
         set -g status-right " "

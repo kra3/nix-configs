@@ -55,6 +55,11 @@
     to: paused
     trigger: state
     id: paused
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    from: playing
+    to: "on"
+    trigger: state
+    id: paused
   conditions:
   - condition: or
     conditions:

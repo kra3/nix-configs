@@ -19,7 +19,9 @@
         };
       };
 
-      # Drives resurrect's scripts directly instead of tmux-continuum, which self-installs an unmanaged systemd/launchd unit.
+      # Boot/restore drive resurrect's scripts directly (continuum's boot installer bakes a stale nix
+      # store path into an unmanaged unit). Periodic save uses continuum's save-check script instead —
+      # see continuumSave — since an external launchd/systemd timer can't reach the tmux socket.
       resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
       resurrectDir = "${config.xdg.dataHome}/tmux/resurrect";
       resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
@@ -30,7 +32,7 @@
         ${lib.optionalString pkgs.stdenv.isLinux ''export TMUX_TMPDIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"''}
       '';
 
-      # "$@" lets the timer pass "quiet" while the manual C-s keybind keeps resurrect's spinner feedback.
+      # "$@" lets continuum's periodic trigger pass "quiet" while the manual C-s keybind keeps resurrect's spinner feedback.
       resurrectSave = pkgs.writeShellScript "tmux-resurrect-save" ''
         ${tmuxEnvExports}
         prev="$(readlink "${resurrectDir}/last" 2>/dev/null || true)"
@@ -59,6 +61,10 @@
           echo "💾 --"
         fi
       '';
+
+      # continuum_save.sh is self-contained (reads @continuum-* options directly), so it's invoked
+      # from status-right below without loading the rest of continuum's plugin.
+      continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
     in
     {
       imports = [
@@ -235,7 +241,11 @@
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
           set -g @resurrect-processes '~claude ~aider'
-          # Periodic save is handled outside tmux — see tmux-resurrect-save below.
+          # Point continuum's periodic save at our paneless-dump-guarded wrapper instead of resurrect's raw save.sh.
+          set -g @resurrect-save-script-path "${resurrectSave}"
+
+          # Read by continuum_save.sh (see continuumSave); boot/restore stay on the login-agent + hook below.
+          set -g @continuum-save-interval '15'
 
           # Restore only on a fresh headless server (server age + no attached client) — skip the interactive attach, which restore.sh would tear down.
           run-shell -b 'sleep 1; if [ $(( $(date +%s) - $(tmux display-message -p "#{start_time}") )) -lt 5 ] && [ -z "$(tmux list-clients 2>/dev/null)" ]; then "${resurrectRestore}"; fi'
@@ -247,33 +257,6 @@
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
         '';
-      };
-
-      # Periodic resurrect save, replacing tmux-continuum's status-bar-polled autosave.
-      systemd.user.services.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
-        Unit.Description = "Save tmux session state (tmux-resurrect)";
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${resurrectSave} quiet";
-        };
-      };
-      systemd.user.timers.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isLinux {
-        Unit.Description = "Periodic tmux-resurrect save";
-        Timer = {
-          OnStartupSec = "5m";
-          OnUnitActiveSec = "15m";
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
-      launchd.agents.tmux-resurrect-save = lib.mkIf pkgs.stdenv.isDarwin {
-        enable = true;
-        config = {
-          ProgramArguments = [
-            "${resurrectSave}"
-            "quiet"
-          ];
-          StartInterval = 15 * 60;
-        };
       };
 
       # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources).
@@ -301,6 +284,7 @@
 
         set -g status-right " "
         set -ag status-right "#(${resurrectStatus}) "
+        set -ag status-right "#(${continuumSave})"
         set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
         set -agF status-right "#{E:@catppuccin_status_battery}"
         set -agF status-right "#{E:@catppuccin_status_date_time}"

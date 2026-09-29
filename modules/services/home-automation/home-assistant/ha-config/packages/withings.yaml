@@ -16,16 +16,16 @@ template:
         unit_of_measurement: kg
         state_class: measurement
         availability: >-
-          {{ has_value('sensor.withings_arun_weight') and has_value('sensor.withings_arun_weight_goal') }}
+          {{ has_value('sensor.office_room_withings_kra_weight') }}
         state: >-
-          {{ (states('sensor.withings_arun_weight') | float - states('sensor.withings_arun_weight_goal') | float) | round(1) }}
+          {{ (states('sensor.office_room_withings_kra_weight') | float - 68) | round(1) }}
 
 automation:
   - id: withings_record_weigh_in
     alias: Withings — record weigh-in time
     triggers:
     - trigger: state
-      entity_id: sensor.withings_arun_weight
+      entity_id: sensor.office_room_withings_kra_weight
       not_from: [unavailable, unknown]
       not_to: [unavailable, unknown]
       id: arun

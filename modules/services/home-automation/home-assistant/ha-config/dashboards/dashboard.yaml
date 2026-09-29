@@ -637,7 +637,7 @@ views:
       heading: Arun
       heading_style: title
     - type: tile
-      entity: sensor.withings_arun_weight
+      entity: sensor.office_room_withings_kra_weight
       grid_options:
         columns: 6
     - type: tile
@@ -651,12 +651,12 @@ views:
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.withings_arun_fat_ratio
+      entity: sensor.office_room_withings_kra_fat_ratio
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Weight
-      entities: [sensor.withings_arun_weight]
+      entities: [sensor.office_room_withings_kra_weight]
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -666,8 +666,8 @@ views:
     - type: statistics-graph
       title: Fat and muscle mass
       entities:
-      - sensor.withings_arun_fat_mass
-      - sensor.withings_arun_muscle_mass
+      - sensor.office_room_withings_kra_fat_mass
+      - sensor.office_room_withings_kra_muscle_mass
       days_to_show: 180
       period: week
       stat_types: [mean]

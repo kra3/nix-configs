@@ -34,7 +34,9 @@
 # ── Battery ────────────────────────────────────────────────────
 - id: '1733595301092'
   alias: Low Battery Notifications & Actions
-  description: ''
+  description: >-
+    Blackshome blueprint: notifies (persistent + push) on low-battery
+    devices, evening-scheduled.
   use_blueprint:
     path: Blackshome/low-battery-notifications-and-actions.yaml
     input:
@@ -51,19 +53,9 @@
 - id: everyone_left_home
   alias: Everyone left home
   description: >-
-    When the last tracked person leaves the home zone, notify immediately
-    if an exit is already open, then wait out
-    timer.everyone_left_home_confirm (5 min, restore: true) before turning
-    off all lights and arming Alarmo away — an HA restart mid-countdown
-    just resumes instead of needing a startup-trigger workaround. Trigger
-    is zone.home crossing below 1, not a raw person-entity state trigger —
-    the latter fires on every GPS/attribute update even while already
-    away, and combined with mode: restart that kept resetting the confirm
-    timer for hours before it ever got to run. Alarmo silently refuses to
-    arm if a sensor's open (same as the bedtime arm in sleep.yaml), so
-    this checks the result and notifies either way — don't claim "alarm
-    armed" if it didn't. Force-arm is a dashboard button (dashboard.yaml)
-    for that case.
+    When the last tracked person leaves, waits out a 5min confirm timer
+    (timer.everyone_left_home_confirm, restart-safe) then turns off all
+    lights and arms Alarmo away, notifying either way.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home

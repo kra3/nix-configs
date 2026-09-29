@@ -2,12 +2,8 @@
 - id: hall_darkness
   alias: Hall — Darkness detection
   description: >-
-    Hysteresis darkness state machine for hall.
-    ON: lux < 10 sustained 2 min (or < 5 sustained 15 min if sun is up and
-    the forecast doesn't corroborate overcast). OFF: lux > 30 sustained
-    2 min AND sun above horizon; turns off light.
-    Thresholds lowered from the blueprint's 30/120 defaults - this room's
-    Hue PIR tops out around 70 lux even at midday, so 120 was unreachable.
+    Hysteresis darkness state machine for hall. ON: lux < 10 for 2min
+    (or < 5 for 15min if sun up). OFF: lux > 30 for 2min + sun up.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -23,17 +19,10 @@
 - id: hall_lighting
   alias: Hall — Lighting
   description: >-
-    Motion-tiered brightness instead of Adaptive Lighting's brightness
-    curve: hall is a transit space, not somewhere to linger, so it
-    doesn't need AL's daytime-brightness levels at night. 45% on
-    motion, 80% if occupancy stays continuously on for 2 min
-    (lingering, not passing through), 15% ambient instead of fully off
-    once occupancy's been clear for 2 min — including immediately at
-    dusk if already unoccupied. Off immediately at bedtime. Both
-    dim-down paths suppressed during input_boolean.party_mode, same as
-    the room-presence-lighting blueprint this replaces. Suppressed
-    entirely while Alarmo is pending/triggered so it can't undo
-    security.yaml's alarm-response lighting on the next motion event.
+    Motion-tiered brightness (45% on motion, 80% if lingering 2min, 15%
+    ambient once clear 2min, off at bedtime) instead of Adaptive
+    Lighting. Suppressed during party_mode and while Alarmo is
+    pending/triggered.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
     to: "on"

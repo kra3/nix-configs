@@ -31,8 +31,8 @@
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
   description: >-
-    Alarmo has no notification action of its own - this is the only
-    alert a triggered alarm produces.
+    Sends a push notification listing the open sensor(s) when Alarmo
+    triggers — its only built-in alert.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -48,12 +48,8 @@
 - id: alarm_triggered_auto_disarm_on_arrival
   alias: "Security: auto-disarm on triggered if a resident just arrived"
   description: >-
-    A triggered alarm otherwise only clears via sleep_alarmo_disarm_morning
-    (sleep.yaml), which can leave it triggered for up to the length of the
-    sleep window. Auto-clears if either a resident's device just arrived
-    home, or the front door was unlocked via keypad (a valid code is
-    stronger proof of legitimate entry than phone geofencing, which can
-    lag or drift).
+    Auto-disarms a triggered alarm if a resident's device arrived home
+    in the last 5min, or the front door was unlocked via keypad.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered

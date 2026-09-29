@@ -2,9 +2,8 @@
 - id: waste_collection_reminder
   alias: "Waste collection: evening-before reminder"
   description: >-
-    HA-start trigger is a catch-up for restarts landing on the T-12h
-    moment (calendar trigger's schedule is one-shot and silently drops
-    it); worst case is a duplicate notification, not a silent miss.
+    Notifies 12h before waste collection (calendar offset trigger).
+    HA-start trigger catches a restart landing on that one-shot moment.
   triggers:
   - trigger: calendar
     entity_id: calendar.va_syd_sophamntning

@@ -19,11 +19,9 @@
         };
       };
 
-      # Boot/restore drive resurrect's scripts directly (continuum's boot installer bakes a resolved
-      # `command -v tmux` path into an unmanaged systemd/launchd unit, which goes stale on package
-      # bumps). Periodic save uses continuum's own save-check script directly (see continuumSave
-      # below) — it's a tmux status-line interpolation forked by the server itself, unlike an
-      # external launchd/systemd timer, which can't connect to the tmux socket as a background agent.
+      # Boot/restore drive resurrect's scripts directly (continuum's boot installer bakes a stale nix
+      # store path into an unmanaged unit). Periodic save uses continuum's save-check script instead —
+      # see continuumSave — since an external launchd/systemd timer can't reach the tmux socket.
       resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
       resurrectDir = "${config.xdg.dataHome}/tmux/resurrect";
       resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
@@ -64,11 +62,8 @@
         fi
       '';
 
-      # continuum's own plugin init (boot-installer + status-right auto-injection) isn't loaded at
-      # all — continuum_save.sh is self-contained (reads @continuum-* tmux options directly), so we
-      # invoke it explicitly from status-right below (see continuumSave) instead of pulling in the
-      # rest of continuum's plugin, which would also try (and, per its own docs, needs to load last
-      # to avoid) touching status-right itself.
+      # continuum_save.sh is self-contained (reads @continuum-* options directly), so it's invoked
+      # from status-right below without loading the rest of continuum's plugin.
       continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
     in
     {
@@ -249,9 +244,7 @@
           # Point continuum's periodic save at our paneless-dump-guarded wrapper instead of resurrect's raw save.sh.
           set -g @resurrect-save-script-path "${resurrectSave}"
 
-          # continuum's save-interval option, read directly by continuum_save.sh (see continuumSave
-          # below) — boot/restore stay on the custom login-agent + hook, not continuum's own boot
-          # installer, which bakes a stale nix store path into an unmanaged systemd/launchd unit.
+          # Read by continuum_save.sh (see continuumSave); boot/restore stay on the login-agent + hook below.
           set -g @continuum-save-interval '15'
 
           # Restore only on a fresh headless server (server age + no attached client) — skip the interactive attach, which restore.sh would tear down.

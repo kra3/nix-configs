@@ -181,7 +181,7 @@
       home.shellAliases.beet-indian-film-cleanup = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-cleanup-secrets.yaml";
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
-        directory: /srv/media/library/music
+        directory: /srv/media/library/music/Indian
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         # aisauce is opt-in (see beet-indian-film-cleanup), not run on every regular import.
         plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names

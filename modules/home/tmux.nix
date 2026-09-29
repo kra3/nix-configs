@@ -10,6 +10,9 @@
     let
       tmux-pomodoro-plus = pkgs.tmuxPlugins.mkTmuxPlugin {
         pluginName = "tmux-pomodoro-plus";
+        # mkTmuxPlugin's default rtpFilePath guess (tmux_pomodoro_plus.tmux) doesn't exist in this
+        # repo — the actual entry point is pomodoro.tmux.
+        rtpFilePath = "pomodoro.tmux";
         version = "unstable-2024-08-17";
         src = pkgs.fetchFromGitHub {
           owner = "olimorris";

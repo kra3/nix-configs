@@ -52,11 +52,16 @@
   # Denon needs a moment after power-on before it accepts a source select
   # (same slow-to-respond behavior already worked around in front-door.yaml).
   - delay: "00:00:03"
-  - action: media_player.select_source
-    target:
-      entity_id: media_player.home_theater_2
-    data:
-      source: TV Audio
+  - if:
+    - condition: template
+      value_template: >-
+        {{ state_attr('media_player.home_theater_2', 'source') != 'PlayStation 5' }}
+    then:
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.home_theater_2
+      data:
+        source: TV Audio
   mode: single
 
 - id: tv_ht_on_when_playing

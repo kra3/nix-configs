@@ -57,15 +57,32 @@
       resurrectStatus = pkgs.writeShellScript "tmux-resurrect-status" ''
         if [ -f "${resurrectLastSaveFile}" ]; then
           elapsed=$(( ($(date +%s) - $(cat "${resurrectLastSaveFile}")) / 60 ))
-          echo "💾 ''${elapsed}m"
+          echo "''${elapsed}m"
         else
-          echo "💾 --"
+          echo "--"
         fi
       '';
 
       # continuum_save.sh is self-contained (reads @continuum-* options directly), so it's invoked
       # from status-right below without loading the rest of continuum's plugin.
       continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
+      catppuccinStatusModule = "${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/utils/status_module.conf";
+      batteryScripts = "${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/scripts";
+      pomodoroScript = "${tmux-pomodoro-plus}/share/tmux-plugins/tmux-pomodoro-plus/scripts/pomodoro.sh";
+
+      # catppuccin's own default text pill color (mocha surface_0/fg) — built-in modules resolve
+      # this themselves once loaded, but resurrect runs inline before that, so it's hardcoded here
+      # to match what they'd all land on anyway.
+      moduleTextBg = "#313244";
+      moduleTextFg = "#cdd6f4";
+
+      # sutala/surasa are battery-less servers; mac-work is a laptop that always has one.
+      hasBatteryScript = pkgs.writeShellScript "tmux-has-battery" (
+        if pkgs.stdenv.isDarwin then
+          "echo yes"
+        else
+          "ls -d /sys/class/power_supply/BAT* >/dev/null 2>&1 && echo yes || echo no"
+      );
     in
     {
       imports = [
@@ -260,15 +277,25 @@
         '';
       };
 
-      # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources).
-      # extraConfig runs after the plugin is loaded — customise window/status layout here.
+      # catppuccin.tmux loads the catppuccin plugin. This extraConfig renders before catppuccin's own
+      # run-shell, so @thm_* isn't defined yet here (hence the hardcoded hex colors, and no -F on
+      # the status-right appends, which would freeze in empty values before it's ready).
       catppuccin.tmux.extraConfig = ''
         set -g @catppuccin_window_status_style "rounded"
         set -g @catppuccin_window_text "#W"
         set -g @catppuccin_window_current_text "#W"
         set -g @catppuccin_window_flags "icon"
-        set -g @catppuccin_status_left_separator ""
-        set -g @catppuccin_status_right_separator " "
+        # Rounded pill caps, matching @catppuccin_window_status_style above.
+        set -g @catppuccin_status_left_separator ""
+        set -g @catppuccin_status_right_separator ""
+
+        # battery/pomodoro-plus normally interpolate their #{battery_icon}/#{pomodoro_status}
+        # placeholders by rewriting status-right at their own (earlier) plugin load time, before
+        # catppuccin has written those placeholders in — so it never fires. Set the resolved
+        # #() calls directly instead; catppuccin's -ogq defaults then leave these alone.
+        set -ogq @catppuccin_battery_icon "#(${batteryScripts}/battery_icon.sh) "
+        set -ogq @catppuccin_battery_text " #(${batteryScripts}/battery_percentage.sh)"
+        set -ogq @catppuccin_pomodoro_plus_text " #(${pomodoroScript})"
 
         # ============================================================================
         # Status Line
@@ -283,12 +310,23 @@
         set -ag status-left "#{E:@catppuccin_status_application}"
         set -ag status-left "#{E:@catppuccin_status_directory}"
 
+        %hidden MODULE_NAME="resurrect"
+        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
+        set -ogq "@catppuccin_''${MODULE_NAME}_color" "#a6e3a1"
+        set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#11111b"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "${moduleTextFg}"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "${moduleTextBg}"
+        source-file "${catppuccinStatusModule}"
+
         set -g status-right " "
-        set -ag status-right "#(${resurrectStatus}) "
+        set -ag status-right "#{E:@catppuccin_status_resurrect}"
         set -ag status-right "#(${continuumSave})"
-        set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
-        set -agF status-right "#{E:@catppuccin_status_battery}"
-        set -agF status-right "#{E:@catppuccin_status_date_time}"
+        set -ag status-right "#{E:@catppuccin_status_pomodoro_plus}"
+        %if "#{==:#(${hasBatteryScript}),yes}"
+        set -ag status-right "#{E:@catppuccin_status_battery}"
+        %endif
+        set -ag status-right "#{E:@catppuccin_status_date_time}"
       '';
     };
 }

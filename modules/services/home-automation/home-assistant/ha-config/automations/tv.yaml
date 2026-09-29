@@ -77,7 +77,7 @@
   - action: media_player.turn_on
     target:
       entity_id: media_player.home_theater_2
-  - delay: "00:00:03"
+  - delay: "00:00:05"
   - action: media_player.select_source
     target:
       entity_id: media_player.home_theater_2

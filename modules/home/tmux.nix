@@ -57,15 +57,16 @@
       resurrectStatus = pkgs.writeShellScript "tmux-resurrect-status" ''
         if [ -f "${resurrectLastSaveFile}" ]; then
           elapsed=$(( ($(date +%s) - $(cat "${resurrectLastSaveFile}")) / 60 ))
-          echo "💾 ''${elapsed}m"
+          echo "''${elapsed}m"
         else
-          echo "💾 --"
+          echo "--"
         fi
       '';
 
       # continuum_save.sh is self-contained (reads @continuum-* options directly), so it's invoked
       # from status-right below without loading the rest of continuum's plugin.
       continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
+      catppuccinStatusModule = "${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/utils/status_module.conf";
     in
     {
       imports = [
@@ -283,8 +284,14 @@
         set -ag status-left "#{E:@catppuccin_status_application}"
         set -ag status-left "#{E:@catppuccin_status_directory}"
 
+        %hidden MODULE_NAME="resurrect"
+        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
+        set -ogqF "@catppuccin_''${MODULE_NAME}_color" "#{E:@thm_green}"
+        set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
+        source-file "${catppuccinStatusModule}"
+
         set -g status-right " "
-        set -ag status-right "#(${resurrectStatus}) "
+        set -agF status-right "#{E:@catppuccin_status_resurrect}"
         set -ag status-right "#(${continuumSave})"
         set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
         set -agF status-right "#{E:@catppuccin_status_battery}"

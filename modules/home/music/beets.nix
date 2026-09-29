@@ -144,17 +144,22 @@
             ];
           };
           embedart.maxwidth = 1000;
-          # fanarttv_key (secret) lives in the beets-secrets.yaml overlay; this just
-          # opts the source into the default list, which omits it otherwise.
-          fetchart.sources = [
-            "filesystem"
-            "coverart"
-            "itunes"
-            "amazon"
-            "albumart"
-            "cover_art_url"
-            "fanarttv"
-          ];
+          fetchart = {
+            # fanarttv_key (secret) lives in the beets-secrets.yaml overlay; this just
+            # opts the source into the default list, which omits it otherwise.
+            sources = [
+              "filesystem"
+              "coverart"
+              "itunes"
+              "amazon"
+              "albumart"
+              "cover_art_url"
+              "fanarttv"
+            ];
+            # Default (no) skips art fetching for track-only ("Tracks") imports, leaving
+            # whatever was already embedded in the source file -- stale or wrong.
+            fetch_for_asis = true;
+          };
           import = {
             move = true;
             write = true;
@@ -204,6 +209,9 @@
             - albumart
             - cover_art_url
             - fanarttv
+          # Default (no) skips art fetching for track-only ("Tracks") imports, leaving
+          # whatever was already embedded in the source file -- stale or wrong.
+          fetch_for_asis: yes
         import:
           move: yes
           write: yes

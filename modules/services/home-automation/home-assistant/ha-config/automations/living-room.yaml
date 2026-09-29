@@ -56,13 +56,10 @@
     are known to false-negative (see living_room_lighting's KNOWN ISSUE).
     Darkness gate is either room's own boolean now (was hall_is_dark) -
     living and dining each have their own since both moved to
-    sensor.average_illuminance. Pause dims living room lights to 20%
-    after a 38s buffer (avoids flicker on brief pause/buffering) rather
-    than restoring full brightness, and hands the light to Adaptive
-    Lighting's manual_control so it doesn't immediately re-adapt the
-    brightness back up; AL reclaims it automatically on the light's
-    next off->on transition (i.e. when not_playing's plain turn_on
-    fires on a genuine stop).
+    sensor.average_illuminance. Pause skips the presence check (paused
+    implies someone's there) and dims living room lights to 20% at 15s,
+    then hands the light back to Adaptive Lighting's manual_control at
+    38s so AL resumes adapting brightness on its own.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -145,16 +142,11 @@
         entity_id: schedule.sleep
         state: "off"
       sequence:
-      - delay: "00:00:38"
+      - delay: "00:00:15"
       - if:
         - condition: state
           entity_id: light.living_room_lights
           state: "off"
-        - condition: not
-          conditions:
-          - condition: state
-            entity_id: binary_sensor.ranger_duo_fxd_person_occupancy
-            state: "off"
         then:
         - target:
             entity_id: light.living_room_lights
@@ -168,4 +160,56 @@
             lights: light.living_room_lights
             manual_control: true
           action: adaptive_lighting.set_manual_control
+      - delay: "00:00:23"
+      - target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: light.living_room_lights
+          manual_control: false
+        action: adaptive_lighting.set_manual_control
   mode: restart
+
+- id: living_room_bedtime_lights_off
+  alias: Living room — Lights off (bedtime, no presence)
+  description: >-
+    Past bedtime, if nobody's been detected in living room or dining
+    for 15 minutes and nothing's playing on the TV or home theater,
+    turn both rooms' lights off. Two triggers cover both orderings:
+    presence clearing while already past bedtime, and bedtime starting
+    while the rooms are already empty.
+  triggers:
+  - id: presence_clear
+    trigger: template
+    value_template: >-
+      {{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'off')
+         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off') }}
+    for: "00:15:00"
+  - id: sleep_start
+    trigger: state
+    entity_id: schedule.sleep
+    to: "on"
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  - condition: template
+    value_template: >-
+      {{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'off')
+         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off')
+         and now() - states.binary_sensor.ranger_duo_fxd_person_occupancy.last_changed
+             >= timedelta(minutes=15)
+         and now() - states.binary_sensor.ranger_duo_ptz_person_occupancy.last_changed
+             >= timedelta(minutes=15) }}
+  - condition: template
+    value_template: >-
+      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
+         and states('media_player.home_theater_2') != 'playing' }}
+  actions:
+  - target:
+      entity_id:
+      - light.living_room_lights
+      - light.dining_lights
+    data:
+      transition: 5
+    action: light.turn_off
+  mode: single

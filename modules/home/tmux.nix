@@ -66,15 +66,10 @@
       # continuum_save.sh is self-contained (reads @continuum-* options directly), so it's invoked
       # from status-right below without loading the rest of continuum's plugin.
       continuumSave = "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh";
-      catppuccinStatusModule = "${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/utils/status_module.conf";
+      catppuccinStatusModule = "${config.catppuccin.sources.tmux}/share/tmux-plugins/catppuccin/utils/status_module.conf";
+      catppuccinTmuxScript = "${config.catppuccin.sources.tmux}/share/tmux-plugins/catppuccin/catppuccin.tmux";
       batteryScripts = "${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/scripts";
       pomodoroScript = "${tmux-pomodoro-plus}/share/tmux-plugins/tmux-pomodoro-plus/scripts/pomodoro.sh";
-
-      # catppuccin's own default text pill color (mocha surface_0/fg) — built-in modules resolve
-      # this themselves once loaded, but resurrect runs inline before that, so it's hardcoded here
-      # to match what they'd all land on anyway.
-      moduleTextBg = "#313244";
-      moduleTextFg = "#cdd6f4";
 
       # sutala/surasa are battery-less servers; mac-work is a laptop that always has one.
       hasBatteryScript = pkgs.writeShellScript "tmux-has-battery" (
@@ -83,6 +78,56 @@
         else
           "ls -d /sys/class/power_supply/BAT* >/dev/null 2>&1 && echo yes || echo no"
       );
+
+      # Window/separator styling: must be set before catppuccin's run-shell (built-in modules read
+      # these while it sources), and @catppuccin_reset wipes all of it, so client-dark/light-theme
+      # below re-apply this same block before re-running catppuccin.
+      windowAndSeparatorConf = ''
+        set -g @catppuccin_window_status_style "rounded"
+        set -g @catppuccin_window_text "#W"
+        set -g @catppuccin_window_current_text "#W"
+        set -g @catppuccin_window_flags "icon"
+        set -g @catppuccin_status_left_separator ""
+        set -g @catppuccin_status_right_separator ""
+      '';
+
+      # This must live in its own file, sourced via `source-file`, not inlined directly:
+      # tmux's %if inside status_module.conf silently fails to fire when everything is
+      # inlined in the same top-level file as an earlier blocking run-shell (confirmed
+      # empirically) -- one more level of source-file nesting avoids it.
+      resurrectModuleConfFile = pkgs.writeText "tmux-resurrect-module.conf" ''
+        %hidden MODULE_NAME="resurrect"
+        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
+        set -ogqF "@catppuccin_''${MODULE_NAME}_color" "#{E:@thm_green}"
+        set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
+        set -ogqF "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#{E:@thm_crust}"
+        set -ogqF "@catppuccin_status_''${MODULE_NAME}_text_fg" "#{E:@thm_fg}"
+        set -ogqF "@catppuccin_status_''${MODULE_NAME}_text_bg" "#{E:@thm_surface_0}"
+        source-file "${catppuccinStatusModule}"
+      '';
+      resurrectModuleConf = ''source-file "${resurrectModuleConfFile}"'';
+
+      # @catppuccin_reset unsets window/separator styling and catppuccin's own built-in modules'
+      # derived colors (see windowAndSeparatorConf) but doesn't know about our resurrect module, so
+      # its -ogqF-guarded color/icon_bg would otherwise stay frozen at the old flavor's hex forever —
+      # unset them here so resurrectModuleConf re-derives them fresh from the new flavor's @thm_*.
+      resurrectModuleReset = ''
+        set -gu @catppuccin_resurrect_color
+        set -gu @catppuccin_status_resurrect_icon_fg
+        set -gu @catppuccin_status_resurrect_text_fg
+        set -gu @catppuccin_status_resurrect_text_bg
+        set -gu @catppuccin_status_resurrect_icon_bg
+      '';
+
+      themeHook = flavor: ''
+        set -g @catppuccin_flavor "${flavor}"
+        set -g @catppuccin_reset "true"
+        run "${catppuccinTmuxScript}"
+        ${windowAndSeparatorConf}
+        run "${catppuccinTmuxScript}"
+        ${resurrectModuleReset}
+        ${resurrectModuleConf}
+      '';
     in
     {
       imports = [
@@ -274,20 +319,45 @@
           # Tmux-yank
           set -g @yank_selection 'primary'
           set -g @yank_selection_mouse 'clipboard'
+
+          # ============================================================================
+          # Status Line
+          # ============================================================================
+
+          set -g status-position bottom
+          set -g status-justify "absolute-centre"
+          set -g status-left-length 40
+          set -g status-right-length 40
+
+          set -g status-left "#{E:@catppuccin_status_session}"
+          set -ag status-left "#{E:@catppuccin_status_application}"
+          set -ag status-left "#{E:@catppuccin_status_directory}"
+
+          ${resurrectModuleConf}
+          set -g status-right " "
+          set -ag status-right "#{E:@catppuccin_status_resurrect}"
+          set -ag status-right "#(${continuumSave})"
+          set -ag status-right "#{E:@catppuccin_status_pomodoro_plus}"
+          %if "#{==:#(${hasBatteryScript}),yes}"
+          set -ag status-right "#{E:@catppuccin_status_battery}"
+          %endif
+          set -ag status-right "#{E:@catppuccin_status_date_time}"
+
+          # tmux 3.6+: react to the terminal's own light/dark preference by reflavoring catppuccin.
+          set-hook -g client-dark-theme {
+            ${themeHook "mocha"}
+          }
+          set-hook -g client-light-theme {
+            ${themeHook "latte"}
+          }
         '';
       };
 
       # catppuccin.tmux loads the catppuccin plugin. This extraConfig renders before catppuccin's own
-      # run-shell, so @thm_* isn't defined yet here (hence the hardcoded hex colors, and no -F on
-      # the status-right appends, which would freeze in empty values before it's ready).
+      # run-shell, so @thm_* isn't defined yet here — windowAndSeparatorConf needs no theme colors,
+      # but is duplicated into themeHook above since @catppuccin_reset wipes it on a flavor switch.
       catppuccin.tmux.extraConfig = ''
-        set -g @catppuccin_window_status_style "rounded"
-        set -g @catppuccin_window_text "#W"
-        set -g @catppuccin_window_current_text "#W"
-        set -g @catppuccin_window_flags "icon"
-        # Rounded pill caps, matching @catppuccin_window_status_style above.
-        set -g @catppuccin_status_left_separator ""
-        set -g @catppuccin_status_right_separator ""
+        ${windowAndSeparatorConf}
 
         # battery/pomodoro-plus normally interpolate their #{battery_icon}/#{pomodoro_status}
         # placeholders by rewriting status-right at their own (earlier) plugin load time, before
@@ -296,37 +366,6 @@
         set -ogq @catppuccin_battery_icon "#(${batteryScripts}/battery_icon.sh) "
         set -ogq @catppuccin_battery_text " #(${batteryScripts}/battery_percentage.sh)"
         set -ogq @catppuccin_pomodoro_plus_text " #(${pomodoroScript})"
-
-        # ============================================================================
-        # Status Line
-        # ============================================================================
-
-        set -g status-position bottom
-        set -g status-justify "absolute-centre"
-        set -g status-left-length 40
-        set -g status-right-length 40
-
-        set -g status-left "#{E:@catppuccin_status_session}"
-        set -ag status-left "#{E:@catppuccin_status_application}"
-        set -ag status-left "#{E:@catppuccin_status_directory}"
-
-        %hidden MODULE_NAME="resurrect"
-        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
-        set -ogq "@catppuccin_''${MODULE_NAME}_color" "#a6e3a1"
-        set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#11111b"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "${moduleTextFg}"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "${moduleTextBg}"
-        source-file "${catppuccinStatusModule}"
-
-        set -g status-right " "
-        set -ag status-right "#{E:@catppuccin_status_resurrect}"
-        set -ag status-right "#(${continuumSave})"
-        set -ag status-right "#{E:@catppuccin_status_pomodoro_plus}"
-        %if "#{==:#(${hasBatteryScript}),yes}"
-        set -ag status-right "#{E:@catppuccin_status_battery}"
-        %endif
-        set -ag status-right "#{E:@catppuccin_status_date_time}"
       '';
     };
 }

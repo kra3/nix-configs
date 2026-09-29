@@ -261,8 +261,9 @@
         '';
       };
 
-      # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources).
-      # extraConfig runs after the plugin is loaded — customise window/status layout here.
+      # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources). This extraConfig
+      # actually renders before catppuccin.tmux's own run-shell in the generated tmux.conf, so
+      # setting @catppuccin_<module>_color here (non -o) wins over that module's own -o default.
       catppuccin.tmux.extraConfig = ''
         set -g @catppuccin_window_status_style "rounded"
         set -g @catppuccin_window_text "#W"
@@ -270,6 +271,12 @@
         set -g @catppuccin_window_flags "icon"
         set -g @catppuccin_status_left_separator ""
         set -g @catppuccin_status_right_separator " "
+
+        set -gF @catppuccin_application_color "#{E:@thm_lavender}"
+        set -gF @catppuccin_directory_color "#{E:@thm_lavender}"
+        set -gF @catppuccin_pomodoro_plus_color "#{E:@thm_lavender}"
+        set -gF @catppuccin_battery_color "#{E:@thm_lavender}"
+        set -gF @catppuccin_date_time_color "#{E:@thm_lavender}"
 
         # ============================================================================
         # Status Line
@@ -286,7 +293,7 @@
 
         %hidden MODULE_NAME="resurrect"
         set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
-        set -ogqF "@catppuccin_''${MODULE_NAME}_color" "#{E:@thm_green}"
+        set -ogqF "@catppuccin_''${MODULE_NAME}_color" "#{E:@thm_lavender}"
         set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
         source-file "${catppuccinStatusModule}"
 

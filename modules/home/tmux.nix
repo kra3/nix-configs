@@ -10,6 +10,7 @@
     let
       tmux-pomodoro-plus = pkgs.tmuxPlugins.mkTmuxPlugin {
         pluginName = "tmux-pomodoro-plus";
+        rtpFilePath = "pomodoro.tmux";
         version = "unstable-2024-08-17";
         src = pkgs.fetchFromGitHub {
           owner = "olimorris";

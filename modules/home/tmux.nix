@@ -70,22 +70,24 @@
       batteryScripts = "${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/scripts";
       pomodoroScript = "${tmux-pomodoro-plus}/share/tmux-plugins/tmux-pomodoro-plus/scripts/pomodoro.sh";
 
-      # Neutral pill styling (mocha surface_0/fg) shared by every status-right module, instead of
-      # each module's own accent color.
+      # One shared neutral pill background/text color (mocha surface_0/fg) instead of each module's
+      # own accent background — only the icon glyph keeps its accent, as color now instead of bg.
+      # session is left out — it stays red while the prefix key is held.
       neutralBg = "#313244";
       neutralFg = "#cdd6f4";
-      builtinStatusModules = [
-        "session"
-        "application"
-        "directory"
-        "pomodoro_plus"
-        "battery"
-        "date_time"
-      ];
-      neutralModuleColors = lib.concatMapStrings (m: ''
-        set -g @catppuccin_${m}_color "${neutralBg}"
-        set -ogq "@catppuccin_status_${m}_icon_fg" "${neutralFg}"
-      '') builtinStatusModules;
+      builtinModuleAccents = {
+        application = "#eba0ac"; # maroon
+        directory = "#f5e0dc"; # rosewater
+        pomodoro_plus = "#fab387"; # peach
+        battery = "#b4befe"; # lavender
+        date_time = "#74c7ec"; # sapphire
+      };
+      neutralModuleColors = lib.concatStrings (
+        lib.mapAttrsToList (m: accent: ''
+          set -g @catppuccin_${m}_color "${neutralBg}"
+          set -ogq "@catppuccin_status_${m}_icon_fg" "${accent}"
+        '') builtinModuleAccents
+      );
 
       # sutala/surasa are battery-less servers; mac-work is a laptop that always has one.
       hasBatteryScript = pkgs.writeShellScript "tmux-has-battery" (
@@ -322,10 +324,10 @@
         set -ag status-left "#{E:@catppuccin_status_directory}"
 
         %hidden MODULE_NAME="resurrect"
-        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
+        set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
         set -ogq "@catppuccin_''${MODULE_NAME}_color" "${neutralBg}"
         set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
-        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "${neutralFg}"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#a6e3a1"
         set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "${neutralFg}"
         set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "${neutralBg}"
         source-file "${catppuccinStatusModule}"

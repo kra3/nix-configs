@@ -2,15 +2,9 @@
 - id: dining_darkness
   alias: Dining room — Darkness detection
   description: >-
-    Hysteresis darkness state machine for dining, using the house-wide
-    average illuminance (dining has no illuminance sensor of its own)
-    rather than hall_is_dark — dining is one of the brightest rooms, so
-    gating it on the hall's dim interior PIR reading (which can read
-    dark at midday, see hall.yaml) turned dining lights on in broad
-    daylight. dark_below raised to 45 — blueprint's 30 default was slow to
-    trip on cloudy-evening drops (stuck above 30 at 44 lux, occupied).
-    dark_below_daytime pinned to 45 too — left at the blueprint's 1000
-    default, it read normal daytime dips in average_illuminance as dark.
+    Hysteresis darkness state machine for dining, using house-wide
+    average illuminance (no local sensor). dark_below/dark_below_daytime
+    pinned to 45.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -25,9 +19,8 @@
 - id: dining_room_lighting
   alias: Dining room — Lighting
   description: >-
-    Presence + darkness via ranger_duo_ptz's Frigate person detection
-    (was hall_is_dark-only edge-triggered; motion PIR/PTZ verified firing
-    reliably for this camera). Manual override via STYRBAR double-tap.
+    Presence + darkness via ranger_duo_ptz's Frigate person detection.
+    Manual override via STYRBAR double-tap.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:

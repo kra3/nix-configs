@@ -2,15 +2,9 @@
 - id: automations_paused_sync
   alias: "Manual mode: pause/resume automations"
   description: >-
-    Disables the automations in managed_aliases below while
-    input_boolean.automations_paused is on (re-enables on off) — matched
-    by alias text since HA appends a numeric suffix on any entity_id
-    slug collision (automation.tv_backlight_off_2 already has one), so
-    a hardcoded entity_id list would silently miss entries. Security
-    lights, Frigate gating, and pure-notification automations are
-    intentionally excluded. Blunt pause/resume, not per-automation
-    memory — resume re-enables everything on the list regardless of
-    prior state.
+    Pauses/resumes the automations listed in managed_aliases (matched
+    by alias, not entity_id) via input_boolean.automations_paused.
+    Security, Frigate gating, and notification automations excluded.
   triggers:
   - entity_id: input_boolean.automations_paused
     trigger: state

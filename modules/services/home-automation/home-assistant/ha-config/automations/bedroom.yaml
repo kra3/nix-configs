@@ -2,13 +2,8 @@
 - id: bedroom_darkness
   alias: Bedroom — Darkness detection
   description: >-
-    Hysteresis darkness state machine for bedroom.
-    ON: lux < 50 sustained 2 min AND sun below horizon.
-    OFF: lux > 120 sustained 2 min AND sun above horizon; turns off light.
-    dark_below raised from the blueprint's 30 default - bedroom's own
-    sensor floors around 20-24 lux overnight, so 30 left almost no
-    margin and lagged real dusk (confirmed via Prometheus: sat in the
-    30-90 lux range for a good while before finally crossing under 30).
+    Hysteresis darkness state machine for bedroom. ON: lux < 50 for
+    2min + sun down. OFF: lux > 120 for 2min + sun up.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:

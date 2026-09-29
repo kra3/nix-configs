@@ -2,17 +2,9 @@
 - id: living_darkness
   alias: Living room — Darkness detection
   description: >-
-    Hysteresis darkness state machine for living room, using the
-    house-wide average illuminance (living room has no illuminance
-    sensor of its own) rather than hall_is_dark — same fix as
-    dining_darkness, for the same reason: living room is one of the
-    brightest rooms, so gating it on the hall's dim interior PIR
-    turned its lights on in broad daylight. dark_below/dark_below_daytime
-    pinned to 45, matching dining_darkness (same sensor) — left at the
-    blueprint's 1000 default, normal daytime dips in average_illuminance
-    read as dark and got stuck on (bright_above's trigger needs a fresh
-    below→above crossing to clear it, which lux never dropped low enough
-    to produce).
+    Hysteresis darkness state machine for living room, using house-wide
+    average illuminance (no local sensor). dark_below/dark_below_daytime
+    pinned to 45.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -28,12 +20,8 @@
   alias: Living room — Lighting
   description: >-
     Presence + darkness via ranger_duo_fxd's Frigate person detection.
-    KNOWN ISSUE: ranger_duo_fxd's motion sensor is barely firing (verified
-    2026-09-04 — one event all day despite confirmed presence), so
-    Frigate's detect-on-motion gate rarely enables long enough for
-    person_occupancy to populate. Needs a Frigate motion-mask/sensitivity
-    tuning pass before this reliably turns lights on; shipped anyway
-    since darkness-edge-only was equally unreliable.
+    KNOWN ISSUE: motion sensor rarely fires, so occupancy rarely
+    populates for turn-on.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -46,20 +34,10 @@
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
   description: >-
-    Turn off living + dining lights when watching content on
-    Stremio, Jellyfin, or Apple TV. Restore when stopped, unless a
-    room's presence sensor already reports it empty — otherwise this
-    would flicker the light back on right before living_room_lighting/
-    dining_room_lighting's own occupancy-clear branch turns it off
-    again. Only skips on a definite "off"; unknown/unavailable still
-    restores, since the underlying Frigate person_occupancy sensors
-    are known to false-negative (see living_room_lighting's KNOWN ISSUE).
-    Darkness gate is either room's own boolean now (was hall_is_dark) -
-    living and dining each have their own since both moved to
-    sensor.average_illuminance. Pause skips the presence check (paused
-    implies someone's there) and dims living room lights to 20% at 15s,
-    then hands the light back to Adaptive Lighting's manual_control at
-    38s so AL resumes adapting brightness on its own.
+    Turns off living+dining lights when Stremio/Jellyfin/Apple TV plays;
+    restores full brightness on stop (skips a room only if its presence
+    sensor reads a definite off), dims living room to 20% on pause then
+    hands it back to Adaptive Lighting after 38s.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -172,11 +150,8 @@
 - id: living_room_bedtime_lights_off
   alias: Living room — Lights off (bedtime, no presence)
   description: >-
-    Past bedtime, if nobody's been detected in living room or dining
-    for 15 minutes and nothing's playing on the TV or home theater,
-    turn both rooms' lights off. Two triggers cover both orderings:
-    presence clearing while already past bedtime, and bedtime starting
-    while the rooms are already empty.
+    Turns off living+dining lights once past bedtime with no presence
+    for 15 minutes and nothing playing on the TV or home theater.
   triggers:
   - id: presence_clear
     trigger: template

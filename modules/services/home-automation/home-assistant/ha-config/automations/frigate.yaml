@@ -79,11 +79,8 @@
 - id: frigate_detect_resync_on_restart
   alias: "Frigate: resync detect/audio baseline after restart"
   description: >-
-    Frigate's detect/audio switches are in-memory only (not persisted
-    across process restarts — every reconnect republishes them ON from
-    the static YAML config). Re-apply the alarm-state baseline as soon
-    as Frigate reconnects to MQTT so a nix deploy or crash doesn't
-    silently leave detection running while armed night/disarmed.
+    Re-applies the alarm-state detect/audio baseline when Frigate
+    reconnects to MQTT — its switches aren't persisted across restarts.
   triggers:
   - trigger: mqtt
     topic: frigate/available
@@ -95,16 +92,8 @@
 - id: frigate_motion_staleness_watchdog
   alias: "Frigate: alert on stale motion sensor"
   description: >-
-    A per-camera motion sensor can silently stop updating while
-    everything else (stream, MQTT, detect switches) still looks fine —
-    seen 2026-09-04 on ranger_duo_fxd_motion, frozen for 3.5+ hours
-    through a live-verified motion event; reloading the MQTT
-    integration alone didn't clear it, only a host-level restart did.
-    Dining/living room lighting now depends on person_occupancy (built
-    on this same motion signal), so a stuck sensor silently breaks
-    presence-based lighting. The fix is a host-side systemctl restart
-    HA has no built-in way to trigger, so this just notifies with the
-    exact command rather than attempting the restart itself.
+    Notifies if a camera's motion sensor hasn't updated in 4+ hours,
+    with the host-side restart command — HA can't trigger it itself.
   triggers:
   - trigger: time_pattern
     hours: "/1"

@@ -262,8 +262,13 @@
       };
 
       # catppuccin.tmux loads the catppuccin plugin (from catppuccin/nix sources). This extraConfig
-      # actually renders before catppuccin.tmux's own run-shell in the generated tmux.conf, so
-      # setting @catppuccin_<module>_color here (non -o) wins over that module's own -o default.
+      # renders before catppuccin.tmux's own run-shell in the generated tmux.conf, so @thm_* isn't
+      # defined yet here — hence the resurrect module's hardcoded mocha-green hex below (flavor is
+      # pinned to mocha above) instead of "#{E:@thm_*}", and no -F on the status-right appends
+      # (which would freeze in empty values); deferring to render time via #{E:...} works once loaded.
+      # Built-in modules (application/directory/pomodoro/battery/date_time) keep their own default
+      # accent colors — overriding those would hit the same not-yet-defined-@thm_* problem, since
+      # they're consumed inside catppuccin's own run-shell alongside the theme.
       catppuccin.tmux.extraConfig = ''
         set -g @catppuccin_window_status_style "rounded"
         set -g @catppuccin_window_text "#W"
@@ -271,12 +276,6 @@
         set -g @catppuccin_window_flags "icon"
         set -g @catppuccin_status_left_separator ""
         set -g @catppuccin_status_right_separator " "
-
-        set -gF @catppuccin_application_color "#{E:@thm_lavender}"
-        set -gF @catppuccin_directory_color "#{E:@thm_lavender}"
-        set -gF @catppuccin_pomodoro_plus_color "#{E:@thm_lavender}"
-        set -gF @catppuccin_battery_color "#{E:@thm_lavender}"
-        set -gF @catppuccin_date_time_color "#{E:@thm_lavender}"
 
         # ============================================================================
         # Status Line
@@ -293,16 +292,19 @@
 
         %hidden MODULE_NAME="resurrect"
         set -ogq "@catppuccin_''${MODULE_NAME}_icon" " "
-        set -ogqF "@catppuccin_''${MODULE_NAME}_color" "#{E:@thm_lavender}"
+        set -ogq "@catppuccin_''${MODULE_NAME}_color" "#a6e3a1"
         set -ogq "@catppuccin_''${MODULE_NAME}_text" " #(${resurrectStatus})"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_icon_fg" "#11111b"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_fg" "#cdd6f4"
+        set -ogq "@catppuccin_status_''${MODULE_NAME}_text_bg" "#313244"
         source-file "${catppuccinStatusModule}"
 
         set -g status-right " "
-        set -agF status-right "#{E:@catppuccin_status_resurrect}"
+        set -ag status-right "#{E:@catppuccin_status_resurrect}"
         set -ag status-right "#(${continuumSave})"
-        set -agF status-right "#{E:@catppuccin_status_pomodoro_plus}"
-        set -agF status-right "#{E:@catppuccin_status_battery}"
-        set -agF status-right "#{E:@catppuccin_status_date_time}"
+        set -ag status-right "#{E:@catppuccin_status_pomodoro_plus}"
+        set -ag status-right "#{E:@catppuccin_status_battery}"
+        set -ag status-right "#{E:@catppuccin_status_date_time}"
       '';
     };
 }

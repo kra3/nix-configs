@@ -36,8 +36,8 @@
   description: >-
     Turns off living+dining lights when Stremio/Jellyfin/Apple TV plays;
     restores full brightness on stop (skips a room only if its presence
-    sensor reads a definite off), dims living room to 20% on pause then
-    hands it back to Adaptive Lighting after 38s.
+    sensor reads a definite off). On pause, dims living room to 20% at
+    15s, then hands it back to Adaptive Lighting at 38s.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing

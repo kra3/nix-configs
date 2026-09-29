@@ -59,10 +59,8 @@
 - id: tv_backlight_off
   alias: TV — Backlight off + HT
   description: >-
-    Turn off ambient backlight when TV powers off; also turn off the home
-    theater, but only if it was actually playing TV audio (PS5 passthrough
-    counts as TV audio here too) -- otherwise it's doing something
-    unrelated (Music Assistant/Spotify direct) and shouldn't be touched.
+    Turns off backlight when TV powers off; also turns off the home
+    theater, but only if its source was TV Audio or PS5 passthrough.
   triggers:
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: media_player

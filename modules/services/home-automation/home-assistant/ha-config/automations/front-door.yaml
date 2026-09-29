@@ -1,7 +1,10 @@
 # ── Front Door Management ──────────────────────────────────────
 - id: front_door_knock_announcements
   alias: "Front Door: Knock TTS & Notifications"
-  description: Plays TTS and sends notifications when someone knocks at the front door.
+  description: >-
+    On a valid knock (door closed, no recent lock/open activity), pauses
+    the TV, plays a TTS chime on the home theater, resumes the TV, then
+    notifies whoever's home (or everyone, if the house is empty).
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration

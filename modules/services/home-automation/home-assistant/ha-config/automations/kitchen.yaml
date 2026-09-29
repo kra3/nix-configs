@@ -2,10 +2,9 @@
 - id: kitchen_darkness
   alias: Kitchen — Darkness detection
   description: >-
-    Hysteresis darkness state machine for kitchen. ON: lux < 10 for 2min
-    (or < 15 for 15min if sun up). OFF: lux > 30 for 2min + sun up.
-    House-wide average illuminance corroborates the daytime dip to
-    guard against false trips.
+    Hysteresis darkness state machine for kitchen. ON: lux < 10 for
+    2min (or < 15 for 15min, corroborated by house-wide average). OFF:
+    lux > 30 for 2min + sun up.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:

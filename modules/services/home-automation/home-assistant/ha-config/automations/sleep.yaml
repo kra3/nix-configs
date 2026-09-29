@@ -63,9 +63,8 @@
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Kept separate from wakeup_lighting so a fault there can't also block
-    the disarm. Only disarms if someone's actually home — an empty house
-    shouldn't lose its alarm just because the sleep schedule ended.
+    Disarms Alarmo when the sleep schedule ends (or on HA startup if it
+    ended while still armed_night), only if someone's home.
   triggers:
   - id: schedule_off
     entity_id: schedule.sleep
@@ -108,7 +107,8 @@
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting
   description: >-
-    When sleep schedule ends, gradually brighten bedroom and hall over 10 minutes.
+    When sleep schedule ends, ramps bedroom+hall lights 5%→15%→40%→60%
+    over 10 minutes.
   triggers:
   - entity_id: schedule.sleep
     to: "off"

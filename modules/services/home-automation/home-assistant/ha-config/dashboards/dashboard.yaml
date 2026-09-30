@@ -390,31 +390,61 @@ views:
           - condition: state
             entity: binary_sensor.dashboard_alert_crisis
             state: "off"
-    - type: sensor
-      graph: line
-      entity: sensor.average_temperature
-      name: Temperature
-      icon: mdi:thermometer
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Temperature
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_temperature
+        name: Temperature
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_humidity
-      name: Humidity
-      icon: mdi:water-percent
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Humidity
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_humidity
+        name: Humidity
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_illuminance
-      name: Illuminance
-      icon: mdi:brightness-6
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Illuminance
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_illuminance
+        name: Illuminance
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
   - type: grid

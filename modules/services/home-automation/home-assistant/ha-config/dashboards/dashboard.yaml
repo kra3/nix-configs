@@ -751,6 +751,23 @@ views:
           type: source
           id: Live TV
     - type: custom:mini-media-player
+      entity: media_player.home_theater
+      name: Now playing
+      max_volume: 64
+      artwork: material
+      info: scroll
+      hide:
+        power: true
+        source: true
+        volume: true
+        mute: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.home_theater
+        state: [playing, paused]
+    - type: custom:mini-media-player
       entity: media_player.home_theater_2
       name: Home theater
       toggle_power: false

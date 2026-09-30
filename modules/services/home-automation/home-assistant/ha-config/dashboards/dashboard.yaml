@@ -793,7 +793,7 @@ views:
           icon: mdi:bluetooth
           type: source
           id: Bluetooth
-        - name: HEOS
+        - name: HEOS (Net)
           icon: mdi:music
           type: source
           id: HEOS Music

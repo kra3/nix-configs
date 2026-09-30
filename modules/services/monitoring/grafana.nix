@@ -900,6 +900,7 @@
         "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
         "grafana-dashboards/smart.json".source = ./dashboards/smart.json;
         "grafana-dashboards/container-resources.json".source = ./dashboards/container-resources.json;
+        "grafana-dashboards/media-stack.json".source = ./dashboards/media-stack.json;
         "grafana-dashboards-surasa/surasa.json".source = ./dashboards/surasa.json;
       };
 

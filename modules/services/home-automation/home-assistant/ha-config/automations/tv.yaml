@@ -117,35 +117,3 @@
       target:
         entity_id: media_player.home_theater_2
   mode: single
-
-- id: tv_default_youtube
-  alias: TV — Launch YouTube on power-on
-  description: >-
-    Once the TV has booted, launch YouTube unless it came up on an HDMI input
-    (e.g. the PS5 waking it over CEC).
-  triggers:
-  - entity_id: media_player.lg_webos_tv_oled77c35la
-    from: "off"
-    not_to:
-    - "off"
-    - unavailable
-    - unknown
-    trigger: state
-  actions:
-  - wait_template: >-
-      {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source') not in [none, ''] }}
-    timeout: "00:00:30"
-    continue_on_timeout: true
-  - delay: "00:00:02"
-  - if:
-    - condition: template
-      value_template: >-
-        {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
-           not in ['PlayStation 5', 'HDMI 1', 'HDMI 3', 'HDMI 4'] }}
-    then:
-    - action: media_player.select_source
-      target:
-        entity_id: media_player.lg_webos_tv_oled77c35la
-      data:
-        source: YouTube AdFree
-  mode: single

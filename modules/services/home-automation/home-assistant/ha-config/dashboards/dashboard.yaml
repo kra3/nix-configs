@@ -488,7 +488,7 @@ views:
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 3
+        columns: 4
         hide_when_off: true
         buttons:
         - name: Stremio
@@ -507,6 +507,10 @@ views:
           icon: mdi:play-box-multiple
           type: source
           id: Breezyfin
+        - name: Litefin
+          icon: mdi:play-box-outline
+          type: source
+          id: Litefin
         - name: PS5
           icon: mdi:sony-playstation
           type: source
@@ -522,6 +526,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.home_theater
       name: HEOS
+      max_volume: 64
       artwork: material
       info: scroll
       source: full
@@ -536,6 +541,7 @@ views:
       entity: media_player.home_theater_2
       name: Receiver
       toggle_power: false
+      max_volume: 64
       source: full
       sound_mode: full
       idle_view:
@@ -732,7 +738,7 @@ views:
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 3
+        columns: 4
         hide_when_off: true
         buttons:
         - name: Stremio
@@ -751,6 +757,10 @@ views:
           icon: mdi:play-box-multiple
           type: source
           id: Breezyfin
+        - name: Litefin
+          icon: mdi:play-box-outline
+          type: source
+          id: Litefin
         - name: PS5
           icon: mdi:sony-playstation
           type: source
@@ -762,6 +772,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.home_theater
       name: HEOS
+      max_volume: 64
       artwork: material
       info: scroll
       source: full
@@ -772,6 +783,7 @@ views:
       entity: media_player.home_theater_2
       name: Receiver
       toggle_power: false
+      max_volume: 64
       source: full
       sound_mode: full
       idle_view:

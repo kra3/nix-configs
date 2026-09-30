@@ -640,6 +640,7 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_kra_weight
+      name: Weight
       grid_options:
         columns: 6
     - type: tile
@@ -649,15 +650,19 @@ views:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_kra_fat_ratio
+      name: Body fat
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_kra_muscle_mass
+      name: Muscle mass
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Weight
-      entities: [sensor.office_room_withings_kra_weight]
+      entities:
+      - entity: sensor.office_room_withings_kra_weight
+        name: Weight
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -667,8 +672,10 @@ views:
     - type: statistics-graph
       title: Fat and muscle mass
       entities:
-      - sensor.office_room_withings_kra_fat_mass
-      - sensor.office_room_withings_kra_muscle_mass
+      - entity: sensor.office_room_withings_kra_fat_mass
+        name: Fat mass
+      - entity: sensor.office_room_withings_kra_muscle_mass
+        name: Muscle mass
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -682,23 +689,29 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.meghanadha_steps
+      name: Steps
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.meghanadha_distance
+      name: Distance
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.meghanadha_floors_ascended
+      name: Floors climbed
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.meghanadha_resting_heart_rate
+      name: Resting heart rate
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Steps per day
-      entities: [sensor.meghanadha_steps]
+      entities:
+      - entity: sensor.meghanadha_steps
+        name: Steps
       days_to_show: 30
       period: day
       stat_types: [max]
@@ -707,7 +720,9 @@ views:
         columns: 12
     - type: statistics-graph
       title: Resting heart rate
-      entities: [sensor.meghanadha_resting_heart_rate]
+      entities:
+      - entity: sensor.meghanadha_resting_heart_rate
+        name: Resting heart rate
       days_to_show: 90
       period: day
       stat_types: [mean]
@@ -727,6 +742,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_sleep_duration
+        name: Sleep
       grid_options:
         columns: 6
     - type: conditional
@@ -737,6 +753,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_in_bed
+        name: In bed
       grid_options:
         columns: 6
     - type: conditional
@@ -747,6 +764,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_heart_rate_variability
+        name: Heart rate variability
       grid_options:
         columns: 6
     - type: conditional
@@ -757,6 +775,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_vo2_max
+        name: VO2 max
       grid_options:
         columns: 6
     - type: conditional
@@ -767,6 +786,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_blood_oxygen
+        name: Blood oxygen
       grid_options:
         columns: 6
     - type: conditional
@@ -777,6 +797,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_blood_pressure_systolic
+        name: Systolic pressure
       grid_options:
         columns: 6
     - type: conditional
@@ -787,6 +808,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_blood_pressure_diastolic
+        name: Diastolic pressure
       grid_options:
         columns: 6
     - type: conditional
@@ -796,8 +818,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: sleep duration
-        entities: [sensor.meghanadha_sleep_duration]
+        title: Sleep duration
+        entities:
+        - entity: sensor.meghanadha_sleep_duration
+          name: Sleep
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -811,8 +835,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: heart rate variability
-        entities: [sensor.meghanadha_heart_rate_variability]
+        title: Heart rate variability
+        entities:
+        - entity: sensor.meghanadha_heart_rate_variability
+          name: Heart rate variability
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -828,9 +854,12 @@ views:
         type: statistics-graph
         title: Sleep stages
         entities:
-        - sensor.meghanadha_deep_sleep
-        - sensor.meghanadha_core_sleep
-        - sensor.meghanadha_rem_sleep
+        - entity: sensor.meghanadha_deep_sleep
+          name: Deep sleep
+        - entity: sensor.meghanadha_core_sleep
+          name: Core sleep
+        - entity: sensor.meghanadha_rem_sleep
+          name: REM sleep
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -852,6 +881,7 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_anj_weight
+      name: Weight
       grid_options:
         columns: 6
     - type: tile
@@ -861,15 +891,19 @@ views:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_anj_fat_ratio
+      name: Body fat
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_anj_muscle_mass
+      name: Muscle mass
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Weight
-      entities: [sensor.office_room_withings_anj_weight]
+      entities:
+      - entity: sensor.office_room_withings_anj_weight
+        name: Weight
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -879,8 +913,10 @@ views:
     - type: statistics-graph
       title: Fat and muscle mass
       entities:
-      - sensor.office_room_withings_anj_fat_mass
-      - sensor.office_room_withings_anj_muscle_mass
+      - entity: sensor.office_room_withings_anj_fat_mass
+        name: Fat mass
+      - entity: sensor.office_room_withings_anj_muscle_mass
+        name: Muscle mass
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -894,23 +930,29 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.anjalis_iphone_steps
+      name: Steps
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.anjalis_iphone_distance
+      name: Distance
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.anjalis_iphone_floors_ascended
+      name: Floors climbed
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.anjalis_iphone_resting_heart_rate
+      name: Resting heart rate
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Steps per day
-      entities: [sensor.anjalis_iphone_steps]
+      entities:
+      - entity: sensor.anjalis_iphone_steps
+        name: Steps
       days_to_show: 30
       period: day
       stat_types: [max]
@@ -919,7 +961,9 @@ views:
         columns: 12
     - type: statistics-graph
       title: Resting heart rate
-      entities: [sensor.anjalis_iphone_resting_heart_rate]
+      entities:
+      - entity: sensor.anjalis_iphone_resting_heart_rate
+        name: Resting heart rate
       days_to_show: 90
       period: day
       stat_types: [mean]
@@ -939,6 +983,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_sleep_duration
+        name: Sleep
       grid_options:
         columns: 6
     - type: conditional
@@ -949,6 +994,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_in_bed
+        name: In bed
       grid_options:
         columns: 6
     - type: conditional
@@ -959,6 +1005,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_heart_rate_variability
+        name: Heart rate variability
       grid_options:
         columns: 6
     - type: conditional
@@ -969,6 +1016,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_vo2_max
+        name: VO2 max
       grid_options:
         columns: 6
     - type: conditional
@@ -979,6 +1027,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_blood_oxygen
+        name: Blood oxygen
       grid_options:
         columns: 6
     - type: conditional
@@ -989,6 +1038,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_blood_pressure_systolic
+        name: Systolic pressure
       grid_options:
         columns: 6
     - type: conditional
@@ -999,6 +1049,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_blood_pressure_diastolic
+        name: Diastolic pressure
       grid_options:
         columns: 6
     - type: conditional
@@ -1008,8 +1059,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: sleep duration
-        entities: [sensor.anjalis_iphone_sleep_duration]
+        title: Sleep duration
+        entities:
+        - entity: sensor.anjalis_iphone_sleep_duration
+          name: Sleep
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -1023,8 +1076,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: heart rate variability
-        entities: [sensor.anjalis_iphone_heart_rate_variability]
+        title: Heart rate variability
+        entities:
+        - entity: sensor.anjalis_iphone_heart_rate_variability
+          name: Heart rate variability
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -1040,9 +1095,12 @@ views:
         type: statistics-graph
         title: Sleep stages
         entities:
-        - sensor.anjalis_iphone_deep_sleep
-        - sensor.anjalis_iphone_core_sleep
-        - sensor.anjalis_iphone_rem_sleep
+        - entity: sensor.anjalis_iphone_deep_sleep
+          name: Deep sleep
+        - entity: sensor.anjalis_iphone_core_sleep
+          name: Core sleep
+        - entity: sensor.anjalis_iphone_rem_sleep
+          name: REM sleep
         days_to_show: 30
         period: day
         stat_types: [mean]

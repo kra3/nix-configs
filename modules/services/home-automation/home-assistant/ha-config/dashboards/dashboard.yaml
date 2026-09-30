@@ -479,106 +479,65 @@ views:
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
-      toggle_power: false
       artwork: none
-      info: scroll
-      source: icon
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        columns: 4
-        hide_when_off: true
-        buttons:
-        - name: Stremio
-          icon: mdi:movie-open-play
-          type: source
-          id: Stremio
-        - name: YouTube
-          icon: mdi:youtube
-          type: source
-          id: YouTube AdFree
-        - name: SVT Play
-          icon: mdi:television-play
-          type: source
-          id: SVT Play
-        - name: Breezyfin
-          icon: mdi:play-box-multiple
-          type: source
-          id: Breezyfin
-        - name: Litefin
-          icon: mdi:play-box-outline
-          type: source
-          id: Litefin
-        - name: PS5
-          icon: mdi:sony-playstation
-          type: source
-          id: PlayStation 5
-        - name: Live TV
-          icon: mdi:television-classic
-          type: source
-          id: Live TV
+      info: short
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
       visibility:
       - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.lg_webos_tv_oled77c35la
+        entity: media_player.lg_webos_tv_oled77c35la
+        state: [playing, paused]
     - type: custom:mini-media-player
-      entity: media_player.home_theater
-      name: HEOS
-      max_volume: 64
-      artwork: material
+      entity: media_player.ma_home_theater
+      name: Living room
+      artwork: cover
       info: scroll
-      source: full
-      idle_view:
-        when_idle: true
-        when_standby: true
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
       visibility:
       - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.home_theater
-    - type: custom:mini-media-player
-      entity: media_player.home_theater_2
-      name: Receiver
-      toggle_power: false
-      max_volume: 64
-      source: full
-      sound_mode: full
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        columns: 3
-        hide_when_off: true
-        buttons:
-        - name: TV Audio
-          icon: mdi:television-speaker
-          type: source
-          id: TV Audio
-        - name: PS5
-          icon: mdi:sony-playstation
-          type: source
-          id: PlayStation 5
-        - name: HEOS
-          icon: mdi:music
-          type: source
-          id: HEOS Music
-      visibility:
-      - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.home_theater_2
+        entity: media_player.ma_home_theater
+        state: [playing, paused]
     - type: custom:mini-media-player
       entity: media_player.kitchen
       name: Kitchen
-      artwork: material
+      artwork: cover
       info: scroll
-      idle_view:
-        when_idle: true
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
       visibility:
       - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.kitchen
+        entity: media_player.kitchen
+        state: [playing, paused]
+    - type: custom:mini-media-player
+      entity: media_player.ma_home_theater
+      name: Play
+      artwork: none
+      info: short
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.ma_home_theater
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.kitchen
+        state_not: [playing, paused]
   - type: grid
     cards:
     - type: todo-list

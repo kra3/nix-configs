@@ -35,8 +35,9 @@
         def worker():
             while True:
                 album_dir, env = work_queue.get()
+                # No TTY here, so an ambiguous match's prompt would silently skip it.
                 result = subprocess.run(
-                    ["beet", "--config", BEETS_BASE, "--config", OVERLAY, "import", album_dir],
+                    ["beet", "--config", BEETS_BASE, "--config", OVERLAY, "import", "-q", "--quiet-fallback", "asis", album_dir],
                     env=env, capture_output=True, text=True,
                 )
                 if result.returncode != 0:

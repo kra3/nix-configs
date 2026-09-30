@@ -819,6 +819,24 @@ views:
         chart_type: line
       grid_options:
         columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_deep_sleep
+        above: 0
+      card:
+        type: statistics-graph
+        title: Sleep stages
+        entities:
+        - sensor.meghanadha_deep_sleep
+        - sensor.meghanadha_core_sleep
+        - sensor.meghanadha_rem_sleep
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: bar
+      grid_options:
+        columns: 12
 - type: sections
   title: Health
   path: health-anjali
@@ -1011,6 +1029,24 @@ views:
         period: day
         stat_types: [mean]
         chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_deep_sleep
+        above: 0
+      card:
+        type: statistics-graph
+        title: Sleep stages
+        entities:
+        - sensor.anjalis_iphone_deep_sleep
+        - sensor.anjalis_iphone_core_sleep
+        - sensor.anjalis_iphone_rem_sleep
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: bar
       grid_options:
         columns: 12
 - title: Lights

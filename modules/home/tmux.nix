@@ -26,6 +26,8 @@
       resurrectScripts = "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/scripts";
       resurrectDir = "${config.xdg.dataHome}/tmux/resurrect";
       resurrectLastSaveFile = "${config.xdg.stateHome}/tmux/last-save";
+      # Touched when a restore completes; `tm` (shell_common.sh) waits on it to attach after a headless restore.
+      resurrectLastRestoreFile = "${config.xdg.stateHome}/tmux/last-restore";
 
       # resurrect's scripts shell out to bare `tmux`, so PATH/TMUX_TMPDIR must be set explicitly outside a tmux client context.
       tmuxEnvExports = ''
@@ -37,10 +39,14 @@
       resurrectSave = pkgs.writeShellScript "tmux-resurrect-save" ''
         ${tmuxEnvExports}
         prev="$(readlink "${resurrectDir}/last" 2>/dev/null || true)"
+        prevpanes=$(grep -c '^pane' "${resurrectDir}/$prev" 2>/dev/null || true); prevpanes=$((prevpanes + 0))
         "${resurrectScripts}/save.sh" "$@" || exit $?
-        # Don't let save.sh repoint `last` to a paneless dump (trivial server) — restore would lose the workspace.
         new="$(readlink "${resurrectDir}/last" 2>/dev/null || true)"
-        if [ -n "$new" ] && ! grep -q '^pane' "${resurrectDir}/$new" 2>/dev/null; then
+        newpanes=$(grep -c '^pane' "${resurrectDir}/$new" 2>/dev/null || true); newpanes=$((newpanes + 0))
+        # Reject a clobber: paneless dump, or a >50% pane collapse vs the prev save (a thin/fresh
+        # server) — restore would lose the real workspace. A legit big teardown just keeps the old
+        # save until a stable server saves again.
+        if [ -n "$new" ] && { [ "$newpanes" -eq 0 ] || { [ "$prevpanes" -gt 0 ] && [ "$((newpanes * 2))" -lt "$prevpanes" ]; }; }; then
           rm -f "${resurrectDir}/$new"
           [ -n "$prev" ] && ln -sfn "$prev" "${resurrectDir}/last"
           exit 0
@@ -52,6 +58,9 @@
       resurrectRestore = pkgs.writeShellScript "tmux-resurrect-restore" ''
         ${tmuxEnvExports}
         "${resurrectScripts}/restore.sh"
+        # Marker so `tm` knows the headless restore finished and can attach.
+        mkdir -p "$(dirname "${resurrectLastRestoreFile}")"
+        date +%s > "${resurrectLastRestoreFile}"
       '';
 
       resurrectStatus = pkgs.writeShellScript "tmux-resurrect-status" ''

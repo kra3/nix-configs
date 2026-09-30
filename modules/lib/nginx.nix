@@ -40,9 +40,7 @@ in
         vhostExtraConfig ? "",
         locationExtraConfig ? null,
         forwardAuth ? false,
-        # Path prefixes proxied straight through with no auth_request, even when
-        # forwardAuth is on -- for API clients that can't follow a login redirect
-        # (e.g. Navidrome's Subsonic API used by mobile players).
+        # Prefixes proxied through with no auth_request even when forwardAuth is on (e.g. Navidrome's Subsonic API).
         forwardAuthExcludePrefixes ? [ ],
       }:
       {

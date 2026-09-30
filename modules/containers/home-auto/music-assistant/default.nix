@@ -55,9 +55,7 @@
         forwardAuth = true;
       };
 
-      # Snapcast clients hit ma-snapcast below directly (no browser session) -- left unauthenticated.
-
-      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
+      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss) -- no forwardAuth, real speaker clients can't log in.
       services.nginx.virtualHosts."ma-snapcast" = {
         serverName = "ma.${config.vars.acme.domain}";
         useACMEHost = config.vars.acme.domain;

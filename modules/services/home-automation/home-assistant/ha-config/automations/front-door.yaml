@@ -97,17 +97,53 @@
         - delay: "00:00:30"
   mode: single
 
-- id: front_door_knock_lights
-  alias: "Front Door: Knock Lights"
+- id: front_door_knock_detect
+  alias: "Front Door: Knock detect"
   description: >-
-    On a valid knock in the dark, turns on the entrance light once hall
-    motion shows someone coming to answer; off via
-    timer.front_door_knock_auto_off (5min, restart-safe). Door open
-    cancels the countdown, since the entrance-on-open automation takes over.
+    A knock is two short vibration pulses (each 8s or less) within 30s, with
+    no door/lock activity around it; single pulses (inner doors, bumps) and
+    long pulses (trucks) are ignored. Fires the front_door_knock event.
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration
       to: "on"
+  action:
+    - delay: "00:00:02"
+    - condition: and
+      conditions: *valid_knock_check
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "off"
+      timeout: "00:00:06"
+      continue_on_timeout: false
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "on"
+      timeout: "00:00:30"
+      continue_on_timeout: false
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "off"
+      timeout: "00:00:08"
+      continue_on_timeout: false
+    - event: front_door_knock
+    - delay: "00:00:30"
+  mode: single
+  max_exceeded: silent
+
+- id: front_door_knock_lights
+  alias: "Front Door: Knock Lights"
+  description: >-
+    On a detected knock in the dark, turns on the entrance light once hall
+    motion shows someone coming to answer; off via
+    timer.front_door_knock_auto_off (5min, restart-safe). Door open
+    cancels the countdown, since the entrance-on-open automation takes over.
+  trigger:
+    - platform: event
+      event_type: front_door_knock
       id: knock
     - platform: state
       entity_id: binary_sensor.front_door_open
@@ -124,27 +160,24 @@
             - condition: trigger
               id: knock
           sequence:
-            - delay: "00:00:02"
-            - if: *valid_knock_check
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.hue_pir_hallway_occupancy
+                  to: "on"
+              timeout: "00:02:00"
+            - if:
+                - condition: template
+                  value_template: "{{ wait.trigger is not none }}"
+                - condition: state
+                  entity_id: binary_sensor.front_door_area_dark
+                  state: "on"
               then:
-                - wait_for_trigger:
-                    - platform: state
-                      entity_id: binary_sensor.hue_pir_hallway_occupancy
-                      to: "on"
-                  timeout: "00:02:00"
-                - if:
-                    - condition: template
-                      value_template: "{{ wait.trigger is not none }}"
-                    - condition: state
-                      entity_id: binary_sensor.front_door_area_dark
-                      state: "on"
-                  then:
-                    - action: switch.turn_on
-                      target:
-                        entity_id: switch.front_entrance_double_switch_left
-                    - action: timer.start
-                      target:
-                        entity_id: timer.front_door_knock_auto_off
+                - action: switch.turn_on
+                  target:
+                    entity_id: switch.front_entrance_double_switch_left
+                - action: timer.start
+                  target:
+                    entity_id: timer.front_door_knock_auto_off
         - conditions:
             - condition: trigger
               id: door_open

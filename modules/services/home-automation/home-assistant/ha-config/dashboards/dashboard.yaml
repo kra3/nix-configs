@@ -657,64 +657,29 @@ views:
       name: Watching now
       grid_options:
         columns: 12
-    - type: conditional
-      conditions:
-      - condition: state
-        entity: media_player.desktop_client
-        state: [playing, paused]
+    - type: custom:auto-entities
       card:
-        type: tile
-        entity: media_player.desktop_client
-        name: Desktop client
-        state_content: [media_title, state]
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: state
-        entity: media_player.chrome
-        state: [playing, paused]
-      card:
-        type: tile
-        entity: media_player.chrome
-        name: Chrome
-        state_content: [media_title, state]
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: state
-        entity: media_player.safari_iphone
-        state: [playing, paused]
-      card:
-        type: tile
-        entity: media_player.safari_iphone
-        name: iPhone
-        state_content: [media_title, state]
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: state
-        entity: media_player.aruns_macbook_pro
-        state: [playing, paused]
-      card:
-        type: tile
-        entity: media_player.aruns_macbook_pro
-        name: Arun's MacBook Pro
-        state_content: [media_title, state]
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: state
-        entity: media_player.anjalis_macbook_air_2
-        state: [playing, paused]
-      card:
-        type: tile
-        entity: media_player.anjalis_macbook_air_2
-        name: Anjali's MacBook Air
-        state_content: [media_title, state]
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: media_player
+          state: /^(playing|paused)$/
+          options:
+            type: tile
+            state_content:
+            - media_title
+            - state
+        exclude:
+        - entity_id: media_player.*webos*
+        - entity_id: media_player.*oled77c35la*
+        - entity_id: media_player.*home_theater*
+        - entity_id: media_player.*lg_smart_tv*
+        - entity_id: media_player.ma_*
+        - entity_id: media_player.surasa*
       grid_options:
         columns: 12
   - type: grid

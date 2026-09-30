@@ -1,0 +1,13 @@
+template:
+  - sensor:
+      - name: Media disk used
+        unique_id: media_disk_used_percent
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.sabnzbd_karunagath_in_total_disk_space') | is_number
+             and states('sensor.sabnzbd_karunagath_in_free_disk_space') | is_number }}
+        state: >-
+          {% set total = states('sensor.sabnzbd_karunagath_in_total_disk_space') | float %}
+          {% set free = states('sensor.sabnzbd_karunagath_in_free_disk_space') | float %}
+          {{ ((total - free) / total * 100) | round(1) if total > 0 else 0 }}

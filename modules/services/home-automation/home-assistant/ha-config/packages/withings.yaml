@@ -30,7 +30,7 @@ automation:
       not_to: [unavailable, unknown]
       id: arun
     - trigger: state
-      entity_id: sensor.withings_weight
+      entity_id: sensor.office_room_withings_anjali_weight
       not_from: [unavailable, unknown]
       not_to: [unavailable, unknown]
       id: anjali

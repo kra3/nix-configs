@@ -1398,6 +1398,45 @@ views:
       entity: sensor.power_monitor_1_current
     - type: tile
       entity: switch.power_monitor_1_child_lock
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Power
+        show_states: true
+        colorize_states: false
+      graph_span: 24h
+      apex_config:
+        chart:
+          height: 160
+      series:
+      - entity: sensor.power_monitor_1_power
+        name: Power
+        type: line
+        group_by:
+          func: avg
+          duration: 10min
+      grid_options:
+        columns: 12
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Energy per day
+        show_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 160
+      series:
+      - entity: sensor.power_monitor_1_energy
+        name: Energy
+        type: column
+        statistics:
+          type: change
+          period: day
+      grid_options:
+        columns: 12
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - title: Maintenance

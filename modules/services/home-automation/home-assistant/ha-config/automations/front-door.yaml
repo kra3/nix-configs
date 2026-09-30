@@ -99,12 +99,7 @@
 
 - id: front_door_knock_lights
   alias: "Front Door: Knock Lights"
-  description: >-
-    On a short vibration pulse (8s or less; longer ones are trucks) with no
-    door/lock activity around it, turns on the entrance light in the dark
-    once hall motion shows someone coming to answer; off via
-    timer.front_door_knock_auto_off (5min, restart-safe). Door open cancels
-    the countdown, since the entrance-on-open automation takes over.
+  description: Entrance light on a short knock pulse in the dark once hall motion follows; 5min timer, door open cancels.
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration

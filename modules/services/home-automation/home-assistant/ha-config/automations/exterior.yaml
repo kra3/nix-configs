@@ -59,9 +59,7 @@
 
 - id: exterior_front_light_vibration
   alias: Exterior — Front street light on door vibration (sleep)
-  description: >-
-    After the sleep schedule has switched the street light off, door
-    vibration turns it on for 5min; further vibration restarts the wait.
+  description: Street light on door vibration during sleep hours for 5min, restarted by further vibration.
   triggers:
   - entity_id: binary_sensor.front_door_knock_vibration
     to: "on"

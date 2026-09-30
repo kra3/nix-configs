@@ -56,3 +56,24 @@
           entity_id: switch.front_entrance_double_switch_right
         action: switch.turn_on
   mode: single
+
+- id: exterior_front_light_vibration
+  alias: Exterior — Front street light on door vibration (sleep)
+  description: Street light on door vibration during sleep hours for 5min, restarted by further vibration.
+  triggers:
+  - entity_id: binary_sensor.front_door_knock_vibration
+    to: "on"
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.front_entrance_double_switch_right
+  - delay: "00:05:00"
+  - action: switch.turn_off
+    target:
+      entity_id: switch.front_entrance_double_switch_right
+  mode: restart

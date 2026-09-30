@@ -99,10 +99,7 @@
 
 - id: front_door_knock_lights
   alias: "Front Door: Knock Lights"
-  description: >-
-    Turns on entrance lights on a valid knock (dark + motion-after-knock
-    check); auto-off via timer.front_door_knock_auto_off (10min,
-    restart-safe).
+  description: Entrance light on a short knock pulse in the dark once hall motion follows; 5min timer, door open cancels.
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration
@@ -112,10 +109,6 @@
       entity_id: binary_sensor.front_door_open
       to: "on"
       id: door_open
-    - platform: state
-      entity_id: binary_sensor.front_door_open
-      to: "off"
-      id: door_close
     - platform: event
       event_type: timer.finished
       event_data:
@@ -127,30 +120,15 @@
             - condition: trigger
               id: knock
           sequence:
-            # Cancel any auto-off still counting down from a prior knock.
-            - action: timer.cancel
-              target:
-                entity_id: timer.front_door_knock_auto_off
-
-            # 1. Wait 2 seconds to let contact/lock sensor state settle
             - delay: "00:00:02"
-
-            # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
             - if: *valid_knock_check
               then:
-                # Was gated on schedule.sleep (fixed clock, not sun-relative) —
-                # turned this on in broad Swedish-summer daylight. Use sun.sun.
-                - if:
-                    - condition: state
-                      entity_id: sun.sun
-                      state: below_horizon
-                  then:
-                    - action: switch.turn_on
-                      target:
-                        entity_id: switch.front_entrance_double_switch_right
-
-                # Entrance Light: Turn on only if motion detected after knock (someone going to the door)
-                # and someone's actually home to be going to answer it.
+                - wait_for_trigger:
+                    - platform: state
+                      entity_id: binary_sensor.front_door_knock_vibration
+                      to: "off"
+                  timeout: "00:00:06"
+                  continue_on_timeout: false
                 - wait_for_trigger:
                     - platform: state
                       entity_id: binary_sensor.hue_pir_hallway_occupancy
@@ -159,39 +137,21 @@
                 - if:
                     - condition: template
                       value_template: "{{ wait.trigger is not none }}"
-                    - condition: numeric_state
-                      entity_id: zone.home
-                      above: 0
+                    - condition: state
+                      entity_id: binary_sensor.front_door_area_dark
+                      state: "on"
                   then:
                     - action: switch.turn_on
                       target:
                         entity_id: switch.front_entrance_double_switch_left
-
-                # Auto-off if no one comes to the door within 10 min
-                - action: timer.start
-                  target:
-                    entity_id: timer.front_door_knock_auto_off
+                    - action: timer.start
+                      target:
+                        entity_id: timer.front_door_knock_auto_off
         - conditions:
             - condition: trigger
               id: door_open
           sequence:
-            # Someone came in - cancel the "no one showed up" countdown.
             - action: timer.cancel
-              target:
-                entity_id: timer.front_door_knock_auto_off
-        - conditions:
-            - condition: trigger
-              id: door_close
-            - condition: or
-              conditions:
-                - condition: state
-                  entity_id: switch.front_entrance_double_switch_left
-                  state: "on"
-                - condition: state
-                  entity_id: switch.front_entrance_double_switch_right
-                  state: "on"
-          sequence:
-            - action: timer.start
               target:
                 entity_id: timer.front_door_knock_auto_off
         - conditions:
@@ -200,16 +160,14 @@
           sequence:
             - action: switch.turn_off
               target:
-                entity_id:
-                  - switch.front_entrance_double_switch_right
-                  - switch.front_entrance_double_switch_left
+                entity_id: switch.front_entrance_double_switch_left
   mode: restart
 
 - id: front_door_open_entrance_light
   alias: "Front Door: Entrance light on open (dark)"
   description: >-
     Turns on entrance light when the front door opens in the dark; off
-    via timer.front_door_entrance_light_off (10min after close,
+    via timer.front_door_entrance_light_off (5min after close,
     restart-safe). Falls back to unlock-as-open-proxy when BLE degraded.
   triggers:
   - entity_id: binary_sensor.front_door_open

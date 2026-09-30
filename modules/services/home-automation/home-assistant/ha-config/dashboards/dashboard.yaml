@@ -396,7 +396,7 @@ views:
         title: Temperature
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120
@@ -415,7 +415,7 @@ views:
         title: Humidity
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120
@@ -434,7 +434,7 @@ views:
         title: Illuminance
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120
@@ -479,7 +479,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
-      artwork: none
+      artwork: cover
       info: short
       hide:
         source: true
@@ -711,87 +711,122 @@ views:
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
       toggle_power: false
-      artwork: none
+      artwork: cover
       info: scroll
-      source: icon
+      hide:
+        source: true
       idle_view:
         when_idle: true
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 4
         hide_when_off: true
-        buttons:
-        - name: Stremio
-          icon: mdi:movie-open-play
-          type: source
-          id: Stremio
+        label: Apps
+        list:
         - name: YouTube
-          icon: mdi:youtube
           type: source
           id: YouTube AdFree
+        - name: Stremio
+          type: source
+          id: Stremio
         - name: SVT Play
-          icon: mdi:television-play
           type: source
           id: SVT Play
         - name: Breezyfin
-          icon: mdi:play-box-multiple
           type: source
           id: Breezyfin
         - name: Litefin
-          icon: mdi:play-box-outline
           type: source
           id: Litefin
         - name: PS5
-          icon: mdi:sony-playstation
           type: source
           id: PlayStation 5
         - name: Live TV
-          icon: mdi:television-classic
           type: source
           id: Live TV
     - type: custom:mini-media-player
       entity: media_player.home_theater
-      name: HEOS
+      name: Now playing
       max_volume: 64
       artwork: material
       info: scroll
-      source: full
-      idle_view:
-        when_idle: true
-        when_standby: true
+      hide:
+        power: true
+        source: true
+        volume: true
+        mute: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.home_theater
+        state: [playing, paused]
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
-      name: Receiver
+      name: Home theater
       toggle_power: false
       max_volume: 64
-      source: full
+      hide:
+        source: true
+        controls: true
       sound_mode: full
       idle_view:
         when_idle: true
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 3
         hide_when_off: true
-        buttons:
-        - name: TV Audio
-          icon: mdi:television-speaker
+        label: Input or radio
+        list:
+        - name: TV
           type: source
           id: TV Audio
-        - name: PS5
-          icon: mdi:sony-playstation
+        - name: Bluetooth
           type: source
-          id: PlayStation 5
-        - name: HEOS
-          icon: mdi:music
+          id: Bluetooth
+        - name: HEOS (Net)
           type: source
           id: HEOS Music
+        - name: PS5
+          type: source
+          id: PlayStation 5
+        - name: HitCity
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: HitCity (Malmö)
+        - name: BBC World Service
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: BBC World Service
+        - name: Radio Relax International
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: Radio Relax International
+        - name: AIR Kochi FM 102.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR KOCHI FM 102.3 | (Classical Indian)
+        - name: AIR FM Rainbow 101.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR FM Rainbow 101.3 (Indian Music)
     - type: custom:mini-media-player
       entity: media_player.kitchen
       name: Kitchen
       artwork: material
       info: scroll
+      hide:
+        power: true
       idle_view:
         when_idle: true
   - type: grid
@@ -932,7 +967,7 @@ views:
       heading: Storage
       heading_style: title
     - type: gauge
-      entity: sensor.media_disk_used_percent
+      entity: sensor.media_disk_used
       name: Media disk used
       min: 0
       max: 100

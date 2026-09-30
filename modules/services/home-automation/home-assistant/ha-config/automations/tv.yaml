@@ -30,6 +30,7 @@
     - action: wake_on_lan.send_magic_packet
       data:
         mac: 20:28:bc:b7:ff:3e
+        broadcast_address: 192.168.1.255
         broadcast_port: 7
   - if:
     - condition: or

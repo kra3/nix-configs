@@ -11,10 +11,10 @@ input_text:
 # needing hand-rolled elapsed-time recovery in the automation itself.
 timer:
   front_door_entrance_light_off:
-    duration: "00:10:00"
+    duration: "00:05:00"
     restore: true
   front_door_knock_auto_off:
-    duration: "00:10:00"
+    duration: "00:05:00"
     restore: true
 
 template:

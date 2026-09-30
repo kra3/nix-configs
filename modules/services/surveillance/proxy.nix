@@ -14,6 +14,7 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://${homeAutoIp}:8080";
+        forwardAuth = true;
       };
 
       services.nginx.virtualHosts."nvr.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {

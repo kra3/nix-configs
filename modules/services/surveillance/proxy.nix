@@ -20,6 +20,7 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://${homeAutoIp}:80";
+        forwardAuth = true;
       };
     };
 }

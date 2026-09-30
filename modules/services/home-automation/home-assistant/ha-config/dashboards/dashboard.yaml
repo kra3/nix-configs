@@ -703,20 +703,44 @@ views:
       name: Steps
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.meghanadha_distance
-      name: Distance
-      features:
-      - type: trend-graph
-        hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Distance
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.meghanadha_distance
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.meghanadha_floors_ascended
-      name: Floors climbed
-      features:
-      - type: trend-graph
-        hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Floors climbed
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.meghanadha_floors_ascended
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
     - type: tile
@@ -782,12 +806,24 @@ views:
         entity: sensor.meghanadha_vo2_max
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_vo2_max
-        name: VO2 max
-        features:
-        - type: trend-graph
-          hours_to_show: 240
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: VO2 max
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.meghanadha_vo2_max
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -796,12 +832,24 @@ views:
         entity: sensor.meghanadha_blood_oxygen
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_blood_oxygen
-        name: Blood oxygen
-        features:
-        - type: trend-graph
-          hours_to_show: 240
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Blood oxygen
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.meghanadha_blood_oxygen
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -954,20 +1002,44 @@ views:
       name: Steps
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anjalis_iphone_distance
-      name: Distance
-      features:
-      - type: trend-graph
-        hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Distance
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.anjalis_iphone_distance
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anjalis_iphone_floors_ascended
-      name: Floors climbed
-      features:
-      - type: trend-graph
-        hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Floors climbed
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.anjalis_iphone_floors_ascended
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
     - type: tile
@@ -1033,12 +1105,24 @@ views:
         entity: sensor.anjalis_iphone_vo2_max
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_vo2_max
-        name: VO2 max
-        features:
-        - type: trend-graph
-          hours_to_show: 240
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: VO2 max
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.anjalis_iphone_vo2_max
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -1047,12 +1131,24 @@ views:
         entity: sensor.anjalis_iphone_blood_oxygen
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_oxygen
-        name: Blood oxygen
-        features:
-        - type: trend-graph
-          hours_to_show: 240
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Blood oxygen
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.anjalis_iphone_blood_oxygen
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional

@@ -15,11 +15,12 @@
   "packageRules": [
     {
       "matchDatasources": ["docker"],
-      "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*|next|\\d+b\\d+)/"
+      "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*|next|\\d+b\\d+)/",
+      "minimumReleaseAge": "3 days"
     },
     {
       "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],
-      "allowedVersions": "/^[\\w.]+-ls\\d+$/"
+      "allowedVersions": "/^v?\\d+(\\.\\d+)*-ls\\d+$/"
     },
     {
       "matchPackageNames": ["lscr.io/linuxserver/lidarr"],

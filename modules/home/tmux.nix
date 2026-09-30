@@ -288,19 +288,15 @@
           # Quick notes popup
           bind N display-popup -E -w 80% -h 80% 'sh -c "mkdir -p ~/notes; exec ''${EDITOR:-vim} ~/notes/tmux-scratch.md"'
 
-          # Lazygit popup
-          bind g if-shell "command -v lazygit" \
-            "display-popup -E -w 95% -h 95% -d '#{pane_current_path}' lazygit" \
-            "display-popup -E -w 80% -h 80% -d '#{pane_current_path}'"
+          # Lazygit popup (absolute path — tmux server PATH lacks the nix profile)
+          bind g display-popup -E -w 95% -h 95% -d "#{pane_current_path}" "${lib.getExe pkgs.lazygit}"
 
           # Git status popup
           bind G display-popup -E -w 70% -h 70% -d "#{pane_current_path}" \
             "git status; echo; echo 'Press enter to close'; read"
 
-          # GitHub Dashboard popup
-          bind D if-shell "command -v gh" \
-            "display-popup -E -w 95% -h 95% -d '#{pane_current_path}' 'gh dash'" \
-            "display-message 'gh not found. Install with: brew install gh'"
+          # gh dash popup (absolute path — tmux server PATH lacks the nix profile)
+          bind D display-popup -E -w 95% -h 95% -d "#{pane_current_path}" "${lib.getExe pkgs.gh} dash"
 
           # ============================================================================
           # Plugin Settings

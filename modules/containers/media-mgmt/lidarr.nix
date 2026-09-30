@@ -24,8 +24,11 @@
           #!/bin/sh
           set -eu
           [ "''${lidarr_eventtype:-}" = "Test" ] && exit 0
+          # Temporary: log every invocation's eventtype so we can confirm what
+          # On Release Import actually sends before widening the filter below.
+          echo "$(date -Iseconds) eventtype=''${lidarr_eventtype:-} path=''${lidarr_trackfile_path:-}" >> /config/retag-debug.log
           [ "''${lidarr_eventtype:-}" != "TrackRetag" ] && exit 0
-          wget -qO- --post-data="path=$lidarr_trackfile_path" "http://host.containers.internal:8942/retag"
+          wget -qO- --post-data="$lidarr_trackfile_path" "http://host.containers.internal:8942/retag"
         '';
       };
 

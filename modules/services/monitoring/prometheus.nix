@@ -134,6 +134,37 @@
             ];
           }
           {
+            job_name = "jellyfin";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${mediaAddr}:8096" ];
+                labels.container = "media-play";
+                labels.instance = "media-play";
+              }
+            ];
+          }
+          {
+            job_name = "unpackerr";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${networkVars.podmanAddresses.unpackerr}:5656" ];
+                labels.instance = "unpackerr";
+              }
+            ];
+          }
+          {
+            job_name = "slskd";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${networkVars.podmanAddresses.slskd}:5030" ];
+                labels.instance = "slskd";
+              }
+            ];
+          }
+          {
             # surasa's blackbox exporter probing sutala from an independent LAN vantage point --
             # catches HTTP-level failures (expired cert, backend crashed behind nginx) that
             # sutala-watchdog's plain ICMP check can't see.

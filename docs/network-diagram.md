@@ -87,7 +87,8 @@ listed here):
 
 | # | Flow | Ports |
 |---|---|---|
-| 1 | monitoring → media-play | 9100 (node-exporter), 4533 (navidrome) |
+| 1 | monitoring → media-play | 9100 (node-exporter), 4533 (navidrome), 8096 (jellyfin metrics) |
+| 1a| monitoring → media-mgmt (unpackerr, slskd) | 5656 (unpackerr), 5030 (slskd) |
 | 2 | monitoring → home-auto (nspawn) | 9100, 80 (frigate) |
 | 3 | monitoring → home-auto pods (br-home-auto) | 8123 (HA prometheus) |
 | 4 | home-auto (nspawn) → monitoring | 3100 (loki) |

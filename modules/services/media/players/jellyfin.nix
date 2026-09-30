@@ -26,6 +26,7 @@
 
         system = {
           serverName = "sutala";
+          enableMetrics = true;
           trickplayOptions = {
             enableHwAcceleration = true;
             enableHwEncoding = true;

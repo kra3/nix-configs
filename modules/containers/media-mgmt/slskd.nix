@@ -64,6 +64,8 @@
             SLSKD_DOWNLOADS_DIR = "/data/downloads/slskd/complete";
             SLSKD_INCOMPLETE_DIR = "/data/downloads/slskd/incomplete";
             SLSKD_SHARED_DIR = "/music/Western;/music/Indian";
+            SLSKD_METRICS = "true";
+            SLSKD_METRICS_NO_AUTH = "true";
           };
           memory = "512m";
           podmanArgs = [ "--cpus=1" ];

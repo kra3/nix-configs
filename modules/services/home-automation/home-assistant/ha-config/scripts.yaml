@@ -1,7 +1,7 @@
 notify_all_phones:
   alias: "Notify: all phones"
   description: >-
-    Fan out a plain notification to both phones via notify.send_message.
+    Fan out a plain notification to both phones and the iPad via notify.send_message.
     The old per-device notify.mobile_app_* services were removed by the
     mobile_app integration's move to entity-based notify (HA 2026.9), and
     the replacement doesn't support actionable buttons (data.actions) —
@@ -21,6 +21,7 @@ notify_all_phones:
       entity_id:
       - notify.meghanadha
       - notify.anjalis_iphone
+      - notify.hiranyagarbha
     data:
       title: "{{ title | default(omit) }}"
       message: "{{ message }}"

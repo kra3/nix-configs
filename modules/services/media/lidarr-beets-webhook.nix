@@ -20,7 +20,6 @@
         import queue
         import subprocess
         import threading
-        import urllib.parse
 
         PORT = ${toString port}
         HOST_ROOT = "${hostMusicRoot}"
@@ -46,9 +45,7 @@
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
                 length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(length).decode()
-                params = urllib.parse.parse_qs(body)
-                track_path = params.get("path", [""])[0]
+                track_path = self.rfile.read(length).decode()
 
                 if not track_path.startswith(CONTAINER_ROOT):
                     self.send_response(400)

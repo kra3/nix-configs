@@ -390,31 +390,61 @@ views:
           - condition: state
             entity: binary_sensor.dashboard_alert_crisis
             state: "off"
-    - type: sensor
-      graph: line
-      entity: sensor.average_temperature
-      name: Temperature
-      icon: mdi:thermometer
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Temperature
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_temperature
+        name: Temperature
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_humidity
-      name: Humidity
-      icon: mdi:water-percent
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Humidity
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_humidity
+        name: Humidity
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_illuminance
-      name: Illuminance
-      icon: mdi:brightness-6
-      detail: 2
-      hours_to_show: 168
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Illuminance
+        show_states: true
+        colorize_states: false
+      graph_span: 7d
+      apex_config:
+        chart:
+          height: 120
+      series:
+      - entity: sensor.average_illuminance
+        name: Illuminance
+        type: line
+        group_by:
+          func: avg
+          duration: 1h
       grid_options:
         columns: 4
   - type: grid
@@ -422,6 +452,30 @@ views:
     - type: heading
       heading: Media
       heading_style: title
+    - type: custom:mushroom-template-card
+      primary: Media activity
+      secondary: >-
+        {% set q = states('sensor.sabnzbd_karunagath_in_queue_count') | int(0) %}
+        {% set p = states('sensor.seerr_pending_requests') | int(0) %}
+        {% set parts = [] %}
+        {% if q > 0 %}{% set parts = parts + [q ~ ' downloading'] %}{% endif %}
+        {% if p > 0 %}{% set parts = parts + [p ~ ' pending requests'] %}{% endif %}
+        {{ parts | join(' · ') }}
+      icon: mdi:download
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/media
+      visibility:
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity: sensor.sabnzbd_karunagath_in_queue_count
+          above: 0
+        - condition: numeric_state
+          entity: sensor.seerr_pending_requests
+          above: 0
+      grid_options:
+        columns: full
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       visibility:
@@ -440,6 +494,13 @@ views:
       - condition: state
         entity: sensor.dashboard_active_media_player
         state: media_player.home_theater_2
+    - type: custom:mini-media-player
+      entity: media_player.kitchen
+      name: Kitchen
+      visibility:
+      - condition: state
+        entity: sensor.dashboard_active_media_player
+        state: media_player.kitchen
   - type: grid
     cards:
     - type: todo-list
@@ -584,47 +645,177 @@ views:
   sections:
   - type: grid
     cards:
+    - type: heading
+      heading: Players
+      heading_style: title
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
     - type: custom:mini-media-player
       entity: media_player.home_theater
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+    - type: custom:mini-media-player
+      entity: media_player.kitchen
+      name: Kitchen
   - type: grid
     cards:
     - type: heading
-      heading: Media Acquisition
+      heading: Jellyfin
       heading_style: title
     - type: tile
       entity: sensor.media_play_active_clients
-      name: Jellyfin watching
+      name: Watching now
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: media_player
+          state: /^(playing|paused)$/
+          options:
+            type: tile
+            state_content:
+            - media_title
+            - state
+        exclude:
+        - entity_id: media_player.*webos*
+        - entity_id: media_player.*oled77c35la*
+        - entity_id: media_player.*home_theater*
+        - entity_id: media_player.*lg_smart_tv*
+        - entity_id: media_player.ma_*
+        - entity_id: media_player.kitchen
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Requests
+      heading_style: title
+    - type: tile
+      entity: sensor.seerr_pending_requests
+      name: Pending
       grid_options:
         columns: 4
     - type: tile
-      entity: sensor.sonarr_upcoming
-      name: Sonarr upcoming
+      entity: sensor.seerr_processing_requests
+      name: Processing
       grid_options:
         columns: 4
+    - type: tile
+      entity: sensor.seerr_open_issues
+      name: Open issues
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: event.seerr_last_media_event
+      name: Last event
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Downloads
+      heading_style: title
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_status
+      name: Status
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_speed
+      name: Speed
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_queue_count
+      name: Queue
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.sabnzbd_karunagath_in_left_to_download
+      name: Left to download
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: number.sabnzbd_karunagath_in_speedlimit
+      name: Speed limit
+      features:
+      - type: numeric-input
+        style: slider
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: button.sabnzbd_karunagath_in_pause
+      name: Pause
+      icon: mdi:pause
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.sabnzbd_karunagath_in_pause
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: button.sabnzbd_karunagath_in_resume
+      name: Resume
+      icon: mdi:play
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.sabnzbd_karunagath_in_resume
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: binary_sensor.sabnzbd_karunagath_in_warnings
+      name: Warnings
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Upcoming
+      heading_style: title
+    - type: calendar
+      initial_view: listWeek
+      entities:
+      - calendar.sonarr
+      - calendar.radarr
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Storage
+      heading_style: title
+    - type: gauge
+      entity: sensor.media_disk_used_percent
+      name: Media disk used
+      min: 0
+      max: 100
+      severity:
+        green: 0
+        yellow: 75
+        red: 90
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: sensor.radarr_disk_space_movies
+      name: Free space
+      grid_options:
+        columns: 6
     - type: tile
       entity: binary_sensor.radarr_health
       name: Radarr health
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.radarr_disk_space_movies
-      name: Movies disk space
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_queue
-      name: SABnzbd queue
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.sabnzbd_karunagath_in_warnings
-      name: SABnzbd warnings
-      grid_options:
-        columns: 4
+        columns: 12
 - type: sections
   title: Health
   path: health-arun

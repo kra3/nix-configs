@@ -8,18 +8,6 @@ input_datetime:
     has_date: true
     has_time: true
 
-template:
-  - sensor:
-      - name: "Withings Arun weight to goal"
-        unique_id: withings_arun_weight_to_goal
-        device_class: weight
-        unit_of_measurement: kg
-        state_class: measurement
-        availability: >-
-          {{ has_value('sensor.office_room_withings_kra_weight') }}
-        state: >-
-          {{ (states('sensor.office_room_withings_kra_weight') | float - 68) | round(1) }}
-
 automation:
   - id: withings_record_weigh_in
     alias: Withings — record weigh-in time

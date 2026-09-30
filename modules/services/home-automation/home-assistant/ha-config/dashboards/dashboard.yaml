@@ -627,22 +627,19 @@ views:
         columns: 4
 - type: sections
   title: Health
-  path: health
+  path: health-arun
   icon: mdi:scale-bathroom
+  visible:
+  - user: a1d4401b8b714ebb83f07c5316ab399c
   cards: []
   sections:
   - type: grid
     cards:
     - type: heading
-      heading: Arun
+      heading: Health
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_kra_weight
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.withings_arun_weight_to_goal
-      name: To goal
       grid_options:
         columns: 6
     - type: tile
@@ -652,6 +649,10 @@ views:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_kra_fat_ratio
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.office_room_withings_kra_muscle_mass
       grid_options:
         columns: 6
     - type: statistics-graph
@@ -674,10 +675,18 @@ views:
       chart_type: line
       grid_options:
         columns: 12
+- type: sections
+  title: Health
+  path: health-anjali
+  icon: mdi:scale-bathroom
+  visible:
+  - user: 6edcc5a09c3144d684077ee362e7394a
+  cards: []
+  sections:
   - type: grid
     cards:
     - type: heading
-      heading: Anjali
+      heading: Health
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_anj_weight

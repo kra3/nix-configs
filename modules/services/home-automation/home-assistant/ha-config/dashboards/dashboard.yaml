@@ -479,7 +479,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
-      artwork: none
+      artwork: cover
       info: short
       hide:
         source: true
@@ -711,7 +711,7 @@ views:
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
       toggle_power: false
-      artwork: none
+      artwork: cover
       info: scroll
       source: icon
       idle_view:

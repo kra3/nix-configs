@@ -713,41 +713,35 @@ views:
       toggle_power: false
       artwork: cover
       info: scroll
-      source: icon
+      hide:
+        source: true
       idle_view:
         when_idle: true
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 4
         hide_when_off: true
-        buttons:
+        label: Apps
+        list:
         - name: Stremio
-          icon: mdi:movie-open-play
           type: source
           id: Stremio
         - name: YouTube
-          icon: mdi:youtube
           type: source
           id: YouTube AdFree
         - name: SVT Play
-          icon: mdi:television-play
           type: source
           id: SVT Play
         - name: Breezyfin
-          icon: mdi:play-box-multiple
           type: source
           id: Breezyfin
         - name: Litefin
-          icon: mdi:play-box-outline
           type: source
           id: Litefin
         - name: PS5
-          icon: mdi:sony-playstation
           type: source
           id: PlayStation 5
         - name: Live TV
-          icon: mdi:television-classic
           type: source
           id: Live TV
     - type: custom:mini-media-player
@@ -781,27 +775,21 @@ views:
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 4
         hide_when_off: true
-        label: Radio
-        buttons:
+        label: Input or radio
+        list:
         - name: TV
-          icon: mdi:television-speaker
           type: source
           id: TV Audio
         - name: Bluetooth
-          icon: mdi:bluetooth
           type: source
           id: Bluetooth
         - name: HEOS (Net)
-          icon: mdi:music
           type: source
           id: HEOS Music
         - name: PS5
-          icon: mdi:sony-playstation
           type: source
           id: PlayStation 5
-        list:
         - name: HitCity
           type: service
           id: media_player.select_source

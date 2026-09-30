@@ -40,6 +40,10 @@ in
         vhostExtraConfig ? "",
         locationExtraConfig ? null,
         forwardAuth ? false,
+        # Path prefixes proxied straight through with no auth_request, even when
+        # forwardAuth is on -- for API clients that can't follow a login redirect
+        # (e.g. Navidrome's Subsonic API used by mobile players).
+        forwardAuthExcludePrefixes ? [ ],
       }:
       {
         useACMEHost = domain;
@@ -75,7 +79,16 @@ in
               proxy_http_version 1.1;
             '';
           };
-        };
+        }
+        // lib.listToAttrs (
+          map (prefix: {
+            name = prefix;
+            value = {
+              proxyPass = upstream;
+              proxyWebsockets = websockets;
+            };
+          }) forwardAuthExcludePrefixes
+        );
       };
   };
 }

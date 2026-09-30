@@ -148,6 +148,8 @@
           enabledCollectors = [
             "systemd"
           ];
+          # thermal_zone has no data on this host, same as the nspawn containers (common.nix).
+          disabledCollectors = [ "thermal_zone" ];
           # unit-exclude adds podman's per-invocation healthcheck transient units to the upstream default.
           extraFlags = [
             "--collector.systemd.enable-restarts-metrics"

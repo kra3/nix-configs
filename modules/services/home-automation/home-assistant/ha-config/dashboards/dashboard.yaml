@@ -625,6 +625,106 @@ views:
       name: SABnzbd warnings
       grid_options:
         columns: 4
+- type: sections
+  title: Health
+  path: health-arun
+  icon: mdi:scale-bathroom
+  visible:
+  - user: a1d4401b8b714ebb83f07c5316ab399c
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Health
+      heading_style: title
+    - type: tile
+      entity: sensor.office_room_withings_kra_weight
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: input_datetime.withings_arun_last_weigh_in
+      name: Last weigh-in
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.office_room_withings_kra_fat_ratio
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.office_room_withings_kra_muscle_mass
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Weight
+      entities: [sensor.office_room_withings_kra_weight]
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Fat and muscle mass
+      entities:
+      - sensor.office_room_withings_kra_fat_mass
+      - sensor.office_room_withings_kra_muscle_mass
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+- type: sections
+  title: Health
+  path: health-anjali
+  icon: mdi:scale-bathroom
+  visible:
+  - user: 6edcc5a09c3144d684077ee362e7394a
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Health
+      heading_style: title
+    - type: tile
+      entity: sensor.office_room_withings_anj_weight
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: input_datetime.withings_anjali_last_weigh_in
+      name: Last weigh-in
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.office_room_withings_anj_fat_ratio
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.office_room_withings_anj_muscle_mass
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Weight
+      entities: [sensor.office_room_withings_anj_weight]
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Fat and muscle mass
+      entities:
+      - sensor.office_room_withings_anj_fat_mass
+      - sensor.office_room_withings_anj_muscle_mass
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
 - title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group

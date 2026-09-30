@@ -670,6 +670,17 @@ views:
       grid_options:
         columns: 12
     - type: statistics-graph
+      title: Body fat
+      entities:
+      - entity: sensor.office_room_withings_kra_fat_ratio
+        name: Body fat
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
       title: Fat and muscle mass
       entities:
       - entity: sensor.office_room_withings_kra_fat_mass
@@ -695,11 +706,17 @@ views:
     - type: tile
       entity: sensor.meghanadha_distance
       name: Distance
+      features:
+      - type: trend-graph
+        hours_to_show: 168
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.meghanadha_floors_ascended
       name: Floors climbed
+      features:
+      - type: trend-graph
+        hours_to_show: 168
       grid_options:
         columns: 6
     - type: tile
@@ -734,28 +751,20 @@ views:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
+
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.meghanadha_sleep_duration
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_sleep_duration
-        name: Sleep
+        type: custom:mushroom-template-card
+        primary: Sleep
+        secondary: >-
+          {{ states('sensor.meghanadha_sleep_duration') }} {{ state_attr('sensor.meghanadha_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.meghanadha_in_bed')) %} · in bed {{ states('sensor.meghanadha_in_bed') }} {{ state_attr('sensor.meghanadha_in_bed', 'unit_of_measurement') }}{% endif %}
+        icon: mdi:sleep
       grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_in_bed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_in_bed
-        name: In bed
-      grid_options:
-        columns: 6
+        columns: 12
     - type: conditional
       conditions:
       - condition: numeric_state
@@ -776,6 +785,9 @@ views:
         type: tile
         entity: sensor.meghanadha_vo2_max
         name: VO2 max
+        features:
+        - type: trend-graph
+          hours_to_show: 240
       grid_options:
         columns: 6
     - type: conditional
@@ -787,28 +799,9 @@ views:
         type: tile
         entity: sensor.meghanadha_blood_oxygen
         name: Blood oxygen
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_blood_pressure_systolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_blood_pressure_systolic
-        name: Systolic pressure
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_blood_pressure_diastolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_blood_pressure_diastolic
-        name: Diastolic pressure
+        features:
+        - type: trend-graph
+          hours_to_show: 240
       grid_options:
         columns: 6
     - type: conditional
@@ -911,6 +904,17 @@ views:
       grid_options:
         columns: 12
     - type: statistics-graph
+      title: Body fat
+      entities:
+      - entity: sensor.office_room_withings_anj_fat_ratio
+        name: Body fat
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
       title: Fat and muscle mass
       entities:
       - entity: sensor.office_room_withings_anj_fat_mass
@@ -936,11 +940,17 @@ views:
     - type: tile
       entity: sensor.anjalis_iphone_distance
       name: Distance
+      features:
+      - type: trend-graph
+        hours_to_show: 168
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.anjalis_iphone_floors_ascended
       name: Floors climbed
+      features:
+      - type: trend-graph
+        hours_to_show: 168
       grid_options:
         columns: 6
     - type: tile
@@ -975,28 +985,20 @@ views:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
+
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.anjalis_iphone_sleep_duration
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_sleep_duration
-        name: Sleep
+        type: custom:mushroom-template-card
+        primary: Sleep
+        secondary: >-
+          {{ states('sensor.anjalis_iphone_sleep_duration') }} {{ state_attr('sensor.anjalis_iphone_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.anjalis_iphone_in_bed')) %} · in bed {{ states('sensor.anjalis_iphone_in_bed') }} {{ state_attr('sensor.anjalis_iphone_in_bed', 'unit_of_measurement') }}{% endif %}
+        icon: mdi:sleep
       grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_in_bed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_in_bed
-        name: In bed
-      grid_options:
-        columns: 6
+        columns: 12
     - type: conditional
       conditions:
       - condition: numeric_state
@@ -1017,6 +1019,9 @@ views:
         type: tile
         entity: sensor.anjalis_iphone_vo2_max
         name: VO2 max
+        features:
+        - type: trend-graph
+          hours_to_show: 240
       grid_options:
         columns: 6
     - type: conditional
@@ -1028,28 +1033,9 @@ views:
         type: tile
         entity: sensor.anjalis_iphone_blood_oxygen
         name: Blood oxygen
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_blood_pressure_systolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_pressure_systolic
-        name: Systolic pressure
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_blood_pressure_diastolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_pressure_diastolic
-        name: Diastolic pressure
+        features:
+        - type: trend-graph
+          hours_to_show: 240
       grid_options:
         columns: 6
     - type: conditional

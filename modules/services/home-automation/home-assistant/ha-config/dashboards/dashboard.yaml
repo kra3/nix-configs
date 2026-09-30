@@ -714,6 +714,111 @@ views:
       chart_type: line
       grid_options:
         columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_sleep_duration
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_sleep_duration
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_in_bed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_in_bed
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_heart_rate_variability
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_heart_rate_variability
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_vo2_max
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_vo2_max
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_oxygen
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_oxygen
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_pressure_systolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_pressure_systolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_pressure_diastolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_pressure_diastolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_sleep_duration
+        above: 0
+      card:
+        type: statistics-graph
+        title: sleep duration
+        entities: [sensor.meghanadha_sleep_duration]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_heart_rate_variability
+        above: 0
+      card:
+        type: statistics-graph
+        title: heart rate variability
+        entities: [sensor.meghanadha_heart_rate_variability]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
 - type: sections
   title: Health
   path: health-anjali
@@ -801,6 +906,111 @@ views:
       period: day
       stat_types: [mean]
       chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_sleep_duration
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_sleep_duration
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_in_bed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_in_bed
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_heart_rate_variability
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_vo2_max
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_vo2_max
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_oxygen
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_oxygen
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_pressure_systolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_pressure_systolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_pressure_diastolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_pressure_diastolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_sleep_duration
+        above: 0
+      card:
+        type: statistics-graph
+        title: sleep duration
+        entities: [sensor.anjalis_iphone_sleep_duration]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        above: 0
+      card:
+        type: statistics-graph
+        title: heart rate variability
+        entities: [sensor.anjalis_iphone_heart_rate_variability]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
       grid_options:
         columns: 12
 - title: Lights

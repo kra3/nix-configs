@@ -396,7 +396,7 @@ views:
         title: Temperature
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120
@@ -415,7 +415,7 @@ views:
         title: Humidity
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120
@@ -434,7 +434,7 @@ views:
         title: Illuminance
         show_states: true
         colorize_states: false
-      graph_span: 7d
+      graph_span: 24h
       apex_config:
         chart:
           height: 120

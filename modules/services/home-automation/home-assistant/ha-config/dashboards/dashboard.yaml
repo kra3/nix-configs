@@ -494,6 +494,13 @@ views:
       - condition: state
         entity: sensor.dashboard_active_media_player
         state: media_player.home_theater_2
+    - type: custom:mini-media-player
+      entity: media_player.surasa_2
+      name: Kitchen
+      visibility:
+      - condition: state
+        entity: sensor.dashboard_active_media_player
+        state: media_player.surasa_2
   - type: grid
     cards:
     - type: todo-list
@@ -647,6 +654,9 @@ views:
       entity: media_player.home_theater
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+    - type: custom:mini-media-player
+      entity: media_player.surasa_2
+      name: Kitchen
   - type: grid
     cards:
     - type: heading

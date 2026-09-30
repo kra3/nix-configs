@@ -49,6 +49,7 @@ template:
             'media_player.lg_webos_tv_oled77c35la',
             'media_player.home_theater',
             'media_player.home_theater_2',
+            'media_player.surasa_2',
           ] -%}
           {%- set playing = players | select('is_state', 'playing') | list -%}
           {{ playing[0] if playing else players[0] }}

@@ -52,7 +52,10 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8095";
+        forwardAuth = true;
       };
+
+      # Snapcast clients hit ma-snapcast below directly (no browser session) -- left unauthenticated.
 
       # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
       services.nginx.virtualHosts."ma-snapcast" = {

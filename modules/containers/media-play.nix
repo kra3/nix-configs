@@ -85,11 +85,11 @@
       services.nginx.virtualHosts."jellyfin.${config.vars.acme.domain}" =
         lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)
           (
-            flakeLib.nginx.mkProxyVhost {
+            lib.recursiveUpdate (flakeLib.nginx.mkProxyVhost {
               domain = config.vars.acme.domain;
               cidrs = config.vars.network.nginxAllowCidrs;
               upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
-            }
+            }) { locations."/metrics".return = "404"; }
           );
 
       services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" =

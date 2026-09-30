@@ -335,7 +335,7 @@
 
           set -g status-position bottom
           set -g status-justify "absolute-centre"
-          set -g status-left-length 40
+          set -g status-left-length 100
           set -g status-right-length 40
 
           set -g status-left "#{E:@catppuccin_status_session}"

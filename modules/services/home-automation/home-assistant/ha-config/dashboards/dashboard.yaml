@@ -478,18 +478,86 @@ views:
         columns: full
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
+      name: TV
+      toggle_power: false
+      artwork: none
+      info: scroll
+      source: icon
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        columns: 3
+        hide_when_off: true
+        buttons:
+        - name: Stremio
+          icon: mdi:movie-open-play
+          type: source
+          id: Stremio
+        - name: YouTube
+          icon: mdi:youtube
+          type: source
+          id: YouTube AdFree
+        - name: SVT Play
+          icon: mdi:television-play
+          type: source
+          id: SVT Play
+        - name: Breezyfin
+          icon: mdi:play-box-multiple
+          type: source
+          id: Breezyfin
+        - name: PS5
+          icon: mdi:sony-playstation
+          type: source
+          id: PlayStation 5
+        - name: Live TV
+          icon: mdi:television-classic
+          type: source
+          id: Live TV
       visibility:
       - condition: state
         entity: sensor.dashboard_active_media_player
         state: media_player.lg_webos_tv_oled77c35la
     - type: custom:mini-media-player
       entity: media_player.home_theater
+      name: HEOS
+      artwork: material
+      info: scroll
+      source: full
+      idle_view:
+        when_idle: true
+        when_standby: true
       visibility:
       - condition: state
         entity: sensor.dashboard_active_media_player
         state: media_player.home_theater
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+      name: Receiver
+      toggle_power: false
+      source: full
+      sound_mode: full
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        columns: 3
+        hide_when_off: true
+        buttons:
+        - name: TV Audio
+          icon: mdi:television-speaker
+          type: source
+          id: TV Audio
+        - name: PS5
+          icon: mdi:sony-playstation
+          type: source
+          id: PlayStation 5
+        - name: HEOS
+          icon: mdi:music
+          type: source
+          id: HEOS Music
       visibility:
       - condition: state
         entity: sensor.dashboard_active_media_player
@@ -497,6 +565,10 @@ views:
     - type: custom:mini-media-player
       entity: media_player.kitchen
       name: Kitchen
+      artwork: material
+      info: scroll
+      idle_view:
+        when_idle: true
       visibility:
       - condition: state
         entity: sensor.dashboard_active_media_player
@@ -650,13 +722,85 @@ views:
       heading_style: title
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
+      name: TV
+      toggle_power: false
+      artwork: none
+      info: scroll
+      source: icon
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        columns: 3
+        hide_when_off: true
+        buttons:
+        - name: Stremio
+          icon: mdi:movie-open-play
+          type: source
+          id: Stremio
+        - name: YouTube
+          icon: mdi:youtube
+          type: source
+          id: YouTube AdFree
+        - name: SVT Play
+          icon: mdi:television-play
+          type: source
+          id: SVT Play
+        - name: Breezyfin
+          icon: mdi:play-box-multiple
+          type: source
+          id: Breezyfin
+        - name: PS5
+          icon: mdi:sony-playstation
+          type: source
+          id: PlayStation 5
+        - name: Live TV
+          icon: mdi:television-classic
+          type: source
+          id: Live TV
     - type: custom:mini-media-player
       entity: media_player.home_theater
+      name: HEOS
+      artwork: material
+      info: scroll
+      source: full
+      idle_view:
+        when_idle: true
+        when_standby: true
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+      name: Receiver
+      toggle_power: false
+      source: full
+      sound_mode: full
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        columns: 3
+        hide_when_off: true
+        buttons:
+        - name: TV Audio
+          icon: mdi:television-speaker
+          type: source
+          id: TV Audio
+        - name: PS5
+          icon: mdi:sony-playstation
+          type: source
+          id: PlayStation 5
+        - name: HEOS
+          icon: mdi:music
+          type: source
+          id: HEOS Music
     - type: custom:mini-media-player
       entity: media_player.kitchen
       name: Kitchen
+      artwork: material
+      info: scroll
+      idle_view:
+        when_idle: true
   - type: grid
     cards:
     - type: heading

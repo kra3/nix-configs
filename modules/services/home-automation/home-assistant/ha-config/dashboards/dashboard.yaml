@@ -751,47 +751,77 @@ views:
           type: source
           id: Live TV
     - type: custom:mini-media-player
-      entity: media_player.home_theater
-      name: HEOS
-      max_volume: 64
-      artwork: material
-      info: scroll
-      source: full
-      idle_view:
-        when_idle: true
-        when_standby: true
-    - type: custom:mini-media-player
       entity: media_player.home_theater_2
-      name: Receiver
+      name: Home theater
       toggle_power: false
       max_volume: 64
-      source: full
+      hide:
+        source: true
+        controls: true
       sound_mode: full
       idle_view:
         when_idle: true
         when_standby: true
       shortcuts:
         attribute: source
-        columns: 3
+        columns: 4
         hide_when_off: true
+        label: Radio
         buttons:
-        - name: TV Audio
+        - name: TV
           icon: mdi:television-speaker
           type: source
           id: TV Audio
-        - name: PS5
-          icon: mdi:sony-playstation
+        - name: Bluetooth
+          icon: mdi:bluetooth
           type: source
-          id: PlayStation 5
+          id: Bluetooth
         - name: HEOS
           icon: mdi:music
           type: source
           id: HEOS Music
+        - name: PS5
+          icon: mdi:sony-playstation
+          type: source
+          id: PlayStation 5
+        list:
+        - name: HitCity
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: HitCity (Malmö)
+        - name: BBC World Service
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: BBC World Service
+        - name: Radio Relax International
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: Radio Relax International
+        - name: AIR Kochi FM 102.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR KOCHI FM 102.3 | (Classical Indian)
+        - name: AIR FM Rainbow 101.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR FM Rainbow 101.3 (Indian Music)
     - type: custom:mini-media-player
       entity: media_player.kitchen
       name: Kitchen
       artwork: material
       info: scroll
+      hide:
+        power: true
       idle_view:
         when_idle: true
   - type: grid
@@ -932,7 +962,7 @@ views:
       heading: Storage
       heading_style: title
     - type: gauge
-      entity: sensor.media_disk_used_percent
+      entity: sensor.media_disk_used
       name: Media disk used
       min: 0
       max: 100

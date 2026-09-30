@@ -518,16 +518,38 @@ views:
       - condition: state
         entity: media_player.kitchen
         state: [playing, paused]
-    - type: custom:mini-media-player
+    - type: tile
+      entity: media_player.lg_webos_tv_oled77c35la
+      name: Watch TV
+      icon: mdi:television-play
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: media_player.turn_on
+        target:
+          entity_id: media_player.lg_webos_tv_oled77c35la
+      grid_options:
+        columns: 6
+      visibility:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.ma_home_theater
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.kitchen
+        state_not: [playing, paused]
+    - type: tile
       entity: media_player.ma_home_theater
-      name: Play
-      artwork: none
-      info: short
-      hide:
-        source: true
-        power: true
-        shuffle: true
-        repeat: true
+      name: Play music
+      icon: mdi:music
+      hide_state: true
+      tap_action:
+        action: navigate
+        navigation_path: /media-browser
+      grid_options:
+        columns: 6
       visibility:
       - condition: state
         entity: media_player.lg_webos_tv_oled77c35la

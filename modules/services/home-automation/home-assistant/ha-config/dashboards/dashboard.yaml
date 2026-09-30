@@ -636,7 +636,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Health
+      heading: Body
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_kra_weight
@@ -675,6 +675,45 @@ views:
       chart_type: line
       grid_options:
         columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Activity and heart
+      heading_style: title
+    - type: tile
+      entity: sensor.meghanadha_steps
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_distance
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_floors_ascended
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_resting_heart_rate
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Steps per day
+      entities: [sensor.meghanadha_steps]
+      days_to_show: 30
+      period: day
+      stat_types: [max]
+      chart_type: bar
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Resting heart rate
+      entities: [sensor.meghanadha_resting_heart_rate]
+      days_to_show: 90
+      period: day
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
 - type: sections
   title: Health
   path: health-anjali
@@ -686,7 +725,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Health
+      heading: Body
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_anj_weight
@@ -721,6 +760,45 @@ views:
       - sensor.office_room_withings_anj_muscle_mass
       days_to_show: 180
       period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Activity and heart
+      heading_style: title
+    - type: tile
+      entity: sensor.anjalis_iphone_steps
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_distance
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_floors_ascended
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_resting_heart_rate
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Steps per day
+      entities: [sensor.anjalis_iphone_steps]
+      days_to_show: 30
+      period: day
+      stat_types: [max]
+      chart_type: bar
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Resting heart rate
+      entities: [sensor.anjalis_iphone_resting_heart_rate]
+      days_to_show: 90
+      period: day
       stat_types: [mean]
       chart_type: line
       grid_options:

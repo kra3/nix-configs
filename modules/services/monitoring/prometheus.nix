@@ -201,6 +201,13 @@
                 labels.instance = "ha";
               }
             ];
+            metric_relabel_configs = [
+              {
+                source_labels = [ "__name__" ];
+                regex = "ha_.*_created|ha_last_updated_time_seconds";
+                action = "drop";
+              }
+            ];
           }
         ];
       };

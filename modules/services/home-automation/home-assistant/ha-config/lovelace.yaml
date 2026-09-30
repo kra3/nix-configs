@@ -8,6 +8,8 @@ resources:
     type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module
+  - url: /hacsfiles/apexcharts-card/apexcharts-card.js
+    type: module
 dashboards:
   lovelace-map:
     mode: yaml

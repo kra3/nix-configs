@@ -640,6 +640,7 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_kra_weight
+      name: Weight
       grid_options:
         columns: 6
     - type: tile
@@ -649,15 +650,30 @@ views:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_kra_fat_ratio
+      name: Body fat
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_kra_muscle_mass
+      name: Muscle mass
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Weight
-      entities: [sensor.office_room_withings_kra_weight]
+      entities:
+      - entity: sensor.office_room_withings_kra_weight
+        name: Weight
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Body fat
+      entities:
+      - entity: sensor.office_room_withings_kra_fat_ratio
+        name: Body fat
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -667,8 +683,10 @@ views:
     - type: statistics-graph
       title: Fat and muscle mass
       entities:
-      - sensor.office_room_withings_kra_fat_mass
-      - sensor.office_room_withings_kra_muscle_mass
+      - entity: sensor.office_room_withings_kra_fat_mass
+        name: Fat mass
+      - entity: sensor.office_room_withings_kra_muscle_mass
+        name: Muscle mass
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -682,23 +700,59 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.meghanadha_steps
+      name: Steps
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.meghanadha_distance
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Distance
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.meghanadha_distance
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.meghanadha_floors_ascended
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Floors climbed
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.meghanadha_floors_ascended
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.meghanadha_resting_heart_rate
+      name: Resting heart rate
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Steps per day
-      entities: [sensor.meghanadha_steps]
+      entities:
+      - entity: sensor.meghanadha_steps
+        name: Steps
       days_to_show: 30
       period: day
       stat_types: [max]
@@ -707,7 +761,9 @@ views:
         columns: 12
     - type: statistics-graph
       title: Resting heart rate
-      entities: [sensor.meghanadha_resting_heart_rate]
+      entities:
+      - entity: sensor.meghanadha_resting_heart_rate
+        name: Resting heart rate
       days_to_show: 90
       period: day
       stat_types: [mean]
@@ -719,26 +775,20 @@ views:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
+
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.meghanadha_sleep_duration
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_sleep_duration
+        type: custom:mushroom-template-card
+        primary: Sleep
+        secondary: >-
+          {{ states('sensor.meghanadha_sleep_duration') }} {{ state_attr('sensor.meghanadha_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.meghanadha_in_bed')) %} · in bed {{ states('sensor.meghanadha_in_bed') }} {{ state_attr('sensor.meghanadha_in_bed', 'unit_of_measurement') }}{% endif %}
+        icon: mdi:sleep
       grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_in_bed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_in_bed
-      grid_options:
-        columns: 6
+        columns: 12
     - type: conditional
       conditions:
       - condition: numeric_state
@@ -747,6 +797,7 @@ views:
       card:
         type: tile
         entity: sensor.meghanadha_heart_rate_variability
+        name: Heart rate variability
       grid_options:
         columns: 6
     - type: conditional
@@ -755,8 +806,24 @@ views:
         entity: sensor.meghanadha_vo2_max
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_vo2_max
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: VO2 max
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.meghanadha_vo2_max
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -765,28 +832,24 @@ views:
         entity: sensor.meghanadha_blood_oxygen
         above: 0
       card:
-        type: tile
-        entity: sensor.meghanadha_blood_oxygen
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_blood_pressure_systolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_blood_pressure_systolic
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_blood_pressure_diastolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.meghanadha_blood_pressure_diastolic
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Blood oxygen
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.meghanadha_blood_oxygen
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -796,8 +859,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: sleep duration
-        entities: [sensor.meghanadha_sleep_duration]
+        title: Sleep duration
+        entities:
+        - entity: sensor.meghanadha_sleep_duration
+          name: Sleep
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -811,8 +876,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: heart rate variability
-        entities: [sensor.meghanadha_heart_rate_variability]
+        title: Heart rate variability
+        entities:
+        - entity: sensor.meghanadha_heart_rate_variability
+          name: Heart rate variability
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -825,16 +892,36 @@ views:
         entity: sensor.meghanadha_deep_sleep
         above: 0
       card:
-        type: statistics-graph
-        title: Sleep stages
-        entities:
-        - sensor.meghanadha_deep_sleep
-        - sensor.meghanadha_core_sleep
-        - sensor.meghanadha_rem_sleep
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: bar
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Sleep stages
+          show_states: false
+        graph_span: 30d
+        span:
+          end: day
+        apex_config:
+          chart:
+            stacked: true
+        series:
+        - entity: sensor.meghanadha_deep_sleep
+          name: Deep sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
+        - entity: sensor.meghanadha_core_sleep
+          name: Core sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
+        - entity: sensor.meghanadha_rem_sleep
+          name: REM sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 12
 - type: sections
@@ -852,6 +939,7 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_anj_weight
+      name: Weight
       grid_options:
         columns: 6
     - type: tile
@@ -861,15 +949,30 @@ views:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_anj_fat_ratio
+      name: Body fat
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.office_room_withings_anj_muscle_mass
+      name: Muscle mass
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Weight
-      entities: [sensor.office_room_withings_anj_weight]
+      entities:
+      - entity: sensor.office_room_withings_anj_weight
+        name: Weight
+      days_to_show: 180
+      period: week
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Body fat
+      entities:
+      - entity: sensor.office_room_withings_anj_fat_ratio
+        name: Body fat
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -879,8 +982,10 @@ views:
     - type: statistics-graph
       title: Fat and muscle mass
       entities:
-      - sensor.office_room_withings_anj_fat_mass
-      - sensor.office_room_withings_anj_muscle_mass
+      - entity: sensor.office_room_withings_anj_fat_mass
+        name: Fat mass
+      - entity: sensor.office_room_withings_anj_muscle_mass
+        name: Muscle mass
       days_to_show: 180
       period: week
       stat_types: [mean]
@@ -894,23 +999,59 @@ views:
       heading_style: title
     - type: tile
       entity: sensor.anjalis_iphone_steps
+      name: Steps
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anjalis_iphone_distance
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Distance
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.anjalis_iphone_distance
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anjalis_iphone_floors_ascended
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Floors climbed
+        show_states: true
+        colorize_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 140
+      series:
+      - entity: sensor.anjalis_iphone_floors_ascended
+        type: column
+        statistics:
+          type: max
+          period: day
       grid_options:
         columns: 6
     - type: tile
       entity: sensor.anjalis_iphone_resting_heart_rate
+      name: Resting heart rate
       grid_options:
         columns: 6
     - type: statistics-graph
       title: Steps per day
-      entities: [sensor.anjalis_iphone_steps]
+      entities:
+      - entity: sensor.anjalis_iphone_steps
+        name: Steps
       days_to_show: 30
       period: day
       stat_types: [max]
@@ -919,7 +1060,9 @@ views:
         columns: 12
     - type: statistics-graph
       title: Resting heart rate
-      entities: [sensor.anjalis_iphone_resting_heart_rate]
+      entities:
+      - entity: sensor.anjalis_iphone_resting_heart_rate
+        name: Resting heart rate
       days_to_show: 90
       period: day
       stat_types: [mean]
@@ -931,26 +1074,20 @@ views:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
+
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.anjalis_iphone_sleep_duration
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_sleep_duration
+        type: custom:mushroom-template-card
+        primary: Sleep
+        secondary: >-
+          {{ states('sensor.anjalis_iphone_sleep_duration') }} {{ state_attr('sensor.anjalis_iphone_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.anjalis_iphone_in_bed')) %} · in bed {{ states('sensor.anjalis_iphone_in_bed') }} {{ state_attr('sensor.anjalis_iphone_in_bed', 'unit_of_measurement') }}{% endif %}
+        icon: mdi:sleep
       grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_in_bed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_in_bed
-      grid_options:
-        columns: 6
+        columns: 12
     - type: conditional
       conditions:
       - condition: numeric_state
@@ -959,6 +1096,7 @@ views:
       card:
         type: tile
         entity: sensor.anjalis_iphone_heart_rate_variability
+        name: Heart rate variability
       grid_options:
         columns: 6
     - type: conditional
@@ -967,8 +1105,24 @@ views:
         entity: sensor.anjalis_iphone_vo2_max
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_vo2_max
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: VO2 max
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.anjalis_iphone_vo2_max
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -977,28 +1131,24 @@ views:
         entity: sensor.anjalis_iphone_blood_oxygen
         above: 0
       card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_oxygen
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_blood_pressure_systolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_pressure_systolic
-      grid_options:
-        columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_blood_pressure_diastolic
-        above: 0
-      card:
-        type: tile
-        entity: sensor.anjalis_iphone_blood_pressure_diastolic
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Blood oxygen
+          show_states: true
+          colorize_states: false
+        graph_span: 90d
+        span:
+          end: day
+        apex_config:
+          chart:
+            height: 140
+        series:
+        - entity: sensor.anjalis_iphone_blood_oxygen
+          type: line
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 6
     - type: conditional
@@ -1008,8 +1158,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: sleep duration
-        entities: [sensor.anjalis_iphone_sleep_duration]
+        title: Sleep duration
+        entities:
+        - entity: sensor.anjalis_iphone_sleep_duration
+          name: Sleep
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -1023,8 +1175,10 @@ views:
         above: 0
       card:
         type: statistics-graph
-        title: heart rate variability
-        entities: [sensor.anjalis_iphone_heart_rate_variability]
+        title: Heart rate variability
+        entities:
+        - entity: sensor.anjalis_iphone_heart_rate_variability
+          name: Heart rate variability
         days_to_show: 30
         period: day
         stat_types: [mean]
@@ -1037,16 +1191,36 @@ views:
         entity: sensor.anjalis_iphone_deep_sleep
         above: 0
       card:
-        type: statistics-graph
-        title: Sleep stages
-        entities:
-        - sensor.anjalis_iphone_deep_sleep
-        - sensor.anjalis_iphone_core_sleep
-        - sensor.anjalis_iphone_rem_sleep
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: bar
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Sleep stages
+          show_states: false
+        graph_span: 30d
+        span:
+          end: day
+        apex_config:
+          chart:
+            stacked: true
+        series:
+        - entity: sensor.anjalis_iphone_deep_sleep
+          name: Deep sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
+        - entity: sensor.anjalis_iphone_core_sleep
+          name: Core sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
+        - entity: sensor.anjalis_iphone_rem_sleep
+          name: REM sleep
+          type: column
+          statistics:
+            type: mean
+            period: day
       grid_options:
         columns: 12
 - title: Lights
@@ -1224,6 +1398,45 @@ views:
       entity: sensor.power_monitor_1_current
     - type: tile
       entity: switch.power_monitor_1_child_lock
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Power
+        show_states: true
+        colorize_states: false
+      graph_span: 24h
+      apex_config:
+        chart:
+          height: 160
+      series:
+      - entity: sensor.power_monitor_1_power
+        name: Power
+        type: line
+        group_by:
+          func: avg
+          duration: 10min
+      grid_options:
+        columns: 12
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Energy per day
+        show_states: false
+      graph_span: 14d
+      span:
+        end: day
+      apex_config:
+        chart:
+          height: 160
+      series:
+      - entity: sensor.power_monitor_1_energy
+        name: Energy
+        type: column
+        statistics:
+          type: change
+          period: day
+      grid_options:
+        columns: 12
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - title: Maintenance

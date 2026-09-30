@@ -37,12 +37,14 @@ logger:
 # Noisy, high-frequency entities already covered by Prometheus/Grafana for
 # long-term graphing — excluded here to keep the recorder DB small.
 recorder:
+  include:
+    entities:
+      - sensor.average_illuminance
   exclude:
     entity_globs:
       - sensor.*_illuminance
       - sensor.*_occupancy_temperature
       - sensor.*_occupancy_humidity
-      - sensor.average_*
       - binary_sensor.*_occupancy
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection

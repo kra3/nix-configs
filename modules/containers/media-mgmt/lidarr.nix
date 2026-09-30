@@ -85,5 +85,9 @@
         upstream = "http://${ip}:8686";
         forwardAuth = true;
       };
+
+      # Recycle bin target (set in Lidarr's own UI/API, like its other
+      # media-management settings) -- PUID=1000/PGID=2000 matches the container.
+      systemd.tmpfiles.rules = [ "d /srv/media/.recycle-bin 0770 1000 2000 - -" ];
     };
 }

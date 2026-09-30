@@ -636,7 +636,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Health
+      heading: Body
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_kra_weight
@@ -675,6 +675,168 @@ views:
       chart_type: line
       grid_options:
         columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Activity and heart
+      heading_style: title
+    - type: tile
+      entity: sensor.meghanadha_steps
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_distance
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_floors_ascended
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.meghanadha_resting_heart_rate
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Steps per day
+      entities: [sensor.meghanadha_steps]
+      days_to_show: 30
+      period: day
+      stat_types: [max]
+      chart_type: bar
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Resting heart rate
+      entities: [sensor.meghanadha_resting_heart_rate]
+      days_to_show: 90
+      period: day
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_sleep_duration
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_sleep_duration
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_in_bed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_in_bed
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_heart_rate_variability
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_heart_rate_variability
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_vo2_max
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_vo2_max
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_oxygen
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_oxygen
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_pressure_systolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_pressure_systolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_blood_pressure_diastolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.meghanadha_blood_pressure_diastolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_sleep_duration
+        above: 0
+      card:
+        type: statistics-graph
+        title: sleep duration
+        entities: [sensor.meghanadha_sleep_duration]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_heart_rate_variability
+        above: 0
+      card:
+        type: statistics-graph
+        title: heart rate variability
+        entities: [sensor.meghanadha_heart_rate_variability]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_deep_sleep
+        above: 0
+      card:
+        type: statistics-graph
+        title: Sleep stages
+        entities:
+        - sensor.meghanadha_deep_sleep
+        - sensor.meghanadha_core_sleep
+        - sensor.meghanadha_rem_sleep
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: bar
+      grid_options:
+        columns: 12
 - type: sections
   title: Health
   path: health-anjali
@@ -686,7 +848,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Health
+      heading: Body
       heading_style: title
     - type: tile
       entity: sensor.office_room_withings_anj_weight
@@ -723,6 +885,168 @@ views:
       period: week
       stat_types: [mean]
       chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Activity and heart
+      heading_style: title
+    - type: tile
+      entity: sensor.anjalis_iphone_steps
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_distance
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_floors_ascended
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anjalis_iphone_resting_heart_rate
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Steps per day
+      entities: [sensor.anjalis_iphone_steps]
+      days_to_show: 30
+      period: day
+      stat_types: [max]
+      chart_type: bar
+      grid_options:
+        columns: 12
+    - type: statistics-graph
+      title: Resting heart rate
+      entities: [sensor.anjalis_iphone_resting_heart_rate]
+      days_to_show: 90
+      period: day
+      stat_types: [mean]
+      chart_type: line
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_sleep_duration
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_sleep_duration
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_in_bed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_in_bed
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_heart_rate_variability
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_vo2_max
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_vo2_max
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_oxygen
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_oxygen
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_pressure_systolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_pressure_systolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_blood_pressure_diastolic
+        above: 0
+      card:
+        type: tile
+        entity: sensor.anjalis_iphone_blood_pressure_diastolic
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_sleep_duration
+        above: 0
+      card:
+        type: statistics-graph
+        title: sleep duration
+        entities: [sensor.anjalis_iphone_sleep_duration]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        above: 0
+      card:
+        type: statistics-graph
+        title: heart rate variability
+        entities: [sensor.anjalis_iphone_heart_rate_variability]
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: line
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_deep_sleep
+        above: 0
+      card:
+        type: statistics-graph
+        title: Sleep stages
+        entities:
+        - sensor.anjalis_iphone_deep_sleep
+        - sensor.anjalis_iphone_core_sleep
+        - sensor.anjalis_iphone_rem_sleep
+        days_to_show: 30
+        period: day
+        stat_types: [mean]
+        chart_type: bar
       grid_options:
         columns: 12
 - title: Lights

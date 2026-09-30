@@ -723,12 +723,12 @@ views:
         hide_when_off: true
         label: Apps
         list:
-        - name: Stremio
-          type: source
-          id: Stremio
         - name: YouTube
           type: source
           id: YouTube AdFree
+        - name: Stremio
+          type: source
+          id: Stremio
         - name: SVT Play
           type: source
           id: SVT Play

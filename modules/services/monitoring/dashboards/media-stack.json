@@ -1,0 +1,272 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Media stack health: per-unit process, memory and CPU from the host process-exporter, plus scrape status of the apps that expose their own metrics (jellyfin, unpackerr, slskd, navidrome).",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "description": "Media services (excluding the timer-driven recyclarr) with at least one running process",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 13
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "count(sum by (unit) (label_replace(namedprocess_namegroup_num_procs{instance=~\"$instance\", groupname=~\".*/system.slice/(aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\")) > 0) or vector(0)",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Services running (of 13)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Prometheus scrape status of apps exposing their own /metrics",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 18,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"jellyfin|unpackerr|slskd|navidrome\"}",
+          "instant": true,
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Metrics endpoints",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "Resident memory per media service (sum of all processes in the unit's cgroup)",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (unit) (label_replace(namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*/system.slice/(aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
+          "legendFormat": "{{unit}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory by service",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "description": "CPU time per media service over 5m, percent of one core",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (unit) (label_replace(rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*/system.slice/(aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}[5m]), \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
+          "legendFormat": "{{unit}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU by service",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "media",
+    "containers"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "sutala",
+          "value": "sutala"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(namedprocess_namegroup_num_procs, instance)",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Instance",
+        "multi": false,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(namedprocess_namegroup_num_procs, instance)",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Media Stack",
+  "uid": "media-stack",
+  "version": 1
+}

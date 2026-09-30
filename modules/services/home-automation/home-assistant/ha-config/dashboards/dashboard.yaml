@@ -495,12 +495,12 @@ views:
         entity: sensor.dashboard_active_media_player
         state: media_player.home_theater_2
     - type: custom:mini-media-player
-      entity: media_player.surasa_2
+      entity: media_player.kitchen
       name: Kitchen
       visibility:
       - condition: state
         entity: sensor.dashboard_active_media_player
-        state: media_player.surasa_2
+        state: media_player.kitchen
   - type: grid
     cards:
     - type: todo-list
@@ -655,7 +655,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
     - type: custom:mini-media-player
-      entity: media_player.surasa_2
+      entity: media_player.kitchen
       name: Kitchen
   - type: grid
     cards:
@@ -689,7 +689,7 @@ views:
         - entity_id: media_player.*home_theater*
         - entity_id: media_player.*lg_smart_tv*
         - entity_id: media_player.ma_*
-        - entity_id: media_player.surasa*
+        - entity_id: media_player.kitchen
       grid_options:
         columns: 12
   - type: grid

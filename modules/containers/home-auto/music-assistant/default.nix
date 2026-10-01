@@ -55,7 +55,7 @@
         forwardAuth = true;
         forwardAuthBypass = [
           {
-            prefix = "/ws";
+            location = "= /ws";
             from = "10.3.2.10";
           }
         ];

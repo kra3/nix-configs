@@ -24,7 +24,7 @@
         forwardAuth = true;
         forwardAuthBypass = [
           {
-            prefix = "/api/";
+            location = "/api/";
             from = "10.3.2.10";
           }
         ];

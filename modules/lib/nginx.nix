@@ -6,8 +6,8 @@ let
   # proxying through. Endpoint/headers per Authelia's documented nginx
   # auth_request integration (server.endpoints.authz."auth-request" ships
   # as one of Authelia's built-in defaults, no extra Authelia config needed).
-  forwardAuthLocationConfig = ''
-    auth_request /internal/authelia/authz;
+  forwardAuthLocationConfig = authzUri: ''
+    auth_request ${authzUri};
     auth_request_set $user $upstream_http_remote_user;
     auth_request_set $groups $upstream_http_remote_groups;
     auth_request_set $name $upstream_http_remote_name;
@@ -26,15 +26,19 @@ let
     proxy_set_header Remote-Name "";
   '';
 
-  bypassSnippet =
-    { prefix, from }:
-    ''
-      set $authz_bypass "";
-      if ($remote_addr = "${from}") { set $authz_bypass 1; }
-      if ($request_uri ~ "^${lib.escapeRegex prefix}") { set $authz_bypass "''${authz_bypass}1"; }
-      if ($request_uri ~* "(\.\.|%2e|%2f|//)") { set $authz_bypass 0; }
-      if ($authz_bypass = 11) { return 200; }
-    '';
+  authzProxyConfig = ''
+    proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
+    proxy_set_header X-Original-Method $request_method;
+    proxy_set_header X-Original-URL $scheme://$host$request_uri;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header Content-Length "";
+    proxy_set_header Connection "";
+    proxy_pass_request_body off;
+    proxy_http_version 1.1;
+  '';
+
+  authzUri = "/internal/authelia/authz";
+  bypassAuthzUri = i: "${authzUri}-bypass-${toString i}";
 in
 {
   flake.lib.nginx = {
@@ -58,7 +62,7 @@ in
         forwardAuth ? false,
         # Prefixes proxied through with no auth_request even when forwardAuth is on (e.g. Navidrome's Subsonic API).
         forwardAuthExcludePrefixes ? [ ],
-        # { prefix, from }: requests from this IP to this prefix skip Authelia; the vhost CIDR allowlist still applies.
+        # { location, from }: a real nginx location (e.g. "/api/" or "= /ws") whose requests from this IP skip Authelia; the vhost CIDR allowlist still applies.
         forwardAuthBypass ? [ ],
       }:
       {
@@ -76,27 +80,40 @@ in
           }
           // lib.optionalAttrs (forwardAuth || locationExtraConfig != null) {
             extraConfig = lib.concatStringsSep "\n" (
-              lib.optional forwardAuth forwardAuthLocationConfig
+              lib.optional forwardAuth (forwardAuthLocationConfig authzUri)
               ++ lib.optional (locationExtraConfig != null) locationExtraConfig
             );
           };
         }
         // lib.optionalAttrs forwardAuth {
-          "/internal/authelia/authz" = {
-            extraConfig = ''
-              ${lib.concatMapStringsSep "\n" bypassSnippet forwardAuthBypass}
-              internal;
-              proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
-              proxy_set_header X-Original-Method $request_method;
-              proxy_set_header X-Original-URL $scheme://$host$request_uri;
-              proxy_set_header X-Forwarded-For $remote_addr;
-              proxy_set_header Content-Length "";
-              proxy_set_header Connection "";
-              proxy_pass_request_body off;
-              proxy_http_version 1.1;
-            '';
-          };
+          ${authzUri}.extraConfig = ''
+            internal;
+            ${authzProxyConfig}
+          '';
         }
+        // lib.listToAttrs (
+          lib.imap0 (i: b: {
+            name = bypassAuthzUri i;
+            value.extraConfig = ''
+              internal;
+              if ($remote_addr = "${b.from}") { return 200; }
+              ${authzProxyConfig}
+            '';
+          }) forwardAuthBypass
+        )
+        // lib.listToAttrs (
+          lib.imap0 (i: b: {
+            name = b.location;
+            value = {
+              proxyPass = upstream;
+              proxyWebsockets = websockets;
+              extraConfig = lib.concatStringsSep "\n" (
+                [ (forwardAuthLocationConfig (bypassAuthzUri i)) ]
+                ++ lib.optional (locationExtraConfig != null) locationExtraConfig
+              );
+            };
+          }) forwardAuthBypass
+        )
         // lib.listToAttrs (
           map (prefix: {
             name = prefix;

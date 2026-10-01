@@ -19,6 +19,22 @@ let
     auth_request_set $redirection_url $upstream_http_location;
     error_page 401 =302 $redirection_url;
   '';
+  clearAuthHeaders = ''
+    proxy_set_header Remote-User "";
+    proxy_set_header Remote-Groups "";
+    proxy_set_header Remote-Email "";
+    proxy_set_header Remote-Name "";
+  '';
+
+  bypassSnippet =
+    { prefix, from }:
+    ''
+      set $authz_bypass "";
+      if ($remote_addr = "${from}") { set $authz_bypass 1; }
+      if ($request_uri ~ "^${lib.escapeRegex prefix}") { set $authz_bypass "''${authz_bypass}1"; }
+      if ($request_uri ~* "(\.\.|%2e|%2f|//)") { set $authz_bypass 0; }
+      if ($authz_bypass = 11) { return 200; }
+    '';
 in
 {
   flake.lib.nginx = {
@@ -42,6 +58,8 @@ in
         forwardAuth ? false,
         # Prefixes proxied through with no auth_request even when forwardAuth is on (e.g. Navidrome's Subsonic API).
         forwardAuthExcludePrefixes ? [ ],
+        # { prefix, from }: requests from this IP to this prefix skip Authelia; the vhost CIDR allowlist still applies.
+        forwardAuthBypass ? [ ],
       }:
       {
         useACMEHost = domain;
@@ -66,6 +84,7 @@ in
         // lib.optionalAttrs forwardAuth {
           "/internal/authelia/authz" = {
             extraConfig = ''
+              ${lib.concatMapStringsSep "\n" bypassSnippet forwardAuthBypass}
               internal;
               proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
               proxy_set_header X-Original-Method $request_method;
@@ -84,6 +103,7 @@ in
             value = {
               proxyPass = upstream;
               proxyWebsockets = websockets;
+              extraConfig = clearAuthHeaders;
             };
           }) forwardAuthExcludePrefixes
         );

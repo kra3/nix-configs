@@ -22,6 +22,8 @@
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://${homeAutoIp}:80";
         forwardAuth = true;
+        # Home Assistant's Frigate integration polls this with no Authelia session.
+        forwardAuthExcludePrefixes = [ "/api/" ];
       };
     };
 }

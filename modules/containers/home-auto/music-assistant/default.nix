@@ -53,6 +53,8 @@
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8095";
         forwardAuth = true;
+        # Home Assistant's Music Assistant integration connects here with no Authelia session.
+        forwardAuthExcludePrefixes = [ "/ws" ];
       };
 
       # Snapcast JSON-RPC WebSocket on 1705 (ws/wss) -- no forwardAuth, real speaker clients can't log in.

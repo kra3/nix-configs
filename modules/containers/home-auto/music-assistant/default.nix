@@ -52,9 +52,16 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8095";
+        forwardAuth = true;
+        forwardAuthBypass = [
+          {
+            location = "= /ws";
+            from = "10.3.2.10";
+          }
+        ];
       };
 
-      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
+      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss) -- no forwardAuth, real speaker clients can't log in.
       services.nginx.virtualHosts."ma-snapcast" = {
         serverName = "ma.${config.vars.acme.domain}";
         useACMEHost = config.vars.acme.domain;

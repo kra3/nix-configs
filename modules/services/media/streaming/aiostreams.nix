@@ -13,6 +13,7 @@
             BASE_URL = "https://aiostreams.${config.vars.acme.domain}";
             DATABASE_URI = "sqlite://./data/db.sqlite";
             ADDON_NAME = "Rasa";
+            TRUSTED_UUIDS = "ec2cd866-a20b-4d59-84df-697f19621110";
             TEMPLATE_URLS = ''["https://git.tamtaro.de/complete.json"]'';
             # Dashboard-only SSO (never gates Stremio addon URLs); client secret
             # is set via the env file instead (see media-mgmt/aiostreams.nix).

@@ -19,6 +19,9 @@
       sops.secrets."media.aiostreams.tmdb_access_token" = { };
       sops.secrets."media.aiostreams.tmdb_api_key" = { };
       sops.secrets."media.aiostreams.tvdb_api_key" = { };
+      sops.secrets."media.aiostreams.realdebrid_api_key" = { };
+      sops.secrets."media.aiostreams.easynews_username" = { };
+      sops.secrets."media.aiostreams.easynews_password" = { };
 
       sops.templates."media.aiostreams.env" = {
         owner = "root";
@@ -31,6 +34,13 @@
           TMDB_ACCESS_TOKEN=${config.sops.placeholder."media.aiostreams.tmdb_access_token"}
           TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}
           TVDB_API_KEY=${config.sops.placeholder."media.aiostreams.tvdb_api_key"}
+          DEFAULT_SERVICE_CREDENTIALS=realdebrid.apiKey=${
+            config.sops.placeholder."media.aiostreams.realdebrid_api_key"
+          }\neasynews.username=${
+            config.sops.placeholder."media.aiostreams.easynews_username"
+          }\neasynews.password=${
+            config.sops.placeholder."media.aiostreams.easynews_password"
+          }\naiostreams.aiostreamsAuth=${config.sops.placeholder."media.aiostreams.auth"}
         '';
       };
 

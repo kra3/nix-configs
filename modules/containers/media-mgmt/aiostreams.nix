@@ -22,6 +22,7 @@
       sops.secrets."media.aiostreams.realdebrid_api_key" = { };
       sops.secrets."media.aiostreams.easynews_username" = { };
       sops.secrets."media.aiostreams.easynews_password" = { };
+      sops.secrets."media.prowlarr.api_key" = { };
 
       sops.templates."media.aiostreams.env" = {
         owner = "root";
@@ -41,6 +42,7 @@
           }\neasynews.password=${
             config.sops.placeholder."media.aiostreams.easynews_password"
           }\naiostreams.aiostreamsAuth=${config.sops.placeholder."media.aiostreams.auth"}
+          BUILTIN_PROWLARR_API_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
         '';
       };
 
@@ -48,6 +50,7 @@
         containerConfig = {
           # Pinned IP (vars.nix podmanAddresses.aiostreams) — see radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
+          environments.BUILTIN_PROWLARR_URL = "http://${config.vars.network.podmanAddresses.prowlarr}:9696";
           volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "2048m";

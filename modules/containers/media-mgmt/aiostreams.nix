@@ -16,6 +16,9 @@
       sops.secrets."media.aiostreams.secret_key" = { };
       sops.secrets."media.aiostreams.auth" = { };
       sops.secrets."media.aiostreams.oidc_client_secret" = { };
+      sops.secrets."media.aiostreams.tmdb_access_token" = { };
+      sops.secrets."media.aiostreams.tmdb_api_key" = { };
+      sops.secrets."media.aiostreams.tvdb_api_key" = { };
 
       sops.templates."media.aiostreams.env" = {
         owner = "root";
@@ -25,6 +28,9 @@
           SECRET_KEY=${config.sops.placeholder."media.aiostreams.secret_key"}
           AIOSTREAMS_AUTH=${config.sops.placeholder."media.aiostreams.auth"}
           AIOSTREAMS_OIDC_CLIENT_SECRET=${config.sops.placeholder."media.aiostreams.oidc_client_secret"}
+          TMDB_ACCESS_TOKEN=${config.sops.placeholder."media.aiostreams.tmdb_access_token"}
+          TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}
+          TVDB_API_KEY=${config.sops.placeholder."media.aiostreams.tvdb_api_key"}
         '';
       };
 

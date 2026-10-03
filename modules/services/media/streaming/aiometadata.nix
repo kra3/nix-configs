@@ -16,6 +16,7 @@
             ENABLE_BUILTIN_POSTER_CACHE = "true";
             REDIS_AUTOTUNE = "false";
             ENABLE_AI_SEARCH = "true";
+            JIKAN_API_BASE = "https://jikanfortheweebs.midnightignite.me/v4";
             # Dashboard-only SSO; client secret comes from the env file (see media-mgmt/aiometadata.nix).
             OIDC_ENABLED = "true";
             OIDC_ISSUER = "https://auth.${config.vars.acme.domain}";

@@ -53,6 +53,8 @@
           # Pinned IP (vars.nix podmanAddresses.aiostreams) — see radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
           environments.BUILTIN_PROWLARR_URL = "http://${config.vars.network.podmanAddresses.prowlarr}:9696";
+          # OIDC discovery calls auth.${config.vars.acme.domain} directly; route via the bridge gateway.
+          addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
           volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "2048m";

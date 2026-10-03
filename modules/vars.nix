@@ -132,6 +132,11 @@
               default = "10.3.1.12";
               description = "Pinned br-media-mgmt IP for sabnzbd";
             };
+            maintainerr = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.8";
+              description = "Pinned br-media-mgmt IP for maintainerr";
+            };
             aiostreams = lib.mkOption {
               type = lib.types.str;
               default = "10.3.1.50";
@@ -157,6 +162,11 @@
               type = lib.types.str;
               default = "10.3.1.2";
               description = "Pinned br-media-mgmt IP for audiobookshelf";
+            };
+            unpackerr = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.6";
+              description = "Pinned br-media-mgmt IP for unpackerr";
             };
             recyclarr = lib.mkOption {
               type = lib.types.str;

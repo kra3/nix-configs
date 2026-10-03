@@ -242,6 +242,10 @@
               hostPath = "/srv/appdata/media-play/navidrome";
               isReadOnly = false;
             };
+            "/data/library/music/playlists" = {
+              hostPath = "${flakeLib.navidrome-playlists.mkPlaylistsDir pkgs}";
+              isReadOnly = true;
+            };
 
             "/run/secrets/media.jellyfin.users.kra3.password" = {
               hostPath = "/run/secrets/media.jellyfin.users.kra3.password";

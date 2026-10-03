@@ -228,6 +228,10 @@
               "||statcounter.com^$important"
               # thexem.info: legit Sonarr/Radarr scene-numbering API; needs $important to beat a blocklist rule that also has it.
               "@@||thexem.info^$important"
+              # AIOStreams addon hosts that blocklists resolve to 0.0.0.0 (ECONNREFUSED).
+              "@@||yastream.tamthai.de^$important"
+              "@@||torrent-catalogs.strem.fun^$important"
+              "@@||torrentgalaxy.one^$important"
             ];
 
             querylog = {

@@ -218,6 +218,15 @@
                     };
                   }
                   {
+                    # No dedicated Homepage widget for AIOMetadata, plain link.
+                    AIOMetadata = {
+                      description = "Stremio metadata addon";
+                      icon = "mdi-database-search";
+                      href = "https://aiometadata.${domain}";
+                      siteMonitor = "https://aiometadata.${domain}";
+                    };
+                  }
+                  {
                     Radarr = {
                       description = "Movie management";
                       icon = "radarr.png";

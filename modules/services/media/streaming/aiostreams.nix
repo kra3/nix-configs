@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.aiostreams = {
         containerConfig = {
-          image = "ghcr.io/viren070/aiostreams:v2.35.4";
+          image = "ghcr.io/viren070/aiostreams:v2.35.8";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           # No healthcheck: no documented health endpoint to pin to.

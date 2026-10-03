@@ -49,6 +49,7 @@
         "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
         "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
         "d /srv/appdata/media-mgmt/aiostreams 2770 root media - -"
+        "d /srv/appdata/media-mgmt/aiometadata 2770 root media - -"
         "d /srv/appdata/media-mgmt/slskd 2770 root media - -"
         "d /srv/media/downloads/slskd 2770 root media - -"
         "d /srv/media/downloads/slskd/complete 2770 root media - -"

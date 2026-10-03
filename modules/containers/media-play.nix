@@ -61,6 +61,48 @@
       # No secret values embedded (placeholders are stable tokens) — see
       # authelia.nix's configHash.
       jellyfinSsoAuthXmlHash = builtins.hashString "sha256" jellyfinSsoAuthXmlContent;
+
+      languageMix = language: {
+        all = [ { is = { inherit language; }; } ];
+        sort = "random";
+        limit = 200;
+      };
+      navidromeSmartPlaylists = {
+        "Hindi Mix" = languageMix "hin";
+        "Tamil Mix" = languageMix "tam";
+        "Malayalam Mix" = languageMix "mal";
+        "Recently Added" = {
+          all = [ { inTheLast.dateAdded = 30; } ];
+          sort = "dateAdded";
+          order = "desc";
+          limit = 100;
+        };
+        "Discovery" = {
+          all = [ { is.playCount = 0; } ];
+          sort = "random";
+          limit = 100;
+        };
+        "Favourites" = {
+          all = [ { is.loved = true; } ];
+          sort = "dateLoved";
+          order = "desc";
+        };
+        "Heavy Rotation" = {
+          all = [
+            { gt.playCount = 0; }
+            { inTheLast.lastPlayed = 90; }
+          ];
+          sort = "playCount";
+          order = "desc";
+          limit = 100;
+        };
+      };
+      navidromePlaylistsDir = pkgs.linkFarm "navidrome-smart-playlists" (
+        lib.mapAttrsToList (name: rules: {
+          name = "${name}.nsp";
+          path = pkgs.writeText "${name}.nsp" (builtins.toJSON ({ inherit name; } // rules));
+        }) navidromeSmartPlaylists
+      );
     in
     {
       # Host group for media files
@@ -212,6 +254,7 @@
                 ''
               );
             };
+            services.navidrome.settings.PlaylistsPath = "playlists";
             systemd.services.navidrome.serviceConfig = {
               MemoryMax = "384M";
               CPUQuota = "100%";
@@ -241,6 +284,10 @@
             "/var/lib/navidrome" = {
               hostPath = "/srv/appdata/media-play/navidrome";
               isReadOnly = false;
+            };
+            "/data/library/music/playlists" = {
+              hostPath = "${navidromePlaylistsDir}";
+              isReadOnly = true;
             };
 
             "/run/secrets/media.jellyfin.users.kra3.password" = {

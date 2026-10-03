@@ -40,13 +40,22 @@
         '';
       };
 
+      # Rebuildable cache lives outside /srv/appdata so ZFS snapshots skip it.
+      systemd.tmpfiles.rules = [
+        "d /var/cache/aiometadata 2770 root media - -"
+        "d /var/cache/aiometadata/poster-cache 2770 root media - -"
+      ];
+
       virtualisation.quadlet.containers.aiometadata = {
         containerConfig = {
           # Pinned IP (vars.nix podmanAddresses.aiometadata) — see radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
           # OIDC discovery calls auth.${domain} directly; route via the bridge gateway.
           addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
-          volumes = [ "/srv/appdata/media-mgmt/aiometadata:/app/addon/data" ];
+          volumes = [
+            "/srv/appdata/media-mgmt/aiometadata:/app/addon/data"
+            "/var/cache/aiometadata/poster-cache:/app/addon/data/poster-cache"
+          ];
           memory = "1024m";
           podmanArgs = [ "--cpus=1" ];
         };

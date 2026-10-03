@@ -14,6 +14,7 @@
             HOST_NAME = "https://aiometadata.${config.vars.acme.domain}";
             DATABASE_URI = "sqlite://addon/data/db.sqlite";
             ENABLE_BUILTIN_POSTER_CACHE = "true";
+            POSTER_CACHE_MAX_SIZE = "2g";
             REDIS_AUTOTUNE = "false";
             ENABLE_AI_SEARCH = "true";
             JIKAN_API_BASE = "https://jikanfortheweebs.midnightignite.me/v4";

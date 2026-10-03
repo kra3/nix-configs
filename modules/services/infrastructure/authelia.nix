@@ -270,6 +270,26 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
+              # Dashboard-only login (see aiometadata.nix), never the Stremio addon URLs.
+              - client_id: 'aiometadata'
+                client_name: 'AIOMetadata'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.aiometadata.client_secret_hash"
+                }'
+                public: false
+                authorization_policy: 'one_factor'
+                token_endpoint_auth_method: 'client_secret_basic'
+                redirect_uris:
+                  - 'https://aiometadata.${domain}/api/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
       '';
       usersDatabaseYmlContent = ''
         users:
@@ -392,6 +412,11 @@
         mode = "0400";
       };
       sops.secrets."authelia.oidc_clients.aiostreams.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.aiometadata.client_secret_hash" = {
         owner = "authelia";
         group = "authelia";
         mode = "0400";

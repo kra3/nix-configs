@@ -14,6 +14,7 @@
       imports = [ flakeModules.nixos.services-media-streaming-aiometadata ];
 
       sops.secrets."media.aiometadata.admin_key" = { };
+      sops.secrets."media.aiometadata.oidc_client_secret" = { };
       sops.secrets."media.aiostreams.tmdb_api_key" = { };
       sops.secrets."media.aiostreams.tvdb_api_key" = { };
       sops.secrets."db.redis_password" = { };
@@ -24,6 +25,7 @@
         mode = "0440";
         content = ''
           ADMIN_KEY=${config.sops.placeholder."media.aiometadata.admin_key"}
+          OIDC_CLIENT_SECRET=${config.sops.placeholder."media.aiometadata.oidc_client_secret"}
           BUILT_IN_TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}
           BUILT_IN_TVDB_API_KEY=${config.sops.placeholder."media.aiostreams.tvdb_api_key"}
           REDIS_URL=redis://:${config.sops.placeholder."db.redis_password"}@host.containers.internal:6379
@@ -34,6 +36,8 @@
         containerConfig = {
           # Pinned IP (vars.nix podmanAddresses.aiometadata) — see radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
+          # OIDC discovery calls auth.${domain} directly; route via the bridge gateway.
+          addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
           volumes = [ "/srv/appdata/media-mgmt/aiometadata:/app/addon/data" ];
           memory = "1024m";
           podmanArgs = [ "--cpus=1" ];

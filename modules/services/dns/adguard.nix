@@ -127,6 +127,7 @@
                 "::1/128"
               ];
               cache_size = 4194304;
+              ratelimit = 1000;
               cache_ttl_min = 0;
               cache_ttl_max = 0;
               bogus_nxdomain = [ ];

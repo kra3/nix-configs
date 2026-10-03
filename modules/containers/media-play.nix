@@ -67,7 +67,102 @@
         sort = "random";
         limit = 200;
       };
+      mix = rule: {
+        all = [ rule ];
+        sort = "random";
+        limit = 200;
+      };
+      pathMix = path: mix { contains.filepath = path; };
+      genreMix = genres: mix { any = map (genre: { is = { inherit genre; }; }) genres; };
       navidromeSmartPlaylists = {
+        "Carnatic Mix" = pathMix "Classical/Carnatic/";
+        "Hindustani Mix" = pathMix "Classical/Hindustani/";
+        "Western Classical Mix" = pathMix "Classical/Western/";
+        "Classical Instrumental" = genreMix [
+          "Instrumental"
+          "Concerto"
+          "Symphony"
+          "Sonata"
+        ];
+        "Opera & Choral" = genreMix [
+          "Opera"
+          "Requiem"
+          "Mass"
+        ];
+        "Rock" = genreMix [
+          "Rock"
+          "Hard Rock"
+          "Alternative Rock"
+          "Soft Rock"
+          "Post-Grunge"
+        ];
+        "Metal & Punk" = genreMix [
+          "Heavy Metal"
+          "Punk Rock"
+          "Pop Punk"
+        ];
+        "Pop & Dance" = genreMix [
+          "Pop"
+          "Dance-Pop"
+          "Europop"
+          "Synth-Pop"
+          "Teen Pop"
+        ];
+        "Disco & House" = genreMix [
+          "Disco"
+          "Euro-Disco"
+          "House"
+        ];
+        "Hip Hop & R&B" = genreMix [
+          "Hip Hop"
+          "Contemporary R&B"
+        ];
+        "Jazz & Blues" = genreMix [
+          "Jazz"
+          "Blues"
+        ];
+        "Chill" = genreMix [
+          "Easy Listening"
+          "Ballad"
+          "Soft Rock"
+        ];
+        "Throwback 90s-00s" = {
+          all = [
+            {
+              inTheRange.year = [
+                1990
+                2009
+              ];
+            }
+          ];
+          sort = "random";
+          limit = 200;
+        };
+        "Devotional Mix" = pathMix "Devotional/";
+        "Malayalam Devotional" = {
+          all = [
+            { contains.filepath = "Devotional/"; }
+            { is.language = "mal"; }
+          ];
+          sort = "random";
+          limit = 200;
+        };
+        "Tamil Devotional" = {
+          all = [
+            { contains.filepath = "Devotional/"; }
+            { is.language = "tam"; }
+          ];
+          sort = "random";
+          limit = 200;
+        };
+        "Sanskrit Stotras" = {
+          all = [
+            { contains.filepath = "Devotional/"; }
+            { is.language = "san"; }
+          ];
+          sort = "random";
+          limit = 200;
+        };
         "Hindi Mix" = languageMix "hin";
         "Tamil Mix" = languageMix "tam";
         "Malayalam Mix" = languageMix "mal";

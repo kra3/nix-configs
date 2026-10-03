@@ -54,7 +54,7 @@
           addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
           volumes = [
             "/srv/appdata/media-mgmt/aiometadata:/app/addon/data"
-            "/var/cache/aiometadata/poster-cache:/app/addon/data/poster-cache"
+            "/var/cache/aiometadata/poster-cache:/app/poster-cache"
           ];
           memory = "1024m";
           podmanArgs = [ "--cpus=1" ];

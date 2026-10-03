@@ -38,7 +38,7 @@ LAN 192.168.1.0/24
         |     ghostfolio, actualbudget                     (life zone)
         |-- br-media-mgmt (podman, 10.3.1.0/24)
         |     radarr, sonarr, prowlarr, sabnzbd, bazarr, lidarr, seerr,
-        |     bookshelf, audiobookshelf, maintainerr, unpackerr, recyclarr
+        |     bookshelf, audiobookshelf, recyclarr
         |-- br-home-auto (podman, 10.3.2.0/24, gw 10.3.2.1)
         |     home-assistant .10, otbr .11, matter-server .12,
         |     music-assistant .13
@@ -88,7 +88,7 @@ listed here):
 | # | Flow | Ports |
 |---|---|---|
 | 1 | monitoring → media-play | 9100 (node-exporter), 4533 (navidrome), 8096 (jellyfin metrics) |
-| 1a| monitoring → media-mgmt (unpackerr, slskd) | 5656 (unpackerr), 5030 (slskd) |
+| 1a| monitoring → media-mgmt (slskd) | 5030 (slskd) |
 | 2 | monitoring → home-auto (nspawn) | 9100, 80 (frigate) |
 | 3 | monitoring → home-auto pods (br-home-auto) | 8123 (HA prometheus) |
 | 4 | home-auto (nspawn) → monitoring | 3100 (loki) |
@@ -159,7 +159,7 @@ Unbound -> DoT upstreams (1.1.1.1:853 family, 9.9.9.11:853 quad9)
 | `auth.${domain}` | `127.0.0.1:9091` (authelia) |
 | `ghostfolio.${domain}` | `127.0.0.1:3333` |
 | `actualbudget.${domain}` | `127.0.0.1:5006` |
-| `radarr` / `sonarr` / `prowlarr` / `sabnzbd` / `bazarr` / `lidarr` / `seerr` / `bookshelf` / `audiobookshelf` / `maintainerr` `.${domain}` | `127.0.0.1:{7878,8989,9696,8080,6767,8686,5055,8787,13378,6246}` respectively |
+| `radarr` / `sonarr` / `prowlarr` / `sabnzbd` / `bazarr` / `lidarr` / `seerr` / `bookshelf` / `audiobookshelf` `.${domain}` | `127.0.0.1:{7878,8989,9696,8080,6767,8686,5055,8787,13378}` respectively |
 | mosquitto stream proxy (`1883`) | `10.3.255.10:1883` (home-auto nspawn, via `services.nginx.streamConfig`) |
 
 ## Services and Ports
@@ -194,8 +194,8 @@ from LAN), node-exporter `9100`.
 ### br-media-mgmt pods (10.3.1.0/24)
 
 radarr `7878`, sonarr `8989`, prowlarr `9696`, sabnzbd `8080`, bazarr `6767`,
-lidarr `8686`, seerr `5055`, bookshelf `8787`, audiobookshelf `13378`→80,
-maintainerr `6246`, unpackerr `5656` — all published to `127.0.0.1` only.
+lidarr `8686`, seerr `5055`, bookshelf `8787`, audiobookshelf `13378`→80 —
+all published to `127.0.0.1` only.
 lidarr's On Track Retag Custom Script reaches the host's
 `lidarr-beets-webhook` (port `8942`, `networking.firewall.interfaces.
 br-media-mgmt.allowedTCPPorts`) via `host.containers.internal`, same

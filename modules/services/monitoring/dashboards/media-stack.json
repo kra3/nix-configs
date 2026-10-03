@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Media stack health: per-unit process, memory and CPU from the host process-exporter, plus scrape status of the apps that expose their own metrics (jellyfin, unpackerr, slskd, navidrome).",
+  "description": "Media stack health: per-unit process, memory and CPU from the host process-exporter, plus scrape status of the apps that expose their own metrics (jellyfin, slskd, navidrome).",
   "editable": true,
   "graphTooltip": 1,
   "id": null,
@@ -66,7 +66,7 @@
       },
       "targets": [
         {
-          "expr": "count(sum by (unit) (label_replace(namedprocess_namegroup_num_procs{instance=~\"$instance\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\")) > 0) or vector(0)",
+          "expr": "count(sum by (unit) (label_replace(namedprocess_namegroup_num_procs{instance=~\"$instance\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|prowlarr|radarr|sabnzbd|seerr|sonarr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\")) > 0) or vector(0)",
           "instant": true,
           "refId": "A"
         }
@@ -134,7 +134,7 @@
       },
       "targets": [
         {
-          "expr": "up{job=~\"jellyfin|unpackerr|slskd|navidrome\"}",
+          "expr": "up{job=~\"jellyfin|slskd|navidrome\"}",
           "instant": true,
           "legendFormat": "{{job}}",
           "refId": "A"
@@ -179,7 +179,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (unit) (label_replace(namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
+          "expr": "sum by (unit) (label_replace(namedprocess_namegroup_memory_bytes{instance=~\"$instance\", memtype=\"resident\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|slskd)\\\\.service.*\"}, \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
           "legendFormat": "{{unit}}",
           "refId": "A"
         }
@@ -223,7 +223,7 @@
       },
       "targets": [
         {
-          "expr": "100 * sum by (unit) (label_replace(rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|maintainerr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|unpackerr|slskd)\\\\.service.*\"}[5m]), \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
+          "expr": "100 * sum by (unit) (label_replace(rate(namedprocess_namegroup_cpu_seconds_total{instance=~\"$instance\", groupname=~\".*/system.slice/(aiometadata|aiostreams|audiobookshelf|bazarr|bookshelf|lidarr|prowlarr|radarr|recyclarr|sabnzbd|seerr|sonarr|slskd)\\\\.service.*\"}[5m]), \"unit\", \"$1\", \"groupname\", \".*/system.slice/([a-z-]+)\\\\.service.*\"))",
           "legendFormat": "{{unit}}",
           "refId": "A"
         }

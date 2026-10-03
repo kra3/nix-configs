@@ -165,8 +165,7 @@
 
           # 1. monitoring → media-play: scrape node-exporter + navidrome + jellyfin metrics
           ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533, 8096 } accept
-          # 1a. monitoring → media-mgmt: scrape unpackerr + slskd metrics
-          ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.unpackerr} tcp dport 5656 accept
+          # 1a. monitoring → media-mgmt: scrape slskd metrics
           ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.slskd} tcp dport 5030 accept
           # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
           ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept

@@ -322,18 +322,6 @@
                     };
                   }
                   {
-                    Maintainerr = {
-                      description = "Library cleanup automation";
-                      icon = "maintainerr.png";
-                      href = "https://maintainerr.${domain}";
-                      siteMonitor = "https://maintainerr.${domain}";
-                      widget = {
-                        type = "maintainerr";
-                        url = "http://${ip.maintainerr}:6246";
-                      };
-                    };
-                  }
-                  {
                     Bookshelf = {
                       description = "Book tracking";
                       icon = "mdi-book-open-page-variant";

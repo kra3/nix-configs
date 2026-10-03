@@ -145,16 +145,6 @@
             ];
           }
           {
-            job_name = "unpackerr";
-            metrics_path = "/metrics";
-            static_configs = [
-              {
-                targets = [ "${networkVars.podmanAddresses.unpackerr}:5656" ];
-                labels.instance = "unpackerr";
-              }
-            ];
-          }
-          {
             job_name = "slskd";
             metrics_path = "/metrics";
             static_configs = [

@@ -89,7 +89,7 @@ paired 1:1 with `modules/services/media/acquisition/*.nix` (same basename)
 except where noted:
 
 `radarr`, `sonarr`, `lidarr`, `bazarr`, `prowlarr`, `sabnzbd`, `seerr`,
-`bookshelf`, `audiobookshelf`, `maintainerr`, `unpackerr`, `recyclarr`,
+`bookshelf`, `audiobookshelf`, `recyclarr`,
 `aiostreams` (service side: `modules/services/media/streaming/aiostreams.nix`).
 
 **`home-auto` zone (`br-home-auto` + `home-auto-macvlan`)** —

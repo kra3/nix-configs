@@ -14,8 +14,6 @@
       flakeModules.nixos.containers-media-mgmt-audiobookshelf
       flakeModules.nixos.containers-media-mgmt-seerr
       flakeModules.nixos.containers-media-mgmt-recyclarr
-      flakeModules.nixos.containers-media-mgmt-unpackerr
-      flakeModules.nixos.containers-media-mgmt-maintainerr
       flakeModules.nixos.containers-media-mgmt-aiostreams
       flakeModules.nixos.containers-media-mgmt-aiometadata
       flakeModules.nixos.containers-media-mgmt-slskd

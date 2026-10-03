@@ -17,7 +17,9 @@
         HOMEPAGE_VAR_SONARR_KEY=${config.sops.placeholder."media.sonarr.api_key"}
         HOMEPAGE_VAR_LIDARR_KEY=${config.sops.placeholder."media.lidarr.api_key"}
         HOMEPAGE_VAR_PROWLARR_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
-        HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}
+        ${lib.optionalString (config.virtualisation.quadlet.containers ? bazarr)
+          "HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}"
+        }
         HOMEPAGE_VAR_SABNZBD_KEY=${config.sops.placeholder."media.sabnzbd.api_key"}
         HOMEPAGE_VAR_SLSKD_KEY=${config.sops.placeholder."media.slskd.api_key"}
         HOMEPAGE_VAR_JELLYFIN_KEY=${config.sops.placeholder."media.jellyfin.apikeys.seerr"}
@@ -296,19 +298,6 @@
                     };
                   }
                   {
-                    Bazarr = {
-                      description = "Subtitle management";
-                      icon = "bazarr.png";
-                      href = "https://bazarr.${domain}";
-                      siteMonitor = "https://bazarr.${domain}";
-                      widget = {
-                        type = "bazarr";
-                        url = "http://${ip.bazarr}:6767";
-                        key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
-                      };
-                    };
-                  }
-                  {
                     SABnzbd = {
                       description = "Usenet downloader";
                       icon = "sabnzbd.png";
@@ -345,6 +334,21 @@
                       widget = {
                         type = "maintainerr";
                         url = "http://${ip.maintainerr}:6246";
+                      };
+                    };
+                  }
+                ]
+                ++ lib.optionals (config.virtualisation.quadlet.containers ? bazarr) [
+                  {
+                    Bazarr = {
+                      description = "Subtitle management";
+                      icon = "bazarr.png";
+                      href = "https://bazarr.${domain}";
+                      siteMonitor = "https://bazarr.${domain}";
+                      widget = {
+                        type = "bazarr";
+                        url = "http://${ip.bazarr}:6767";
+                        key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
                       };
                     };
                   }

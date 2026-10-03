@@ -8,7 +8,6 @@
       flakeModules.nixos.containers-media-mgmt-sonarr
       flakeModules.nixos.containers-media-mgmt-prowlarr
       flakeModules.nixos.containers-media-mgmt-sabnzbd
-      flakeModules.nixos.containers-media-mgmt-bazarr
       flakeModules.nixos.containers-media-mgmt-lidarr
       flakeModules.nixos.containers-media-mgmt-bookshelf
       flakeModules.nixos.containers-media-mgmt-audiobookshelf

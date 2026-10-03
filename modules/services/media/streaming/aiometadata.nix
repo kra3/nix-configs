@@ -14,6 +14,7 @@
             HOST_NAME = "https://aiometadata.${config.vars.acme.domain}";
             DATABASE_URI = "sqlite://addon/data/db.sqlite";
             ENABLE_BUILTIN_POSTER_CACHE = "true";
+            REDIS_AUTOTUNE = "false";
           };
           environmentFiles = [ config.sops.templates."media.aiometadata.env".path ];
         };

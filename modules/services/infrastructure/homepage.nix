@@ -334,6 +334,20 @@
                       };
                     };
                   }
+                ]
+                ++ lib.optionals (config.virtualisation.quadlet.containers ? maintainerr) [
+                  {
+                    Maintainerr = {
+                      description = "Library cleanup automation";
+                      icon = "maintainerr.png";
+                      href = "https://maintainerr.${domain}";
+                      siteMonitor = "https://maintainerr.${domain}";
+                      widget = {
+                        type = "maintainerr";
+                        url = "http://${ip.maintainerr}:6246";
+                      };
+                    };
+                  }
                 ];
               }
             ];

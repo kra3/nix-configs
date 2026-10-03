@@ -15,6 +15,7 @@
 
       sops.secrets."media.aiostreams.secret_key" = { };
       sops.secrets."media.aiostreams.auth" = { };
+      sops.secrets."media.aiostreams.trusted_uuids" = { };
       sops.secrets."media.aiostreams.oidc_client_secret" = { };
       sops.secrets."media.aiostreams.tmdb_access_token" = { };
       sops.secrets."media.aiostreams.tmdb_api_key" = { };
@@ -31,6 +32,7 @@
         content = ''
           SECRET_KEY=${config.sops.placeholder."media.aiostreams.secret_key"}
           AIOSTREAMS_AUTH=${config.sops.placeholder."media.aiostreams.auth"}
+          TRUSTED_UUIDS=${config.sops.placeholder."media.aiostreams.trusted_uuids"}
           AIOSTREAMS_OIDC_CLIENT_SECRET=${config.sops.placeholder."media.aiostreams.oidc_client_secret"}
           TMDB_ACCESS_TOKEN=${config.sops.placeholder."media.aiostreams.tmdb_access_token"}
           TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}

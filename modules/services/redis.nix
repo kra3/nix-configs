@@ -50,7 +50,8 @@
         SystemCallArchitectures = "native";
       };
 
-      # allow containers on br-life to reach redis
+      # allow containers on br-life and br-media-mgmt to reach redis
+      networking.firewall.interfaces.br-media-mgmt.allowedTCPPorts = [ 6379 ];
       networking.firewall.interfaces.br-life.allowedTCPPorts = [ 6379 ];
     };
 }

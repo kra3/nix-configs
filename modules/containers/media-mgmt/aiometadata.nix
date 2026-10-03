@@ -1,0 +1,55 @@
+{
+  flake.nixosModules.containers-media-mgmt-aiometadata =
+    {
+      config,
+      flakeLib,
+      flakeModules,
+      ...
+    }:
+    let
+      network = config.virtualisation.quadlet.networks.media-mgmt;
+      ip = config.vars.network.podmanAddresses.aiometadata;
+    in
+    {
+      imports = [ flakeModules.nixos.services-media-streaming-aiometadata ];
+
+      sops.secrets."media.aiometadata.admin_key" = { };
+      sops.secrets."media.aiostreams.tmdb_api_key" = { };
+      sops.secrets."media.aiostreams.tvdb_api_key" = { };
+      sops.secrets."db.redis_password" = { };
+
+      sops.templates."media.aiometadata.env" = {
+        owner = "root";
+        group = "media";
+        mode = "0440";
+        content = ''
+          ADMIN_KEY=${config.sops.placeholder."media.aiometadata.admin_key"}
+          BUILT_IN_TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}
+          BUILT_IN_TVDB_API_KEY=${config.sops.placeholder."media.aiostreams.tvdb_api_key"}
+          REDIS_URL=redis://:${config.sops.placeholder."db.redis_password"}@host.containers.internal:6379
+        '';
+      };
+
+      virtualisation.quadlet.containers.aiometadata = {
+        containerConfig = {
+          # Pinned IP (vars.nix podmanAddresses.aiometadata) — see radarr.nix for why.
+          networks = [ "${network.ref}:ip=${ip}" ];
+          volumes = [ "/srv/appdata/media-mgmt/aiometadata:/app/addon/data" ];
+          memory = "1024m";
+          podmanArgs = [ "--cpus=1" ];
+        };
+      }
+      // flakeLib.quadlet.mkNetworkDeps {
+        networkServices = [ "media-mgmt-network.service" ];
+        extraAfter = [ "redis-default.service" ];
+        extraRequires = [ "redis-default.service" ];
+      };
+
+      # No forward-auth: Stremio clients fetch manifest/catalog paths directly.
+      services.nginx.virtualHosts."aiometadata.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
+        domain = config.vars.acme.domain;
+        cidrs = config.vars.network.nginxAllowCidrs;
+        upstream = "http://${ip}:3232";
+      };
+    };
+}

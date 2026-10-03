@@ -143,6 +143,11 @@
               # .16 collided with an existing dynamic lease; .50 clears that range.
               description = "Pinned br-media-mgmt IP for aiostreams";
             };
+            aiometadata = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.51";
+              description = "Pinned br-media-mgmt IP for aiometadata";
+            };
             seerr = lib.mkOption {
               type = lib.types.str;
               default = "10.3.1.11";

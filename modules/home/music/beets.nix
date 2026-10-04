@@ -127,7 +127,12 @@
             "fromfilename"
             "edit"
             "normalize_names"
+            "permissions"
           ];
+          permissions = {
+            file = "664";
+            dir = "2755";
+          };
           # aisauce is opt-in (see beet-cleanup/beet-indian-film-cleanup), not run on every
           # regular import -- it's an LLM-backed helper, not needed for routine matches.
           # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
@@ -189,7 +194,10 @@
         directory: /srv/media/library/music/Indian
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         # aisauce is opt-in (see beet-indian-film-cleanup), not run on every regular import.
-        plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
+        plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names permissions
+        permissions:
+          file: "664"
+          dir: "2755"
         # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
         musicbrainz:
           ratelimit_interval: 1.5

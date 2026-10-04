@@ -233,6 +233,10 @@
               "@@||yastream.tamthai.de^$important"
               "@@||torrent-catalogs.strem.fun^$important"
               "@@||torrentgalaxy.one^$important"
+              # Akashvani (All India Radio) streams via BitGravity CDN; blocklists resolve these to 0.0.0.0.
+              "@@||air.pc.cdn.bitgravity.com^$important"
+              "@@||airhlspush.pc.cdn.bitgravity.com^$important"
+              "@@||cdncache.bitg.net^$important"
             ];
 
             querylog = {

@@ -14,6 +14,7 @@
       imports = [ flakeModules.nixos.services-media-streaming-aiometadata ];
 
       sops.secrets."media.aiometadata.admin_key" = { };
+      sops.secrets."media.aiometadata.addon_password" = { };
       sops.secrets."media.aiometadata.oidc_client_secret" = { };
       sops.secrets."media.aiostreams.tmdb_api_key" = { };
       sops.secrets."media.aiostreams.tvdb_api_key" = { };
@@ -29,6 +30,7 @@
         mode = "0440";
         content = ''
           ADMIN_KEY=${config.sops.placeholder."media.aiometadata.admin_key"}
+          ADDON_PASSWORD=${config.sops.placeholder."media.aiometadata.addon_password"}
           OIDC_CLIENT_SECRET=${config.sops.placeholder."media.aiometadata.oidc_client_secret"}
           BUILT_IN_TMDB_API_KEY=${config.sops.placeholder."media.aiostreams.tmdb_api_key"}
           BUILT_IN_TVDB_API_KEY=${config.sops.placeholder."media.aiostreams.tvdb_api_key"}

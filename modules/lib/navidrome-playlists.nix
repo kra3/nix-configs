@@ -133,11 +133,24 @@
           limit = 100;
         };
       };
+      personal = [
+        "Discovery"
+        "Favourites"
+        "Heavy Rotation"
+      ];
     in
     pkgs.linkFarm "navidrome-smart-playlists" (
       lib.mapAttrsToList (name: rules: {
         name = "${name}.nsp";
-        path = pkgs.writeText "${name}.nsp" (builtins.toJSON ({ inherit name; } // rules));
+        path = pkgs.writeText "${name}.nsp" (
+          builtins.toJSON (
+            {
+              inherit name;
+              public = !(builtins.elem name personal);
+            }
+            // rules
+          )
+        );
       }) navidromeSmartPlaylists
     );
 }

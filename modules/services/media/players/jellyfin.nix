@@ -180,7 +180,7 @@
         };
       };
 
-      users.users.jellyfin = {
+      users.users.jellyfin = lib.mkIf config.services.declarative-jellyfin.enable {
         extraGroups = [
           "media"
           "render"
@@ -188,12 +188,12 @@
         ];
       };
 
-      systemd.services.jellyfin = {
+      systemd.services.jellyfin = lib.mkIf config.services.declarative-jellyfin.enable {
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
       };
 
-      systemd.tmpfiles.rules = [
+      systemd.tmpfiles.rules = lib.mkIf config.services.declarative-jellyfin.enable [
         "d /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
         "f /var/lib/jellyfin/log/jellyfin.log 0640 jellyfin jellyfin - -"
         "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"

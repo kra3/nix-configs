@@ -14,6 +14,18 @@
     { lib, ... }:
     {
       options.vars = {
+        localMedia = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Local media stack: Jellyfin, Radarr, Sonarr, Recyclarr (with their scrape jobs, tiles, firewall rules)";
+          };
+          extras.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Bazarr, Maintainerr, Unpackerr; only takes effect when localMedia.enable is set";
+          };
+        };
         network = {
           lanIf = lib.mkOption {
             type = lib.types.str;

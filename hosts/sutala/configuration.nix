@@ -1,6 +1,7 @@
 {
   inputs,
   config,
+  lib,
   pkgs,
   flakeModules,
   flakeLib,
@@ -158,14 +159,17 @@
           mmNet = p.mediaMgmt;
           liNet = p.life;
           lan = config.vars.network.lanCidr;
+          jellyfin = config.vars.localMedia.enable;
+          unpackerr = config.vars.localMedia.enable && config.vars.localMedia.extras.enable;
         in
         ''
           # Allow established and related traffic (replies to allowed connections)
           ct state established,related accept
 
           # 1. monitoring → media-play: scrape node-exporter + navidrome + jellyfin metrics
-          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533, 8096 } accept
-          # 1a. monitoring → media-mgmt: scrape slskd metrics
+          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533${lib.optionalString jellyfin ", 8096"} } accept
+          # 1a. monitoring → media-mgmt: scrape slskd (+ unpackerr) metrics
+          ${lib.optionalString unpackerr "ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.unpackerr} tcp dport 5656 accept"}
           ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.slskd} tcp dport 5030 accept
           # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
           ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
@@ -182,9 +186,9 @@
           # 7. home-auto → HA pod: Frigate notifications / automations
           ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
           # 8. HA pod → media-play: HA media_player integration (Jellyfin)
-          ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
+          ${lib.optionalString jellyfin "ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept"}
           # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
-          ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
+          ${lib.optionalString jellyfin "ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept"}
           # 10. LAN → home-auto: DNAT for MQTT + WebRTC
           ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
           ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept

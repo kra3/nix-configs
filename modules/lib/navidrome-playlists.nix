@@ -133,11 +133,37 @@
           limit = 100;
         };
       };
+      personal = [
+        "Discovery"
+        "Favourites"
+        "Heavy Rotation"
+      ];
+      # Owner is set to this user by hand in Navidrome's Playlists view; the .nsp can't declare it.
+      extraUsers = [ "drpc" ];
+      playlists =
+        navidromeSmartPlaylists
+        // lib.listToAttrs (
+          lib.concatMap (
+            user:
+            map (name: {
+              name = "${name} (${user})";
+              value = navidromeSmartPlaylists.${name};
+            }) personal
+          ) extraUsers
+        );
     in
     pkgs.linkFarm "navidrome-smart-playlists" (
       lib.mapAttrsToList (name: rules: {
         name = "${name}.nsp";
-        path = pkgs.writeText "${name}.nsp" (builtins.toJSON ({ inherit name; } // rules));
-      }) navidromeSmartPlaylists
+        path = pkgs.writeText "${name}.nsp" (
+          builtins.toJSON (
+            {
+              inherit name;
+              public = !(lib.any (p: lib.hasPrefix p name) personal);
+            }
+            // rules
+          )
+        );
+      }) playlists
     );
 }

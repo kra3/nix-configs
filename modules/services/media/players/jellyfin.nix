@@ -63,15 +63,15 @@
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Jellyfin Tweaks + Enhanced";
-                Url = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json";
+                Name = "Gelato";
+                Url = "https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json";
               };
             }
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Streamyfin";
-                Url = "https://raw.githubusercontent.com/streamyfin/jellyfin-plugin-streamyfin/main/manifest.json";
+                Name = "Litefin";
+                Url = "https://raw.githubusercontent.com/MoazSalem/litefin-plugin/release/manifest.json";
               };
             }
           ];

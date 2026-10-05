@@ -187,6 +187,8 @@
           ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
           # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
           ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
+          # 9a. media-play → Seerr: Jellyfin plugins (Home Screen Sections, Litefin) call its API
+          ip saddr ${mp} ip daddr ${config.vars.network.podmanAddresses.seerr} tcp dport 5055 accept
           # 10. LAN → home-auto: DNAT for MQTT + WebRTC
           ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
           ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept

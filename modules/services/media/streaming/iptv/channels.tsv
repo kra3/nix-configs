@@ -1,0 +1,29 @@
+# channel<TAB>slot<TAB>needed (keep below 720p)<TAB>tvg-ids (comma-separated feed variants; best working one wins)
+# slots: official | english | hindi | outside | ml-right | ml-left | ml-community | ml-mainstream | ml-neutral | ml-other
+DD News	official		DDNews.in@HD,DDNews.in@SD
+India Today	english		IndiaToday.in@SD
+WION	english		WION.in@SD
+India Global Review	english		yt:@IndiaGlobalReview|Palki Sharma Show
+NDTV 24x7	english		NDTV24x7.in@SD
+ABP News	hindi		ABPNews.in@SD
+Aaj Tak	hindi		AajTak.in@HD,AajTak.in@SD
+NDTV India	hindi		NDTVIndia.in@SD
+BBC News	outside		BBCNews.uk@UKHD,BBCNews.uk@UK,BBCNews.uk@SouthAsia,BBCNews.uk@Europe,BBCNews.uk@NorthAmerica,BBCNews.uk@AsiaPacific,BBCNews.uk@Africa,BBCNews.uk@LatinAmerica
+BBC News Hindi	outside		BBCNewsHindi.in@SD,yt:@BBCHindi
+Al Jazeera English	outside		AlJazeera.qa@English,AlJazeera.qa@EnglishHD
+DW English	outside		DW.de@English
+Janam TV	ml-right	needed	JanamTV.in@SD
+Kairali News	ml-left	needed	KairaliNews.in@SD
+Media One	ml-community	needed	MediaOne.in@SD
+Manorama News	ml-mainstream		ManoramaNews.in@SD
+Mathrubhumi News	ml-mainstream	needed	MathrubhumiNews.in@SD
+Asianet News	ml-mainstream		AsianetNews.in@SD,yt:@asianetnews
+News18 Kerala	ml-mainstream		News18Kerala.in@SD
+24 News	ml-neutral	needed	24News.in@SD
+Reporter TV	ml-other	needed	ReporterTV.in@SD
+CNBC TV18	biz-india		CNBCTV18PrimeHD.in@SD,CNBCTV18.in@SD
+NDTV Profit	biz-india		NDTVProfit.in@SD
+ET Now	biz-india		ETNow.in@SD,yt:@ETNow
+Zee Business	biz-india		ZeeBusiness.in@SD
+Bloomberg TV	biz-outside		BloombergTV.us@US,BloombergTV.us@Asia
+Reuters TV	outside		ReutersTV.us@SD

@@ -174,6 +174,15 @@
               ];
             };
 
+            services.declarative-jellyfin.livetv.tunerHosts = [
+              {
+                id = "7f3c1b0a5d2e4c8f9a6b1d0e2c4f8a35";
+                type = "m3u";
+                friendlyName = "Live News";
+                url = "http://${config.vars.network.containers.mediaPlay.hostAddress}:8099/news.m3u";
+              }
+            ];
+
             hardware.graphics = {
               enable = true;
               extraPackages = with pkgs; [

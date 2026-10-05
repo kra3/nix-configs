@@ -158,7 +158,7 @@ def main():
     for _, _, _, ids in allow:
         for i in ids:
             if i.startswith("yt:") and a.yt_base:
-                url = f"{a.yt_base}/yt/{i[4:].lstrip('@')}"
+                url = f"{a.yt_base}/yt/{i[3:].split('|')[0].lstrip('@')}"
                 entries[i] = {"id": i, "logo": "", "ua": UA, "ref": None, "label": 0, "url": url, "trusted": True}
 
     jobs = {(ch, i): entries[i] for ch, _, _, ids in allow for i in ids if i in entries}

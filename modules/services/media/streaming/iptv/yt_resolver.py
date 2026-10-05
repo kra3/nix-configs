@@ -11,13 +11,25 @@ cache = {}
 lock = threading.Lock()
 
 
-def resolve(handle):
+def pick_live(handle, prefer):
+    out = subprocess.run(
+        ["yt-dlp", "--no-warnings", "--flat-playlist", "--playlist-end", "15",
+         "--print", "%(id)s\t%(live_status)s\t%(title)s", f"https://www.youtube.com/@{handle}/streams"],
+        capture_output=True, text=True, timeout=45,
+    )
+    lives = [l.split("\t", 2) for l in out.stdout.splitlines() if "\tis_live\t" in l]
+    preferred = [l for l in lives if prefer and prefer.lower() in l[2].lower()]
+    chosen = (preferred or lives or [None])[-1]
+    return f"https://www.youtube.com/watch?v={chosen[0]}" if chosen else f"https://www.youtube.com/@{handle}/live"
+
+
+def resolve(handle, prefer):
     with lock:
         hit = cache.get(handle)
         if hit and time.monotonic() - hit[0] < CACHE_SECS:
             return hit[1]
         out = subprocess.run(
-            ["yt-dlp", "--no-warnings", "--no-playlist", "-j", f"https://www.youtube.com/@{handle}/live"],
+            ["yt-dlp", "--no-warnings", "--no-playlist", "-j", pick_live(handle, prefer)],
             capture_output=True, text=True, timeout=45,
         )
         if out.returncode != 0:
@@ -47,7 +59,7 @@ def make_handler(handles, m3u):
             if len(parts) != 2 or parts[0] != "yt" or parts[1] not in handles:
                 return self.send_error(404)
             try:
-                url = resolve(parts[1])
+                url = resolve(parts[1], handles[parts[1]])
             except (subprocess.TimeoutExpired, ValueError):
                 url = None
             if not url:
@@ -69,8 +81,11 @@ if __name__ == "__main__":
     ap.add_argument("--allow", required=True)
     ap.add_argument("--m3u", required=True)
     a = ap.parse_args()
-    handles = set()
+    handles = {}
     for line in open(a.allow):
         if line.strip() and not line.startswith("#"):
-            handles |= {i[4:].lstrip("@") for i in line.rstrip("\n").split("\t")[-1].split(",") if i.startswith("yt:")}
+            for i in line.rstrip("\n").split("\t")[-1].split(","):
+                if i.startswith("yt:"):
+                    handle, _, prefer = i[3:].partition("|")
+                    handles[handle.lstrip("@")] = prefer
     http.server.ThreadingHTTPServer((a.bind, a.port), make_handler(handles, a.m3u)).serve_forever()

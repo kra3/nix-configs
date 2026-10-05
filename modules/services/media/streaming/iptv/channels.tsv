@@ -1,9 +1,9 @@
-# channel<TAB>slot<TAB>needed (keep below 720p)<TAB>tvg-ids (comma-separated feed variants; best working one wins)
+# channel<TAB>slot<TAB>needed (keep below 720p)<TAB>tvg-ids (comma-separated feed variants; best working one wins)<TAB>logo URL (optional)
 # slots: official | english | hindi | outside | ml-right | ml-left | ml-community | ml-mainstream | ml-neutral | ml-other
 DD News	official		DDNews.in@HD,DDNews.in@SD
 India Today	english		IndiaToday.in@SD
 WION	english		WION.in@SD
-India Global Review	english		yt:@IndiaGlobalReview|Palki Sharma Show
+India Global Review	english		yt:@IndiaGlobalReview|Palki Sharma Show	https://yt3.googleusercontent.com/o9MSWgxskgbXNQD3U3VV2s8vCGIRD_2TqWP2GRfIMz8LHhPCD8m50k2rVZmJIvDRxILliW6WjtY=s176-c-k-c0x00ffffff-no-rj
 NDTV 24x7	english		NDTV24x7.in@SD
 ABP News	hindi		ABPNews.in@SD
 Aaj Tak	hindi		AajTak.in@HD,AajTak.in@SD

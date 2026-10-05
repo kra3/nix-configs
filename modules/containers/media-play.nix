@@ -33,7 +33,6 @@
                   </AdminRoles>
                   <Roles>
                     <string>admin</string>
-                    <string>family</string>
                   </Roles>
                   <EnableFolderRoles>false</EnableFolderRoles>
                   <EnableLiveTvRoles>false</EnableLiveTvRoles>

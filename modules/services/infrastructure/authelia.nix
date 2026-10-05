@@ -97,6 +97,12 @@
               id_token_groups:
                 id_token:
                   - 'groups'
+            authorization_policies:
+              admin_only:
+                default_policy: 'deny'
+                rules:
+                  - policy: 'one_factor'
+                    subject: 'group:admin'
             clients:
               - client_id: 'arcane'
                 client_name: 'Arcane'
@@ -208,7 +214,7 @@
                   config.sops.placeholder."authelia.oidc_clients.jellyfin.client_secret_hash"
                 }'
                 public: false
-                authorization_policy: 'one_factor'
+                authorization_policy: 'admin_only'
                 require_pkce: true
                 pkce_challenge_method: 'S256'
                 token_endpoint_auth_method: 'client_secret_post'
@@ -256,7 +262,7 @@
                   config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"
                 }'
                 public: false
-                authorization_policy: 'one_factor'
+                authorization_policy: 'admin_only'
                 # AIOStreams posts the client secret in the token body, not a header.
                 token_endpoint_auth_method: 'client_secret_post'
                 redirect_uris:
@@ -277,7 +283,7 @@
                   config.sops.placeholder."authelia.oidc_clients.aiometadata.client_secret_hash"
                 }'
                 public: false
-                authorization_policy: 'one_factor'
+                authorization_policy: 'admin_only'
                 token_endpoint_auth_method: 'client_secret_basic'
                 redirect_uris:
                   - 'https://aiometadata.${domain}/api/auth/oidc/callback'

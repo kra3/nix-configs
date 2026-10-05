@@ -63,6 +63,13 @@
             {
               tag = "RepositoryInfo";
               content = {
+                Name = "Gelato";
+                Url = "https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json";
+              };
+            }
+            {
+              tag = "RepositoryInfo";
+              content = {
                 Name = "Litefin";
                 Url = "https://raw.githubusercontent.com/MoazSalem/litefin-plugin/release/manifest.json";
               };

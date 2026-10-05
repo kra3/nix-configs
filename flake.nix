@@ -28,7 +28,7 @@
     };
 
     declarative-jellyfin = {
-      url = "github:Sveske-Juice/declarative-jellyfin";
+      url = "github:provokateurin/declarative-jellyfin/support-12.x";
     };
 
     quadlet-nix = {

@@ -79,15 +79,16 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1787764582,
-        "narHash": "sha256-3mJ0iQh9mqk3ufjsqROWFjE26Erm3DSVK+U8/DYpyzM=",
-        "owner": "Sveske-Juice",
+        "lastModified": 1790845524,
+        "narHash": "sha256-ichflElAELZm2LEJySjdxabm+S71iolOKEUEfsEyQjY=",
+        "owner": "provokateurin",
         "repo": "declarative-jellyfin",
-        "rev": "547fe8c17c9f5ea4fa99e26b98ab0fab2050cf42",
+        "rev": "9c0720bc6332f6c7df0aed95af669d508896a01c",
         "type": "github"
       },
       "original": {
-        "owner": "Sveske-Juice",
+        "owner": "provokateurin",
+        "ref": "support-12.x",
         "repo": "declarative-jellyfin",
         "type": "github"
       }
@@ -420,16 +421,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1781096110,
-        "narHash": "sha256-f+n9dEZouEmO+QfVlSv5hlcIba4WkbfM8d+xl5t3QB0=",
+        "lastModified": 1789464939,
+        "narHash": "sha256-xCZcOp0qPiNW2vwphbD+nq5c7sWITslyQ23c9R1E3FM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "a2e8eec250c2ab53592ed6917ce7eac5d29fd714",
+        "rev": "482bf14a06e7b19c7138236c0301f14d416850dd",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "master",
+        "ref": "482bf14a06e7b19c7138236c0301f14d416850dd",
         "repo": "nixpkgs",
         "type": "github"
       }

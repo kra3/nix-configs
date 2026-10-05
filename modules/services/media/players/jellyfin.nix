@@ -128,6 +128,14 @@
             contentType = "tvshows";
             pathInfos = [ "/data/library/anime/tv" ];
           };
+          "Gelato Movies" = {
+            contentType = "movies";
+            pathInfos = [ "/data/library/gelato/movies" ];
+          };
+          "Gelato Shows" = {
+            contentType = "tvshows";
+            pathInfos = [ "/data/library/gelato/shows" ];
+          };
           "Home Videos" = {
             contentType = "homevideos";
             pathInfos = [ "/data/library/homevideos" ];

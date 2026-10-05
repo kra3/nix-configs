@@ -28,6 +28,10 @@
         "d /srv/media/library/anime/tv 2775 root media - -"
         "d /srv/media/library/audiobooks 2775 root media - -"
         "d /srv/media/library/homevideos 2775 root media - -"
+        # Stub-file folders for the Gelato Jellyfin plugin; movies and shows must be separate.
+        "d /srv/media/library/gelato 2775 root media - -"
+        "d /srv/media/library/gelato/movies 2775 root media - -"
+        "d /srv/media/library/gelato/shows 2775 root media - -"
         # Ringtone-extraction destination for the music-library reorg (Task 8 runbook).
         "d /srv/media/bkup 2775 root media - -"
         "d /srv/media/bkup/Ringtones 2775 root media - -"

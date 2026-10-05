@@ -144,6 +144,13 @@
 
             nixpkgs.overlays = [
               inputs.self.overlays.default
+              (final: _: {
+                inherit (inputs.nixpkgs-unstable.legacyPackages.${final.stdenv.hostPlatform.system})
+                  jellyfin
+                  jellyfin-web
+                  jellyfin-ffmpeg
+                  ;
+              })
             ];
 
             # Containers re-evaluate their own nixpkgs.config and don't inherit the

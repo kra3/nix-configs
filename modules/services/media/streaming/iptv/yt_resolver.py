@@ -84,7 +84,7 @@ if __name__ == "__main__":
     handles = {}
     for line in open(a.allow):
         if line.strip() and not line.startswith("#"):
-            for i in line.rstrip("\n").split("\t")[-1].split(","):
+            for i in line.rstrip("\n").split("\t")[3].split(","):
                 if i.startswith("yt:"):
                     handle, _, prefer = i[3:].partition("|")
                     handles[handle.lstrip("@")] = prefer

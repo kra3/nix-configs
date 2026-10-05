@@ -78,7 +78,7 @@ def probe(e):
     if not e.get("trusted") and unofficial(e["url"]):
         return {"ok": False, "why": "raw-ip/shortener"}
     r = probe_once(e)
-    if not r["ok"] and r["why"].endswith(" 0"):
+    if not r["ok"]:
         r = probe_once(e)
     return r
 
@@ -118,7 +118,7 @@ def probe_once(e):
         text = body.decode("utf-8", "replace").replace("\r", "")
     if "#EXTINF" not in text:
         return {"ok": False, "why": "no segments"}
-    seg = next((x for x in text.split("\n") if x and not x.startswith("#")), None)
+    seg = [x for x in text.split("\n") if x and not x.startswith("#")][-1]
     code, _, _ = fetch(urllib.parse.urljoin(cur_url, seg), ua, ref, rng="bytes=0-2047")
     if code not in (200, 206):
         return {"ok": False, "why": f"segment {code}"}
@@ -129,7 +129,14 @@ def tier(h):
     return 3 if h >= 1080 else 2 if h >= 720 else 1 if h >= 540 else 0
 
 
-GROUP = {"biz": "Business", "ml": "Malayalam News"}
+GROUPS = {
+    "official": ("English & Official", 100),
+    "english": ("English & Official", 100),
+    "hindi": ("Hindi", 200),
+    "outside": ("International", 300),
+    "ml": ("Malayalam", 400),
+    "biz": ("Business", 500),
+}
 
 
 def main():
@@ -149,11 +156,12 @@ def main():
         for k, v in parse_m3u(body.decode("utf-8", "replace")).items():
             entries.setdefault(k, v)
 
-    allow = []
+    allow, logos = [], {}
     for line in open(a.allow):
         if line.strip() and not line.startswith("#"):
-            ch, slot, needed, ids = (line.rstrip("\n").split("\t") + [""] * 4)[:4]
+            ch, slot, needed, ids, logo = (line.rstrip("\n").split("\t") + [""] * 5)[:5]
             allow.append((ch, slot, bool(needed), [i for i in ids.split(",") if i]))
+            logos[ch] = logo
 
     for _, _, _, ids in allow:
         for i in ids:
@@ -227,10 +235,17 @@ def main():
     if len(chosen) < MIN_CHANNELS:
         sys.exit(f"only {len(chosen)} channels live; refusing to overwrite output")
     lines = ["#EXTM3U"]
-    for n, (ch, slot, cid, e) in enumerate(chosen, 1):
-        grp = GROUP.get(slot.split("-")[0], "News")
+    counts, chno = {}, {}
+    for ch, slot, _, _ in allow:
+        name, first = GROUPS[slot.split("-")[0]]
+        counts[name] = counts.get(name, 0) + 1
+        chno[ch] = first + counts[name]
+    for ch, slot, cid, e in sorted(chosen, key=lambda c: chno[c[0]]):
+        grp = GROUPS[slot.split("-")[0]][0]
         base = re.sub(r"\W+", "", ch) if cid.startswith("yt:") else cid.split("@")[0]
-        lines.append(f'#EXTINF:-1 tvg-id="{base}" tvg-chno="{n}" tvg-logo="{e["logo"]}" group-title="{grp}",{ch}')
+        variants = next(ids for c, _, _, ids in allow if c == ch)
+        logo = logos[ch] or e["logo"] or next((entries[i]["logo"] for i in variants if i in entries and entries[i]["logo"]), "")
+        lines.append(f'#EXTINF:-1 tvg-id="{base}" tvg-chno="{chno[ch]}" tvg-logo="{logo}" group-title="{grp}",{ch}')
         if e["ua"] != UA:
             lines.append(f'#EXTVLCOPT:http-user-agent={e["ua"]}')
         if e["ref"]:

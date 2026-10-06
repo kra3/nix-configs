@@ -154,7 +154,7 @@ triggers:
   - trigger: homeassistant
     event: start
     id: startup
-  # Fired by manual-mode.yaml on resume: a pause spanning sunrise/sunset misses the sun trigger.
+  # fired by manual-mode.yaml on resume
   - trigger: event
     event_type: automations_resumed
     id: startup

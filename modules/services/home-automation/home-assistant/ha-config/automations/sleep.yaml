@@ -112,7 +112,7 @@
   triggers:
   - entity_id: schedule.sleep
     to: "off"
-    # Ignores the 1s off at 23:59:59 where the split midnight schedule restarts.
+    # skips the 23:59:59 midnight split
     for: "00:00:30"
     trigger: state
   actions:

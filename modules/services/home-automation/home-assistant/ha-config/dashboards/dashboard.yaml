@@ -1102,6 +1102,7 @@ views:
             entities:
             - sensor.meghanadha_sleep_duration
             days: 30
+            stat: reading
             format: duration
           - name: Sleep stages (min)
             entities:
@@ -1115,6 +1116,7 @@ views:
             type: bar
             stacked: true
             format: duration
+            stat: reading
       grid_options:
         columns: 12
     - type: conditional
@@ -1533,6 +1535,7 @@ views:
             entities:
             - sensor.anjalis_iphone_sleep_duration
             days: 30
+            stat: reading
             format: duration
           - name: Sleep stages (min)
             entities:
@@ -1546,6 +1549,7 @@ views:
             type: bar
             stacked: true
             format: duration
+            stat: reading
       grid_options:
         columns: 12
     - type: conditional

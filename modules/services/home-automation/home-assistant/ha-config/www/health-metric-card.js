@@ -30,6 +30,7 @@ function bucketDaily(raw, stat) {
 }
 
 const PALETTE = ["#9fa8ff", "#8fd9c0", "#c9a7e8", "#f2c14e"];
+const DUR_STEPS = [30, 60, 120, 180, 240, 360, 480];
 const RANGES = [[7, "Week"], [30, "Month"], [90, "3M"], [180, "6M"]];
 const TONE_COLOR = { good: "#7ccf7c", mid: "#f2c14e", bad: "#f08a80" };
 let chartSeq = 0;
@@ -63,6 +64,17 @@ function smoothPath(pts) {
     d += `C${f(p1[0] + (p2[0] - p0[0]) / 6)},${f(c1)} ${f(p2[0] - (p3[0] - p1[0]) / 6)},${f(c2)} ${f(p2[0])},${f(p2[1])}`;
   }
   return d;
+}
+
+// Round tick values (multiples of a nice step) inside [lo, hi].
+function niceTicks(lo, hi, steps) {
+  const rough = (hi - lo) / 3;
+  const p = Math.pow(10, Math.floor(Math.log10(rough)));
+  const list = steps || [1, 2, 2.5, 5, 10].map((m) => m * p);
+  const step = list.find((s) => s >= rough) || list[list.length - 1];
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
+  return out.length ? out : [(lo + hi) / 2];
 }
 
 function pill(label, y, W) {
@@ -103,7 +115,7 @@ function chartSvg(list, type, days, stacked, lang, opts = {}) {
   const dl = (t) => new Date(t).toLocaleDateString(lang, { month: "short", day: "numeric" });
   const id = "hmc" + ++chartSeq;
   let out = "";
-  const ticks = [0.15, 0.5, 0.85].map((f) => lo + (hi - lo) * f);
+  const ticks = niceTicks(lo, hi, opts.steps);
   for (const v of ticks) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
   out += `<text x="${L}" y="${H - 6}" text-anchor="start">${dl(t0)}</text><text x="${((L + W - R) / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${dl((t0 + end) / 2)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${dl(end)}</text>`;
   const slot = (W - L - R) / days;
@@ -192,7 +204,8 @@ function todaySvg(m, color, now, opts = {}) {
   const hf = d.getHours() + d.getMinutes() / 60;
   const label = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   let out = "";
-  for (const f of [0.25, 0.55, 0.9]) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(hi * f).toFixed(1)}" y2="${y(hi * f).toFixed(1)}"/>`;
+  const tk = niceTicks(0, hi, opts.steps);
+  for (const v of tk) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
   out += `<text x="${L}" y="${H - 6}" text-anchor="start">00:00</text><text x="${x(hf).toFixed(1)}" y="${H - 6}" text-anchor="middle">${label}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">00:00</text>`;
   out += `<line class="grid" stroke-dasharray="3 3" x1="${x(hf).toFixed(1)}" x2="${x(hf).toFixed(1)}" y1="${T}" y2="${H - B}"/>`;
   if (m.avg.length) out += `<path d="${smoothPath([[x(0), y(0)], ...m.avg.map((v, h) => [x(h + 1), y(v)])])}" fill="none" stroke="var(--secondary-text-color)" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>`;
@@ -200,7 +213,7 @@ function todaySvg(m, color, now, opts = {}) {
     const pts = [[x(0), y(0)], ...m.today.map((v, h) => [h === m.today.length - 1 ? x(hf) : x(h + 1), y(v)])];
     out += `<path d="${smoothPath(pts)}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round"/><circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="4.5" fill="${color}"/>`;
   }
-  for (const f of [0.25, 0.55, 0.9]) out += pill(af(hi * f), y(hi * f), W);
+  for (const v of tk) out += pill(af(v), y(v), W);
   return `<svg class="hmc-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${out}</svg>`;
 }
 
@@ -824,7 +837,7 @@ class HealthMetricCard extends HTMLElement {
     const lang = this._hass.language;
     const st = this._hass.states[ents[0].entity];
     const unit = g.unit !== undefined ? g.unit : (st && st.attributes.unit_of_measurement) || "";
-    if (g.format === "duration") return { fmtv: shortDur, axisFmt: (v) => fmt(v / 60, 0, lang) + " h" };
+    if (g.format === "duration") return { fmtv: shortDur, axisFmt: (v) => fmt(v / 60, v % 60 ? 1 : 0, lang) + " h", steps: DUR_STEPS };
     const dec = g.decimals !== undefined ? g.decimals : pts.every((v) => Math.abs(v - Math.round(v)) < 0.05) ? 0 : 1;
     return { fmtv: (v) => fmt(v, dec, lang) + (unit ? " " + unit : ""), axisFmt: (v) => fmt(v, dec, lang) };
   }
@@ -847,14 +860,14 @@ class HealthMetricCard extends HTMLElement {
           } catch (err) {
             /* leave empty */
           }
-          return { name: e.name, color: e.color || (ents.length === 1 ? c.color : undefined), pts: g.type === "bar" ? pts : collapseRuns(pts) };
+          return { name: e.name, color: e.color || (ents.length === 1 ? c.color : undefined), pts: g.type === "bar" && stat !== "reading" ? pts : collapseRuns(pts) };
         })
       );
-      const { fmtv, axisFmt } = this._graphFmt(g, ents, list.flatMap((s) => s.pts.map((p) => p.v)));
+      const { fmtv, axisFmt, steps } = this._graphFmt(g, ents, list.flatMap((s) => s.pts.map((p) => p.v)));
       const tabs =
         `<div class="hmc-tabs">${ranges.map((r) => `<button data-days="${r[0]}" class="${r[0] === state.days ? "on" : ""}">${r[1]}</button>`).join("")}` +
         `<span class="sp"></span><button data-nav="1" aria-label="Earlier">‹</button><button data-nav="-1" aria-label="Later" ${state.offset === 0 ? "disabled" : ""}>›</button></div>`;
-      const svg = chartSvg(list, g.type || "line", state.days, !!g.stacked, lang, { end: end.getTime(), fmt: fmtv, axisFmt });
+      const svg = chartSvg(list, g.type || "line", state.days, !!g.stacked, lang, { end: end.getTime(), fmt: fmtv, axisFmt, steps });
       const legend =
         list.length > 1
           ? `<div class="hmc-legend">${list.map((s, i) => `<span><i style="background:${s.color || PALETTE[i % PALETTE.length]}"></i>${s.name}</span>`).join("")}</div>`
@@ -894,8 +907,8 @@ class HealthMetricCard extends HTMLElement {
     }
     const now = Date.now();
     const m = todayModel(rows, now);
-    const { fmtv, axisFmt } = this._graphFmt(g, [{ entity: e }], [...m.today, ...m.avg]);
-    const svg = todaySvg(m, c.color || "var(--primary-color)", now, { axisFmt });
+    const { fmtv, axisFmt, steps } = this._graphFmt(g, [{ entity: e }], [...m.today, ...m.avg]);
+    const svg = todaySvg(m, c.color || "var(--primary-color)", now, { axisFmt, steps });
     if (!svg) {
       box.innerHTML = `<div class="empty">No data yet</div>`;
       return;

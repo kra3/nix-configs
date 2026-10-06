@@ -6,6 +6,8 @@ resources:
     type: module
   - url: /hacsfiles/alarmo-card/alarmo-card.js
     type: module
+  - url: /local/health-metric-card.js?v=8
+    type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module
   - url: /hacsfiles/apexcharts-card/apexcharts-card.js

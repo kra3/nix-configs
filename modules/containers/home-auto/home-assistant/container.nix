@@ -46,6 +46,7 @@
             "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
             "${../../../services/home-automation/home-assistant/ha-config/custom_templates}:/config/custom_templates:ro"
             "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/health-metric-card.js}:/config/www/health-metric-card.js:ro"
             "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
             "/run/dbus:/run/dbus:ro"
           ];

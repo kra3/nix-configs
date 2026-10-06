@@ -9,7 +9,7 @@
     input:
       illuminance_sensor: sensor.hall_illuminance_filtered
       occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
-      light_entity: light.hall
+      light_entity: light.hallway_hall_lights
       dark_boolean: input_boolean.hall_is_dark
       dark_below: 10
       bright_above: 30
@@ -76,7 +76,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           transition: 2
         action: light.turn_off
@@ -85,7 +85,7 @@
         id: persistent
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 80
           transition: 1
@@ -102,7 +102,7 @@
         state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 45
           transition: 1
@@ -124,7 +124,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 15
           transition: 3
@@ -142,7 +142,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           transition: 2
         action: light.turn_off
@@ -158,7 +158,7 @@
           {{ elapsed_ge('binary_sensor.hue_pir_hallway_occupancy', 120) }}
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 80
           transition: 1
@@ -171,7 +171,7 @@
         state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 45
           transition: 1
@@ -193,7 +193,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 15
           transition: 3

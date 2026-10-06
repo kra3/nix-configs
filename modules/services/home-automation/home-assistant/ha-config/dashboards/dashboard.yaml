@@ -133,7 +133,7 @@ views:
           entity: media_player.lg_webos_tv_oled77c35la
           state: playing
     - type: tile
-      entity: light.hall
+      entity: light.hallway_hall_lights
       name: Hall
       area: hall
       features:
@@ -145,7 +145,7 @@ views:
           entity: binary_sensor.hue_pir_hallway_occupancy
           state: "on"
         - condition: state
-          entity: light.hall
+          entity: light.hallway_hall_lights
           state: "on"
     - type: custom:streamline-card
       template: home_room

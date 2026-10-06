@@ -793,7 +793,7 @@ class HealthMetricCard extends HTMLElement {
           const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
-            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : ""}</div></div></div>`
+            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : "&nbsp;"}</div></div></div>`
           );
         }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";

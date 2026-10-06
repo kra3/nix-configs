@@ -819,6 +819,52 @@ views:
           type: bar
       grid_options:
         columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.slskd_download_speed
+      name: Soulseek
+      icon: mdi:music-note-plus
+      color: "#f5c28b"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+        stat: max
+      items:
+      - entity: sensor.slskd_active_downloads
+        name: Active
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.slskd_queued_downloads
+        name: Queued
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.slskd_completed_downloads
+        name: Done
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Speed (daily peak)
+          entities:
+          - sensor.slskd_download_speed
+          days: 7
+          stat: max
+        - name: Queued and active
+          entities:
+          - entity: sensor.slskd_queued_downloads
+            name: Queued
+          - entity: sensor.slskd_active_downloads
+            name: Active
+          days: 7
+      grid_options:
+        columns: 12
     - type: entities
       show_header_toggle: false
       entities:
@@ -846,7 +892,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Requests
+      heading: Requests & imports
       icon: mdi:movie-search-outline
       heading_style: title
     - type: custom:health-metric-card
@@ -898,6 +944,59 @@ views:
           - entity: sensor.seerr_tv_requests
             name: TV
           days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.unpackerr_lidarr_queue
+      name: Import queue
+      icon: mdi:package-down
+      color: "#6bb6ff"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.unpackerr_radarr_queue
+        name: Radarr
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.unpackerr_sonarr_queue
+        name: Sonarr
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.unpackerr_extracting
+        name: Extracting
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Queues
+          entities:
+          - entity: sensor.unpackerr_lidarr_queue
+            name: Lidarr
+          - entity: sensor.unpackerr_radarr_queue
+            name: Radarr
+          - entity: sensor.unpackerr_sonarr_queue
+            name: Sonarr
+          days: 7
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.unpackerr_failed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.unpackerr_failed
+        name: Failed extractions
       grid_options:
         columns: 12
     - type: conditional
@@ -976,59 +1075,6 @@ views:
     - type: tile
       entity: sensor.navidrome_last_scan
       name: Last library scan
-      grid_options:
-        columns: 12
-    - type: custom:health-metric-card
-      entity: sensor.unpackerr_lidarr_queue
-      name: Import queue
-      icon: mdi:package-down
-      color: "#6bb6ff"
-      decimals: 0
-      show_date: false
-      chart:
-        type: line
-        days: 7
-      items:
-      - entity: sensor.unpackerr_radarr_queue
-        name: Radarr
-        mode: now
-        days: 7
-        decimals: 0
-        unit: ""
-      - entity: sensor.unpackerr_sonarr_queue
-        name: Sonarr
-        mode: now
-        days: 7
-        decimals: 0
-        unit: ""
-      - entity: sensor.unpackerr_extracting
-        name: Extracting
-        mode: now
-        days: 7
-        decimals: 0
-        unit: ""
-      popup:
-        graphs:
-        - name: Queues
-          entities:
-          - entity: sensor.unpackerr_lidarr_queue
-            name: Lidarr
-          - entity: sensor.unpackerr_radarr_queue
-            name: Radarr
-          - entity: sensor.unpackerr_sonarr_queue
-            name: Sonarr
-          days: 7
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.unpackerr_failed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.unpackerr_failed
-        name: Failed extractions
       grid_options:
         columns: 12
     - type: conditional

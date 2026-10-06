@@ -65,3 +65,31 @@ rest:
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.name', 'eq', 'failed') | list %}
           {{ r[0].value[1] | int if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=%7Bjob%3D%22slskd%22%2C__name__%3D~%22slskd_transfers_downloads_.%2A%22%7D"
+    scan_interval: 60
+    sensor:
+      - name: Slskd download speed
+        unique_id: slskd_download_speed
+        unit_of_measurement: MB/s
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_speed_total_current') | list %}
+          {{ (r[0].value[1] | float / 1000000) | round(2) if r else none }}
+      - name: Slskd active downloads
+        unique_id: slskd_active_downloads
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_files_current') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Slskd queued downloads
+        unique_id: slskd_queued_downloads
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_queued_files_current') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Slskd completed downloads
+        unique_id: slskd_completed_downloads
+        state_class: total_increasing
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_completed_succeeded') | list %}
+          {{ r[0].value[1] | int if r else none }}

@@ -98,19 +98,34 @@
 
         def expected_release(q):
             try:
-                rels = api("GET", "/album/" + str(q["albumId"])).get("releases", [])
+                album = api("GET", "/album/" + str(q["albumId"]))
             except (KeyError, urllib.error.HTTPError):
-                return None
+                return None, None
+            rels = album.get("releases", [])
             sel = next((r for r in rels if r.get("monitored")), rels[0] if rels else None)
-            return sel["foreignReleaseId"] if sel else None
+            return (sel["foreignReleaseId"] if sel else None), album.get("title")
 
 
-        def beets_artist_dir(release, env):
+        def beets_artist_dir(query, env):
             out = subprocess.run(
-                ["beet", "--config", BEETS_BASE, "ls", "-f", "$path", "mb_albumid:" + release],
+                ["beet", "--config", BEETS_BASE, "ls", "-f", "$path"] + query,
                 env=env, capture_output=True, text=True,
             ).stdout.splitlines()
             return os.path.dirname(os.path.dirname(out[0])) if out else None
+
+
+        def reconcile(q, artist, new_dir, title):
+            cur = artist["path"].rstrip("/")
+            if new_dir and new_dir.startswith(HOST_ROOT + "/") and CONTAINER_ROOT + new_dir[len(HOST_ROOT):] != cur:
+                old_host = HOST_ROOT + cur[len(CONTAINER_ROOT):]
+                if os.path.isdir(old_host) and audio_left(old_host):
+                    notify("Lidarr artist folder differs from where beets filed it, left as is: " + title)
+                else:
+                    full = api("GET", "/artist/" + str(artist["id"]))
+                    full["path"] = CONTAINER_ROOT + new_dir[len(HOST_ROOT):]
+                    api("PUT", "/artist/" + str(artist["id"]) + "?moveFiles=false", full)
+            api("DELETE", "/queue/" + str(q["id"]) + "?removeFromClient=false&blocklist=false")
+            api("POST", "/command", {"name": "RefreshArtist", "artistId": artist["id"]})
 
 
         def library_for(artist):
@@ -143,28 +158,28 @@
             why = "Lidarr: " + reason_of(q)
             if lib is None:
                 reason = "Classical artist, needs manual import | " + why
-            elif (release := expected_release(q)) is None:
+            elif (rel := expected_release(q))[0] is None:
                 reason = "Lidarr no longer has the expected album | " + why
             else:
-                cmd = ["beet", "--config", BEETS_BASE, "--config", MATCH_OVERLAY, "import", "-q", "--quiet-fallback", "skip", "-S", release, folder]
+                release, album_title = rel
                 env = dict(os.environ, BEETSDIR=BEETS_INDIAN_DIR) if lib == "indian" else dict(os.environ)
+                have = beets_artist_dir(["mb_albumid:" + release], env) or beets_artist_dir(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
+                if have:
+                    print(("WOULD " if DRY_RUN else "") + "DUPLICATE already in beets library:", title)
+                    if DRY_RUN:
+                        continue
+                    reconcile(q, artist, have, title)
+                    tried.pop(str(qid), None)
+                    save_tried(tried)
+                    notify("Lidarr re-grabbed an album already in the library; queue entry cleared, download left in " + folder + ": " + title)
+                    continue
+                cmd = ["beet", "--config", BEETS_BASE, "--config", MATCH_OVERLAY, "import", "-q", "--quiet-fallback", "skip", "-S", release, folder]
                 print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title + " | " + why)
                 if DRY_RUN:
                     continue
                 subprocess.run(cmd, env=env, capture_output=True, text=True)
                 if not audio_left(folder):
-                    new_dir = beets_artist_dir(release, env)
-                    cur = artist["path"].rstrip("/")
-                    if new_dir and new_dir.startswith(HOST_ROOT + "/") and CONTAINER_ROOT + new_dir[len(HOST_ROOT):] != cur:
-                        old_host = HOST_ROOT + cur[len(CONTAINER_ROOT):]
-                        if os.path.isdir(old_host) and audio_left(old_host):
-                            notify("Lidarr artist folder differs from where beets filed it, left as is: " + title)
-                        else:
-                            full = api("GET", "/artist/" + str(artist["id"]))
-                            full["path"] = CONTAINER_ROOT + new_dir[len(HOST_ROOT):]
-                            api("PUT", "/artist/" + str(artist["id"]) + "?moveFiles=false", full)
-                    api("DELETE", "/queue/" + str(qid) + "?removeFromClient=false&blocklist=false")
-                    api("POST", "/command", {"name": "RefreshArtist", "artistId": artist["id"]})
+                    reconcile(q, artist, beets_artist_dir(["mb_albumid:" + release], env), title)
                     for d, _, _ in sorted(os.walk(folder), reverse=True):
                         try:
                             os.rmdir(d)

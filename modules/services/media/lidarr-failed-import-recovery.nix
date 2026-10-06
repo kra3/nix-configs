@@ -6,7 +6,10 @@
       lidarrUrl = "http://${config.vars.network.podmanAddresses.lidarr}:8686/api/v1";
       hostRoot = "/srv/media";
       containerRoot = "/data";
-      completeDir = "${hostRoot}/downloads/slskd/complete";
+      completeDirs = [
+        "${hostRoot}/downloads/slskd/complete"
+        "${hostRoot}/downloads/usenet/complete/music"
+      ];
       beetsBase = "/run/secrets/rendered/music/beets-secrets.yaml";
       beetsIndianDir = "/home/kra3/.config/beets-indian-film";
       indianLibrary = "${hostRoot}/library/music/Indian";
@@ -28,7 +31,7 @@
         LIDARR = "${lidarrUrl}"
         HOST_ROOT = "${hostRoot}"
         CONTAINER_ROOT = "${containerRoot}"
-        COMPLETE = "${completeDir}"
+        COMPLETE_DIRS = json.loads('${builtins.toJSON completeDirs}')
         BEETS_BASE = "${beetsBase}"
         MATCH_OVERLAY = "${matchOverlay}"
         BEETS_INDIAN_DIR = "${beetsIndianDir}"
@@ -147,14 +150,14 @@
 
         tried = load_tried()
         queue = api("GET", "/queue?pageSize=500")["records"]
-        failed = [q for q in queue if q.get("trackedDownloadState") == "importFailed" and q.get("downloadClient") == "Slskd"]
-        print(("DRY-RUN: " if DRY_RUN else "") + str(len(failed)) + " failed Slskd imports")
+        failed = [q for q in queue if q.get("trackedDownloadState") == "importFailed" and q.get("downloadClient") in ("Slskd", "SABnzbd")]
+        print(("DRY-RUN: " if DRY_RUN else "") + str(len(failed)) + " failed Slskd/SABnzbd imports")
 
         for q in failed:
             title = q["title"]
             qid = q["id"]
             folder = HOST_ROOT + q["outputPath"][len(CONTAINER_ROOT):] if q.get("outputPath", "").startswith(CONTAINER_ROOT) else ""
-            if not folder.startswith(COMPLETE + "/"):
+            if not any(folder.startswith(c + "/") for c in COMPLETE_DIRS):
                 print("SKIP out of scope:", title)
                 continue
             if not os.path.isdir(folder):

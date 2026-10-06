@@ -102,6 +102,14 @@
             return sel["foreignReleaseId"] if sel else None
 
 
+        def beets_artist_dir(release, env):
+            out = subprocess.run(
+                ["beet", "--config", BEETS_BASE, "ls", "-f", "$path", "mb_albumid:" + release],
+                env=env, capture_output=True, text=True,
+            ).stdout.splitlines()
+            return os.path.dirname(os.path.dirname(out[0])) if out else None
+
+
         def library_for(artist):
             root = os.path.basename(artist["rootFolderPath"].rstrip("/"))
             if root == "Classical":
@@ -142,6 +150,16 @@
                     continue
                 subprocess.run(cmd, env=env, capture_output=True, text=True)
                 if not audio_left(folder):
+                    new_dir = beets_artist_dir(release, env)
+                    cur = artist["path"].rstrip("/")
+                    if new_dir and new_dir.startswith(HOST_ROOT + "/") and CONTAINER_ROOT + new_dir[len(HOST_ROOT):] != cur:
+                        old_host = HOST_ROOT + cur[len(CONTAINER_ROOT):]
+                        if os.path.isdir(old_host) and audio_left(old_host):
+                            notify("Lidarr artist folder differs from where beets filed it, left as is: " + title)
+                        else:
+                            full = api("GET", "/artist/" + str(artist["id"]))
+                            full["path"] = CONTAINER_ROOT + new_dir[len(HOST_ROOT):]
+                            api("PUT", "/artist/" + str(artist["id"]) + "?moveFiles=false", full)
                     api("DELETE", "/queue/" + str(qid) + "?removeFromClient=false&blocklist=false")
                     api("POST", "/command", {"name": "RefreshArtist", "artistId": artist["id"]})
                     for d, _, _ in sorted(os.walk(folder), reverse=True):

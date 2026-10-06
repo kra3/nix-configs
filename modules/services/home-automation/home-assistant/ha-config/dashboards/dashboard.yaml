@@ -1080,10 +1080,11 @@ views:
           height: 140
       series:
       - entity: sensor.meghanadha_distance
+        name: Distance
         type: column
-        statistics:
-          type: max
-          period: day
+        group_by:
+          func: max
+          duration: 1d
       grid_options:
         columns: 6
     - type: custom:apexcharts-card
@@ -1100,10 +1101,11 @@ views:
           height: 140
       series:
       - entity: sensor.meghanadha_floors_ascended
+        name: Floors climbed
         type: column
-        statistics:
-          type: max
-          period: day
+        group_by:
+          func: max
+          duration: 1d
       grid_options:
         columns: 6
     - type: tile
@@ -1379,6 +1381,7 @@ views:
           height: 140
       series:
       - entity: sensor.anjalis_iphone_distance
+        name: Distance
         type: column
         statistics:
           type: max
@@ -1399,6 +1402,7 @@ views:
           height: 140
       series:
       - entity: sensor.anjalis_iphone_floors_ascended
+        name: Floors climbed
         type: column
         statistics:
           type: max

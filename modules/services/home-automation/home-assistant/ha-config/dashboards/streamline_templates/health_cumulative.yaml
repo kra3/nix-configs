@@ -1,0 +1,40 @@
+card:
+  type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: "[[entity]]"
+    above: "[[above]]"
+  card:
+    type: custom:health-metric-card
+    entity: "[[entity]]"
+    name: "[[name]]"
+    icon: "[[icon]]"
+    color: "[[color]]"
+    goal: "[[goal]]"
+    decimals: "[[decimals]]"
+    format: "[[format]]"
+    scale: "[[scale]]"
+    show_date: false
+    chart:
+      type: bar
+      days: 7
+      stat: max
+    popup:
+      graphs:
+      - name: Today vs average
+        type: today
+        entities:
+        - "[[entity]]"
+        days: 14
+      - name: "[[per_day]]"
+        entities:
+        - "[[entity]]"
+        days: 30
+        stat: max
+        type: bar
+default:
+- above: 0
+- goal: 0
+- decimals: -1
+- format: ""
+- scale: 1

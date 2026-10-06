@@ -1,0 +1,52 @@
+card:
+  type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.[[p]]_sleep_duration
+    above: 0
+  card:
+    type: custom:health-metric-card
+    entity: sensor.[[p]]_sleep_duration
+    name: Sleep
+    icon: mdi:sleep
+    color: "#7aa2f7"
+    format: duration
+    show_date: false
+    secondary:
+      entity: sensor.[[p]]_in_bed
+      prefix: "In bed "
+      format: duration
+    chart:
+      type: bar
+      days: 7
+      stat: max
+    popup:
+      sleep:
+        duration: sensor.[[p]]_sleep_duration
+        awake: sensor.[[p]]_awake
+        deep: sensor.[[p]]_deep_sleep
+        core: sensor.[[p]]_core_sleep
+        rem: sensor.[[p]]_rem_sleep
+        hrv: sensor.[[p]]_heart_rate_variability
+        hr: sensor.[[p]]_resting_heart_rate
+        target: 450
+      graphs:
+      - name: Sleep duration (min)
+        entities:
+        - sensor.[[p]]_sleep_duration
+        days: 30
+        stat: reading
+        format: duration
+      - name: Sleep stages (min)
+        entities:
+        - entity: sensor.[[p]]_deep_sleep
+          name: Deep sleep
+        - entity: sensor.[[p]]_core_sleep
+          name: Core sleep
+        - entity: sensor.[[p]]_rem_sleep
+          name: REM sleep
+        days: 30
+        type: bar
+        stacked: true
+        format: duration
+        stat: reading

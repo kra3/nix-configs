@@ -154,8 +154,13 @@
             title = q["title"]
             qid = q["id"]
             folder = HOST_ROOT + q["outputPath"][len(CONTAINER_ROOT):] if q.get("outputPath", "").startswith(CONTAINER_ROOT) else ""
-            if not folder.startswith(COMPLETE + "/") or not os.path.isdir(folder):
-                print("SKIP out of scope or missing folder:", title)
+            if not folder.startswith(COMPLETE + "/"):
+                print("SKIP out of scope:", title)
+                continue
+            if not os.path.isdir(folder):
+                print(("WOULD " if DRY_RUN else "") + "CLEAR queue entry, download folder is gone:", title)
+                if not DRY_RUN:
+                    api("DELETE", "/queue/" + str(qid) + "?removeFromClient=false&blocklist=false")
                 continue
             last = tried.get(str(qid))
             recent = bool(last) and time.time() - last < RETRY_AFTER

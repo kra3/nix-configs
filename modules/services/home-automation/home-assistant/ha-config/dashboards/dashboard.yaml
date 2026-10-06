@@ -1371,6 +1371,8 @@ views:
         mode: now
         days: 7
         decimals: 1
+        scale: 0.0009765625
+        unit: GiB
         color: "#6bb6ff"
       - entity: sensor.system_monitor_swap_usage
         name: Swap

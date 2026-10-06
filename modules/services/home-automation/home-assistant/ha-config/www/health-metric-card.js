@@ -675,12 +675,24 @@ class HealthMetricCard extends HTMLElement {
         this._itemSeries(it).then((s) => (this._data["item" + i] = collapseRuns(s)))
       ),
     ];
+    const bound = (k, entity, spec) => this._series(entity, Object.assign({}, spec, { stat: k === "lo" ? "min" : "max" }));
+    if (c.delta && c.delta.mode === "range") for (const k of ["lo", "hi"]) jobs.push(bound(k, c.entity, c.chart).then((s) => (this._data[k] = s)));
+    c.items.forEach((it, i) => {
+      if (it.mode === "now") for (const k of ["lo", "hi"]) jobs.push(bound(k, it.entity, { days: it.days || 30, scale: it.scale, source: it.source }).then((s) => (this._data[k + i] = s)));
+    });
     try {
       await Promise.all(jobs);
     } catch (e) {
       /* keep whatever loaded */
     }
     this._render();
+  }
+
+  // True min/max points for a range chip, plus the live reading; falls back to the plotted series.
+  _span(key, fallback, live) {
+    const pts = [...(this._data["lo" + key] || []), ...(this._data["hi" + key] || [])];
+    if (!pts.length) return fallback;
+    return isFinite(live) ? [...pts, { v: live }] : pts;
   }
 
   _formatMain(v) {
@@ -725,7 +737,7 @@ class HealthMetricCard extends HTMLElement {
     } else if (c.delta && c.delta.mode === "range" && main.length) {
       const dec = c.delta.decimals !== undefined ? c.delta.decimals : 1;
       const unit = c.delta.unit !== undefined ? c.delta.unit : " " + (hero.unit || "");
-      under = `<span class="chip neutral">${rangeText(main, dec, unit, lang)}</span>`;
+      under = `<span class="chip neutral">${rangeText(this._span("", main, raw * scale), dec, unit, lang)}</span>`;
     } else if (c.delta && main.length) {
       const d = computeDelta(main, c.delta.mode || "absolute", c.delta.points);
       if (d) {
@@ -775,7 +787,7 @@ class HealthMetricCard extends HTMLElement {
           }
         }
         if (it.mode === "now") {
-          const range = rangeText(s, dec, "", lang);
+          const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
             `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : ""}</div></div></div>`

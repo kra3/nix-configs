@@ -1,6 +1,4 @@
-// Room tile: name plus temperature, humidity and light level on one line.
-
-const DASH = "—";
+// Room presence tile: shows whichever of temperature, humidity and light level the room has.
 
 function reading(states, id, decimals) {
   const s = id && states[id];
@@ -14,9 +12,7 @@ function reading(states, id, decimals) {
 function roomModel(states, cfg) {
   const on = (id) => !!id && !!states[id] && states[id].state === "on";
   const parts = [reading(states, cfg.temperature), reading(states, cfg.humidity, 0), reading(states, cfg.illuminance, 0)].filter(Boolean);
-  const lightOn = on(cfg.light);
-  if (lightOn) parts.unshift("Light on");
-  return { line: parts.length ? parts.join(" · ") : DASH, active: on(cfg.presence) || lightOn };
+  return { line: parts.length ? parts.join(" · ") : "Occupied", active: on(cfg.presence) };
 }
 
 const STYLE = `
@@ -33,7 +29,7 @@ const STYLE = `
 
 class RoomTileCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !config.temperature) throw new Error("room-tile-card: temperature is required");
+    if (!config || !config.presence) throw new Error("room-tile-card: presence is required");
     this._config = config;
     this._html = "";
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -66,7 +62,7 @@ class RoomTileCard extends HTMLElement {
   }
 
   _tap() {
-    const entityId = this._config.light || this._config.temperature;
+    const entityId = this._config.temperature || this._config.presence;
     this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
   }
 }
@@ -77,7 +73,7 @@ if (typeof customElements !== "undefined" && !customElements.get("room-tile-card
   window.customCards.push({
     type: "room-tile-card",
     name: "Room tile card",
-    description: "Room name with temperature, humidity and light level.",
+    description: "Room presence with temperature, humidity and light level.",
   });
 }
 

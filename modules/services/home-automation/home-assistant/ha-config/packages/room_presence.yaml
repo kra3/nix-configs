@@ -24,3 +24,9 @@ template:
         device_class: occupancy
         state: "{{ is_state('binary_sensor.ranger_uno_person_occupancy', 'on') }}"
         delay_off: "00:05:00"
+
+      - name: "Room Presence Hall"
+        unique_id: room_presence_hall
+        device_class: occupancy
+        state: "{{ is_state('binary_sensor.hue_pir_hallway_occupancy', 'on') }}"
+        delay_off: "00:02:00"

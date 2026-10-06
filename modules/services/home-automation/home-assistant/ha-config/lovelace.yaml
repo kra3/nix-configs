@@ -14,7 +14,7 @@ resources:
     type: module
   - url: /local/popup-tile-card.js?v=1
     type: module
-  - url: /local/room-tile-card.js?v=1
+  - url: /local/room-tile-card.js?v=2
     type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module

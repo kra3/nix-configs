@@ -88,3 +88,15 @@ card:
       state: "on"
     tap:
       more_info: binary_sensor.dashboard_alert_override_active
+  - label: System
+    icon: mdi:server
+    color: orange
+    when:
+    - entity: binary_sensor.dashboard_alert_system
+      state: "on"
+    - user: a1d4401b8b714ebb83f07c5316ab399c
+    detail:
+      entity: binary_sensor.dashboard_alert_system
+      attr: reasons
+    tap:
+      navigate: /dashboard-home/system-health

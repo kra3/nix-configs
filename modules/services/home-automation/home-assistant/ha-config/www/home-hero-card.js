@@ -43,8 +43,9 @@ const IDLE = ["none", "unknown", "unavailable", ""];
 
 const titleCase = (s) => String(s).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-function whenOk(states, conds) {
+function whenOk(states, conds, userId) {
   return (conds || []).every((c) => {
+    if (c.user !== undefined) return [].concat(c.user).includes(userId);
     const s = states[c.entity];
     const v = s ? s.state : undefined;
     if (c.state !== undefined) return [].concat(c.state).map(String).includes(v);
@@ -63,7 +64,7 @@ function pillDetail(states, d) {
   return v == null || IDLE.includes(v) ? "" : String(v);
 }
 
-function heroModel(states, cfg) {
+function heroModel(states, cfg, userId) {
   const val = (id) => (id && states[id] ? states[id].state : "");
   const presence = val(cfg.presence);
   const period = val(cfg.period);
@@ -89,7 +90,7 @@ function heroModel(states, cfg) {
   const alarm = a ? { state: a.state, icon: (ALARM[a.state] || ALARM.disarmed)[0], label: (ALARM[a.state] || [0, titleCase(a.state), "neutral"])[1], tone: (ALARM[a.state] || [0, 0, "neutral"])[2] } : null;
   const pills = (cfg.pills || [])
     .map((p, i) => ({ p, i }))
-    .filter(({ p }) => whenOk(states, p.when))
+    .filter(({ p }) => whenOk(states, p.when, userId))
     .map(({ p, i }) => ({ i, label: p.label, icon: p.icon, color: COLORS[p.color] || COLORS.blue, detail: pillDetail(states, p.detail) }));
   return { title, icon, sub, weather, alarm, pills };
 }
@@ -156,7 +157,7 @@ class HomeHeroCard extends HTMLElement {
   }
 
   _render() {
-    const html = heroHtml(heroModel(this._hass.states, this._config));
+    const html = heroHtml(heroModel(this._hass.states, this._config, this._hass.user && this._hass.user.id));
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
@@ -174,6 +175,11 @@ class HomeHeroCard extends HTMLElement {
     if (act === "weather") return this._moreInfo(cfg.weather);
     const tap = (cfg.pills[Number(el.dataset.i)] || {}).tap || {};
     if (tap.more_info) return this._moreInfo(tap.more_info);
+    if (tap.navigate) {
+      history.pushState(null, "", tap.navigate);
+      window.dispatchEvent(new Event("location-changed"));
+      return;
+    }
     if (!tap.service) return;
     if (tap.confirm && !window.confirm(tap.confirm)) return;
     const [domain, service] = tap.service.split(".");

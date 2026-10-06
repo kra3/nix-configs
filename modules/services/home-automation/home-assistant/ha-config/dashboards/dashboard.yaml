@@ -411,7 +411,7 @@ views:
       heading: Climate
       heading_style: title
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_temperature
         name: Temperature
@@ -424,7 +424,7 @@ views:
       - condition: screen
         media_query: "(min-width: 700px)"
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_humidity
         name: Humidity
@@ -437,7 +437,7 @@ views:
       - condition: screen
         media_query: "(min-width: 700px)"
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_illuminance
         name: Illuminance
@@ -450,7 +450,7 @@ views:
       - condition: screen
         media_query: "(min-width: 700px)"
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_temperature
         name: Temperature
@@ -463,7 +463,7 @@ views:
       - condition: screen
         media_query: "(max-width: 699px)"
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_humidity
         name: Humidity
@@ -476,7 +476,7 @@ views:
       - condition: screen
         media_query: "(max-width: 699px)"
     - type: custom:streamline-card
-      template: home_climate
+      template: metric_line
       variables:
         entity: sensor.average_illuminance
         name: Illuminance
@@ -1290,199 +1290,164 @@ views:
   sections:
   - type: grid
     cards:
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:server
-        heading_style: title
-        heading: Sutala (Intel Comet Lake)
-      - type: heading
-        icon: mdi:camera-timer
-        heading: Last Boot
-        heading_style: subtitle
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_last_boot
-      - show_name: false
-        show_icon: true
-        show_state: true
-        type: glance
-        entities:
-        - entity: sensor.system_monitor_processor_use
-        - entity: sensor.system_monitor_memory_usage
-        - entity: sensor.system_monitor_disk_usage
-        - entity: sensor.system_monitor_swap_usage
-        state_color: true
-      grid_options:
-        columns: 18
-        rows: auto
-  - type: grid
-    cards:
-    - type: vertical-stack
-      cards:
-      - type: heading
+    - type: heading
+      heading: Compute
+      icon: mdi:cpu-64-bit
+      heading_style: title
+      badges:
+      - type: entity
+        entity: sensor.system_monitor_last_boot
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.system_monitor_processor_use
+        name: CPU use
         icon: mdi:cpu-64-bit
-        heading_style: title
-        heading: CPU
-      - type: heading
-        icon: mdi:cpu-64-bit
-        heading: Use / Temp
-        heading_style: subtitle
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_processor_use
-        - type: entity
-          entity: sensor.system_monitor_processor_temperature
-      - square: true
-        type: grid
-        cards:
-        - type: gauge
-          entity: sensor.system_monitor_load_1m
-          name: 1m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        - type: gauge
-          entity: sensor.system_monitor_load_5m
-          name: 5m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        - type: gauge
-          entity: sensor.system_monitor_load_15m
-          name: 15m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        columns: 3
+        color: "#ff9f6b"
+        decimals: 0
       grid_options:
-        columns: 14
-        rows: auto
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:memory
-        heading_style: title
-        heading: Memory
-      - type: heading
-        icon: mdi:memory
-        heading_style: subtitle
-        heading: Memory
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_memory_use
-        - type: entity
-          entity: sensor.system_monitor_memory_free
-      - type: gauge
-        entity: sensor.system_monitor_memory_usage
-        name: RAM
-        min: 0
-        max: 100
-        needle: false
-        severity:
-          green: 0
-          yellow: 55
-          red: 85
+        columns: 12
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.system_monitor_processor_temperature
+        name: CPU temperature
+        icon: mdi:thermometer
+        color: "#ff7b7b"
+        decimals: 0
       grid_options:
-        columns: 6
-        rows: auto
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:harddisk
-        heading_style: title
-        heading: Storage
-      - type: heading
-        icon: mdi:harddisk
-        heading_style: subtitle
-        heading: Used / Free
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_disk_use
-        - type: entity
-          entity: sensor.system_monitor_disk_free
-      - type: gauge
-        entity: sensor.system_monitor_disk_usage
-        max: 100
-        min: 0
-        name: /
-        needle: false
-        severity:
-          green: 0
-          yellow: 60
-          red: 85
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_load_1m
+      name: Load
+      icon: mdi:gauge
+      color: "#c9a7e8"
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 2
+        unit: ""
+      popup:
+        graphs:
+        - name: Load average
+          entities:
+          - entity: sensor.system_monitor_load_1m
+            name: 1 min
+          - entity: sensor.system_monitor_load_5m
+            name: 5 min
+          - entity: sensor.system_monitor_load_15m
+            name: 15 min
+          days: 7
       grid_options:
-        columns: 6
-        rows: auto
+        columns: 12
   - type: grid
     cards:
     - type: heading
-      heading: Power Monitor
+      heading: Memory and storage
+      icon: mdi:memory
       heading_style: title
-    - type: tile
-      entity: switch.power_monitor_1
-    - type: tile
-      entity: sensor.power_monitor_1_power
-    - type: tile
-      entity: select.power_monitor_1_power_on_behavior
-    - type: tile
-      entity: sensor.power_monitor_1_energy
-    - type: tile
-      entity: sensor.power_monitor_1_voltage
-    - type: tile
-      entity: sensor.power_monitor_1_current
-    - type: tile
-      entity: switch.power_monitor_1_child_lock
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Power
-        show_states: true
-        colorize_states: false
-      graph_span: 24h
-      apex_config:
-        chart:
-          height: 160
-      series:
-      - entity: sensor.power_monitor_1_power
-        name: Power
-        show:
-          name_in_header: false
-        type: line
-        group_by:
-          func: avg
-          duration: 10min
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.system_monitor_memory_usage
+        name: Memory
+        icon: mdi:memory
+        color: "#6bb6ff"
+        decimals: 0
       grid_options:
         columns: 12
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Energy per day
-        show_states: false
-      graph_span: 14d
-      span:
-        end: day
-      apex_config:
-        chart:
-          height: 160
-      series:
-      - entity: sensor.power_monitor_1_energy
-        name: Energy
-        show:
-          name_in_header: false
-        type: column
-        statistics:
-          type: change
-          period: day
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.system_monitor_disk_usage
+        name: Disk
+        icon: mdi:harddisk
+        color: "#8fd9c0"
+        decimals: 0
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.system_monitor_swap_usage
+        name: Swap
+        icon: mdi:swap-horizontal
+        color: "#9fa8ff"
+        decimals: 0
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Power monitor
+      icon: mdi:flash
+      heading_style: title
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.power_monitor_1_power
+        name: Power
+        icon: mdi:flash
+        color: "#ffd86b"
+        decimals: 0
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.power_monitor_1_energy
+      name: Energy today
+      icon: mdi:lightning-bolt
+      color: "#ffd86b"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      popup:
+        graphs:
+        - name: Energy per day
+          entities:
+          - sensor.power_monitor_1_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.power_monitor_1_voltage
+        name: Voltage
+        icon: mdi:sine-wave
+        color: "#c9a7e8"
+        decimals: 0
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.power_monitor_1_current
+        name: Current
+        icon: mdi:current-ac
+        color: "#ff9f6b"
+        decimals: 2
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: switch.power_monitor_1
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: switch.power_monitor_1_child_lock
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: select.power_monitor_1_power_on_behavior
       grid_options:
         columns: 12
   visible:

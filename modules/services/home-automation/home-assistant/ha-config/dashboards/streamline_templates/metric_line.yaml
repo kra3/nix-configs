@@ -12,9 +12,7 @@ card:
     type: line
     days: 7
   delta:
-    mode: absolute
-    good: none
-    points: 2
+    mode: range
     decimals: "[[decimals]]"
     unit: auto
   popup:

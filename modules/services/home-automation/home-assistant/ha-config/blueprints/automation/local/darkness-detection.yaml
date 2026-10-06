@@ -154,6 +154,10 @@ triggers:
   - trigger: homeassistant
     event: start
     id: startup
+  # Fired by manual-mode.yaml on resume: a pause spanning sunrise/sunset misses the sun trigger.
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
 
 variables:
   corroborating_bright_sensor: !input corroborating_bright_sensor

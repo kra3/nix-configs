@@ -10,11 +10,17 @@
       beetsBase = "/run/secrets/rendered/music/beets-secrets.yaml";
       beetsIndianDir = "/home/kra3/.config/beets-indian-film";
       indianLibrary = "${hostRoot}/library/music/Indian";
+      matchOverlay = pkgs.writeText "lidarr-recovery-match.yaml" ''
+        match:
+          strong_rec_thresh: 0.25
+      '';
 
       script = pkgs.writeText "lidarr-failed-import-recovery.py" ''
         import json
         import os
         import subprocess
+        import time
+        import urllib.error
         import urllib.parse
         import urllib.request
 
@@ -24,10 +30,12 @@
         CONTAINER_ROOT = "${containerRoot}"
         COMPLETE = "${completeDir}"
         BEETS_BASE = "${beetsBase}"
+        MATCH_OVERLAY = "${matchOverlay}"
         BEETS_INDIAN_DIR = "${beetsIndianDir}"
         INDIAN_LIBRARY = "${indianLibrary}"
         AUDIO = (".flac", ".mp3", ".ogg", ".m4a", ".aac", ".opus", ".wav", ".wma", ".ape", ".wv")
-        STATE = os.path.join(os.environ["STATE_DIRECTORY"], "notified.json")
+        STATE = os.path.join(os.environ["STATE_DIRECTORY"], "tried.json")
+        RETRY_AFTER = 24 * 3600
 
 
         def cred(name):
@@ -58,12 +66,24 @@
             urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15)
 
 
-        def load_notified():
+        def load_tried():
             try:
                 with open(STATE) as f:
-                    return set(json.load(f))
+                    return json.load(f)
             except FileNotFoundError:
-                return set()
+                return {}
+
+
+        def save_tried(tried):
+            with open(STATE, "w") as f:
+                json.dump(tried, f)
+
+
+        def reason_of(q):
+            msgs = [m for s in q.get("statusMessages", []) for m in s.get("messages", [])] or [
+                s.get("title", "") for s in q.get("statusMessages", [])
+            ]
+            return (msgs[0] if msgs else "no reason given")[:140]
 
 
         def audio_left(folder):
@@ -71,6 +91,15 @@
                 if any(n.lower().endswith(AUDIO) for n in files):
                     return True
             return False
+
+
+        def expected_release(q):
+            try:
+                rels = api("GET", "/album/" + str(q["albumId"])).get("releases", [])
+            except (KeyError, urllib.error.HTTPError):
+                return None
+            sel = next((r for r in rels if r.get("monitored")), rels[0] if rels else None)
+            return sel["foreignReleaseId"] if sel else None
 
 
         def library_for(artist):
@@ -82,7 +111,7 @@
             return "western"
 
 
-        notified = load_notified()
+        tried = load_tried()
         queue = api("GET", "/queue?pageSize=500")["records"]
         failed = [q for q in queue if q.get("trackedDownloadState") == "importFailed" and q.get("downloadClient") == "Slskd"]
         print(("DRY-RUN: " if DRY_RUN else "") + str(len(failed)) + " failed Slskd imports")
@@ -94,14 +123,21 @@
             if not folder.startswith(COMPLETE + "/") or not os.path.isdir(folder):
                 print("SKIP out of scope or missing folder:", title)
                 continue
+            last = tried.get(str(qid))
+            if last and time.time() - last < RETRY_AFTER:
+                print("SKIP tried recently:", title)
+                continue
             artist = api("GET", "/artist/" + str(q["artistId"]))
             lib = library_for(artist)
+            why = "Lidarr: " + reason_of(q)
             if lib is None:
-                reason = "Classical artist, needs manual import"
+                reason = "Classical artist, needs manual import | " + why
+            elif (release := expected_release(q)) is None:
+                reason = "Lidarr no longer has the expected album | " + why
             else:
-                cmd = ["beet", "--config", BEETS_BASE, "import", "-q", "--quiet-fallback", "skip", folder]
+                cmd = ["beet", "--config", BEETS_BASE, "--config", MATCH_OVERLAY, "import", "-q", "--quiet-fallback", "skip", "-S", release, folder]
                 env = dict(os.environ, BEETSDIR=BEETS_INDIAN_DIR) if lib == "indian" else dict(os.environ)
-                print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title)
+                print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title + " | " + why)
                 if DRY_RUN:
                     continue
                 subprocess.run(cmd, env=env, capture_output=True, text=True)
@@ -113,15 +149,17 @@
                             os.rmdir(d)
                         except OSError:
                             pass
+                    tried.pop(str(qid), None)
+                    save_tried(tried)
                     print("IMPORTED", title)
                     continue
-                reason = "beets could not match confidently"
+                reason = "beets could not match confidently | " + why
             print("LEFT", title, "|", reason)
-            if qid not in notified and not DRY_RUN:
-                notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
-                notified.add(qid)
-                with open(STATE, "w") as f:
-                    json.dump(sorted(notified), f)
+            if not DRY_RUN:
+                if last is None:
+                    notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
+                tried[str(qid)] = time.time()
+                save_tried(tried)
       '';
     in
     {

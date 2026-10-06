@@ -183,6 +183,8 @@
       # BEETSDIR keeps this profile separate from Western's paths.comp etc.
       home.shellAliases.beet-indian-film = "BEETSDIR=${config.home.homeDirectory}/.config/beets-indian-film beet --config /run/secrets/rendered/music/beets-secrets.yaml";
 
+      home.shellAliases.beet-classical = "BEETSDIR=${config.home.homeDirectory}/.config/beets-classical beet --config /run/secrets/rendered/music/beets-secrets.yaml";
+
       # aisauce.mode is single-valued (metadata_source XOR metadata_cleanup); these use a
       # separate sops template (beets-cleanup-secrets.yaml) rather than a small overlay
       # file, since beets' --config doesn't stack (last one wins) and a partial overlay
@@ -230,6 +232,42 @@
         # VA-flagged soundtracks add distance penalty; default 0.04 demotes correct matches to skip.
         match:
           strong_rec_thresh: 0.15
+      '';
+
+      home.file.".config/beets-classical/config.yaml".text = ''
+        directory: /srv/media/library/music/Classical/Western
+        library: ${config.home.homeDirectory}/.config/beets/classical.db
+        plugins: musicbrainz chroma spotify fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names permissions
+        permissions:
+          file: "664"
+          dir: "2755"
+        # Lidarr shares this host's IP and also queries MusicBrainz; stay under the combined rate limit.
+        musicbrainz:
+          ratelimit_interval: 1.5
+        lastgenre:
+          source: track
+          count: 1
+        zero:
+          fields: comments
+        embedart:
+          maxwidth: 1000
+        fetchart:
+          sources:
+            - filesystem
+            - coverart
+            - itunes
+            - amazon
+            - albumart
+            - cover_art_url
+            - fanarttv
+          fetch_for_asis: yes
+        import:
+          move: yes
+          write: yes
+        paths:
+          default: "$albumartist/$album ($year)/$track - $title"
+          singleton: "$albumartist/$album ($year)/$track - $title"
+          comp: "$albumartist/$album ($year)/$track - $title"
       '';
     };
 }

@@ -2,7 +2,7 @@
   flake.nixosModules.services-media-lidarr-failed-import-recovery =
     { config, pkgs, ... }:
     let
-      dryRun = true;
+      dryRun = false;
       lidarrUrl = "http://${config.vars.network.podmanAddresses.lidarr}:8686/api/v1";
       hostRoot = "/srv/media";
       containerRoot = "/data";
@@ -10,11 +10,17 @@
       beetsBase = "/run/secrets/rendered/music/beets-secrets.yaml";
       beetsIndianDir = "/home/kra3/.config/beets-indian-film";
       indianLibrary = "${hostRoot}/library/music/Indian";
+      matchOverlay = pkgs.writeText "lidarr-recovery-match.yaml" ''
+        match:
+          strong_rec_thresh: 0.25
+      '';
 
       script = pkgs.writeText "lidarr-failed-import-recovery.py" ''
         import json
         import os
         import subprocess
+        import time
+        import urllib.error
         import urllib.parse
         import urllib.request
 
@@ -24,10 +30,12 @@
         CONTAINER_ROOT = "${containerRoot}"
         COMPLETE = "${completeDir}"
         BEETS_BASE = "${beetsBase}"
+        MATCH_OVERLAY = "${matchOverlay}"
         BEETS_INDIAN_DIR = "${beetsIndianDir}"
         INDIAN_LIBRARY = "${indianLibrary}"
         AUDIO = (".flac", ".mp3", ".ogg", ".m4a", ".aac", ".opus", ".wav", ".wma", ".ape", ".wv")
-        STATE = os.path.join(os.environ["STATE_DIRECTORY"], "notified.json")
+        STATE = os.path.join(os.environ["STATE_DIRECTORY"], "tried.json")
+        RETRY_AFTER = 24 * 3600
 
 
         def cred(name):
@@ -55,15 +63,30 @@
                 return
             data = urllib.parse.urlencode({"chat_id": cred("telegram-chat-id"), "text": text}).encode()
             url = "https://api.telegram.org/bot" + cred("telegram-bot-token") + "/sendMessage"
-            urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15)
+            try:
+                urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15)
+            except Exception as e:
+                print("telegram notify failed:", type(e).__name__)
 
 
-        def load_notified():
+        def load_tried():
             try:
                 with open(STATE) as f:
-                    return set(json.load(f))
+                    return json.load(f)
             except FileNotFoundError:
-                return set()
+                return {}
+
+
+        def save_tried(tried):
+            with open(STATE, "w") as f:
+                json.dump(tried, f)
+
+
+        def reason_of(q):
+            msgs = [m for s in q.get("statusMessages", []) for m in s.get("messages", [])] or [
+                s.get("title", "") for s in q.get("statusMessages", [])
+            ]
+            return (msgs[0] if msgs else "no reason given")[:140]
 
 
         def audio_left(folder):
@@ -71,6 +94,46 @@
                 if any(n.lower().endswith(AUDIO) for n in files):
                     return True
             return False
+
+
+        def expected_release(q):
+            try:
+                album = api("GET", "/album/" + str(q["albumId"]))
+            except (KeyError, urllib.error.HTTPError):
+                return None, None
+            rels = album.get("releases", [])
+            sel = next((r for r in rels if r.get("monitored")), rels[0] if rels else None)
+            return (sel["foreignReleaseId"] if sel else None), album.get("title")
+
+
+        def beets_lookup(query, env):
+            out = subprocess.run(
+                ["beet", "--config", BEETS_BASE, "ls", "-f", "$path"] + query,
+                env=env, capture_output=True, text=True,
+            ).stdout.splitlines()
+            return (os.path.dirname(os.path.dirname(out[0])) if out else None), len(out)
+
+
+        def beets_artist_dir(query, env):
+            return beets_lookup(query, env)[0]
+
+
+        def audio_count(folder):
+            return sum(n.lower().endswith(AUDIO) for _, _, files in os.walk(folder) for n in files)
+
+
+        def reconcile(q, artist, new_dir, title):
+            cur = artist["path"].rstrip("/")
+            if new_dir and new_dir.startswith(HOST_ROOT + "/") and CONTAINER_ROOT + new_dir[len(HOST_ROOT):] != cur:
+                old_host = HOST_ROOT + cur[len(CONTAINER_ROOT):]
+                if os.path.isdir(old_host) and audio_left(old_host):
+                    notify("Lidarr artist folder differs from where beets filed it, left as is: " + title)
+                else:
+                    full = api("GET", "/artist/" + str(artist["id"]))
+                    full["path"] = CONTAINER_ROOT + new_dir[len(HOST_ROOT):]
+                    api("PUT", "/artist/" + str(artist["id"]) + "?moveFiles=false", full)
+            api("DELETE", "/queue/" + str(q["id"]) + "?removeFromClient=false&blocklist=false")
+            api("POST", "/command", {"name": "RefreshArtist", "artistId": artist["id"]})
 
 
         def library_for(artist):
@@ -82,7 +145,7 @@
             return "western"
 
 
-        notified = load_notified()
+        tried = load_tried()
         queue = api("GET", "/queue?pageSize=500")["records"]
         failed = [q for q in queue if q.get("trackedDownloadState") == "importFailed" and q.get("downloadClient") == "Slskd"]
         print(("DRY-RUN: " if DRY_RUN else "") + str(len(failed)) + " failed Slskd imports")
@@ -94,34 +157,71 @@
             if not folder.startswith(COMPLETE + "/") or not os.path.isdir(folder):
                 print("SKIP out of scope or missing folder:", title)
                 continue
+            last = tried.get(str(qid))
+            recent = bool(last) and time.time() - last < RETRY_AFTER
             artist = api("GET", "/artist/" + str(q["artistId"]))
             lib = library_for(artist)
+            why = "Lidarr: " + reason_of(q)
             if lib is None:
-                reason = "Classical artist, needs manual import"
+                reason = "Classical artist, needs manual import | " + why
+            elif (rel := expected_release(q))[0] is None:
+                reason = "Lidarr no longer has the expected album | " + why
             else:
-                cmd = ["beet", "--config", BEETS_BASE, "import", "-q", "--quiet-fallback", "skip", folder]
+                release, album_title = rel
                 env = dict(os.environ, BEETSDIR=BEETS_INDIAN_DIR) if lib == "indian" else dict(os.environ)
-                print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title)
+                have, have_n = beets_lookup(["mb_albumid:" + release], env)
+                if not have:
+                    have, have_n = beets_lookup(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
+                if have and have_n < 0.9 * audio_count(folder):
+                    reason = "library holds only " + str(have_n) + " of " + str(audio_count(folder)) + " tracks, needs a replace import | " + why
+                    if recent:
+                        print("SKIP tried recently:", title)
+                        continue
+                    print("LEFT", title, "|", reason)
+                    if not DRY_RUN:
+                        tried[str(qid)] = time.time()
+                        save_tried(tried)
+                        if last is None:
+                            notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
+                    continue
+                if have:
+                    print(("WOULD " if DRY_RUN else "") + "DUPLICATE already in beets library:", title)
+                    if DRY_RUN:
+                        continue
+                    reconcile(q, artist, have, title)
+                    tried.pop(str(qid), None)
+                    save_tried(tried)
+                    notify("Lidarr re-grabbed an album already in the library; queue entry cleared, download left in " + folder + ": " + title)
+                    continue
+                if recent:
+                    print("SKIP tried recently:", title)
+                    continue
+                cmd = ["beet", "--config", BEETS_BASE, "--config", MATCH_OVERLAY, "import", "-q", "--quiet-fallback", "skip", "-S", release, folder]
+                print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title + " | " + why)
                 if DRY_RUN:
                     continue
                 subprocess.run(cmd, env=env, capture_output=True, text=True)
                 if not audio_left(folder):
-                    api("DELETE", "/queue/" + str(qid) + "?removeFromClient=false&blocklist=false")
-                    api("POST", "/command", {"name": "RefreshArtist", "artistId": artist["id"]})
+                    reconcile(q, artist, beets_artist_dir(["mb_albumid:" + release], env), title)
                     for d, _, _ in sorted(os.walk(folder), reverse=True):
                         try:
                             os.rmdir(d)
                         except OSError:
                             pass
+                    tried.pop(str(qid), None)
+                    save_tried(tried)
                     print("IMPORTED", title)
                     continue
-                reason = "beets could not match confidently"
+                reason = "beets could not match confidently | " + why
+            if recent:
+                print("SKIP tried recently:", title)
+                continue
             print("LEFT", title, "|", reason)
-            if qid not in notified and not DRY_RUN:
-                notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
-                notified.add(qid)
-                with open(STATE, "w") as f:
-                    json.dump(sorted(notified), f)
+            if not DRY_RUN:
+                tried[str(qid)] = time.time()
+                save_tried(tried)
+                if last is None:
+                    notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
       '';
     in
     {

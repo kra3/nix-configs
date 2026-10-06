@@ -17,6 +17,19 @@ function aggregate(values, stat) {
 }
 
 // raw: [{t (ms), v}] -> one point per local day, ascending.
+// History only records changes, so a flat sensor yields one row; repeat the last value on each day.
+function carryForward(pts, from, to) {
+  if (!pts.length) return pts;
+  const out = [];
+  let i = 0;
+  let cur = pts[0].v;
+  for (let t = from; t <= to; t = dayStart(t + 30 * 36e5)) {
+    while (i < pts.length && pts[i].t <= t) cur = pts[i++].v;
+    out.push({ t, v: cur });
+  }
+  return out;
+}
+
 function bucketDaily(raw, stat) {
   const days = new Map();
   for (const p of raw) {
@@ -652,7 +665,10 @@ class HealthMetricCard extends HTMLElement {
       if (stat === "change") {
         const top = bucketDaily(raw, "max");
         pts = top.map((p, i) => ({ t: p.t, v: i ? Math.max(0, p.v - top[i - 1].v) : 0 }));
-      } else pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
+      } else {
+        pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
+        pts = carryForward(pts, dayStart(start.getTime()), dayStart(last.getTime()));
+      }
     }
     if (stat === "reading" && !spec.end) {
       const live = st ? parseFloat(st.state) : NaN;
@@ -1014,5 +1030,5 @@ if (typeof customElements !== "undefined" && !customElements.get("health-metric-
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { usable, popupStat, chartSvg, statsHtml, todayModel, todaySvg, sleepScore, sleepModel, sleepHtml, smoothPath, shortDur, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, rangeText, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
+  module.exports = { carryForward, usable, popupStat, chartSvg, statsHtml, todayModel, todaySvg, sleepScore, sleepModel, sleepHtml, smoothPath, shortDur, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, rangeText, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
 }

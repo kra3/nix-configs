@@ -2,7 +2,7 @@
   flake.nixosModules.services-media-lidarr-failed-import-recovery =
     { config, pkgs, ... }:
     let
-      dryRun = true;
+      dryRun = false;
       lidarrUrl = "http://${config.vars.network.podmanAddresses.lidarr}:8686/api/v1";
       hostRoot = "/srv/media";
       containerRoot = "/data";

@@ -405,6 +405,8 @@ views:
       series:
       - entity: sensor.average_temperature
         name: Temperature
+        show:
+          name_in_header: false
         type: line
         group_by:
           func: avg
@@ -424,6 +426,8 @@ views:
       series:
       - entity: sensor.average_humidity
         name: Humidity
+        show:
+          name_in_header: false
         type: line
         group_by:
           func: avg
@@ -443,6 +447,8 @@ views:
       series:
       - entity: sensor.average_illuminance
         name: Illuminance
+        show:
+          name_in_header: false
         type: line
         group_by:
           func: avg
@@ -1001,159 +1007,116 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Body
+      heading: Body composition
       heading_style: title
-    - type: tile
+    - type: custom:health-metric-card
       entity: sensor.office_room_withings_kra_weight
       name: Weight
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: input_datetime.withings_arun_last_weigh_in
-      name: Last weigh-in
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.office_room_withings_kra_fat_ratio
-      name: Body fat
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.office_room_withings_kra_muscle_mass
-      name: Muscle mass
-      grid_options:
-        columns: 6
-    - type: statistics-graph
-      title: Weight
-      entities:
-      - entity: sensor.office_room_withings_kra_weight
-        name: Weight
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Body fat
-      entities:
-      - entity: sensor.office_room_withings_kra_fat_ratio
-        name: Body fat
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Fat and muscle mass
-      entities:
-      - entity: sensor.office_room_withings_kra_fat_mass
-        name: Fat mass
+      icon: mdi:scale-bathroom
+      color: "#9fa8ff"
+      date_entity: input_datetime.withings_arun_last_weigh_in
+      chart:
+        type: line
+        days: 30
+        stat: reading
+      delta:
+        mode: percent
+        good: down
+        points: 2
+      items:
       - entity: sensor.office_room_withings_kra_muscle_mass
-        name: Muscle mass
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
+        per: sensor.office_room_withings_kra_weight
+        name: Muscle
+        also:
+          entity: sensor.office_room_withings_kra_muscle_mass
+        color: "#8fd9c0"
+        stat: reading
+        good: up
+        points: 2
+      - entity: sensor.office_room_withings_kra_fat_ratio
+        name: Fat
+        also:
+          entity: sensor.office_room_withings_kra_fat_mass
+        color: "#c9a7e8"
+        good: down
+        points: 2
+        stat: reading
+      popup:
+        graphs:
+        - name: Weight
+          entities:
+          - sensor.office_room_withings_kra_weight
+          days: 180
+          period: week
+        - name: Body fat
+          entities:
+          - sensor.office_room_withings_kra_fat_ratio
+          days: 180
+          period: week
+        - name: Fat and muscle mass
+          entities:
+          - entity: sensor.office_room_withings_kra_fat_mass
+            name: Fat mass
+          - entity: sensor.office_room_withings_kra_muscle_mass
+            name: Muscle mass
+          days: 180
+          period: week
       grid_options:
         columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Activity and heart
-      heading_style: title
-    - type: tile
-      entity: sensor.meghanadha_steps
-      name: Steps
-      grid_options:
-        columns: 6
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Distance
-        show_states: true
-        colorize_states: false
-      graph_span: 14d
-      span:
-        end: day
-      apex_config:
-        chart:
-          height: 140
-      series:
-      - entity: sensor.meghanadha_distance
-        name: Distance
-        type: column
-        group_by:
-          func: max
-          duration: 1d
-      grid_options:
-        columns: 6
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Floors climbed
-        show_states: true
-        colorize_states: false
-      graph_span: 14d
-      span:
-        end: day
-      apex_config:
-        chart:
-          height: 140
-      series:
-      - entity: sensor.meghanadha_floors_ascended
-        name: Floors climbed
-        type: column
-        group_by:
-          func: max
-          duration: 1d
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.meghanadha_resting_heart_rate
-      name: Resting heart rate
-      grid_options:
-        columns: 6
-    - type: statistics-graph
-      title: Steps per day
-      entities:
-      - entity: sensor.meghanadha_steps
-        name: Steps
-      days_to_show: 30
-      period: day
-      stat_types: [max]
-      chart_type: bar
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Resting heart rate
-      entities:
-      - entity: sensor.meghanadha_resting_heart_rate
-        name: Resting heart rate
-      days_to_show: 90
-      period: day
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-  - type: grid
-    cards:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
-
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.meghanadha_sleep_duration
         above: 0
       card:
-        type: custom:mushroom-template-card
-        primary: Sleep
-        secondary: >-
-          {{ states('sensor.meghanadha_sleep_duration') }} {{ state_attr('sensor.meghanadha_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.meghanadha_in_bed')) %} · in bed {{ states('sensor.meghanadha_in_bed') }} {{ state_attr('sensor.meghanadha_in_bed', 'unit_of_measurement') }}{% endif %}
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_sleep_duration
+        name: Sleep
         icon: mdi:sleep
+        color: "#7aa2f7"
+        format: duration
+        show_date: false
+        secondary:
+          entity: sensor.meghanadha_in_bed
+          prefix: "In bed "
+          format: duration
+        chart:
+          type: bar
+          days: 7
+          stat: max
+        popup:
+          sleep:
+            duration: sensor.meghanadha_sleep_duration
+            awake: sensor.meghanadha_awake
+            deep: sensor.meghanadha_deep_sleep
+            core: sensor.meghanadha_core_sleep
+            rem: sensor.meghanadha_rem_sleep
+            hrv: sensor.meghanadha_heart_rate_variability
+            hr: sensor.meghanadha_resting_heart_rate
+            target: 450
+          graphs:
+          - name: Sleep duration (min)
+            entities:
+            - sensor.meghanadha_sleep_duration
+            days: 30
+            stat: reading
+            format: duration
+          - name: Sleep stages (min)
+            entities:
+            - entity: sensor.meghanadha_deep_sleep
+              name: Deep sleep
+            - entity: sensor.meghanadha_core_sleep
+              name: Core sleep
+            - entity: sensor.meghanadha_rem_sleep
+              name: REM sleep
+            days: 30
+            type: bar
+            stacked: true
+            format: duration
+            stat: reading
       grid_options:
         columns: 12
     - type: conditional
@@ -1162,9 +1125,27 @@ views:
         entity: sensor.meghanadha_heart_rate_variability
         above: 0
       card:
-        type: tile
+        type: custom:health-metric-card
         entity: sensor.meghanadha_heart_rate_variability
         name: Heart rate variability
+        icon: mdi:pulse
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Heart rate variability (ms)
+            entities:
+            - sensor.meghanadha_heart_rate_variability
+            days: 30
       grid_options:
         columns: 6
     - type: conditional
@@ -1173,24 +1154,29 @@ views:
         entity: sensor.meghanadha_vo2_max
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: VO2 max
-          show_states: true
-          colorize_states: false
-        graph_span: 90d
-        span:
-          end: day
-        apex_config:
-          chart:
-            height: 140
-        series:
-        - entity: sensor.meghanadha_vo2_max
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_vo2_max
+        name: VO2 max
+        icon: mdi:run-fast
+        color: "#5ec4c4"
+        decimals: 1
+        show_date: false
+        chart:
           type: line
-          statistics:
-            type: mean
-            period: day
+          days: 90
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 1
+          unit: ""
+        popup:
+          graphs:
+          - name: VO2 max
+            entities:
+            - sensor.meghanadha_vo2_max
+            days: 180
+            period: week
       grid_options:
         columns: 6
     - type: conditional
@@ -1199,98 +1185,250 @@ views:
         entity: sensor.meghanadha_blood_oxygen
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Blood oxygen
-          show_states: true
-          colorize_states: false
-        graph_span: 90d
-        span:
-          end: day
-        apex_config:
-          chart:
-            height: 140
-        series:
-        - entity: sensor.meghanadha_blood_oxygen
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_blood_oxygen
+        name: Blood oxygen
+        icon: mdi:water-percent
+        color: "#6bb8ff"
+        decimals: 0
+        show_date: false
+        chart:
           type: line
-          statistics:
-            type: mean
-            period: day
+          days: 30
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Blood oxygen (%)
+            entities:
+            - sensor.meghanadha_blood_oxygen
+            days: 90
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Past 7 days
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.meghanadha_health_steps
+      name: Steps
+      icon: mdi:shoe-print
+      color: "#f2c14e"
+      goal: 10000
+      decimals: 0
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.meghanadha_health_steps
+          days: 14
+        - name: Steps per day
+          entities:
+          - sensor.meghanadha_health_steps
+          days: 30
+          stat: max
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.meghanadha_walking_running_distance
+      name: Distance
+      icon: mdi:map-marker-distance
+      color: "#f2c14e"
+      format: distance
+      scale: 1000
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.meghanadha_walking_running_distance
+          days: 14
+        - name: Distance per day (km)
+          entities:
+          - sensor.meghanadha_walking_running_distance
+          days: 30
+          stat: max
+          type: bar
+      grid_options:
+        columns: 6
+    - type: custom:health-metric-card
+      entity: sensor.meghanadha_floors_ascended
+      name: Floors climbed
+      icon: mdi:stairs-up
+      color: "#f2c14e"
+      decimals: 0
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Floors climbed per day
+          entities:
+          - sensor.meghanadha_floors_ascended
+          days: 30
+          stat: max
+          type: bar
       grid_options:
         columns: 6
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.meghanadha_sleep_duration
+        entity: sensor.meghanadha_active_energy
         above: 0
       card:
-        type: statistics-graph
-        title: Sleep duration
-        entities:
-        - entity: sensor.meghanadha_sleep_duration
-          name: Sleep
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: line
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_active_energy
+        name: Active energy
+        icon: mdi:fire
+        color: "#ff9f43"
+        decimals: 0
+        show_date: false
+        chart:
+          type: bar
+          days: 7
+          stat: max
+        popup:
+          graphs:
+          - name: Today vs average
+            type: today
+            entities:
+            - sensor.meghanadha_active_energy
+            days: 14
+          - name: Active energy per day (kcal)
+            entities:
+            - sensor.meghanadha_active_energy
+            days: 30
+            stat: max
+            type: bar
       grid_options:
         columns: 12
+    - type: heading
+      heading: Heart
+      heading_style: title
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.meghanadha_heart_rate_variability
+        entity: sensor.meghanadha_resting_heart_rate
         above: 0
       card:
-        type: statistics-graph
-        title: Heart rate variability
-        entities:
-        - entity: sensor.meghanadha_heart_rate_variability
-          name: Heart rate variability
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: line
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_resting_heart_rate
+        name: Resting heart rate
+        icon: mdi:heart-pulse
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: down
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Resting heart rate (bpm)
+            entities:
+            - sensor.meghanadha_resting_heart_rate
+            days: 90
       grid_options:
-        columns: 12
+        columns: 6
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.meghanadha_deep_sleep
+        entity: sensor.meghanadha_heart_rate
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Sleep stages
-          show_states: false
-        graph_span: 30d
-        span:
-          end: day
-        apex_config:
-          chart:
-            stacked: true
-        series:
-        - entity: sensor.meghanadha_deep_sleep
-          name: Deep sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
-        - entity: sensor.meghanadha_core_sleep
-          name: Core sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
-        - entity: sensor.meghanadha_rem_sleep
-          name: REM sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_heart_rate
+        name: Heart rate
+        icon: mdi:heart
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 14
+        popup:
+          graphs:
+          - name: Heart rate (bpm)
+            entities:
+            - sensor.meghanadha_heart_rate
+            days: 30
       grid_options:
-        columns: 12
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_walking_heart_rate_average
+        above: 0
+      card:
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_walking_heart_rate_average
+        name: Walking heart rate
+        icon: mdi:walk
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: down
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Walking heart rate (bpm)
+            entities:
+            - sensor.meghanadha_walking_heart_rate_average
+            days: 90
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.meghanadha_respiratory_rate
+        above: 0
+      card:
+        type: custom:health-metric-card
+        entity: sensor.meghanadha_respiratory_rate
+        name: Respiratory rate
+        icon: mdi:lungs
+        color: "#6bb8ff"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        popup:
+          graphs:
+          - name: Respiratory rate (breaths/min)
+            entities:
+            - sensor.meghanadha_respiratory_rate
+            days: 90
+      grid_options:
+        columns: 6
 - type: sections
   title: Health
   path: health-anjali
@@ -1302,159 +1440,116 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Body
+      heading: Body composition
       heading_style: title
-    - type: tile
+    - type: custom:health-metric-card
       entity: sensor.office_room_withings_anj_weight
       name: Weight
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: input_datetime.withings_anjali_last_weigh_in
-      name: Last weigh-in
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.office_room_withings_anj_fat_ratio
-      name: Body fat
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.office_room_withings_anj_muscle_mass
-      name: Muscle mass
-      grid_options:
-        columns: 6
-    - type: statistics-graph
-      title: Weight
-      entities:
-      - entity: sensor.office_room_withings_anj_weight
-        name: Weight
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Body fat
-      entities:
-      - entity: sensor.office_room_withings_anj_fat_ratio
-        name: Body fat
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Fat and muscle mass
-      entities:
-      - entity: sensor.office_room_withings_anj_fat_mass
-        name: Fat mass
+      icon: mdi:scale-bathroom
+      color: "#9fa8ff"
+      date_entity: input_datetime.withings_anjali_last_weigh_in
+      chart:
+        type: line
+        days: 30
+        stat: reading
+      delta:
+        mode: percent
+        good: down
+        points: 2
+      items:
       - entity: sensor.office_room_withings_anj_muscle_mass
-        name: Muscle mass
-      days_to_show: 180
-      period: week
-      stat_types: [mean]
-      chart_type: line
+        per: sensor.office_room_withings_anj_weight
+        name: Muscle
+        also:
+          entity: sensor.office_room_withings_anj_muscle_mass
+        color: "#8fd9c0"
+        stat: reading
+        good: up
+        points: 2
+      - entity: sensor.office_room_withings_anj_fat_ratio
+        name: Fat
+        also:
+          entity: sensor.office_room_withings_anj_fat_mass
+        color: "#c9a7e8"
+        good: down
+        points: 2
+        stat: reading
+      popup:
+        graphs:
+        - name: Weight
+          entities:
+          - sensor.office_room_withings_anj_weight
+          days: 180
+          period: week
+        - name: Body fat
+          entities:
+          - sensor.office_room_withings_anj_fat_ratio
+          days: 180
+          period: week
+        - name: Fat and muscle mass
+          entities:
+          - entity: sensor.office_room_withings_anj_fat_mass
+            name: Fat mass
+          - entity: sensor.office_room_withings_anj_muscle_mass
+            name: Muscle mass
+          days: 180
+          period: week
       grid_options:
         columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Activity and heart
-      heading_style: title
-    - type: tile
-      entity: sensor.anjalis_iphone_steps
-      name: Steps
-      grid_options:
-        columns: 6
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Distance
-        show_states: true
-        colorize_states: false
-      graph_span: 14d
-      span:
-        end: day
-      apex_config:
-        chart:
-          height: 140
-      series:
-      - entity: sensor.anjalis_iphone_distance
-        name: Distance
-        type: column
-        statistics:
-          type: max
-          period: day
-      grid_options:
-        columns: 6
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Floors climbed
-        show_states: true
-        colorize_states: false
-      graph_span: 14d
-      span:
-        end: day
-      apex_config:
-        chart:
-          height: 140
-      series:
-      - entity: sensor.anjalis_iphone_floors_ascended
-        name: Floors climbed
-        type: column
-        statistics:
-          type: max
-          period: day
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.anjalis_iphone_resting_heart_rate
-      name: Resting heart rate
-      grid_options:
-        columns: 6
-    - type: statistics-graph
-      title: Steps per day
-      entities:
-      - entity: sensor.anjalis_iphone_steps
-        name: Steps
-      days_to_show: 30
-      period: day
-      stat_types: [max]
-      chart_type: bar
-      grid_options:
-        columns: 12
-    - type: statistics-graph
-      title: Resting heart rate
-      entities:
-      - entity: sensor.anjalis_iphone_resting_heart_rate
-        name: Resting heart rate
-      days_to_show: 90
-      period: day
-      stat_types: [mean]
-      chart_type: line
-      grid_options:
-        columns: 12
-  - type: grid
-    cards:
     - type: heading
       heading: Sleep and vitals
       heading_style: title
-
     - type: conditional
       conditions:
       - condition: numeric_state
         entity: sensor.anjalis_iphone_sleep_duration
         above: 0
       card:
-        type: custom:mushroom-template-card
-        primary: Sleep
-        secondary: >-
-          {{ states('sensor.anjalis_iphone_sleep_duration') }} {{ state_attr('sensor.anjalis_iphone_sleep_duration', 'unit_of_measurement') }}{% if is_number(states('sensor.anjalis_iphone_in_bed')) %} · in bed {{ states('sensor.anjalis_iphone_in_bed') }} {{ state_attr('sensor.anjalis_iphone_in_bed', 'unit_of_measurement') }}{% endif %}
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_sleep_duration
+        name: Sleep
         icon: mdi:sleep
+        color: "#7aa2f7"
+        format: duration
+        show_date: false
+        secondary:
+          entity: sensor.anjalis_iphone_in_bed
+          prefix: "In bed "
+          format: duration
+        chart:
+          type: bar
+          days: 7
+          stat: max
+        popup:
+          sleep:
+            duration: sensor.anjalis_iphone_sleep_duration
+            awake: sensor.anjalis_iphone_awake
+            deep: sensor.anjalis_iphone_deep_sleep
+            core: sensor.anjalis_iphone_core_sleep
+            rem: sensor.anjalis_iphone_rem_sleep
+            hrv: sensor.anjalis_iphone_heart_rate_variability
+            hr: sensor.anjalis_iphone_resting_heart_rate
+            target: 450
+          graphs:
+          - name: Sleep duration (min)
+            entities:
+            - sensor.anjalis_iphone_sleep_duration
+            days: 30
+            stat: reading
+            format: duration
+          - name: Sleep stages (min)
+            entities:
+            - entity: sensor.anjalis_iphone_deep_sleep
+              name: Deep sleep
+            - entity: sensor.anjalis_iphone_core_sleep
+              name: Core sleep
+            - entity: sensor.anjalis_iphone_rem_sleep
+              name: REM sleep
+            days: 30
+            type: bar
+            stacked: true
+            format: duration
+            stat: reading
       grid_options:
         columns: 12
     - type: conditional
@@ -1463,9 +1558,27 @@ views:
         entity: sensor.anjalis_iphone_heart_rate_variability
         above: 0
       card:
-        type: tile
+        type: custom:health-metric-card
         entity: sensor.anjalis_iphone_heart_rate_variability
         name: Heart rate variability
+        icon: mdi:pulse
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Heart rate variability (ms)
+            entities:
+            - sensor.anjalis_iphone_heart_rate_variability
+            days: 30
       grid_options:
         columns: 6
     - type: conditional
@@ -1474,24 +1587,29 @@ views:
         entity: sensor.anjalis_iphone_vo2_max
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: VO2 max
-          show_states: true
-          colorize_states: false
-        graph_span: 90d
-        span:
-          end: day
-        apex_config:
-          chart:
-            height: 140
-        series:
-        - entity: sensor.anjalis_iphone_vo2_max
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_vo2_max
+        name: VO2 max
+        icon: mdi:run-fast
+        color: "#5ec4c4"
+        decimals: 1
+        show_date: false
+        chart:
           type: line
-          statistics:
-            type: mean
-            period: day
+          days: 90
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 1
+          unit: ""
+        popup:
+          graphs:
+          - name: VO2 max
+            entities:
+            - sensor.anjalis_iphone_vo2_max
+            days: 180
+            period: week
       grid_options:
         columns: 6
     - type: conditional
@@ -1500,98 +1618,249 @@ views:
         entity: sensor.anjalis_iphone_blood_oxygen
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Blood oxygen
-          show_states: true
-          colorize_states: false
-        graph_span: 90d
-        span:
-          end: day
-        apex_config:
-          chart:
-            height: 140
-        series:
-        - entity: sensor.anjalis_iphone_blood_oxygen
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_blood_oxygen
+        name: Blood oxygen
+        icon: mdi:water-percent
+        color: "#6bb8ff"
+        decimals: 0
+        show_date: false
+        chart:
           type: line
-          statistics:
-            type: mean
-            period: day
+          days: 30
+        delta:
+          mode: absolute
+          good: up
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Blood oxygen (%)
+            entities:
+            - sensor.anjalis_iphone_blood_oxygen
+            days: 90
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Past 7 days
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.anjalis_iphone_steps
+      name: Steps
+      icon: mdi:shoe-print
+      color: "#f2c14e"
+      goal: 10000
+      decimals: 0
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.anjalis_iphone_steps
+          days: 14
+        - name: Steps per day
+          entities:
+          - sensor.anjalis_iphone_steps
+          days: 30
+          stat: max
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.anjalis_iphone_distance
+      name: Distance
+      icon: mdi:map-marker-distance
+      color: "#f2c14e"
+      format: distance
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.anjalis_iphone_distance
+          days: 14
+        - name: Distance per day (m)
+          entities:
+          - sensor.anjalis_iphone_distance
+          days: 30
+          stat: max
+          type: bar
+      grid_options:
+        columns: 6
+    - type: custom:health-metric-card
+      entity: sensor.anjalis_iphone_floors_ascended
+      name: Floors climbed
+      icon: mdi:stairs-up
+      color: "#f2c14e"
+      decimals: 0
+      show_date: false
+      chart:
+        type: bar
+        days: 7
+        stat: max
+      popup:
+        graphs:
+        - name: Floors climbed per day
+          entities:
+          - sensor.anjalis_iphone_floors_ascended
+          days: 30
+          stat: max
+          type: bar
       grid_options:
         columns: 6
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.anjalis_iphone_sleep_duration
+        entity: sensor.anjalis_iphone_active_energy
         above: 0
       card:
-        type: statistics-graph
-        title: Sleep duration
-        entities:
-        - entity: sensor.anjalis_iphone_sleep_duration
-          name: Sleep
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: line
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_active_energy
+        name: Active energy
+        icon: mdi:fire
+        color: "#ff9f43"
+        decimals: 0
+        show_date: false
+        chart:
+          type: bar
+          days: 7
+          stat: max
+        popup:
+          graphs:
+          - name: Today vs average
+            type: today
+            entities:
+            - sensor.anjalis_iphone_active_energy
+            days: 14
+          - name: Active energy per day (kcal)
+            entities:
+            - sensor.anjalis_iphone_active_energy
+            days: 30
+            stat: max
+            type: bar
       grid_options:
         columns: 12
+    - type: heading
+      heading: Heart
+      heading_style: title
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.anjalis_iphone_heart_rate_variability
+        entity: sensor.anjalis_iphone_resting_heart_rate
         above: 0
       card:
-        type: statistics-graph
-        title: Heart rate variability
-        entities:
-        - entity: sensor.anjalis_iphone_heart_rate_variability
-          name: Heart rate variability
-        days_to_show: 30
-        period: day
-        stat_types: [mean]
-        chart_type: line
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_resting_heart_rate
+        name: Resting heart rate
+        icon: mdi:heart-pulse
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: down
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Resting heart rate (bpm)
+            entities:
+            - sensor.anjalis_iphone_resting_heart_rate
+            days: 90
       grid_options:
-        columns: 12
+        columns: 6
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.anjalis_iphone_deep_sleep
+        entity: sensor.anjalis_iphone_heart_rate
         above: 0
       card:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Sleep stages
-          show_states: false
-        graph_span: 30d
-        span:
-          end: day
-        apex_config:
-          chart:
-            stacked: true
-        series:
-        - entity: sensor.anjalis_iphone_deep_sleep
-          name: Deep sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
-        - entity: sensor.anjalis_iphone_core_sleep
-          name: Core sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
-        - entity: sensor.anjalis_iphone_rem_sleep
-          name: REM sleep
-          type: column
-          statistics:
-            type: mean
-            period: day
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_heart_rate
+        name: Heart rate
+        icon: mdi:heart
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 14
+        popup:
+          graphs:
+          - name: Heart rate (bpm)
+            entities:
+            - sensor.anjalis_iphone_heart_rate
+            days: 30
       grid_options:
-        columns: 12
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_walking_heart_rate_average
+        above: 0
+      card:
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_walking_heart_rate_average
+        name: Walking heart rate
+        icon: mdi:walk
+        color: "#f48fb1"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        delta:
+          mode: absolute
+          good: down
+          points: 2
+          decimals: 0
+        popup:
+          graphs:
+          - name: Walking heart rate (bpm)
+            entities:
+            - sensor.anjalis_iphone_walking_heart_rate_average
+            days: 90
+      grid_options:
+        columns: 6
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.anjalis_iphone_respiratory_rate
+        above: 0
+      card:
+        type: custom:health-metric-card
+        entity: sensor.anjalis_iphone_respiratory_rate
+        name: Respiratory rate
+        icon: mdi:lungs
+        color: "#6bb8ff"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 30
+        popup:
+          graphs:
+          - name: Respiratory rate (breaths/min)
+            entities:
+            - sensor.anjalis_iphone_respiratory_rate
+            days: 90
+      grid_options:
+        columns: 6
 - title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group
@@ -1780,6 +2049,8 @@ views:
       series:
       - entity: sensor.power_monitor_1_power
         name: Power
+        show:
+          name_in_header: false
         type: line
         group_by:
           func: avg
@@ -1800,6 +2071,8 @@ views:
       series:
       - entity: sensor.power_monitor_1_energy
         name: Energy
+        show:
+          name_in_header: false
         type: column
         statistics:
           type: change

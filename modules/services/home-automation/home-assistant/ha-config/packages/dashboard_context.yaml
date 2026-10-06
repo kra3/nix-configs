@@ -92,6 +92,24 @@ template:
             {%- endfor -%}
             {{ ns.names | join(', ') }}
 
+      - name: "Dashboard Alert: System"
+        unique_id: dashboard_alert_system
+        device_class: problem
+        delay_on: "00:05:00"
+        state: >-
+          {{ states('sensor.system_monitor_processor_use') | float(0) > 90
+             or states('sensor.system_monitor_memory_usage') | float(0) > 90
+             or states('sensor.system_monitor_disk_usage') | float(0) > 85
+             or states('sensor.system_monitor_processor_temperature') | float(0) > 90 }}
+        attributes:
+          reasons: >-
+            {%- set ns = namespace(r=[]) -%}
+            {%- if states('sensor.system_monitor_processor_use') | float(0) > 90 -%}{%- set ns.r = ns.r + ['CPU ' ~ (states('sensor.system_monitor_processor_use') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_memory_usage') | float(0) > 90 -%}{%- set ns.r = ns.r + ['Memory ' ~ (states('sensor.system_monitor_memory_usage') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_disk_usage') | float(0) > 85 -%}{%- set ns.r = ns.r + ['Disk ' ~ (states('sensor.system_monitor_disk_usage') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_processor_temperature') | float(0) > 90 -%}{%- set ns.r = ns.r + ['CPU temp ' ~ (states('sensor.system_monitor_processor_temperature') | float(0) | round(0)) ~ '°C'] -%}{%- endif -%}
+            {{ ns.r | join(', ') }}
+
       - name: "Dashboard Alert: Override Active"
         unique_id: dashboard_alert_override_active
         device_class: running

@@ -1,0 +1,23 @@
+default:
+- decimals: 1
+card:
+  type: custom:health-metric-card
+  entity: "[[entity]]"
+  name: "[[name]]"
+  icon: "[[icon]]"
+  color: "[[color]]"
+  decimals: "[[decimals]]"
+  show_date: false
+  chart:
+    type: line
+    days: 7
+  delta:
+    mode: range
+    decimals: "[[decimals]]"
+    unit: auto
+  popup:
+    graphs:
+    - name: "[[name]]"
+      entities:
+      - "[[entity]]"
+      days: 7

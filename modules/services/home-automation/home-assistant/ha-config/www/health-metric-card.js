@@ -363,6 +363,13 @@ function computeDelta(series, mode, points) {
   return { value: abs, abs };
 }
 
+// "min–max" of a series, for the chip that replaces a delta on noisy readings.
+function rangeText(series, decimals, unit, lang) {
+  if (!series.length) return "";
+  const vals = series.map((p) => p.v);
+  return fmt(Math.min(...vals), decimals, lang) + "\u2013" + fmt(Math.max(...vals), decimals, lang) + unit;
+}
+
 function deltaTone(delta, good) {
   if (!delta || Math.abs(delta.abs) < 1e-9 || good === "none" || !good) return "neutral";
   return (delta.abs > 0) === (good === "up") ? "good" : "bad";
@@ -668,12 +675,24 @@ class HealthMetricCard extends HTMLElement {
         this._itemSeries(it).then((s) => (this._data["item" + i] = collapseRuns(s)))
       ),
     ];
+    const bound = (k, entity, spec) => this._series(entity, Object.assign({}, spec, { stat: k === "lo" ? "min" : "max" }));
+    if (c.delta && c.delta.mode === "range") for (const k of ["lo", "hi"]) jobs.push(bound(k, c.entity, c.chart).then((s) => (this._data[k] = s)));
+    c.items.forEach((it, i) => {
+      if (it.mode === "now") for (const k of ["lo", "hi"]) jobs.push(bound(k, it.entity, { days: it.days || 30, scale: it.scale, source: it.source }).then((s) => (this._data[k + i] = s)));
+    });
     try {
       await Promise.all(jobs);
     } catch (e) {
       /* keep whatever loaded */
     }
     this._render();
+  }
+
+  // True min/max points for a range chip, plus the live reading; falls back to the plotted series.
+  _span(key, fallback, live) {
+    const pts = [...(this._data["lo" + key] || []), ...(this._data["hi" + key] || [])];
+    if (!pts.length) return fallback;
+    return isFinite(live) ? [...pts, { v: live }] : pts;
   }
 
   _formatMain(v) {
@@ -706,7 +725,8 @@ class HealthMetricCard extends HTMLElement {
     const st = this._hass.states[c.entity];
     const accent = c.color || "var(--primary-color)";
     const scale = c.scale || 1;
-    const raw = st ? parseFloat(st.state) : NaN;
+    const chartMain = this._data.main || [];
+    const raw = c.hero_from === "chart" ? (chartMain.length ? chartMain[chartMain.length - 1].v / scale : NaN) : st ? parseFloat(st.state) : NaN;
     const hero = isFinite(raw) ? this._formatMain(raw * scale) : { text: "\u2013", unit: "" };
     const heroHtml = hero.html || `<span class="value">${hero.text}</span><span class="unit">${hero.unit}</span>`;
 
@@ -714,6 +734,10 @@ class HealthMetricCard extends HTMLElement {
     const main = this._data.main || [];
     if (c.goal && isFinite(raw)) {
       under = `<div class="sub">${fmt(Math.round((raw / c.goal) * 100), 0, lang)} % Goal</div>`;
+    } else if (c.delta && c.delta.mode === "range" && main.length) {
+      const dec = c.delta.decimals !== undefined ? c.delta.decimals : 1;
+      const unit = c.delta.unit !== undefined ? c.delta.unit : " " + (hero.unit || "");
+      under = `<span class="chip neutral">${rangeText(this._span("", main, raw * scale), dec, unit, lang)}</span>`;
     } else if (c.delta && main.length) {
       const d = computeDelta(main, c.delta.mode || "absolute", c.delta.points);
       if (d) {
@@ -761,6 +785,13 @@ class HealthMetricCard extends HTMLElement {
             const au = it.also.unit !== undefined ? it.also.unit : (ast.attributes.unit_of_measurement || "");
             alsoTxt = `${fmt(av, it.also.decimals !== undefined ? it.also.decimals : 1, lang)} ${au} \u00b7 `;
           }
+        }
+        if (it.mode === "now") {
+          const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
+          return (
+            `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
+            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : ""}</div></div></div>`
+          );
         }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";
         return (
@@ -977,5 +1008,5 @@ if (typeof customElements !== "undefined" && !customElements.get("health-metric-
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { usable, popupStat, chartSvg, statsHtml, todayModel, todaySvg, sleepScore, sleepModel, sleepHtml, smoothPath, shortDur, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
+  module.exports = { usable, popupStat, chartSvg, statsHtml, todayModel, todaySvg, sleepScore, sleepModel, sleepHtml, smoothPath, shortDur, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, rangeText, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
 }

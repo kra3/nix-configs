@@ -106,12 +106,20 @@
             return (sel["foreignReleaseId"] if sel else None), album.get("title")
 
 
-        def beets_artist_dir(query, env):
+        def beets_lookup(query, env):
             out = subprocess.run(
                 ["beet", "--config", BEETS_BASE, "ls", "-f", "$path"] + query,
                 env=env, capture_output=True, text=True,
             ).stdout.splitlines()
-            return os.path.dirname(os.path.dirname(out[0])) if out else None
+            return (os.path.dirname(os.path.dirname(out[0])) if out else None), len(out)
+
+
+        def beets_artist_dir(query, env):
+            return beets_lookup(query, env)[0]
+
+
+        def audio_count(folder):
+            return sum(n.lower().endswith(AUDIO) for _, _, files in os.walk(folder) for n in files)
 
 
         def reconcile(q, artist, new_dir, title):
@@ -161,7 +169,21 @@
             else:
                 release, album_title = rel
                 env = dict(os.environ, BEETSDIR=BEETS_INDIAN_DIR) if lib == "indian" else dict(os.environ)
-                have = beets_artist_dir(["mb_albumid:" + release], env) or beets_artist_dir(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
+                have, have_n = beets_lookup(["mb_albumid:" + release], env)
+                if not have:
+                    have, have_n = beets_lookup(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
+                if have and have_n < 0.9 * audio_count(folder):
+                    reason = "library holds only " + str(have_n) + " of " + str(audio_count(folder)) + " tracks, needs a replace import | " + why
+                    if recent:
+                        print("SKIP tried recently:", title)
+                        continue
+                    print("LEFT", title, "|", reason)
+                    if not DRY_RUN:
+                        tried[str(qid)] = time.time()
+                        save_tried(tried)
+                        if last is None:
+                            notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
+                    continue
                 if have:
                     print(("WOULD " if DRY_RUN else "") + "DUPLICATE already in beets library:", title)
                     if DRY_RUN:

@@ -1731,7 +1731,7 @@ views:
         columns: 12
     - type: custom:health-metric-card
       entity: sensor.zfs_tank_used
-      name: ZFS pools
+      name: ZFS tank
       icon: mdi:database
       color: "#8fd9c0"
       decimals: 0

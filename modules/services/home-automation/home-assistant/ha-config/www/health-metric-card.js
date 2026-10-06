@@ -649,7 +649,10 @@ class HealthMetricCard extends HTMLElement {
       const raw = (res[entityId] || [])
         .map((r) => ({ t: (r.lu !== undefined ? r.lu : r.lc) * 1000, v: parseFloat(r.s) }))
         .filter((p) => isFinite(p.v) && isFinite(p.t));
-      pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
+      if (stat === "change") {
+        const top = bucketDaily(raw, "max");
+        pts = top.map((p, i) => ({ t: p.t, v: i ? Math.max(0, p.v - top[i - 1].v) : 0 }));
+      } else pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
     }
     if (stat === "reading" && !spec.end) {
       const live = st ? parseFloat(st.state) : NaN;

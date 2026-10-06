@@ -8,7 +8,7 @@ resources:
     type: module
   - url: /hacsfiles/streamline-card/streamline-card.js
     type: module
-  - url: /local/health-metric-card.js?v=17
+  - url: /local/health-metric-card.js?v=18
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module

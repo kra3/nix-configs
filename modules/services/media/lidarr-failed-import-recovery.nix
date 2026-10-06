@@ -163,7 +163,8 @@
             if not os.path.isdir(folder):
                 print(("WOULD " if DRY_RUN else "") + "CLEAR queue entry, download folder is gone:", title)
                 if not DRY_RUN:
-                    api("DELETE", "/queue/" + str(qid) + "?removeFromClient=false&blocklist=false")
+                    from_client = "true" if q.get("downloadClient") == "SABnzbd" else "false"
+                    api("DELETE", "/queue/" + str(qid) + "?removeFromClient=" + from_client + "&blocklist=false")
                 continue
             last = tried.get(str(qid))
             recent = bool(last) and time.time() - last < RETRY_AFTER

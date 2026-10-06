@@ -932,8 +932,105 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Jellyfin
+      heading: Library
       heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.navidrome_tracks
+      name: Music library
+      icon: mdi:music-box-multiple-outline
+      color: "#f5c28b"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.navidrome_albums
+        name: Albums
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.navidrome_artists
+        name: Artists
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Tracks
+          entities:
+          - entity: sensor.navidrome_tracks
+            name: Tracks
+          days: 7
+        - name: Albums and artists
+          entities:
+          - entity: sensor.navidrome_albums
+            name: Albums
+          - entity: sensor.navidrome_artists
+            name: Artists
+          days: 7
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.navidrome_last_scan
+      name: Last library scan
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.unpackerr_lidarr_queue
+      name: Import queue
+      icon: mdi:package-down
+      color: "#6bb6ff"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.unpackerr_radarr_queue
+        name: Radarr
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.unpackerr_sonarr_queue
+        name: Sonarr
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.unpackerr_extracting
+        name: Extracting
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Queues
+          entities:
+          - entity: sensor.unpackerr_lidarr_queue
+            name: Lidarr
+          - entity: sensor.unpackerr_radarr_queue
+            name: Radarr
+          - entity: sensor.unpackerr_sonarr_queue
+            name: Sonarr
+          days: 7
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.unpackerr_failed
+        above: 0
+      card:
+        type: tile
+        entity: sensor.unpackerr_failed
+        name: Failed extractions
+      grid_options:
+        columns: 12
     - type: conditional
       conditions:
       - condition: numeric_state

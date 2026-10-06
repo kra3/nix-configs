@@ -1496,16 +1496,15 @@ views:
           type: bar
       grid_options:
         columns: 12
-    - type: tile
-      entity: switch.power_monitor_1
-      grid_options:
-        columns: 12
-    - type: tile
-      entity: switch.power_monitor_1_child_lock
-      grid_options:
-        columns: 12
-    - type: tile
-      entity: select.power_monitor_1_power_on_behavior
+    - type: entities
+      show_header_toggle: false
+      entities:
+      - entity: switch.power_monitor_1
+        name: Power
+      - entity: switch.power_monitor_1_child_lock
+        name: Child lock
+      - entity: select.power_monitor_1_power_on_behavior
+        name: Power-on behavior
       grid_options:
         columns: 12
   visible:

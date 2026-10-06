@@ -63,7 +63,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.hue_pir_kitchen_occupancy
+          entity: binary_sensor.room_presence_kitchen
           state: "on"
         - condition: state
           entity: light.kitchen_lights
@@ -91,7 +91,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.ranger_duo_ptz_person_occupancy
+          entity: binary_sensor.room_presence_dining
           state: "on"
         - condition: state
           entity: light.dining_lights
@@ -106,7 +106,7 @@ views:
       - condition: or
         conditions:
         - condition: state
-          entity: binary_sensor.ranger_duo_fxd_person_occupancy
+          entity: binary_sensor.room_presence_living
           state: "on"
         - condition: state
           entity: light.living_room_lights
@@ -172,6 +172,9 @@ views:
       visibility:
       - condition: or
         conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_office
+          state: "on"
         - condition: state
           entity: light.office_room_light
           state: "on"

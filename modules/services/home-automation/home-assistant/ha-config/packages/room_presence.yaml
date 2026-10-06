@@ -1,0 +1,26 @@
+# Per-room "occupied" signals for the dashboard: raw presence held for 5 minutes after the last detection.
+template:
+  - binary_sensor:
+      - name: "Room Presence Kitchen"
+        unique_id: room_presence_kitchen
+        device_class: occupancy
+        state: "{{ is_state('binary_sensor.hue_pir_kitchen_occupancy', 'on') }}"
+        delay_off: "00:05:00"
+
+      - name: "Room Presence Dining"
+        unique_id: room_presence_dining
+        device_class: occupancy
+        state: "{{ is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'on') }}"
+        delay_off: "00:05:00"
+
+      - name: "Room Presence Living"
+        unique_id: room_presence_living
+        device_class: occupancy
+        state: "{{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'on') }}"
+        delay_off: "00:05:00"
+
+      - name: "Room Presence Office"
+        unique_id: room_presence_office
+        device_class: occupancy
+        state: "{{ is_state('binary_sensor.ranger_uno_person_occupancy', 'on') }}"
+        delay_off: "00:05:00"

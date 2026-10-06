@@ -158,6 +158,7 @@
                       siteMonitor = "https://jellyfin.${domain}";
                       widget = {
                         type = "jellyfin";
+                        version = 2;
                         url = "http://${net.containers.mediaPlay.localAddress}:8096";
                         key = "{{HOMEPAGE_VAR_JELLYFIN_KEY}}";
                       };

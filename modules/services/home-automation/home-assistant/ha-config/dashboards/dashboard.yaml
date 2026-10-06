@@ -763,7 +763,7 @@ views:
       heading_style: title
     - type: custom:health-metric-card
       entity: sensor.sabnzbd_karunagath_in_speed
-      name: Download speed
+      name: SABnzbd
       icon: mdi:download
       color: "#6bb6ff"
       decimals: 1
@@ -799,7 +799,7 @@ views:
         columns: 12
     - type: custom:health-metric-card
       entity: sensor.sabnzbd_karunagath_in_overall_total
-      name: Downloaded today
+      name: SABnzbd today
       icon: mdi:cloud-download-outline
       color: "#8fd9c0"
       decimals: 1
@@ -866,6 +866,7 @@ views:
       grid_options:
         columns: 12
     - type: entities
+      title: SABnzbd controls
       show_header_toggle: false
       entities:
       - entity: number.sabnzbd_karunagath_in_speedlimit
@@ -897,7 +898,7 @@ views:
       heading_style: title
     - type: custom:health-metric-card
       entity: sensor.seerr_total_requests
-      name: Requests
+      name: Seerr
       icon: mdi:movie-open-plus-outline
       color: "#c9a7e8"
       decimals: 0
@@ -947,8 +948,8 @@ views:
       grid_options:
         columns: 12
     - type: custom:health-metric-card
-      entity: sensor.unpackerr_lidarr_queue
-      name: Import queue
+      entity: sensor.arr_queue_total
+      name: Arr queues
       icon: mdi:package-down
       color: "#6bb6ff"
       decimals: 0
@@ -957,6 +958,12 @@ views:
         type: line
         days: 7
       items:
+      - entity: sensor.unpackerr_lidarr_queue
+        name: Lidarr
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
       - entity: sensor.unpackerr_radarr_queue
         name: Radarr
         mode: now
@@ -965,12 +972,6 @@ views:
         unit: ""
       - entity: sensor.unpackerr_sonarr_queue
         name: Sonarr
-        mode: now
-        days: 7
-        decimals: 0
-        unit: ""
-      - entity: sensor.unpackerr_extracting
-        name: Extracting
         mode: now
         days: 7
         decimals: 0
@@ -1073,7 +1074,7 @@ views:
         columns: 12
     - type: custom:health-metric-card
       entity: sensor.navidrome_tracks
-      name: Music library
+      name: Navidrome
       icon: mdi:music-box-multiple-outline
       color: "#f5c28b"
       decimals: 0

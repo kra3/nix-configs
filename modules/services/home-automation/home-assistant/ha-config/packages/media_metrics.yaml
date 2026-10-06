@@ -110,3 +110,17 @@ rest:
         unique_id: jellyfin_episodes
         state_class: measurement
         value_template: "{{ value_json.EpisodeCount }}"
+
+template:
+  - sensor:
+      - name: Arr queue total
+        unique_id: arr_queue_total
+        unit_of_measurement: items
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.unpackerr_lidarr_queue') | is_number
+             and states('sensor.unpackerr_radarr_queue') | is_number
+             and states('sensor.unpackerr_sonarr_queue') | is_number }}
+        state: >-
+          {{ ['sensor.unpackerr_lidarr_queue', 'sensor.unpackerr_radarr_queue', 'sensor.unpackerr_sonarr_queue']
+             | map('states') | map('float', 0) | sum | int }}

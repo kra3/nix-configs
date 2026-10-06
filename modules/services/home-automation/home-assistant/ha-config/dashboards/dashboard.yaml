@@ -241,15 +241,17 @@ views:
         - condition: state
           entity: binary_sensor.dashboard_alert_crisis
           state: "on"
-    - type: tile
+    - type: custom:alarmo-card
       entity: alarm_control_panel.vasudha_secure
       name: Alarm
-      features:
-      - type: alarm-modes
-        modes:
-        - armed_night
-        - armed_away
-        - disarmed
+      use_code_dialog: true
+      states:
+        armed_home:
+          hide: true
+        armed_vacation:
+          hide: true
+        armed_custom_bypass:
+          hide: true
       grid_options:
         columns: full
     - type: tile

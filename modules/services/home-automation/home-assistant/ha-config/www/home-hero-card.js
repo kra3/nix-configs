@@ -125,12 +125,12 @@ const STYLE = `
   .weather { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--primary-text-color); cursor: pointer; }
   .weather ha-icon { --mdc-icon-size: 26px; color: var(--secondary-text-color); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .chip { font: inherit; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; --c: var(--secondary-text-color); color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+  .chip { max-width: 100%; font: inherit; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; --c: var(--secondary-text-color); color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
   .chip ha-icon { --mdc-icon-size: 18px; }
   .chip.good { --c: var(--success-color, #4caf50); }
   .chip.bad { --c: var(--error-color, #f44336); }
   .chip.warn { --c: #ffb300; }
-  .detail { font-weight: 500; opacity: 0.8; }
+  .detail { font-weight: 500; opacity: 0.8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;
 
 class HomeHeroCard extends HTMLElement {

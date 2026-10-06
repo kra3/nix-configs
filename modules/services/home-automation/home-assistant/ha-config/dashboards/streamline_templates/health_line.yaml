@@ -1,0 +1,23 @@
+card:
+  type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: "[[entity]]"
+    above: 0
+  card:
+    type: custom:health-metric-card
+    entity: "[[entity]]"
+    name: "[[name]]"
+    icon: "[[icon]]"
+    color: "[[color]]"
+    decimals: 0
+    show_date: false
+    chart:
+      type: line
+      days: "[[days]]"
+    popup:
+      graphs:
+      - name: "[[popup]]"
+        entities:
+        - "[[entity]]"
+        days: "[[popup_days]]"

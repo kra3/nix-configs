@@ -561,6 +561,12 @@ class HealthMetricCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.entity) throw new Error("health-metric-card: entity is required");
     this._config = Object.assign({ chart: {}, items: [] }, config);
+    if (this._config.decimals === -1) delete this._config.decimals;
+    if (this._config.delta) {
+      this._config.delta = Object.assign({}, this._config.delta);
+      if (this._config.delta.decimals === -1) delete this._config.delta.decimals;
+      if (this._config.delta.unit === "auto") delete this._config.delta.unit;
+    }
     this._data = {};
     this._lastFetch = 0;
     this._html = "";

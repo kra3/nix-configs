@@ -1,3 +1,4 @@
+streamline_templates: !include_dir_named streamline_templates/
 views:
 - title: Home
   path: home
@@ -1009,203 +1010,61 @@ views:
     - type: heading
       heading: Body composition
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.office_room_withings_kra_weight
-      name: Weight
-      icon: mdi:scale-bathroom
-      color: "#9fa8ff"
-      date_entity: input_datetime.withings_arun_last_weigh_in
-      chart:
-        type: line
-        days: 30
-        stat: reading
-      delta:
-        mode: percent
-        good: down
-        points: 2
-      items:
-      - entity: sensor.office_room_withings_kra_muscle_mass
-        per: sensor.office_room_withings_kra_weight
-        name: Muscle
-        also:
-          entity: sensor.office_room_withings_kra_muscle_mass
-        color: "#8fd9c0"
-        stat: reading
-        good: up
-        points: 2
-      - entity: sensor.office_room_withings_kra_fat_ratio
-        name: Fat
-        also:
-          entity: sensor.office_room_withings_kra_fat_mass
-        color: "#c9a7e8"
-        good: down
-        points: 2
-        stat: reading
-      popup:
-        graphs:
-        - name: Weight
-          entities:
-          - sensor.office_room_withings_kra_weight
-          days: 180
-          period: week
-        - name: Body fat
-          entities:
-          - sensor.office_room_withings_kra_fat_ratio
-          days: 180
-          period: week
-        - name: Fat and muscle mass
-          entities:
-          - entity: sensor.office_room_withings_kra_fat_mass
-            name: Fat mass
-          - entity: sensor.office_room_withings_kra_muscle_mass
-            name: Muscle mass
-          days: 180
-          period: week
+    - type: custom:streamline-card
+      template: health_body
+      variables:
+        date_entity: input_datetime.withings_arun_last_weigh_in
+        w: kra
       grid_options:
         columns: 12
     - type: heading
       heading: Sleep and vitals
       heading_style: title
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_sleep_duration
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_sleep_duration
-        name: Sleep
-        icon: mdi:sleep
-        color: "#7aa2f7"
-        format: duration
-        show_date: false
-        secondary:
-          entity: sensor.meghanadha_in_bed
-          prefix: "In bed "
-          format: duration
-        chart:
-          type: bar
-          days: 7
-          stat: max
-        popup:
-          sleep:
-            duration: sensor.meghanadha_sleep_duration
-            awake: sensor.meghanadha_awake
-            deep: sensor.meghanadha_deep_sleep
-            core: sensor.meghanadha_core_sleep
-            rem: sensor.meghanadha_rem_sleep
-            hrv: sensor.meghanadha_heart_rate_variability
-            hr: sensor.meghanadha_resting_heart_rate
-            target: 450
-          graphs:
-          - name: Sleep duration (min)
-            entities:
-            - sensor.meghanadha_sleep_duration
-            days: 30
-            stat: reading
-            format: duration
-          - name: Sleep stages (min)
-            entities:
-            - entity: sensor.meghanadha_deep_sleep
-              name: Deep sleep
-            - entity: sensor.meghanadha_core_sleep
-              name: Core sleep
-            - entity: sensor.meghanadha_rem_sleep
-              name: REM sleep
-            days: 30
-            type: bar
-            stacked: true
-            format: duration
-            stat: reading
+    - type: custom:streamline-card
+      template: health_sleep
+      variables:
+        p: meghanadha
       grid_options:
         columns: 12
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_heart_rate_variability
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_heart_rate_variability
-        name: Heart rate variability
-        icon: mdi:pulse
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Heart rate variability (ms)
-            entities:
-            - sensor.meghanadha_heart_rate_variability
-            days: 30
+        days: 30
+        entity: sensor.meghanadha_heart_rate_variability
+        good: up
+        icon: mdi:pulse
+        name: Heart rate variability
+        popup: "Heart rate variability (ms)"
+        popup_days: 30
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_vo2_max
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_vo2_max
-        name: VO2 max
-        icon: mdi:run-fast
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#5ec4c4"
+        days: 90
         decimals: 1
-        show_date: false
-        chart:
-          type: line
-          days: 90
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 1
-          unit: ""
-        popup:
-          graphs:
-          - name: VO2 max
-            entities:
-            - sensor.meghanadha_vo2_max
-            days: 180
-            period: week
+        delta_unit: ""
+        entity: sensor.meghanadha_vo2_max
+        good: up
+        icon: mdi:run-fast
+        name: VO2 max
+        popup: "VO2 max"
+        popup_days: 180
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_blood_oxygen
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_blood_oxygen
-        name: Blood oxygen
-        icon: mdi:water-percent
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#6bb8ff"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Blood oxygen (%)
-            entities:
-            - sensor.meghanadha_blood_oxygen
-            days: 90
+        days: 30
+        entity: sensor.meghanadha_blood_oxygen
+        good: up
+        icon: mdi:water-percent
+        name: Blood oxygen
+        popup: "Blood oxygen (%)"
+        popup_days: 90
       grid_options:
         columns: 6
   - type: grid
@@ -1213,220 +1072,106 @@ views:
     - type: heading
       heading: Past 7 days
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.meghanadha_health_steps
-      name: Steps
-      icon: mdi:shoe-print
-      color: "#f2c14e"
-      goal: 10000
-      decimals: 0
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Today vs average
-          type: today
-          entities:
-          - sensor.meghanadha_health_steps
-          days: 14
-        - name: Steps per day
-          entities:
-          - sensor.meghanadha_health_steps
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.meghanadha_health_steps
+        goal: 10000
+        icon: mdi:shoe-print
+        name: Steps
+        per_day: "Steps per day"
       grid_options:
         columns: 12
-    - type: custom:health-metric-card
-      entity: sensor.meghanadha_walking_running_distance
-      name: Distance
-      icon: mdi:map-marker-distance
-      color: "#f2c14e"
-      format: distance
-      scale: 1000
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Today vs average
-          type: today
-          entities:
-          - sensor.meghanadha_walking_running_distance
-          days: 14
-        - name: Distance per day (km)
-          entities:
-          - sensor.meghanadha_walking_running_distance
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        entity: sensor.meghanadha_walking_running_distance
+        format: distance
+        icon: mdi:map-marker-distance
+        name: Distance
+        per_day: "Distance per day (km)"
+        scale: 1000
       grid_options:
         columns: 6
-    - type: custom:health-metric-card
-      entity: sensor.meghanadha_floors_ascended
-      name: Floors climbed
-      icon: mdi:stairs-up
-      color: "#f2c14e"
-      decimals: 0
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Floors climbed per day
-          entities:
-          - sensor.meghanadha_floors_ascended
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.meghanadha_floors_ascended
+        icon: mdi:stairs-up
+        name: Floors climbed
+        per_day: "Floors climbed per day"
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_active_energy
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_active_energy
-        name: Active energy
-        icon: mdi:fire
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
         color: "#ff9f43"
         decimals: 0
-        show_date: false
-        chart:
-          type: bar
-          days: 7
-          stat: max
-        popup:
-          graphs:
-          - name: Today vs average
-            type: today
-            entities:
-            - sensor.meghanadha_active_energy
-            days: 14
-          - name: Active energy per day (kcal)
-            entities:
-            - sensor.meghanadha_active_energy
-            days: 30
-            stat: max
-            type: bar
+        entity: sensor.meghanadha_active_energy
+        icon: mdi:fire
+        name: Active energy
+        per_day: "Active energy per day (kcal)"
       grid_options:
         columns: 12
     - type: heading
       heading: Heart
       heading_style: title
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
         entity: sensor.meghanadha_resting_heart_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_resting_heart_rate
-        name: Resting heart rate
+        good: down
         icon: mdi:heart-pulse
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: down
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Resting heart rate (bpm)
-            entities:
-            - sensor.meghanadha_resting_heart_rate
-            days: 90
+        name: Resting heart rate
+        popup: "Resting heart rate (bpm)"
+        popup_days: 90
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#f48fb1"
+        days: 14
         entity: sensor.meghanadha_heart_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_heart_rate
-        name: Heart rate
         icon: mdi:heart
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 14
-        popup:
-          graphs:
-          - name: Heart rate (bpm)
-            entities:
-            - sensor.meghanadha_heart_rate
-            days: 30
+        name: Heart rate
+        popup: "Heart rate (bpm)"
+        popup_days: 30
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
         entity: sensor.meghanadha_walking_heart_rate_average
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_walking_heart_rate_average
-        name: Walking heart rate
+        good: down
         icon: mdi:walk
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: down
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Walking heart rate (bpm)
-            entities:
-            - sensor.meghanadha_walking_heart_rate_average
-            days: 90
+        name: Walking heart rate
+        popup: "Walking heart rate (bpm)"
+        popup_days: 90
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.meghanadha_respiratory_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.meghanadha_respiratory_rate
-        name: Respiratory rate
-        icon: mdi:lungs
+    - type: custom:streamline-card
+      template: health_line
+      variables:
         color: "#6bb8ff"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        popup:
-          graphs:
-          - name: Respiratory rate (breaths/min)
-            entities:
-            - sensor.meghanadha_respiratory_rate
-            days: 90
+        days: 30
+        entity: sensor.meghanadha_respiratory_rate
+        icon: mdi:lungs
+        name: Respiratory rate
+        popup: "Respiratory rate (breaths/min)"
+        popup_days: 90
       grid_options:
         columns: 6
 - type: sections
@@ -1442,203 +1187,61 @@ views:
     - type: heading
       heading: Body composition
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.office_room_withings_anj_weight
-      name: Weight
-      icon: mdi:scale-bathroom
-      color: "#9fa8ff"
-      date_entity: input_datetime.withings_anjali_last_weigh_in
-      chart:
-        type: line
-        days: 30
-        stat: reading
-      delta:
-        mode: percent
-        good: down
-        points: 2
-      items:
-      - entity: sensor.office_room_withings_anj_muscle_mass
-        per: sensor.office_room_withings_anj_weight
-        name: Muscle
-        also:
-          entity: sensor.office_room_withings_anj_muscle_mass
-        color: "#8fd9c0"
-        stat: reading
-        good: up
-        points: 2
-      - entity: sensor.office_room_withings_anj_fat_ratio
-        name: Fat
-        also:
-          entity: sensor.office_room_withings_anj_fat_mass
-        color: "#c9a7e8"
-        good: down
-        points: 2
-        stat: reading
-      popup:
-        graphs:
-        - name: Weight
-          entities:
-          - sensor.office_room_withings_anj_weight
-          days: 180
-          period: week
-        - name: Body fat
-          entities:
-          - sensor.office_room_withings_anj_fat_ratio
-          days: 180
-          period: week
-        - name: Fat and muscle mass
-          entities:
-          - entity: sensor.office_room_withings_anj_fat_mass
-            name: Fat mass
-          - entity: sensor.office_room_withings_anj_muscle_mass
-            name: Muscle mass
-          days: 180
-          period: week
+    - type: custom:streamline-card
+      template: health_body
+      variables:
+        date_entity: input_datetime.withings_anjali_last_weigh_in
+        w: anj
       grid_options:
         columns: 12
     - type: heading
       heading: Sleep and vitals
       heading_style: title
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_sleep_duration
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_sleep_duration
-        name: Sleep
-        icon: mdi:sleep
-        color: "#7aa2f7"
-        format: duration
-        show_date: false
-        secondary:
-          entity: sensor.anjalis_iphone_in_bed
-          prefix: "In bed "
-          format: duration
-        chart:
-          type: bar
-          days: 7
-          stat: max
-        popup:
-          sleep:
-            duration: sensor.anjalis_iphone_sleep_duration
-            awake: sensor.anjalis_iphone_awake
-            deep: sensor.anjalis_iphone_deep_sleep
-            core: sensor.anjalis_iphone_core_sleep
-            rem: sensor.anjalis_iphone_rem_sleep
-            hrv: sensor.anjalis_iphone_heart_rate_variability
-            hr: sensor.anjalis_iphone_resting_heart_rate
-            target: 450
-          graphs:
-          - name: Sleep duration (min)
-            entities:
-            - sensor.anjalis_iphone_sleep_duration
-            days: 30
-            stat: reading
-            format: duration
-          - name: Sleep stages (min)
-            entities:
-            - entity: sensor.anjalis_iphone_deep_sleep
-              name: Deep sleep
-            - entity: sensor.anjalis_iphone_core_sleep
-              name: Core sleep
-            - entity: sensor.anjalis_iphone_rem_sleep
-              name: REM sleep
-            days: 30
-            type: bar
-            stacked: true
-            format: duration
-            stat: reading
+    - type: custom:streamline-card
+      template: health_sleep
+      variables:
+        p: anjalis_iphone
       grid_options:
         columns: 12
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_heart_rate_variability
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_heart_rate_variability
-        name: Heart rate variability
-        icon: mdi:pulse
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Heart rate variability (ms)
-            entities:
-            - sensor.anjalis_iphone_heart_rate_variability
-            days: 30
+        days: 30
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        good: up
+        icon: mdi:pulse
+        name: Heart rate variability
+        popup: "Heart rate variability (ms)"
+        popup_days: 30
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_vo2_max
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_vo2_max
-        name: VO2 max
-        icon: mdi:run-fast
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#5ec4c4"
+        days: 90
         decimals: 1
-        show_date: false
-        chart:
-          type: line
-          days: 90
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 1
-          unit: ""
-        popup:
-          graphs:
-          - name: VO2 max
-            entities:
-            - sensor.anjalis_iphone_vo2_max
-            days: 180
-            period: week
+        delta_unit: ""
+        entity: sensor.anjalis_iphone_vo2_max
+        good: up
+        icon: mdi:run-fast
+        name: VO2 max
+        popup: "VO2 max"
+        popup_days: 180
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_blood_oxygen
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_blood_oxygen
-        name: Blood oxygen
-        icon: mdi:water-percent
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
         color: "#6bb8ff"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: up
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Blood oxygen (%)
-            entities:
-            - sensor.anjalis_iphone_blood_oxygen
-            days: 90
+        days: 30
+        entity: sensor.anjalis_iphone_blood_oxygen
+        good: up
+        icon: mdi:water-percent
+        name: Blood oxygen
+        popup: "Blood oxygen (%)"
+        popup_days: 90
       grid_options:
         columns: 6
   - type: grid
@@ -1646,219 +1249,105 @@ views:
     - type: heading
       heading: Past 7 days
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.anjalis_iphone_steps
-      name: Steps
-      icon: mdi:shoe-print
-      color: "#f2c14e"
-      goal: 10000
-      decimals: 0
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Today vs average
-          type: today
-          entities:
-          - sensor.anjalis_iphone_steps
-          days: 14
-        - name: Steps per day
-          entities:
-          - sensor.anjalis_iphone_steps
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.anjalis_iphone_steps
+        goal: 10000
+        icon: mdi:shoe-print
+        name: Steps
+        per_day: "Steps per day"
       grid_options:
         columns: 12
-    - type: custom:health-metric-card
-      entity: sensor.anjalis_iphone_distance
-      name: Distance
-      icon: mdi:map-marker-distance
-      color: "#f2c14e"
-      format: distance
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Today vs average
-          type: today
-          entities:
-          - sensor.anjalis_iphone_distance
-          days: 14
-        - name: Distance per day (m)
-          entities:
-          - sensor.anjalis_iphone_distance
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        entity: sensor.anjalis_iphone_distance
+        format: distance
+        icon: mdi:map-marker-distance
+        name: Distance
+        per_day: "Distance per day (m)"
       grid_options:
         columns: 6
-    - type: custom:health-metric-card
-      entity: sensor.anjalis_iphone_floors_ascended
-      name: Floors climbed
-      icon: mdi:stairs-up
-      color: "#f2c14e"
-      decimals: 0
-      show_date: false
-      chart:
-        type: bar
-        days: 7
-        stat: max
-      popup:
-        graphs:
-        - name: Floors climbed per day
-          entities:
-          - sensor.anjalis_iphone_floors_ascended
-          days: 30
-          stat: max
-          type: bar
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.anjalis_iphone_floors_ascended
+        icon: mdi:stairs-up
+        name: Floors climbed
+        per_day: "Floors climbed per day"
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_active_energy
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_active_energy
-        name: Active energy
-        icon: mdi:fire
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
         color: "#ff9f43"
         decimals: 0
-        show_date: false
-        chart:
-          type: bar
-          days: 7
-          stat: max
-        popup:
-          graphs:
-          - name: Today vs average
-            type: today
-            entities:
-            - sensor.anjalis_iphone_active_energy
-            days: 14
-          - name: Active energy per day (kcal)
-            entities:
-            - sensor.anjalis_iphone_active_energy
-            days: 30
-            stat: max
-            type: bar
+        entity: sensor.anjalis_iphone_active_energy
+        icon: mdi:fire
+        name: Active energy
+        per_day: "Active energy per day (kcal)"
       grid_options:
         columns: 12
     - type: heading
       heading: Heart
       heading_style: title
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
         entity: sensor.anjalis_iphone_resting_heart_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_resting_heart_rate
-        name: Resting heart rate
+        good: down
         icon: mdi:heart-pulse
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: down
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Resting heart rate (bpm)
-            entities:
-            - sensor.anjalis_iphone_resting_heart_rate
-            days: 90
+        name: Resting heart rate
+        popup: "Resting heart rate (bpm)"
+        popup_days: 90
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#f48fb1"
+        days: 14
         entity: sensor.anjalis_iphone_heart_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_heart_rate
-        name: Heart rate
         icon: mdi:heart
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 14
-        popup:
-          graphs:
-          - name: Heart rate (bpm)
-            entities:
-            - sensor.anjalis_iphone_heart_rate
-            days: 30
+        name: Heart rate
+        popup: "Heart rate (bpm)"
+        popup_days: 30
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
         entity: sensor.anjalis_iphone_walking_heart_rate_average
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_walking_heart_rate_average
-        name: Walking heart rate
+        good: down
         icon: mdi:walk
-        color: "#f48fb1"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        delta:
-          mode: absolute
-          good: down
-          points: 2
-          decimals: 0
-        popup:
-          graphs:
-          - name: Walking heart rate (bpm)
-            entities:
-            - sensor.anjalis_iphone_walking_heart_rate_average
-            days: 90
+        name: Walking heart rate
+        popup: "Walking heart rate (bpm)"
+        popup_days: 90
       grid_options:
         columns: 6
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.anjalis_iphone_respiratory_rate
-        above: 0
-      card:
-        type: custom:health-metric-card
-        entity: sensor.anjalis_iphone_respiratory_rate
-        name: Respiratory rate
-        icon: mdi:lungs
+    - type: custom:streamline-card
+      template: health_line
+      variables:
         color: "#6bb8ff"
-        decimals: 0
-        show_date: false
-        chart:
-          type: line
-          days: 30
-        popup:
-          graphs:
-          - name: Respiratory rate (breaths/min)
-            entities:
-            - sensor.anjalis_iphone_respiratory_rate
-            days: 90
+        days: 30
+        entity: sensor.anjalis_iphone_respiratory_rate
+        icon: mdi:lungs
+        name: Respiratory rate
+        popup: "Respiratory rate (breaths/min)"
+        popup_days: 90
       grid_options:
         columns: 6
 - title: Lights

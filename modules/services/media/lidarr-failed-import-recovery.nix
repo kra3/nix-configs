@@ -63,7 +63,10 @@
                 return
             data = urllib.parse.urlencode({"chat_id": cred("telegram-chat-id"), "text": text}).encode()
             url = "https://api.telegram.org/bot" + cred("telegram-bot-token") + "/sendMessage"
-            urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15)
+            try:
+                urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15)
+            except Exception as e:
+                print("telegram notify failed:", type(e).__name__)
 
 
         def load_tried():
@@ -174,10 +177,10 @@
                 reason = "beets could not match confidently | " + why
             print("LEFT", title, "|", reason)
             if not DRY_RUN:
-                if last is None:
-                    notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
                 tried[str(qid)] = time.time()
                 save_tried(tried)
+                if last is None:
+                    notify("Lidarr import failed, not auto-resolved: " + title + " (" + reason + ")")
       '';
     in
     {

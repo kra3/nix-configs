@@ -5,19 +5,8 @@ views:
   sections:
   - type: grid
     cards:
-    - type: custom:mushroom-template-card
-      primary: >-
-        {%- if is_state('sensor.dashboard_presence_state', 'away') -%}
-          Away
-        {%- elif is_state('sensor.dashboard_presence_state', 'home_both') -%}
-          Everyone's home
-        {%- else -%}
-          Home
-        {%- endif -%}
-      secondary: >-
-        {{ states('sensor.dashboard_time_period') | title }}{% if states('sensor.dashboard_eta') not in ['none', 'unknown', 'unavailable'] %} · {{ states('sensor.dashboard_eta') }}{% endif %}
-      icon: >-
-        {% if is_state('sensor.dashboard_presence_state', 'away') %}mdi:home-export-outline{% else %}mdi:home-heart{% endif %}
+    - type: custom:streamline-card
+      template: home_hero
       grid_options:
         columns: full
       visibility:
@@ -25,11 +14,10 @@ views:
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
         - 6edcc5a09c3144d684077ee362e7394a
-    - type: custom:mushroom-template-card
-      primary: "Vasudha"
-      secondary: >-
-        {{ states('sensor.dashboard_presence_state') | replace('_', ' ') | title }} · {{ states('sensor.dashboard_time_period') | title }}
-      icon: mdi:home
+    - type: custom:streamline-card
+      template: home_hero
+      variables:
+        name: Vasudha
       grid_options:
         columns: full
       visibility:
@@ -213,35 +201,6 @@ views:
     - type: heading
       heading: Right Now
       heading_style: title
-      badges:
-      - type: entity
-        entity: binary_sensor.dashboard_alert_security
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_device_health
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_device_health
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_override_active
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_override_active
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_crisis
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_crisis
-          state: "on"
     - type: custom:alarmo-card
       entity: alarm_control_panel.vasudha_secure
       name: Alarm
@@ -263,197 +222,34 @@ views:
       entity: input_boolean.automations_paused
       name: Manual mode
       icon: mdi:pause-circle
-    - type: vertical-stack
-      cards:
-      - type: heading
-        heading: Needs attention
-        heading_style: subtitle
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Open door/window
-          secondary: >-
-            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown' }}
-          icon: mdi:door-open
-          icon_color: red
-          tap_action:
-            action: more-info
-            entity: binary_sensor.house_exits_open_status
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-        - condition: state
-          entity: alarm_control_panel.vasudha_secure
-          state: disarmed
-        - condition: state
-          entity: schedule.sleep
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Force arm for the night
-          icon: mdi:shield-lock
-          icon_color: amber
-          tap_action:
-            action: call-service
-            service: script.alarm_force_arm_night
-            confirmation:
-              text: Force-arm for the night, bypassing any open sensors?
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-        - condition: state
-          entity: alarm_control_panel.vasudha_secure
-          state: disarmed
-        - condition: numeric_state
-          entity: zone.home
-          below: 1
-        card:
-          type: custom:mushroom-template-card
-          primary: Force arm away
-          icon: mdi:shield-lock
-          icon_color: amber
-          tap_action:
-            action: call-service
-            service: script.alarm_force_arm_away
-            confirmation:
-              text: Force-arm away, bypassing any open sensors?
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.house_exits_open_status
-          state: "on"
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "off"
-        card:
-          type: custom:mushroom-template-card
-          primary: Open (FYI, not armed)
-          secondary: >-
-            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown' }}
-          icon: mdi:door-open
-          icon_color: blue
-          tap_action:
-            action: more-info
-            entity: binary_sensor.house_exits_open_status
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_device_health
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Device unavailable
-          secondary: >-
-            {{ state_attr('binary_sensor.dashboard_alert_device_health', 'unavailable_names') or 'Unknown' }}
-          icon: mdi:alert-circle
-          icon_color: orange
-          tap_action:
-            action: more-info
-            entity: binary_sensor.dashboard_alert_device_health
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_crisis
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Crisis information
-          secondary: >-
-            {{ state_attr('binary_sensor.dashboard_alert_crisis', 'headlines') or 'Unknown' }}
-          icon: mdi:alert
-          icon_color: red
-          tap_action:
-            action: more-info
-            entity: binary_sensor.dashboard_alert_crisis
-      - type: markdown
-        content: "Nothing needs attention right now."
-        visibility:
-        - condition: and
-          conditions:
-          - condition: state
-            entity: binary_sensor.dashboard_alert_security
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_device_health
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_override_active
-            state: "off"
-          - condition: state
-            entity: binary_sensor.house_exits_open_status
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_crisis
-            state: "off"
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Temperature
-        show_states: true
-        colorize_states: false
-      graph_span: 24h
-      apex_config:
-        chart:
-          height: 120
-      series:
-      - entity: sensor.average_temperature
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_temperature
         name: Temperature
-        show:
-          name_in_header: false
-        type: line
-        group_by:
-          func: avg
-          duration: 1h
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
       grid_options:
         columns: 4
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Humidity
-        show_states: true
-        colorize_states: false
-      graph_span: 24h
-      apex_config:
-        chart:
-          height: 120
-      series:
-      - entity: sensor.average_humidity
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_humidity
         name: Humidity
-        show:
-          name_in_header: false
-        type: line
-        group_by:
-          func: avg
-          duration: 1h
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
       grid_options:
         columns: 4
-    - type: custom:apexcharts-card
-      header:
-        show: true
-        title: Illuminance
-        show_states: true
-        colorize_states: false
-      graph_span: 24h
-      apex_config:
-        chart:
-          height: 120
-      series:
-      - entity: sensor.average_illuminance
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_illuminance
         name: Illuminance
-        show:
-          name_in_header: false
-        type: line
-        group_by:
-          func: avg
-          duration: 1h
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
       grid_options:
         columns: 4
   - type: grid

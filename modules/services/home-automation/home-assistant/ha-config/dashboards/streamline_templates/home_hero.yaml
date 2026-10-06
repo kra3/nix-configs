@@ -1,0 +1,91 @@
+default:
+- name: ""
+card:
+  type: custom:home-hero-card
+  name: "[[name]]"
+  presence: sensor.dashboard_presence_state
+  period: sensor.dashboard_time_period
+  eta: sensor.dashboard_eta
+  weather: weather.forecast_vasudha
+  alarm: alarm_control_panel.vasudha_secure
+  pills:
+  - label: Open door/window
+    icon: mdi:door-open
+    color: red
+    when:
+    - entity: binary_sensor.dashboard_alert_security
+      state: "on"
+    detail:
+      entity: binary_sensor.house_exits_open_status
+      attr: open_names
+    tap:
+      more_info: binary_sensor.house_exits_open_status
+  - label: Force arm for the night
+    icon: mdi:shield-lock
+    color: amber
+    when:
+    - entity: binary_sensor.dashboard_alert_security
+      state: "on"
+    - entity: alarm_control_panel.vasudha_secure
+      state: disarmed
+    - entity: schedule.sleep
+      state: "on"
+    tap:
+      service: script.alarm_force_arm_night
+      confirm: Force-arm for the night, bypassing any open sensors?
+  - label: Force arm away
+    icon: mdi:shield-lock
+    color: amber
+    when:
+    - entity: binary_sensor.dashboard_alert_security
+      state: "on"
+    - entity: alarm_control_panel.vasudha_secure
+      state: disarmed
+    - entity: zone.home
+      below: 1
+    tap:
+      service: script.alarm_force_arm_away
+      confirm: Force-arm away, bypassing any open sensors?
+  - label: Open (not armed)
+    icon: mdi:door-open
+    color: blue
+    when:
+    - entity: binary_sensor.house_exits_open_status
+      state: "on"
+    - entity: binary_sensor.dashboard_alert_security
+      state: "off"
+    detail:
+      entity: binary_sensor.house_exits_open_status
+      attr: open_names
+    tap:
+      more_info: binary_sensor.house_exits_open_status
+  - label: Device unavailable
+    icon: mdi:alert-circle
+    color: orange
+    when:
+    - entity: binary_sensor.dashboard_alert_device_health
+      state: "on"
+    detail:
+      entity: binary_sensor.dashboard_alert_device_health
+      attr: unavailable_names
+    tap:
+      more_info: binary_sensor.dashboard_alert_device_health
+  - label: Crisis information
+    icon: mdi:alert
+    color: red
+    when:
+    - entity: binary_sensor.dashboard_alert_crisis
+      state: "on"
+    detail:
+      entity: binary_sensor.dashboard_alert_crisis
+      attr: headlines
+    tap:
+      more_info: binary_sensor.dashboard_alert_crisis
+  - label: Override active
+    icon: mdi:hand-back-right
+    color: blue
+    when:
+    - entity: binary_sensor.dashboard_alert_override_active
+      state: "on"
+    tap:
+      more_info: binary_sensor.dashboard_alert_override_active

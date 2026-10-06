@@ -10,6 +10,8 @@ resources:
     type: module
   - url: /local/health-metric-card.js?v=12
     type: module
+  - url: /local/home-hero-card.js?v=1
+    type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module
   - url: /hacsfiles/apexcharts-card/apexcharts-card.js

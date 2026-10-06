@@ -367,7 +367,9 @@ function computeDelta(series, mode, points) {
 function rangeText(series, decimals, unit, lang) {
   if (!series.length) return "";
   const vals = series.map((p) => p.v);
-  return fmt(Math.min(...vals), decimals, lang) + "\u2013" + fmt(Math.max(...vals), decimals, lang) + unit;
+  const lo = fmt(Math.min(...vals), decimals, lang);
+  const hi = fmt(Math.max(...vals), decimals, lang);
+  return lo === hi ? "" : lo + "\u2013" + hi + unit;
 }
 
 function deltaTone(delta, good) {
@@ -737,7 +739,8 @@ class HealthMetricCard extends HTMLElement {
     } else if (c.delta && c.delta.mode === "range" && main.length) {
       const dec = c.delta.decimals !== undefined ? c.delta.decimals : 1;
       const unit = c.delta.unit !== undefined ? c.delta.unit : " " + (hero.unit || "");
-      under = `<span class="chip neutral">${rangeText(this._span("", main, raw * scale), dec, unit, lang)}</span>`;
+      const rt = rangeText(this._span("", main, raw * scale), dec, unit, lang);
+      if (rt) under = `<span class="chip neutral">${rt}</span>`;
     } else if (c.delta && main.length) {
       const d = computeDelta(main, c.delta.mode || "absolute", c.delta.points);
       if (d) {

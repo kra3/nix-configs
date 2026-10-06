@@ -46,39 +46,61 @@
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival
-  alias: "Security: auto-disarm on triggered if a resident just arrived"
+  alias: "Security: auto-disarm if a resident just arrived or used the keypad"
   description: >-
-    Auto-disarms a triggered alarm if a resident's device arrived home
-    in the last 5min, or the front door was unlocked via keypad.
+    Disarms on entry (pending, retried at triggered) if a resident's
+    device arrived home in the last 5min, or the front door was
+    unlocked via keypad. Waits up to 15s for the lock's operator
+    report, which lags the door opening. Notifies only if it disarmed.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
-    to: triggered
+    to:
+    - pending
+    - triggered
     trigger: state
-  conditions:
-  - condition: or
-    conditions:
-    - condition: template
-      value_template: >-
-        {%- set window = 300 -%}
-        {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
-                          + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
-        {%- set ns = namespace(recent_arrival=false) -%}
-        {%- for t in trackers -%}
-          {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
-            {%- set ns.recent_arrival = true -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {{ ns.recent_arrival }}
-    - condition: template
-      value_template: >-
-        {{ state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
-           and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < 300 }}
   actions:
-  - action: alarm_control_panel.alarm_disarm
-    target:
+  - wait_template: &resident_or_keypad >-
+      {%- set window = 300 -%}
+      {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
+                        + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
+      {%- set ns = namespace(ok=false) -%}
+      {%- for t in trackers -%}
+        {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
+          {%- set ns.ok = true -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.ok or (state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
+         and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < window) }}
+    timeout: "00:00:15"
+    continue_on_timeout: true
+  - if:
+    - condition: state
       entity_id: alarm_control_panel.vasudha_secure
-  - action: script.notify_all_phones
-    data:
-      title: "Alarm auto-disarmed"
-      message: "Front door opened right after a resident arrived home - disarmed automatically."
+      state:
+      - pending
+      - triggered
+    - condition: template
+      value_template: *resident_or_keypad
+    then:
+    - action: alarm_control_panel.alarm_disarm
+      target:
+        entity_id: alarm_control_panel.vasudha_secure
+      data:
+        code: !secret alarm_code
+    - delay: "00:00:02"
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: alarm_control_panel.vasudha_secure
+          state: disarmed
+        sequence:
+        - action: script.notify_all_phones
+          data:
+            title: "Alarm auto-disarmed"
+            message: "Front door opened right after a resident arrived home - disarmed automatically."
+      default:
+      - action: script.notify_all_phones
+        data:
+          title: "Alarm auto-disarm failed"
+          message: "Alarm is still {{ states('alarm_control_panel.vasudha_secure') }} after a resident entry."
   mode: single

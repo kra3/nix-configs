@@ -1,0 +1,11 @@
+default:
+- light: ""
+card:
+  type: custom:room-tile-card
+  name: "[[name]]"
+  icon: "[[icon]]"
+  presence: binary_sensor.[[room]]_occupancy_presence
+  temperature: sensor.[[room]]_occupancy_temperature
+  humidity: sensor.[[room]]_occupancy_humidity
+  illuminance: sensor.[[room]]_occupancy_illuminance
+  light: "[[light]]"

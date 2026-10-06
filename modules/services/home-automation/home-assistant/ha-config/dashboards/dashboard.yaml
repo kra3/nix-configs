@@ -147,12 +147,13 @@ views:
         - condition: state
           entity: light.hall
           state: "on"
-    - type: tile
-      entity: light.bedroom_wardrobe_lights
-      name: Bedroom
-      area: bedroom
-      features:
-      - type: light-brightness
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        room: bedroom
+        name: Bedroom
+        icon: mdi:bed
+        light: light.bedroom_wardrobe_lights
       visibility:
       - condition: or
         conditions:
@@ -177,18 +178,22 @@ views:
         - condition: user
           users:
           - a1d4401b8b714ebb83f07c5316ab399c
-    - type: tile
-      entity: sensor.bathroom_occupancy_temperature
-      name: Bathroom
-      area: bathroom
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        room: bathroom
+        name: Bathroom
+        icon: mdi:shower
       visibility:
       - condition: state
         entity: binary_sensor.bathroom_occupancy_presence
         state: "on"
-    - type: tile
-      entity: sensor.laundry_occupancy_temperature
-      name: Laundry
-      area: laundry
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        room: laundry
+        name: Laundry
+        icon: mdi:washing-machine
       visibility:
       - condition: state
         entity: binary_sensor.laundry_occupancy_presence
@@ -213,10 +218,16 @@ views:
       - condition: state
         entity: switch.front_entrance_double_switch_right
         state: "on"
-    - type: tile
-      entity: sensor.toilet_occupancy_temperature
-      name: Toilet
-      area: toilet
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        room: toilet
+        name: Toilet
+        icon: mdi:toilet
+      visibility:
+      - condition: state
+        entity: binary_sensor.toilet_occupancy_presence
+        state: "on"
   - type: grid
     cards:
     - show_current: true

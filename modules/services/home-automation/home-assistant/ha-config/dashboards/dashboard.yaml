@@ -1034,6 +1034,44 @@ views:
       heading: Library
       heading_style: title
     - type: custom:health-metric-card
+      entity: sensor.jellyfin_movies
+      name: Jellyfin
+      icon: mdi:filmstrip-box-multiple
+      color: "#9d8cff"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 30
+      items:
+      - entity: sensor.jellyfin_series
+        name: Series
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.jellyfin_episodes
+        name: Episodes
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Movies
+          entities:
+          - sensor.jellyfin_movies
+          days: 30
+        - name: Series and episodes
+          entities:
+          - entity: sensor.jellyfin_series
+            name: Series
+          - entity: sensor.jellyfin_episodes
+            name: Episodes
+          days: 30
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
       entity: sensor.navidrome_tracks
       name: Music library
       icon: mdi:music-box-multiple-outline

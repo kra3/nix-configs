@@ -109,6 +109,9 @@
           homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
           mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
+          jellyfin_auth_header: 'MediaBrowser Token="${
+            config.sops.placeholder."media.jellyfin.apikeys.seerr"
+          }"'
         '';
       };
 

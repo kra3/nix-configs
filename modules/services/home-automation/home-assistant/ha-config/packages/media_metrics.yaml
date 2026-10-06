@@ -93,3 +93,20 @@ rest:
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_completed_succeeded') | list %}
           {{ r[0].value[1] | int if r else none }}
+  - resource: https://jellyfin.karunagath.in/Items/Counts
+    scan_interval: 1800
+    headers:
+      Authorization: !secret jellyfin_auth_header
+    sensor:
+      - name: Jellyfin movies
+        unique_id: jellyfin_movies
+        state_class: measurement
+        value_template: "{{ value_json.MovieCount }}"
+      - name: Jellyfin series
+        unique_id: jellyfin_series
+        state_class: measurement
+        value_template: "{{ value_json.SeriesCount }}"
+      - name: Jellyfin episodes
+        unique_id: jellyfin_episodes
+        state_class: measurement
+        value_template: "{{ value_json.EpisodeCount }}"

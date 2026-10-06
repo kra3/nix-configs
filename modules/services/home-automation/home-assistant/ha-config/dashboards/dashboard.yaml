@@ -1088,11 +1088,21 @@ views:
           days: 7
           stat: max
         popup:
+          sleep:
+            duration: sensor.meghanadha_sleep_duration
+            awake: sensor.meghanadha_awake
+            deep: sensor.meghanadha_deep_sleep
+            core: sensor.meghanadha_core_sleep
+            rem: sensor.meghanadha_rem_sleep
+            hrv: sensor.meghanadha_heart_rate_variability
+            hr: sensor.meghanadha_resting_heart_rate
+            target: 450
           graphs:
           - name: Sleep duration (min)
             entities:
             - sensor.meghanadha_sleep_duration
             days: 30
+            format: duration
           - name: Sleep stages (min)
             entities:
             - entity: sensor.meghanadha_deep_sleep
@@ -1104,6 +1114,7 @@ views:
             days: 30
             type: bar
             stacked: true
+            format: duration
       grid_options:
         columns: 12
     - type: conditional
@@ -1214,6 +1225,11 @@ views:
         stat: max
       popup:
         graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.meghanadha_health_steps
+          days: 14
         - name: Steps per day
           entities:
           - sensor.meghanadha_health_steps
@@ -1236,6 +1252,11 @@ views:
         stat: max
       popup:
         graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.meghanadha_walking_running_distance
+          days: 14
         - name: Distance per day (km)
           entities:
           - sensor.meghanadha_walking_running_distance
@@ -1284,6 +1305,11 @@ views:
           stat: max
         popup:
           graphs:
+          - name: Today vs average
+            type: today
+            entities:
+            - sensor.meghanadha_active_energy
+            days: 14
           - name: Active energy per day (kcal)
             entities:
             - sensor.meghanadha_active_energy
@@ -1493,11 +1519,21 @@ views:
           days: 7
           stat: max
         popup:
+          sleep:
+            duration: sensor.anjalis_iphone_sleep_duration
+            awake: sensor.anjalis_iphone_awake
+            deep: sensor.anjalis_iphone_deep_sleep
+            core: sensor.anjalis_iphone_core_sleep
+            rem: sensor.anjalis_iphone_rem_sleep
+            hrv: sensor.anjalis_iphone_heart_rate_variability
+            hr: sensor.anjalis_iphone_resting_heart_rate
+            target: 450
           graphs:
           - name: Sleep duration (min)
             entities:
             - sensor.anjalis_iphone_sleep_duration
             days: 30
+            format: duration
           - name: Sleep stages (min)
             entities:
             - entity: sensor.anjalis_iphone_deep_sleep
@@ -1509,6 +1545,7 @@ views:
             days: 30
             type: bar
             stacked: true
+            format: duration
       grid_options:
         columns: 12
     - type: conditional
@@ -1619,6 +1656,11 @@ views:
         stat: max
       popup:
         graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.anjalis_iphone_steps
+          days: 14
         - name: Steps per day
           entities:
           - sensor.anjalis_iphone_steps
@@ -1640,6 +1682,11 @@ views:
         stat: max
       popup:
         graphs:
+        - name: Today vs average
+          type: today
+          entities:
+          - sensor.anjalis_iphone_distance
+          days: 14
         - name: Distance per day (m)
           entities:
           - sensor.anjalis_iphone_distance
@@ -1688,6 +1735,11 @@ views:
           stat: max
         popup:
           graphs:
+          - name: Today vs average
+            type: today
+            entities:
+            - sensor.anjalis_iphone_active_energy
+            days: 14
           - name: Active energy per day (kcal)
             entities:
             - sensor.anjalis_iphone_active_energy

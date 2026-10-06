@@ -30,6 +30,9 @@ function bucketDaily(raw, stat) {
 }
 
 const PALETTE = ["#9fa8ff", "#8fd9c0", "#c9a7e8", "#f2c14e"];
+const RANGES = [[7, "Week"], [30, "Month"], [90, "3M"], [180, "6M"]];
+const TONE_COLOR = { good: "#7ccf7c", mid: "#f2c14e", bad: "#f08a80" };
+let chartSeq = 0;
 
 // Cumulative sensors chart their daily change; everything else the configured stat.
 function popupStat(states, g) {
@@ -38,16 +41,46 @@ function popupStat(states, g) {
   return totals ? "change" : g.stat || "mean";
 }
 
-// list: [{name, color, pts: [{t, v}]}] -> SVG for the popup; bars get one slot per day, stacked sums them.
-function chartSvg(list, type, days, stacked, lang) {
+function shortDur(min) {
+  const h = Math.floor(min / 60);
+  return `${h}h ${String(Math.round(min - h * 60)).padStart(2, "0")}m`;
+}
+
+// Smooth curve through [[x, y]] without overshooting between points.
+function smoothPath(pts) {
+  const f = (n) => n.toFixed(1);
+  if (pts.length < 3) return "M" + pts.map((p) => f(p[0]) + "," + f(p[1])).join("L");
+  let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const lo = Math.min(p1[1], p2[1]);
+    const hi = Math.max(p1[1], p2[1]);
+    const c1 = Math.min(hi, Math.max(lo, p1[1] + (p2[1] - p0[1]) / 6));
+    const c2 = Math.min(hi, Math.max(lo, p2[1] - (p3[1] - p1[1]) / 6));
+    d += `C${f(p1[0] + (p2[0] - p0[0]) / 6)},${f(c1)} ${f(p2[0] - (p3[0] - p1[0]) / 6)},${f(c2)} ${f(p2[0])},${f(p2[1])}`;
+  }
+  return d;
+}
+
+function pill(label, y, W) {
+  const w = Math.max(32, label.length * 6.6 + 12);
+  return `<rect class="pill" x="${(W - w).toFixed(1)}" y="${(y - 9).toFixed(1)}" width="${w.toFixed(1)}" height="18" rx="9"/><text class="pilltxt" x="${(W - w / 2).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle">${label}</text>`;
+}
+
+// list: [{name, color, pts: [{t, v}]}]; bars get one slot per day, stacked sums them.
+// opts: {end (ms, last day), fmt (hover), axisFmt (y pills)}
+function chartSvg(list, type, days, stacked, lang, opts = {}) {
   const W = 640;
   const H = 220;
-  const L = 44;
-  const R = 10;
-  const T = 10;
+  const L = 8;
+  const R = 54;
+  const T = 12;
   const B = 24;
   if (!list.some((s) => s.pts.length)) return "";
-  const end = dayStart(Date.now());
+  const end = opts.end || dayStart(Date.now());
   const sd = new Date(end);
   sd.setDate(sd.getDate() - (days - 1));
   const t0 = sd.getTime();
@@ -59,20 +92,20 @@ function chartSvg(list, type, days, stacked, lang) {
   let lo = bar ? 0 : Math.min(...vals);
   if (hi === lo) hi = lo + 1;
   if (!bar) {
-    const pad = (hi - lo) * 0.1;
+    const pad = (hi - lo) * 0.12;
     hi += pad;
     lo -= pad;
   } else hi *= 1.05;
   const x = (t) => L + ((t - t0) / Math.max(end - t0, 1)) * (W - L - R);
   const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  const dec = autoDecimals(hi);
-  let out = "";
-  for (const f of [0, 0.5, 1]) {
-    const v = lo + (hi - lo) * f;
-    out += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${fmt(v, dec, lang)}</text>`;
-  }
+  const hf = opts.fmt || ((v) => fmt(v, autoDecimals(v), lang));
+  const af = opts.axisFmt || ((v) => fmt(v, autoDecimals(hi), lang));
   const dl = (t) => new Date(t).toLocaleDateString(lang, { month: "short", day: "numeric" });
-  out += `<text x="${L}" y="${H - 6}" text-anchor="start">${dl(t0)}</text><text x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle">${dl((t0 + end) / 2)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${dl(end)}</text>`;
+  const id = "hmc" + ++chartSeq;
+  let out = "";
+  const ticks = [0.15, 0.5, 0.85].map((f) => lo + (hi - lo) * f);
+  for (const v of ticks) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
+  out += `<text x="${L}" y="${H - 6}" text-anchor="start">${dl(t0)}</text><text x="${((L + W - R) / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${dl((t0 + end) / 2)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${dl(end)}</text>`;
   const slot = (W - L - R) / days;
   const acc = new Map();
   list.forEach((s, i) => {
@@ -85,15 +118,190 @@ function chartSvg(list, type, days, stacked, lang) {
         const top = y(base + p.v);
         const h = Math.max(1.5, y(base) - top);
         const bw = Math.max(2, slot * 0.6);
-        out += `<rect x="${(x(k) - bw / 2 + slot / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}"><title>${dl(k)}: ${fmt(p.v, autoDecimals(p.v), lang)}</title></rect>`;
+        out += `<rect x="${(x(k) - bw / 2 + slot / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}"><title>${dl(k)}: ${hf(p.v)}</title></rect>`;
       }
       return;
     }
     const pts = s.pts.map((p) => [x(p.t), y(p.v), p]);
-    if (pts.length > 1) out += `<polyline points="${pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
-    for (const p of pts) out += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${pts.length > 60 ? 1.8 : 3}" fill="${color}"><title>${dl(p[2].t)}: ${fmt(p[2].v, autoDecimals(p[2].v), lang)}</title></circle>`;
+    if (pts.length > 1) {
+      const line = smoothPath(pts);
+      if (list.length === 1) {
+        out += `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity="0.35"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`;
+        out += `<path d="${line}L${pts[pts.length - 1][0].toFixed(1)},${H - B}L${pts[0][0].toFixed(1)},${H - B}Z" fill="url(#${id})"/>`;
+      }
+      out += `<path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+    pts.forEach((p, j) => {
+      const last = j === pts.length - 1;
+      if (pts.length > 40 && !last) return;
+      out += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${last ? 4 : 2.8}" fill="${color}"><title>${dl(p[2].t)}: ${hf(p[2].v)}</title></circle>`;
+    });
   });
+  for (const v of ticks) out += pill(af(v), y(v), W);
   return `<svg class="hmc-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${out}</svg>`;
+}
+
+function statRow(name, value) {
+  return `<div class="hmc-row"><span>${name}</span><b>${value}</b></div>`;
+}
+
+// Average / range (lines) or average / total / best day (bars) for a single series.
+function statsHtml(list, type, fmtv) {
+  if (list.length !== 1 || !list[0].pts.length) return "";
+  const v = list[0].pts.map((p) => p.v);
+  const sum = v.reduce((a, b) => a + b, 0);
+  const avg = sum / v.length;
+  if (type === "bar") return statRow("Average", fmtv(avg)) + statRow("Total", fmtv(sum)) + statRow("Best day", fmtv(Math.max(...v)));
+  return statRow("Average", fmtv(avg)) + statRow("Range (min – max)", `${fmtv(Math.min(...v))} – ${fmtv(Math.max(...v))}`) + statRow("Latest", fmtv(v[v.length - 1]));
+}
+
+// rows: hourly changes [{t, v}] -> cumulative today vs the mean cumulative day before it.
+function todayModel(rows, now) {
+  const today = dayStart(now);
+  const hourNow = new Date(now).getHours();
+  const days = new Map();
+  for (const r of rows) {
+    const d = dayStart(r.t);
+    if (!days.has(d)) days.set(d, new Array(24).fill(0));
+    days.get(d)[new Date(r.t).getHours()] += r.v;
+  }
+  const cum = (a) => {
+    let s = 0;
+    return a.map((v) => (s += v));
+  };
+  const prior = [...days.entries()].filter(([d]) => d < today).map(([, a]) => cum(a));
+  const avg = prior.length ? Array.from({ length: 24 }, (_, h) => prior.reduce((s, c) => s + c[h], 0) / prior.length) : [];
+  const t = days.has(today) ? cum(days.get(today)).slice(0, hourNow + 1) : [];
+  return { today: t, avg, todayNow: t.length ? t[t.length - 1] : null, avgNow: avg.length ? avg[hourNow] : null, hourNow, days: prior.length };
+}
+
+function todaySvg(m, color, now, opts = {}) {
+  const W = 640;
+  const H = 220;
+  const L = 8;
+  const R = 54;
+  const T = 12;
+  const B = 24;
+  if (!m.avg.length && !m.today.length) return "";
+  const hiRaw = Math.max(m.avg.length ? m.avg[23] : 0, ...m.today, 1e-9);
+  const hi = hiRaw * 1.08;
+  const x = (h) => L + (h / 24) * (W - L - R);
+  const y = (v) => T + (1 - v / hi) * (H - T - B);
+  const af = opts.axisFmt || ((v) => String(Math.round(v)));
+  const d = new Date(now);
+  const hf = d.getHours() + d.getMinutes() / 60;
+  const label = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  let out = "";
+  for (const f of [0.25, 0.55, 0.9]) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(hi * f).toFixed(1)}" y2="${y(hi * f).toFixed(1)}"/>`;
+  out += `<text x="${L}" y="${H - 6}" text-anchor="start">00:00</text><text x="${x(hf).toFixed(1)}" y="${H - 6}" text-anchor="middle">${label}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">00:00</text>`;
+  out += `<line class="grid" stroke-dasharray="3 3" x1="${x(hf).toFixed(1)}" x2="${x(hf).toFixed(1)}" y1="${T}" y2="${H - B}"/>`;
+  if (m.avg.length) out += `<path d="${smoothPath([[x(0), y(0)], ...m.avg.map((v, h) => [x(h + 1), y(v)])])}" fill="none" stroke="var(--secondary-text-color)" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>`;
+  if (m.today.length) {
+    const pts = [[x(0), y(0)], ...m.today.map((v, h) => [h === m.today.length - 1 ? x(hf) : x(h + 1), y(v)])];
+    out += `<path d="${smoothPath(pts)}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round"/><circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="4.5" fill="${color}"/>`;
+  }
+  for (const f of [0.25, 0.55, 0.9]) out += pill(af(hi * f), y(hi * f), W);
+  return `<svg class="hmc-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${out}</svg>`;
+}
+
+function ringSvg(score, size) {
+  const r = size / 2 - 5;
+  const c = 2 * Math.PI * r;
+  const f = score === null ? 0 : Math.max(0, Math.min(score, 100)) / 100;
+  const col = score === null ? "none" : TONE_COLOR[scoreTone(score)];
+  const h = size / 2;
+  return (
+    `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="var(--divider-color)" stroke-width="5"/>` +
+    `<circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${h} ${h})"/>` +
+    `<text x="${h}" y="${h}" dy=".35em" text-anchor="middle" class="ringtxt" style="font-size:${(size * 0.34).toFixed(0)}px">${score === null ? "" : score}</text></svg>`
+  );
+}
+
+function scoreTone(s) {
+  return s >= 70 ? "good" : s >= 50 ? "mid" : "bad";
+}
+
+// Weighted mean of the components that have data: duration vs target, deep+REM share, HRV vs own baseline.
+function sleepScore({ dur, deep, rem, hrv, hrvBase, target }) {
+  const parts = [];
+  if (dur > 0) parts.push([0.6, Math.min(dur / target, 1)]);
+  if (dur > 0 && isFinite(deep) && isFinite(rem)) parts.push([0.2, Math.min((deep + rem) / dur / 0.35, 1)]);
+  if (isFinite(hrv) && isFinite(hrvBase) && hrvBase > 0) parts.push([0.2, Math.max(0, Math.min(hrv / hrvBase, 1))]);
+  if (!parts.length) return null;
+  const w = parts.reduce((a, p) => a + p[0], 0);
+  return Math.round((100 * parts.reduce((a, p) => a + p[0] * p[1], 0)) / w);
+}
+
+const mean = (a) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN);
+
+// s: {dur, awake, deep, core, rem, hrv, hr} daily series [{t, v}] over ~28 days.
+function sleepModel(s, now, target) {
+  const by = (arr) => {
+    const m = new Map((arr || []).map((p) => [dayStart(p.t), p.v]));
+    m.near = (d) => (m.has(d) ? m.get(d) : m.get(dayStart(d - 43200000)));
+    return m;
+  };
+  const dur = by(s.dur);
+  const awake = by(s.awake);
+  const deep = by(s.deep);
+  const core = by(s.core);
+  const rem = by(s.rem);
+  const hrv = by(s.hrv);
+  const hr = by(s.hr);
+  const hrvBase = mean([...hrv.values()]);
+  const hrBase = mean([...hr.values()]);
+  const today = dayStart(now);
+  const dayOf = (i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    return d.getTime();
+  };
+  const scoreOf = (d) => (dur.get(d) > 0 ? sleepScore({ dur: dur.get(d), deep: deep.near(d), rem: rem.near(d), hrv: hrv.near(d), hrvBase, target }) : null);
+  const week = [6, 5, 4, 3, 2, 1, 0].map((i) => ({ t: dayOf(i), score: scoreOf(dayOf(i)) }));
+  const last = [...dur.keys()].filter((d) => dur.get(d) > 0).sort((a, b) => b - a)[0];
+  if (last === undefined) return null;
+  const d = dur.get(last);
+  const tiles = [{ name: "Duration", value: shortDur(d), tone: d >= target * 0.9 ? "good" : d >= target * 0.75 ? "mid" : "bad" }];
+  const hrN = hr.near(last);
+  if (hrN !== undefined) tiles.push({ name: "Heart rate", value: `${Math.round(hrN)} bpm`, tone: hrN <= hrBase + 3 ? "good" : "mid" });
+  const hrvN = hrv.near(last);
+  if (hrvN !== undefined) tiles.push({ name: "HRV", value: `${Math.round(hrvN)} ms`, tone: hrvN >= hrvBase * 0.9 ? "good" : hrvN >= hrvBase * 0.75 ? "mid" : "bad" });
+  if (deep.near(last) !== undefined) {
+    const share = (deep.near(last) / d) * 100;
+    tiles.push({ name: "Depth", value: `${Math.round(share)} % deep`, tone: share >= 13 ? "good" : share >= 8 ? "mid" : "bad" });
+  }
+  const recent = week.map((w) => dur.get(w.t)).filter((v) => v > 0);
+  if (recent.length >= 3) {
+    const m = mean(recent);
+    const sd = Math.sqrt(mean(recent.map((v) => (v - m) * (v - m))));
+    tiles.push({ name: "Regularity", value: sd < 45 ? "Good" : sd < 75 ? "Fair" : "Poor", tone: sd < 45 ? "good" : sd < 75 ? "mid" : "bad" });
+  }
+  const awN = awake.near(last);
+  if (awN !== undefined) tiles.push({ name: "Awake", value: `${Math.round(awN)} min`, tone: awN <= 20 ? "good" : awN <= 40 ? "mid" : "bad" });
+  const wk = [...dur.entries()].filter(([t, v]) => v > 0 && ![0, 6].includes(new Date(t).getDay())).map(([, v]) => v);
+  const we = [...dur.entries()].filter(([t, v]) => v > 0 && [0, 6].includes(new Date(t).getDay())).map(([, v]) => v);
+  const stages = [["Awake", awake.near(last), "#f08a80"], ["REM", rem.near(last), "#6bb8ff"], ["Core", core.near(last), "#4a6cf7"], ["Deep", deep.near(last), "#3b3f9e"]].filter((st) => isFinite(st[1]));
+  return { score: scoreOf(last), last, tiles, week, avgWeekday: mean(wk), avgWeekend: mean(we), stages };
+}
+
+function sleepHtml(m, lang) {
+  const ico = (t) => `<span class="ico ${t}">${t === "good" ? "✓" : "!"}</span>`;
+  const tiles = m.tiles.map((t) => `<div class="tile"><div class="tn">${t.name}</div><div class="tv">${t.value}</div>${ico(t.tone)}</div>`).join("");
+  const week = m.week
+    .map((w) => `<div class="wd">${ringSvg(w.score, 44)}<div>${new Date(w.t).toLocaleDateString(lang, { weekday: "narrow" })}</div></div>`)
+    .join("");
+  const total = m.stages.reduce((a, st) => a + st[1], 0);
+  const stages = m.stages
+    .map((st) => `<div class="stage"><span style="color:${st[2]}">${st[0]}</span><b>${shortDur(st[1])}</b><i style="width:${total ? ((st[1] / total) * 100).toFixed(0) : 0}%;background:${st[2]}"></i></div>`)
+    .join("");
+  const avg = (name, v) => (isFinite(v) ? statRow(name, shortDur(v)) : "");
+  return (
+    `<div class="hmc-sleep"><div class="ringbox">${ringSvg(m.score, 92)}<div class="ringlabel">Sleep score</div></div>` +
+    `<div class="tiles">${tiles}</div>` +
+    (stages ? `<div class="stages">${stages}</div>` : "") +
+    `<div class="week">${week}</div>` +
+    `<div class="avgs">${avg("Average weekday", m.avgWeekday)}${avg("Average weekend", m.avgWeekend)}</div></div>`
+  );
 }
 
 // Daily statistics blend the carried-over value into the day of a new reading; recover the reading itself.
@@ -303,6 +511,37 @@ const POPUP_STYLE = `
   .hmc-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; font-size: 12px; color: var(--secondary-text-color); }
   .hmc-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
   .hmc-graph .empty { font-size: 12px; color: var(--secondary-text-color); }
+  .hmc-chart .pill { fill: var(--secondary-background-color, rgba(255,255,255,.08)); stroke: var(--divider-color); }
+  .hmc-chart .pilltxt { fill: var(--primary-text-color); font-size: 11px; }
+  .hmc-tabs { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .hmc-tabs .sp { flex: 1; }
+  .hmc-tabs button { border: 0; border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; background: transparent; color: var(--secondary-text-color); }
+  .hmc-tabs button.on { background: color-mix(in srgb, var(--primary-color) 28%, transparent); color: var(--primary-text-color); }
+  .hmc-tabs button[disabled] { opacity: .3; cursor: default; }
+  .hmc-stats { margin-top: 8px; border-top: 1px solid var(--divider-color); }
+  .hmc-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--divider-color); font-size: 14px; }
+  .hmc-row:last-child { border-bottom: 0; }
+  .hmc-row span { color: var(--secondary-text-color); }
+  .hmc-cmp { display: flex; gap: 40px; margin-bottom: 6px; }
+  .hmc-cmp span { display: block; font-size: 12px; color: var(--secondary-text-color); }
+  .hmc-cmp b { font-size: 26px; }
+  .hmc-sleep { display: grid; gap: 14px; }
+  .ringbox { display: grid; justify-items: center; gap: 4px; }
+  .ringlabel { font-size: 15px; font-weight: 600; }
+  .ringtxt { fill: var(--primary-text-color); font-weight: 700; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { position: relative; border-radius: 14px; padding: 10px 12px; background: var(--secondary-background-color, rgba(255,255,255,.06)); }
+  .tn { font-size: 12px; color: var(--secondary-text-color); }
+  .tv { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  .ico { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #111; }
+  .ico.good { background: #7ccf7c; }
+  .ico.mid { background: #f2c14e; }
+  .ico.bad { background: #f08a80; }
+  .stage { position: relative; display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; border-bottom: 1px dashed var(--divider-color); }
+  .stage i { position: absolute; left: 0; bottom: -1px; height: 2px; }
+  .week { display: flex; justify-content: space-between; padding: 8px 4px; border-radius: 14px; background: var(--secondary-background-color, rgba(255,255,255,.06)); }
+  .wd { display: grid; justify-items: center; gap: 2px; font-size: 12px; color: var(--secondary-text-color); }
+  .wd .ringtxt { font-size: 14px !important; font-weight: 500; }
 `;
 
 class HealthMetricCard extends HTMLElement {
@@ -341,8 +580,9 @@ class HealthMetricCard extends HTMLElement {
     const days = spec.days || 7;
     const stat = spec.stat || "mean";
     const scale = spec.scale || 1;
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+    const now = spec.end ? new Date(new Date(spec.end).getFullYear(), new Date(spec.end).getMonth(), new Date(spec.end).getDate() + 1) : new Date();
+    const last = spec.end ? new Date(spec.end) : now;
+    const start = new Date(last.getFullYear(), last.getMonth(), last.getDate() - (days - 1));
     const st = hass.states[entityId];
     let source = spec.source || "auto";
     if (source === "auto") source = st && st.attributes.state_class ? "statistics" : "history";
@@ -555,7 +795,12 @@ class HealthMetricCard extends HTMLElement {
     document.body.appendChild(ov);
     this._overlay = ov;
     const body = ov.querySelector(".hmc-body");
-    const lang = this._hass.language;
+    if (c.popup.sleep && usable(this._hass, c.popup.sleep.duration)) {
+      const sec = document.createElement("div");
+      sec.className = "hmc-graph";
+      body.appendChild(sec);
+      await this._renderSleep(c.popup.sleep, sec);
+    }
     const shown = c.popup.graphs.filter((g) => g.entities.some((e) => usable(this._hass, typeof e === "string" ? e : e.entity)));
     await Promise.all(
       shown.map(async (g) => {
@@ -569,27 +814,112 @@ class HealthMetricCard extends HTMLElement {
         sec.appendChild(title);
         sec.appendChild(box);
         body.appendChild(sec);
-        const stat = popupStat(this._hass.states, g);
-        const ents = g.entities.map((e) => (typeof e === "string" ? { entity: e } : e)).filter((e) => usable(this._hass, e.entity));
-        const list = await Promise.all(
-          ents.map(async (e) => {
-            let pts = [];
-            try {
-              pts = await this._series(e.entity, { days: g.days || 30, stat, scale: g.scale });
-            } catch (err) {
-              /* leave empty */
-            }
-            return { name: e.name, color: e.color || (ents.length === 1 ? c.color : undefined), pts: g.type === "bar" ? pts : collapseRuns(pts) };
-          })
-        );
-        const svg = chartSvg(list, g.type || "line", g.days || 30, !!g.stacked, lang);
-        const legend =
-          list.length > 1
-            ? `<div class="hmc-legend">${list.map((s, i) => `<span><i style="background:${s.color || PALETTE[i % PALETTE.length]}"></i>${s.name}</span>`).join("")}</div>`
-            : "";
-        box.innerHTML = svg ? svg + legend : `<div class="empty">No data yet</div>`;
+        if (g.type === "today") await this._renderToday(g, box);
+        else await this._renderGraph(g, sec, box);
       })
     );
+  }
+
+  _graphFmt(g, ents, pts) {
+    const lang = this._hass.language;
+    const st = this._hass.states[ents[0].entity];
+    const unit = g.unit !== undefined ? g.unit : (st && st.attributes.unit_of_measurement) || "";
+    if (g.format === "duration") return { fmtv: shortDur, axisFmt: (v) => fmt(v / 60, 0, lang) + " h" };
+    const dec = g.decimals !== undefined ? g.decimals : pts.every((v) => Math.abs(v - Math.round(v)) < 0.05) ? 0 : 1;
+    return { fmtv: (v) => fmt(v, dec, lang) + (unit ? " " + unit : ""), axisFmt: (v) => fmt(v, dec, lang) };
+  }
+
+  async _renderGraph(g, sec, box) {
+    const c = this._config;
+    const lang = this._hass.language;
+    const stat = popupStat(this._hass.states, g);
+    const ents = g.entities.map((e) => (typeof e === "string" ? { entity: e } : e)).filter((e) => usable(this._hass, e.entity));
+    const ranges = RANGES.some((r) => r[0] === (g.days || 30)) ? RANGES : [...RANGES, [g.days, g.days + "d"]].sort((a, b) => a[0] - b[0]);
+    const state = { days: g.days || 30, offset: 0 };
+    const draw = async () => {
+      const end = new Date(dayStart(Date.now()));
+      end.setDate(end.getDate() - state.offset * state.days);
+      const list = await Promise.all(
+        ents.map(async (e) => {
+          let pts = [];
+          try {
+            pts = await this._series(e.entity, { days: state.days, stat, scale: g.scale, end: end.getTime() });
+          } catch (err) {
+            /* leave empty */
+          }
+          return { name: e.name, color: e.color || (ents.length === 1 ? c.color : undefined), pts: g.type === "bar" ? pts : collapseRuns(pts) };
+        })
+      );
+      const { fmtv, axisFmt } = this._graphFmt(g, ents, list.flatMap((s) => s.pts.map((p) => p.v)));
+      const tabs =
+        `<div class="hmc-tabs">${ranges.map((r) => `<button data-days="${r[0]}" class="${r[0] === state.days ? "on" : ""}">${r[1]}</button>`).join("")}` +
+        `<span class="sp"></span><button data-nav="1" aria-label="Earlier">‹</button><button data-nav="-1" aria-label="Later" ${state.offset === 0 ? "disabled" : ""}>›</button></div>`;
+      const svg = chartSvg(list, g.type || "line", state.days, !!g.stacked, lang, { end: end.getTime(), fmt: fmtv, axisFmt });
+      const legend =
+        list.length > 1
+          ? `<div class="hmc-legend">${list.map((s, i) => `<span><i style="background:${s.color || PALETTE[i % PALETTE.length]}"></i>${s.name}</span>`).join("")}</div>`
+          : "";
+      box.innerHTML = tabs + (svg ? svg + legend + `<div class="hmc-stats">${statsHtml(list, g.type || "line", fmtv)}</div>` : `<div class="empty">No data in this period</div>`);
+    };
+    sec.addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest("button");
+      if (!b || b.disabled) return;
+      if (b.dataset.days) {
+        state.days = Number(b.dataset.days);
+        state.offset = 0;
+      } else if (b.dataset.nav) state.offset = Math.max(0, state.offset + Number(b.dataset.nav));
+      draw();
+    });
+    await draw();
+  }
+
+  async _renderToday(g, box) {
+    const c = this._config;
+    const lang = this._hass.language;
+    const e = typeof g.entities[0] === "string" ? g.entities[0] : g.entities[0].entity;
+    let rows = [];
+    try {
+      const start = new Date();
+      start.setDate(start.getDate() - (g.days || 14));
+      const res = await this._hass.callWS({
+        type: "recorder/statistics_during_period",
+        start_time: start.toISOString(),
+        statistic_ids: [e],
+        period: "hour",
+        types: ["change"],
+      });
+      rows = (res[e] || []).filter((r) => r.change !== null && r.change !== undefined).map((r) => ({ t: typeof r.start === "number" ? r.start : Date.parse(r.start), v: r.change * (g.scale || 1) }));
+    } catch (err) {
+      /* leave empty */
+    }
+    const now = Date.now();
+    const m = todayModel(rows, now);
+    const { fmtv, axisFmt } = this._graphFmt(g, [{ entity: e }], [...m.today, ...m.avg]);
+    const svg = todaySvg(m, c.color || "var(--primary-color)", now, { axisFmt });
+    if (!svg) {
+      box.innerHTML = `<div class="empty">No data yet</div>`;
+      return;
+    }
+    box.innerHTML =
+      `<div class="hmc-cmp"><div><span style="color:${c.color || "var(--primary-color)"}">● Today</span><b style="color:${c.color || "var(--primary-color)"}">${m.todayNow === null ? "–" : fmtv(m.todayNow)}</b></div>` +
+      `<div><span>● Average</span><b>${m.avgNow === null ? "–" : fmtv(m.avgNow)}</b></div></div>` +
+      svg;
+  }
+
+  async _renderSleep(cfg, sec) {
+    const lang = this._hass.language;
+    const get = async (key, stat = "reading") => {
+      if (!cfg[key] || !usable(this._hass, cfg[key])) return [];
+      try {
+        const s = await this._series(cfg[key], { days: 28, stat });
+        return stat === "reading" ? collapseRuns(s) : s;
+      } catch (err) {
+        return [];
+      }
+    };
+    const [dur, awake, deep, core, rem, hrv, hr] = await Promise.all([get("duration"), get("awake"), get("deep"), get("core"), get("rem"), get("hrv", "mean"), get("hr", "mean")]);
+    const m = sleepModel({ dur, awake, deep, core, rem, hrv, hr }, Date.now(), cfg.target || 450);
+    sec.innerHTML = m ? sleepHtml(m, lang) : `<div class="empty">No sleep data yet</div>`;
   }
 
   _tap() {
@@ -620,5 +950,5 @@ if (typeof customElements !== "undefined" && !customElements.get("health-metric-
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { usable, popupStat, chartSvg, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
+  module.exports = { usable, popupStat, chartSvg, statsHtml, todayModel, todaySvg, sleepScore, sleepModel, sleepHtml, smoothPath, shortDur, readingsFromMinMax, collapseRuns, ratioSeries, durationHtml, bucketDaily, computeDelta, deltaTone, deltaDir, signed, fmt, sparkSvg, dayStart };
 }

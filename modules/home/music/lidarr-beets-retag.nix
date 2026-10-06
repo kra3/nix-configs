@@ -15,6 +15,8 @@
         write: yes
         autotag: yes
         quiet: yes
+      # Lidarr's container writes files as uid 0, so kra3's chmod from this plugin fails with EPERM.
+      disabled_plugins: [permissions]
     '';
   };
 }

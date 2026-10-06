@@ -1575,11 +1575,236 @@ views:
   icon: mdi:lightbulb-group
   strategy:
     type: light
-- title: Security
+- type: sections
+  title: Security
   path: dash-security
   icon: mdi:shield-home
-  strategy:
-    type: security
+  max_columns: 4
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Alarm
+      icon: mdi:shield-home
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: alarm_control_panel
+          options:
+            type: tile
+            features:
+            - type: alarm-modes
+              modes:
+              - armed_night
+              - armed_away
+              - disarmed
+      grid_options:
+        columns: 12
+    - type: markdown
+      content: >-
+        {% set cls = ['door', 'window', 'garage_door', 'opening'] %}
+        {% set o = states.binary_sensor | selectattr('attributes.device_class', 'defined')
+           | selectattr('attributes.device_class', 'in', cls) | selectattr('state', 'eq', 'on') | list %}
+        {% if o %}**Open now:** {{ o | map(attribute='name') | join(', ') }}
+        {% else %}Everything is closed.{% endif %}
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Locks
+      icon: mdi:lock
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: lock
+          state: /^(locked|unlocked|locking|unlocking|jammed|open|opening)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+            features:
+            - type: lock-commands
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Openings
+      icon: mdi:door
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 2
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+
+      sort:
+        method: state
+        reverse: true
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: entities
+        title: Not reporting
+        show_header_toggle: false
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+          state: /^(unknown|unavailable)$/
+        - domain: lock
+          state: /^(unknown|unavailable)$/
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Cameras
+      icon: mdi:cctv
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: camera
+          options:
+            type: picture-entity
+            camera_view: auto
+            show_state: false
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: /^(motion|vibration|tamper)$/
+          state: "on"
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+        exclude:
+        - entity_id: "*iphone*"
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Activity
+      icon: mdi:history
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: logbook
+        hours_to_show: 24
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+
+        - domain: lock
+        - domain: alarm_control_panel
+      grid_options:
+        columns: 12
 - title: Climate
   path: dash-climate
   icon: mdi:thermostat

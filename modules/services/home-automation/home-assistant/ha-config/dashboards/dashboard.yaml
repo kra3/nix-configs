@@ -446,7 +446,8 @@ views:
         name: Shopping list
         icon: mdi:cart-outline
         tap_action:
-          action: more-info
+          action: navigate
+          navigation_path: /todo?entity_id=todo.shopping_list
   badges:
   - type: entity
     show_name: true

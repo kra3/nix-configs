@@ -355,6 +355,9 @@ views:
         decimals: 1
       grid_options:
         columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
     - type: custom:streamline-card
       template: home_climate
       variables:
@@ -365,6 +368,9 @@ views:
         decimals: 0
       grid_options:
         columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
     - type: custom:streamline-card
       template: home_climate
       variables:
@@ -375,12 +381,72 @@ views:
         decimals: 0
       grid_options:
         columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_temperature
+        name: Temperature
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_humidity
+        name: Humidity
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:streamline-card
+      template: home_climate
+      variables:
+        entity: sensor.average_illuminance
+        name: Illuminance
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
   - type: grid
     cards:
-    - type: todo-list
-      entity: todo.shopping_list
-      title: Shopping List
-      hide_completed: true
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        above: 0
+      card:
+        type: todo-list
+        entity: todo.shopping_list
+        title: Shopping List
+        hide_completed: true
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        below: 1
+      card:
+        type: tile
+        entity: todo.shopping_list
+        name: Shopping list
+        icon: mdi:cart-outline
+        tap_action:
+          action: more-info
   badges:
   - type: entity
     show_name: true

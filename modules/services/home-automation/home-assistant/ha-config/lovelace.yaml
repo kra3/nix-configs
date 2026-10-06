@@ -12,6 +12,8 @@ resources:
     type: module
   - url: /local/home-hero-card.js?v=3
     type: module
+  - url: /local/popup-tile-card.js?v=1
+    type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module
   - url: /hacsfiles/apexcharts-card/apexcharts-card.js

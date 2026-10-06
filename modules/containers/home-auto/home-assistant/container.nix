@@ -48,6 +48,7 @@
             "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/health-metric-card.js}:/config/www/health-metric-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/home-hero-card.js}:/config/www/home-hero-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
             "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
             "/run/dbus:/run/dbus:ro"
           ];

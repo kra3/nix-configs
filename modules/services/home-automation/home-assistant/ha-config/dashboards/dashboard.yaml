@@ -441,13 +441,16 @@ views:
         entity: todo.shopping_list
         below: 1
       card:
-        type: tile
+        type: custom:popup-tile-card
         entity: todo.shopping_list
         name: Shopping list
         icon: mdi:cart-outline
-        tap_action:
-          action: navigate
-          navigation_path: /todo?entity_id=todo.shopping_list
+        unit: items
+        popup:
+          type: todo-list
+          entity: todo.shopping_list
+          title: Shopping List
+          hide_completed: true
   badges:
   - type: entity
     show_name: true

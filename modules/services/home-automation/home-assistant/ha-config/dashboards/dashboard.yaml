@@ -758,11 +758,191 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Downloads
+      icon: mdi:download
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.sabnzbd_karunagath_in_speed
+      name: Download speed
+      icon: mdi:download
+      color: "#6bb6ff"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+        stat: max
+      items:
+      - entity: sensor.sabnzbd_karunagath_in_queue_count
+        name: Queue
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.sabnzbd_karunagath_in_left_to_download
+        name: Left
+        mode: now
+        days: 7
+        decimals: 0
+      popup:
+        graphs:
+        - name: Speed (daily peak)
+          entities:
+          - sensor.sabnzbd_karunagath_in_speed
+          days: 7
+          stat: max
+        - name: Queue
+          entities:
+          - sensor.sabnzbd_karunagath_in_queue_count
+          days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.sabnzbd_karunagath_in_overall_total
+      name: Downloaded today
+      icon: mdi:cloud-download-outline
+      color: "#8fd9c0"
+      decimals: 1
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      popup:
+        graphs:
+        - name: Downloaded per day
+          entities:
+          - sensor.sabnzbd_karunagath_in_overall_total
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: entities
+      show_header_toggle: false
+      entities:
+      - entity: number.sabnzbd_karunagath_in_speedlimit
+        name: Speed limit
+      - entity: button.sabnzbd_karunagath_in_pause
+        name: Pause
+        action_name: Pause
+      - entity: button.sabnzbd_karunagath_in_resume
+        name: Resume
+        action_name: Resume
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.sabnzbd_karunagath_in_warnings
+        state: "on"
+      card:
+        type: tile
+        entity: binary_sensor.sabnzbd_karunagath_in_warnings
+        name: SABnzbd warnings
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Requests
+      icon: mdi:movie-search-outline
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.seerr_total_requests
+      name: Requests
+      icon: mdi:movie-open-plus-outline
+      color: "#c9a7e8"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.seerr_processing_requests
+        name: Processing
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.seerr_film_requests
+        name: Movies
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.seerr_tv_requests
+        name: TV
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Total requests
+          entities:
+          - sensor.seerr_total_requests
+          days: 7
+        - name: Pending and processing
+          entities:
+          - entity: sensor.seerr_pending_requests
+            name: Pending
+          - entity: sensor.seerr_processing_requests
+            name: Processing
+          days: 7
+        - name: Movies and TV
+          entities:
+          - entity: sensor.seerr_film_requests
+            name: Movies
+          - entity: sensor.seerr_tv_requests
+            name: TV
+          days: 7
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.seerr_pending_requests
+        above: 0
+      card:
+        type: tile
+        entity: sensor.seerr_pending_requests
+        name: Pending requests
+        icon: mdi:clock-alert-outline
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.seerr_open_issues
+        above: 0
+      card:
+        type: tile
+        entity: sensor.seerr_open_issues
+        name: Open issues
+        icon: mdi:alert-circle-outline
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: event.seerr_last_media_event
+      name: Last event
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
       heading: Jellyfin
       heading_style: title
-    - type: tile
-      entity: sensor.media_play_active_clients
-      name: Watching now
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.media_play_active_clients
+        above: 0
+      card:
+        type: tile
+        entity: sensor.media_play_active_clients
+        name: Watching now
       grid_options:
         columns: 12
     - type: custom:auto-entities
@@ -793,86 +973,54 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Requests
+      heading: Storage
+      icon: mdi:harddisk
       heading_style: title
-    - type: tile
-      entity: sensor.seerr_pending_requests
-      name: Pending
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.seerr_processing_requests
-      name: Processing
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.seerr_open_issues
-      name: Open issues
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: event.seerr_last_media_event
-      name: Last event
+    - type: custom:health-metric-card
+      entity: sensor.media_disk_used
+      name: Media disk
+      icon: mdi:harddisk
+      color: "#8fd9c0"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 30
+      delta:
+        mode: range
+        decimals: 0
+      items:
+      - entity: sensor.radarr_disk_space_movies
+        name: Free
+        mode: now
+        days: 7
+        decimals: 1
+        scale: 0.001
+        unit: TB
+      - entity: sensor.sabnzbd_karunagath_in_total_disk_space
+        name: Total
+        mode: now
+        days: 7
+        decimals: 1
+        scale: 0.001
+        unit: TB
+      popup:
+        graphs:
+        - name: Media disk used
+          entities:
+          - sensor.media_disk_used
+          days: 90
       grid_options:
         columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Downloads
-      heading_style: title
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_status
-      name: Status
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_speed
-      name: Speed
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_queue_count
-      name: Queue
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_left_to_download
-      name: Left to download
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: number.sabnzbd_karunagath_in_speedlimit
-      name: Speed limit
-      features:
-      - type: numeric-input
-        style: slider
-      grid_options:
-        columns: 12
-    - type: tile
-      entity: button.sabnzbd_karunagath_in_pause
-      name: Pause
-      icon: mdi:pause
-      tap_action:
-        action: perform-action
-        perform_action: button.press
-        target:
-          entity_id: button.sabnzbd_karunagath_in_pause
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: button.sabnzbd_karunagath_in_resume
-      name: Resume
-      icon: mdi:play
-      tap_action:
-        action: perform-action
-        perform_action: button.press
-        target:
-          entity_id: button.sabnzbd_karunagath_in_resume
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.sabnzbd_karunagath_in_warnings
-      name: Warnings
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.radarr_health
+        state: "on"
+      card:
+        type: tile
+        entity: binary_sensor.radarr_health
+        name: Radarr health
       grid_options:
         columns: 12
   - type: grid
@@ -885,33 +1033,6 @@ views:
       entities:
       - calendar.sonarr
       - calendar.radarr
-      grid_options:
-        columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Storage
-      heading_style: title
-    - type: gauge
-      entity: sensor.media_disk_used
-      name: Media disk used
-      min: 0
-      max: 100
-      severity:
-        green: 0
-        yellow: 75
-        red: 90
-      grid_options:
-        columns: 6
-        rows: auto
-    - type: tile
-      entity: sensor.radarr_disk_space_movies
-      name: Free space
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.radarr_health
-      name: Radarr health
       grid_options:
         columns: 12
 - type: sections

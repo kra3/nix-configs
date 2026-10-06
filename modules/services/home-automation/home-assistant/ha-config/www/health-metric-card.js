@@ -636,6 +636,14 @@ class HealthMetricCard extends HTMLElement {
         .filter((p) => isFinite(p.v) && isFinite(p.t));
       pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
     }
+    if (stat === "reading" && !spec.end) {
+      const live = st ? parseFloat(st.state) : NaN;
+      const lastP = pts[pts.length - 1];
+      if (isFinite(live) && (!lastP || Math.abs(lastP.v - live) > 1e-9)) {
+        if (lastP && dayStart(lastP.t) === dayStart(Date.now())) lastP.v = live;
+        else pts.push({ t: dayStart(Date.now()), v: live });
+      }
+    }
     return pts.map((p) => ({ t: p.t, v: p.v * scale }));
   }
 

@@ -244,6 +244,7 @@ views:
     - type: custom:alarmo-card
       entity: alarm_control_panel.vasudha_secure
       name: Alarm
+      use_code_dialog: true
       states:
         armed_home:
           hide: true

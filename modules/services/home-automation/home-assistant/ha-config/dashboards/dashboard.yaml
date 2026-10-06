@@ -1297,42 +1297,44 @@ views:
       badges:
       - type: entity
         entity: sensor.system_monitor_last_boot
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.system_monitor_processor_use
-        name: CPU use
-        icon: mdi:cpu-64-bit
-        color: "#ff9f6b"
-        decimals: 0
-      grid_options:
-        columns: 12
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.system_monitor_processor_temperature
-        name: CPU temperature
-        icon: mdi:thermometer
-        color: "#ff7b7b"
-        decimals: 0
-      grid_options:
-        columns: 12
     - type: custom:health-metric-card
-      entity: sensor.system_monitor_load_1m
-      name: Load
-      icon: mdi:gauge
-      color: "#c9a7e8"
-      decimals: 2
+      entity: sensor.system_monitor_processor_use
+      name: CPU
+      icon: mdi:cpu-64-bit
+      color: "#ff9f6b"
+      decimals: 0
       show_date: false
       chart:
         type: line
         days: 7
       delta:
         mode: range
+        decimals: 0
+      items:
+      - entity: sensor.system_monitor_processor_temperature
+        name: Temperature
+        mode: now
+        days: 7
+        decimals: 0
+        unit: "°C"
+        color: "#ff7b7b"
+      - entity: sensor.system_monitor_load_1m
+        name: Load 1 min
+        mode: now
+        days: 7
         decimals: 2
         unit: ""
+        color: "#c9a7e8"
       popup:
         graphs:
+        - name: CPU use
+          entities:
+          - sensor.system_monitor_processor_use
+          days: 7
+        - name: Temperature
+          entities:
+          - sensor.system_monitor_processor_temperature
+          days: 7
         - name: Load average
           entities:
           - entity: sensor.system_monitor_load_1m
@@ -1350,34 +1352,76 @@ views:
       heading: Memory and storage
       icon: mdi:memory
       heading_style: title
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.system_monitor_memory_usage
-        name: Memory
-        icon: mdi:memory
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_memory_usage
+      name: Memory
+      icon: mdi:memory
+      color: "#6bb6ff"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 0
+      items:
+      - entity: sensor.system_monitor_memory_use
+        name: Used
+        mode: now
+        days: 7
+        decimals: 1
         color: "#6bb6ff"
-        decimals: 0
-      grid_options:
-        columns: 12
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.system_monitor_disk_usage
-        name: Disk
-        icon: mdi:harddisk
-        color: "#8fd9c0"
-        decimals: 0
-      grid_options:
-        columns: 12
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.system_monitor_swap_usage
+      - entity: sensor.system_monitor_swap_usage
         name: Swap
-        icon: mdi:swap-horizontal
-        color: "#9fa8ff"
+        mode: now
+        days: 7
         decimals: 0
+        color: "#9fa8ff"
+      popup:
+        graphs:
+        - name: Memory use
+          entities:
+          - sensor.system_monitor_memory_usage
+          days: 7
+        - name: Swap use
+          entities:
+          - sensor.system_monitor_swap_usage
+          days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_disk_usage
+      name: Disk
+      icon: mdi:harddisk
+      color: "#8fd9c0"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 0
+      items:
+      - entity: sensor.system_monitor_disk_use
+        name: Used
+        mode: now
+        days: 7
+        decimals: 0
+        color: "#8fd9c0"
+      - entity: sensor.system_monitor_disk_free
+        name: Free
+        mode: now
+        days: 7
+        decimals: 0
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Disk use
+          entities:
+          - sensor.system_monitor_disk_usage
+          days: 7
       grid_options:
         columns: 12
   - type: grid
@@ -1386,14 +1430,46 @@ views:
       heading: Power monitor
       icon: mdi:flash
       heading_style: title
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.power_monitor_1_power
-        name: Power
-        icon: mdi:flash
-        color: "#ffd86b"
+    - type: custom:health-metric-card
+      entity: sensor.power_monitor_1_power
+      name: Power
+      icon: mdi:flash
+      color: "#ffd86b"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
         decimals: 0
+      items:
+      - entity: sensor.power_monitor_1_voltage
+        name: Voltage
+        mode: now
+        days: 7
+        decimals: 0
+        color: "#c9a7e8"
+      - entity: sensor.power_monitor_1_current
+        name: Current
+        mode: now
+        days: 7
+        decimals: 2
+        color: "#ff9f6b"
+      popup:
+        graphs:
+        - name: Power
+          entities:
+          - sensor.power_monitor_1_power
+          days: 7
+        - name: Voltage
+          entities:
+          - sensor.power_monitor_1_voltage
+          days: 7
+        - name: Current
+          entities:
+          - sensor.power_monitor_1_current
+          days: 7
       grid_options:
         columns: 12
     - type: custom:health-metric-card
@@ -1416,26 +1492,6 @@ views:
           days: 30
           stat: change
           type: bar
-      grid_options:
-        columns: 12
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.power_monitor_1_voltage
-        name: Voltage
-        icon: mdi:sine-wave
-        color: "#c9a7e8"
-        decimals: 0
-      grid_options:
-        columns: 12
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.power_monitor_1_current
-        name: Current
-        icon: mdi:current-ac
-        color: "#ff9f6b"
-        decimals: 2
       grid_options:
         columns: 12
     - type: tile

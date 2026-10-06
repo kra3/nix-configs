@@ -774,6 +774,13 @@ class HealthMetricCard extends HTMLElement {
             alsoTxt = `${fmt(av, it.also.decimals !== undefined ? it.also.decimals : 1, lang)} ${au} \u00b7 `;
           }
         }
+        if (it.mode === "now") {
+          const range = rangeText(s, dec, "", lang);
+          return (
+            `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
+            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : ""}</div></div></div>`
+          );
+        }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";
         return (
           `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +

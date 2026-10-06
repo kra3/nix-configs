@@ -1,0 +1,126 @@
+rest:
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=db_model_totals"
+    scan_interval: 600
+    sensor:
+      - name: Navidrome albums
+        unique_id: navidrome_albums
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'album') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Navidrome artists
+        unique_id: navidrome_artists
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'artist') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Navidrome tracks
+        unique_id: navidrome_tracks
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'media') | list %}
+          {{ r[0].value[1] | int if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=media_scan_last"
+    scan_interval: 600
+    sensor:
+      - name: Navidrome last scan
+        unique_id: navidrome_last_scan
+        device_class: timestamp
+        value_template: >-
+          {% set r = value_json.data.result %}
+          {{ as_datetime(r[0].value[1] | float).isoformat() if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=unpackerr_app_queue_size"
+    scan_interval: 60
+    sensor:
+      - name: Unpackerr Lidarr queue
+        unique_id: unpackerr_lidarr_queue
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.app', 'eq', 'Lidarr') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Unpackerr Radarr queue
+        unique_id: unpackerr_radarr_queue
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.app', 'eq', 'Radarr') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Unpackerr Sonarr queue
+        unique_id: unpackerr_sonarr_queue
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.app', 'eq', 'Sonarr') | list %}
+          {{ r[0].value[1] | int if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=unpackerr_gauges"
+    scan_interval: 60
+    sensor:
+      - name: Unpackerr extracting
+        unique_id: unpackerr_extracting
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.name', 'eq', 'extracting') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Unpackerr failed
+        unique_id: unpackerr_failed
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.name', 'eq', 'failed') | list %}
+          {{ r[0].value[1] | int if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=%7Bjob%3D%22slskd%22%2C__name__%3D~%22slskd_transfers_downloads_.%2A%22%7D"
+    scan_interval: 60
+    sensor:
+      - name: Slskd download speed
+        unique_id: slskd_download_speed
+        unit_of_measurement: MB/s
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_speed_total_current') | list %}
+          {{ (r[0].value[1] | float / 1000000) | round(2) if r else none }}
+      - name: Slskd active downloads
+        unique_id: slskd_active_downloads
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_files_current') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Slskd queued downloads
+        unique_id: slskd_queued_downloads
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_queued_files_current') | list %}
+          {{ r[0].value[1] | int if r else none }}
+      - name: Slskd completed downloads
+        unique_id: slskd_completed_downloads
+        state_class: total_increasing
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_completed_succeeded') | list %}
+          {{ r[0].value[1] | int if r else none }}
+  - resource: https://jellyfin.karunagath.in/Items/Counts
+    scan_interval: 1800
+    headers:
+      Authorization: !secret jellyfin_auth_header
+    sensor:
+      - name: Jellyfin movies
+        unique_id: jellyfin_movies
+        state_class: measurement
+        value_template: "{{ value_json.MovieCount }}"
+      - name: Jellyfin series
+        unique_id: jellyfin_series
+        state_class: measurement
+        value_template: "{{ value_json.SeriesCount }}"
+      - name: Jellyfin episodes
+        unique_id: jellyfin_episodes
+        state_class: measurement
+        value_template: "{{ value_json.EpisodeCount }}"
+
+template:
+  - sensor:
+      - name: Arr queue total
+        unique_id: arr_queue_total
+        unit_of_measurement: items
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.unpackerr_lidarr_queue') | is_number
+             and states('sensor.unpackerr_radarr_queue') | is_number
+             and states('sensor.unpackerr_sonarr_queue') | is_number }}
+        state: >-
+          {{ ['sensor.unpackerr_lidarr_queue', 'sensor.unpackerr_radarr_queue', 'sensor.unpackerr_sonarr_queue']
+             | map('states') | map('float', 0) | sum | int }}

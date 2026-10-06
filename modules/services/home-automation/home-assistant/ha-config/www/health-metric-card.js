@@ -367,7 +367,9 @@ function computeDelta(series, mode, points) {
 function rangeText(series, decimals, unit, lang) {
   if (!series.length) return "";
   const vals = series.map((p) => p.v);
-  return fmt(Math.min(...vals), decimals, lang) + "\u2013" + fmt(Math.max(...vals), decimals, lang) + unit;
+  const lo = fmt(Math.min(...vals), decimals, lang);
+  const hi = fmt(Math.max(...vals), decimals, lang);
+  return lo === hi ? "" : lo + "\u2013" + hi + unit;
 }
 
 function deltaTone(delta, good) {
@@ -647,7 +649,10 @@ class HealthMetricCard extends HTMLElement {
       const raw = (res[entityId] || [])
         .map((r) => ({ t: (r.lu !== undefined ? r.lu : r.lc) * 1000, v: parseFloat(r.s) }))
         .filter((p) => isFinite(p.v) && isFinite(p.t));
-      pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
+      if (stat === "change") {
+        const top = bucketDaily(raw, "max");
+        pts = top.map((p, i) => ({ t: p.t, v: i ? Math.max(0, p.v - top[i - 1].v) : 0 }));
+      } else pts = bucketDaily(raw, stat === "reading" ? "last" : stat);
     }
     if (stat === "reading" && !spec.end) {
       const live = st ? parseFloat(st.state) : NaN;
@@ -737,7 +742,8 @@ class HealthMetricCard extends HTMLElement {
     } else if (c.delta && c.delta.mode === "range" && main.length) {
       const dec = c.delta.decimals !== undefined ? c.delta.decimals : 1;
       const unit = c.delta.unit !== undefined ? c.delta.unit : " " + (hero.unit || "");
-      under = `<span class="chip neutral">${rangeText(this._span("", main, raw * scale), dec, unit, lang)}</span>`;
+      const rt = rangeText(this._span("", main, raw * scale), dec, unit, lang);
+      if (rt) under = `<span class="chip neutral">${rt}</span>`;
     } else if (c.delta && main.length) {
       const d = computeDelta(main, c.delta.mode || "absolute", c.delta.points);
       if (d) {
@@ -790,7 +796,7 @@ class HealthMetricCard extends HTMLElement {
           const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
-            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : ""}</div></div></div>`
+            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : "&nbsp;"}</div></div></div>`
           );
         }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";

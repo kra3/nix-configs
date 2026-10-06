@@ -180,6 +180,8 @@
               ];
             };
 
+            services.declarative-jellyfin.backups = false;
+
             services.declarative-jellyfin.livetv.tunerHosts = [
               {
                 id = "7f3c1b0a5d2e4c8f9a6b1d0e2c4f8a35";
@@ -217,15 +219,30 @@
               MemoryMax = "1024M";
               CPUQuota = "100%";
               # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).
-              ExecStartPre = lib.mkForce (
-                "+"
-                + pkgs.writeShellScript "jellyfin-perm-fix" ''
-                  find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chown ${config.services.jellyfin.user}:${config.services.jellyfin.group} {} +
-                  find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chmod 750 {} +
-                  chown -R ${config.services.jellyfin.user}:${config.services.jellyfin.group} ${config.services.jellyfin.cacheDir}
-                  chmod -R 750 ${config.services.jellyfin.cacheDir}
-                ''
-              );
+              ExecStartPre = lib.mkForce [
+                (
+                  "+"
+                  + pkgs.writeShellScript "jellyfin-perm-fix" ''
+                    find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chown ${config.services.jellyfin.user}:${config.services.jellyfin.group} {} +
+                    find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chmod 750 {} +
+                    chown -R ${config.services.jellyfin.user}:${config.services.jellyfin.group} ${config.services.jellyfin.cacheDir}
+                    chmod -R 750 ${config.services.jellyfin.cacheDir}
+                  ''
+                )
+                (
+                  "-"
+                  + pkgs.writeShellScript "jellyfin-backup" ''
+                    set -o pipefail
+                    install -d -m 775 "${config.services.jellyfin.dataDir}/backups"
+                    out="${config.services.jellyfin.dataDir}/backups/backup_$(date +%Y%m%d%H%M%S).tar.gz"
+                    ${pkgs.gnutar}/bin/tar -c -C / \
+                      --exclude="${lib.removePrefix "/" config.services.jellyfin.dataDir}/backups" \
+                      --exclude="${lib.removePrefix "/" config.services.jellyfin.dataDir}/metadata" \
+                      ${lib.removePrefix "/" config.services.jellyfin.dataDir} | ${pkgs.pigz}/bin/pigz > "$out" || rm -f "$out"
+                    ls -1t "${config.services.jellyfin.dataDir}"/backups/backup_*.tar.gz | tail -n +6 | xargs -r rm
+                  ''
+                )
+              ];
             };
             systemd.services.navidrome.serviceConfig = {
               MemoryMax = "384M";

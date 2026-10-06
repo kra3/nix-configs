@@ -354,7 +354,7 @@ views:
         color: "#ff9f6b"
         decimals: 1
       grid_options:
-        columns: 4
+        columns: 8
     - type: custom:streamline-card
       template: home_climate
       variables:
@@ -364,7 +364,7 @@ views:
         color: "#6bb6ff"
         decimals: 0
       grid_options:
-        columns: 4
+        columns: 8
     - type: custom:streamline-card
       template: home_climate
       variables:
@@ -374,7 +374,7 @@ views:
         color: "#ffd86b"
         decimals: 0
       grid_options:
-        columns: 4
+        columns: 8
   - type: grid
     cards:
     - type: todo-list

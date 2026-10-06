@@ -104,7 +104,7 @@ function heroHtml(m) {
   const pills = m.pills
     .map(
       (p) =>
-        `<button class="chip pill" style="--c:${p.color}" data-act="pill" data-i="${p.i}"><ha-icon icon="${esc(p.icon)}"></ha-icon>${esc(p.label)}${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ""}</button>`
+        `<button class="chip pill" style="--c:${p.color}" data-act="pill" data-i="${p.i}"><ha-icon icon="${esc(p.icon)}"></ha-icon><span class="lbl">${esc(p.label)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ""}</button>`
     )
     .join("");
   return `<div class="card">
@@ -130,6 +130,8 @@ const STYLE = `
   .chip.good { --c: var(--success-color, #4caf50); }
   .chip.bad { --c: var(--error-color, #f44336); }
   .chip.warn { --c: #ffb300; }
+  .chip { text-align: left; }
+  .lbl { white-space: nowrap; }
   .detail { font-weight: 500; opacity: 0.8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;
 

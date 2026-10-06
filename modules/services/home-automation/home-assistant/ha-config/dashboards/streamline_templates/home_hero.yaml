@@ -7,7 +7,6 @@ card:
   period: sensor.dashboard_time_period
   eta: sensor.dashboard_eta
   weather: weather.forecast_vasudha
-  alarm: alarm_control_panel.vasudha_secure
   pills:
   - label: Open door/window
     icon: mdi:door-open

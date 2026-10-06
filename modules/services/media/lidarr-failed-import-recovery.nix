@@ -150,9 +150,7 @@
                 print("SKIP out of scope or missing folder:", title)
                 continue
             last = tried.get(str(qid))
-            if last and time.time() - last < RETRY_AFTER:
-                print("SKIP tried recently:", title)
-                continue
+            recent = bool(last) and time.time() - last < RETRY_AFTER
             artist = api("GET", "/artist/" + str(q["artistId"]))
             lib = library_for(artist)
             why = "Lidarr: " + reason_of(q)
@@ -173,6 +171,9 @@
                     save_tried(tried)
                     notify("Lidarr re-grabbed an album already in the library; queue entry cleared, download left in " + folder + ": " + title)
                     continue
+                if recent:
+                    print("SKIP tried recently:", title)
+                    continue
                 cmd = ["beet", "--config", BEETS_BASE, "--config", MATCH_OVERLAY, "import", "-q", "--quiet-fallback", "skip", "-S", release, folder]
                 print(("WOULD RUN [" if DRY_RUN else "RUN [") + lib + "] " + " ".join(cmd) + " | " + title + " | " + why)
                 if DRY_RUN:
@@ -190,6 +191,9 @@
                     print("IMPORTED", title)
                     continue
                 reason = "beets could not match confidently | " + why
+            if recent:
+                print("SKIP tried recently:", title)
+                continue
             print("LEFT", title, "|", reason)
             if not DRY_RUN:
                 tried[str(qid)] = time.time()

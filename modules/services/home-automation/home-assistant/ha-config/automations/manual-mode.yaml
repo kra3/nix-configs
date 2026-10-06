@@ -53,4 +53,5 @@
     - action: automation.turn_on
       target:
         entity_id: "{{ targets }}"
+    - event: automations_resumed
   mode: single

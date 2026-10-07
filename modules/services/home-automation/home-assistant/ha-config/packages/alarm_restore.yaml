@@ -1,0 +1,8 @@
+input_select:
+  alarm_restore_mode:
+    name: Alarm mode to restore after a restart
+    icon: mdi:shield-sync-outline
+    options:
+      - none
+      - armed_away
+      - armed_night

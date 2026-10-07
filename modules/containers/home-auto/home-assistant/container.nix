@@ -66,6 +66,7 @@
           # (BLE reconnect storms, etc.) so it can't starve the host.
           memory = "2g";
           podmanArgs = [ "--cpus=2" ];
+          stopTimeout = 60;
           # Retries internally so podman's immediate first probe (before HA's port is up) doesn't fail nixos-rebuild switch.
           healthCmd = "i=0; while [ $i -lt 12 ]; do python3 -c \"import urllib.request as u; u.urlopen('http://localhost:8123/manifest.json', timeout=2)\" && exit 0; sleep 2; i=$((i+1)); done; exit 1";
           healthInterval = "1m";

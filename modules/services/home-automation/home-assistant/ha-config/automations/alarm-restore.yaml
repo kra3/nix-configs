@@ -1,0 +1,64 @@
+# Alarmo comes back disarmed after a Home Assistant restart. Remember the last real armed mode and re-arm it.
+- id: alarm_remember_armed_mode
+  alias: "Alarm: remember the armed mode for restart recovery"
+  description: >-
+    Records the last armed mode, or none after a disarm. Transitions out of
+    unavailable/unknown (startup) are ignored so a restart cannot overwrite it.
+  triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - armed_away
+    - armed_night
+    - disarmed
+  conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none
+         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+  actions:
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.alarm_restore_mode
+    data:
+      option: "{{ 'none' if trigger.to_state.state == 'disarmed' else trigger.to_state.state }}"
+  - action: homeassistant.save_persistent_states
+  mode: queued
+
+- id: alarm_restore_after_restart
+  alias: "Alarm: re-arm after a restart disarmed it"
+  description: >-
+    After Home Assistant starts, re-arms the remembered mode if Alarmo came
+    back disarmed, skipping the exit delay, and notifies the phones.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  actions:
+  - wait_template: >-
+      {{ states('alarm_control_panel.vasudha_secure') not in ['unavailable', 'unknown'] }}
+    timeout: "00:03:00"
+    continue_on_timeout: false
+  - delay: "00:00:30"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: input_select.alarm_restore_mode
+      state: none
+  - variables:
+      mode: "{{ 'away' if is_state('input_select.alarm_restore_mode', 'armed_away') else 'night' }}"
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: "{{ mode }}"
+      force: true
+      skip_delay: true
+      code: !secret alarm_code
+  - delay: "00:00:05"
+  - action: script.notify_all_phones
+    data:
+      title: "Alarm re-armed after restart"
+      message: "Home Assistant restarted and disarmed the alarm; it is armed {{ mode }} again ({{ states('alarm_control_panel.vasudha_secure') }})."
+  mode: single

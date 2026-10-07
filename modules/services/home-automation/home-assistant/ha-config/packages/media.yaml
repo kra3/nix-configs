@@ -1,5 +1,15 @@
 template:
   - sensor:
+      - name: Media disk used GB
+        unique_id: media_disk_used_gb
+        unit_of_measurement: GB
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.sabnzbd_karunagath_in_total_disk_space') | is_number
+             and states('sensor.sabnzbd_karunagath_in_free_disk_space') | is_number }}
+        state: >-
+          {{ (states('sensor.sabnzbd_karunagath_in_total_disk_space') | float
+              - states('sensor.sabnzbd_karunagath_in_free_disk_space') | float) | round(0) }}
       - name: Media disk used
         unique_id: media_disk_used_percent
         unit_of_measurement: "%"

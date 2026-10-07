@@ -1160,7 +1160,7 @@ views:
       icon: mdi:harddisk
       heading_style: title
     - type: custom:health-metric-card
-      entity: sensor.media_disk_used
+      entity: sensor.media_disk_used_gb
       name: Media disk
       icon: mdi:harddisk
       color: "#8fd9c0"
@@ -1173,6 +1173,13 @@ views:
         mode: absolute
         decimals: 0
       items:
+      - entity: sensor.media_disk_used
+        name: Used
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: "%"
       - entity: sensor.radarr_disk_space_movies
         name: Free
         days: 7
@@ -1191,6 +1198,10 @@ views:
       popup:
         graphs:
         - name: Media disk used
+          entities:
+          - sensor.media_disk_used_gb
+          days: 90
+        - name: Media disk used (percent)
           entities:
           - sensor.media_disk_used
           days: 90

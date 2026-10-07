@@ -1634,6 +1634,8 @@ views:
             - 6
             - 275
             - 174
+          presence:
+            - binary_sensor.bedroom_occupancy_presence
         - name: Hallway
           areas:
             - Hallway
@@ -1670,6 +1672,8 @@ views:
             - 240
             - 80
             - 118
+          presence:
+            - binary_sensor.laundry_occupancy_presence
         - name: Entrance
           areas:
             - Entrance
@@ -1690,6 +1694,8 @@ views:
             - 268
             - 53
             - 90
+          presence:
+            - binary_sensor.toilet_occupancy_presence
         - name: Bathroom
           areas:
             - Bathroom
@@ -1698,6 +1704,8 @@ views:
             - 240
             - 80
             - 118
+          presence:
+            - binary_sensor.bathroom_occupancy_presence
         - name: Office
           areas:
             - Office Room

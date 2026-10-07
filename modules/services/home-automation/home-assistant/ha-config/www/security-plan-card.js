@@ -37,8 +37,7 @@ function badgeFor(s, armed) {
   };
 }
 
-function planModel(states, areaOf, cfg, seen = {}, now = Date.now()) {
-  const hold = (cfg.occupancy_hold_seconds == null ? 120 : cfg.occupancy_hold_seconds) * 1000;
+function planModel(states, areaOf, cfg) {
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
   const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
@@ -54,9 +53,11 @@ function planModel(states, areaOf, cfg, seen = {}, now = Date.now()) {
       })
       .map((s) => badgeFor(s, armed))
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
-    const sensed = mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id));
-    for (const s of sensed) if (s.state === "on") seen[s.entity_id] = now;
-    const occupied = (r.presence || []).some((id) => states[id] && states[id].state === "on") || sensed.some((s) => s.state === "on" || (seen[s.entity_id] != null && now - seen[s.entity_id] < hold));
+    const presenceIds = new Set([
+      ...(r.presence || []),
+      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id)).map((s) => s.entity_id),
+    ]);
+    const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
     const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
     const lights = mine.filter((s) => s.entity_id.startsWith("light.") && !s.attributes.entity_id && !s.attributes.is_hue_group);
     const on = lights.filter((s) => s.state === "on");
@@ -178,14 +179,6 @@ class SecurityPlanCard extends HTMLElement {
     return { columns: 12, min_columns: 6 };
   }
 
-  connectedCallback() {
-    this._timer = setInterval(() => this._hass && this._render(), 15000);
-  }
-
-  disconnectedCallback() {
-    clearInterval(this._timer);
-  }
-
   set hass(hass) {
     this._hass = hass;
     if (this._popupCard) this._popupCard.hass = hass;
@@ -235,8 +228,7 @@ class SecurityPlanCard extends HTMLElement {
   _render() {
     const cfg = this._config;
     const layer = this._layer || cfg.layer || "security";
-    this._seen = this._seen || {};
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg, this._seen), cfg.size || [730, 620], cfg.image, layer);
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;

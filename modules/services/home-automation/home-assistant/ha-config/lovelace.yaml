@@ -16,9 +16,9 @@ resources:
     type: module
   - url: /local/room-tile-card.js?v=2
     type: module
-  - url: /local/security-status-card.js?v=2
+  - url: /local/security-status-card.js?v=3
     type: module
-  - url: /local/security-plan-card.js?v=5
+  - url: /local/security-plan-card.js?v=6
     type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module

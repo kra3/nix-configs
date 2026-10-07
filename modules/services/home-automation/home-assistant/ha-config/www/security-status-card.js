@@ -81,7 +81,9 @@ function secModel(states, areaOf, now, cfg) {
     title = "All closed";
     sub = `${alabel}${cams ? ` · ${cams} cameras watching` : ""}`;
   }
-  return { tone, title, sub, icon: aicon, alarm: alarm ? alarm.entity_id : "", astate, armed, open, unlocked, dead, people, now };
+  const warns = (cfg.warn || []).filter((w) => states[w.entity] && states[w.entity].state === "on").map((w) => ({ id: w.entity, label: w.label, icon: w.icon || "mdi:alert-outline" }));
+  if (warns.length && tone !== "bad") tone = "warn";
+  return { tone, title, sub, icon: aicon, alarm: alarm ? alarm.entity_id : "", astate, armed, open, unlocked, dead, people, warns, now };
 }
 
 function secHtml(m, showDead) {
@@ -91,15 +93,12 @@ function secHtml(m, showDead) {
     ...m.people.map((p) => chip("bad pulse", "mdi:walk", "Person", p.area, `data-act="more" data-id="${esc(p.id)}"`)),
     ...m.open.map((o) => chip(m.armed ? "bad" : "amber", "mdi:door-open", o.name, [o.area, ago(o.since, m.now)].filter(Boolean).join(" · "), `data-act="more" data-id="${esc(o.id)}"`)),
     ...m.unlocked.map((l) => chip("warn", "mdi:lock-open-variant", l.name, l.state, `data-act="more" data-id="${esc(l.id)}"`)),
+    ...m.warns.map((w) => chip("warn", w.icon, w.label, "", `data-act="more" data-id="${esc(w.id)}"`)),
     ...(m.dead.length ? [chip("warn", "mdi:access-point-off", `${m.dead.length} not reporting`, "", `data-act="dead"`)] : []),
   ].join("");
   const deadRow = showDead && m.dead.length ? `<div class="dead">${m.dead.map((d) => `<button class="link" data-act="more" data-id="${esc(d.id)}">${esc(d.name)}</button>`).join("")}</div>` : "";
   const arm = m.alarm
-    ? `<div class="arm">
-        <button class="btn ${m.astate === "armed_night" ? "on" : ""}" data-act="arm" data-mode="night"><ha-icon icon="mdi:shield-moon"></ha-icon>Night</button>
-        <button class="btn ${m.astate === "armed_away" ? "on" : ""}" data-act="arm" data-mode="away"><ha-icon icon="mdi:shield-lock"></ha-icon>Away</button>
-        <button class="btn ${m.astate === "disarmed" ? "on" : ""}" data-act="disarm"><ha-icon icon="mdi:shield-off-outline"></ha-icon>Disarm</button>
-      </div>`
+    ? `<div class="arm"><button class="btn on" data-act="alarm"><ha-icon icon="${m.icon}"></ha-icon>${m.astate === "disarmed" ? "Arm" : "Disarm"}</button></div>`
     : "";
   return `<div class="card ${m.tone}">
     <div class="top"><ha-icon class="lead" icon="${m.icon}"></ha-icon><div class="txt"><div class="title">${esc(m.title)}</div><div class="sub">${esc(m.sub)}</div></div>${arm}</div>
@@ -163,6 +162,7 @@ class SecurityStatusCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._popupCard) this._popupCard.hass = hass;
     if (this._config) this._render();
   }
 
@@ -188,11 +188,45 @@ class SecurityStatusCard extends HTMLElement {
       this._html = "";
       return this._render();
     }
-    if (act === "disarm") return this._moreInfo(m.alarm);
-    if (act === "arm") {
-      if (m.open.length && !window.confirm(`Arm anyway? Bypasses: ${m.open.map((o) => o.name).join(", ")}`)) return;
-      this._hass.callService("script", `alarm_force_arm_${el.dataset.mode}`, {});
+    if (act === "alarm") return this._openAlarmo(m.alarm);
+  }
+
+  async _openAlarmo(entity) {
+    if (this._overlay) return;
+    if (!document.getElementById("ssc-style")) {
+      const st = document.createElement("style");
+      st.id = "ssc-style";
+      st.textContent = `
+        .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .ssc-sheet { width: min(420px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
+        .ssc-head { display: flex; justify-content: flex-end; }
+        .ssc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
+      document.head.appendChild(st);
     }
+    const helpers = await window.loadCardHelpers();
+    const card = await helpers.createCardElement({ type: "custom:alarmo-card", entity });
+    card.hass = this._hass;
+    const ov = document.createElement("div");
+    ov.className = "ssc-overlay";
+    ov.innerHTML = '<div class="ssc-sheet" role="dialog" aria-modal="true"><div class="ssc-head"><button class="ssc-close" aria-label="Close">×</button></div></div>';
+    ov.querySelector(".ssc-sheet").appendChild(card);
+    const close = () => {
+      document.removeEventListener("keydown", onKey);
+      ov.remove();
+      this._overlay = null;
+      this._popupCard = null;
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) close();
+    });
+    ov.querySelector(".ssc-close").addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(ov);
+    this._overlay = ov;
+    this._popupCard = card;
   }
 }
 

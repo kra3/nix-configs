@@ -1538,6 +1538,12 @@ views:
       exclude:
       - binary_sensor.house_exits_open_status
       - binary_sensor.front_door_knock_contact
+      - lock.front_front_door_nw
+      - binary_sensor.front_front_door_nw_door
+      warn:
+      - entity: binary_sensor.front_door_ble_degraded
+        label: Front door lock on cloud fallback
+        icon: mdi:bluetooth-off
       area_override:
         camera.ranger_duo_fxd: Living Room
         binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
@@ -1559,6 +1565,8 @@ views:
       hide:
         - binary_sensor.house_exits_open_status
         - binary_sensor.front_door_knock_contact
+        - lock.front_front_door_nw
+        - binary_sensor.front_front_door_nw_door
       rooms:
         - name: Dining Room
           areas:
@@ -1635,6 +1643,7 @@ views:
             - 118
           entities:
             - lock.front_door
+            - binary_sensor.front_door_open
         - name: Toilet
           areas:
             - Toilet
@@ -1687,15 +1696,12 @@ views:
         binary_sensor.hallway_door_contact_contact:
           - 727
           - 205
-        binary_sensor.front_front_door_nw_door:
-          - 444
-          - 366
         lock.front_door:
-          - 422
+          - 458
           - 364
-        lock.front_front_door_nw:
-          - 466
-          - 364
+        binary_sensor.front_door_open:
+          - 430
+          - 366
       grid_options:
         columns: full
   - type: grid
@@ -1780,6 +1786,8 @@ views:
             - area_name
             features:
             - type: lock-commands
+        exclude:
+        - entity_id: lock.front_front_door_nw
       grid_options:
         columns: 12
     - type: custom:auto-entities
@@ -1808,74 +1816,13 @@ views:
           state: /^(unknown|unavailable)$/
         - domain: lock
           state: /^(unknown|unavailable)$/
-      grid_options:
-        columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Openings
-      icon: mdi:door
-      heading_style: title
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 768px)"
-    - type: custom:auto-entities
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 768px)"
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: binary_sensor
-          attributes:
-            device_class: door
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: window
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: garage_door
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: opening
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
         exclude:
-        - entity_id: binary_sensor.house_exits_open_status
-      sort:
-        method: state
-        reverse: true
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
       grid_options:
         columns: 12
   - type: grid
-    column_span: 2
+    column_span: 3
     cards:
     - type: heading
       heading: Activity
@@ -1908,6 +1855,8 @@ views:
         - domain: alarm_control_panel
         exclude:
         - entity_id: binary_sensor.house_exits_open_status
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
       grid_options:
         columns: full
 - title: Climate

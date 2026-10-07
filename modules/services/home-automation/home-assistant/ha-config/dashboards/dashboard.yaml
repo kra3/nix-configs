@@ -799,6 +799,8 @@ views:
         unit: ""
       - entity: sensor.slskd_completed_downloads
         name: Done
+        mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: ""
@@ -1073,11 +1075,15 @@ views:
       items:
       - entity: sensor.jellyfin_series
         name: Series
+        mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.jellyfin_episodes
         name: Episodes
+        mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: ""
@@ -1113,11 +1119,15 @@ views:
       items:
       - entity: sensor.navidrome_albums
         name: Albums
+        mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.navidrome_artists
         name: Artists
+        mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: ""
@@ -1207,6 +1217,8 @@ views:
         unit: "%"
       - entity: sensor.radarr_disk_space_movies
         name: Free
+        mode: now
+        growth: true
         days: 7
         good: up
         decimals: 0

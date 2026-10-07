@@ -712,6 +712,13 @@ class HealthMetricCard extends HTMLElement {
     this._render();
   }
 
+  _growthHtml(s, it, dec, lang) {
+    const g = s.length === 1 ? { value: 0, abs: 0 } : computeDelta(s, "absolute", it.points);
+    if (!g) return `<div class="now">&nbsp;</div>`;
+    const col = TONE_COLOR[deltaTone(g, it.good)] || "var(--secondary-text-color)";
+    return `<div class="now" style="color:${col}">${signed(g.value, dec, lang)} / ${it.days || 7}d</div>`;
+  }
+
   // True min/max points for a range chip, plus the live reading; falls back to the plotted series.
   _span(key, fallback, live) {
     const pts = [...(this._data["lo" + key] || []), ...(this._data["hi" + key] || [])];
@@ -794,7 +801,7 @@ class HealthMetricCard extends HTMLElement {
         const s = this._data["item" + i] || [];
         const ist = this._hass.states[it.entity];
         const mode = it.mode || "absolute";
-        const d = s.length === 1 ? { value: 0, abs: 0 } : computeDelta(s, mode, it.points);
+        const d = computeDelta(s, mode, it.points);
         const tone = deltaTone(d, it.good);
         const unit = it.unit !== undefined ? it.unit : it.per ? "%" : (ist && ist.attributes.unit_of_measurement) || "";
         const dec = it.decimals !== undefined ? it.decimals : 1;
@@ -824,7 +831,7 @@ class HealthMetricCard extends HTMLElement {
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
             `<div class="change">${now} ${unit}${chips ? `<span class="scs">${chips}</span>` : ""}</div>` +
-            (range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
+            (it.growth ? this._growthHtml(s, it, dec, lang) : range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
             `</div></div>`
           );
         }

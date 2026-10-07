@@ -124,3 +124,15 @@ template:
         state: >-
           {{ ['sensor.unpackerr_lidarr_queue', 'sensor.unpackerr_radarr_queue', 'sensor.unpackerr_sonarr_queue']
              | map('states') | map('float', 0) | sum | int }}
+      - name: Seerr waiting requests
+        unique_id: seerr_waiting_requests
+        unit_of_measurement: requests
+        state_class: measurement
+        availability: >-
+          {{ states("sensor.seerr_processing_requests") | is_number
+             and states("sensor.unpackerr_radarr_queue") | is_number
+             and states("sensor.unpackerr_sonarr_queue") | is_number }}
+        state: >-
+          {{ [states("sensor.seerr_processing_requests") | int(0)
+              - states("sensor.unpackerr_radarr_queue") | int(0)
+              - states("sensor.unpackerr_sonarr_queue") | int(0), 0] | max }}

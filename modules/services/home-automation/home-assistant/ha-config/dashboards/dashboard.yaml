@@ -863,6 +863,12 @@ views:
         days: 7
         decimals: 0
         unit: ""
+      - entity: sensor.seerr_waiting_requests
+        name: Waiting
+        mode: now
+        days: 7
+        decimals: 0
+        unit: ""
       - entity: sensor.seerr_film_requests
         name: Movies
         mode: now
@@ -881,12 +887,14 @@ views:
           entities:
           - sensor.seerr_total_requests
           days: 7
-        - name: Pending and processing
+        - name: Pending, processing and waiting
           entities:
           - entity: sensor.seerr_pending_requests
             name: Pending
           - entity: sensor.seerr_processing_requests
             name: Processing
+          - entity: sensor.seerr_waiting_requests
+            name: Waiting
           days: 7
         - name: Movies and TV
           entities:

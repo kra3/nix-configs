@@ -1559,6 +1559,29 @@ views:
       heading_style: title
     - type: custom:security-plan-card
       image: /local/floorplan.png?v=12
+      sound_quiet_when:
+      - media_player.lg_webos_tv_oled77c35la
+      - media_player.home_theater_2
+      camera_card:
+        cameras: &sec_cams
+        - camera_entity: camera.ranger_duo_fxd
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_fxd_person_occupancy
+        - camera_entity: camera.ranger_duo_ptz
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_ptz_person_occupancy
+        - camera_entity: camera.ranger_uno
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_uno_person_occupancy
+        live:
+          display:
+            mode: single
       size:
         - 736
         - 374
@@ -1712,22 +1735,7 @@ views:
       icon: mdi:cctv
       heading_style: title
     - type: custom:advanced-camera-card
-      cameras:
-      - camera_entity: camera.ranger_duo_fxd
-        live_provider: go2rtc
-        triggers:
-          entities:
-          - binary_sensor.ranger_duo_fxd_person_occupancy
-      - camera_entity: camera.ranger_duo_ptz
-        live_provider: go2rtc
-        triggers:
-          entities:
-          - binary_sensor.ranger_duo_ptz_person_occupancy
-      - camera_entity: camera.ranger_uno
-        live_provider: go2rtc
-        triggers:
-          entities:
-          - binary_sensor.ranger_uno_person_occupancy
+      cameras: *sec_cams
       live:
         display:
           mode: grid
@@ -1755,11 +1763,27 @@ views:
       icon: mdi:account-eye
       heading_style: subtitle
     - type: custom:security-lastseen-card
-      kind: person
+      kinds:
+      - person
+      - dog
+      - cat
       area_override:
         camera.ranger_duo_fxd: Living Room
         binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
         image.ranger_duo_fxd_person: Living Room
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Recent events
+      icon: mdi:history
+      heading_style: subtitle
+    - type: custom:advanced-camera-card
+      cameras: *sec_cams
+      view:
+        default: clips
+        camera_select: current
+      status_bar:
+        style: overlay
       grid_options:
         columns: full
   - type: grid

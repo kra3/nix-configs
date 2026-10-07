@@ -54,8 +54,16 @@ function secModel(states, areaOf, now, cfg) {
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
   const astate = alarm ? alarm.state : "unknown";
   const [aicon, alabel] = ALARM[astate] || ["mdi:shield-outline", titleCase(astate)];
-  const armed = astate.startsWith("armed_");
-  const cams = all.filter((s) => s.entity_id.startsWith("camera.") && !GONE.includes(s.state)).length;
+  const armed = astate.startsWith("armed_") || astate === "pending";
+  const camList = all.filter((s) => s.entity_id.startsWith("camera.") && !GONE.includes(s.state));
+  const cams = camList.length;
+  const detect = (c) => states["switch." + c.entity_id.slice(7) + "_detect"];
+  const camStat = {
+    total: cams,
+    rec: camList.filter((c) => c.state === "recording").length,
+    det: camList.filter((c) => detect(c) && detect(c).state === "on").length,
+    off: camList.filter((c) => detect(c) && detect(c).state === "off").map((c) => name(c)),
+  };
 
   let tone;
   let title;
@@ -82,8 +90,9 @@ function secModel(states, areaOf, now, cfg) {
     sub = `${alabel}${cams ? ` · ${cams} cameras watching` : ""}`;
   }
   const warns = (cfg.warn || []).filter((w) => states[w.entity] && states[w.entity].state === "on").map((w) => ({ id: w.entity, label: w.label, icon: w.icon || "mdi:alert-outline" }));
-  if (warns.length && tone !== "bad") tone = "warn";
-  return { tone, title, sub, icon: aicon, alarm: alarm ? alarm.entity_id : "", astate, armed, open, unlocked, dead, people, warns, now };
+  const blind = armed && camStat.off.length;
+  if ((warns.length || blind) && tone !== "bad") tone = "warn";
+  return { tone, title, sub, icon: aicon, alarm: alarm ? alarm.entity_id : "", astate, armed, open, unlocked, dead, people, warns, camStat, blind: blind ? camStat.off : [], now };
 }
 
 function secHtml(m, showDead) {
@@ -94,6 +103,8 @@ function secHtml(m, showDead) {
     ...m.open.map((o) => chip(m.armed ? "bad" : "amber", "mdi:door-open", o.name, [o.area, ago(o.since, m.now)].filter(Boolean).join(" · "), `data-act="more" data-id="${esc(o.id)}"`)),
     ...m.unlocked.map((l) => chip("warn", "mdi:lock-open-variant", l.name, l.state, `data-act="more" data-id="${esc(l.id)}"`)),
     ...m.warns.map((w) => chip("warn", w.icon, w.label, "", `data-act="more" data-id="${esc(w.id)}"`)),
+    ...(m.blind.length ? [chip("warn", "mdi:cctv-off", "Detection off", m.blind.join(", "), `data-act="none"`)] : []),
+    ...(m.camStat.total ? [chip("info", "mdi:cctv", "Cameras", `${m.camStat.rec} recording · ${m.camStat.det} detecting`, `data-act="none"`)] : []),
     ...(m.dead.length ? [chip("warn", "mdi:access-point-off", `${m.dead.length} not reporting`, "", `data-act="dead"`)] : []),
   ].join("");
   const deadRow = showDead && m.dead.length ? `<div class="dead">${m.dead.map((d) => `<button class="link" data-act="more" data-id="${esc(d.id)}">${esc(d.name)}</button>`).join("")}</div>` : "";
@@ -128,6 +139,7 @@ const STYLE = `
   .chip.amber { --k: #ffb300; }
   .chip.warn { --k: #ffb300; }
   .chip.bad { --k: var(--error-color, #f44336); }
+  .chip.info { cursor: default; }
   .chip.pulse { animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
   .lbl { white-space: nowrap; }
@@ -255,6 +267,7 @@ class SecurityStatusCard extends HTMLElement {
 }
 
 function lastSeen(states, kind, now, areaOf = () => "") {
+  const label = kind === "person" ? "" : titleCase(kind);
   const re = new RegExp("^image\\..*_" + kind + "$");
   const suffix = new RegExp(" " + kind + "$", "i");
   return Object.values(states)
@@ -263,7 +276,7 @@ function lastSeen(states, kind, now, areaOf = () => "") {
       id: s.entity_id,
       picture: s.attributes.entity_picture,
       camera: (s.attributes.friendly_name || titleCase(s.entity_id.replace(/^image\./, ""))).replace(suffix, "").replace(/^(Dining Room|Office Room) /, ""),
-      area: areaOf(s.entity_id),
+      area: [label, areaOf(s.entity_id)].filter(Boolean).join(" · "),
       ts: Date.parse(s.state),
     }))
     .filter((i) => isFinite(i.ts))
@@ -300,8 +313,11 @@ class SecurityLastSeenCard extends HTMLElement {
   }
 
   _render() {
-    const kind = this._config.kind || "person";
-    const items = lastSeen(this._hass.states, kind, Date.now(), (id) => areaFor(this._hass, id, this._config));
+    const kinds = this._config.kinds || [this._config.kind || "person"];
+    const kind = kinds.join("/");
+    const items = kinds
+      .flatMap((k) => lastSeen(this._hass.states, k, Date.now(), (id) => areaFor(this._hass, id, this._config)))
+      .sort((a, b) => b.ts - a.ts);
     const html = items.length
       ? items
           .map(

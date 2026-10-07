@@ -4,6 +4,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
+const SOUND = /^binary_sensor\.(.+)_(glass|shatter|scream|fire_alarm)_sound$/;
+const PLAYING = ["on", "playing", "paused", "buffering"];
 
 function areaFor(hass, id, cfg) {
   const over = cfg && cfg.area_override && cfg.area_override[id];
@@ -39,7 +41,7 @@ function badgeFor(s, armed) {
 function planModel(states, areaOf, cfg) {
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
-  const armed = !!alarm && alarm.state.startsWith("armed_");
+  const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
   const rooms = (cfg.rooms || []).map((r) => {
     const areas = new Set([].concat(r.areas || r.area || []));
     const extra = new Set(r.entities || []);
@@ -67,6 +69,12 @@ function planModel(states, areaOf, cfg) {
     if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
     return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
   });
+  const quiet = !armed && (cfg.sound_quiet_when || []).some((id) => states[id] && PLAYING.includes(states[id].state));
+  for (const s of all) {
+    const hit = SOUND.exec(s.entity_id);
+    if (!hit || s.state !== "on" || (quiet && hit[2] !== "fire_alarm")) continue;
+    for (const r of rooms) for (const b of r.badges) if (b.id === "camera." + hit[1]) b.heard = hit[2].replace("_", " ");
+  }
   return { rooms, armed };
 }
 
@@ -82,7 +90,7 @@ function planHtml(m, size, image, layer = "security") {
         : ""
       : r.badges
           .filter((b) => !b.pos)
-          .map((b) => `<button class="b ${b.tone} ${b.seen ? "seen" : ""}" title="${esc(b.name)}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
+          .map((b) => `<button class="b ${b.tone} ${b.seen ? "seen" : ""} ${b.heard ? "heard" : ""}" title="${esc(b.name + (b.heard ? " · heard " + b.heard : ""))}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
           .join("");
     const glow = lay && r.lit ? `--glow:${Math.round(10 + 22 * r.glow)}%;` : "";
     return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.occupied ? "occ" : ""} ${lay && r.lit ? "lit" : ""} ${lay && r.lights.length ? "tog" : ""}" data-lights="${esc(r.lights.join(","))}" style="${glow}left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
@@ -92,12 +100,12 @@ function planHtml(m, size, image, layer = "security") {
     .flatMap((r) => r.badges.filter((b) => b.pos))
     .map(
       (b) =>
-        `<button class="b w ${b.tone}" title="${esc(b.name)}" data-id="${esc(b.id)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"><ha-icon icon="${b.icon}"></ha-icon></button>`
+        `<button class="b w ${b.tone} ${b.heard ? "heard" : ""}" title="${esc(b.name + (b.heard ? " · heard " + b.heard : ""))}" data-id="${esc(b.id)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"><ha-icon icon="${b.icon}"></ha-icon></button>`
     )
     .join("");
   const legend = lay
     ? `<div class="legend"><span><i class="k lit"></i>Lights on</span><span><i class="k occ"></i>Occupied</span><span>Tap a room to toggle, hold for details</span></div>`
-    : `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span></div>`;
+    : `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span><span><i class="k heard"></i>Sound alert</span></div>`;
   const sw = `<div class="sw"><button data-layer="security" class="${lay ? "" : "on"}"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Security</button><button data-layer="lights" class="${lay ? "on" : ""}"><ha-icon icon="mdi:lightbulb-group-outline"></ha-icon>Lights</button></div>`;
   return `${sw}<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}${walls}</div>${legend}`;
 }
@@ -133,6 +141,7 @@ const STYLE = `
   .b.open { color: #ffb300; background: color-mix(in srgb, #ffb300 18%, transparent); }
   .b.alert { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
   .b.cam { color: var(--primary-color); }
+  .b.heard { outline: 2px dashed var(--error-color, #f44336); outline-offset: 1px; border-radius: 50%; }
   .b.dead { opacity: 0.45; }
   .b.w { position: absolute; transform: translate(-50%, -50%); z-index: 1; background: var(--card-background-color); border-radius: 50%; }
   .b.w.ok { opacity: 0.6; }
@@ -145,6 +154,7 @@ const STYLE = `
   .k.alert { background: var(--error-color, #f44336); border-radius: 50%; }
   .k.lit { background: color-mix(in srgb, #ffcf6b 45%, transparent); }
   .k.cam { background: var(--primary-color); border-radius: 50%; }
+  .k.heard { border: 2px dashed var(--error-color, #f44336); border-radius: 50%; width: 6px; height: 6px; }
   @container plan (max-width: 560px) {
     .nm { font-size: 9px; }
     .room { padding: 2px 3px; }
@@ -172,7 +182,48 @@ class SecurityPlanCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._popupCard) this._popupCard.hass = hass;
     if (this._config) this._render();
+  }
+
+  async _openCamera(id) {
+    const base = this._config.camera_card;
+    const cameras = (base.cameras || []).filter((c) => c.camera_entity === id);
+    if (this._overlay || !cameras.length) return;
+    if (!document.getElementById("spc-style")) {
+      const st = document.createElement("style");
+      st.id = "spc-style";
+      st.textContent = `
+        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .spc-sheet { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px; box-sizing: border-box; }
+        .spc-head { display: flex; justify-content: flex-end; }
+        .spc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
+      document.head.appendChild(st);
+    }
+    const helpers = await window.loadCardHelpers();
+    const card = await helpers.createCardElement({ ...base, type: "custom:advanced-camera-card", cameras, view: { ...(base.view || {}), default: "live" } });
+    card.hass = this._hass;
+    const ov = document.createElement("div");
+    ov.className = "spc-overlay";
+    ov.innerHTML = '<div class="spc-sheet" role="dialog" aria-modal="true"><div class="spc-head"><button class="spc-close" aria-label="Close">×</button></div></div>';
+    ov.querySelector(".spc-sheet").appendChild(card);
+    const close = () => {
+      document.removeEventListener("keydown", onKey);
+      ov.remove();
+      this._overlay = null;
+      this._popupCard = null;
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) close();
+    });
+    ov.querySelector(".spc-close").addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(ov);
+    this._overlay = ov;
+    this._popupCard = card;
   }
 
   _render() {
@@ -183,7 +234,7 @@ class SecurityPlanCard extends HTMLElement {
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
     const more = (entityId) => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
-    for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => more(el.dataset.id));
+    for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
     for (const el of this.shadowRoot.querySelectorAll(".sw button")) {
       el.addEventListener("click", () => {
         this._layer = el.dataset.layer;

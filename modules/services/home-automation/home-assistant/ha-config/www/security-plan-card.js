@@ -97,8 +97,8 @@ const STYLE = `
   .plan.img::before { content: ""; position: absolute; inset: 0; background: var(--secondary-text-color); opacity: 0.6; -webkit-mask: var(--img) center / 100% 100% no-repeat; mask: var(--img) center / 100% 100% no-repeat; }
   .plan.img .room { border: 0; background: transparent; border-radius: 0; }
   .plan.img .room.occ { background: color-mix(in srgb, var(--primary-color) 24%, transparent); }
-  .plan.img .room.open { box-shadow: inset 0 0 0 2px #ffb300; }
-  .plan.img .room.alert { box-shadow: inset 0 0 0 2px var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
+  .plan.img .room.open { background: color-mix(in srgb, #ffb300 14%, transparent); }
+  .plan.img .room.alert { background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
   .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
   .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
   .room.open { border-color: #ffb300; }

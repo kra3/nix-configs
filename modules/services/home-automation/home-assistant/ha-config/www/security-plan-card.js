@@ -5,7 +5,9 @@ const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
 
-function areaFor(hass, id) {
+function areaFor(hass, id, cfg) {
+  const over = cfg && cfg.area_override && cfg.area_override[id];
+  if (over) return over;
   const e = hass.entities && hass.entities[id];
   const dev = e && e.device_id && hass.devices && hass.devices[e.device_id];
   const areaId = (e && e.area_id) || (dev && dev.area_id);
@@ -120,7 +122,7 @@ class SecurityPlanCard extends HTMLElement {
 
   _render() {
     const cfg = this._config;
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id), cfg), cfg.size || [730, 620]);
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620]);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;

@@ -26,7 +26,9 @@ function ago(ms, now) {
   return `${Math.floor(h / 24)} d`;
 }
 
-function areaFor(hass, id) {
+function areaFor(hass, id, cfg) {
+  const over = cfg && cfg.area_override && cfg.area_override[id];
+  if (over) return over;
   const e = hass.entities && hass.entities[id];
   const dev = e && e.device_id && hass.devices && hass.devices[e.device_id];
   const areaId = (e && e.area_id) || (dev && dev.area_id);
@@ -165,7 +167,7 @@ class SecurityStatusCard extends HTMLElement {
   }
 
   _render() {
-    this._model = secModel(this._hass.states, (id) => areaFor(this._hass, id), Date.now(), this._config);
+    this._model = secModel(this._hass.states, (id) => areaFor(this._hass, id, this._config), Date.now(), this._config);
     const html = secHtml(this._model, this._showDead);
     if (html === this._html) return;
     this._html = html;
@@ -241,7 +243,7 @@ class SecurityLastSeenCard extends HTMLElement {
 
   _render() {
     const kind = this._config.kind || "person";
-    const items = lastSeen(this._hass.states, kind, Date.now(), (id) => areaFor(this._hass, id));
+    const items = lastSeen(this._hass.states, kind, Date.now(), (id) => areaFor(this._hass, id, this._config));
     const html = items.length
       ? items
           .map(

@@ -1538,6 +1538,10 @@ views:
       exclude:
       - binary_sensor.house_exits_open_status
       - binary_sensor.front_door_knock_contact
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
     - type: heading
@@ -1546,6 +1550,10 @@ views:
       heading_style: subtitle
     - type: custom:security-lastseen-card
       kind: person
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
   - type: grid
@@ -1558,27 +1566,17 @@ views:
     - type: custom:security-plan-card
       size:
         - 730
-        - 620
+        - 352
       hide:
-        - binary_sensor.patio_door_contact_contact
         - binary_sensor.house_exits_open_status
         - binary_sensor.front_door_knock_contact
       rooms:
-        - name: Terrace
-          rect:
-            - 5
-            - 0
-            - 248
-            - 252
-          outdoor: true
-          entities:
-            - binary_sensor.patio_door_contact_contact
         - name: Dining Room
           areas:
             - Dining Room
           rect:
             - 5
-            - 260
+            - 0
             - 245
             - 234
           presence:
@@ -1588,7 +1586,7 @@ views:
             - Living Room
           rect:
             - 250
-            - 260
+            - 0
             - 190
             - 174
           presence:
@@ -1598,7 +1596,7 @@ views:
             - Bed Room
           rect:
             - 445
-            - 260
+            - 0
             - 275
             - 174
         - name: Hallway
@@ -1606,7 +1604,7 @@ views:
             - Hallway
           rect:
             - 250
-            - 434
+            - 174
             - 475
             - 60
           presence:
@@ -1616,7 +1614,7 @@ views:
             - Kitchen Dining
           rect:
             - 5
-            - 494
+            - 234
             - 115
             - 118
         - name: Kitchen
@@ -1624,7 +1622,7 @@ views:
             - Kitchen
           rect:
             - 120
-            - 494
+            - 234
             - 170
             - 118
           presence:
@@ -1634,7 +1632,7 @@ views:
             - Laundry Room
           rect:
             - 295
-            - 494
+            - 234
             - 80
             - 118
         - name: Entrance
@@ -1643,7 +1641,7 @@ views:
             - FRONT
           rect:
             - 375
-            - 494
+            - 234
             - 110
             - 118
           entities:
@@ -1653,7 +1651,7 @@ views:
             - Toilet
           rect:
             - 487
-            - 494
+            - 234
             - 53
             - 118
         - name: Bathroom
@@ -1661,7 +1659,7 @@ views:
             - Bathroom
           rect:
             - 540
-            - 494
+            - 234
             - 80
             - 118
         - name: Office
@@ -1669,11 +1667,15 @@ views:
             - Office Room
           rect:
             - 625
-            - 494
+            - 234
             - 100
             - 118
           presence:
             - binary_sensor.room_presence_office
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
   - type: grid

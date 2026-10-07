@@ -83,7 +83,10 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8123";
-        vhostExtraConfig = "client_max_body_size 500m;";
+        vhostExtraConfig = ''
+          client_max_body_size 500m;
+          rewrite ^/api/frigate/([^/]+)/var/lib/frigate/(.*)$ /api/frigate/$1/$2 last;
+        '';
         locationExtraConfig = ''
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Proto $scheme;

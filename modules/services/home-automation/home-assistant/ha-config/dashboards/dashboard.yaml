@@ -1558,7 +1558,7 @@ views:
       icon: mdi:floor-plan
       heading_style: title
     - type: custom:security-plan-card
-      image: /local/floorplan.png?v=12
+      image: /local/floorplan.png?v=13
       camera_card:
         cameras: &sec_cams
         - camera_entity: camera.ranger_duo_fxd

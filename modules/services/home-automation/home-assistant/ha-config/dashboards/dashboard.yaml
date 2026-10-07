@@ -1171,6 +1171,11 @@ views:
       icon: mdi:harddisk
       color: "#8fd9c0"
       decimals: 0
+      secondary:
+        entity: sensor.media_disk_used
+        inline: true
+        decimals: 0
+        unit: " %"
       show_date: false
       chart:
         type: line
@@ -1179,13 +1184,6 @@ views:
         mode: absolute
         decimals: 0
       items:
-      - entity: sensor.media_disk_used
-        name: Used
-        mode: now
-        range: false
-        days: 7
-        decimals: 0
-        unit: "%"
       - entity: sensor.radarr_disk_space_movies
         name: Free
         mode: now

@@ -519,6 +519,7 @@ const STYLE = `
   .chip.bad { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
   .chip.neutral { color: var(--secondary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
   .item .change.gr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+  .alt { margin-left: 6px; font-size: 15px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; }
   .item .fl { flex: 1; min-width: 0; }
   .vv { white-space: nowrap; }
   .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -764,7 +765,7 @@ class HealthMetricCard extends HTMLElement {
     const chartMain = this._data.main || [];
     const raw = c.hero_from === "chart" ? (chartMain.length ? chartMain[chartMain.length - 1].v / scale : NaN) : st ? parseFloat(st.state) : NaN;
     const hero = isFinite(raw) ? this._formatMain(raw * scale) : { text: "\u2013", unit: "" };
-    const heroHtml = hero.html || `<span class="value">${hero.text}</span><span class="unit">${hero.unit}</span>`;
+    let heroHtml = hero.html || `<span class="value">${hero.text}</span><span class="unit">${hero.unit}</span>`;
 
     let under = "";
     const main = this._data.main || [];
@@ -789,7 +790,8 @@ class HealthMetricCard extends HTMLElement {
       const sv = sec ? parseFloat(sec.state) : NaN;
       if (isFinite(sv)) {
         const txt = c.secondary.format === "duration" ? durationText(sv, lang) : fmt(sv, c.secondary.decimals || 0, lang);
-        under += `<div class="sub">${c.secondary.prefix || ""}${txt}</div>`;
+        if (c.secondary.inline) heroHtml += `<span class="alt">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</span>`;
+        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}</div>`;
       }
     }
 

@@ -52,6 +52,7 @@
             "${../../../services/home-automation/home-assistant/ha-config/www/room-tile-card.js}:/config/www/room-tile-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-status-card.js}:/config/www/security-status-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-plan-card.js}:/config/www/security-plan-card.js:ro"
+            "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"
             "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
             "/run/dbus:/run/dbus:ro"
           ];
@@ -115,6 +116,14 @@
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'
         '';
+      };
+
+      sops.secrets."home-assistant/floorplan.png" = {
+        sopsFile = ../../../../secrets/floorplan.png;
+        format = "binary";
+        owner = "root";
+        group = "root";
+        mode = "0444";
       };
 
       sops.secrets."homeassistant.latitude" = {

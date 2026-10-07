@@ -64,7 +64,7 @@ function planModel(states, areaOf, cfg) {
   return { rooms, armed };
 }
 
-function planHtml(m, size) {
+function planHtml(m, size, image) {
   const [W, H] = size;
   const pct = (v, t) => ((v / t) * 100).toFixed(3) + "%";
   const room = (r) => {
@@ -75,7 +75,7 @@ function planHtml(m, size) {
     return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.person ? "person" : ""}" style="left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
       <div class="nm">${esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div><div class="bs">${badges}</div></div>`;
   };
-  return `<div class="plan" style="aspect-ratio:${W}/${H}">${m.rooms.map(room).join("")}</div>`;
+  return `<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}</div>`;
 }
 
 const STYLE = `
@@ -83,6 +83,11 @@ const STYLE = `
   ha-card { padding: 10px; }
   .plan { position: relative; width: 100%; container: plan / inline-size; }
   .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; container: room / inline-size; }
+  .plan.img::before { content: ""; position: absolute; inset: 0; background: var(--secondary-text-color); opacity: 0.6; -webkit-mask: var(--img) center / 100% 100% no-repeat; mask: var(--img) center / 100% 100% no-repeat; }
+  .plan.img .room { border: 0; background: transparent; border-radius: 0; }
+  .plan.img .room.occ { background: color-mix(in srgb, var(--primary-color) 24%, transparent); }
+  .plan.img .room.open { box-shadow: inset 0 0 0 2px #ffb300; }
+  .plan.img .room.alert { box-shadow: inset 0 0 0 2px var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
   .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
   .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
   .room.open { border-color: #ffb300; }
@@ -130,7 +135,7 @@ class SecurityPlanCard extends HTMLElement {
 
   _render() {
     const cfg = this._config;
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620]);
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;

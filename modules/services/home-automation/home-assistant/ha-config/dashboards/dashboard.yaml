@@ -1552,9 +1552,10 @@ views:
       icon: mdi:floor-plan
       heading_style: title
     - type: custom:security-plan-card
+      image: /local/floorplan.png
       size:
-        - 730
-        - 352
+        - 736
+        - 374
       hide:
         - binary_sensor.house_exits_open_status
         - binary_sensor.front_door_knock_contact
@@ -1563,8 +1564,8 @@ views:
           areas:
             - Dining Room
           rect:
-            - 5
-            - 0
+            - 9
+            - 6
             - 245
             - 234
           presence:
@@ -1573,8 +1574,8 @@ views:
           areas:
             - Living Room
           rect:
-            - 250
-            - 0
+            - 254
+            - 6
             - 190
             - 174
           presence:
@@ -1583,16 +1584,16 @@ views:
           areas:
             - Bed Room
           rect:
-            - 445
-            - 0
+            - 449
+            - 6
             - 275
             - 174
         - name: Hallway
           areas:
             - Hallway
           rect:
-            - 250
-            - 174
+            - 254
+            - 180
             - 475
             - 60
           presence:
@@ -1601,16 +1602,16 @@ views:
           areas:
             - Kitchen Dining
           rect:
-            - 5
-            - 234
+            - 9
+            - 240
             - 115
             - 118
         - name: Kitchen
           areas:
             - Kitchen
           rect:
-            - 120
-            - 234
+            - 124
+            - 240
             - 170
             - 118
           presence:
@@ -1619,8 +1620,8 @@ views:
           areas:
             - Laundry Room
           rect:
-            - 295
-            - 234
+            - 299
+            - 240
             - 80
             - 118
         - name: Entrance
@@ -1628,8 +1629,8 @@ views:
             - Entrance
             - FRONT
           rect:
-            - 375
-            - 234
+            - 379
+            - 240
             - 110
             - 118
           entities:
@@ -1638,24 +1639,24 @@ views:
           areas:
             - Toilet
           rect:
-            - 487
-            - 234
+            - 491
+            - 240
             - 53
             - 118
         - name: Bathroom
           areas:
             - Bathroom
           rect:
-            - 540
-            - 234
+            - 544
+            - 240
             - 80
             - 118
         - name: Office
           areas:
             - Office Room
           rect:
-            - 625
-            - 234
+            - 629
+            - 240
             - 100
             - 118
           presence:

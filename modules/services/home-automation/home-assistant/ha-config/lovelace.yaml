@@ -16,7 +16,7 @@ resources:
     type: module
   - url: /local/room-tile-card.js?v=2
     type: module
-  - url: /local/security-status-card.js?v=3
+  - url: /local/security-status-card.js?v=4
     type: module
   - url: /local/security-plan-card.js?v=7
     type: module

@@ -188,10 +188,10 @@ class SecurityStatusCard extends HTMLElement {
       this._html = "";
       return this._render();
     }
-    if (act === "alarm") return this._openAlarmo(m.alarm);
+    if (act === "alarm") return this._openAlarmo(m.alarm, m.astate === "disarmed" ? m.open : []);
   }
 
-  async _openAlarmo(entity) {
+  async _openAlarmo(entity, open = []) {
     if (this._overlay) return;
     if (!document.getElementById("ssc-style")) {
       const st = document.createElement("style");
@@ -200,12 +200,36 @@ class SecurityStatusCard extends HTMLElement {
         .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .ssc-sheet { width: min(420px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
         .ssc-head { display: flex; justify-content: flex-end; }
+        .ssc-force { padding: 4px 16px 8px; display: grid; gap: 12px; }
+        .ssc-force h3 { margin: 0; font-size: 18px; }
+        .ssc-force p { margin: 0; color: var(--secondary-text-color); font-size: 14px; }
+        .ssc-force input { font-size: 22px; letter-spacing: 6px; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--divider-color); background: transparent; color: var(--primary-text-color); }
+        .ssc-force .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .ssc-force button { padding: 12px; border-radius: 10px; border: 0; font-size: 15px; cursor: pointer; background: var(--primary-color); color: var(--text-primary-color, #fff); }
+        .ssc-force .err { color: var(--error-color, #db4437); min-height: 1em; }
         .ssc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
       document.head.appendChild(st);
     }
-    const helpers = await window.loadCardHelpers();
-    const card = await helpers.createCardElement({ type: "custom:alarmo-card", entity });
-    card.hass = this._hass;
+    let card;
+    if (open.length) {
+      card = document.createElement("div");
+      card.className = "ssc-force";
+      card.innerHTML = `<h3>Arm with sensors open?</h3><p>${open.map((o) => esc(o.name)).join(", ")} will be bypassed.</p><input type="password" inputmode="numeric" autocomplete="off" placeholder="PIN"><div class="err"></div><div class="row"><button data-mode="night">Night</button><button data-mode="away">Away</button></div>`;
+      card.addEventListener("click", async (e) => {
+        const b = e.target.closest("button[data-mode]");
+        if (!b) return;
+        try {
+          await this._hass.callService("alarmo", "arm", { entity_id: entity, mode: b.dataset.mode, force: true, code: card.querySelector("input").value });
+          this._overlay.querySelector(".ssc-close").click();
+        } catch (err) {
+          card.querySelector(".err").textContent = err.message || "Could not arm";
+        }
+      });
+    } else {
+      const helpers = await window.loadCardHelpers();
+      card = await helpers.createCardElement({ type: "custom:alarmo-card", entity });
+      card.hass = this._hass;
+    }
     const ov = document.createElement("div");
     ov.className = "ssc-overlay";
     ov.innerHTML = '<div class="ssc-sheet" role="dialog" aria-modal="true"><div class="ssc-head"><button class="ssc-close" aria-label="Close">×</button></div></div>';
@@ -226,7 +250,7 @@ class SecurityStatusCard extends HTMLElement {
     document.addEventListener("keydown", onKey);
     document.body.appendChild(ov);
     this._overlay = ov;
-    this._popupCard = card;
+    this._popupCard = open.length ? null : card;
   }
 }
 

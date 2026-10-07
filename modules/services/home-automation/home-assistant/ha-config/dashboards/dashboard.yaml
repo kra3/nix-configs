@@ -1612,15 +1612,15 @@ views:
           rect:
             - 9
             - 240
-            - 115
+            - 95
             - 118
         - name: Kitchen
           areas:
             - Kitchen
           rect:
-            - 124
+            - 104
             - 240
-            - 170
+            - 190
             - 118
           presence:
             - binary_sensor.room_presence_kitchen

@@ -37,7 +37,8 @@ function badgeFor(s, armed) {
   };
 }
 
-function planModel(states, areaOf, cfg) {
+function planModel(states, areaOf, cfg, seen = {}, now = Date.now()) {
+  const hold = (cfg.occupancy_hold_seconds == null ? 120 : cfg.occupancy_hold_seconds) * 1000;
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
   const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
@@ -53,11 +54,9 @@ function planModel(states, areaOf, cfg) {
       })
       .map((s) => badgeFor(s, armed))
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
-    const presenceIds = new Set([
-      ...(r.presence || []),
-      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id)).map((s) => s.entity_id),
-    ]);
-    const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
+    const sensed = mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id));
+    for (const s of sensed) if (s.state === "on") seen[s.entity_id] = now;
+    const occupied = (r.presence || []).some((id) => states[id] && states[id].state === "on") || sensed.some((s) => s.state === "on" || (seen[s.entity_id] != null && now - seen[s.entity_id] < hold));
     const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
     const lights = mine.filter((s) => s.entity_id.startsWith("light.") && !s.attributes.entity_id && !s.attributes.is_hue_group);
     const on = lights.filter((s) => s.state === "on");
@@ -132,7 +131,8 @@ const STYLE = `
   .b.seen { box-shadow: 0 0 0 2px var(--error-color, #f44336); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--error-color, #f44336) 40%, transparent); } }
   .nm { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dot { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 50%; background: var(--primary-color); }
+  .dot { display: inline-block; width: 9px; height: 9px; margin-left: 5px; border-radius: 50%; background: var(--primary-color); animation: beat 2s ease-in-out infinite; }
+  @keyframes beat { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 30%, transparent); } }
   .bs { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
   .b { border: 0; padding: 2px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--secondary-text-color); line-height: 0; }
   .b ha-icon { --mdc-icon-size: 20px; }
@@ -176,6 +176,14 @@ class SecurityPlanCard extends HTMLElement {
 
   getGridOptions() {
     return { columns: 12, min_columns: 6 };
+  }
+
+  connectedCallback() {
+    this._timer = setInterval(() => this._hass && this._render(), 15000);
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._timer);
   }
 
   set hass(hass) {
@@ -227,7 +235,8 @@ class SecurityPlanCard extends HTMLElement {
   _render() {
     const cfg = this._config;
     const layer = this._layer || cfg.layer || "security";
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
+    this._seen = this._seen || {};
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg, this._seen), cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;

@@ -22,6 +22,7 @@
       entity_id: input_select.alarm_restore_mode
     data:
       option: "{{ 'none' if trigger.to_state.state == 'disarmed' else trigger.to_state.state }}"
+  - action: homeassistant.save_persistent_states
   mode: queued
 
 - id: alarm_restore_after_restart
@@ -37,7 +38,7 @@
       {{ states('alarm_control_panel.vasudha_secure') not in ['unavailable', 'unknown'] }}
     timeout: "00:03:00"
     continue_on_timeout: false
-  - delay: "00:00:10"
+  - delay: "00:00:30"
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
     state: disarmed

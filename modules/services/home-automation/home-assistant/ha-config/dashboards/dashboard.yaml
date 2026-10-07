@@ -726,12 +726,14 @@ views:
       - entity: sensor.sabnzbd_karunagath_in_queue_count
         name: Queue
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.sabnzbd_karunagath_in_left_to_download
         name: Left
         mode: now
+        range: false
         days: 7
         decimals: 0
       popup:
@@ -784,18 +786,19 @@ views:
       - entity: sensor.slskd_active_downloads
         name: Active
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.slskd_queued_downloads
         name: Queued
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.slskd_completed_downloads
         name: Done
-        mode: now
         days: 7
         decimals: 0
         unit: ""
@@ -1167,19 +1170,20 @@ views:
         type: line
         days: 30
       delta:
-        mode: range
+        mode: absolute
         decimals: 0
       items:
       - entity: sensor.radarr_disk_space_movies
         name: Free
-        mode: now
         days: 7
+        good: up
         decimals: 1
         scale: 0.001
         unit: TB
       - entity: sensor.sabnzbd_karunagath_in_total_disk_space
         name: Total
         mode: now
+        range: false
         days: 7
         decimals: 1
         scale: 0.001

@@ -116,10 +116,22 @@
       '';
       resurrectModuleConf = ''source-file "${resurrectModuleConfFile}"'';
 
-      # @catppuccin_reset unsets window/separator styling and catppuccin's own built-in modules'
-      # derived colors (see windowAndSeparatorConf) but doesn't know about our resurrect module, so
-      # its -ogqF-guarded color/icon_bg would otherwise stay frozen at the old flavor's hex forever —
-      # unset them here so resurrectModuleConf re-derives them fresh from the new flavor's @thm_*.
+      # catppuccin freezes each module's text_fg/icon_fg with -ogqF (set-once) and @catppuccin_reset
+      # won't clear them; unset before a flavor switch or the old flavor's fg survives (unreadable).
+      builtinModuleReset =
+        lib.concatMapStrings
+          (m: ''
+            set -gu @catppuccin_status_${m}_text_fg
+            set -gu @catppuccin_status_${m}_icon_fg
+          '')
+          [
+            "session"
+            "application"
+            "directory"
+            "pomodoro_plus"
+            "battery"
+            "date_time"
+          ];
       resurrectModuleReset = ''
         set -gu @catppuccin_resurrect_color
         set -gu @catppuccin_status_resurrect_icon_fg
@@ -131,6 +143,7 @@
       themeHook = flavor: ''
         set -g @catppuccin_flavor "${flavor}"
         set -g @catppuccin_reset "true"
+        ${builtinModuleReset}
         run "${catppuccinTmuxScript}"
         ${windowAndSeparatorConf}
         run "${catppuccinTmuxScript}"

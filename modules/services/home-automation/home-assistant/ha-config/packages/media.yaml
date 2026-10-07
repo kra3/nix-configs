@@ -30,6 +30,7 @@ template:
           - action: button.press
             target:
               entity_id: button.sabnzbd_karunagath_in_resume
+          - delay: "00:00:02"
           - action: homeassistant.update_entity
             target:
               entity_id: sensor.sabnzbd_karunagath_in_status
@@ -37,6 +38,7 @@ template:
           - action: button.press
             target:
               entity_id: button.sabnzbd_karunagath_in_pause
+          - delay: "00:00:02"
           - action: homeassistant.update_entity
             target:
               entity_id: sensor.sabnzbd_karunagath_in_status

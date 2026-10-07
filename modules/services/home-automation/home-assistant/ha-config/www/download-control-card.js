@@ -45,8 +45,12 @@ class DownloadControlCard extends HTMLElement {
     this._val = root.querySelector(".val");
     this._pill.addEventListener("click", () => {
       const s = this._hass.states[this._config.switch];
-      if (!s) return;
-      this._hass.callService("switch", s.state === "on" ? "turn_off" : "turn_on", { entity_id: this._config.switch });
+      if (!s || this._pending) return;
+      const want = s.state !== "on";
+      this._pending = { want, until: Date.now() + 10000 };
+      this._hass.callService("switch", want ? "turn_on" : "turn_off", { entity_id: this._config.switch });
+      this._render();
+      setTimeout(() => this._render(), 10100);
     });
     this._range.addEventListener("input", () => {
       this._drag = true;
@@ -65,7 +69,9 @@ class DownloadControlCard extends HTMLElement {
     const sw = this._hass.states[this._config.switch];
     const num = this._hass.states[this._config.number];
     const usable = (s) => s && s.state !== "unavailable" && s.state !== "unknown";
-    const running = usable(sw) && sw.state === "on";
+    let running = usable(sw) && sw.state === "on";
+    if (this._pending && (running === this._pending.want || Date.now() > this._pending.until)) this._pending = null;
+    if (this._pending) running = this._pending.want;
     this._pill.disabled = !usable(sw);
     this._icon.setAttribute("icon", running ? this._config.running_icon || "mdi:download" : this._config.paused_icon || "mdi:pause");
     this._text.textContent = !usable(sw) ? "Unavailable" : running ? this._config.running_label || "Downloading" : this._config.paused_label || "Paused";

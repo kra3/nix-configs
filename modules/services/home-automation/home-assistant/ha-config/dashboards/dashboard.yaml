@@ -1558,7 +1558,7 @@ views:
       icon: mdi:floor-plan
       heading_style: title
     - type: custom:security-plan-card
-      image: /local/floorplan.png?v=3
+      image: /local/floorplan.png?v=4
       size:
         - 736
         - 374

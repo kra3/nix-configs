@@ -31,10 +31,15 @@
         # faster than `beet import` can process them one at a time; queuing
         # keeps do_POST fast so wget doesn't time out waiting its turn.
         work_queue = queue.Queue()
+        # One import per album folder is enough however many of its tracks were retagged.
+        pending = set()
+        pending_lock = threading.Lock()
 
         def worker():
             while True:
                 album_dir, env = work_queue.get()
+                with pending_lock:
+                    pending.discard(album_dir)
                 # No TTY here, so an ambiguous match's prompt would silently skip it.
                 result = subprocess.run(
                     ["beet", "--config", BEETS_BASE, "--config", OVERLAY, "import", "-q", "--quiet-fallback", "asis", album_dir],
@@ -65,7 +70,10 @@
                     self.end_headers()
                     return
 
-                work_queue.put((album_dir, env))
+                with pending_lock:
+                    if album_dir not in pending:
+                        pending.add(album_dir)
+                        work_queue.put((album_dir, env))
                 self.send_response(202)
                 self.end_headers()
 

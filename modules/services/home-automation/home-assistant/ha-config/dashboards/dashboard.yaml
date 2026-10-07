@@ -985,18 +985,21 @@ views:
       - entity: sensor.unpackerr_lidarr_queue
         name: Lidarr
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.unpackerr_radarr_queue
         name: Radarr
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.unpackerr_sonarr_queue
         name: Sonarr
         mode: now
+        range: false
         days: 7
         decimals: 0
         unit: ""

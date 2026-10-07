@@ -21,3 +21,22 @@ template:
           {% set total = states('sensor.sabnzbd_karunagath_in_total_disk_space') | float %}
           {% set free = states('sensor.sabnzbd_karunagath_in_free_disk_space') | float %}
           {{ ((total - free) / total * 100) | round(1) if total > 0 else 0 }}
+  - switch:
+      - name: SABnzbd downloading
+        unique_id: sabnzbd_downloading
+        availability: "{{ states('sensor.sabnzbd_karunagath_in_status') not in ['unavailable', 'unknown'] }}"
+        state: "{{ states('sensor.sabnzbd_karunagath_in_status') | lower != 'paused' }}"
+        turn_on:
+          - action: button.press
+            target:
+              entity_id: button.sabnzbd_karunagath_in_resume
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.sabnzbd_karunagath_in_status
+        turn_off:
+          - action: button.press
+            target:
+              entity_id: button.sabnzbd_karunagath_in_pause
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.sabnzbd_karunagath_in_status

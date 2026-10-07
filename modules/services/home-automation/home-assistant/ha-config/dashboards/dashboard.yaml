@@ -820,45 +820,13 @@ views:
           days: 7
       grid_options:
         columns: 12
-    - type: tile
-      entity: number.sabnzbd_karunagath_in_speedlimit
-      name: Speed limit
-      icon: mdi:speedometer
-      color: blue
-      vertical: true
-      features:
-      - type: numeric-input
-        style: slider
+    - type: custom:download-control-card
+      switch: switch.sabnzbd_downloading
+      number: number.sabnzbd_karunagath_in_speedlimit
+      color: "#6bb6ff"
+      limit_label: Limit
       grid_options:
-        columns: 6
-    - type: tile
-      entity: button.sabnzbd_karunagath_in_pause
-      name: Pause
-      icon: mdi:pause
-      color: blue
-      vertical: true
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: button.press
-        target:
-          entity_id: button.sabnzbd_karunagath_in_pause
-      grid_options:
-        columns: 3
-    - type: tile
-      entity: button.sabnzbd_karunagath_in_resume
-      name: Resume
-      icon: mdi:play
-      color: blue
-      vertical: true
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: button.press
-        target:
-          entity_id: button.sabnzbd_karunagath_in_resume
-      grid_options:
-        columns: 3
+        columns: 12
     - type: conditional
       conditions:
       - condition: state

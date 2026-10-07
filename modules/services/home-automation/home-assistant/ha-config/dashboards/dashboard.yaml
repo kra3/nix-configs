@@ -574,56 +574,6 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
-- title: Cameras
-  path: cameras
-  icon: mdi:cctv
-  sections:
-  - type: grid
-    cards:
-    - type: custom:advanced-camera-card
-      cameras:
-      - camera_entity: camera.ranger_duo_fxd
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_duo_ptz
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_uno
-        live_provider: go2rtc
-      live:
-        display:
-          mode: grid
-      view:
-        dim: true
-      menu:
-        buttons:
-          microphone:
-            enabled: true
-      status_bar:
-        style: overlay
-      image:
-        mode: camera
-      grid_options:
-        columns: full
-    - type: heading
-      heading: Person detected
-      heading_style: subtitle
-    - type: tile
-      entity: binary_sensor.ranger_duo_fxd_person_occupancy
-      name: Living Room
-      area: living_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_duo_ptz_person_occupancy
-      name: Dining Room
-      area: dining_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_uno_person_occupancy
-      name: Office Room
-      area: office
-      grid_options:
-        columns: 4
 - title: Media
   path: media
   icon: mdi:play-circle
@@ -1582,64 +1532,68 @@ views:
   max_columns: 4
   sections:
   - type: grid
+    column_span: 4
+    cards:
+    - type: custom:security-status-card
+      exclude:
+      - binary_sensor.house_exits_open_status
+      - binary_sensor.front_door_knock_contact
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Last seen
+      icon: mdi:account-eye
+      heading_style: subtitle
+    - type: custom:security-lastseen-card
+      kind: person
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 2
     cards:
     - type: heading
-      heading: Alarm
-      icon: mdi:shield-home
+      heading: Cameras
+      icon: mdi:cctv
       heading_style: title
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: alarm_control_panel
-          options:
-            type: tile
-            features:
-            - type: alarm-modes
-              modes:
-              - armed_night
-              - armed_away
-              - disarmed
+    - type: custom:advanced-camera-card
+      cameras:
+      - camera_entity: camera.ranger_duo_fxd
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_fxd_person_occupancy
+      - camera_entity: camera.ranger_duo_ptz
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_ptz_person_occupancy
+      - camera_entity: camera.ranger_uno
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_uno_person_occupancy
+      live:
+        display:
+          mode: grid
+      view:
+        dim: true
+        triggers:
+          filter_selected_camera: false
+          show_trigger_status: true
+          untrigger_delay_seconds: 20
+          actions:
+            trigger: live
+            untrigger: default
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+      status_bar:
+        style: overlay
+      image:
+        mode: camera
       grid_options:
-        columns: 12
-    - type: markdown
-      content: >-
-        {% set cls = ['door', 'window', 'garage_door', 'opening'] %}
-        {% set o = states.binary_sensor | selectattr('attributes.device_class', 'defined')
-           | selectattr('attributes.device_class', 'in', cls) | selectattr('state', 'eq', 'on') | list %}
-        {% if o %}**Open now:** {{ o | map(attribute='name') | map('replace', ' Contact Door', '') | map('replace', ' Contact', '') | map('replace', ' Open Status', '') | join(', ') }}
-        {% else %}Everything is closed.{% endif %}
-      grid_options:
-        columns: 12
-    - type: heading
-      heading: Locks
-      icon: mdi:lock
-      heading_style: title
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: lock
-          state: /^(locked|unlocked|locking|unlocking|jammed|open|opening)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-            features:
-            - type: lock-commands
-      grid_options:
-        columns: 12
+        columns: full
   - type: grid
     cards:
     - type: heading
@@ -1664,7 +1618,6 @@ views:
             state_content:
             - state
             - area_name
-
         - domain: binary_sensor
           attributes:
             device_class: window
@@ -1674,7 +1627,6 @@ views:
             state_content:
             - state
             - area_name
-
         - domain: binary_sensor
           attributes:
             device_class: garage_door
@@ -1684,7 +1636,6 @@ views:
             state_content:
             - state
             - area_name
-
         - domain: binary_sensor
           attributes:
             device_class: opening
@@ -1694,10 +1645,33 @@ views:
             state_content:
             - state
             - area_name
-
       sort:
         method: state
         reverse: true
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Locks
+      icon: mdi:lock
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: lock
+          state: /^(locked|unlocked|locking|unlocking|jammed|open|opening)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+            features:
+            - type: lock-commands
       grid_options:
         columns: 12
     - type: custom:auto-entities
@@ -1726,50 +1700,6 @@ views:
           state: /^(unknown|unavailable)$/
         - domain: lock
           state: /^(unknown|unavailable)$/
-      grid_options:
-        columns: 12
-  - type: grid
-    cards:
-    - type: heading
-      heading: Cameras
-      icon: mdi:cctv
-      heading_style: title
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: camera
-          options:
-            type: picture-entity
-            camera_view: auto
-            show_state: false
-      grid_options:
-        columns: 12
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: binary_sensor
-          attributes:
-            device_class: /^(motion|vibration|tamper)$/
-          state: "on"
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        exclude:
-        - entity_id: "*iphone*"
       grid_options:
         columns: 12
   - type: grid

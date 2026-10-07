@@ -50,6 +50,7 @@
             "${../../../services/home-automation/home-assistant/ha-config/www/home-hero-card.js}:/config/www/home-hero-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/room-tile-card.js}:/config/www/room-tile-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/security-status-card.js}:/config/www/security-status-card.js:ro"
             "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
             "/run/dbus:/run/dbus:ro"
           ];

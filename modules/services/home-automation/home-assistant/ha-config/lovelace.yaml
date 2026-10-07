@@ -12,7 +12,7 @@ resources:
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module
-  - url: /local/popup-tile-card.js?v=1
+  - url: /local/popup-tile-card.js?v=2
     type: module
   - url: /local/room-tile-card.js?v=2
     type: module

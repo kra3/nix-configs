@@ -1770,13 +1770,23 @@ views:
         image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
-    - type: heading
-      heading: Recent events
+    - type: custom:popup-tile-card
+      entity: camera.ranger_uno
+      name: Recent events
       icon: mdi:history
-      heading_style: subtitle
-      tap_action:
-        action: navigate
-        navigation_path: /dashboard-home/security-events
+      subtitle: Clips and snapshots
+      title: Recent events
+      width: 900px
+      popup:
+        type: custom:advanced-camera-card
+        cameras: *sec_cams
+        view:
+          default: clips
+          camera_select: current
+        status_bar:
+          style: overlay
+      grid_options:
+        columns: full
   - type: grid
     cards:
     - type: heading
@@ -1872,23 +1882,6 @@ views:
         - entity_id: binary_sensor.house_exits_open_status
         - entity_id: lock.front_front_door_nw
         - entity_id: binary_sensor.front_front_door_nw_door
-      grid_options:
-        columns: full
-- type: sections
-  title: Recent events
-  path: security-events
-  subview: true
-  back_path: /dashboard-home/dash-security
-  sections:
-  - type: grid
-    cards:
-    - type: custom:advanced-camera-card
-      cameras: *sec_cams
-      view:
-        default: clips
-        camera_select: current
-      status_bar:
-        style: overlay
       grid_options:
         columns: full
 - title: Climate

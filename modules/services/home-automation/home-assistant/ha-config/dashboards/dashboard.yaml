@@ -1561,24 +1561,42 @@ views:
       image: /local/floorplan.png?v=13
       camera_card:
         cameras: &sec_cams
-        - camera_entity: camera.ranger_duo_fxd
+        - &cam_fxd
+          camera_entity: camera.ranger_duo_fxd
           live_provider: go2rtc
           triggers:
             entities:
             - binary_sensor.ranger_duo_fxd_person_occupancy
-        - camera_entity: camera.ranger_duo_ptz
+            reviews:
+              severities:
+              - high
+        - &cam_ptz
+          camera_entity: camera.ranger_duo_ptz
           live_provider: go2rtc
           triggers:
             entities:
             - binary_sensor.ranger_duo_ptz_person_occupancy
-        - camera_entity: camera.ranger_uno
+            reviews:
+              severities:
+              - high
+        - &cam_uno
+          camera_entity: camera.ranger_uno
           live_provider: go2rtc
           triggers:
             entities:
             - binary_sensor.ranger_uno_person_occupancy
+            reviews:
+              severities:
+              - high
         live:
           display:
             mode: single
+        menu:
+          buttons:
+            ptz_controls:
+              enabled: true
+            ptz_home:
+              enabled: true
       size:
         - 736
         - 374
@@ -1749,39 +1767,71 @@ views:
         buttons:
           microphone:
             enabled: true
+          clips:
+            enabled: true
+          reviews:
+            enabled: true
+          ptz_controls:
+            enabled: true
+          ptz_home:
+            enabled: true
+          screenshot:
+            enabled: true
+          pip:
+            enabled: true
+          download:
+            enabled: false
+          folders:
+            enabled: false
+          gallery:
+            enabled: false
+          camera_ui:
+            enabled: false
+      overrides:
+      - conditions:
+        - condition: screen
+          media_query: "(max-width: 700px)"
+        merge:
+          live.display:
+            mode: single
+      automations:
+      - triggers:
+        - trigger: state
+          entity_id: alarm_control_panel.vasudha_secure
+          to: triggered
+        actions:
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: live
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: display_mode_select
+          display_mode: grid
       status_bar:
         style: overlay
       image:
         mode: camera
       grid_options:
         columns: full
-    - type: heading
-      heading: Last seen
-      icon: mdi:account-eye
-      heading_style: subtitle
-    - type: custom:security-lastseen-card
-      kinds:
-      - person
-      - dog
-      - cat
-      area_override:
-        camera.ranger_duo_fxd: Living Room
-        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
-        image.ranger_duo_fxd_person: Living Room
-      grid_options:
-        columns: full
     - type: custom:popup-tile-card
       entity: camera.ranger_uno
       name: Recent events
       icon: mdi:history
-      subtitle: Clips and snapshots
+      subtitle: Reviews and clips
       title: Recent events
       width: 900px
       popup:
         type: custom:advanced-camera-card
-        cameras: *sec_cams
+        cameras:
+        - <<: *cam_fxd
+          dependencies:
+            all_cameras: true
+        - <<: *cam_ptz
+          dependencies:
+            all_cameras: true
+        - <<: *cam_uno
+          dependencies:
+            all_cameras: true
         view:
-          default: clips
+          default: reviews
           camera_select: current
         status_bar:
           style: overlay

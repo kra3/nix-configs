@@ -266,114 +266,12 @@ class SecurityStatusCard extends HTMLElement {
   }
 }
 
-function lastSeen(states, kind, now, areaOf = () => "", events = {}) {
-  const label = kind === "person" ? "" : titleCase(kind);
-  const re = new RegExp("^image\\..*_" + kind + "$");
-  const suffix = new RegExp(" " + kind + "$", "i");
-  return Object.values(states)
-    .filter((s) => re.test(s.entity_id) && s.attributes.entity_picture && !GONE.includes(s.state))
-    .map((s) => ({
-      id: s.entity_id,
-      picture: s.attributes.entity_picture,
-      camera: (s.attributes.friendly_name || titleCase(s.entity_id.replace(/^image\./, ""))).replace(suffix, "").replace(/^(Dining Room|Office Room) /, ""),
-      area: [label, areaOf(s.entity_id)].filter(Boolean).join(" · "),
-      ts: events[Object.keys(events).find((slug) => s.entity_id.includes(slug))],
-    }))
-    .filter((i) => isFinite(i.ts))
-    .sort((a, b) => b.ts - a.ts)
-    .map((i) => ({ ...i, when: ago(i.ts, now) === "just now" ? "just now" : ago(i.ts, now) + " ago" }));
-}
-
-class SecurityLastSeenCard extends HTMLElement {
-  setConfig(config) {
-    this._config = config || {};
-    this._html = "";
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
-  }
-
-  getCardSize() {
-    return 2;
-  }
-
-  getGridOptions() {
-    return { columns: 12, min_columns: 6 };
-  }
-
-  connectedCallback() {
-    this._timer = setInterval(() => this._hass && this._fetch(), 60000);
-  }
-
-  disconnectedCallback() {
-    clearInterval(this._timer);
-  }
-
-  set hass(hass) {
-    const first = !this._hass;
-    this._hass = hass;
-    if (first && this._config) this._fetch();
-    if (this._config) this._render();
-  }
-
-  async _fetch() {
-    const kinds = this._config.kinds || [this._config.kind || "person"];
-    this._events = this._events || {};
-    for (const k of kinds) {
-      try {
-        const res = await this._hass.callWS({ type: "frigate/events/get", instance_id: this._config.instance_id || "frigate", labels: [k], limit: 50 });
-        const seen = {};
-        for (const e of JSON.parse(res)) {
-          const ms = (e.end_time || Date.now() / 1000) * 1000;
-          if (!(seen[e.camera] >= ms)) seen[e.camera] = ms;
-        }
-        this._events[k] = seen;
-      } catch (err) {
-        this._events[k] = this._events[k] || {};
-      }
-    }
-    this._render();
-  }
-
-  _render() {
-    const kinds = this._config.kinds || [this._config.kind || "person"];
-    const kind = kinds.join("/");
-    const items = kinds
-      .flatMap((k) => lastSeen(this._hass.states, k, Date.now(), (id) => areaFor(this._hass, id, this._config), (this._events || {})[k]))
-      .sort((a, b) => b.ts - a.ts);
-    const html = items.length
-      ? items
-          .map(
-            (i) =>
-              `<button class="tile" data-id="${esc(i.id)}"><img src="${esc(i.picture)}" loading="lazy"><div class="cap"><b>${esc(i.camera)}</b><span>${esc([i.area, i.when].filter(Boolean).join(" · "))}</span></div></button>`
-          )
-          .join("")
-      : `<div class="none">No ${esc(kind)} detected recently.</div>`;
-    if (html === this._html) return;
-    this._html = html;
-    this.shadowRoot.innerHTML = `<style>
-      :host { display: block; }
-      .row { display: flex; gap: 10px; overflow-x: auto; padding: 2px; }
-      .tile { position: relative; flex: 0 0 auto; width: 150px; padding: 0; border: 0; border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--card-background-color); }
-      img { display: block; width: 150px; height: 96px; object-fit: cover; }
-      .cap { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; text-align: left; padding: 14px 8px 6px; color: #fff; font-size: 12px; background: linear-gradient(transparent, rgba(0,0,0,0.75)); }
-      .cap span { opacity: 0.85; font-size: 11px; }
-      .none { padding: 8px; color: var(--secondary-text-color); font-size: 13px; }
-    </style><div class="row">${html}</div>`;
-    for (const el of this.shadowRoot.querySelectorAll(".tile")) {
-      el.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.id }, bubbles: true, composed: true })));
-    }
-  }
-}
-
 if (typeof customElements !== "undefined" && !customElements.get("security-status-card")) {
   customElements.define("security-status-card", SecurityStatusCard);
-  customElements.define("security-lastseen-card", SecurityLastSeenCard);
   window.customCards = window.customCards || [];
-  window.customCards.push(
-    { type: "security-status-card", name: "Security status card", description: "House state, open items with durations and arm controls." },
-    { type: "security-lastseen-card", name: "Security last-seen card", description: "Latest Frigate snapshot per camera." }
-  );
+  window.customCards.push({ type: "security-status-card", name: "Security status card", description: "House state, open items with durations and arm controls." });
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { secModel, secHtml, lastSeen, ago };
+  module.exports = { secModel, secHtml, ago };
 }

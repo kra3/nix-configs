@@ -1547,6 +1547,9 @@ views:
       area_override:
         camera.ranger_duo_fxd: Living Room
         binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        binary_sensor.living_room_person_occupancy: Living Room
+        binary_sensor.dining_room_person_occupancy: Dining Room
+        binary_sensor.hallway_person_occupancy: Hallway
         image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
@@ -1719,6 +1722,9 @@ views:
       area_override:
         camera.ranger_duo_fxd: Living Room
         binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        binary_sensor.living_room_person_occupancy: Living Room
+        binary_sensor.dining_room_person_occupancy: Dining Room
+        binary_sensor.hallway_person_occupancy: Hallway
         image.ranger_duo_fxd_person: Living Room
       positions:
         binary_sensor.patio_door_contact_contact:

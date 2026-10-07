@@ -4,6 +4,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
+const PERSON = /^binary_sensor\..*_person_occupancy$/;
+const personFor = (id, away, states) => !PERSON.test(id) || !!states["camera." + id.slice(14, -17)] !== away;
 const SOUND = /^binary_sensor\.(.+)_(glass|shatter|scream|fire_alarm)_sound$/;
 
 function areaFor(hass, id, cfg) {
@@ -40,6 +42,7 @@ function badgeFor(s, armed) {
 function planModel(states, areaOf, cfg) {
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
+  const away = !!alarm && alarm.state === "armed_away";
   const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
   const rooms = (cfg.rooms || []).map((r) => {
     const areas = new Set([].concat(r.areas || r.area || []));
@@ -55,10 +58,10 @@ function planModel(states, areaOf, cfg) {
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
     const presenceIds = new Set([
       ...(r.presence || []),
-      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id)).map((s) => s.entity_id),
+      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id) && personFor(s.entity_id, away, states)).map((s) => s.entity_id),
     ]);
     const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
-    const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
+    const person = mine.some((s) => PERSON.test(s.entity_id) && personFor(s.entity_id, away, states) && s.state === "on");
     const lights = mine.filter((s) => s.entity_id.startsWith("light.") && !s.attributes.entity_id && !s.attributes.is_hue_group);
     const on = lights.filter((s) => s.state === "on");
     const glow = on.length ? Math.max(...on.map((s) => (s.attributes.brightness == null ? 255 : s.attributes.brightness))) / 255 : 0;

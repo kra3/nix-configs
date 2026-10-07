@@ -1034,20 +1034,22 @@ views:
       icon: mdi:filmstrip-box-multiple
       color: "#9d8cff"
       decimals: 0
+      unit: movies
       show_date: false
       chart:
         type: line
         days: 30
+      delta:
+        mode: absolute
+        decimals: 0
       items:
       - entity: sensor.jellyfin_series
         name: Series
-        mode: now
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.jellyfin_episodes
         name: Episodes
-        mode: now
         days: 7
         decimals: 0
         unit: ""
@@ -1072,20 +1074,22 @@ views:
       icon: mdi:music-box-multiple-outline
       color: "#f5c28b"
       decimals: 0
+      unit: tracks
       show_date: false
       chart:
         type: line
         days: 7
+      delta:
+        mode: absolute
+        decimals: 0
       items:
       - entity: sensor.navidrome_albums
         name: Albums
-        mode: now
         days: 7
         decimals: 0
         unit: ""
       - entity: sensor.navidrome_artists
         name: Artists
-        mode: now
         days: 7
         decimals: 0
         unit: ""

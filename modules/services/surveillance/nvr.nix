@@ -93,6 +93,11 @@
         };
       };
 
+      noContrastBoost = [
+        "ranger_duo_fxd"
+        "ranger_duo_ptz"
+      ];
+
       reviewRequiredZones = {
         ranger_duo_fxd = "living_room";
       };
@@ -133,8 +138,10 @@
             };
           };
         }
-        // lib.optionalAttrs (motionMasks ? ${name}) {
-          motion.mask = motionMasks.${name};
+        // lib.optionalAttrs (motionMasks ? ${name} || builtins.elem name noContrastBoost) {
+          motion =
+            lib.optionalAttrs (motionMasks ? ${name}) { mask = motionMasks.${name}; }
+            // lib.optionalAttrs (builtins.elem name noContrastBoost) { improve_contrast = false; };
         }
         // lib.optionalAttrs (zones ? ${name}) {
           zones = zones.${name};
@@ -229,6 +236,9 @@
 
           motion = {
             enabled = true;
+            threshold = 35;
+            contour_area = 40;
+            lightning_threshold = 0.5;
           };
 
           mqtt = {

@@ -518,6 +518,10 @@ const STYLE = `
   .chip.good { color: var(--success-color, #4caf50); background: color-mix(in srgb, var(--success-color, #4caf50) 16%, transparent); }
   .chip.bad { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
   .chip.neutral { color: var(--secondary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
+  .item .change.gr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+  .item .fl { flex: 1; min-width: 0; }
+  .vv { white-space: nowrap; }
+  .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
   .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }
   .sc ha-icon { --mdc-icon-size: 16px; color: var(--c); }
@@ -714,9 +718,10 @@ class HealthMetricCard extends HTMLElement {
 
   _growthHtml(s, it, dec, lang) {
     const g = s.length === 1 ? { value: 0, abs: 0 } : computeDelta(s, "absolute", it.points);
-    if (!g) return `<div class="now">&nbsp;</div>`;
+    if (!g) return "";
+    const dir = deltaDir(g);
     const col = TONE_COLOR[deltaTone(g, it.good)] || "var(--secondary-text-color)";
-    return `<div class="now" style="color:${col}">${signed(g.value, dec, lang)} / ${it.days || 7}d</div>`;
+    return `<span class="grw" style="color:${col}">${dir === "flat" ? "" : arrowSvg(dir)}${signed(g.value, dec, lang)} / ${it.days || 7}d</span>`;
   }
 
   // True min/max points for a range chip, plus the live reading; falls back to the plotted series.
@@ -829,9 +834,9 @@ class HealthMetricCard extends HTMLElement {
             })
             .join("");
           return (
-            `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
-            `<div class="change">${now} ${unit}${chips ? `<span class="scs">${chips}</span>` : ""}</div>` +
-            (it.growth ? this._growthHtml(s, it, dec, lang) : range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
+            `<div class="item" style="--dot:${it.color || accent}"><div${it.growth ? ' class="fl"' : ""}><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
+            `<div class="change${it.growth ? " gr" : ""}"><span class="vv">${now} ${unit}</span>${chips ? `<span class="scs">${chips}</span>` : ""}${it.growth ? this._growthHtml(s, it, dec, lang) : ""}</div>` +
+            (it.growth || range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
             `</div></div>`
           );
         }

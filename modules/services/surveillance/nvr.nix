@@ -65,9 +65,10 @@
       # Coordinates are normalized (0-1) polygons drawn in the Frigate UI
       # (Settings > Masks / Zones) to exclude windows/curtains and the
       # camera timestamp overlay from motion detection.
+      # UI edits only live in /run/frigate/frigate.yml and are lost on restart, so port them here.
       motionMasks = {
         ranger_duo_fxd = [
-          "0,0.545,0.117,0.618,0.123,1,0.004,0.992"
+          "0,0.545,0.053,0.519,0.058,1,0.004,0.992"
           "0.633,0.012,0.99,0.012,0.99,0.089,0.633,0.089"
         ];
         ranger_duo_ptz = [
@@ -75,6 +76,25 @@
           "0.641,0.042,0.642,0.087,0.996,0.087,0.988,0.029"
         ];
         ranger_uno = "0.665,0.012,0.99,0.012,0.99,0.095,0.665,0.095";
+      };
+
+      zones = {
+        ranger_duo_fxd.living_room = {
+          coordinates = "0.051,0.482,0.53,0.567,0.532,0.996,0.059,0.998";
+          loitering_time = 0;
+        };
+        ranger_duo_ptz.dining_room = {
+          coordinates = "0.384,0.441,0.39,0.652,0.006,0.849,0.001,0.996,0.761,0.99,0.826,0.828,0.848,0.747,0.69,0.71,0.662,0.7,0.658,0.482";
+          loitering_time = 0;
+        };
+        ranger_uno.hallway = {
+          coordinates = "0.3,0.213,0.558,0.209,0.572,0.884,0.72,0.88,0.732,0.534,0.72,0.358,0.994,0.302,0.996,0.698,0.72,0.973,0.03,0.99,0.022,0.211";
+          loitering_time = 0;
+        };
+      };
+
+      reviewRequiredZones = {
+        ranger_duo_fxd = "living_room";
       };
 
       frigateCameras = lib.mapAttrs (
@@ -115,6 +135,15 @@
         }
         // lib.optionalAttrs (motionMasks ? ${name}) {
           motion.mask = motionMasks.${name};
+        }
+        // lib.optionalAttrs (zones ? ${name}) {
+          zones = zones.${name};
+        }
+        // lib.optionalAttrs (reviewRequiredZones ? ${name}) {
+          review = {
+            alerts.required_zones = reviewRequiredZones.${name};
+            detections.required_zones = reviewRequiredZones.${name};
+          };
         }
       ) cameras;
 

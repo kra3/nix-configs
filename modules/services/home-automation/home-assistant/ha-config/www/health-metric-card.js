@@ -518,6 +518,9 @@ const STYLE = `
   .chip.good { color: var(--success-color, #4caf50); background: color-mix(in srgb, var(--success-color, #4caf50) 16%, transparent); }
   .chip.bad { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
   .chip.neutral { color: var(--secondary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
+  .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
+  .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }
+  .sc ha-icon { --mdc-icon-size: 16px; color: var(--c); }
   .footer { display: grid; margin-top: 12px; border-top: 1px solid var(--divider-color); }
   .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0 0; min-width: 0; }
   .item + .item { border-left: 1px solid var(--divider-color); padding-left: 14px; margin-left: 14px; }
@@ -809,10 +812,20 @@ class HealthMetricCard extends HTMLElement {
           }
         }
         if (it.mode === "now") {
-          const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
+          const range = it.range === false ? null : rangeText(this._span(String(i), s, nowVal), dec, "", lang);
+          const chips = (it.chips || [])
+            .map((ch) => {
+              const cs = this._hass.states[ch.entity];
+              const n = cs ? parseFloat(cs.state) : NaN;
+              if (!isFinite(n) || n === 0) return "";
+              return `<span class="sc" style="--c:${ch.color || "var(--secondary-text-color)"}" title="${ch.name || ""}"><ha-icon icon="${ch.icon}"></ha-icon>${fmt(n, 0, lang)}</span>`;
+            })
+            .join("");
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
-            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : "&nbsp;"}</div></div></div>`
+            `<div class="change">${now} ${unit}${chips ? `<span class="scs">${chips}</span>` : ""}</div>` +
+            (range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
+            `</div></div>`
           );
         }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";

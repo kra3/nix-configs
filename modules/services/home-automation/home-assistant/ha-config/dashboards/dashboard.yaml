@@ -860,21 +860,47 @@ views:
       - entity: sensor.seerr_processing_requests
         name: Processing
         mode: now
-        days: 7
+        range: false
         decimals: 0
         unit: ""
       - entity: sensor.seerr_film_requests
         name: Movies
         mode: now
-        days: 7
+        range: false
         decimals: 0
         unit: ""
+        chips:
+        - entity: sensor.radarr_download_queue
+          icon: mdi:download
+          name: Downloading
+          color: "#6fd0a8"
+        - entity: sensor.radarr_movies_unreleased
+          icon: mdi:calendar-clock
+          name: Not released yet
+          color: "#7fb2ff"
+        - entity: sensor.radarr_movies_searching
+          icon: mdi:magnify-close
+          name: Released, nothing found
+          color: "#f0b45a"
       - entity: sensor.seerr_tv_requests
         name: TV
         mode: now
-        days: 7
+        range: false
         decimals: 0
         unit: ""
+        chips:
+        - entity: sensor.sonarr_download_queue
+          icon: mdi:download
+          name: Downloading
+          color: "#6fd0a8"
+        - entity: sensor.sonarr_series_incomplete
+          icon: mdi:magnify-close
+          name: Episodes missing
+          color: "#f0b45a"
+        - entity: sensor.sonarr_series_complete
+          icon: mdi:check
+          name: Complete
+          color: "#7bd88f"
       popup:
         graphs:
         - name: Total requests
@@ -894,6 +920,24 @@ views:
             name: Movies
           - entity: sensor.seerr_tv_requests
             name: TV
+          days: 7
+        - name: Movies by state
+          entities:
+          - entity: sensor.radarr_download_queue
+            name: Downloading
+          - entity: sensor.radarr_movies_unreleased
+            name: Not released yet
+          - entity: sensor.radarr_movies_searching
+            name: Released, nothing found
+          days: 7
+        - name: TV by state
+          entities:
+          - entity: sensor.sonarr_download_queue
+            name: Downloading
+          - entity: sensor.sonarr_series_incomplete
+            name: Episodes missing
+          - entity: sensor.sonarr_series_complete
+            name: Complete
           days: 7
       grid_options:
         columns: 12

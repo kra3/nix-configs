@@ -46,9 +46,6 @@
     entity_id: input_boolean.living_room_is_dark
     state: "on"
   - condition: state
-    entity_id: schedule.sleep
-    state: "off"
-  - condition: state
     entity_id: input_boolean.party_mode
     state: "off"
   - condition: template

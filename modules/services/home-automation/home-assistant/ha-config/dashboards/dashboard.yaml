@@ -1539,7 +1539,7 @@ views:
       - binary_sensor.house_exits_open_status
       - binary_sensor.front_door_knock_contact
       grid_options:
-        columns: 12
+        columns: full
     - type: heading
       heading: Last seen
       icon: mdi:account-eye
@@ -1547,7 +1547,7 @@ views:
     - type: custom:security-lastseen-card
       kind: person
       grid_options:
-        columns: 12
+        columns: full
   - type: grid
     column_span: 2
     cards:
@@ -1645,6 +1645,8 @@ views:
             state_content:
             - state
             - area_name
+        exclude:
+        - entity_id: binary_sensor.house_exits_open_status
       sort:
         method: state
         reverse: true
@@ -1733,6 +1735,8 @@ views:
 
         - domain: lock
         - domain: alarm_control_panel
+        exclude:
+        - entity_id: binary_sensor.house_exits_open_status
       grid_options:
         columns: 12
 - title: Climate

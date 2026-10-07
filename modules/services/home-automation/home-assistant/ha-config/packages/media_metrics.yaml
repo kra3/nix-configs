@@ -167,3 +167,14 @@ template:
              and states('sensor.radarr_download_queue') | is_number }}
         state: >-
           {{ [states('sensor.radarr_movies_no_file') | int(0) - states('sensor.radarr_download_queue') | int(0), 0] | max }}
+      - name: Arr queue total
+        unique_id: arr_queue_total
+        unit_of_measurement: items
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.unpackerr_lidarr_queue') | is_number
+             and states('sensor.unpackerr_radarr_queue') | is_number
+             and states('sensor.unpackerr_sonarr_queue') | is_number }}
+        state: >-
+          {{ ['sensor.unpackerr_lidarr_queue', 'sensor.unpackerr_radarr_queue', 'sensor.unpackerr_sonarr_queue']
+             | map('states') | map('float', 0) | sum | int }}

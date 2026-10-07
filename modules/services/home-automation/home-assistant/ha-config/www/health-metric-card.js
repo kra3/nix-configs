@@ -794,7 +794,7 @@ class HealthMetricCard extends HTMLElement {
         const s = this._data["item" + i] || [];
         const ist = this._hass.states[it.entity];
         const mode = it.mode || "absolute";
-        const d = computeDelta(s, mode, it.points);
+        const d = s.length === 1 ? { value: 0, abs: 0 } : computeDelta(s, mode, it.points);
         const tone = deltaTone(d, it.good);
         const unit = it.unit !== undefined ? it.unit : it.per ? "%" : (ist && ist.attributes.unit_of_measurement) || "";
         const dec = it.decimals !== undefined ? it.decimals : 1;

@@ -835,6 +835,7 @@ views:
       icon: mdi:pause
       color: blue
       vertical: true
+      hide_state: true
       tap_action:
         action: perform-action
         perform_action: button.press
@@ -848,6 +849,7 @@ views:
       icon: mdi:play
       color: blue
       vertical: true
+      hide_state: true
       tap_action:
         action: perform-action
         perform_action: button.press
@@ -1207,9 +1209,8 @@ views:
         name: Free
         days: 7
         good: up
-        decimals: 1
-        scale: 0.001
-        unit: TB
+        decimals: 0
+        unit: GB
       - entity: sensor.sabnzbd_karunagath_in_total_disk_space
         name: Total
         mode: now

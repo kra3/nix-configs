@@ -1544,18 +1544,6 @@ views:
         image.ranger_duo_fxd_person: Living Room
       grid_options:
         columns: full
-    - type: heading
-      heading: Last seen
-      icon: mdi:account-eye
-      heading_style: subtitle
-    - type: custom:security-lastseen-card
-      kind: person
-      area_override:
-        camera.ranger_duo_fxd: Living Room
-        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
-        image.ranger_duo_fxd_person: Living Room
-      grid_options:
-        columns: full
   - type: grid
     column_span: 2
     cards:
@@ -1724,64 +1712,18 @@ views:
         mode: camera
       grid_options:
         columns: full
-  - type: grid
-    cards:
     - type: heading
-      heading: Openings
-      icon: mdi:door
-      heading_style: title
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: binary_sensor
-          attributes:
-            device_class: door
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: window
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: garage_door
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        - domain: binary_sensor
-          attributes:
-            device_class: opening
-          state: /^(on|off)$/
-          options:
-            type: tile
-            state_content:
-            - state
-            - area_name
-        exclude:
-        - entity_id: binary_sensor.house_exits_open_status
-      sort:
-        method: state
-        reverse: true
+      heading: Last seen
+      icon: mdi:account-eye
+      heading_style: subtitle
+    - type: custom:security-lastseen-card
+      kind: person
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
       grid_options:
-        columns: 12
+        columns: full
   - type: grid
     cards:
     - type: heading
@@ -1839,6 +1781,71 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Openings
+      icon: mdi:door
+      heading_style: title
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+    - type: custom:auto-entities
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+          state: /^(on|off)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+        exclude:
+        - entity_id: binary_sensor.house_exits_open_status
+      sort:
+        method: state
+        reverse: true
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
       heading: Activity
       icon: mdi:history
       heading_style: title
@@ -1870,7 +1877,7 @@ views:
         exclude:
         - entity_id: binary_sensor.house_exits_open_status
       grid_options:
-        columns: 12
+        columns: full
 - title: Climate
   path: dash-climate
   icon: mdi:thermostat

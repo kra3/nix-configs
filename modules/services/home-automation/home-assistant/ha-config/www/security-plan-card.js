@@ -81,8 +81,8 @@ function planHtml(m, size) {
 const STYLE = `
   :host { display: block; }
   ha-card { padding: 10px; }
-  .plan { position: relative; width: 100%; }
-  .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; }
+  .plan { position: relative; width: 100%; container: plan / inline-size; }
+  .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; container: room / inline-size; }
   .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
   .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
   .room.open { border-color: #ffb300; }
@@ -98,6 +98,14 @@ const STYLE = `
   .b.alert { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
   .b.cam { color: var(--primary-color); }
   .b.dead { opacity: 0.45; }
+  @container plan (max-width: 560px) {
+    .nm { font-size: 9px; }
+    .room { padding: 2px 3px; }
+    .b { padding: 1px; }
+    .b ha-icon { --mdc-icon-size: 16px; }
+  }
+  @container room (max-width: 64px) { .nm { font-size: 8px; } }
+  @container room (max-width: 34px) { .nm { display: none; } .b ha-icon { --mdc-icon-size: 14px; } }
 `;
 
 class SecurityPlanCard extends HTMLElement {

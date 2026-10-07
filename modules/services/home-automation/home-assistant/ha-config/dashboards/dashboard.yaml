@@ -1559,9 +1559,6 @@ views:
       heading_style: title
     - type: custom:security-plan-card
       image: /local/floorplan.png?v=12
-      sound_quiet_when:
-      - media_player.lg_webos_tv_oled77c35la
-      - media_player.home_theater_2
       camera_card:
         cameras: &sec_cams
         - camera_entity: camera.ranger_duo_fxd

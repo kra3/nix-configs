@@ -5,7 +5,6 @@ const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
 const SOUND = /^binary_sensor\.(.+)_(glass|shatter|scream|fire_alarm)_sound$/;
-const PLAYING = ["on", "playing", "paused", "buffering"];
 
 function areaFor(hass, id, cfg) {
   const over = cfg && cfg.area_override && cfg.area_override[id];
@@ -69,10 +68,9 @@ function planModel(states, areaOf, cfg) {
     if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
     return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
   });
-  const quiet = !armed && (cfg.sound_quiet_when || []).some((id) => states[id] && PLAYING.includes(states[id].state));
   for (const s of all) {
     const hit = SOUND.exec(s.entity_id);
-    if (!hit || s.state !== "on" || (quiet && hit[2] !== "fire_alarm")) continue;
+    if (!hit || s.state !== "on") continue;
     for (const r of rooms) for (const b of r.badges) if (b.id === "camera." + hit[1]) b.heard = hit[2].replace("_", " ");
   }
   return { rooms, armed };

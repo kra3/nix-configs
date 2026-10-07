@@ -18,7 +18,7 @@ resources:
     type: module
   - url: /local/security-status-card.js?v=5
     type: module
-  - url: /local/security-plan-card.js?v=10
+  - url: /local/security-plan-card.js?v=11
     type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module

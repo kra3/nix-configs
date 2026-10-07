@@ -818,20 +818,43 @@ views:
           days: 7
       grid_options:
         columns: 12
-    - type: entities
-      title: SABnzbd controls
-      show_header_toggle: false
-      entities:
-      - entity: number.sabnzbd_karunagath_in_speedlimit
-        name: Speed limit
-      - entity: button.sabnzbd_karunagath_in_pause
-        name: Pause
-        action_name: Pause
-      - entity: button.sabnzbd_karunagath_in_resume
-        name: Resume
-        action_name: Resume
+    - type: tile
+      entity: number.sabnzbd_karunagath_in_speedlimit
+      name: Speed limit
+      icon: mdi:speedometer
+      color: blue
+      vertical: true
+      features:
+      - type: numeric-input
+        style: slider
       grid_options:
-        columns: 12
+        columns: 6
+    - type: tile
+      entity: button.sabnzbd_karunagath_in_pause
+      name: Pause
+      icon: mdi:pause
+      color: blue
+      vertical: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.sabnzbd_karunagath_in_pause
+      grid_options:
+        columns: 3
+    - type: tile
+      entity: button.sabnzbd_karunagath_in_resume
+      name: Resume
+      icon: mdi:play
+      color: blue
+      vertical: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.sabnzbd_karunagath_in_resume
+      grid_options:
+        columns: 3
     - type: conditional
       conditions:
       - condition: state

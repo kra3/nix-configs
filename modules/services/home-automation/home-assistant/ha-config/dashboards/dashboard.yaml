@@ -2092,32 +2092,33 @@ views:
       icon: mdi:memory
       heading_style: title
     - type: custom:health-metric-card
-      entity: sensor.system_monitor_memory_usage
+      entity: sensor.system_monitor_memory_use
       name: Memory
       icon: mdi:memory
       color: "#6bb6ff"
-      decimals: 0
+      decimals: 1
+      scale: 0.0009765625
+      unit: GiB
+      secondary:
+        entity: sensor.system_monitor_memory_usage
+        inline: true
+        decimals: 0
+        unit: " %"
       show_date: false
       chart:
         type: line
         days: 7
+        scale: 0.0009765625
       delta:
         mode: range
-        decimals: 0
-      items:
-      - entity: sensor.system_monitor_memory_use
-        name: Used
-        mode: now
-        days: 7
         decimals: 1
-        scale: 0.0009765625
-        unit: GiB
-        color: "#6bb6ff"
+      items:
       - entity: sensor.system_monitor_swap_usage
         name: Swap
         mode: now
         days: 7
         decimals: 0
+        unit: "%"
         color: "#9fa8ff"
       popup:
         graphs:
@@ -2132,34 +2133,39 @@ views:
       grid_options:
         columns: 12
     - type: custom:health-metric-card
-      entity: sensor.system_monitor_disk_usage
+      entity: sensor.system_monitor_disk_use
       name: Disk
       icon: mdi:harddisk
       color: "#8fd9c0"
-      decimals: 0
+      decimals: 1
+      secondary:
+        entity: sensor.system_monitor_disk_usage
+        inline: true
+        decimals: 1
+        unit: " %"
       show_date: false
       chart:
         type: line
         days: 7
       delta:
-        mode: range
-        decimals: 0
+        mode: absolute
+        decimals: 1
       items:
-      - entity: sensor.system_monitor_disk_use
-        name: Used
-        mode: now
-        days: 7
-        decimals: 0
-        color: "#8fd9c0"
       - entity: sensor.system_monitor_disk_free
         name: Free
         mode: now
+        growth: true
+        good: up
         days: 7
         decimals: 0
         color: "#8fd9c0"
       popup:
         graphs:
-        - name: Disk use
+        - name: Disk used
+          entities:
+          - sensor.system_monitor_disk_use
+          days: 7
+        - name: Disk used (percent)
           entities:
           - sensor.system_monitor_disk_usage
           days: 7
@@ -2170,30 +2176,33 @@ views:
       name: ZFS tank
       icon: mdi:database
       color: "#8fd9c0"
-      decimals: 0
+      decimals: 1
       show_date: false
       chart:
         type: line
         days: 30
       delta:
-        mode: range
-        decimals: 0
+        mode: absolute
+        decimals: 1
       items:
       - entity: sensor.zfs_rpool_used
         name: rpool used
         mode: now
+        growth: true
         days: 7
-        decimals: 0
+        decimals: 1
         unit: "%"
       - entity: sensor.zfs_tank_fragmentation
         name: tank frag
         mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: "%"
       - entity: sensor.zfs_rpool_fragmentation
         name: rpool frag
         mode: now
+        growth: true
         days: 7
         decimals: 0
         unit: "%"
@@ -2249,6 +2258,7 @@ views:
       - entity: sensor.power_monitor_1_voltage
         name: Voltage
         mode: now
+        range: false
         days: 7
         decimals: 0
         color: "#c9a7e8"
@@ -2296,17 +2306,32 @@ views:
           type: bar
       grid_options:
         columns: 12
-    - type: entities
-      show_header_toggle: false
-      entities:
-      - entity: switch.power_monitor_1
-        name: Power
-      - entity: switch.power_monitor_1_child_lock
-        name: Child lock
-      - entity: select.power_monitor_1_power_on_behavior
-        name: Power-on behavior
+    - type: tile
+      entity: switch.power_monitor_1
+      name: Power
+      icon: mdi:power-socket-eu
+      color: yellow
+      vertical: true
       grid_options:
-        columns: 12
+        columns: 4
+    - type: tile
+      entity: switch.power_monitor_1_child_lock
+      name: Child lock
+      icon: mdi:lock
+      color: yellow
+      vertical: true
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: select.power_monitor_1_power_on_behavior
+      name: Power-on
+      icon: mdi:power-settings
+      color: yellow
+      vertical: true
+      features:
+      - type: select-options
+      grid_options:
+        columns: 4
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - title: Maintenance

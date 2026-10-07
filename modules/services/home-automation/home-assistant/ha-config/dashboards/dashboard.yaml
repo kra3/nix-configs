@@ -1696,7 +1696,7 @@ views:
         image.ranger_duo_fxd_person: Living Room
       positions:
         binary_sensor.patio_door_contact_contact:
-          - 100
+          - 187
           - 6
         binary_sensor.living_room_window_left_contact_contact:
           - 380

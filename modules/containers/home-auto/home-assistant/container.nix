@@ -51,6 +51,7 @@
             "${../../../services/home-automation/home-assistant/ha-config/www/home-hero-card.js}:/config/www/home-hero-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/room-tile-card.js}:/config/www/room-tile-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/status-row-card.js}:/config/www/status-row-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-status-card.js}:/config/www/security-status-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-plan-card.js}:/config/www/security-plan-card.js:ro"
             "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"

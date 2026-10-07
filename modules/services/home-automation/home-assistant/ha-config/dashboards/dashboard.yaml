@@ -1612,7 +1612,7 @@ views:
         {% set cls = ['door', 'window', 'garage_door', 'opening'] %}
         {% set o = states.binary_sensor | selectattr('attributes.device_class', 'defined')
            | selectattr('attributes.device_class', 'in', cls) | selectattr('state', 'eq', 'on') | list %}
-        {% if o %}**Open now:** {{ o | map(attribute='name') | join(', ') }}
+        {% if o %}**Open now:** {{ o | map(attribute='name') | map('replace', ' Contact Door', '') | map('replace', ' Contact', '') | map('replace', ' Open Status', '') | join(', ') }}
         {% else %}Everything is closed.{% endif %}
       grid_options:
         columns: 12
@@ -1649,7 +1649,7 @@ views:
     - type: custom:auto-entities
       card:
         type: grid
-        columns: 2
+        columns: 1
         square: false
       card_param: cards
       show_empty: false

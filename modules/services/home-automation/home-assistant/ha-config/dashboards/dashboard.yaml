@@ -1635,12 +1635,6 @@ views:
             - 118
           entities:
             - lock.front_door
-        - name: Closet
-          rect:
-            - 491
-            - 225
-            - 53
-            - 43
         - name: Toilet
           areas:
             - Toilet
@@ -1696,6 +1690,12 @@ views:
         binary_sensor.front_front_door_nw_door:
           - 444
           - 366
+        lock.front_door:
+          - 422
+          - 364
+        lock.front_front_door_nw:
+          - 466
+          - 364
       grid_options:
         columns: full
   - type: grid

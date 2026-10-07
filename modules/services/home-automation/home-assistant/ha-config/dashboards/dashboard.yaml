@@ -2172,11 +2172,16 @@ views:
       grid_options:
         columns: 12
     - type: custom:health-metric-card
-      entity: sensor.zfs_tank_used
+      entity: sensor.zfs_tank_used_gib
       name: ZFS tank
       icon: mdi:database
       color: "#8fd9c0"
-      decimals: 1
+      decimals: 0
+      secondary:
+        entity: sensor.zfs_tank_used
+        inline: true
+        decimals: 1
+        unit: " %"
       show_date: false
       chart:
         type: line
@@ -2208,7 +2213,12 @@ views:
         unit: "%"
       popup:
         graphs:
-        - name: Pool usage
+        - name: Tank used
+          entities:
+          - entity: sensor.zfs_tank_used_gib
+            name: tank
+          days: 30
+        - name: Pool usage (percent)
           entities:
           - entity: sensor.zfs_tank_used
             name: tank

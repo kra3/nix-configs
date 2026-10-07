@@ -1552,6 +1552,134 @@ views:
     column_span: 2
     cards:
     - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:security-plan-card
+      size:
+        - 730
+        - 620
+      hide:
+        - binary_sensor.patio_door_contact_contact
+        - binary_sensor.house_exits_open_status
+        - binary_sensor.front_door_knock_contact
+      rooms:
+        - name: Terrace
+          rect:
+            - 5
+            - 0
+            - 248
+            - 252
+          outdoor: true
+          entities:
+            - binary_sensor.patio_door_contact_contact
+        - name: Dining Room
+          areas:
+            - Dining Room
+          rect:
+            - 5
+            - 260
+            - 245
+            - 234
+          presence:
+            - binary_sensor.room_presence_dining
+        - name: Living Room
+          areas:
+            - Living Room
+          rect:
+            - 250
+            - 260
+            - 190
+            - 174
+          presence:
+            - binary_sensor.room_presence_living
+        - name: Bed Room
+          areas:
+            - Bed Room
+          rect:
+            - 445
+            - 260
+            - 275
+            - 174
+        - name: Hallway
+          areas:
+            - Hallway
+          rect:
+            - 250
+            - 434
+            - 475
+            - 60
+          presence:
+            - binary_sensor.room_presence_hall
+        - name: Kitchen Dining
+          areas:
+            - Kitchen Dining
+          rect:
+            - 5
+            - 494
+            - 115
+            - 118
+        - name: Kitchen
+          areas:
+            - Kitchen
+          rect:
+            - 120
+            - 494
+            - 170
+            - 118
+          presence:
+            - binary_sensor.room_presence_kitchen
+        - name: Laundry
+          areas:
+            - Laundry Room
+          rect:
+            - 295
+            - 494
+            - 80
+            - 118
+        - name: Entrance
+          areas:
+            - Entrance
+            - FRONT
+          rect:
+            - 375
+            - 494
+            - 110
+            - 118
+          entities:
+            - lock.front_door
+        - name: Toilet
+          areas:
+            - Toilet
+          rect:
+            - 487
+            - 494
+            - 53
+            - 118
+        - name: Bathroom
+          areas:
+            - Bathroom
+          rect:
+            - 540
+            - 494
+            - 80
+            - 118
+        - name: Office
+          areas:
+            - Office Room
+          rect:
+            - 625
+            - 494
+            - 100
+            - 118
+          presence:
+            - binary_sensor.room_presence_office
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
       heading: Cameras
       icon: mdi:cctv
       heading_style: title
@@ -1652,6 +1780,8 @@ views:
         reverse: true
       grid_options:
         columns: 12
+  - type: grid
+    cards:
     - type: heading
       heading: Locks
       icon: mdi:lock

@@ -111,8 +111,62 @@ rest:
         state_class: measurement
         value_template: "{{ value_json.EpisodeCount }}"
 
+  - resource: https://radarr.karunagath.in/api/v3/movie
+    scan_interval: 300
+    headers:
+      X-Api-Key: !secret radarr_api_key
+    sensor:
+      - name: Radarr movies unreleased
+        unique_id: radarr_movies_unreleased
+        state_class: measurement
+        value_template: "{{ value_json | selectattr('monitored') | rejectattr('hasFile') | rejectattr('isAvailable') | list | count }}"
+      - name: Radarr movies no file
+        unique_id: radarr_movies_no_file
+        state_class: measurement
+        value_template: "{{ value_json | selectattr('monitored') | rejectattr('hasFile') | selectattr('isAvailable') | list | count }}"
+  - resource: https://radarr.karunagath.in/api/v3/queue?pageSize=1
+    scan_interval: 60
+    headers:
+      X-Api-Key: !secret radarr_api_key
+    sensor:
+      - name: Radarr download queue
+        unique_id: radarr_download_queue
+        state_class: measurement
+        value_template: "{{ value_json.totalRecords }}"
+  - resource: https://sonarr.karunagath.in/api/v3/series
+    scan_interval: 300
+    headers:
+      X-Api-Key: !secret sonarr_api_key
+    sensor:
+      - name: Sonarr series complete
+        unique_id: sonarr_series_complete
+        state_class: measurement
+        value_template: "{{ value_json | selectattr('statistics.percentOfEpisodes', 'ge', 100) | list | count }}"
+      - name: Sonarr series incomplete
+        unique_id: sonarr_series_incomplete
+        state_class: measurement
+        value_template: "{{ value_json | selectattr('monitored') | selectattr('statistics.percentOfEpisodes', 'lt', 100) | list | count }}"
+  - resource: https://sonarr.karunagath.in/api/v3/queue?pageSize=1
+    scan_interval: 60
+    headers:
+      X-Api-Key: !secret sonarr_api_key
+    sensor:
+      - name: Sonarr download queue
+        unique_id: sonarr_download_queue
+        state_class: measurement
+        value_template: "{{ value_json.totalRecords }}"
+
 template:
   - sensor:
+      - name: Radarr movies searching
+        unique_id: radarr_movies_searching
+        unit_of_measurement: movies
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.radarr_movies_no_file') | is_number
+             and states('sensor.radarr_download_queue') | is_number }}
+        state: >-
+          {{ [states('sensor.radarr_movies_no_file') | int(0) - states('sensor.radarr_download_queue') | int(0), 0] | max }}
       - name: Arr queue total
         unique_id: arr_queue_total
         unit_of_measurement: items

@@ -518,6 +518,14 @@ const STYLE = `
   .chip.good { color: var(--success-color, #4caf50); background: color-mix(in srgb, var(--success-color, #4caf50) 16%, transparent); }
   .chip.bad { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 16%, transparent); }
   .chip.neutral { color: var(--secondary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
+  .item .change.gr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+  .alt { margin-left: 6px; font-size: 15px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; }
+  .item .fl { flex: 1; min-width: 0; }
+  .vv { white-space: nowrap; }
+  .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
+  .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }
+  .sc ha-icon { --mdc-icon-size: 16px; color: var(--c); }
   .footer { display: grid; margin-top: 12px; border-top: 1px solid var(--divider-color); }
   .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0 0; min-width: 0; }
   .item + .item { border-left: 1px solid var(--divider-color); padding-left: 14px; margin-left: 14px; }
@@ -709,6 +717,14 @@ class HealthMetricCard extends HTMLElement {
     this._render();
   }
 
+  _growthHtml(s, it, dec, lang) {
+    const g = s.length === 1 ? { value: 0, abs: 0 } : computeDelta(s, "absolute", it.points);
+    if (!g) return "";
+    const dir = deltaDir(g);
+    const col = TONE_COLOR[deltaTone(g, it.good)] || "var(--secondary-text-color)";
+    return `<span class="grw" style="color:${col}">${dir === "flat" ? "" : arrowSvg(dir)}${signed(g.value, dec, lang)} / ${it.days || 7}d</span>`;
+  }
+
   // True min/max points for a range chip, plus the live reading; falls back to the plotted series.
   _span(key, fallback, live) {
     const pts = [...(this._data["lo" + key] || []), ...(this._data["hi" + key] || [])];
@@ -749,7 +765,7 @@ class HealthMetricCard extends HTMLElement {
     const chartMain = this._data.main || [];
     const raw = c.hero_from === "chart" ? (chartMain.length ? chartMain[chartMain.length - 1].v / scale : NaN) : st ? parseFloat(st.state) : NaN;
     const hero = isFinite(raw) ? this._formatMain(raw * scale) : { text: "\u2013", unit: "" };
-    const heroHtml = hero.html || `<span class="value">${hero.text}</span><span class="unit">${hero.unit}</span>`;
+    let heroHtml = hero.html || `<span class="value">${hero.text}</span><span class="unit">${hero.unit}</span>`;
 
     let under = "";
     const main = this._data.main || [];
@@ -774,7 +790,8 @@ class HealthMetricCard extends HTMLElement {
       const sv = sec ? parseFloat(sec.state) : NaN;
       if (isFinite(sv)) {
         const txt = c.secondary.format === "duration" ? durationText(sv, lang) : fmt(sv, c.secondary.decimals || 0, lang);
-        under += `<div class="sub">${c.secondary.prefix || ""}${txt}</div>`;
+        if (c.secondary.inline) heroHtml += `<span class="alt">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</span>`;
+        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}</div>`;
       }
     }
 
@@ -809,10 +826,20 @@ class HealthMetricCard extends HTMLElement {
           }
         }
         if (it.mode === "now") {
-          const range = rangeText(this._span(String(i), s, nowVal), dec, "", lang);
+          const range = it.range === false ? null : rangeText(this._span(String(i), s, nowVal), dec, "", lang);
+          const chips = (it.chips || [])
+            .map((ch) => {
+              const cs = this._hass.states[ch.entity];
+              const n = cs ? parseFloat(cs.state) : NaN;
+              if (!isFinite(n) || n === 0) return "";
+              return `<span class="sc" style="--c:${ch.color || "var(--secondary-text-color)"}" title="${ch.name || ""}"><ha-icon icon="${ch.icon}"></ha-icon>${fmt(n, 0, lang)}</span>`;
+            })
+            .join("");
           return (
-            `<div class="item" style="--dot:${it.color || accent}"><div><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
-            `<div class="change">${now} ${unit}</div><div class="now">${range ? range + " " + unit : "&nbsp;"}</div></div></div>`
+            `<div class="item" style="--dot:${it.color || accent}"><div${it.growth ? ' class="fl"' : ""}><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
+            `<div class="change${it.growth ? " gr" : ""}"><span class="vv">${now} ${unit}</span>${chips ? `<span class="scs">${chips}</span>` : ""}${it.growth ? this._growthHtml(s, it, dec, lang) : ""}</div>` +
+            (it.growth || range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
+            `</div></div>`
           );
         }
         const change = d ? signed(d.value, dec, lang) + (mode === "percent" ? "%" : "") : "–";

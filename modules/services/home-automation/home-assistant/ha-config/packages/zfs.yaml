@@ -16,6 +16,17 @@ rest:
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.pool', 'eq', 'rpool') | list %}
           {{ (r[0].value[1] | float) | round(1) if r else none }}
+  - resource: "http://10.3.255.2:9090/api/v1/query?query=zfs_pool_allocated_bytes%20%2F%201073741824"
+    scan_interval: 300
+    sensor:
+      - name: ZFS tank used GiB
+        unique_id: zfs_tank_used_gib
+        unit_of_measurement: GiB
+        device_class: data_size
+        state_class: measurement
+        value_template: >-
+          {% set r = value_json.data.result | selectattr('metric.pool', 'eq', 'tank') | list %}
+          {{ (r[0].value[1] | float) | round(1) if r else none }}
   - resource: "http://10.3.255.2:9090/api/v1/query?query=100%20%2A%20zfs_pool_fragmentation_ratio"
     scan_interval: 1800
     sensor:

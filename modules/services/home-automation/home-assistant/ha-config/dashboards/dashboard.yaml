@@ -574,56 +574,6 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
-- title: Cameras
-  path: cameras
-  icon: mdi:cctv
-  sections:
-  - type: grid
-    cards:
-    - type: custom:advanced-camera-card
-      cameras:
-      - camera_entity: camera.ranger_duo_fxd
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_duo_ptz
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_uno
-        live_provider: go2rtc
-      live:
-        display:
-          mode: grid
-      view:
-        dim: true
-      menu:
-        buttons:
-          microphone:
-            enabled: true
-      status_bar:
-        style: overlay
-      image:
-        mode: camera
-      grid_options:
-        columns: full
-    - type: heading
-      heading: Person detected
-      heading_style: subtitle
-    - type: tile
-      entity: binary_sensor.ranger_duo_fxd_person_occupancy
-      name: Living Room
-      area: living_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_duo_ptz_person_occupancy
-      name: Dining Room
-      area: dining_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_uno_person_occupancy
-      name: Office Room
-      area: office
-      grid_options:
-        columns: 4
 - title: Media
   path: media
   icon: mdi:play-circle
@@ -1575,11 +1525,423 @@ views:
   icon: mdi:lightbulb-group
   strategy:
     type: light
-- title: Security
+- type: sections
+  title: Security
   path: dash-security
   icon: mdi:shield-home
-  strategy:
-    type: security
+  max_columns: 4
+  sections:
+  - type: grid
+    column_span: 4
+    cards:
+    - type: custom:security-status-card
+      exclude:
+      - binary_sensor.house_exits_open_status
+      - binary_sensor.front_door_knock_contact
+      - lock.front_front_door_nw
+      - binary_sensor.front_front_door_nw_door
+      warn:
+      - entity: binary_sensor.front_door_ble_degraded
+        label: Front door lock on cloud fallback
+        icon: mdi:bluetooth-off
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:security-plan-card
+      image: /local/floorplan.png?v=13
+      camera_card:
+        cameras: &sec_cams
+        - &cam_fxd
+          camera_entity: camera.ranger_duo_fxd
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_fxd_person_occupancy
+            reviews:
+              severities:
+              - high
+        - &cam_ptz
+          camera_entity: camera.ranger_duo_ptz
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_ptz_person_occupancy
+            reviews:
+              severities:
+              - high
+        - &cam_uno
+          camera_entity: camera.ranger_uno
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_uno_person_occupancy
+            reviews:
+              severities:
+              - high
+        live:
+          display:
+            mode: single
+        menu:
+          buttons:
+            ptz_controls:
+              enabled: true
+            ptz_home:
+              enabled: true
+      size:
+        - 736
+        - 374
+      hide:
+        - binary_sensor.house_exits_open_status
+        - binary_sensor.front_door_knock_contact
+        - lock.front_front_door_nw
+        - binary_sensor.front_front_door_nw_door
+      rooms:
+        - name: Dining Room
+          areas:
+            - Dining Room
+          rect:
+            - 9
+            - 6
+            - 245
+            - 234
+          presence:
+            - binary_sensor.room_presence_dining
+        - name: Living Room
+          areas:
+            - Living Room
+          rect:
+            - 254
+            - 6
+            - 190
+            - 174
+          presence:
+            - binary_sensor.room_presence_living
+        - name: Bed Room
+          areas:
+            - Bed Room
+          rect:
+            - 449
+            - 6
+            - 275
+            - 174
+          presence:
+            - binary_sensor.bedroom_occupancy_presence
+        - name: Hallway
+          areas:
+            - Hallway
+          rect:
+            - 254
+            - 180
+            - 475
+            - 60
+          presence:
+            - binary_sensor.room_presence_hall
+        - name: Kitchen Dining
+          areas:
+            - Kitchen Dining
+          rect:
+            - 9
+            - 240
+            - 95
+            - 118
+        - name: Kitchen
+          areas:
+            - Kitchen
+          rect:
+            - 104
+            - 240
+            - 190
+            - 118
+          presence:
+            - binary_sensor.room_presence_kitchen
+        - name: Laundry
+          areas:
+            - Laundry Room
+          rect:
+            - 299
+            - 240
+            - 80
+            - 118
+          presence:
+            - binary_sensor.laundry_occupancy_presence
+        - name: Entrance
+          areas:
+            - Entrance
+            - FRONT
+          rect:
+            - 379
+            - 240
+            - 110
+            - 118
+          entities:
+            - lock.front_door
+            - binary_sensor.front_door_open
+        - name: Toilet
+          areas:
+            - Toilet
+          rect:
+            - 491
+            - 268
+            - 53
+            - 90
+          presence:
+            - binary_sensor.toilet_occupancy_presence
+        - name: Bathroom
+          areas:
+            - Bathroom
+          rect:
+            - 544
+            - 240
+            - 80
+            - 118
+          presence:
+            - binary_sensor.bathroom_occupancy_presence
+        - name: Office
+          areas:
+            - Office Room
+          rect:
+            - 629
+            - 240
+            - 100
+            - 118
+          presence:
+            - binary_sensor.room_presence_office
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        image.ranger_duo_fxd_person: Living Room
+      positions:
+        binary_sensor.patio_door_contact_contact:
+          - 187
+          - 6
+        binary_sensor.living_room_window_left_contact_contact:
+          - 380
+          - 6
+        binary_sensor.living_room_window_right_contact_contact:
+          - 420
+          - 6
+        binary_sensor.bedroom_window_left_contact_contact:
+          - 559
+          - 6
+        binary_sensor.bedroom_window_right_contact_contact:
+          - 639
+          - 6
+        binary_sensor.kitchen_dining_window_left_contact_contact:
+          - 55
+          - 366
+        binary_sensor.hallway_door_contact_contact:
+          - 727
+          - 205
+        lock.front_door:
+          - 458
+          - 364
+        binary_sensor.front_door_open:
+          - 430
+          - 366
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Cameras
+      icon: mdi:cctv
+      heading_style: title
+    - type: custom:advanced-camera-card
+      cameras: *sec_cams
+      live:
+        display:
+          mode: grid
+      view:
+        dim: true
+        triggers:
+          filter_selected_camera: false
+          show_trigger_status: true
+          untrigger_delay_seconds: 20
+          actions:
+            trigger: live
+            untrigger: default
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+          clips:
+            enabled: true
+          reviews:
+            enabled: true
+          ptz_controls:
+            enabled: true
+          ptz_home:
+            enabled: true
+          screenshot:
+            enabled: true
+          pip:
+            enabled: true
+          download:
+            enabled: false
+          folders:
+            enabled: false
+          gallery:
+            enabled: false
+          camera_ui:
+            enabled: false
+      overrides:
+      - conditions:
+        - condition: screen
+          media_query: "(max-width: 700px)"
+        merge:
+          live.display:
+            mode: single
+      automations:
+      - triggers:
+        - trigger: state
+          entity_id: alarm_control_panel.vasudha_secure
+          to: triggered
+        actions:
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: live
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: display_mode_select
+          display_mode: grid
+      status_bar:
+        style: overlay
+      image:
+        mode: camera
+      grid_options:
+        columns: full
+    - type: custom:popup-tile-card
+      entity: camera.ranger_uno
+      name: Recent events
+      icon: mdi:history
+      subtitle: Reviews and clips
+      title: Recent events
+      width: 900px
+      popup:
+        type: custom:advanced-camera-card
+        cameras:
+        - <<: *cam_fxd
+          dependencies:
+            all_cameras: true
+        - <<: *cam_ptz
+          dependencies:
+            all_cameras: true
+        - <<: *cam_uno
+          dependencies:
+            all_cameras: true
+        view:
+          default: reviews
+          camera_select: current
+        status_bar:
+          style: overlay
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Locks
+      icon: mdi:lock
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: lock
+          state: /^(locked|unlocked|locking|unlocking|jammed|open|opening)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+            features:
+            - type: lock-commands
+        exclude:
+        - entity_id: lock.front_front_door_nw
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: entities
+        title: Not reporting
+        show_header_toggle: false
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+          state: /^(unknown|unavailable)$/
+        - domain: lock
+          state: /^(unknown|unavailable)$/
+        exclude:
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Activity
+      icon: mdi:history
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: logbook
+        hours_to_show: 24
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+
+        - domain: lock
+        - domain: alarm_control_panel
+        exclude:
+        - entity_id: binary_sensor.house_exits_open_status
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
+      grid_options:
+        columns: full
 - title: Climate
   path: dash-climate
   icon: mdi:thermostat

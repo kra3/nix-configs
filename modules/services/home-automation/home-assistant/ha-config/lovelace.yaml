@@ -12,9 +12,13 @@ resources:
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module
-  - url: /local/popup-tile-card.js?v=1
+  - url: /local/popup-tile-card.js?v=2
     type: module
   - url: /local/room-tile-card.js?v=2
+    type: module
+  - url: /local/security-status-card.js?v=7
+    type: module
+  - url: /local/security-plan-card.js?v=14
     type: module
   - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
     type: module

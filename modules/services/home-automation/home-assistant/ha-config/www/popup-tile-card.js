@@ -11,8 +11,9 @@ const STYLE = `
 
 const POPUP_STYLE = `
   .ptc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
-  .ptc-sheet { width: min(520px, 100%); max-height: 90vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
-  .ptc-head { display: flex; justify-content: flex-end; }
+  .ptc-sheet { width: min(var(--ptc-w, 520px), 100%); max-height: 90vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
+  .ptc-head { display: flex; justify-content: space-between; align-items: center; }
+  .ptc-title { padding-left: 12px; font-size: 16px; font-weight: 600; color: var(--primary-text-color); }
   .ptc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }
 `;
 
@@ -49,7 +50,7 @@ class PopupTileCard extends HTMLElement {
       this.shadowRoot.querySelector("ha-card").addEventListener("click", () => this._open());
     }
     this.shadowRoot.querySelector(".name").textContent = c.name || (s && s.attributes.friendly_name) || c.entity;
-    this.shadowRoot.querySelector(".state").textContent = c.unit ? `${state} ${c.unit}` : state;
+    this.shadowRoot.querySelector(".state").textContent = c.subtitle || (c.unit ? `${state} ${c.unit}` : state);
   }
 
   async _open() {
@@ -65,7 +66,9 @@ class PopupTileCard extends HTMLElement {
     card.hass = this._hass;
     const ov = document.createElement("div");
     ov.className = "ptc-overlay";
-    ov.innerHTML = `<div class="ptc-sheet" role="dialog" aria-modal="true"><div class="ptc-head"><button class="ptc-close" aria-label="Close">×</button></div></div>`;
+    ov.innerHTML = `<div class="ptc-sheet" role="dialog" aria-modal="true"><div class="ptc-head"><span class="ptc-title"></span><button class="ptc-close" aria-label="Close">×</button></div></div>`;
+    ov.querySelector(".ptc-title").textContent = this._config.title || "";
+    if (this._config.width) ov.querySelector(".ptc-sheet").style.setProperty("--ptc-w", this._config.width);
     ov.querySelector(".ptc-sheet").appendChild(card);
     const close = () => {
       document.removeEventListener("keydown", onKey);

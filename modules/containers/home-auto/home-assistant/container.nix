@@ -50,6 +50,9 @@
             "${../../../services/home-automation/home-assistant/ha-config/www/home-hero-card.js}:/config/www/home-hero-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/room-tile-card.js}:/config/www/room-tile-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/security-status-card.js}:/config/www/security-status-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/security-plan-card.js}:/config/www/security-plan-card.js:ro"
+            "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"
             "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
             "/run/dbus:/run/dbus:ro"
           ];
@@ -80,7 +83,10 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8123";
-        vhostExtraConfig = "client_max_body_size 500m;";
+        vhostExtraConfig = ''
+          client_max_body_size 500m;
+          rewrite ^/api/frigate/([^/]+)/var/lib/frigate/(.*)$ /api/frigate/$1/$2 last;
+        '';
         locationExtraConfig = ''
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Proto $scheme;
@@ -113,6 +119,14 @@
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'
         '';
+      };
+
+      sops.secrets."home-assistant/floorplan.png" = {
+        sopsFile = ../../../../secrets/floorplan.png;
+        format = "binary";
+        owner = "root";
+        group = "root";
+        mode = "0444";
       };
 
       sops.secrets."homeassistant.latitude" = {

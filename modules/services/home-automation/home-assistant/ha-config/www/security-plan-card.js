@@ -1,0 +1,271 @@
+// Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
+const GONE = ["unknown", "unavailable"];
+const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
+const SOUND = /^binary_sensor\.(.+)_(glass|shatter|scream|fire_alarm)_sound$/;
+
+function areaFor(hass, id, cfg) {
+  const over = cfg && cfg.area_override && cfg.area_override[id];
+  if (over) return over;
+  const e = hass.entities && hass.entities[id];
+  const dev = e && e.device_id && hass.devices && hass.devices[e.device_id];
+  const areaId = (e && e.area_id) || (dev && dev.area_id);
+  return (areaId && hass.areas && hass.areas[areaId] && hass.areas[areaId].name) || "";
+}
+
+function badgeFor(s, armed) {
+  const id = s.entity_id;
+  const name = s.attributes.friendly_name || id;
+  if (id.startsWith("camera.")) return { id, name, icon: "mdi:cctv", tone: GONE.includes(s.state) ? "dead" : "cam", kind: "camera" };
+  if (id.startsWith("lock.")) {
+    if (GONE.includes(s.state)) return { id, name, icon: "mdi:lock-alert", tone: "dead", kind: "lock" };
+    const bad = ["unlocked", "open", "jammed"].includes(s.state);
+    return { id, name, icon: bad ? "mdi:lock-open-variant" : "mdi:lock", tone: bad ? "open" : "ok", kind: "lock" };
+  }
+  const cls = s.attributes.device_class;
+  const win = cls === "window";
+  if (GONE.includes(s.state)) return { id, name, icon: "mdi:help-circle-outline", tone: "dead", kind: "opening" };
+  const on = s.state === "on";
+  return {
+    id,
+    name,
+    icon: win ? (on ? "mdi:window-open-variant" : "mdi:window-closed-variant") : on ? "mdi:door-open" : "mdi:door-closed",
+    tone: on ? (armed ? "alert" : "open") : "ok",
+    kind: "opening",
+  };
+}
+
+function planModel(states, areaOf, cfg) {
+  const all = Object.values(states);
+  const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
+  const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
+  const rooms = (cfg.rooms || []).map((r) => {
+    const areas = new Set([].concat(r.areas || r.area || []));
+    const extra = new Set(r.entities || []);
+    const mine = all.filter((s) => extra.has(s.entity_id) || (areas.has(areaOf(s.entity_id)) && !(cfg.hide || []).includes(s.entity_id)));
+    const badges = mine
+      .filter((s) => {
+        const id = s.entity_id;
+        if (id.startsWith("camera.") || id.startsWith("lock.")) return true;
+        return id.startsWith("binary_sensor.") && OPEN_CLASSES.includes(s.attributes.device_class);
+      })
+      .map((s) => badgeFor(s, armed))
+      .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
+    const presenceIds = new Set([
+      ...(r.presence || []),
+      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id)).map((s) => s.entity_id),
+    ]);
+    const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
+    const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
+    const lights = mine.filter((s) => s.entity_id.startsWith("light.") && !s.attributes.entity_id && !s.attributes.is_hue_group);
+    const on = lights.filter((s) => s.state === "on");
+    const glow = on.length ? Math.max(...on.map((s) => (s.attributes.brightness == null ? 255 : s.attributes.brightness))) / 255 : 0;
+    const posOf = cfg.positions || {};
+    for (const b of badges) if (posOf[b.id]) b.pos = posOf[b.id];
+    const status = badges.some((b) => b.tone === "alert") ? "alert" : badges.some((b) => b.tone === "open") ? "open" : occupied ? "occ" : "";
+    if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
+    return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
+  });
+  for (const s of all) {
+    const hit = SOUND.exec(s.entity_id);
+    if (!hit || s.state !== "on") continue;
+    for (const r of rooms) for (const b of r.badges) if (b.id === "camera." + hit[1]) b.heard = hit[2].replace("_", " ");
+  }
+  return { rooms, armed };
+}
+
+function planHtml(m, size, image, layer = "security") {
+  const [W, H] = size;
+  const lay = layer === "lights";
+  const pct = (v, t) => ((v / t) * 100).toFixed(3) + "%";
+  const room = (r) => {
+    const [x, y, w, h] = r.rect;
+    const badges = lay
+      ? r.lights.length
+        ? `<span class="bulb ${r.lit ? "on" : ""}"><ha-icon icon="${r.lit ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon></span>`
+        : ""
+      : r.badges
+          .filter((b) => !b.pos)
+          .map((b) => `<button class="b ${b.tone} ${b.seen ? "seen" : ""} ${b.heard ? "heard" : ""}" title="${esc(b.name + (b.heard ? " · heard " + b.heard : ""))}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
+          .join("");
+    const glow = lay && r.lit ? `--glow:${Math.round(10 + 22 * r.glow)}%;` : "";
+    return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.occupied ? "occ" : ""} ${lay && r.lit ? "lit" : ""} ${lay && r.lights.length ? "tog" : ""}" data-lights="${esc(r.lights.join(","))}" style="${glow}left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
+      <div class="nm">${esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div><div class="bs">${badges}</div></div>`;
+  };
+  const walls = (lay ? [] : m.rooms)
+    .flatMap((r) => r.badges.filter((b) => b.pos))
+    .map(
+      (b) =>
+        `<button class="b w ${b.tone} ${b.heard ? "heard" : ""}" title="${esc(b.name + (b.heard ? " · heard " + b.heard : ""))}" data-id="${esc(b.id)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"><ha-icon icon="${b.icon}"></ha-icon></button>`
+    )
+    .join("");
+  const legend = lay
+    ? `<div class="legend"><span><i class="k lit"></i>Lights on</span><span><i class="k occ"></i>Occupied</span><span>Tap a room to toggle, hold for details</span></div>`
+    : `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span><span><i class="k heard"></i>Sound alert</span></div>`;
+  const sw = `<div class="sw"><button data-layer="security" class="${lay ? "" : "on"}"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Security</button><button data-layer="lights" class="${lay ? "on" : ""}"><ha-icon icon="mdi:lightbulb-group-outline"></ha-icon>Lights</button></div>`;
+  return `${sw}<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}${walls}</div>${legend}`;
+}
+
+const STYLE = `
+  :host { display: block; }
+  ha-card { padding: 10px; }
+  .plan { position: relative; width: 100%; container: plan / inline-size; }
+  .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; container: room / inline-size; }
+  .plan.img::before { content: ""; position: absolute; inset: 0; background: var(--secondary-text-color); opacity: 0.6; -webkit-mask: var(--img) center / 100% 100% no-repeat; mask: var(--img) center / 100% 100% no-repeat; }
+  .plan.img .room { border: 0; background: transparent; border-radius: 0; }
+  .plan.img .room.lit { background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, #ffcf6b calc(var(--glow) + 8%), transparent), color-mix(in srgb, #ffcf6b var(--glow), transparent)); }
+  .plan.img .room.tog { cursor: pointer; }
+  .plan.img .room.occ .nm { color: var(--primary-color); }
+  .bulb { line-height: 0; color: var(--secondary-text-color); }
+  .bulb.on { color: #ffb300; }
+  .bulb ha-icon { --mdc-icon-size: 18px; }
+  .sw { display: inline-flex; gap: 2px; padding: 2px; margin-bottom: 8px; border-radius: 999px; background: var(--secondary-background-color); }
+  .sw button { display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 4px 12px; border-radius: 999px; font-size: 12px; cursor: pointer; background: transparent; color: var(--secondary-text-color); }
+  .sw button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .sw ha-icon { --mdc-icon-size: 16px; }
+  .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
+  .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
+  .room.open { border-color: #ffb300; }
+  .room.alert { border-color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 14%, var(--secondary-background-color)); }
+  .b.seen { box-shadow: 0 0 0 2px var(--error-color, #f44336); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--error-color, #f44336) 40%, transparent); } }
+  .nm { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dot { display: inline-block; width: 9px; height: 9px; margin-left: 5px; border-radius: 50%; background: var(--primary-color); animation: beat 2s ease-in-out infinite; }
+  @keyframes beat { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 30%, transparent); } }
+  .bs { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+  .b { border: 0; padding: 2px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--secondary-text-color); line-height: 0; }
+  .b ha-icon { --mdc-icon-size: 20px; }
+  .b.open { color: #ffb300; background: color-mix(in srgb, #ffb300 18%, transparent); }
+  .b.alert { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
+  .b.cam { color: var(--primary-color); }
+  .b.heard { outline: 2px dashed var(--error-color, #f44336); outline-offset: 1px; border-radius: 50%; }
+  .b.dead { opacity: 0.45; }
+  .b.w { position: absolute; transform: translate(-50%, -50%); z-index: 1; background: var(--card-background-color); border-radius: 50%; }
+  .b.w.ok { opacity: 0.6; }
+  .b.w.open { background: #ffb300; color: #1c1c1c; }
+  .b.w.alert { background: var(--error-color, #f44336); color: #fff; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: var(--secondary-text-color); }
+  .legend .k { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
+  .k.occ { background: var(--primary-color); border-radius: 50%; width: 7px; height: 7px; margin: 0 7px 0 1.5px; }
+  .k.open { background: #ffb300; border-radius: 50%; }
+  .k.alert { background: var(--error-color, #f44336); border-radius: 50%; }
+  .k.lit { background: color-mix(in srgb, #ffcf6b 45%, transparent); }
+  .k.cam { background: var(--primary-color); border-radius: 50%; }
+  .k.heard { border: 2px dashed var(--error-color, #f44336); border-radius: 50%; width: 6px; height: 6px; }
+  @container plan (max-width: 560px) {
+    .nm { font-size: 9px; }
+    .room { padding: 2px 3px; }
+    .b { padding: 1px; }
+    .b ha-icon { --mdc-icon-size: 16px; }
+  }
+  @container room (max-width: 64px) { .nm { font-size: 8px; } }
+  @container room (max-width: 34px) { .nm { display: none; } .b ha-icon { --mdc-icon-size: 14px; } }
+`;
+
+class SecurityPlanCard extends HTMLElement {
+  setConfig(config) {
+    this._config = config || {};
+    this._html = "";
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+  }
+
+  getCardSize() {
+    return 6;
+  }
+
+  getGridOptions() {
+    return { columns: 12, min_columns: 6 };
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._popupCard) this._popupCard.hass = hass;
+    if (this._config) this._render();
+  }
+
+  async _openCamera(id) {
+    const base = this._config.camera_card;
+    const cameras = (base.cameras || []).filter((c) => c.camera_entity === id);
+    if (this._overlay || !cameras.length) return;
+    if (!document.getElementById("spc-style")) {
+      const st = document.createElement("style");
+      st.id = "spc-style";
+      st.textContent = `
+        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .spc-sheet { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px; box-sizing: border-box; }
+        .spc-head { display: flex; justify-content: flex-end; }
+        .spc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
+      document.head.appendChild(st);
+    }
+    const helpers = await window.loadCardHelpers();
+    const card = await helpers.createCardElement({ ...base, type: "custom:advanced-camera-card", cameras, view: { ...(base.view || {}), default: "live" } });
+    card.hass = this._hass;
+    const ov = document.createElement("div");
+    ov.className = "spc-overlay";
+    ov.innerHTML = '<div class="spc-sheet" role="dialog" aria-modal="true"><div class="spc-head"><button class="spc-close" aria-label="Close">×</button></div></div>';
+    ov.querySelector(".spc-sheet").appendChild(card);
+    const close = () => {
+      document.removeEventListener("keydown", onKey);
+      ov.remove();
+      this._overlay = null;
+      this._popupCard = null;
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) close();
+    });
+    ov.querySelector(".spc-close").addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(ov);
+    this._overlay = ov;
+    this._popupCard = card;
+  }
+
+  _render() {
+    const cfg = this._config;
+    const layer = this._layer || cfg.layer || "security";
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
+    if (html === this._html) return;
+    this._html = html;
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
+    const more = (entityId) => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
+    for (const el of this.shadowRoot.querySelectorAll(".sw button")) {
+      el.addEventListener("click", () => {
+        this._layer = el.dataset.layer;
+        this._html = "";
+        this._render();
+      });
+    }
+    for (const el of this.shadowRoot.querySelectorAll(".room.tog")) {
+      const ids = el.dataset.lights.split(",");
+      let timer = null;
+      let held = false;
+      el.addEventListener("pointerdown", () => {
+        held = false;
+        timer = setTimeout(() => {
+          held = true;
+          more(ids[0]);
+        }, 500);
+      });
+      for (const ev of ["pointerup", "pointerleave", "pointercancel"]) el.addEventListener(ev, () => clearTimeout(timer));
+      el.addEventListener("click", () => {
+        if (!held) this._hass.callService("light", "toggle", { entity_id: ids });
+      });
+    }
+  }
+}
+
+if (typeof customElements !== "undefined" && !customElements.get("security-plan-card")) {
+  customElements.define("security-plan-card", SecurityPlanCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({ type: "security-plan-card", name: "Security floor plan", description: "Floor plan with doors, windows, locks, cameras, presence and lights placed by area." });
+}
+
+if (typeof module !== "undefined") {
+  module.exports = { planModel, planHtml, badgeFor };
+}

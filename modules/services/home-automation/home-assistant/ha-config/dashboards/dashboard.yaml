@@ -1635,14 +1635,20 @@ views:
             - 118
           entities:
             - lock.front_door
+        - name: Closet
+          rect:
+            - 491
+            - 225
+            - 53
+            - 43
         - name: Toilet
           areas:
             - Toilet
           rect:
             - 491
-            - 240
+            - 268
             - 53
-            - 118
+            - 90
         - name: Bathroom
           areas:
             - Bathroom
@@ -1665,6 +1671,31 @@ views:
         camera.ranger_duo_fxd: Living Room
         binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
         image.ranger_duo_fxd_person: Living Room
+      positions:
+        binary_sensor.patio_door_contact_contact:
+          - 100
+          - 6
+        binary_sensor.living_room_window_left_contact_contact:
+          - 380
+          - 6
+        binary_sensor.living_room_window_right_contact_contact:
+          - 420
+          - 6
+        binary_sensor.bedroom_window_left_contact_contact:
+          - 559
+          - 6
+        binary_sensor.bedroom_window_right_contact_contact:
+          - 639
+          - 6
+        binary_sensor.kitchen_dining_window_left_contact_contact:
+          - 55
+          - 366
+        binary_sensor.hallway_door_contact_contact:
+          - 727
+          - 205
+        binary_sensor.front_front_door_nw_door:
+          - 444
+          - 366
       grid_options:
         columns: full
   - type: grid

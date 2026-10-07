@@ -58,6 +58,8 @@ function planModel(states, areaOf, cfg) {
     ]);
     const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
     const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
+    const posOf = cfg.positions || {};
+    for (const b of badges) if (posOf[b.id]) b.pos = posOf[b.id];
     const status = badges.some((b) => b.tone === "alert") ? "alert" : badges.some((b) => b.tone === "open") ? "open" : occupied ? "occ" : "";
     return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status };
   });
@@ -70,12 +72,21 @@ function planHtml(m, size, image) {
   const room = (r) => {
     const [x, y, w, h] = r.rect;
     const badges = r.badges
+      .filter((b) => !b.pos)
       .map((b) => `<button class="b ${b.tone}" title="${esc(b.name)}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
       .join("");
     return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.person ? "person" : ""}" style="left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
       <div class="nm">${esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div><div class="bs">${badges}</div></div>`;
   };
-  return `<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}</div>`;
+  const walls = m.rooms
+    .flatMap((r) => r.badges.filter((b) => b.pos))
+    .map(
+      (b) =>
+        `<button class="b w ${b.tone}" title="${esc(b.name)}" data-id="${esc(b.id)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"><ha-icon icon="${b.icon}"></ha-icon></button>`
+    )
+    .join("");
+  const legend = `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span></div>`;
+  return `<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}${walls}</div>${legend}`;
 }
 
 const STYLE = `
@@ -103,6 +114,15 @@ const STYLE = `
   .b.alert { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
   .b.cam { color: var(--primary-color); }
   .b.dead { opacity: 0.45; }
+  .b.w { position: absolute; transform: translate(-50%, -50%); z-index: 1; background: var(--card-background-color); border-radius: 50%; }
+  .b.w.open { background: color-mix(in srgb, #ffb300 35%, var(--card-background-color)); }
+  .b.w.alert { background: color-mix(in srgb, var(--error-color, #f44336) 35%, var(--card-background-color)); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: var(--secondary-text-color); }
+  .legend .k { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
+  .k.occ { background: color-mix(in srgb, var(--primary-color) 45%, transparent); }
+  .k.open { box-shadow: inset 0 0 0 2px #ffb300; }
+  .k.alert { box-shadow: inset 0 0 0 2px var(--error-color, #f44336); }
+  .k.cam { background: var(--primary-color); border-radius: 50%; }
   @container plan (max-width: 560px) {
     .nm { font-size: 9px; }
     .room { padding: 2px 3px; }

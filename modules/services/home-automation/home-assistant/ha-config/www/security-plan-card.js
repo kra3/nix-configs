@@ -58,35 +58,48 @@ function planModel(states, areaOf, cfg) {
     ]);
     const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
     const person = mine.some((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && s.state === "on");
+    const lights = mine.filter((s) => s.entity_id.startsWith("light.") && !s.attributes.entity_id && !s.attributes.is_hue_group);
+    const on = lights.filter((s) => s.state === "on");
+    const glow = on.length ? Math.max(...on.map((s) => (s.attributes.brightness == null ? 255 : s.attributes.brightness))) / 255 : 0;
     const posOf = cfg.positions || {};
     for (const b of badges) if (posOf[b.id]) b.pos = posOf[b.id];
     const status = badges.some((b) => b.tone === "alert") ? "alert" : badges.some((b) => b.tone === "open") ? "open" : occupied ? "occ" : "";
-    return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status };
+    if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
+    return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
   });
   return { rooms, armed };
 }
 
-function planHtml(m, size, image) {
+function planHtml(m, size, image, layer = "security") {
   const [W, H] = size;
+  const lay = layer === "lights";
   const pct = (v, t) => ((v / t) * 100).toFixed(3) + "%";
   const room = (r) => {
     const [x, y, w, h] = r.rect;
-    const badges = r.badges
-      .filter((b) => !b.pos)
-      .map((b) => `<button class="b ${b.tone}" title="${esc(b.name)}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
-      .join("");
-    return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.person ? "person" : ""}" style="left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
+    const badges = lay
+      ? r.lights.length
+        ? `<span class="bulb ${r.lit ? "on" : ""}"><ha-icon icon="${r.lit ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon></span>`
+        : ""
+      : r.badges
+          .filter((b) => !b.pos)
+          .map((b) => `<button class="b ${b.tone} ${b.seen ? "seen" : ""}" title="${esc(b.name)}" data-id="${esc(b.id)}"><ha-icon icon="${b.icon}"></ha-icon></button>`)
+          .join("");
+    const glow = lay && r.lit ? `--glow:${Math.round(10 + 22 * r.glow)}%;` : "";
+    return `<div class="room ${r.status} ${r.outdoor ? "out" : ""} ${r.occupied ? "occ" : ""} ${lay && r.lit ? "lit" : ""} ${lay && r.lights.length ? "tog" : ""}" data-lights="${esc(r.lights.join(","))}" style="${glow}left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}">
       <div class="nm">${esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div><div class="bs">${badges}</div></div>`;
   };
-  const walls = m.rooms
+  const walls = (lay ? [] : m.rooms)
     .flatMap((r) => r.badges.filter((b) => b.pos))
     .map(
       (b) =>
         `<button class="b w ${b.tone}" title="${esc(b.name)}" data-id="${esc(b.id)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"><ha-icon icon="${b.icon}"></ha-icon></button>`
     )
     .join("");
-  const legend = `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span></div>`;
-  return `<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}${walls}</div>${legend}`;
+  const legend = lay
+    ? `<div class="legend"><span><i class="k lit"></i>Lights on</span><span><i class="k occ"></i>Occupied</span><span>Tap a room to toggle, hold for details</span></div>`
+    : `<div class="legend"><span><i class="k occ"></i>Occupied</span><span><i class="k open"></i>Open</span><span><i class="k alert"></i>Open while armed</span><span><i class="k cam"></i>Camera</span></div>`;
+  const sw = `<div class="sw"><button data-layer="security" class="${lay ? "" : "on"}"><ha-icon icon="mdi:shield-home-outline"></ha-icon>Security</button><button data-layer="lights" class="${lay ? "on" : ""}"><ha-icon icon="mdi:lightbulb-group-outline"></ha-icon>Lights</button></div>`;
+  return `${sw}<div class="plan ${image ? "img" : ""}" style="aspect-ratio:${W}/${H};${image ? `--img:url(${esc(image)})` : ""}">${m.rooms.map(room).join("")}${walls}</div>${legend}`;
 }
 
 const STYLE = `
@@ -96,15 +109,22 @@ const STYLE = `
   .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; container: room / inline-size; }
   .plan.img::before { content: ""; position: absolute; inset: 0; background: var(--secondary-text-color); opacity: 0.6; -webkit-mask: var(--img) center / 100% 100% no-repeat; mask: var(--img) center / 100% 100% no-repeat; }
   .plan.img .room { border: 0; background: transparent; border-radius: 0; }
-  .plan.img .room.occ { background: color-mix(in srgb, var(--primary-color) 24%, transparent); }
-  .plan.img .room.open { background: color-mix(in srgb, #ffb300 14%, transparent); }
-  .plan.img .room.alert { background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
+  .plan.img .room.lit { background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, #ffcf6b calc(var(--glow) + 8%), transparent), color-mix(in srgb, #ffcf6b var(--glow), transparent)); }
+  .plan.img .room.tog { cursor: pointer; }
+  .plan.img .room.occ .nm { color: var(--primary-color); }
+  .bulb { line-height: 0; color: var(--secondary-text-color); }
+  .bulb.on { color: #ffb300; }
+  .bulb ha-icon { --mdc-icon-size: 18px; }
+  .sw { display: inline-flex; gap: 2px; padding: 2px; margin-bottom: 8px; border-radius: 999px; background: var(--secondary-background-color); }
+  .sw button { display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 4px 12px; border-radius: 999px; font-size: 12px; cursor: pointer; background: transparent; color: var(--secondary-text-color); }
+  .sw button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .sw ha-icon { --mdc-icon-size: 16px; }
   .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
   .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
   .room.open { border-color: #ffb300; }
   .room.alert { border-color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 14%, var(--secondary-background-color)); }
-  .room.person { animation: pulse 1.6s ease-in-out infinite; }
-  @keyframes pulse { 50% { box-shadow: inset 0 0 0 2px var(--error-color, #f44336); } }
+  .b.seen { box-shadow: 0 0 0 2px var(--error-color, #f44336); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--error-color, #f44336) 40%, transparent); } }
   .nm { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dot { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 50%; background: var(--primary-color); }
   .bs { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
@@ -115,13 +135,15 @@ const STYLE = `
   .b.cam { color: var(--primary-color); }
   .b.dead { opacity: 0.45; }
   .b.w { position: absolute; transform: translate(-50%, -50%); z-index: 1; background: var(--card-background-color); border-radius: 50%; }
-  .b.w.open { background: color-mix(in srgb, #ffb300 35%, var(--card-background-color)); }
-  .b.w.alert { background: color-mix(in srgb, var(--error-color, #f44336) 35%, var(--card-background-color)); }
+  .b.w.ok { opacity: 0.6; }
+  .b.w.open { background: #ffb300; color: #1c1c1c; }
+  .b.w.alert { background: var(--error-color, #f44336); color: #fff; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: var(--secondary-text-color); }
   .legend .k { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
-  .k.occ { background: color-mix(in srgb, var(--primary-color) 45%, transparent); }
-  .k.open { box-shadow: inset 0 0 0 2px #ffb300; }
-  .k.alert { box-shadow: inset 0 0 0 2px var(--error-color, #f44336); }
+  .k.occ { background: var(--primary-color); border-radius: 50%; width: 7px; height: 7px; margin: 0 7px 0 1.5px; }
+  .k.open { background: #ffb300; border-radius: 50%; }
+  .k.alert { background: var(--error-color, #f44336); border-radius: 50%; }
+  .k.lit { background: color-mix(in srgb, #ffcf6b 45%, transparent); }
   .k.cam { background: var(--primary-color); border-radius: 50%; }
   @container plan (max-width: 560px) {
     .nm { font-size: 9px; }
@@ -155,12 +177,35 @@ class SecurityPlanCard extends HTMLElement {
 
   _render() {
     const cfg = this._config;
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image);
+    const layer = this._layer || cfg.layer || "security";
+    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
-    for (const el of this.shadowRoot.querySelectorAll(".b")) {
-      el.addEventListener("click", () => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.id }, bubbles: true, composed: true })));
+    const more = (entityId) => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => more(el.dataset.id));
+    for (const el of this.shadowRoot.querySelectorAll(".sw button")) {
+      el.addEventListener("click", () => {
+        this._layer = el.dataset.layer;
+        this._html = "";
+        this._render();
+      });
+    }
+    for (const el of this.shadowRoot.querySelectorAll(".room.tog")) {
+      const ids = el.dataset.lights.split(",");
+      let timer = null;
+      let held = false;
+      el.addEventListener("pointerdown", () => {
+        held = false;
+        timer = setTimeout(() => {
+          held = true;
+          more(ids[0]);
+        }, 500);
+      });
+      for (const ev of ["pointerup", "pointerleave", "pointercancel"]) el.addEventListener(ev, () => clearTimeout(timer));
+      el.addEventListener("click", () => {
+        if (!held) this._hass.callService("light", "toggle", { entity_id: ids });
+      });
     }
   }
 }
@@ -168,7 +213,7 @@ class SecurityPlanCard extends HTMLElement {
 if (typeof customElements !== "undefined" && !customElements.get("security-plan-card")) {
   customElements.define("security-plan-card", SecurityPlanCard);
   window.customCards = window.customCards || [];
-  window.customCards.push({ type: "security-plan-card", name: "Security floor plan", description: "Rooms with doors, windows, locks, cameras and presence placed by area." });
+  window.customCards.push({ type: "security-plan-card", name: "Security floor plan", description: "Floor plan with doors, windows, locks, cameras, presence and lights placed by area." });
 }
 
 if (typeof module !== "undefined") {

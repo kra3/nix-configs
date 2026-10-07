@@ -31,6 +31,37 @@
       dark_boolean: input_boolean.living_room_is_dark
       media_player_entity: media_player.lg_webos_tv_oled77c35la
 
+- id: living_room_motion_lights_on
+  alias: Living room — Lights on for motion
+  description: >-
+    Turns the lights on for camera motion when dark, so Frigate has light to
+    detect a person; the Lighting automation above turns them off again.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.ranger_duo_fxd_motion
+    to: "on"
+    for: "00:00:03"
+  conditions:
+  - condition: state
+    entity_id: input_boolean.living_room_is_dark
+    state: "on"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "off"
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: template
+    value_template: >-
+      {{ is_state('media_player.lg_webos_tv_oled77c35la', ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.living_room_lights
+    data:
+      transition: 1
+  mode: single
+
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
   description: >-

@@ -53,17 +53,27 @@
   mode: parallel
 
 - id: frigate_detect_off_after_motion_when_home
-  alias: "Frigate: disable detect after motion cooldown (home)"
+  alias: "Frigate: disable detect once the room is quiet (home)"
   description: >-
-    Turn a camera's detect+audio back off once its motion sensor has
-    been clear for 5 minutes, while armed night or disarmed.
+    Turn a camera's detect+audio back off while armed night or disarmed,
+    but only 5 minutes after its motion is clear, nobody is detected on
+    it and (living and dining) the TV is not playing, so a person sitting
+    still keeps being tracked.
   triggers:
   - trigger: state
     entity_id:
     - binary_sensor.ranger_duo_fxd_motion
     - binary_sensor.ranger_duo_ptz_motion
     - binary_sensor.ranger_uno_motion
+    - binary_sensor.ranger_duo_fxd_person_occupancy
+    - binary_sensor.ranger_duo_ptz_person_occupancy
+    - binary_sensor.ranger_uno_person_occupancy
     to: "off"
+    for:
+      minutes: 5
+  - trigger: state
+    entity_id: media_player.lg_webos_tv_oled77c35la
+    from: playing
     for:
       minutes: 5
   conditions:
@@ -74,12 +84,25 @@
     - armed_night
   actions:
   - variables:
-      cam: "{{ trigger.entity_id.split('.')[1] | regex_replace('_motion$', '') }}"
-  - action: switch.turn_off
-    target:
-      entity_id:
-      - "switch.{{ cam }}_detect"
-      - "switch.{{ cam }}_audio_detection"
+      cams: >-
+        {{ ['ranger_duo_fxd', 'ranger_duo_ptz'] if trigger.entity_id.startswith('media_player')
+           else [trigger.entity_id.split('.')[1] | regex_replace('_(motion|person_occupancy)$', '')] }}
+  - repeat:
+      for_each: "{{ cams }}"
+      sequence:
+      - if:
+        - condition: template
+          value_template: >-
+            {{ is_state('binary_sensor.' ~ repeat.item ~ '_motion', 'off')
+               and is_state('binary_sensor.' ~ repeat.item ~ '_person_occupancy', 'off')
+               and not (is_state('media_player.lg_webos_tv_oled77c35la', 'playing')
+                        and repeat.item in ['ranger_duo_fxd', 'ranger_duo_ptz']) }}
+        then:
+        - action: switch.turn_off
+          target:
+            entity_id:
+            - "switch.{{ repeat.item }}_detect"
+            - "switch.{{ repeat.item }}_audio_detection"
   mode: parallel
 
 - id: frigate_audio_off_while_tv_plays

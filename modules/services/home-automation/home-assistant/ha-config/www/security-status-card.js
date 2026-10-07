@@ -266,7 +266,7 @@ class SecurityStatusCard extends HTMLElement {
   }
 }
 
-function lastSeen(states, kind, now, areaOf = () => "") {
+function lastSeen(states, kind, now, areaOf = () => "", events = {}) {
   const label = kind === "person" ? "" : titleCase(kind);
   const re = new RegExp("^image\\..*_" + kind + "$");
   const suffix = new RegExp(" " + kind + "$", "i");
@@ -277,7 +277,7 @@ function lastSeen(states, kind, now, areaOf = () => "") {
       picture: s.attributes.entity_picture,
       camera: (s.attributes.friendly_name || titleCase(s.entity_id.replace(/^image\./, ""))).replace(suffix, "").replace(/^(Dining Room|Office Room) /, ""),
       area: [label, areaOf(s.entity_id)].filter(Boolean).join(" · "),
-      ts: Date.parse(s.state),
+      ts: events[Object.keys(events).find((slug) => s.entity_id.includes(slug))],
     }))
     .filter((i) => isFinite(i.ts))
     .sort((a, b) => b.ts - a.ts)
@@ -300,7 +300,7 @@ class SecurityLastSeenCard extends HTMLElement {
   }
 
   connectedCallback() {
-    this._timer = setInterval(() => this._hass && this._render(), 30000);
+    this._timer = setInterval(() => this._hass && this._fetch(), 60000);
   }
 
   disconnectedCallback() {
@@ -308,15 +308,36 @@ class SecurityLastSeenCard extends HTMLElement {
   }
 
   set hass(hass) {
+    const first = !this._hass;
     this._hass = hass;
+    if (first && this._config) this._fetch();
     if (this._config) this._render();
+  }
+
+  async _fetch() {
+    const kinds = this._config.kinds || [this._config.kind || "person"];
+    this._events = this._events || {};
+    for (const k of kinds) {
+      try {
+        const res = await this._hass.callWS({ type: "frigate/events/get", instance_id: this._config.instance_id || "frigate", labels: [k], limit: 50 });
+        const seen = {};
+        for (const e of JSON.parse(res)) {
+          const ms = (e.end_time || Date.now() / 1000) * 1000;
+          if (!(seen[e.camera] >= ms)) seen[e.camera] = ms;
+        }
+        this._events[k] = seen;
+      } catch (err) {
+        this._events[k] = this._events[k] || {};
+      }
+    }
+    this._render();
   }
 
   _render() {
     const kinds = this._config.kinds || [this._config.kind || "person"];
     const kind = kinds.join("/");
     const items = kinds
-      .flatMap((k) => lastSeen(this._hass.states, k, Date.now(), (id) => areaFor(this._hass, id, this._config)))
+      .flatMap((k) => lastSeen(this._hass.states, k, Date.now(), (id) => areaFor(this._hass, id, this._config), (this._events || {})[k]))
       .sort((a, b) => b.ts - a.ts);
     const html = items.length
       ? items
@@ -325,7 +346,7 @@ class SecurityLastSeenCard extends HTMLElement {
               `<button class="tile" data-id="${esc(i.id)}"><img src="${esc(i.picture)}" loading="lazy"><div class="cap"><b>${esc(i.camera)}</b><span>${esc([i.area, i.when].filter(Boolean).join(" · "))}</span></div></button>`
           )
           .join("")
-      : `<div class="none">No ${esc(kind)} snapshots yet.</div>`;
+      : `<div class="none">No ${esc(kind)} detected recently.</div>`;
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<style>

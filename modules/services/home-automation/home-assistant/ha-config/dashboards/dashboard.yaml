@@ -1799,7 +1799,6 @@ views:
     - type: custom:security-status-card
       exclude:
       - binary_sensor.house_exits_open_status
-      - binary_sensor.front_door_knock_contact
       - lock.front_front_door_nw
       - binary_sensor.front_front_door_nw_door
       warn:
@@ -2683,8 +2682,85 @@ views:
         columns: 12
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
-- title: Maintenance
+- type: sections
+  title: Maintenance
   path: dash-maintenance
   icon: mdi:wrench
-  strategy:
-    type: maintenance
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      items:
+      - entity: sensor.needs_attention
+        name: Needs attention
+        icon: mdi:wrench-clock
+        hint: Low batteries, offline devices and updates waiting
+        colors:
+          All good: success
+          other: warning
+      - entity: sensor.lowest_battery
+        name: Lowest battery
+        icon: mdi:battery-alert-variant-outline
+        hint: The lowest device battery, phones excluded
+        colors:
+          All OK: success
+          No data: inactive
+          other: warning
+      - entity: sensor.devices_offline
+        name: Offline
+        icon: mdi:lan-disconnect
+        hint: Devices whose battery sensor is unavailable, phones excluded
+        colors:
+          All online: success
+          other: error
+      - entity: sensor.updates_available
+        name: Updates
+        icon: mdi:update
+        hint: Integrations, cards and servers with an update waiting
+        colors:
+          All current: success
+          other: info
+      - entity: sensor.broken_references
+        name: Config references
+        icon: mdi:link-variant-off
+        hint: Entities your automations and dashboards use that no longer exist
+        colors:
+          All resolved: success
+          other: warning
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Needs attention
+      icon: mdi:wrench-clock
+      heading_style: title
+    - type: custom:attention-list-card
+      entity: sensor.needs_attention
+      details:
+        entity: sensor.broken_references
+        title: Config references
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Personal devices
+      icon: mdi:cellphone
+      heading_style: title
+    - type: custom:personal-list-card
+      entity: sensor.personal_devices
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Batteries
+      icon: mdi:battery-heart-variant
+      heading_style: title
+    - type: custom:battery-list-card
+      entity: sensor.battery_report
+      grid_options:
+        columns: full

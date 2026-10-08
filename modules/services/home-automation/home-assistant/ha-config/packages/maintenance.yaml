@@ -1,0 +1,71 @@
+# What needs attention around the house: low batteries, offline devices, pending updates and broken config references, refreshed every minute.
+template:
+  - triggers:
+      - trigger: time_pattern
+        minutes: "/1"
+      - trigger: homeassistant
+        event: start
+    sensor:
+      - name: "Needs attention"
+        unique_id: maintenance_needs_attention
+        icon: mdi:wrench-clock
+        state: >-
+          {%- from 'maintenance.jinja' import attention -%}
+          {% set n = attention() | from_json | map(attribute='short') | list %}
+          {% if not n %}All good{% elif n | length <= 2 %}{{ n | join(', ') }}{% else %}{{ n[:2] | join(', ') }} +{{ n | length - 2 }}{% endif %}
+        attributes:
+          items: >-
+            {%- from 'maintenance.jinja' import attention -%}
+            {{ attention() | from_json }}
+      - name: "Lowest battery"
+        unique_id: maintenance_lowest_battery
+        icon: mdi:battery-alert-variant-outline
+        state: >-
+          {%- from 'maintenance.jinja' import rows -%}
+          {% set live = rows() | from_json | selectattr('level', 'ne', none) | selectattr('phone', 'eq', false) | sort(attribute='level') | list %}
+          {% if not live %}No data{% elif live[0].level >= 25 %}All OK{% else %}{{ live[0].name }} {{ live[0].level | round(0) | int }} %{% endif %}
+      - name: "Devices offline"
+        unique_id: maintenance_devices_offline
+        icon: mdi:lan-disconnect
+        state: >-
+          {%- from 'maintenance.jinja' import rows, offline -%}
+          {% set n = offline(rows() | from_json) | from_json | map(attribute='name') | list %}
+          {% if not n %}All online{% elif n | length <= 2 %}{{ n | join(', ') }}{% else %}{{ n[:2] | join(', ') }} +{{ n | length - 2 }}{% endif %}
+      - name: "Updates available"
+        unique_id: maintenance_updates_available
+        icon: mdi:update
+        state: >-
+          {%- from 'maintenance.jinja' import pending -%}
+          {% set n = pending() | from_json | map(attribute='name') | list %}
+          {% if not n %}All current{% elif n | length <= 2 %}{{ n | join(', ') }}{% else %}{{ n[:2] | join(', ') }} +{{ n | length - 2 }}{% endif %}
+      - name: "Battery report"
+        unique_id: maintenance_battery_report
+        icon: mdi:battery-heart-variant
+        state: >-
+          {%- from 'maintenance.jinja' import rows -%}
+          {{ rows() | from_json | rejectattr('phone') | list | length }} devices
+        attributes:
+          devices: >-
+            {%- from 'maintenance.jinja' import rows -%}
+            {{ rows() | from_json | rejectattr('phone') | list }}
+      - name: "Personal devices"
+        unique_id: maintenance_personal_devices
+        icon: mdi:cellphone
+        state: >-
+          {%- from 'maintenance.jinja' import rows -%}
+          {{ rows() | from_json | selectattr('phone') | list | length }} devices
+        attributes:
+          devices: >-
+            {%- from 'maintenance.jinja' import rows -%}
+            {{ rows() | from_json | selectattr('phone') | list }}
+      - name: "Broken references"
+        unique_id: maintenance_broken_references
+        icon: mdi:link-variant-off
+        state: >-
+          {%- from 'maintenance.jinja' import refs -%}
+          {% set n = refs() | from_json | length %}
+          {{ 'All resolved' if n == 0 else n ~ (' reference' if n == 1 else ' references') }}
+        attributes:
+          items: >-
+            {%- from 'maintenance.jinja' import refs -%}
+            {{ refs() | from_json }}

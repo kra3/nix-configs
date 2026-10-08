@@ -775,7 +775,7 @@ class HealthMetricCard extends HTMLElement {
       const dec = c.delta.decimals !== undefined ? c.delta.decimals : 1;
       const unit = c.delta.unit !== undefined ? c.delta.unit : " " + (hero.unit || "");
       const rt = rangeText(this._span("", main, raw * scale), dec, unit, lang);
-      if (rt) under = `<span class="chip neutral">${rt}</span>`;
+      if (rt) under = `<span class="chip neutral">${rt}${c.delta.label ? " \u00b7 " + c.delta.label : ""}</span>`;
     } else if (c.delta && main.length) {
       const d = computeDelta(main, c.delta.mode || "absolute", c.delta.points);
       if (d) {
@@ -838,7 +838,7 @@ class HealthMetricCard extends HTMLElement {
           return (
             `<div class="item" style="--dot:${it.color || accent}"><div${it.growth ? ' class="fl"' : ""}><div class="name"><span class="dot"></span>${it.name || ""}</div>` +
             `<div class="change${it.growth ? " gr" : ""}"><span class="vv">${now} ${unit}</span>${chips ? `<span class="scs">${chips}</span>` : ""}${it.growth ? this._growthHtml(s, it, dec, lang) : ""}</div>` +
-            (it.growth || range === null ? "" : `<div class="now">${range ? range + " " + unit : "&nbsp;"}</div>`) +
+            (it.growth || range === null ? "" : `<div class="now">${range ? range + " " + unit + (it.rangeLabel ? " \u00b7 " + it.rangeLabel : "") : "&nbsp;"}</div>`) +
             `</div></div>`
           );
         }

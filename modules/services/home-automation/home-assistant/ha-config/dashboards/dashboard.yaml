@@ -2047,11 +2047,328 @@ views:
         - entity_id: binary_sensor.front_front_door_nw_door
       grid_options:
         columns: full
-- title: Climate
+- type: sections
+  title: Climate
   path: dash-climate
   icon: mdi:thermostat
-  strategy:
-    type: climate
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      items:
+      - entity: sensor.home_comfort
+        name: Comfort
+        icon: mdi:home-thermometer-outline
+        hint: Rooms outside your comfort range, or indoor humidity above today's ceiling
+        colors:
+          All comfortable: success
+          No data: inactive
+          other: warning
+      - entity: sensor.ventilation_advice
+        name: Ventilation
+        icon: mdi:window-open-variant
+        hint: Would opening a window help? Compares indoor and outdoor moisture and temperature
+        colors:
+          Air out: info
+          Air out briefly: info
+          Keep closed: info
+          No difference: inactive
+        labels:
+          Air out: Air out · outside is drier
+          Air out briefly: Air out briefly · drier, but much colder outside
+          Keep closed: Keep closed · outside is more humid
+      - entity: sensor.open_doors_and_windows
+        name: Open
+        icon: mdi:window-open
+        hint: Doors and windows that currently read open
+        colors:
+          All closed: inactive
+          other: info
+      - entity: sensor.rooms_not_reporting
+        name: Sensors
+        icon: mdi:access-point-network
+        hint: Whether every room sensor is sending data
+        colors:
+          All reporting: success
+          other: warning
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Rooms
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:climate-room-card
+      name: Bedroom
+      icon: mdi:bed
+      comfort: sensor.bedroom_comfort
+      temperature: sensor.bedroom_occupancy_temperature
+      humidity: sensor.bedroom_occupancy_humidity
+      dew: sensor.bedroom_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Bathroom
+      icon: mdi:shower
+      comfort: sensor.bathroom_comfort
+      temperature: sensor.bathroom_occupancy_temperature
+      humidity: sensor.bathroom_occupancy_humidity
+      dew: sensor.bathroom_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Laundry
+      icon: mdi:washing-machine
+      comfort: sensor.laundry_comfort
+      temperature: sensor.laundry_occupancy_temperature
+      humidity: sensor.laundry_occupancy_humidity
+      dew: sensor.laundry_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Toilet
+      icon: mdi:toilet
+      comfort: sensor.toilet_comfort
+      temperature: sensor.toilet_occupancy_temperature
+      humidity: sensor.toilet_occupancy_humidity
+      dew: sensor.toilet_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Hall
+      icon: mdi:door
+      comfort: sensor.hall_comfort
+      temperature: sensor.hue_pir_hallway_temperature
+      approx: true
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Kitchen
+      icon: mdi:silverware-fork-knife
+      comfort: sensor.kitchen_comfort
+      temperature: sensor.hue_pir_kitchen_temperature
+      approx: true
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Indoor · house average
+      icon: mdi:home-thermometer
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.average_temperature
+      name: Temperature
+      icon: mdi:thermometer
+      color: "#ff9f6b"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 1
+        label: 7 d
+      items:
+      - entity: sensor.average_humidity
+        name: Humidity
+        mode: now
+        days: 7
+        decimals: 0
+        rangeLabel: 7 d
+        color: "#6bb6ff"
+      - entity: sensor.indoor_dew_point
+        name: Dew point
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Temperature
+          entities:
+          - sensor.average_temperature
+          days: 7
+        - name: Humidity
+          entities:
+          - sensor.average_humidity
+          days: 7
+        - name: Dew point
+          entities:
+          - sensor.indoor_dew_point
+          days: 7
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Outdoor
+      icon: mdi:weather-partly-cloudy
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.openweathermap_temperature
+      name: Temperature
+      icon: mdi:thermometer
+      color: "#9fa8ff"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 1
+        label: 7 d
+      items:
+      - entity: sensor.openweathermap_humidity
+        name: Humidity
+        mode: now
+        days: 7
+        decimals: 0
+        rangeLabel: 7 d
+        color: "#6bb6ff"
+      - entity: sensor.openweathermap_apparent_temperature
+        name: Feels like
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#ff9f6b"
+      - entity: sensor.outdoor_dew_point
+        name: Dew point
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Temperature
+          entities:
+          - sensor.openweathermap_temperature
+          days: 7
+        - name: Humidity
+          entities:
+          - sensor.openweathermap_humidity
+          days: 7
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Forecast
+      icon: mdi:weather-cloudy-clock
+      heading_style: title
+    - type: custom:mushroom-template-card
+      entity: sensor.low_today
+      primary: Low today
+      secondary: >-
+        {% set lo = states('sensor.low_today') %}{% set t = states('sensor.average_temperature') %}{% if is_number(lo) and is_number(t) %}{{ lo }} °C · {% if t | float > lo | float %}{{ (t | float - lo | float) | round(1) }} °C cooler than inside{% else %}not cooler than inside{% endif %}{% else %}No forecast{% endif %}
+      icon: mdi:weather-night
+      icon_color: blue
+      tap_action:
+        action: none
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      entity: sensor.airing_window
+      primary: >-
+        {% set w = states('sensor.airing_window') %}{{ 'No good time to air out in the next 24 h' if w in ['No good window', 'unavailable', 'unknown'] else 'Air out ' ~ w }}
+      secondary: >-
+        {{ state_attr('sensor.airing_window', 'note') or '' }}
+      icon: mdi:window-open-variant
+      icon_color: >-
+        {{ 'grey' if states('sensor.airing_window') in ['No good window', 'unavailable', 'unknown'] else 'blue' }}
+      multiline_secondary: true
+      tap_action:
+        action: none
+      grid_options:
+        columns: full
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Outdoor temperature, next 24 h
+        show_states: false
+      graph_span: 24h
+      span:
+        start: hour
+      now:
+        show: false
+      apex_config:
+        chart:
+          height: 170
+        legend:
+          show: true
+          position: bottom
+        yaxis:
+          decimalsInFloat: 0
+      series:
+      - entity: sensor.airing_window
+        name: Outdoor
+        color: "#9fa8ff"
+        stroke_width: 3
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), h.temp]);
+      - entity: sensor.airing_window
+        name: Comfort low
+        color: "#43a047"
+        stroke_width: 1
+        stroke_dash: 5
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), entity.attributes.low]);
+      - entity: sensor.airing_window
+        name: Comfort high
+        color: "#ffa600"
+        stroke_width: 1
+        stroke_dash: 5
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), entity.attributes.high]);
+      grid_options:
+        columns: full
+    - type: weather-forecast
+      entity: weather.forecast_vasudha
+      forecast_type: daily
+      show_current: false
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Comfort
+      icon: mdi:tune
+      heading_style: title
+    - type: custom:comfort-card
+      grid_options:
+        columns: full
+      season: sensor.season
+      low: input_number.climate_temp_low
+      high: input_number.climate_temp_high
+      high_summer: input_number.climate_temp_high_summer
+      guideline_min: sensor.guideline_temp_min
+      guideline_max: sensor.guideline_temp_max
+      scale: [14, 30]
+      night_offset: input_number.climate_night_offset
+      humidity:
+        entity: sensor.average_humidity
+        ceiling: sensor.humidity_ceiling
+      advanced:
+      - name: Moisture limit
+        effect: "Swedish winter guideline (Folkhälsomyndigheten): at most 3 g/m³ more water vapour indoors than outdoors."
+        when:
+          entity: sensor.season
+          state_not: summer
+        now: >-
+          Now: surplus {{ states('sensor.moisture_surplus') }} g/m³, 24 h average {{ states('sensor.moisture_surplus_24h') }} g/m³.
+        entities:
+        - entity: input_number.climate_moisture_limit
 - type: sections
   title: System Health
   path: system-health

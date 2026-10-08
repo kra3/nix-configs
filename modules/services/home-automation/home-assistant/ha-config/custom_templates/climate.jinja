@@ -1,0 +1,38 @@
+{%- macro dew(t, rh) -%}
+{%- set g = log(rh / 100) + 17.62 * t / (243.12 + t) -%}
+{{ (243.12 * g / (17.62 - g)) | round(1) }}
+{%- endmacro -%}
+
+{%- macro absolute(t, rh) -%}
+{{ (216.7 * (rh / 100 * 6.112 * e ** (17.62 * t / (243.12 + t))) / (273.15 + t)) | round(1) }}
+{%- endmacro -%}
+
+{%- macro status(t, rh, night=false) -%}
+{%- set off = states('input_number.climate_night_offset') | float(1) if night else 0 -%}
+{%- set lo = states('input_number.climate_temp_low') | float(22) - off -%}
+{%- set hi = states('sensor.comfort_high_now') | float(25) - off -%}
+{%- set cold = states('sensor.guideline_temp_min') | float(18) -%}
+{%- set d = dew(t, rh) | float if rh is number else none -%}
+{%- if t >= hi + 2 -%}Hot
+{%- elif t < cold -%}Cold
+{%- elif d is not none and d > 17 -%}Humid
+{%- elif t > hi -%}Warm
+{%- elif t < lo -%}Cool
+{%- elif rh is number and rh < 30 -%}Dry
+{%- else -%}Comfortable
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro airing(hours, ai) -%}
+{%- set ns = namespace(cur=none, curlen=0, best=none, bestlen=0, bestend=none) -%}
+{%- for h in hours -%}
+{%- set t = h.datetime | as_datetime | as_local -%}
+{%- set ao = absolute(h.temperature | float(0), h.humidity | float(100)) | float -%}
+{%- if 7 <= t.hour < 22 and ao < ai - 1 and h.precipitation_probability | float(0) < 50 -%}
+{%- if ns.curlen == 0 -%}{%- set ns.cur = t -%}{%- endif -%}
+{%- set ns.curlen = ns.curlen + 1 -%}
+{%- if ns.curlen > ns.bestlen -%}{%- set ns.best = ns.cur -%}{%- set ns.bestlen = ns.curlen -%}{%- set ns.bestend = t -%}{%- endif -%}
+{%- else -%}{%- set ns.curlen = 0 -%}{%- endif -%}
+{%- endfor -%}
+{{ {'ok': ns.best is not none, 'start': ns.best.strftime('%H:%M') if ns.best else '', 'end': (ns.bestend + timedelta(hours=1)).strftime('%H:%M') if ns.best else ''} | tojson }}
+{%- endmacro -%}

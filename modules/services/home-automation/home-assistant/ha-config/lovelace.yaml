@@ -12,7 +12,11 @@ resources:
     type: module
   - url: /local/download-control-card.js?v=2
     type: module
-  - url: /local/status-row-card.js?v=1
+  - url: /local/status-row-card.js?v=4
+    type: module
+  - url: /local/scene-picker-card.js?v=2
+    type: module
+  - url: /local/mode-switch-card.js?v=1
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module

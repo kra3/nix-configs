@@ -1,0 +1,198 @@
+default:
+- layer: security
+card:
+  type: custom:security-plan-card
+  image: /local/floorplan.png?v=13
+  layer: "[[layer]]"
+  camera_card:
+    cameras:
+    -
+      camera_entity: camera.ranger_duo_fxd
+      live_provider: go2rtc
+      triggers:
+        entities:
+        - binary_sensor.ranger_duo_fxd_person_occupancy
+        reviews:
+          severities:
+          - high
+    -
+      camera_entity: camera.ranger_duo_ptz
+      live_provider: go2rtc
+      triggers:
+        entities:
+        - binary_sensor.ranger_duo_ptz_person_occupancy
+        reviews:
+          severities:
+          - high
+    -
+      camera_entity: camera.ranger_uno
+      live_provider: go2rtc
+      triggers:
+        entities:
+        - binary_sensor.ranger_uno_person_occupancy
+        reviews:
+          severities:
+          - high
+    live:
+      display:
+        mode: single
+    menu:
+      buttons:
+        ptz_controls:
+          enabled: true
+        ptz_home:
+          enabled: true
+  size:
+    - 736
+    - 374
+  hide:
+    - binary_sensor.house_exits_open_status
+    - binary_sensor.front_door_knock_contact
+    - lock.front_front_door_nw
+    - binary_sensor.front_front_door_nw_door
+  rooms:
+    - name: Dining Room
+      areas:
+        - Dining Room
+      rect:
+        - 9
+        - 6
+        - 245
+        - 234
+      presence:
+        - binary_sensor.room_presence_dining
+    - name: Living Room
+      areas:
+        - Living Room
+      rect:
+        - 254
+        - 6
+        - 190
+        - 174
+      presence:
+        - binary_sensor.room_presence_living
+    - name: Bed Room
+      areas:
+        - Bed Room
+      rect:
+        - 449
+        - 6
+        - 275
+        - 174
+      presence:
+        - binary_sensor.bedroom_occupancy_presence
+    - name: Hallway
+      areas:
+        - Hallway
+      rect:
+        - 254
+        - 180
+        - 475
+        - 60
+      presence:
+        - binary_sensor.room_presence_hall
+    - name: Kitchen Dining
+      areas:
+        - Kitchen Dining
+      rect:
+        - 9
+        - 240
+        - 95
+        - 118
+    - name: Kitchen
+      areas:
+        - Kitchen
+      rect:
+        - 104
+        - 240
+        - 190
+        - 118
+      presence:
+        - binary_sensor.room_presence_kitchen
+    - name: Laundry
+      areas:
+        - Laundry Room
+      rect:
+        - 299
+        - 240
+        - 80
+        - 118
+      presence:
+        - binary_sensor.laundry_occupancy_presence
+    - name: Entrance
+      areas:
+        - Entrance
+        - FRONT
+      rect:
+        - 379
+        - 240
+        - 110
+        - 118
+      entities:
+        - lock.front_door
+        - binary_sensor.front_door_open
+    - name: Toilet
+      areas:
+        - Toilet
+      rect:
+        - 491
+        - 268
+        - 53
+        - 90
+      presence:
+        - binary_sensor.toilet_occupancy_presence
+    - name: Bathroom
+      areas:
+        - Bathroom
+      rect:
+        - 544
+        - 240
+        - 80
+        - 118
+      presence:
+        - binary_sensor.bathroom_occupancy_presence
+    - name: Office
+      areas:
+        - Office Room
+      rect:
+        - 629
+        - 240
+        - 100
+        - 118
+      presence:
+        - binary_sensor.room_presence_office
+  area_override:
+    camera.ranger_duo_fxd: Living Room
+    binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+    binary_sensor.living_room_person_occupancy: Living Room
+    binary_sensor.dining_room_person_occupancy: Dining Room
+    binary_sensor.hallway_person_occupancy: Hallway
+    image.ranger_duo_fxd_person: Living Room
+  positions:
+    binary_sensor.patio_door_contact_contact:
+      - 187
+      - 6
+    binary_sensor.living_room_window_left_contact_contact:
+      - 380
+      - 6
+    binary_sensor.living_room_window_right_contact_contact:
+      - 420
+      - 6
+    binary_sensor.bedroom_window_left_contact_contact:
+      - 559
+      - 6
+    binary_sensor.bedroom_window_right_contact_contact:
+      - 639
+      - 6
+    binary_sensor.kitchen_dining_window_left_contact_contact:
+      - 55
+      - 366
+    binary_sensor.hallway_door_contact_contact:
+      - 727
+      - 205
+    lock.front_door:
+      - 458
+      - 364
+    binary_sensor.front_door_open:
+      - 430
+      - 366

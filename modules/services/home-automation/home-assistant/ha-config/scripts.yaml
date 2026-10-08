@@ -100,3 +100,40 @@ alarm_force_arm_away:
       mode: away
       force: true
       code: !secret alarm_code
+
+lights_hand_back:
+  alias: "Lights: hand back to Adaptive"
+  description: Resets both room scenes to Auto and returns every light to Adaptive Lighting.
+  sequence:
+  - action: input_text.set_value
+    target:
+      entity_id:
+      - input_text.living_scene
+      - input_text.office_scene
+    data:
+      value: Auto
+  - action: adaptive_lighting.set_manual_control
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+    data:
+      manual_control: false
+  - action: adaptive_lighting.apply
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+    data:
+      turn_on_lights: false
+  mode: single
+
+lights_all_off:
+  alias: "Lights: all off"
+  description: Turns off every light and the Focus and Shelf light plugs.
+  sequence:
+  - action: light.turn_off
+    target:
+      entity_id: all
+  - action: switch.turn_off
+    target:
+      entity_id:
+      - switch.hue_light_switch_1
+      - switch.hue_light_switch_2
+  mode: single

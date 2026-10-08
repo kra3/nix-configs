@@ -1,6 +1,6 @@
 {
   flake.nixosModules.containers-media-mgmt-storage =
-    { ... }:
+    { config, lib, ... }:
     {
       users.groups.media.gid = 2000;
 
@@ -38,26 +38,30 @@
         # 0755 not 2770: traversal only, so non-media consumers (e.g. arcane) can reach their own subdir.
         "d /srv/appdata 0755 root media - -"
         "d /srv/appdata/media-mgmt 2770 root media - -"
-        "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/prowlarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/sabnzbd 2770 root media - -"
-        "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/lidarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/bookshelf 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf/config 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf/metadata 2770 root media - -"
         "d /srv/appdata/media-mgmt/seerr 2770 kra3 media - -"
-        "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
         "d /srv/appdata/media-mgmt/aiostreams 2770 root media - -"
         "d /srv/appdata/media-mgmt/aiometadata 2770 root media - -"
         "d /srv/appdata/media-mgmt/slskd 2770 root media - -"
         "d /srv/media/downloads/slskd 2770 root media - -"
         "d /srv/media/downloads/slskd/complete 2770 root media - -"
         "d /srv/media/downloads/slskd/incomplete 2770 root media - -"
+      ]
+      ++ lib.optionals config.vars.localMedia.enable [
+        "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
+      ]
+      ++ lib.optionals (config.vars.localMedia.enable && config.vars.localMedia.extras.enable) [
+        "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
       ];
     };
 }

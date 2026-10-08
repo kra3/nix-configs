@@ -1,0 +1,295 @@
+# Dew point, comfort status and a ventilation hint from the room temperature/humidity sensors; thresholds are the input_numbers below.
+template:
+  - sensor:
+      - name: "Bathroom dew point"
+        unique_id: climate_bathroom_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.bathroom_occupancy_temperature')) and is_number(states('sensor.bathroom_occupancy_humidity')) %}{{ dew(states('sensor.bathroom_occupancy_temperature') | float, states('sensor.bathroom_occupancy_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Bathroom comfort"
+        unique_id: climate_bathroom_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.bathroom_occupancy_temperature')) %}{{ status(states('sensor.bathroom_occupancy_temperature') | float, states('sensor.bathroom_occupancy_humidity') | float(none), false) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Bedroom dew point"
+        unique_id: climate_bedroom_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.bedroom_occupancy_temperature')) and is_number(states('sensor.bedroom_occupancy_humidity')) %}{{ dew(states('sensor.bedroom_occupancy_temperature') | float, states('sensor.bedroom_occupancy_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Bedroom comfort"
+        unique_id: climate_bedroom_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.bedroom_occupancy_temperature')) %}{{ status(states('sensor.bedroom_occupancy_temperature') | float, states('sensor.bedroom_occupancy_humidity') | float(none), is_state('schedule.sleep', 'on')) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Laundry dew point"
+        unique_id: climate_laundry_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.laundry_occupancy_temperature')) and is_number(states('sensor.laundry_occupancy_humidity')) %}{{ dew(states('sensor.laundry_occupancy_temperature') | float, states('sensor.laundry_occupancy_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Laundry comfort"
+        unique_id: climate_laundry_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.laundry_occupancy_temperature')) %}{{ status(states('sensor.laundry_occupancy_temperature') | float, states('sensor.laundry_occupancy_humidity') | float(none), false) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Toilet dew point"
+        unique_id: climate_toilet_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.toilet_occupancy_temperature')) and is_number(states('sensor.toilet_occupancy_humidity')) %}{{ dew(states('sensor.toilet_occupancy_temperature') | float, states('sensor.toilet_occupancy_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Toilet comfort"
+        unique_id: climate_toilet_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.toilet_occupancy_temperature')) %}{{ status(states('sensor.toilet_occupancy_temperature') | float, states('sensor.toilet_occupancy_humidity') | float(none), false) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Hall comfort"
+        unique_id: climate_hall_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.hue_pir_hallway_temperature')) %}{{ status(states('sensor.hue_pir_hallway_temperature') | float, none, false) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Kitchen comfort"
+        unique_id: climate_kitchen_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.hue_pir_kitchen_temperature')) %}{{ status(states('sensor.hue_pir_kitchen_temperature') | float, none, false) | trim }}{% else %}{{ none }}{% endif %}
+
+      - name: "Indoor dew point"
+        unique_id: climate_indoor_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.average_temperature')) and is_number(states('sensor.average_humidity')) %}{{ dew(states('sensor.average_temperature') | float, states('sensor.average_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Outdoor dew point"
+        unique_id: climate_outdoor_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.openweathermap_temperature')) and is_number(states('sensor.openweathermap_humidity')) %}{{ dew(states('sensor.openweathermap_temperature') | float, states('sensor.openweathermap_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Indoor absolute humidity"
+        unique_id: climate_indoor_absolute_humidity
+        unit_of_measurement: "g/m³"
+        state: >-
+          {%- from 'climate.jinja' import absolute -%}
+          {% if is_number(states('sensor.average_temperature')) and is_number(states('sensor.average_humidity')) %}{{ absolute(states('sensor.average_temperature') | float, states('sensor.average_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Outdoor absolute humidity"
+        unique_id: climate_outdoor_absolute_humidity
+        unit_of_measurement: "g/m³"
+        state: >-
+          {%- from 'climate.jinja' import absolute -%}
+          {% if is_number(states('sensor.openweathermap_temperature')) and is_number(states('sensor.openweathermap_humidity')) %}{{ absolute(states('sensor.openweathermap_temperature') | float, states('sensor.openweathermap_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Moisture surplus"
+        unique_id: climate_moisture_surplus
+        unit_of_measurement: "g/m³"
+        state_class: measurement
+        state: >-
+          {% set i = states('sensor.indoor_absolute_humidity') %}
+          {% set o = states('sensor.outdoor_absolute_humidity') %}
+          {% if is_number(i) and is_number(o) %}{{ (i | float - o | float) | round(1) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Guideline temp min"
+        unique_id: climate_guideline_temp_min
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: "18"
+        attributes:
+          source: Folkhälsomyndigheten HSLF-FS 2024:10, 18 °C general minimum (20 °C for sensitive groups)
+
+      - name: "Guideline temp max"
+        unique_id: climate_guideline_temp_max
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {{ 26 if is_state('sensor.season', 'summer') else 24 }}
+        attributes:
+          source: Folkhälsomyndigheten HSLF-FS 2024:10, 24 °C operative autumn to spring, 26 °C air temperature in summer
+
+      - name: "Comfort high now"
+        unique_id: climate_comfort_high_now
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {{ states('input_number.climate_temp_high_summer') if is_state('sensor.season', 'summer') else states('input_number.climate_temp_high') }}
+
+      - name: "Humidity ceiling"
+        unique_id: climate_humidity_ceiling
+        unit_of_measurement: "%"
+        state: >-
+          {%- from 'climate.jinja' import absolute -%}
+          {% set t = states('sensor.average_temperature') %}
+          {% set o = states('sensor.outdoor_absolute_humidity') %}
+          {% if is_number(t) and is_number(o) %}{{ [100, ((o | float + states('input_number.climate_moisture_limit') | float(3)) / (absolute(t | float, 100) | float) * 100) | round(0)] | min | int }}{% else %}{{ none }}{% endif %}
+
+      - name: "Ventilation advice"
+        unique_id: climate_ventilation_advice
+        state: >-
+          {% set i = states('sensor.indoor_absolute_humidity') %}
+          {% set o = states('sensor.outdoor_absolute_humidity') %}
+          {% if is_number(i) and is_number(o) %}
+          {% set gap = states('sensor.average_temperature') | float(0) - states('sensor.openweathermap_temperature') | float(0) %}
+          {% if o | float < i | float - 1 %}{% if gap > 8 %}Air out briefly{% else %}Air out{% endif %}{% elif o | float > i | float + 1 %}Keep closed{% else %}No difference{% endif %}
+          {% else %}{{ none }}{% endif %}
+
+      - name: "Open doors and windows"
+        unique_id: climate_open_doors_windows
+        state: >-
+          {% set open = (state_attr('binary_sensor.house_exits_open_status', 'open_names') or '').split(', ') | reject('eq', '') | list %}
+          {% if not open %}All closed{% elif open | length <= 2 %}{{ open | join(', ') }}{% else %}{{ open[:2] | join(', ') }} +{{ open | length - 2 }}{% endif %}
+
+      - name: "Home comfort"
+        unique_id: climate_home_comfort
+        icon: mdi:home-thermometer-outline
+        state: >-
+          {% set rooms = {'Bedroom': 'sensor.bedroom_comfort', 'Bathroom': 'sensor.bathroom_comfort', 'Laundry': 'sensor.laundry_comfort',
+                          'Toilet': 'sensor.toilet_comfort', 'Hall': 'sensor.hall_comfort', 'Kitchen': 'sensor.kitchen_comfort'} %}
+          {% set ns = namespace(bad=[], live=0) %}
+          {% for name, e in rooms.items() %}
+          {% set s = states(e) %}
+          {% if s not in ['unavailable', 'unknown', 'none'] %}
+          {% set ns.live = ns.live + 1 %}
+          {% if s != 'Comfortable' %}{% set ns.bad = ns.bad + [name ~ ' ' ~ (s | lower)] %}{% endif %}
+          {% endif %}
+          {% endfor %}
+          {% set ms = states('sensor.moisture_surplus_24h') %}
+          {% if ns.live == 0 %}No data{% elif not ns.bad %}{% if not is_state('sensor.season', 'summer') and is_number(ms) and ms | float > states('input_number.climate_moisture_limit') | float(3) %}Humidity high · keep under {{ states('sensor.humidity_ceiling') | int(0) }} %{% else %}All comfortable{% endif %}{% elif ns.bad | length <= 2 %}{{ ns.bad | join(', ') }}{% else %}{{ ns.bad[:2] | join(', ') }} +{{ ns.bad | length - 2 }}{% endif %}
+
+      - name: "Rooms not reporting"
+        unique_id: climate_rooms_not_reporting
+        icon: mdi:access-point-network-off
+        state: >-
+          {% set rooms = {'Bedroom': ['sensor.bedroom_occupancy_temperature', 'sensor.bedroom_occupancy_humidity'],
+                          'Bathroom': ['sensor.bathroom_occupancy_temperature', 'sensor.bathroom_occupancy_humidity'],
+                          'Laundry': ['sensor.laundry_occupancy_temperature', 'sensor.laundry_occupancy_humidity'],
+                          'Toilet': ['sensor.toilet_occupancy_temperature', 'sensor.toilet_occupancy_humidity'],
+                          'Hall': ['sensor.hue_pir_hallway_temperature'], 'Kitchen': ['sensor.hue_pir_kitchen_temperature']} %}
+          {% set ns = namespace(dead=[]) %}
+          {% for name, es in rooms.items() %}
+          {% if es | map('states') | select('in', ['unavailable', 'unknown']) | list | count > 0 %}{% set ns.dead = ns.dead + [name] %}{% endif %}
+          {% endfor %}
+          {% if not ns.dead %}All reporting{% elif ns.dead | length <= 2 %}{{ ns.dead | join(', ') }}: no data{% else %}{{ ns.dead[:2] | join(', ') }} +{{ ns.dead | length - 2 }}: no data{% endif %}
+
+  - triggers:
+      - trigger: time_pattern
+        minutes: "/15"
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.forecast_vasudha
+        data:
+          type: daily
+        response_variable: fc
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.forecast_vasudha
+        data:
+          type: hourly
+        response_variable: hr
+    sensor:
+      - name: "Airing window"
+        unique_id: climate_airing_window
+        state: >-
+          {%- from 'climate.jinja' import airing -%}
+          {% set w = airing((hr.get('weather.forecast_vasudha', {}).get('forecast', []))[:24], states('sensor.indoor_absolute_humidity') | float(0)) | from_json %}
+          {{ (w.start ~ '–' ~ w.end) if w.ok else 'No good window' }}
+        attributes:
+          note: >-
+            {%- from 'climate.jinja' import airing -%}
+            {% set hours = (hr.get('weather.forecast_vasudha', {}).get('forecast', []))[:24] %}
+            {% set w = airing(hours, states('sensor.indoor_absolute_humidity') | float(0)) | from_json %}
+            {% set gap = states('sensor.average_temperature') | float(0) - states('sensor.openweathermap_temperature') | float(0) %}
+            {% set rain = hours[:6] | selectattr('precipitation_probability', 'ge', 50) | list %}
+            {{ ('Drier outside' ~ (', but ' ~ (gap | round(0) | int) ~ ' °C colder, so keep it short' if gap > 8 else '')) if w.ok else 'Outside air is not drier than inside, or rain is expected' }}{{ ' · rain likely from ' ~ (rain[0].datetime | as_datetime | as_local).strftime('%H:%M') if rain else '' }}
+          low: >-
+            {{ states('input_number.climate_temp_low') | float(none) }}
+          high: >-
+            {{ states('sensor.comfort_high_now') | float(none) }}
+          hours: >-
+            {% set ns = namespace(rows=[]) %}
+            {% for h in (hr.get('weather.forecast_vasudha', {}).get('forecast', []))[:24] %}
+            {% set ns.rows = ns.rows + [{'t': h.datetime, 'temp': h.temperature}] %}
+            {% endfor %}
+            {{ ns.rows }}
+
+      - name: "Low today"
+        unique_id: climate_low_today
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {% set f = fc.get('weather.forecast_vasudha', {}).get('forecast', []) %}
+          {{ f[0].templow if f and f[0].templow is defined else none }}
+
+input_number:
+  climate_temp_low:
+    name: Comfort temperature, low
+    icon: mdi:thermometer-low
+    min: 15
+    max: 30
+    step: 0.5
+    unit_of_measurement: "°C"
+  climate_temp_high:
+    name: Comfort temperature, high (autumn to spring)
+    icon: mdi:thermometer-high
+    min: 20
+    max: 35
+    step: 0.5
+    unit_of_measurement: "°C"
+  climate_temp_high_summer:
+    name: Comfort temperature, high (summer)
+    icon: mdi:thermometer-high
+    min: 20
+    max: 35
+    step: 0.5
+    unit_of_measurement: "°C"
+  climate_night_offset:
+    name: Bedroom night offset
+    icon: mdi:weather-night
+    min: 0
+    max: 4
+    step: 0.5
+    unit_of_measurement: "°C"
+  climate_moisture_limit:
+    name: Moisture surplus, high above
+    icon: mdi:water-alert
+    min: 1
+    max: 6
+    step: 0.5
+    unit_of_measurement: "g/m³"
+
+sensor:
+  - platform: statistics
+    name: "Moisture surplus 24h"
+    unique_id: climate_moisture_surplus_24h
+    entity_id: sensor.moisture_surplus
+    state_characteristic: mean
+    max_age:
+      hours: 24
+    sampling_size: 500
+    precision: 1
+
+input_boolean:
+  climate_defaults_v5:
+    name: Climate defaults applied
+    icon: mdi:check

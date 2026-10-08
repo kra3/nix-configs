@@ -54,6 +54,8 @@
             "${../../../services/home-automation/home-assistant/ha-config/www/status-row-card.js}:/config/www/status-row-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/scene-picker-card.js}:/config/www/scene-picker-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/mode-switch-card.js}:/config/www/mode-switch-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/comfort-card.js}:/config/www/comfort-card.js:ro"
+            "${../../../services/home-automation/home-assistant/ha-config/www/climate-room-card.js}:/config/www/climate-room-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-status-card.js}:/config/www/security-status-card.js:ro"
             "${../../../services/home-automation/home-assistant/ha-config/www/security-plan-card.js}:/config/www/security-plan-card.js:ro"
             "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"

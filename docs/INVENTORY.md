@@ -104,6 +104,43 @@ except where noted:
 | Wyoming Piper (TTS) | `home-auto/wyoming-piper/default.nix` | `modules/services/home-automation/wyoming-piper.nix` |
 | Wyoming Whisper (STT) | `home-auto/wyoming-whisper/default.nix` | `modules/services/home-automation/wyoming-whisper.nix` |
 
+### Stream-first pipeline (movies/TV/anime)
+
+Streaming is the default; disk is the exception.
+
+- **Watch:** Jellyfin (Litefin client on the TV) browses Gelato libraries,
+  which surface AIOStreams/AIOMetadata catalogs. Nothing touches disk.
+- **Fallback:** when no stream exists, request it in Seerr (Litefin's Seerr
+  page or the Seerr web UI) with no tag. Default profiles: Radarr `HD-1080p`,
+  Sonarr `WEB-1080p`. Radarr/Sonarr -> Prowlarr -> SABnzbd -> import into the
+  normal libraries; Maintainerr reaps it later.
+- **Keep:** tag `keep` (Seerr advanced request, later in Radarr/Sonarr, or by
+  excluding the item in Maintainerr, which writes the tag back for
+  movies/shows). Keep profiles: Radarr `UHD Bluray + WEB` / Sonarr `Ultra-HD`
+  grab >=1080p and upgrade to UHD. Tagged items are never reaped.
+
+| Cleanup rule | Timing |
+|---|---|
+| Movie | deleted 7 days after watched |
+| Season | deleted 21 days after fully watched, once its finale exists (season unmonitored; show removed if empty) |
+| Unwatched download | removed after 90 days total |
+
+Deletes go through the Radarr/Sonarr recycle bin (purged after 7 days).
+Gelato libraries are never touched.
+
+**Toggles:** `vars.localMedia.enable` (Jellyfin, Radarr, Sonarr, Recyclarr,
+Maintainerr); `vars.localMedia.extras.enable` (Bazarr, Unpackerr; off by
+default, Unpackerr kept for future P2P).
+
+**App-internal state:** the keep tag, recycle bin, Maintainerr rules, Seerr
+defaults/library scope, Litefin's Seerr link and Gelato's daily catalog sync
+live in each app's appdata and were applied once. Restore from an appdata
+backup rather than re-deriving.
+
+**If Gelato breaks:** (1) AIOStreams as a SABnzbd-compatible download client
+for Radarr/Sonarr; (2) Moonfin's unified multi-server view with AIOStreams'
+Jellyfin-compatible server (untested).
+
 ### Logs/metrics → Grafana (sutala-specific)
 - Host + all nspawn/podman journald logs ship via each unit's Alloy agent
   (`services-monitoring-alloy-host` on the host;

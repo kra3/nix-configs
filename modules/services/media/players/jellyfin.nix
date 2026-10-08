@@ -74,6 +74,13 @@
                 Url = "https://raw.githubusercontent.com/MoazSalem/litefin-plugin/release/manifest.json";
               };
             }
+            {
+              tag = "RepositoryInfo";
+              content = {
+                Name = "Moonfin";
+                Url = "https://raw.githubusercontent.com/Moonfin-Client/Plugin/refs/heads/master/manifest.json";
+              };
+            }
           ];
         };
 

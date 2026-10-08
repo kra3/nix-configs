@@ -47,7 +47,6 @@ card:
     - 374
   hide:
     - binary_sensor.house_exits_open_status
-    - binary_sensor.front_door_knock_contact
     - lock.front_front_door_nw
     - binary_sensor.front_front_door_nw_door
   rooms:

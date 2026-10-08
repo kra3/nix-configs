@@ -1,0 +1,153 @@
+{%- macro icon_for(name) -%}
+{%- set n = name | lower -%}
+{%- if 'window' in n -%}mdi:window-closed-variant
+{%- elif 'knock' in n -%}mdi:hand-back-left
+{%- elif 'patio' in n or 'door' in n -%}mdi:door
+{%- elif 'remote' in n -%}mdi:remote
+{%- elif 'pir' in n or 'occupancy' in n -%}mdi:motion-sensor
+{%- elif 'lock' in n or 'yale' in n -%}mdi:lock
+{%- else -%}mdi:battery-heart-variant
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro row(s, phone_dids) -%}
+{%- set name = s.name | replace(' Battery+', '') | replace(' Battery Level', '') | replace(' Battery', '') -%}
+{%- set phone = device_id(s.entity_id) in phone_dids -%}
+{%- set bs = (device_entities(device_id(s.entity_id)) | select('search', '_battery_state$') | map('states') | first | default('')) if phone else '' -%}
+{{ {
+  'name': name,
+  'entity': s.entity_id,
+  'state': s.state,
+  'level': s.state | float(none),
+  'low': s.attributes.battery_low | default(false),
+  'type': s.attributes.battery_type_and_quantity | default(''),
+  'reported': (s.attributes.battery_last_reported | default(s.last_reported)) | string,
+  'area': area_name(s.entity_id) or 'Other',
+  'icon': 'mdi:cellphone' if phone else icon_for(name),
+  'phone': phone,
+  'charging': bs in ['Charging', 'Full'],
+  'power': bs
+} | tojson }}
+{%- endmacro -%}
+
+{%- macro rows() -%}
+{%- set phone_dids = integration_entities('mobile_app') | map('device_id') | reject('none') | list -%}
+{%- set all = states.sensor | selectattr('attributes.device_class', 'eq', 'battery') | list -%}
+{%- set ns = namespace(r=[], seen=[]) -%}
+{%- for s in all if s.attributes.battery_type is defined -%}
+{%- set ns.r = ns.r + [row(s, phone_dids) | from_json] -%}
+{%- set ns.seen = ns.seen + [device_id(s.entity_id)] -%}
+{%- endfor -%}
+{%- for s in all if s.attributes.battery_type is not defined -%}
+{%- set did = device_id(s.entity_id) -%}
+{%- if did is none or did not in ns.seen -%}
+{%- set ns.r = ns.r + [row(s, phone_dids) | from_json] -%}
+{%- endif -%}
+{%- endfor -%}
+{{ ns.r | tojson }}
+{%- endmacro -%}
+
+{%- macro low(rows) -%}
+{{ ((rows | selectattr('level', 'ne', none) | selectattr('level', 'lt', 25) | list) + (rows | selectattr('low') | list)) | unique(attribute='entity') | list | tojson }}
+{%- endmacro -%}
+
+{%- macro offline(rows) -%}
+{{ rows | selectattr('state', 'eq', 'unavailable') | selectattr('phone', 'eq', false) | list | tojson }}
+{%- endmacro -%}
+
+{%- macro pending() -%}
+{%- set ns = namespace(r=[]) -%}
+{%- for u in states.update | selectattr('state', 'eq', 'on') -%}
+{%- set ns.r = ns.r + [{
+  'name': u.name | replace(' Update', ''),
+  'installed': u.attributes.installed_version | default('') | string,
+  'latest': u.attributes.latest_version | default('') | string
+}] -%}
+{%- endfor -%}
+{{ ns.r | tojson }}
+{%- endmacro -%}
+
+{%- macro refs() -%}
+{%- set ns = namespace(r=[]) -%}
+{%- set ignored = ['webostv.turn_on', 'statistics.percentOfEpisodes'] -%}
+{%- for e in state_attr('sensor.watchman_missing_entities', 'entities') or [] if not e.id.endswith('.jinja') and e.id not in ignored -%}
+{%- set files = e.occurrences.split('\n') | reject('match', '^\\.storage/') | map('regex_replace', ':.*$', '') | map('regex_replace', '^.*/', '') | unique | list -%}
+{%- if files -%}{%- set ns.r = ns.r + [{'id': e.id, 'files': files}] -%}{%- endif -%}
+{%- endfor -%}
+{{ ns.r | sort(attribute='id') | tojson }}
+{%- endmacro -%}
+
+{%- macro attention() -%}
+{%- set lo = 25 -%}
+{%- set crit = 10 -%}
+{%- set plo = 20 -%}
+{%- set r = rows() | from_json -%}
+{%- set ns = namespace(a=[]) -%}
+{%- for d in r if d.level is not none and (d.level < lo or d.low) and not d.phone -%}
+{%- set bad = d.level <= crit or d.low -%}
+{%- set ns.a = ns.a + [{
+  'rank': 0 if bad else 1,
+  'severity': 'error' if bad else 'warning',
+  'icon': 'mdi:battery-alert-variant-outline',
+  'entity': d.entity,
+  'short': d.name,
+  'title': d.name ~ ' battery ' ~ (d.level | round(0) | int) ~ ' %',
+  'detail': ('Replace the ' ~ d.type) if d.type else 'Replace the battery (type not recorded)'
+}] -%}
+{%- endfor -%}
+{%- for d in r if d.phone and d.level is not none and d.level < plo and not d.charging -%}
+{%- set ns.a = ns.a + [{
+  'rank': 1,
+  'severity': 'warning',
+  'icon': 'mdi:cellphone-arrow-down',
+  'entity': d.entity,
+  'short': d.name,
+  'title': d.name ~ ' battery ' ~ (d.level | round(0) | int) ~ ' %',
+  'detail': 'Not charging. Put it on a charger.'
+}] -%}
+{%- endfor -%}
+{%- for d in r if d.state == 'unavailable' and not d.phone -%}
+{%- set ns.a = ns.a + [{
+  'rank': 0,
+  'severity': 'error',
+  'icon': 'mdi:lan-disconnect',
+  'entity': d.entity,
+  'short': d.name,
+  'title': d.name ~ ' is unavailable',
+  'detail': 'Check its power and connection'
+}] -%}
+{%- endfor -%}
+{%- set nv = r | selectattr('state', 'eq', 'unknown') | selectattr('phone', 'eq', false) | list -%}
+{%- if nv -%}
+{%- set ns.a = ns.a + [{
+  'rank': 2,
+  'severity': 'info',
+  'icon': 'mdi:help-circle-outline',
+  'short': (nv | length) ~ ' never reported',
+  'title': (nv | length) ~ (' device never reported' if nv | length == 1 else ' devices never reported'),
+  'detail': (nv | map(attribute='name') | join(', ')) ~ '. Remove them in Zigbee2MQTT if unused.'
+}] -%}
+{%- endif -%}
+{%- for u in pending() | from_json -%}
+{%- set ns.a = ns.a + [{
+  'rank': 2,
+  'severity': 'info',
+  'icon': 'mdi:update',
+  'short': u.name,
+  'title': u.name ~ ' update available',
+  'detail': (u.installed ~ ' → ' ~ u.latest) if u.installed and u.latest else 'An update is waiting'
+}] -%}
+{%- endfor -%}
+{%- set broken = refs() | from_json | length -%}
+{%- if broken > 0 -%}
+{%- set ns.a = ns.a + [{
+  'rank': 2,
+  'severity': 'info',
+  'icon': 'mdi:link-variant-off',
+  'short': broken ~ (' broken reference' if broken == 1 else ' broken references'),
+  'title': broken ~ (' broken config reference' if broken == 1 else ' broken config references'),
+  'detail': 'Listed below'
+}] -%}
+{%- endif -%}
+{{ ns.a | sort(attribute='rank') | tojson }}
+{%- endmacro -%}

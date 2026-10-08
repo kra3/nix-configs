@@ -89,8 +89,7 @@
       );
 
       # Window/separator styling: must be set before catppuccin's run-shell (built-in modules read
-      # these while it sources), and @catppuccin_reset wipes all of it, so client-dark/light-theme
-      # below re-apply this same block before re-running catppuccin.
+      # these while it sources).
       windowAndSeparatorConf = ''
         set -g @catppuccin_window_status_style "rounded"
         set -g @catppuccin_window_text "#W"
@@ -115,41 +114,6 @@
         source-file "${catppuccinStatusModule}"
       '';
       resurrectModuleConf = ''source-file "${resurrectModuleConfFile}"'';
-
-      # catppuccin freezes each module's text_fg/icon_fg with -ogqF (set-once) and @catppuccin_reset
-      # won't clear them; unset before a flavor switch or the old flavor's fg survives (unreadable).
-      builtinModuleReset =
-        lib.concatMapStrings
-          (m: ''
-            set -gu @catppuccin_status_${m}_text_fg
-            set -gu @catppuccin_status_${m}_icon_fg
-          '')
-          [
-            "session"
-            "application"
-            "directory"
-            "pomodoro_plus"
-            "battery"
-            "date_time"
-          ];
-      resurrectModuleReset = ''
-        set -gu @catppuccin_resurrect_color
-        set -gu @catppuccin_status_resurrect_icon_fg
-        set -gu @catppuccin_status_resurrect_text_fg
-        set -gu @catppuccin_status_resurrect_text_bg
-        set -gu @catppuccin_status_resurrect_icon_bg
-      '';
-
-      themeHook = flavor: ''
-        set -g @catppuccin_flavor "${flavor}"
-        set -g @catppuccin_reset "true"
-        ${builtinModuleReset}
-        run "${catppuccinTmuxScript}"
-        ${windowAndSeparatorConf}
-        run "${catppuccinTmuxScript}"
-        ${resurrectModuleReset}
-        ${resurrectModuleConf}
-      '';
     in
     {
       imports = [
@@ -182,7 +146,16 @@
           yank
           open
           battery
-          tmux-pomodoro-plus
+          {
+            plugin = tmux-pomodoro-plus;
+            # Its defaults (p, P, _) collide with paste-buffer / choose-buffer / pain-control's split;
+            # f replaces find-window (C-w fzf finder covers it), and C-f/M-f derive from it.
+            extraConfig = ''
+              set -g @pomodoro_toggle 'f'
+              set -g @pomodoro_skip 'B'
+              set -g @pomodoro_cancel 'Q'
+            '';
+          }
         ];
 
         extraConfig = ''
@@ -245,9 +218,13 @@
           bind m choose-window 'join-pane -h -s "%%"'
           bind v choose-window 'join-pane -v -s "%%"'
 
-          # Kill pane/window
-          bind x kill-pane
-          bind X kill-window
+          # Kill pane/window (confirm, as stock)
+          bind x confirm-before -p "kill-pane #P? (y/n)" kill-pane
+          bind X confirm-before -p "kill-window #W? (y/n)" kill-window
+
+          # Last window (l is pain-control's pane-right) and mark pane (m is merge-pane)
+          bind Tab last-window
+          bind M select-pane -m
 
           # Quick session tree
           bind s choose-tree -Zs
@@ -342,38 +319,63 @@
           # Status Line
           # ============================================================================
 
-          set -g status-position bottom
-          set -g status-justify "absolute-centre"
-          set -g status-left-length 100
-          set -g status-right-length 40
-
-          set -g status-left "#{E:@catppuccin_status_session}"
-          set -ag status-left "#{E:@catppuccin_status_application}"
-          set -ag status-left "#{E:@catppuccin_status_directory}"
-
           ${resurrectModuleConf}
-          set -g status-right " "
-          set -ag status-right "#{E:@catppuccin_status_resurrect}"
-          set -ag status-right "#(${continuumSave})"
-          set -ag status-right "#{E:@catppuccin_status_pomodoro_plus}"
-          %if "#{==:#(${hasBatteryScript}),yes}"
-          set -ag status-right "#{E:@catppuccin_status_battery}"
-          %endif
-          set -ag status-right "#{E:@catppuccin_status_date_time}"
 
-          # tmux 3.6+: react to the terminal's own light/dark preference by reflavoring catppuccin.
-          set-hook -g client-dark-theme {
-            ${themeHook "mocha"}
-          }
-          set-hook -g client-light-theme {
-            ${themeHook "latte"}
+          set-hook -gu client-light-theme
+          set-hook -gu client-dark-theme
+          set -gu @catppuccin_flavor
+          set -g @catppuccin_flavor 'mocha'
+
+          set -g status-style "bg=#{@thm_mantle}"
+          set -g status-justify "left"
+          set -g status-position bottom
+          set -g allow-rename off
+          set -wg automatic-rename on
+          set -g automatic-rename-format "#{pane_current_command}"
+
+          set -g status-left-length 100
+          set -g status-left ""
+          set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_mantle},bold]  #{=/16:#{session_name}} },#{#[bg=#{@thm_mantle},fg=#{@thm_green}]  #{=/16:#{session_name}} }}"
+          set -ga status-left "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
+          set -ga status-left "#[bg=#{@thm_mantle},fg=#{@thm_maroon}]  #{pane_current_command} "
+          set -ga status-left "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
+          set -ga status-left "#[bg=#{@thm_mantle},fg=#{@thm_blue}]  #{=/-20/...:#{b:pane_current_path}} "
+
+          set -g status-right-length 100
+          set -g status-right ""
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_green}]#{E:@catppuccin_resurrect_icon}#{E:@catppuccin_resurrect_text} "
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_red}] #{E:@catppuccin_pomodoro_plus_text} "
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
+          %if "#{==:#(${hasBatteryScript}),yes}"
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_pink}]#{E:@catppuccin_battery_icon}#{E:@catppuccin_battery_text} "
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
+          %endif
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_blue}] 󰃰 %Y-%m-%d #(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)"
+
+          set -g window-status-format "#[bg=#{@thm_mantle},fg=#{@thm_peach}] #I#[fg=#{@thm_rosewater}]#{?#{||:#{<=:#{session_windows},5},#{||:#{==:#{e|-:#{window_index},#{active_window_index}},1},#{==:#{e|-:#{active_window_index},#{window_index}},1}}},: #W,} "
+          set -g window-status-style "bg=#{@thm_mantle},fg=#{@thm_rosewater}"
+          set -g window-status-last-style "bg=#{@thm_mantle},fg=#{@thm_peach}"
+          set -g window-status-activity-style "bg=#{@thm_mantle},fg=#{@thm_red}"
+          set -g window-status-bell-style "bg=#{@thm_mantle},fg=#{@thm_red},bold"
+          set -gF window-status-separator "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]|"
+          set -g window-status-current-format "#[bg=#{@thm_peach},fg=#{@thm_mantle},bold] #I #[bg=#{@thm_mantle},fg=#{@thm_peach}] #W #{?window_zoomed_flag,󰁌 ,}"
+          set -g window-status-current-style "bg=#{@thm_mantle},fg=#{@thm_peach}"
+
+          # Unset these first: they're set with -ogq, so stale values survive a re-source.
+          bind r {
+            set -g @catppuccin_reset on
+            set -gu @catppuccin_pomodoro_plus_text
+            set -gu @catppuccin_battery_icon
+            set -gu @catppuccin_battery_text
+            source-file ~/.config/tmux/tmux.conf
+            display-message "tmux.conf reloaded"
           }
         '';
       };
 
       # catppuccin.tmux loads the catppuccin plugin. This extraConfig renders before catppuccin's own
-      # run-shell, so @thm_* isn't defined yet here — windowAndSeparatorConf needs no theme colors,
-      # but is duplicated into themeHook above since @catppuccin_reset wipes it on a flavor switch.
+      # run-shell, so @thm_* isn't defined yet here — windowAndSeparatorConf needs no theme colors.
       catppuccin.tmux.extraConfig = ''
         ${windowAndSeparatorConf}
 

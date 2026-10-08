@@ -2699,9 +2699,12 @@ views:
         name: Needs attention
         icon: mdi:wrench-clock
         hint: Low batteries, offline devices and updates waiting
+        color_attribute: severity
         colors:
-          All good: success
-          other: warning
+          clear: success
+          info: info
+          warning: warning
+          error: error
       - entity: sensor.lowest_battery
         name: Lowest battery
         icon: mdi:battery-alert-variant-outline

@@ -14,6 +14,9 @@ template:
           {% set n = attention() | from_json | map(attribute='short') | list %}
           {% if not n %}All good{% elif n | length <= 2 %}{{ n | join(', ') }}{% else %}{{ n[:2] | join(', ') }} +{{ n | length - 2 }}{% endif %}
         attributes:
+          severity: >-
+            {%- from 'maintenance.jinja' import attention -%}
+            {% set v = attention() | from_json | map(attribute='severity') | list %}{{ 'error' if 'error' in v else 'warning' if 'warning' in v else 'info' if v else 'clear' }}
           items: >-
             {%- from 'maintenance.jinja' import attention -%}
             {{ attention() | from_json }}

@@ -1,0 +1,5 @@
+input_text:
+  waste_last_reminded:
+    name: Waste reminder sent for
+    icon: mdi:trash-can-outline
+    max: 20

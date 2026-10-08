@@ -2,8 +2,9 @@
 - id: waste_collection_reminder
   alias: "Waste collection: evening-before reminder"
   description: >-
-    Notifies 12h before waste collection (calendar offset trigger).
-    HA-start trigger catches a restart landing on that one-shot moment.
+    Notifies 12h before waste collection (calendar offset trigger). The
+    HA-start trigger catches a restart after that moment; waste_last_reminded
+    keeps it to one notification per collection date.
   triggers:
   - trigger: calendar
     entity_id: calendar.va_syd_sophamntning
@@ -11,12 +12,18 @@
     offset: "-12:00:00"
   - trigger: homeassistant
     event: start
+  variables:
+    due: >-
+      {% set s = trigger.calendar_event.start if trigger.platform == 'calendar'
+                 else state_attr('calendar.va_syd_sophamntning', 'start_time') %}
+      {% set d = as_datetime(s, none) if s else none %}
+      {{ d.date() | string if d else '' }}
   conditions:
   - condition: template
     value_template: >-
-      {{ trigger.platform == 'calendar' or
-         (as_datetime(state_attr('calendar.va_syd_sophamntning', 'start_time')).date()
-          - now().date()).days == 1 }}
+      {{ due != '' and due != states('input_text.waste_last_reminded')
+         and (trigger.platform == 'calendar'
+              or ((as_datetime(due).date() - now().date()).days == 1 and now().hour >= 12)) }}
   actions:
   - action: script.notify_all_phones
     data:
@@ -24,4 +31,9 @@
       message: >-
         {{ trigger.calendar_event.summary if trigger.platform == 'calendar'
            else state_attr('calendar.va_syd_sophamntning', 'message') }}
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.waste_last_reminded
+    data:
+      value: "{{ due }}"
   mode: queued

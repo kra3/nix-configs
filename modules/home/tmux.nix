@@ -351,7 +351,7 @@
           set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_pink}]#{E:@catppuccin_battery_icon}#{E:@catppuccin_battery_text} "
           set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_overlay_0}]│"
           %endif
-          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_blue}] 󰃰 %Y-%m-%d 󰅐 %H:%M #(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)"
+          set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_blue}] 󰃰 %Y-%m-%d #(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)"
 
           set -g window-status-format "#[bg=#{@thm_mantle},fg=#{@thm_peach}] #I#[fg=#{@thm_rosewater}]#{?#{||:#{<=:#{session_windows},5},#{||:#{==:#{e|-:#{window_index},#{active_window_index}},1},#{==:#{e|-:#{active_window_index},#{window_index}},1}}},: #W,} "
           set -g window-status-style "bg=#{@thm_mantle},fg=#{@thm_rosewater}"

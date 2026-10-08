@@ -146,7 +146,16 @@
           yank
           open
           battery
-          tmux-pomodoro-plus
+          {
+            plugin = tmux-pomodoro-plus;
+            # Its defaults (p, P, _) collide with paste-buffer / choose-buffer / pain-control's split;
+            # f replaces find-window (C-w fzf finder covers it), and C-f/M-f derive from it.
+            extraConfig = ''
+              set -g @pomodoro_toggle 'f'
+              set -g @pomodoro_skip 'B'
+              set -g @pomodoro_cancel 'Q'
+            '';
+          }
         ];
 
         extraConfig = ''
@@ -349,7 +358,15 @@
           set -g window-status-current-format "#[bg=#{@thm_peach},fg=#{@thm_mantle},bold] #I #[bg=#{@thm_mantle},fg=#{@thm_peach}] #W #{?window_zoomed_flag,󰁌 ,}"
           set -g window-status-current-style "bg=#{@thm_mantle},fg=#{@thm_peach}"
 
-          bind r set -g @catppuccin_reset on \; source-file ~/.config/tmux/tmux.conf \; display-message "tmux.conf reloaded"
+          # Unset these first: they're set with -ogq, so stale values survive a re-source.
+          bind r {
+            set -g @catppuccin_reset on
+            set -gu @catppuccin_pomodoro_plus_text
+            set -gu @catppuccin_battery_icon
+            set -gu @catppuccin_battery_text
+            source-file ~/.config/tmux/tmux.conf
+            display-message "tmux.conf reloaded"
+          }
         '';
       };
 

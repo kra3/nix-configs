@@ -218,9 +218,13 @@
           bind m choose-window 'join-pane -h -s "%%"'
           bind v choose-window 'join-pane -v -s "%%"'
 
-          # Kill pane/window
-          bind x kill-pane
-          bind X kill-window
+          # Kill pane/window (confirm, as stock)
+          bind x confirm-before -p "kill-pane #P? (y/n)" kill-pane
+          bind X confirm-before -p "kill-window #W? (y/n)" kill-window
+
+          # Last window (l is pain-control's pane-right) and mark pane (m is merge-pane)
+          bind Tab last-window
+          bind M select-pane -m
 
           # Quick session tree
           bind s choose-tree -Zs

@@ -353,7 +353,7 @@
           %endif
           set -ga status-right "#[bg=#{@thm_mantle},fg=#{@thm_blue}] 󰃰 %Y-%m-%d #(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)"
 
-          set -g window-status-format "#[bg=#{@thm_mantle},fg=#{@thm_peach}] #I#[fg=#{@thm_rosewater}]#{?#{||:#{<=:#{session_windows},5},#{||:#{==:#{e|-:#{window_index},#{active_window_index}},1},#{==:#{e|-:#{active_window_index},#{window_index}},1}}},: #W,} "
+          set -g window-status-format "#[bg=#{@thm_mantle}]#{?window_bell_flag,#[fg=#{@thm_red} bold] ,#{?window_activity_flag,#[fg=#{@thm_yellow}] ,#[fg=#{@thm_peach}]}} #I#{?window_bell_flag,#[fg=#{@thm_red}],#{?window_activity_flag,#[fg=#{@thm_yellow}],#[fg=#{@thm_rosewater}]}}#{?#{||:#{<=:#{session_windows},5},#{||:#{==:#{e|-:#{window_index},#{active_window_index}},1},#{==:#{e|-:#{active_window_index},#{window_index}},1}}},: #W,} "
           set -g window-status-style "bg=#{@thm_mantle},fg=#{@thm_rosewater}"
           set -g window-status-last-style "bg=#{@thm_mantle},fg=#{@thm_peach}"
           set -g window-status-activity-style "bg=#{@thm_mantle},fg=#{@thm_red}"

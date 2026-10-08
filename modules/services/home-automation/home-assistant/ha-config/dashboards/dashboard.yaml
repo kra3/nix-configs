@@ -1588,11 +1588,205 @@ views:
         popup_days: 90
       grid_options:
         columns: 6
-- title: Lights
+- type: sections
+  title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group
-  strategy:
-    type: light
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:mode-switch-card
+      name: House mode
+      grid_options:
+        columns: full
+      modes:
+      - name: Automatic
+        icon: mdi:home-automation
+        hint: Lights, TV and doors react by themselves.
+      - name: Party
+        icon: mdi:party-popper
+        entity: input_boolean.party_mode
+        hint: Room lights stop switching themselves, so they stay as you set them.
+      - name: Paused
+        icon: mdi:pause-circle
+        entity: input_boolean.automations_paused
+        tone: warning
+        confirm: Pause the lighting, TV, door and bedtime automations (this includes arming the alarm at night)?
+        hint: Lighting, TV, door and bedtime automations are off, including arming the alarm at night.
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Rooms
+      icon: mdi:lightbulb-group
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.lights_any_on
+        state: "on"
+      card:
+        type: tile
+        entity: sensor.lights_summary
+        name: All lights off
+        icon: mdi:lightbulb-off
+        state_content: state
+        tap_action:
+          action: perform-action
+          perform_action: script.lights_all_off
+      grid_options:
+        columns: full
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.lights_in_manual_control
+        state: "on"
+      card:
+        type: tile
+        entity: script.lights_hand_back
+        name: Hand back to Adaptive
+        icon: mdi:theme-light-dark
+        hide_state: true
+        tap_action:
+          action: toggle
+      grid_options:
+        columns: full
+    - type: grid
+      columns: 2
+      square: false
+      grid_options:
+        columns: full
+      cards:
+      - type: custom:mushroom-light-card
+        entity: light.dining_lights
+        name: Dining Room
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.living_room_lights
+        name: Living Room
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.bedroom_wardrobe_lights
+        name: Wardrobe
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.kitchen_dining_lights
+        name: Kitchen Dining
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.kitchen_lights
+        name: Kitchen
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.office_room_light
+        name: Office
+        icon: mdi:ceiling-light
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+    - type: heading
+      heading: Accessories
+      heading_style: subtitle
+    - type: grid
+      columns: 3
+      square: false
+      grid_options:
+        columns: full
+      cards:
+      - type: custom:mushroom-entity-card
+        entity: light.tv_backlight
+        name: TV Backlight
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+      - type: custom:mushroom-entity-card
+        entity: switch.hue_light_switch_1
+        name: Focus light
+        icon: mdi:lamp
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+      - type: custom:mushroom-entity-card
+        entity: switch.hue_light_switch_2
+        name: Shelf lights
+        icon: mdi:led-strip-variant
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:streamline-card
+      template: floor_plan
+      variables:
+        layer: lights
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Scenes
+      heading_style: subtitle
+    - type: custom:scene-picker-card
+      rooms:
+      - name: Living Room
+        entity: input_text.living_scene
+      - name: Office
+        entity: input_text.office_scene
+      toggles_label: Whole house
+      toggles:
+      - entity: switch.home_adaptive_lighting_home
+        name: Adaptive colour
+        icon: mdi:theme-light-dark
+        hints:
+          "on": Warm and dim in the evening, bright and cool by day
+          "off": Lights stay exactly as you set them
+      - entity: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+        name: Sleep lighting
+        icon: mdi:sleep
+        hints:
+          "on": Very dim and warm, for night walks
+          "off": Switches on by itself at bedtime
+      grid_options:
+        columns: full
 - type: sections
   title: Security
   path: dash-security
@@ -1628,200 +1822,10 @@ views:
       heading: Floor plan
       icon: mdi:floor-plan
       heading_style: title
-    - type: custom:security-plan-card
-      image: /local/floorplan.png?v=13
-      camera_card:
-        cameras: &sec_cams
-        - &cam_fxd
-          camera_entity: camera.ranger_duo_fxd
-          live_provider: go2rtc
-          triggers:
-            entities:
-            - binary_sensor.ranger_duo_fxd_person_occupancy
-            reviews:
-              severities:
-              - high
-        - &cam_ptz
-          camera_entity: camera.ranger_duo_ptz
-          live_provider: go2rtc
-          triggers:
-            entities:
-            - binary_sensor.ranger_duo_ptz_person_occupancy
-            reviews:
-              severities:
-              - high
-        - &cam_uno
-          camera_entity: camera.ranger_uno
-          live_provider: go2rtc
-          triggers:
-            entities:
-            - binary_sensor.ranger_uno_person_occupancy
-            reviews:
-              severities:
-              - high
-        live:
-          display:
-            mode: single
-        menu:
-          buttons:
-            ptz_controls:
-              enabled: true
-            ptz_home:
-              enabled: true
-      size:
-        - 736
-        - 374
-      hide:
-        - binary_sensor.house_exits_open_status
-        - binary_sensor.front_door_knock_contact
-        - lock.front_front_door_nw
-        - binary_sensor.front_front_door_nw_door
-      rooms:
-        - name: Dining Room
-          areas:
-            - Dining Room
-          rect:
-            - 9
-            - 6
-            - 245
-            - 234
-          presence:
-            - binary_sensor.room_presence_dining
-        - name: Living Room
-          areas:
-            - Living Room
-          rect:
-            - 254
-            - 6
-            - 190
-            - 174
-          presence:
-            - binary_sensor.room_presence_living
-        - name: Bed Room
-          areas:
-            - Bed Room
-          rect:
-            - 449
-            - 6
-            - 275
-            - 174
-          presence:
-            - binary_sensor.bedroom_occupancy_presence
-        - name: Hallway
-          areas:
-            - Hallway
-          rect:
-            - 254
-            - 180
-            - 475
-            - 60
-          presence:
-            - binary_sensor.room_presence_hall
-        - name: Kitchen Dining
-          areas:
-            - Kitchen Dining
-          rect:
-            - 9
-            - 240
-            - 95
-            - 118
-        - name: Kitchen
-          areas:
-            - Kitchen
-          rect:
-            - 104
-            - 240
-            - 190
-            - 118
-          presence:
-            - binary_sensor.room_presence_kitchen
-        - name: Laundry
-          areas:
-            - Laundry Room
-          rect:
-            - 299
-            - 240
-            - 80
-            - 118
-          presence:
-            - binary_sensor.laundry_occupancy_presence
-        - name: Entrance
-          areas:
-            - Entrance
-            - FRONT
-          rect:
-            - 379
-            - 240
-            - 110
-            - 118
-          entities:
-            - lock.front_door
-            - binary_sensor.front_door_open
-        - name: Toilet
-          areas:
-            - Toilet
-          rect:
-            - 491
-            - 268
-            - 53
-            - 90
-          presence:
-            - binary_sensor.toilet_occupancy_presence
-        - name: Bathroom
-          areas:
-            - Bathroom
-          rect:
-            - 544
-            - 240
-            - 80
-            - 118
-          presence:
-            - binary_sensor.bathroom_occupancy_presence
-        - name: Office
-          areas:
-            - Office Room
-          rect:
-            - 629
-            - 240
-            - 100
-            - 118
-          presence:
-            - binary_sensor.room_presence_office
-      area_override:
-        camera.ranger_duo_fxd: Living Room
-        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
-        binary_sensor.living_room_person_occupancy: Living Room
-        binary_sensor.dining_room_person_occupancy: Dining Room
-        binary_sensor.hallway_person_occupancy: Hallway
-        image.ranger_duo_fxd_person: Living Room
-      positions:
-        binary_sensor.patio_door_contact_contact:
-          - 187
-          - 6
-        binary_sensor.living_room_window_left_contact_contact:
-          - 380
-          - 6
-        binary_sensor.living_room_window_right_contact_contact:
-          - 420
-          - 6
-        binary_sensor.bedroom_window_left_contact_contact:
-          - 559
-          - 6
-        binary_sensor.bedroom_window_right_contact_contact:
-          - 639
-          - 6
-        binary_sensor.kitchen_dining_window_left_contact_contact:
-          - 55
-          - 366
-        binary_sensor.hallway_door_contact_contact:
-          - 727
-          - 205
-        lock.front_door:
-          - 458
-          - 364
-        binary_sensor.front_door_open:
-          - 430
-          - 366
+    - type: custom:streamline-card
+      template: floor_plan
+      variables:
+        layer: security
       grid_options:
         columns: full
   - type: grid
@@ -1832,7 +1836,34 @@ views:
       icon: mdi:cctv
       heading_style: title
     - type: custom:advanced-camera-card
-      cameras: *sec_cams
+      cameras: &sec_cams
+      - &cam_fxd
+        camera_entity: camera.ranger_duo_fxd
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_fxd_person_occupancy
+          reviews:
+            severities:
+            - high
+      - &cam_ptz
+        camera_entity: camera.ranger_duo_ptz
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_ptz_person_occupancy
+          reviews:
+            severities:
+            - high
+      - &cam_uno
+        camera_entity: camera.ranger_uno
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_uno_person_occupancy
+          reviews:
+            severities:
+            - high
       live:
         display:
           mode: grid

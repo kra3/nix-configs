@@ -41,6 +41,7 @@ HA config is declarative in this repo; every change is verified before and after
 - A long catalogue (146 scene presets) is a picker with search and categories behind one button, not a long strip; keep the everyday choices one tap away.
 - Reversible and honest: one tap back to normal, automation never silently fights a manual choice (decide and state when a manual state ends), unknown/unavailable is shown as such, "not reporting" is listed, rough sensors are marked "approx.".
 - Consistent grammar across tabs, and improvements on one tab are applied to its siblings: terse labels, units on every value, icons as horizontal chips, used value with the percent inline (`423 GB 16 %`), growth (`+12 / 7d`) for counters, min-max only where a range means something, movies and TV kept split.
+- Use the theme, not literals: colour carries meaning through HA tokens (`--primary-color`, `--success-color`, `--warning-color`, `--error-color`, `--info-color`, `--state-inactive-color`; `--state-active-color` for on), never a fixed hex, except text over images. The same state gets the same colour on every tab, and an off item is grey. Test a card under a light theme too.
 - Defaults are a starting point: expose thresholds as editable helpers and say what the defaults assume.
 - Decide visuals by showing them (render icon or layout options) before committing.
 

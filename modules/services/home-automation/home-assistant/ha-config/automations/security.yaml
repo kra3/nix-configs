@@ -96,7 +96,7 @@
   description: >-
     Sends an iOS critical alert (sounds through silent and Focus)
     naming the sensor(s) Alarmo tripped on (its open_sensors
-    attribute), repeated every minute until the alarm leaves triggered
+    attribute), repeated every 2.5 min until the alarm leaves triggered
     (disarmed, or back to armed when the trigger time ends) — the only
     alert when it triggers. Uses the legacy mobile_app notify actions
     because notify.send_message can't carry push data.
@@ -140,7 +140,7 @@
         - <<: *critical_push
           action: notify.mobile_app_hiranyagarbha
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
-        timeout: "00:01:00"
+        timeout: "00:02:30"
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival

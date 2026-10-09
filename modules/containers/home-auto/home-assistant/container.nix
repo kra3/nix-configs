@@ -2,6 +2,7 @@
   flake.nixosModules.containers-home-auto-home-assistant-container =
     {
       config,
+      lib,
       flakeLib,
       flakeModules,
       ...
@@ -122,6 +123,8 @@
           homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
           mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
+        ''
+        + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
           sonarr_api_key: ${config.sops.placeholder."media.sonarr.api_key"}
           jellyfin_auth_header: 'MediaBrowser Token="${

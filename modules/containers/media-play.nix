@@ -308,9 +308,7 @@
 
       systemd.services."container@media-play" = flakeLib.container-definition.mkContainerSystemdDeps [ ];
 
-      # Create jellyfin group on host matching container GID for secret access.
-      # Also reused by monitoring.nix's grafana secrets (coincidentally the same
-      # gid 999), so it stays defined even with Jellyfin off.
+      # Ungated: monitoring.nix's grafana secrets also use gid 999.
       users.groups.jellyfin.gid = 999;
 
       sops.secrets."media.jellyfin.users.kra3.password" =

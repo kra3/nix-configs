@@ -2,7 +2,6 @@
   flake.nixosModules.containers-home-auto-home-assistant-container =
     {
       config,
-      lib,
       flakeLib,
       flakeModules,
       lib,

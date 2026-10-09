@@ -6,3 +6,14 @@ input_select:
       - none
       - armed_away
       - armed_night
+
+# Both restart-safe, so a restart mid-wait still hands the alarm lights back.
+timer:
+  alarm_lights_handback:
+    duration: "00:07:00"
+    restore: true
+
+input_text:
+  alarm_lights_revert:
+    name: Unmanaged lights to turn off after the alarm
+    max: 255

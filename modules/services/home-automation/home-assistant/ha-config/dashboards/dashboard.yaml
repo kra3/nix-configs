@@ -950,21 +950,21 @@ views:
         type: line
         days: 7
       items:
-      - entity: sensor.unpackerr_lidarr_queue
+      - entity: sensor.lidarr_download_queue
         name: Lidarr
         mode: now
         range: false
         days: 7
         decimals: 0
         unit: ""
-      - entity: sensor.unpackerr_radarr_queue
+      - entity: sensor.radarr_download_queue
         name: Radarr
         mode: now
         range: false
         days: 7
         decimals: 0
         unit: ""
-      - entity: sensor.unpackerr_sonarr_queue
+      - entity: sensor.sonarr_download_queue
         name: Sonarr
         mode: now
         range: false
@@ -975,24 +975,13 @@ views:
         graphs:
         - name: Queues
           entities:
-          - entity: sensor.unpackerr_lidarr_queue
+          - entity: sensor.lidarr_download_queue
             name: Lidarr
-          - entity: sensor.unpackerr_radarr_queue
+          - entity: sensor.radarr_download_queue
             name: Radarr
-          - entity: sensor.unpackerr_sonarr_queue
+          - entity: sensor.sonarr_download_queue
             name: Sonarr
           days: 7
-      grid_options:
-        columns: 12
-    - type: conditional
-      conditions:
-      - condition: numeric_state
-        entity: sensor.unpackerr_failed
-        above: 0
-      card:
-        type: tile
-        entity: sensor.unpackerr_failed
-        name: Failed extractions
       grid_options:
         columns: 12
     - type: conditional

@@ -139,6 +139,7 @@
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
           sonarr_api_key: ${config.sops.placeholder."media.sonarr.api_key"}
+          lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
           jellyfin_auth_header: 'MediaBrowser Token="${
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'

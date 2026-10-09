@@ -1,23 +1,28 @@
 blueprint:
-  name: Room darkness detection (hysteresis)
+  name: Room darkness detection (daylight model)
   description: >-
-    Hysteresis darkness state machine for a room: turns a helper
-    input_boolean on when illuminance drops below 30 lux for 2 min (or the
-    sun goes below the horizon), and off when illuminance rises above 120
-    lux for 2 min (or the sun rises), waiting for the room's occupancy
-    sensor to clear before turning the light off. Factored out of the
-    kitchen/hall automations, which were identical apart from entity names.
-    The dark-below threshold/sustain tightens automatically (dark_below_daytime/
-    dark_sustain_daytime) when the sun is up and sensor.openweathermap_cloud_coverage
-    doesn't corroborate real cloud cover, so a clear-daytime sensor blip
-    doesn't read as dark; unset, the tier is a no-op.
+    Turns a room's "is dark" helper on while binary_sensor.gloomy_outside is
+    on and, for rooms with their own illuminance sensor, that sensor reads
+    below dark_below for 2 min. Turns it off when it is no longer gloomy
+    outside, turning the light off too if the room is empty. Rooms without
+    a sensor follow the house-wide state alone.
   domain: automation
   input:
     illuminance_sensor:
-      name: Illuminance sensor
+      name: Illuminance sensor (optional)
+      default: ""
       selector:
         entity:
           domain: sensor
+    dark_below:
+      name: Dark threshold (lux)
+      description: The room's own reading must be below this, sustained 2 min, before it counts as dark.
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
     occupancy_sensor:
       name: Occupancy sensor
       selector:
@@ -33,120 +38,25 @@ blueprint:
       selector:
         entity:
           domain: input_boolean
-    dark_below:
-      name: Dark threshold (lux)
-      description: >-
-        Illuminance below this, sustained 2 min, counts as dark. Default
-        30 fits a room with a real window (confirmed via Prometheus
-        history); a room whose sensor never reads much above its own
-        ambient floor (e.g. hall/kitchen's Hue PIR units, which top out
-        around 70 lux even at midday) needs this lowered, or every
-        daytime motion event reads as dark.
-      default: 30
-      selector:
-        number:
-          min: 0
-          max: 1000
-          unit_of_measurement: lx
-    bright_above:
-      name: Bright threshold (lux)
-      description: >-
-        Illuminance above this, sustained 2 min, counts as bright.
-        Default 120. In practice sun.sun crossing above_horizon usually
-        drives the day-side transition; this only matters for rooms
-        whose sensor can reliably exceed it.
-      default: 120
-      selector:
-        number:
-          min: 0
-          max: 1000
-          unit_of_measurement: lx
-    dark_below_daytime:
-      name: Dark threshold during clear daytime (lux)
-      description: >-
-        Stricter illuminance-below threshold used instead of dark_below
-        when the sun is above the horizon and the forecast doesn't
-        corroborate real cloud cover (see cloud_coverage_threshold) - guards
-        against a daytime sensor blip (interior PIR briefly reading low
-        with the sun clearly up) being treated as genuine darkness. Leave
-        at the default to disable the daytime-specific tier entirely.
-      default: 1000
-      selector:
-        number:
-          min: 0
-          max: 1000
-          unit_of_measurement: lx
-    dark_sustain_daytime:
-      name: Dark sustain duration during clear daytime
-      description: >-
-        How long illuminance must stay below dark_below_daytime before
-        counting as dark under the same clear-daytime condition. Default
-        matches the always-on 2 min sustain, so rooms that don't override
-        dark_below_daytime see no behavior change.
-      default: "00:02:00"
-      selector:
-        duration: {}
-    cloud_coverage_threshold:
-      name: Cloud coverage corroboration threshold (%)
-      description: >-
-        sensor.openweathermap_cloud_coverage above this, while the sun
-        is up, is treated as corroborating real daytime overcast/rain -
-        keeps the lenient dark_below/2 min response instead of the
-        stricter daytime tier. Same convention as automations/tv.yaml's
-        backlight-on-overcast check.
-      default: 70
-      selector:
-        number:
-          min: 0
-          max: 100
-          unit_of_measurement: "%"
-    corroborating_bright_sensor:
-      name: Corroborating "definitely bright" sensor (optional)
-      description: >-
-        A wider-range illuminance sensor (e.g. a house-wide average) that
-        blocks the daytime-strict tier from firing when it reads clearly
-        bright - guards a narrow-range/shaded sensor from a false trip.
-        Leave unset to skip.
-      default: ""
-      selector:
-        entity:
-          domain: sensor
-    corroborating_bright_above:
-      name: Corroboration bright threshold (lx)
-      description: If corroborating_bright_sensor reads above this, the daytime-strict tier won't fire.
-      default: 500
-      selector:
-        number:
-          min: 0
-          max: 100000
-          unit_of_measurement: lx
+
+trigger_variables:
+  illuminance_sensor: !input illuminance_sensor
+  dark_below: !input dark_below
 
 triggers:
-  - entity_id: !input illuminance_sensor
-    below: !input dark_below
-    for: "00:02:00"
-    trigger: numeric_state
-    id: dark_lux_lenient
-  - entity_id: !input illuminance_sensor
-    below: !input dark_below_daytime
-    for: !input dark_sustain_daytime
-    trigger: numeric_state
-    id: dark_lux_strict
-  - entity_id: sun.sun
-    to: below_horizon
+  - entity_id: binary_sensor.gloomy_outside
+    to: "on"
     trigger: state
-    id: dark
-  - entity_id: !input illuminance_sensor
-    above: !input bright_above
+    id: gloomy
+  - value_template: >-
+      {{ illuminance_sensor not in [none, ''] and states(illuminance_sensor) | float(0) < dark_below }}
     for: "00:02:00"
-    trigger: numeric_state
-    id: bright
-  - entity_id: sun.sun
-    to: above_horizon
+    trigger: template
+    id: gloomy
+  - entity_id: binary_sensor.gloomy_outside
+    to: "off"
     trigger: state
     id: bright
-  # Native trigger instead of a wait_for_trigger inside the bright branch —
-  # an in-flight wait doesn't survive an HA restart, stranding the light on.
   - entity_id: !input occupancy_sensor
     to: "off"
     trigger: state
@@ -160,96 +70,36 @@ triggers:
     id: startup
 
 variables:
-  corroborating_bright_sensor: !input corroborating_bright_sensor
-  corroborating_bright_above: !input corroborating_bright_above
+  illuminance_sensor: !input illuminance_sensor
+  dark_below: !input dark_below
 
 actions:
-  # Trust each trigger's own threshold for sun.sun/bright — re-checking lux
-  # there used to gate the sun-based trigger too, so a sensor that never
-  # reads above 120 lux (kitchen/hall, confirmed via Prometheus) stayed
-  # stuck dark. The two lux-based dark triggers instead gate here. HA's
-  # trigger schema has no inline per-trigger condition, so night-or-
-  # overcast vs. clear-daytime tiering has to live in this choose branch
-  # rather than on the trigger itself.
   - choose:
       - conditions:
-          - condition: or
-            conditions:
-              - condition: trigger
-                id: dark
-              - condition: and
-                conditions:
-                  - condition: trigger
-                    id: dark_lux_lenient
-                  - condition: or
-                    conditions:
-                      - condition: state
-                        entity_id: sun.sun
-                        state: below_horizon
-                      - condition: numeric_state
-                        entity_id: sensor.openweathermap_cloud_coverage
-                        above: !input cloud_coverage_threshold
-              - condition: and
-                conditions:
-                  - condition: trigger
-                    id: dark_lux_strict
-                  - condition: state
-                    entity_id: sun.sun
-                    state: above_horizon
-                  - condition: not
-                    conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.openweathermap_cloud_coverage
-                        above: !input cloud_coverage_threshold
-                  - condition: template
-                    value_template: >-
-                      {{ corroborating_bright_sensor in [none, ''] or
-                         states(corroborating_bright_sensor) | float(0)
-                         <= corroborating_bright_above }}
-              # Restart reconciliation: dark_boolean is restored as-is from
-              # the recorder, not recomputed, so a restart otherwise strands
-              # a stale "off" through an already-dark room.
-              - condition: and
-                conditions:
-                  - condition: trigger
-                    id: startup
-                  - condition: state
-                    entity_id: !input dark_boolean
-                    state: "off"
-                  - condition: or
-                    conditions:
-                      - condition: numeric_state
-                        entity_id: !input illuminance_sensor
-                        below: !input dark_below
-                      - condition: state
-                        entity_id: sun.sun
-                        state: below_horizon
+          - condition: trigger
+            id: [gloomy, startup]
+          - condition: state
+            entity_id: binary_sensor.gloomy_outside
+            state: "on"
+          - condition: state
+            entity_id: !input dark_boolean
+            state: "off"
+          - condition: template
+            value_template: >-
+              {{ illuminance_sensor in [none, ''] or states(illuminance_sensor) | float(0) < dark_below }}
         sequence:
           - target:
               entity_id: !input dark_boolean
             action: input_boolean.turn_on
       - conditions:
-          - condition: or
-            conditions:
-              - condition: trigger
-                id: bright
-              # Same restart reconciliation, for a stale "on" through an
-              # already-bright room (the bug that motivated this branch).
-              - condition: and
-                conditions:
-                  - condition: trigger
-                    id: startup
-                  - condition: state
-                    entity_id: !input dark_boolean
-                    state: "on"
-                  - condition: or
-                    conditions:
-                      - condition: numeric_state
-                        entity_id: !input illuminance_sensor
-                        above: !input bright_above
-                      - condition: state
-                        entity_id: sun.sun
-                        state: above_horizon
+          - condition: trigger
+            id: [bright, startup]
+          - condition: state
+            entity_id: binary_sensor.gloomy_outside
+            state: "off"
+          - condition: state
+            entity_id: !input dark_boolean
+            state: "on"
         sequence:
           - target:
               entity_id: !input dark_boolean
@@ -265,9 +115,6 @@ actions:
               - target:
                   entity_id: !input light_entity
                 action: light.turn_off
-      # occupancy_clear covers the live case (bright already, occupancy
-      # just cleared); startup re-checks the same thing once on every HA
-      # restart in case a prior clear was missed mid-restart.
       - conditions:
           - condition: trigger
             id: [occupancy_clear, startup]

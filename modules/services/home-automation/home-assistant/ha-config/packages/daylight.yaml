@@ -1,0 +1,50 @@
+# House-wide daylight: the windowed rooms' median lux against its own 24 h peak, so "Gloomy outside" follows the season and the weather.
+template:
+  - sensor:
+      - name: "Daylight reference"
+        unique_id: daylight_reference
+        icon: mdi:white-balance-sunny
+        unit_of_measurement: "lx"
+        state_class: measurement
+        state: >-
+          {% set v = ['sensor.bedroom_occupancy_illuminance', 'sensor.bathroom_occupancy_illuminance', 'sensor.laundry_occupancy_illuminance', 'sensor.toilet_occupancy_illuminance'] | map('states') | select('is_number') | map('float') | list %}
+          {{ v | median if v else none }}
+
+      - name: "Daylight fraction"
+        unique_id: daylight_fraction
+        icon: mdi:sun-compass
+        state_class: measurement
+        state: >-
+          {% set r = states('sensor.daylight_reference_5_min') %}
+          {% set p = states('sensor.daylight_peak_24h') %}
+          {% if is_number(r) and is_number(p) and p | float > 0 %}{{ [r | float / p | float, 1] | min | round(3) }}{% else %}{{ none }}{% endif %}
+
+  - binary_sensor:
+      - name: "Gloomy outside"
+        unique_id: gloomy_outside
+        icon: mdi:weather-cloudy
+        delay_on: "00:02:00"
+        delay_off: "00:02:00"
+        state: >-
+          {% set e = state_attr('sun.sun', 'elevation') | float(0) %}
+          {% set f = states('sensor.daylight_fraction') %}
+          {% if e < 0 %}true{% elif not is_number(f) %}false{% elif this.state == 'on' %}{{ f | float < 0.15 }}{% else %}{{ f | float < 0.05 }}{% endif %}
+
+sensor:
+  - platform: statistics
+    name: "Daylight reference 5 min"
+    unique_id: daylight_reference_5min
+    entity_id: sensor.daylight_reference
+    state_characteristic: median
+    max_age:
+      minutes: 5
+    sampling_size: 100
+
+  - platform: statistics
+    name: "Daylight peak 24h"
+    unique_id: daylight_peak_24h
+    entity_id: sensor.daylight_reference_5_min
+    state_characteristic: value_max
+    max_age:
+      hours: 24
+    sampling_size: 5000

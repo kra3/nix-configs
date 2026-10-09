@@ -2070,16 +2070,18 @@ views:
       - entity: sensor.ventilation_advice
         name: Ventilation
         icon: mdi:window-open-variant
-        hint: Would opening a window help? Compares indoor and outdoor moisture and temperature
+        hint: Rooms holding more moisture than the outside air, past the moisture limit
+        color_attribute: action
         colors:
-          Air out: info
-          Air out briefly: info
-          Keep closed: info
-          No difference: inactive
-        labels:
-          Air out: Air out · outside is drier
-          Air out briefly: Air out briefly · drier, but much colder outside
-          Keep closed: Keep closed · outside is more humid
+          air_out: info
+          air_out_briefly: info
+          keep_closed: info
+          not_needed: inactive
+        hints:
+          air_out: These rooms hold more moisture than the outside air can take away; open a window there
+          air_out_briefly: Open a window in these rooms, but keep it short; it is much colder outside
+          keep_closed: The outside air is more humid than inside
+          not_needed: Every room is within the moisture limit of the outside air
       - entity: sensor.open_doors_and_windows
         name: Open
         icon: mdi:window-open

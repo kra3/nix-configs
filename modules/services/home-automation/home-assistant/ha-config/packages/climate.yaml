@@ -144,12 +144,24 @@ template:
       - name: "Ventilation advice"
         unique_id: climate_ventilation_advice
         state: >-
+          {%- from 'climate.jinja' import humid_rooms -%}
           {% set i = states('sensor.indoor_absolute_humidity') %}
           {% set o = states('sensor.outdoor_absolute_humidity') %}
           {% if is_number(i) and is_number(o) %}
+          {% set r = humid_rooms() | from_json | map(attribute='name') | list %}
           {% set gap = states('sensor.average_temperature') | float(0) - states('sensor.openweathermap_temperature') | float(0) %}
-          {% if o | float < i | float - 1 %}{% if gap > 8 %}Air out briefly{% else %}Air out{% endif %}{% elif o | float > i | float + 1 %}Keep closed{% else %}No difference{% endif %}
+          {% if r %}{{ 'Air out briefly' if gap > 8 else 'Air out' }}: {{ r | join(', ') if r | length <= 2 else r[:2] | join(', ') ~ ' +' ~ (r | length - 2) }}{% elif o | float > i | float + 1 %}Keep closed{% else %}No room needs it{% endif %}
           {% else %}{{ none }}{% endif %}
+        attributes:
+          action: >-
+            {%- from 'climate.jinja' import humid_rooms -%}
+            {% set i = states('sensor.indoor_absolute_humidity') %}
+            {% set o = states('sensor.outdoor_absolute_humidity') %}
+            {% set gap = states('sensor.average_temperature') | float(0) - states('sensor.openweathermap_temperature') | float(0) %}
+            {% if not (is_number(i) and is_number(o)) %}unknown{% elif humid_rooms() | from_json %}{{ 'air_out_briefly' if gap > 8 else 'air_out' }}{% elif o | float > i | float + 1 %}keep_closed{% else %}not_needed{% endif %}
+          rooms: >-
+            {%- from 'climate.jinja' import humid_rooms -%}
+            {{ humid_rooms() | from_json }}
 
       - name: "Open doors and windows"
         unique_id: climate_open_doors_windows

@@ -272,20 +272,20 @@
                     isPaused = false;
                   }
                   {
-                    uid = "recyclarr-sync-error";
-                    title = "Recyclarr sync failing";
+                    uid = "service-fatal-log";
+                    title = "Service logged a fatal error";
                     condition = "C";
                     data = [
                       {
                         refId = "A";
                         relativeTimeRange = {
-                          from = 86400;
+                          from = 3600;
                           to = 0;
                         };
                         datasourceUid = lokiDatasourceUid;
                         model = {
                           refId = "A";
-                          expr = ''sum(count_over_time({systemd_unit="recyclarr.service"} |= "[ERR]" [1d]))'';
+                          expr = ''sum by (systemd_unit) (count_over_time({systemd_unit=~".+", systemd_unit!~"loki\\.service|user@.+"} |~ "(?i)(fatal error|exiting due to|panic:|level=fatal)" [1h]))'';
                           queryType = "instant";
                           instant = true;
                           range = false;
@@ -336,8 +336,8 @@
                     for = "0s";
                     labels.severity = "warning";
                     annotations = {
-                      summary = "Recyclarr logged an error in its last daily sync.";
-                      description = "Profiles and custom formats are not being synced to Radarr/Sonarr. Check `journalctl -u recyclarr`.";
+                      summary = "{{ $labels.systemd_unit }} logged a fatal error in the last hour.";
+                      description = "The service or its scheduled job is failing without systemd noticing. Check `journalctl -u {{ $labels.systemd_unit }}`.";
                     };
                     isPaused = false;
                   }

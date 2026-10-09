@@ -47,5 +47,10 @@
         upstream = "http://${ip}:7878";
         forwardAuth = true;
       };
+
+      systemd.tmpfiles.rules = [
+        "d /srv/media/.recycle-bin-video 0770 1000 2000 - -"
+        "d /srv/media/.recycle-bin-video/radarr 0770 1000 2000 - -"
+      ];
     };
 }

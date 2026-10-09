@@ -1,11 +1,12 @@
 notify_all_phones:
   alias: "Notify: all phones"
   description: >-
-    Fan out a plain notification to both phones and the iPad via notify.send_message.
-    The old per-device notify.mobile_app_* services were removed by the
-    mobile_app integration's move to entity-based notify (HA 2026.9), and
-    the replacement doesn't support actionable buttons (data.actions) —
-    anything needing a tappable action belongs on the dashboard instead.
+    Fan out a notification to both phones and the iPad. Plain ones go via
+    entity-based notify.send_message (HA 2026.9), which has no push data,
+    so critical: true (an iOS critical alert that sounds through silent
+    and Focus) goes via the per-device notify.mobile_app_* actions.
+    Neither path is used for actionable buttons — those belong on the
+    dashboard.
   fields:
     title:
       required: false
@@ -15,16 +16,43 @@ notify_all_phones:
       required: true
       selector:
         text:
+    critical:
+      required: false
+      default: false
+      selector:
+        boolean:
   sequence:
-  - action: notify.send_message
-    target:
-      entity_id:
-      - notify.meghanadha
-      - notify.anjalis_iphone
-      - notify.hiranyagarbha
-    data:
-      title: "{{ title | default(omit) }}"
-      message: "{{ message }}"
+  - if: "{{ critical | default(false) }}"
+    then:
+    - parallel:
+      - &critical_push
+        action: notify.mobile_app_meghanadha
+        continue_on_error: true
+        data:
+          title: "{{ title | default(omit) }}"
+          message: "{{ message }}"
+          data:
+            push:
+              interruption-level: critical
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+      - <<: *critical_push
+        action: notify.mobile_app_anjalis_iphone
+      - <<: *critical_push
+        action: notify.mobile_app_hiranyagarbha
+    else:
+    - action: notify.send_message
+      target:
+        entity_id:
+        - notify.meghanadha
+        - notify.anjalis_iphone
+        - notify.hiranyagarbha
+      data:
+        title: "{{ title | default(omit) }}"
+        message: "{{ message }}"
+  mode: parallel
 
 frigate_sync_detect_to_alarm_state:
   alias: "Frigate: sync detect/audio switches to alarm state"

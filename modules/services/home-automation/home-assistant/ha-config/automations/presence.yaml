@@ -87,6 +87,7 @@
         - action: script.notify_all_phones
           data:
             title: Home
+            critical: true
             message: >-
               Everyone left — won't auto-arm, still open:
               {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
@@ -118,6 +119,7 @@
         - action: script.notify_all_phones
           data:
             title: Home
+            critical: true
             message: >-
               Everyone left, lights off — but the alarm didn't arm, still
               open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}

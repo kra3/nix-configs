@@ -98,8 +98,7 @@
     naming the sensor(s) Alarmo tripped on (its open_sensors
     attribute), repeated every 2.5 min until the alarm leaves triggered
     (disarmed, or back to armed when the trigger time ends) — the only
-    alert when it triggers. Uses the legacy mobile_app notify actions
-    because notify.send_message can't carry push data.
+    alert when it triggers.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -121,24 +120,11 @@
         entity_id: alarm_control_panel.vasudha_secure
         state: triggered
       sequence:
-      - parallel:
-        - &critical_push
-          action: notify.mobile_app_meghanadha
-          continue_on_error: true
-          data:
-            title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
-            message: "{{ message }}"
-            data:
-              push:
-                interruption-level: critical
-                sound:
-                  name: default
-                  critical: 1
-                  volume: 1.0
-        - <<: *critical_push
-          action: notify.mobile_app_anjalis_iphone
-        - <<: *critical_push
-          action: notify.mobile_app_hiranyagarbha
+      - action: script.notify_all_phones
+        data:
+          title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
+          message: "{{ message }}"
+          critical: true
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
         timeout: "00:02:30"
   mode: single

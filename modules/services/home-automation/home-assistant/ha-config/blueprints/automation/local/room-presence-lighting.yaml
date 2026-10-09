@@ -86,6 +86,16 @@ blueprint:
       selector:
         entity:
           domain: media_player
+    nap_boolean:
+      name: Nap helper (optional)
+      description: >-
+        While this input_boolean is on, the room is treated as in sleep
+        hours (no motion reaction unless "React to motion during sleep
+        hours" is on).
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -131,6 +141,8 @@ variables:
   occupancy_sensor: !input occupancy_sensor
   motion_sensor: !input motion_sensor
   media_player_entity: !input media_player_entity
+  nap_boolean: !input nap_boolean
+  asleep: "{{ is_state('schedule.sleep', 'on') or (nap_boolean != '' and is_state(nap_boolean, 'on')) }}"
 
 actions:
   - choose:
@@ -162,9 +174,8 @@ actions:
             conditions:
               - condition: not
                 conditions:
-                  - condition: state
-                    entity_id: schedule.sleep
-                    state: "on"
+                  - condition: template
+                    value_template: "{{ asleep }}"
               - condition: template
                 value_template: "{{ react_during_sleep }}"
           - condition: template
@@ -201,9 +212,8 @@ actions:
       - conditions:
           - condition: trigger
             id: startup
-          - condition: state
-            entity_id: schedule.sleep
-            state: "on"
+          - condition: template
+            value_template: "{{ asleep }}"
           - condition: not
             conditions:
               - condition: state
@@ -225,9 +235,8 @@ actions:
             conditions:
               - condition: not
                 conditions:
-                  - condition: state
-                    entity_id: schedule.sleep
-                    state: "on"
+                  - condition: template
+                    value_template: "{{ asleep }}"
               - condition: template
                 value_template: "{{ react_during_sleep }}"
           - condition: template

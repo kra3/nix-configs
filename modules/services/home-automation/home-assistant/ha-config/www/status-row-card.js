@@ -1,4 +1,4 @@
-// Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` maps a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`.
+// Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`.
 
 const STYLE = `
   :host { display: block; }
@@ -51,9 +51,10 @@ class StatusRowCard extends HTMLElement {
         const s = this._hass.states[it.entity];
         const dead = !s || s.state === "unavailable" || s.state === "unknown";
         const text = dead ? "Unavailable" : (it.labels && it.labels[s.state]) || s.state.charAt(0).toUpperCase() + s.state.slice(1);
-        const hint = dead ? "" : (it.hints && it.hints[s.state]) || it.hint || "";
+        const key = dead ? "" : it.color_attribute ? s.attributes[it.color_attribute] : s.state;
+        const hint = dead ? "" : (it.hints && it.hints[key]) || it.hint || "";
         const base = it.color || c.color || "primary";
-        const color = tone(dead ? "inactive" : (it.colors && (it.colors[it.color_attribute ? s.attributes[it.color_attribute] : s.state] || it.colors.other)) || (s.state === "off" ? "inactive" : base));
+        const color = tone(dead ? "inactive" : (it.colors && (it.colors[key] || it.colors.other)) || (s.state === "off" ? "inactive" : base));
         const tap = it.tap === "toggle" && !dead;
         return (
           `<div class="it${dead || s.state === "off" ? " off" : ""}${tap ? " tap" : ""}" data-i="${i}" style="--c:${esc(color)}"><ha-icon icon="${esc(it.icon || "")}"></ha-icon>` +

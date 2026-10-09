@@ -118,6 +118,10 @@ triggers:
   - trigger: homeassistant
     event: start
     id: startup
+  # fired by manual-mode.yaml on resume and by the alarm lights restore
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
 
 conditions:
   - condition: state

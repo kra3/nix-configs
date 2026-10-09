@@ -49,6 +49,9 @@
   - trigger: homeassistant
     event: start
     id: startup
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
   conditions:
   - condition: state
     entity_id: input_boolean.hall_is_dark

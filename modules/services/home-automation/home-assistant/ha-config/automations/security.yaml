@@ -15,17 +15,56 @@
   - condition: state
     entity_id: sun.sun
     state: below_horizon
+  variables:
+    alarm_lights:
+    - light.kitchen_lights
+    - light.hallway_hall_lights
+    - light.bedroom_wardrobe_lights
+    - light.living_room_lights
+    - light.dining_lights
+    - light.kitchen_dining_lights
+    - light.office_room_light
   actions:
+  - if:
+    - condition: template
+      value_template: "{{ trigger.from_state.state not in ['pending', 'triggered'] }}"
+    then:
+    - action: scene.create
+      data:
+        scene_id: alarm_lights_before
+        snapshot_entities: "{{ alarm_lights }}"
   - action: light.turn_on
     target:
-      entity_id:
-      - light.kitchen_lights
-      - light.hallway_hall_lights
-      - light.bedroom_wardrobe_lights
-      - light.living_room_lights
-      - light.dining_lights
-      - light.kitchen_dining_lights
-      - light.office_room_light
+      entity_id: "{{ alarm_lights }}"
+  mode: single
+
+- id: alarm_lights_restore
+  alias: "Security: restore lights after alarm"
+  description: >-
+    7 min after the alarm leaves pending/triggered, puts the lights back
+    the way they were before it, then has the room lighting automations
+    re-derive so occupied dark rooms come back on.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    from:
+    - pending
+    - triggered
+    not_to:
+    - pending
+    - triggered
+    for: "00:07:00"
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: "{{ states('scene.alarm_lights_before') not in ['unknown', 'unavailable'] }}"
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.alarm_lights_before
+  - action: scene.delete
+    target:
+      entity_id: scene.alarm_lights_before
+  - event: automations_resumed
   mode: single
 
 - id: alarm_triggered_notify

@@ -43,7 +43,7 @@
               tag = "RepositoryInfo";
               content = {
                 Name = "SSO";
-                Url = "https://raw.githubusercontent.com/9p4/jellyfin-plugin-sso/manifest-release/manifest.json";
+                Url = "https://raw.githubusercontent.com/k0lin/jellyfin-plugin-sso/manifest-release/manifest.json";
               };
             }
             {

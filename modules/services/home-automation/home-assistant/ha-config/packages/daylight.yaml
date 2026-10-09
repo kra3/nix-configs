@@ -1,15 +1,6 @@
 # House-wide daylight: the windowed rooms' median lux against its own 24 h peak, so "Gloomy outside" follows the season and the weather.
 template:
   - sensor:
-      - name: "Daylight reference"
-        unique_id: daylight_reference
-        icon: mdi:white-balance-sunny
-        unit_of_measurement: "lx"
-        state_class: measurement
-        state: >-
-          {% set v = ['sensor.bedroom_occupancy_illuminance', 'sensor.bathroom_occupancy_illuminance', 'sensor.laundry_occupancy_illuminance', 'sensor.toilet_occupancy_illuminance'] | map('states') | select('is_number') | map('float') | list %}
-          {{ v | median if v else none }}
-
       - name: "Daylight fraction"
         unique_id: daylight_fraction
         icon: mdi:sun-compass
@@ -31,6 +22,16 @@ template:
           {% if e < 0 %}true{% elif not is_number(f) %}false{% elif this.state == 'on' %}{{ f | float < 0.15 }}{% else %}{{ f | float < 0.05 }}{% endif %}
 
 sensor:
+  - platform: min_max
+    name: "Daylight reference"
+    unique_id: daylight_reference
+    type: median
+    entity_ids:
+      - sensor.bedroom_occupancy_illuminance
+      - sensor.bathroom_occupancy_illuminance
+      - sensor.laundry_occupancy_illuminance
+      - sensor.toilet_occupancy_illuminance
+
   - platform: statistics
     name: "Daylight reference 5 min"
     unique_id: daylight_reference_5min

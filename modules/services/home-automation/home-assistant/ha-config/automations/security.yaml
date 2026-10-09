@@ -23,10 +23,9 @@
     Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
     itself already owns the entry-delay (60s, armed_away) via its own
     sensor config — this only adds the light response. 7 min after the
-    alarm settles, turns back off only the lights that were off before
-    it and whose room has been clear for 2 min (presence lighting's own
-    off rule); lights in occupied rooms stay on for presence lighting,
-    except the bedroom during sleep, which presence lighting keeps dark.
+    alarm settles, hands the lights back: the room lighting automations
+    re-derive their state (automations_resumed), and lights no
+    automation manages go back to how they were.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
@@ -38,40 +37,28 @@
     entity_id: sun.sun
     state: below_horizon
   variables:
-    presence:
-      light.kitchen_lights: [binary_sensor.hue_pir_kitchen_occupancy]
-      light.hallway_hall_lights: [binary_sensor.hue_pir_hallway_occupancy]
-      light.bedroom_wardrobe_lights: [binary_sensor.bedroom_occupancy_presence]
-      light.living_room_lights: [binary_sensor.ranger_duo_fxd_person_occupancy, binary_sensor.ranger_duo_fxd_motion]
-      light.dining_lights: [binary_sensor.ranger_duo_ptz_person_occupancy, binary_sensor.ranger_duo_ptz_motion]
-      light.kitchen_dining_lights: []
-      light.office_room_light: []
-    # mirrors react_during_sleep: false in bedroom.yaml
-    dark_during_sleep: [light.bedroom_wardrobe_lights]
-    was_off: "{{ presence.keys() | select('is_state', 'off') | list }}"
+    alarm_lights:
+    - light.kitchen_lights
+    - light.hallway_hall_lights
+    - light.bedroom_wardrobe_lights
+    - light.living_room_lights
+    - light.dining_lights
+    - light.kitchen_dining_lights
+    - light.office_room_light
+    unmanaged_off: >-
+      {{ ['light.kitchen_dining_lights', 'light.office_room_light'] | select('is_state', 'off') | list }}
   actions:
   - action: light.turn_on
     target:
-      entity_id: "{{ presence.keys() | list }}"
+      entity_id: "{{ alarm_lights }}"
   - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', ['pending', 'triggered']) }}"
   - delay: "00:07:00"
-  - variables:
-      to_off: >-
-        {% set ns = namespace(l=[]) %}
-        {% for e in was_off %}
-          {% set room = namespace(busy=false) %}
-          {% set sensors = [] if is_state('schedule.sleep', 'on') and e in dark_during_sleep else presence[e] %}
-          {% for s in sensors if not is_state(s, 'off') or (now() - states[s].last_changed).total_seconds() < 120 %}
-            {% set room.busy = true %}
-          {% endfor %}
-          {% if not room.busy %}{% set ns.l = ns.l + [e] %}{% endif %}
-        {% endfor %}
-        {{ ns.l }}
-  - if: "{{ to_off | count > 0 }}"
+  - if: "{{ unmanaged_off | count > 0 }}"
     then:
     - action: light.turn_off
       target:
-        entity_id: "{{ to_off }}"
+        entity_id: "{{ unmanaged_off }}"
+  - event: automations_resumed
   mode: single
   max_exceeded: silent
 

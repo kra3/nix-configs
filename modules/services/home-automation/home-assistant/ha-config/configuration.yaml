@@ -37,6 +37,7 @@ logger:
 # Noisy, high-frequency entities already covered by Prometheus/Grafana for
 # long-term graphing — excluded here to keep the recorder DB small.
 recorder:
+  db_url: !secret recorder_db_url
   include:
     entities:
       - sensor.average_illuminance

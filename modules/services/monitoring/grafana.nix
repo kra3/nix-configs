@@ -79,6 +79,19 @@
                 access = "proxy";
                 url = "http://${networkVars.containers.monitoring.localAddress}:3100";
               }
+              {
+                name = "Home Assistant";
+                type = "grafana-postgresql-datasource";
+                access = "proxy";
+                url = "${networkVars.containers.monitoring.hostAddress}:5432";
+                user = "grafana_ro";
+                jsonData = {
+                  database = "hass";
+                  sslmode = "disable";
+                  postgresVersion = 1600;
+                };
+                secureJsonData.password = "$__file{/run/secrets/db.grafana_ro_password}";
+              }
             ];
           };
           dashboards.settings = {

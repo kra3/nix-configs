@@ -92,6 +92,9 @@
               Everyone left — won't auto-arm, still open:
               {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
               Force-arm from the dashboard if needed.
+        - action: timer.start
+          target:
+            entity_id: timer.alarm_arm_escalation
     - conditions:
       - condition: trigger
         id: timer_finished
@@ -123,4 +126,7 @@
             message: >-
               Everyone left, lights off — but the alarm didn't arm, still
               open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
+        - action: timer.start
+          target:
+            entity_id: timer.alarm_arm_escalation
   mode: restart

@@ -1,15 +1,7 @@
 # ── Security ───────────────────────────────────────────────────
 - id: alarm_pending_or_triggered_lights
   alias: "Security: lights on when alarm pending or triggered"
-  description: >-
-    Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
-    itself already owns the entry-delay (60s, armed_away) via its own
-    sensor config — this only adds the light response. 7 min after the
-    alarm settles (timer.alarm_lights_handback, restart-safe), hands the
-    lights back: the room lighting automations re-derive their state
-    (automations_resumed), and the lights no automation manages go back
-    off if they were off before (input_text.alarm_lights_revert,
-    "on:<list>" while a hand-back is owed).
+  description: Alarm lights on when pending/triggered after dark; 7 min after it settles, room automations take back over.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
@@ -93,12 +85,7 @@
 
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
-  description: >-
-    Sends an iOS critical alert (sounds through silent and Focus)
-    naming the sensor(s) Alarmo tripped on (its open_sensors
-    attribute), repeated every 2.5 min until the alarm leaves triggered
-    (disarmed, or back to armed when the trigger time ends) — the only
-    alert when it triggers.
+  description: Critical alert naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -125,8 +112,33 @@
           title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
           message: "{{ message }}"
           critical: true
+          escalated: "{{ (now() - states.alarm_control_panel.vasudha_secure.last_changed).total_seconds() >= 600 }}"
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
         timeout: "00:02:30"
+  mode: single
+
+- id: alarm_not_armed_escalate
+  alias: "Security: escalate a failed arm after 10 min"
+  description: Critical alert to Arun and Anjali if the alarm is still disarmed 10 min after a failed arm.
+  triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_arm_escalation
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
+  actions:
+  - action: script.notify_all_phones
+    data:
+      title: Alarm still not armed
+      message: >-
+        Still disarmed 10 min after a failed arm — open:
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'nothing' }}.
+        Force-arm from the dashboard if needed.
+      critical: true
+      escalated: true
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival

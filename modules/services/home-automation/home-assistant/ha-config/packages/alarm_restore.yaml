@@ -7,10 +7,13 @@ input_select:
       - armed_away
       - armed_night
 
-# Both restart-safe, so a restart mid-wait still hands the alarm lights back.
+# All restart-safe, so a restart mid-wait doesn't drop the hand-back or the escalation.
 timer:
   alarm_lights_handback:
     duration: "00:07:00"
+    restore: true
+  alarm_arm_escalation:
+    duration: "00:10:00"
     restore: true
 
 input_text:

@@ -1,12 +1,7 @@
 notify_all_phones:
   alias: "Notify: all phones"
   description: >-
-    Fan out a notification to both phones and the iPad. Plain ones go via
-    entity-based notify.send_message (HA 2026.9), which has no push data,
-    so critical: true (an iOS critical alert that sounds through silent
-    and Focus) goes via the per-device notify.mobile_app_* actions.
-    Neither path is used for actionable buttons — those belong on the
-    dashboard.
+    Notifies the phones; critical (iOS critical alert, via mobile_app actions) goes to Arun only unless escalated.
   fields:
     title:
       required: false
@@ -17,6 +12,11 @@ notify_all_phones:
       selector:
         text:
     critical:
+      required: false
+      default: false
+      selector:
+        boolean:
+    escalated:
       required: false
       default: false
       selector:
@@ -39,9 +39,11 @@ notify_all_phones:
                 critical: 1
                 volume: 1.0
       - <<: *critical_push
-        action: notify.mobile_app_anjalis_iphone
-      - <<: *critical_push
         action: notify.mobile_app_hiranyagarbha
+    - if: "{{ escalated | default(false) }}"
+      then:
+      - <<: *critical_push
+        action: notify.mobile_app_anjalis_iphone
     else:
     - action: notify.send_message
       target:

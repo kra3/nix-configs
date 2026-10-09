@@ -36,6 +36,7 @@
                   "ht:192.168.1.75"
                   "home-theater:192.168.1.75"
                   "radarr.${config.vars.acme.domain}:10.3.2.1"
+                  "lidarr.${config.vars.acme.domain}:10.3.2.1"
                   "sonarr.${config.vars.acme.domain}:10.3.2.1"
                   "sabnzbd.${config.vars.acme.domain}:10.3.2.1"
                   "seerr.${config.vars.acme.domain}:10.3.2.1"

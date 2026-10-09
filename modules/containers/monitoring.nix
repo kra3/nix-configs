@@ -310,6 +310,7 @@
             domain = config.vars.acme.domain;
             monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
             networkVars = config.vars.network;
+            localMedia = config.vars.localMedia;
           };
         }
         // flakeLib.container-definition.mkContainerNetwork {

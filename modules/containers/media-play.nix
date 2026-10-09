@@ -107,13 +107,17 @@
           ve-media-play = {
             allowedTCPPorts = [
               53 # DNS (if a resolver is enabled in the container)
-              443 # Jellyfin's SSO plugin calls auth.${domain} directly
               4533 # Navidrome
-              8096 # Jellyfin
               9100 # node-exporter
+            ]
+            ++ lib.optionals config.vars.localMedia.enable [
+              443 # Jellyfin's SSO plugin calls auth.${domain} directly
+              8096 # Jellyfin
             ];
             allowedUDPPorts = [
               53 # DNS (if a resolver is enabled in the container)
+            ]
+            ++ lib.optionals config.vars.localMedia.enable [
               7359 # Jellyfin client discovery
             ];
           };
@@ -141,6 +145,8 @@
               inputs.declarative-jellyfin.nixosModules.default
               flakeModules.nixos.services-media-players-default
             ];
+
+            services.declarative-jellyfin.enable = lib.mkForce config.vars.localMedia.enable;
 
             nixpkgs.overlays = [
               inputs.self.overlays.default
@@ -172,10 +178,12 @@
               '';
               firewall.allowedTCPPorts = [
                 4533 # Navidrome
-                8096 # Jellyfin
                 9100 # node-exporter
+              ]
+              ++ lib.optionals config.vars.localMedia.enable [
+                8096 # Jellyfin
               ];
-              firewall.allowedUDPPorts = [
+              firewall.allowedUDPPorts = lib.optionals config.vars.localMedia.enable [
                 7359 # Jellyfin client discovery
               ];
             };
@@ -212,22 +220,24 @@
 
             # Jellyfin only reads SSO-Auth.xml at startup; nothing else here
             # would trigger a restart on content-only changes.
-            systemd.services.jellyfin.restartTriggers = [ jellyfinSsoAuthXmlHash ];
+            systemd.services.jellyfin = lib.mkIf config.vars.localMedia.enable {
+              restartTriggers = [ jellyfinSsoAuthXmlHash ];
 
-            # Sized from ~21h process-exporter peaks + safety margin.
-            systemd.services.jellyfin.serviceConfig = {
-              MemoryMax = "1024M";
-              CPUQuota = "100%";
-              # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).
-              ExecStartPre = lib.mkForce (
-                "+"
-                + pkgs.writeShellScript "jellyfin-perm-fix" ''
-                  find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chown ${config.services.jellyfin.user}:${config.services.jellyfin.group} {} +
-                  find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chmod 750 {} +
-                  chown -R ${config.services.jellyfin.user}:${config.services.jellyfin.group} ${config.services.jellyfin.cacheDir}
-                  chmod -R 750 ${config.services.jellyfin.cacheDir}
-                ''
-              );
+              # Sized from ~21h process-exporter peaks + safety margin.
+              serviceConfig = {
+                MemoryMax = "1024M";
+                CPUQuota = "100%";
+                # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).
+                ExecStartPre = lib.mkForce (
+                  "+"
+                  + pkgs.writeShellScript "jellyfin-perm-fix" ''
+                    find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chown ${config.services.jellyfin.user}:${config.services.jellyfin.group} {} +
+                    find "${config.services.jellyfin.dataDir}" -path "${config.services.jellyfin.dataDir}/plugins/configurations/SSO-Auth.xml" -prune -o -exec chmod 750 {} +
+                    chown -R ${config.services.jellyfin.user}:${config.services.jellyfin.group} ${config.services.jellyfin.cacheDir}
+                    chmod -R 750 ${config.services.jellyfin.cacheDir}
+                  ''
+                );
+              };
             };
             systemd.services.navidrome.serviceConfig = {
               MemoryMax = "384M";
@@ -251,10 +261,6 @@
               hostPath = "/srv/media";
               isReadOnly = false;
             };
-            "/var/lib/jellyfin" = {
-              hostPath = "/srv/appdata/media-play/jellyfin";
-              isReadOnly = false;
-            };
             "/var/lib/navidrome" = {
               hostPath = "/srv/appdata/media-play/navidrome";
               isReadOnly = false;
@@ -264,6 +270,12 @@
               isReadOnly = true;
             };
 
+          }
+          // lib.optionalAttrs config.vars.localMedia.enable {
+            "/var/lib/jellyfin" = {
+              hostPath = "/srv/appdata/media-play/jellyfin";
+              isReadOnly = false;
+            };
             "/run/secrets/media.jellyfin.users.kra3.password" = {
               hostPath = "/run/secrets/media.jellyfin.users.kra3.password";
               isReadOnly = true;
@@ -296,14 +308,8 @@
 
       systemd.services."container@media-play" = flakeLib.container-definition.mkContainerSystemdDeps [ ];
 
-      # Create jellyfin group on host matching container GID for secret access.
-      # Also reused by monitoring.nix's grafana secrets (coincidentally the same
-      # gid 999) — don't disable declarative-jellyfin without checking that.
-      users.groups.jellyfin =
-        lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)
-          {
-            gid = 999;
-          };
+      # Ungated: monitoring.nix's grafana secrets also use gid 999.
+      users.groups.jellyfin.gid = 999;
 
       sops.secrets."media.jellyfin.users.kra3.password" =
         lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)

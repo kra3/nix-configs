@@ -25,6 +25,23 @@
                 rename: true
                 standard: jellyfin-tmdb
 
+            quality_profiles:
+              - name: UHD Bluray + WEB
+                upgrade:
+                  allowed: true
+                  until_quality: Bluray-2160p
+                qualities:
+                  - name: Bluray-2160p
+                  - name: WEB 2160p
+                    qualities:
+                      - WEBDL-2160p
+                      - WEBRip-2160p
+                  - name: Bluray-1080p
+                  - name: WEB 1080p
+                    qualities:
+                      - WEBDL-1080p
+                      - WEBRip-1080p
+
             include:
               # Movies
               - template: radarr-quality-definition-movie
@@ -135,6 +152,21 @@
                 standard: default
                 daily: default
                 anime: default
+
+            quality_profiles:
+              - name: Ultra-HD
+                upgrade:
+                  allowed: true
+                  until_quality: WEB 2160p
+                qualities:
+                  - name: WEB 2160p
+                    qualities:
+                      - WEBDL-2160p
+                      - WEBRip-2160p
+                  - name: WEB 1080p
+                    qualities:
+                      - WEBDL-1080p
+                      - WEBRip-1080p
 
             include:
               - template: sonarr-quality-definition-series

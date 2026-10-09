@@ -1,6 +1,12 @@
 {
   flake.nixosModules.services-monitoring-prometheus =
-    { networkVars, domain, ... }:
+    {
+      networkVars,
+      localMedia,
+      domain,
+      lib,
+      ...
+    }:
     let
       hostAddr = networkVars.containers.monitoring.hostAddress;
       monAddr = networkVars.containers.monitoring.localAddress;
@@ -134,27 +140,6 @@
             ];
           }
           {
-            job_name = "jellyfin";
-            metrics_path = "/metrics";
-            static_configs = [
-              {
-                targets = [ "${mediaAddr}:8096" ];
-                labels.container = "media-play";
-                labels.instance = "media-play";
-              }
-            ];
-          }
-          {
-            job_name = "unpackerr";
-            metrics_path = "/metrics";
-            static_configs = [
-              {
-                targets = [ "${networkVars.podmanAddresses.unpackerr}:5656" ];
-                labels.instance = "unpackerr";
-              }
-            ];
-          }
-          {
             job_name = "slskd";
             metrics_path = "/metrics";
             static_configs = [
@@ -237,6 +222,31 @@
                 source_labels = [ "__name__" ];
                 regex = "ha_.*_created|ha_last_updated_time_seconds";
                 action = "drop";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals localMedia.enable [
+          {
+            job_name = "jellyfin";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${mediaAddr}:8096" ];
+                labels.container = "media-play";
+                labels.instance = "media-play";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals (localMedia.enable && localMedia.extras.enable) [
+          {
+            job_name = "unpackerr";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${networkVars.podmanAddresses.unpackerr}:5656" ];
+                labels.instance = "unpackerr";
               }
             ];
           }

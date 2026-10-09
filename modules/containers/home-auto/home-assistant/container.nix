@@ -135,6 +135,7 @@
           homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
           mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
+          lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
         ''
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}

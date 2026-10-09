@@ -17,7 +17,6 @@
             base_url: http://radarr:7878
             api_key: !secret radarr_api_key
             delete_old_custom_formats: true
-            replace_existing_custom_formats: true
 
             media_naming:
               folder: jellyfin-tmdb
@@ -25,8 +24,12 @@
                 rename: true
                 standard: jellyfin-tmdb
 
+            quality_definition:
+              type: movie
+
             quality_profiles:
-              - name: UHD Bluray + WEB
+              - trash_id: 64fb5f9858489bdac2af690e27c8f42f # UHD Bluray + WEB
+                name: UHD Bluray + WEB
                 upgrade:
                   allowed: true
                   until_quality: Bluray-2160p
@@ -41,21 +44,23 @@
                     qualities:
                       - WEBDL-1080p
                       - WEBRip-1080p
+                reset_unmatched_scores:
+                  enabled: true
 
-            include:
-              # Movies
-              - template: radarr-quality-definition-movie
-              # UHD Bluray + WEB (4K)
-              - template: radarr-quality-profile-uhd-bluray-web
-              - template: radarr-custom-formats-uhd-bluray-web
-              # Remux + WEB 1080p
-              # - template: radarr-quality-profile-remux-web-1080p
-              # - template: radarr-custom-formats-remux-web-1080p
+              - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
+                name: Remux-1080p - Anime
+                reset_unmatched_scores:
+                  enabled: true
 
-              # Anime
-              - template: radarr-quality-definition-anime
-              - template: radarr-quality-profile-anime
-              - template: radarr-custom-formats-anime
+            custom_format_groups:
+              skip:
+                - 9d5acd8f1da78dfbae788182f7605200 # [Audio] Audio Formats
+              add:
+                - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
+                - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats
+                  exclude:
+                    - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
+                    - cc444569854e9de0b084ab2b8b1532b2 # Black and White Editions
 
             custom_formats:
               # Audio
@@ -142,7 +147,6 @@
             base_url: http://sonarr:8989
             api_key: !secret sonarr_api_key
             delete_old_custom_formats: true
-            replace_existing_custom_formats: true
 
             media_naming:
               season: default
@@ -153,32 +157,41 @@
                 daily: default
                 anime: default
 
+            quality_definition:
+              type: series
+
             quality_profiles:
+              - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+                name: WEB-1080p
+                reset_unmatched_scores:
+                  enabled: true
+              - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
+                name: Remux-1080p - Anime
+                reset_unmatched_scores:
+                  enabled: true
               - name: Ultra-HD
                 upgrade:
                   allowed: true
                   until_quality: WEB 2160p
                 qualities:
+                  - name: Bluray-2160p
                   - name: WEB 2160p
                     qualities:
                       - WEBDL-2160p
                       - WEBRip-2160p
+                  - name: HDTV-2160p
                   - name: WEB 1080p
                     qualities:
                       - WEBDL-1080p
                       - WEBRip-1080p
 
-            include:
-              - template: sonarr-quality-definition-series
-              # pick one of next 2
-              - template: sonarr-v4-quality-profile-web-1080p
-              # - template: sonarr-v4-quality-profile-web-1080p-alternative
-              - template: sonarr-v4-custom-formats-web-1080p
-
-              # Anime
-              - template: sonarr-quality-definition-anime
-              - template: sonarr-v4-quality-profile-anime
-              - template: sonarr-v4-custom-formats-anime
+            custom_format_groups:
+              skip:
+                - 74aff4168620ed49dcc67e92b2c2a5b4 # [Optional] Language Profiles
+              add:
+                - trash_id: 158188097a58d7687dee647e04af0da3 # [Optional] Golden Rule HD
+                - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
+                - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
 
             custom_formats:
               - assign_scores_to:

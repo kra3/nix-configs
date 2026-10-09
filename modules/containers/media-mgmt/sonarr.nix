@@ -45,5 +45,7 @@
         upstream = "http://${ip}:8989";
         forwardAuth = true;
       };
+
+      systemd.tmpfiles.rules = [ "d /srv/media/.recycle-bin-video/sonarr 0770 1000 2000 - -" ];
     };
 }

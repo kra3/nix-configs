@@ -12,6 +12,7 @@
       noisyUnitsRegex = "(nix-optimise|nixos-rebuild-switch-to-configuration|podman-prune|getty@.+|bluetooth)\\.service";
       # Grafana's auto-generated datasource uid; setting it explicitly via provisioning breaks reconciliation (broke Grafana 2026-09-02) — re-fetch from the API if the DB is ever recreated.
       prometheusDatasourceUid = "PBFA97CFB590B2093";
+      lokiDatasourceUid = "P8E80F9AEF21F6940";
     in
     {
       services.grafana = {
@@ -267,6 +268,76 @@
                     annotations = {
                       summary = "{{ $labels.name }} has restarted more than once in the last 15 minutes.";
                       description = "Early warning for a possible OOM-restart loop — worth checking before it escalates to the failed-state alert.";
+                    };
+                    isPaused = false;
+                  }
+                  {
+                    uid = "service-fatal-log";
+                    title = "Service logged a fatal error";
+                    condition = "C";
+                    data = [
+                      {
+                        refId = "A";
+                        relativeTimeRange = {
+                          from = 3600;
+                          to = 0;
+                        };
+                        datasourceUid = lokiDatasourceUid;
+                        model = {
+                          refId = "A";
+                          expr = ''sum by (systemd_unit) (count_over_time({systemd_unit=~".+", systemd_unit!~"loki\\.service|user@.+"} |~ "(?i)(fatal error|exiting due to|panic:|level=fatal)" [1h]))'';
+                          queryType = "instant";
+                          instant = true;
+                          range = false;
+                        };
+                      }
+                      {
+                        refId = "B";
+                        datasourceUid = "__expr__";
+                        model = {
+                          refId = "B";
+                          type = "reduce";
+                          expression = "A";
+                          reducer = "last";
+                          datasource = {
+                            type = "__expr__";
+                            uid = "__expr__";
+                          };
+                        };
+                      }
+                      {
+                        refId = "C";
+                        datasourceUid = "__expr__";
+                        model = {
+                          refId = "C";
+                          type = "threshold";
+                          expression = "B";
+                          conditions = [
+                            {
+                              evaluator = {
+                                type = "gt";
+                                params = [ 0 ];
+                              };
+                              operator.type = "and";
+                              query.params = [ "C" ];
+                              reducer.type = "last";
+                              type = "query";
+                            }
+                          ];
+                          datasource = {
+                            type = "__expr__";
+                            uid = "__expr__";
+                          };
+                        };
+                      }
+                    ];
+                    noDataState = "OK";
+                    execErrState = "Error";
+                    for = "0s";
+                    labels.severity = "warning";
+                    annotations = {
+                      summary = "{{ $labels.systemd_unit }} logged a fatal error in the last hour.";
+                      description = "The service or its scheduled job is failing without systemd noticing. Check `journalctl -u {{ $labels.systemd_unit }}`.";
                     };
                     isPaused = false;
                   }

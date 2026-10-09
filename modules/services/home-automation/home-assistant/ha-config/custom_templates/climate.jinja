@@ -36,3 +36,20 @@
 {%- endfor -%}
 {{ {'ok': ns.best is not none, 'start': ns.best.strftime('%H:%M') if ns.best else '', 'end': (ns.bestend + timedelta(hours=1)).strftime('%H:%M') if ns.best else ''} | tojson }}
 {%- endmacro -%}
+
+{%- macro humid_rooms() -%}
+{%- set o = states('sensor.outdoor_absolute_humidity') -%}
+{%- set lim = states('input_number.climate_moisture_limit') | float(3) -%}
+{%- set ns = namespace(r=[]) -%}
+{%- if is_number(o) -%}
+{%- for name, k in [('Bedroom', 'bedroom'), ('Bathroom', 'bathroom'), ('Laundry', 'laundry'), ('Toilet', 'toilet')] -%}
+{%- set t = states('sensor.' ~ k ~ '_occupancy_temperature') -%}
+{%- set h = states('sensor.' ~ k ~ '_occupancy_humidity') -%}
+{%- if is_number(t) and is_number(h) -%}
+{%- set s = (absolute(t | float, h | float) | float - o | float) | round(1) -%}
+{%- if s > lim -%}{%- set ns.r = ns.r + [{'name': name, 'humidity': h | float | round(0) | int, 'surplus': s}] -%}{%- endif -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endif -%}
+{{ ns.r | sort(attribute='surplus', reverse=true) | tojson }}
+{%- endmacro -%}

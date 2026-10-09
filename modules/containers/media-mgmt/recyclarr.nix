@@ -56,7 +56,6 @@
               skip:
                 - 9d5acd8f1da78dfbae788182f7605200 # [Audio] Audio Formats
               add:
-                - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
                 - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats
                   exclude:
                     - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
@@ -169,7 +168,10 @@
                 name: Remux-1080p - Anime
                 reset_unmatched_scores:
                   enabled: true
-              - name: Ultra-HD
+              - trash_id: d1498e7d189fbe6c7110ceaabb7473e6 # WEB-2160p
+                name: Ultra-HD
+                reset_unmatched_scores:
+                  enabled: true
                 upgrade:
                   allowed: true
                   until_quality: WEB 2160p
@@ -184,14 +186,9 @@
                     qualities:
                       - WEBDL-1080p
                       - WEBRip-1080p
-
             custom_format_groups:
               skip:
                 - 74aff4168620ed49dcc67e92b2c2a5b4 # [Optional] Language Profiles
-              add:
-                - trash_id: 158188097a58d7687dee647e04af0da3 # [Optional] Golden Rule HD
-                - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
-                - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
 
             custom_formats:
               - assign_scores_to:

@@ -31,6 +31,9 @@ const POPUP_STYLE = `
   .crc-tabs { display: flex; gap: 8px; margin: 12px 0 4px; }
   .crc-tabs button { min-height: 44px; min-width: 64px; border-radius: 22px; border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color); font: inherit; font-size: 13px; cursor: pointer; }
   .crc-tabs button.on { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .crc-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 12px; color: var(--secondary-text-color); }
+  .crc-leg span { display: inline-flex; align-items: center; gap: 5px; }
+  .crc-leg i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .crc-note { margin-top: 8px; font-size: 12px; color: var(--secondary-text-color); }
   .crc-link { margin-top: 12px; min-height: 44px; padding: 0 4px; background: none; border: 0; color: var(--primary-color); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 `;
@@ -47,6 +50,37 @@ const TONES = {
 const INACTIVE = "var(--state-inactive-color, var(--secondary-text-color))";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+function chartSvg(series, start, end, unit, hours, lang) {
+  const W = 480, H = 130, L = 40, R = 8, T = 8, B = 22;
+  const vals = series.flatMap((s) => s.pts.map((p) => p.v));
+  if (!vals.length) return "";
+  let lo = Math.min(...vals);
+  let hi = Math.max(...vals);
+  if (hi - lo < 1) {
+    const m = (hi + lo) / 2;
+    lo = m - 0.5;
+    hi = m + 0.5;
+  }
+  const pad = (hi - lo) * 0.12;
+  const x = (t) => L + ((t - start) / (end - start)) * (W - L - R);
+  const y = (v) => T + (1 - (v - (lo - pad)) / (hi - lo + 2 * pad)) * (H - T - B);
+  const dec = unit === "%" ? 0 : 1;
+  const paths = series
+    .filter((s) => s.pts.length)
+    .map((s) => {
+      let d = "";
+      s.pts.forEach((p, i) => {
+        d += i ? `L${x(p.t).toFixed(1)} ${y(s.pts[i - 1].v).toFixed(1)}L${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}` : `M${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`;
+      });
+      return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
+    })
+    .join("");
+  const fmtT = (t) => (hours <= 24 ? new Date(t).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : new Date(t).toLocaleDateString(lang, { weekday: "short", day: "numeric" }));
+  const lab = (tx, ty, anchor, text) => `<text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="11" fill="var(--secondary-text-color)">${esc(text)}</text>`;
+  const grid = [hi, lo].map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width="1"/>${lab(L - 4, y(v) + 4, "end", v.toFixed(dec))}`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(unit)} history">${grid}${paths}${lab(L, H - 6, "start", fmtT(start))}${lab(W - R, H - 6, "end", "now")}</svg>`;
+}
 
 class ClimateRoomCard extends HTMLElement {
   setConfig(config) {
@@ -171,14 +205,51 @@ class ClimateRoomCard extends HTMLElement {
     body.querySelector(".crc-link").addEventListener("click", () => {
       this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: c.temperature || c.comfort }, bubbles: true, composed: true }));
     });
-    const entities = [c.temperature, c.humidity, c.dew].filter((e) => e && this._hass.states[e]);
-    if (entities.length) {
-      const helpers = await window.loadCardHelpers();
-      const card = await helpers.createCardElement({ type: "history-graph", entities, hours_to_show: this._hours });
-      card.hass = this._hass;
-      const g = body.querySelector(".crc-graph");
-      if (g) g.appendChild(card);
+    const g = body.querySelector(".crc-graph");
+    const series = [
+      { id: c.temperature, name: "Temperature", color: "#ff9f6b", panel: "°C" },
+      { id: c.dew, name: "Dew point", color: "#8fd9c0", panel: "°C" },
+      { id: c.humidity, name: "Humidity", color: "#6bb6ff", panel: "%" },
+    ].filter((x) => x.id && this._hass.states[x.id]);
+    if (!series.length || !g) return;
+    g.textContent = "Loading…";
+    const hours = this._hours;
+    const end = Date.now();
+    const start = end - hours * 3600e3;
+    let res = {};
+    try {
+      res = await this._hass.callWS({
+        type: "history/history_during_period",
+        start_time: new Date(start).toISOString(),
+        end_time: new Date(end).toISOString(),
+        entity_ids: series.map((x) => x.id),
+        minimal_response: true,
+        no_attributes: true,
+        significant_changes_only: false,
+      });
+    } catch (e) {
+      res = {};
     }
+    if (!this._overlay || this._hours !== hours) return;
+    series.forEach((x) => {
+      x.pts = (res[x.id] || [])
+        .map((r) => ({ t: (r.lu !== undefined ? r.lu : r.lc) * 1000, v: parseFloat(r.s) }))
+        .filter((p) => isFinite(p.t) && isFinite(p.v))
+        .map((p) => ({ t: Math.max(p.t, start), v: p.v }));
+      const live = parseFloat(this._hass.states[x.id].state);
+      if (isFinite(live)) x.pts.push({ t: end, v: live });
+    });
+    const lang = this._hass.language;
+    const panels = ["°C", "%"]
+      .map((u) => ({ u, list: series.filter((x) => x.panel === u) }))
+      .filter((p) => p.list.length);
+    g.innerHTML = panels
+      .map((p) => {
+        const svg = chartSvg(p.list, start, end, p.u, hours, lang);
+        const legend = `<div class="crc-leg">${p.list.map((x) => `<span><i style="background:${x.color}"></i>${esc(x.name)}</span>`).join("")}</div>`;
+        return `${legend}${svg || `<div class="crc-note">No history recorded yet for this period.</div>`}`;
+      })
+      .join("");
   }
 }
 

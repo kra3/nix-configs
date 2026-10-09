@@ -366,7 +366,7 @@
           if [ "$age" -gt $(( 4 * 3600 )) ]; then
             # A restart reports motion on startup, which trips the alarm; an empty house is also why motion went quiet.
             alarm=$(mosquitto_sub -h localhost -p 1883 -u "$FRIGATE_MQTT_USER" -P "$FRIGATE_MQTT_PASSWORD" \
-              -t home/alarm/state -C 1 -W 5 2>/dev/null || true)
+              -t alarmo/state -C 1 -W 5 2>/dev/null || true)
             if [ -n "$alarm" ] && [ "$alarm" != disarmed ]; then
               echo "ranger_duo_fxd motion stale for ''${age}s, but alarm is $alarm, skipping restart"
               exit 0

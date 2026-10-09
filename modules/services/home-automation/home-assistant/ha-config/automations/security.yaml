@@ -1,22 +1,4 @@
 # ── Security ───────────────────────────────────────────────────
-- id: alarm_state_to_mqtt
-  alias: "Security: publish alarm state to MQTT"
-  description: >-
-    Retained home/alarm/state, read by the Frigate stale-motion watchdog
-    so it never restarts Frigate (and fakes motion) while armed.
-  triggers:
-  - entity_id: alarm_control_panel.vasudha_secure
-    trigger: state
-  - trigger: homeassistant
-    event: start
-  actions:
-  - action: mqtt.publish
-    data:
-      topic: home/alarm/state
-      payload: "{{ states('alarm_control_panel.vasudha_secure') }}"
-      retain: true
-  mode: queued
-
 - id: alarm_pending_or_triggered_lights
   alias: "Security: lights on when alarm pending or triggered"
   description: >-
@@ -112,8 +94,8 @@
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
   description: >-
-    Sends a push notification listing the open sensor(s) when Alarmo
-    triggers — its only built-in alert.
+    Sends a push notification naming the sensor(s) Alarmo tripped on
+    (its open_sensors attribute) — the only alert when it triggers.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -123,7 +105,8 @@
     data:
       title: "Alarm triggered"
       message: >-
-        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown sensor' }}
+        {%- set tripped = (state_attr('alarm_control_panel.vasudha_secure', 'open_sensors') or {}).keys() | list -%}
+        {{ tripped | map('state_attr', 'friendly_name') | join(', ') or 'Unknown sensor' }}
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival

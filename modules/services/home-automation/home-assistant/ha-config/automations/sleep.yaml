@@ -24,18 +24,17 @@
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
   description: >-
-    Arms Alarmo (night) at bedtime; notifies if it refused (open
-    sensor) — force-arm is a dashboard button for that case.
+    Arms Alarmo (night) at bedtime if disarmed, so an away arm is never
+    downgraded; notifies if it refused (open sensor) — force-arm is a
+    dashboard button for that case.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: alarm_control_panel.vasudha_secure
-      state: armed_night
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
   actions:
   - action: alarm_control_panel.alarm_arm_night
     target:

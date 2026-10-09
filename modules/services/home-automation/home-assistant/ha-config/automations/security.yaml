@@ -96,36 +96,51 @@
   description: >-
     Sends an iOS critical alert (sounds through silent and Focus)
     naming the sensor(s) Alarmo tripped on (its open_sensors
-    attribute) — the only alert when it triggers. Uses the legacy
-    mobile_app notify actions because notify.send_message can't carry
-    push data.
+    attribute), repeated every minute until the alarm leaves triggered
+    (disarmed, or back to armed when the trigger time ends) — the only
+    alert when it triggers. Uses the legacy mobile_app notify actions
+    because notify.send_message can't carry push data.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
     trigger: state
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: triggered
   variables:
     message: >-
       {%- set tripped = (state_attr('alarm_control_panel.vasudha_secure', 'open_sensors') or {}).keys() | list -%}
       {{ tripped | map('state_attr', 'friendly_name') | join(', ') or 'Unknown sensor' }}
   actions:
-  - parallel:
-    - &critical_push
-      action: notify.mobile_app_meghanadha
-      continue_on_error: true
-      data:
-        title: "Alarm triggered"
-        message: "{{ message }}"
-        data:
-          push:
-            interruption-level: critical
-            sound:
-              name: default
-              critical: 1
-              volume: 1.0
-    - <<: *critical_push
-      action: notify.mobile_app_anjalis_iphone
-    - <<: *critical_push
-      action: notify.mobile_app_hiranyagarbha
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: triggered
+      sequence:
+      - parallel:
+        - &critical_push
+          action: notify.mobile_app_meghanadha
+          continue_on_error: true
+          data:
+            title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
+            message: "{{ message }}"
+            data:
+              push:
+                interruption-level: critical
+                sound:
+                  name: default
+                  critical: 1
+                  volume: 1.0
+        - <<: *critical_push
+          action: notify.mobile_app_anjalis_iphone
+        - <<: *critical_push
+          action: notify.mobile_app_hiranyagarbha
+      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
+        timeout: "00:01:00"
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival

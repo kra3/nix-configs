@@ -24,7 +24,8 @@
     itself already owns the entry-delay (60s, armed_away) via its own
     sensor config — this only adds the light response. 7 min after the
     alarm settles, turns back off only the lights that were off before
-    it and whose room is now empty; the rest stay with presence lighting.
+    it and whose room has been clear for 2 min (presence lighting's own
+    off rule); lights in occupied rooms stay on for presence lighting.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
@@ -54,7 +55,13 @@
   - variables:
       to_off: >-
         {% set ns = namespace(l=[]) %}
-        {% for e in was_off if presence[e] | select('is_state', 'on') | list | count == 0 %}{% set ns.l = ns.l + [e] %}{% endfor %}
+        {% for e in was_off %}
+          {% set room = namespace(busy=false) %}
+          {% for s in presence[e] if not is_state(s, 'off') or (now() - states[s].last_changed).total_seconds() < 120 %}
+            {% set room.busy = true %}
+          {% endfor %}
+          {% if not room.busy %}{% set ns.l = ns.l + [e] %}{% endif %}
+        {% endfor %}
         {{ ns.l }}
   - if: "{{ to_off | count > 0 }}"
     then:

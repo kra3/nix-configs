@@ -17,7 +17,7 @@
       dark_below_daytime: 15
       dark_sustain_daytime: "00:15:00"
       corroborating_bright_sensor: sensor.average_illuminance
-      corroborating_bright_above: 500
+      corroborating_bright_above: 100
 
 - id: kitchen_lighting
   alias: Kitchen — Lighting

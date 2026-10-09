@@ -64,7 +64,7 @@ HA config is declarative in this repo; every change is verified before and after
 - A fallback must not compete with the primary: act only if the primary result is absent.
 - Template sensor entity ids derive from `name`, not `unique_id`. `input_number` with `initial` resets on every restart: seed defaults once behind a marker helper. `input_boolean` and `input_select` restore their last value.
 - A quadlet container reading a sops template at a stable path needs a content-hash env var, or content-only edits never restart it.
-- `darkness-detection` defaults (1000 lux) are unsafe for sensors that read above that in daylight. `room-presence-lighting` turns lights on from the person sensor only; motion just holds them on.
+- `darkness-detection` follows `binary_sensor.gloomy_outside` (`packages/daylight.yaml`: windowed-room median lux against its own 24 h peak, gloomy below 0.05, clear above 0.15, always gloomy with the sun below the horizon); a room sensor only adds a per-room floor. `room-presence-lighting` turns lights on from the person sensor only; motion just holds them on.
 - Adaptive Lighting overwrites colours within about a minute unless `adaptive_lighting.set_manual_control` is set; hand back by clearing it and calling `adaptive_lighting.apply` with `turn_on_lights: false`.
 - Scene Presets (HACS): `scene_presets.apply_preset` takes `preset_id` (UUID), `targets: {entity_id: [...]}`, `transition`; target individual bulbs, not a Hue group, so colours spread; preset images load without login from `/assets/scene_presets/<id>.jpeg`.
 

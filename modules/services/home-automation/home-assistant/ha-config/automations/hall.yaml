@@ -2,8 +2,7 @@
 - id: hall_darkness
   alias: Hall — Darkness detection
   description: >-
-    Hysteresis darkness state machine for hall. ON: lux < 10 for 2min
-    (or < 5 for 15min if sun up). OFF: lux > 30 for 2min + sun up.
+    Dark while it is gloomy outside and the hall reads below 10 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -12,9 +11,6 @@
       light_entity: light.hallway_hall_lights
       dark_boolean: input_boolean.hall_is_dark
       dark_below: 10
-      bright_above: 30
-      dark_below_daytime: 5
-      dark_sustain_daytime: "00:15:00"
 
 - id: hall_lighting
   alias: Hall — Lighting

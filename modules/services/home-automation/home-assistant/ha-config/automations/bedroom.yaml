@@ -2,8 +2,7 @@
 - id: bedroom_darkness
   alias: Bedroom — Darkness detection
   description: >-
-    Hysteresis darkness state machine for bedroom. ON: lux < 50 for
-    2min + sun down. OFF: lux > 120 for 2min + sun up.
+    Dark while it is gloomy outside and the bedroom reads below 50 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -12,8 +11,6 @@
       light_entity: light.bedroom_wardrobe_lights
       dark_boolean: input_boolean.bedroom_is_dark
       dark_below: 50
-      dark_below_daytime: 50
-      dark_sustain_daytime: "00:15:00"
 
 - id: bedroom_lighting
   alias: Bedroom — Lighting

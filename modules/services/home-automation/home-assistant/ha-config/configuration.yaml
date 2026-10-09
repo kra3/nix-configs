@@ -44,6 +44,7 @@ recorder:
   exclude:
     entity_globs:
       - sensor.*_illuminance
+      - sensor.daylight_reference
       - binary_sensor.*_occupancy
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection

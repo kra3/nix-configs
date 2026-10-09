@@ -396,6 +396,10 @@
               hostPath = "/run/secrets/homeassistant.token";
               isReadOnly = true;
             };
+            "/run/secrets/db.grafana_ro_password" = {
+              hostPath = "/run/secrets/db.grafana_ro_password";
+              isReadOnly = true;
+            };
             "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml" = {
               hostPath = config.sops.templates."monitoring/grafana-telegram-contactpoint.yaml".path;
               isReadOnly = true;

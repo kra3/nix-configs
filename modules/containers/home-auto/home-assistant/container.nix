@@ -90,6 +90,7 @@
                 "home-auto-network.service"
                 "home-auto-macvlan-network.service"
               ];
+              extraAfter = [ "postgresql-set-passwords.service" ];
             }
           )
           {
@@ -136,6 +137,7 @@
           mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
           lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
+          recorder_db_url: postgresql://hass:${config.sops.placeholder."db.hass_password"}@10.3.2.1/hass
         ''
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
@@ -144,6 +146,28 @@
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'
         '';
+      };
+
+      # The recorder never purges long-term statistics on its own.
+      systemd.services.hass-statistics-prune = {
+        description = "Delete Home Assistant hourly statistics older than 2 years";
+        after = [ "postgresql.service" ];
+        requires = [ "postgresql.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "postgres";
+        };
+        script = ''
+          ${lib.getExe' config.services.postgresql.package "psql"} -d hass -c \
+            "DELETE FROM statistics WHERE start_ts < extract(epoch FROM now() - interval '2 years')"
+        '';
+      };
+      systemd.timers.hass-statistics-prune = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "weekly";
+          Persistent = true;
+        };
       };
 
       sops.secrets."home-assistant/floorplan.png" = {

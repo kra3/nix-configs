@@ -49,6 +49,9 @@
   - trigger: homeassistant
     event: start
     id: startup
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
   conditions:
   - condition: state
     entity_id: input_boolean.hall_is_dark
@@ -131,6 +134,9 @@
       - condition: state
         entity_id: schedule.sleep
         state: "on"
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
       - condition: not
         conditions:
         - condition: state

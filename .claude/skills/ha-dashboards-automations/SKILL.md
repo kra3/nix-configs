@@ -62,6 +62,8 @@ HA config is declarative in this repo; every change is verified before and after
 - Prefer a template sensor to an `input_boolean` plus hysteresis automation: templates recompute on startup, restored helpers do not.
 - A state trigger's `for:` does not fire retroactively after a restart; add a startup branch when state must be reconciled.
 - A fallback must not compete with the primary: act only if the primary result is absent.
+- A temporary override (alarm lights, manual mode) ends by handing back, not restoring: fire `automations_resumed` so room lighting re-derives as at startup, and revert only lights no automation manages. Never snapshot-restore or duplicate occupancy/sleep logic; if a re-derive branch disagrees with steady-state behaviour, fix that branch.
+- A wait longer than a minute is a `restore: true` timer plus a `timer.finished` trigger, not `delay`/`wait_template`, so a restart mid-wait can't drop it; keep what the end step needs in a restored helper.
 - Template sensor entity ids derive from `name`, not `unique_id`. `input_number` with `initial` resets on every restart: seed defaults once behind a marker helper. `input_boolean` and `input_select` restore their last value.
 - A quadlet container reading a sops template at a stable path needs a content-hash env var, or content-only edits never restart it.
 - `darkness-detection` follows `binary_sensor.gloomy_outside` (`packages/daylight.yaml`: windowed-room median lux against its own 24 h peak, gloomy below 0.05, clear above 0.15, always gloomy with the sun below the horizon); a room sensor only adds a per-room floor. `room-presence-lighting` turns lights on from the person sensor only; motion just holds them on.

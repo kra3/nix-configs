@@ -1,48 +1,144 @@
 # ── Security ───────────────────────────────────────────────────
 - id: alarm_pending_or_triggered_lights
   alias: "Security: lights on when alarm pending or triggered"
-  description: >-
-    Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
-    itself already owns the entry-delay (60s, armed_away) via its own
-    sensor config — this only adds the light response.
+  description: Alarm lights on when pending/triggered after dark; 7 min after it settles, room automations take back over.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
     - pending
     - triggered
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: sun.sun
-    state: below_horizon
+    id: alarm
+  - entity_id: alarm_control_panel.vasudha_secure
+    from:
+    - pending
+    - triggered
+    not_to:
+    - pending
+    - triggered
+    trigger: state
+    id: settled
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_lights_handback
+    id: handback
+  variables:
+    revert: "{{ states('input_text.alarm_lights_revert') }}"
   actions:
-  - action: light.turn_on
-    target:
-      entity_id:
-      - light.kitchen_lights
-      - light.hallway_hall_lights
-      - light.bedroom_wardrobe_lights
-      - light.living_room_lights
-      - light.dining_lights
-      - light.kitchen_dining_lights
-      - light.office_room_light
-  mode: single
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: alarm
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - if: "{{ not revert.startswith('on:') }}"
+        then:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.alarm_lights_revert
+          data:
+            value: >-
+              on:{{ ['light.kitchen_dining_lights', 'light.office_room_light'] | select('is_state', 'off') | join(',') }}
+      - action: timer.cancel
+        target:
+          entity_id: timer.alarm_lights_handback
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.kitchen_lights
+          - light.hallway_hall_lights
+          - light.bedroom_wardrobe_lights
+          - light.living_room_lights
+          - light.dining_lights
+          - light.kitchen_dining_lights
+          - light.office_room_light
+    - conditions:
+      - condition: trigger
+        id: settled
+      - "{{ revert.startswith('on:') }}"
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.alarm_lights_handback
+    - conditions:
+      - condition: trigger
+        id: handback
+      - "{{ revert.startswith('on:') }}"
+      sequence:
+      - variables:
+          to_off: "{{ revert[3:].split(',') | reject('eq', '') | list }}"
+      - if: "{{ to_off | count > 0 }}"
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ to_off }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.alarm_lights_revert
+        data:
+          value: ""
+      - event: automations_resumed
+  mode: queued
 
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
-  description: >-
-    Sends a push notification listing the open sensor(s) when Alarmo
-    triggers — its only built-in alert.
+  description: Critical alert naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
     trigger: state
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: triggered
+  variables:
+    message: >-
+      {%- set tripped = (state_attr('alarm_control_panel.vasudha_secure', 'open_sensors') or {}).keys() | list -%}
+      {{ tripped | map('state_attr', 'friendly_name') | join(', ') or 'Unknown sensor' }}
+  actions:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: triggered
+      sequence:
+      - action: script.notify_all_phones
+        data:
+          title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
+          message: "{{ message }}"
+          critical: true
+          escalated: "{{ (now() - states.alarm_control_panel.vasudha_secure.last_changed).total_seconds() >= 600 }}"
+      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
+        timeout: "00:02:30"
+  mode: single
+
+- id: alarm_not_armed_escalate
+  alias: "Security: escalate a failed arm after 10 min"
+  description: Critical alert to Arun and Anjali if the alarm is still disarmed 10 min after a failed arm.
+  triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_arm_escalation
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
   actions:
   - action: script.notify_all_phones
     data:
-      title: "Alarm triggered"
+      title: Alarm still not armed
       message: >-
-        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown sensor' }}
+        Still disarmed 10 min after a failed arm — open:
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'nothing' }}.
+        Force-arm from the dashboard if needed.
+      critical: true
+      escalated: true
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival

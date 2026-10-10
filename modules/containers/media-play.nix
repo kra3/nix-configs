@@ -151,7 +151,8 @@
             nixpkgs.overlays = [
               inputs.self.overlays.default
               (final: _: {
-                inherit (inputs.declarative-jellyfin.inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system})
+                inherit
+                  (inputs.declarative-jellyfin.inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system})
                   jellyfin
                   jellyfin-web
                   jellyfin-ffmpeg

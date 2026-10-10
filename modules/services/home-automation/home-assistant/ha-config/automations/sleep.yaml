@@ -23,7 +23,7 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun, escalated after 10 min.
+  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun and the hallway speaker, escalated after 10 min.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
@@ -54,6 +54,12 @@
           Couldn't arm for the night — still open:
           {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
           Force-arm from the dashboard if needed.
+    - action: script.announce_hallway
+      continue_on_error: true
+      data:
+        message: >-
+          Alarm not armed. Still open:
+          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') | replace('(', '') | replace(')', '') }}.
     - action: timer.start
       target:
         entity_id: timer.alarm_arm_escalation

@@ -85,7 +85,7 @@
 
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
-  description: Critical alert naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
+  description: Critical alert and hallway speech naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -113,6 +113,10 @@
           message: "{{ message }}"
           critical: true
           escalated: "{{ (now() - states.alarm_control_panel.vasudha_secure.last_changed).total_seconds() >= 600 }}"
+      - action: script.announce_hallway
+        continue_on_error: true
+        data:
+          message: "Alarm triggered. {{ message | replace('(', '') | replace(')', '') }}."
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
         timeout: "00:02:30"
   mode: single

@@ -347,10 +347,14 @@
 
       systemd.services.frigate-restart-on-stale-motion = {
         description = "Restart frigate if ranger_duo_fxd's motion sensor has gone stale";
-        serviceConfig.Type = "oneshot";
+        serviceConfig = {
+          Type = "oneshot";
+          EnvironmentFile = "/run/secrets/surveillance-nvr-frigate.env";
+        };
         path = [
           pkgs.coreutils
           pkgs.systemd
+          pkgs.mosquitto
         ];
         script = ''
           stamp=/run/frigate-motion-watchdog/ranger_duo_fxd.stamp
@@ -360,6 +364,13 @@
           fi
           age=$(( $(date +%s) - $(stat -c %Y "$stamp") ))
           if [ "$age" -gt $(( 4 * 3600 )) ]; then
+            # A restart reports motion on startup, which trips the alarm; an empty house is also why motion went quiet.
+            alarm=$(mosquitto_sub -h localhost -p 1883 -u "$FRIGATE_MQTT_USER" -P "$FRIGATE_MQTT_PASSWORD" \
+              -t alarmo/state -C 1 -W 5 2>/dev/null || true)
+            if [ -n "$alarm" ] && [ "$alarm" != disarmed ]; then
+              echo "ranger_duo_fxd motion stale for ''${age}s, but alarm is $alarm, skipping restart"
+              exit 0
+            fi
             echo "ranger_duo_fxd motion stale for ''${age}s, restarting frigate"
             systemctl restart frigate.service
             touch "$stamp"

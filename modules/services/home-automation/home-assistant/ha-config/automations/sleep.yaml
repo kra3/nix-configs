@@ -23,19 +23,15 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: >-
-    Arms Alarmo (night) at bedtime; notifies if it refused (open
-    sensor) — force-arm is a dashboard button for that case.
+  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun, escalated after 10 min.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: alarm_control_panel.vasudha_secure
-      state: armed_night
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
   actions:
   - action: alarm_control_panel.alarm_arm_night
     target:
@@ -53,10 +49,14 @@
     - action: script.notify_all_phones
       data:
         title: Alarm not armed
+        critical: true
         message: >-
           Couldn't arm for the night — still open:
           {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
           Force-arm from the dashboard if needed.
+    - action: timer.start
+      target:
+        entity_id: timer.alarm_arm_escalation
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────

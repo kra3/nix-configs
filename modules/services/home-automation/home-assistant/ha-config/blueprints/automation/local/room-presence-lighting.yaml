@@ -128,6 +128,10 @@ triggers:
   - trigger: homeassistant
     event: start
     id: startup
+  # fired by manual-mode.yaml on resume and by the alarm lights hand-back
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
 
 conditions:
   - condition: state
@@ -214,6 +218,13 @@ actions:
             id: startup
           - condition: template
             value_template: "{{ asleep }}"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ not react_during_sleep }}"
+              - condition: state
+                entity_id: !input occupancy_sensor
+                state: "off"
           - condition: not
             conditions:
               - condition: state

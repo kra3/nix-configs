@@ -6,3 +6,17 @@ input_select:
       - none
       - armed_away
       - armed_night
+
+# All restart-safe, so a restart mid-wait doesn't drop the hand-back or the escalation.
+timer:
+  alarm_lights_handback:
+    duration: "00:07:00"
+    restore: true
+  alarm_arm_escalation:
+    duration: "00:10:00"
+    restore: true
+
+input_text:
+  alarm_lights_revert:
+    name: Unmanaged lights to turn off after the alarm
+    max: 255

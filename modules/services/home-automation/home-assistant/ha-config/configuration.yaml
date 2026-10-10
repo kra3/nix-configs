@@ -49,6 +49,24 @@ recorder:
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection
 
+rest_command:
+  announce_hallway:
+    url: http://10.3.2.1:8098/say
+    method: post
+    content_type: application/json
+    payload: '{"text": {{ message | tojson }}}'
+    timeout: 60
+  chime_hallway:
+    url: http://10.3.2.1:8098/chime
+    method: post
+    timeout: 60
+  siren_hallway:
+    url: http://10.3.2.1:8098/siren
+    method: post
+    content_type: application/json
+    payload: '{"seconds": 10}'
+    timeout: 60
+
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml
 

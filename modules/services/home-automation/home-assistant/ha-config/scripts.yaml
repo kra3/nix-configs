@@ -131,6 +131,99 @@ alarm_force_arm_away:
       force: true
       code: !secret alarm_code
 
+announce_hallway:
+  alias: "Announce: hallway speaker"
+  description: Speaks a message through the hallway camera speaker using local Piper TTS.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - action: rest_command.announce_hallway
+    data:
+      message: "{{ message }}"
+  mode: queued
+
+alarm_speakers_prepare:
+  alias: "Alarm speakers: prepare"
+  description: Powers the home theater receiver on in multi-channel stereo and notes that the alarm did.
+  sequence:
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.alarm_speakers_on
+    data:
+      value: "on"
+  - if: "{{ is_state('media_player.home_theater_2', 'off') }}"
+    then:
+    - action: media_player.turn_on
+      target:
+        entity_id: media_player.home_theater_2
+    - wait_template: "{{ not is_state('media_player.home_theater_2', 'off') }}"
+      timeout: "00:00:20"
+      continue_on_timeout: true
+  - action: media_player.select_sound_mode
+    continue_on_error: true
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      sound_mode: MCH STEREO
+  - delay: "00:00:03"
+  mode: restart
+
+alarm_speakers_play:
+  alias: "Alarm speakers: play"
+  description: Plays a sound URL on the home theater (announce 65, about 50 on the receiver) and the kitchen at 60 %.
+  fields:
+    url:
+      required: true
+      selector:
+        text:
+  sequence:
+  - parallel:
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.ma_home_theater
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 65
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.kitchen
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 60
+    - sequence:
+      - delay: "00:00:02"
+      - action: media_player.select_sound_mode
+        continue_on_error: true
+        target:
+          entity_id: media_player.home_theater_2
+        data:
+          sound_mode: MCH STEREO
+  mode: parallel
+
+alarm_speakers_off:
+  alias: "Alarm speakers: power off"
+  description: Powers the home theater receiver off again if the alarm powered it on.
+  sequence:
+  - if: "{{ is_state('input_text.alarm_speakers_on', 'on') }}"
+    then:
+    - action: media_player.turn_off
+      continue_on_error: true
+      target:
+        entity_id: media_player.home_theater_2
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.alarm_speakers_on
+      data:
+        value: ""
+  mode: single
+
 lights_hand_back:
   alias: "Lights: hand back to Adaptive"
   description: Resets both room scenes to Auto and returns every light to Adaptive Lighting.

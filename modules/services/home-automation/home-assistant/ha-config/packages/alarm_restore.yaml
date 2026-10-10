@@ -15,8 +15,14 @@ timer:
   alarm_arm_escalation:
     duration: "00:10:00"
     restore: true
+  alarm_siren_grace:
+    duration: "00:02:00"
+    restore: true
 
 input_text:
+  alarm_speakers_on:
+    name: Home theater powered on by the alarm
+    max: 8
   alarm_lights_revert:
     name: Unmanaged lights to turn off after the alarm
     max: 255

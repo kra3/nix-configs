@@ -11,6 +11,9 @@
     let
       network = config.virtualisation.quadlet.networks.home-auto;
       macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
+      imageTag = lib.last (
+        lib.splitString ":" config.virtualisation.quadlet.containers.home-assistant.containerConfig.image
+      );
     in
     {
       imports = [ flakeModules.nixos.services-home-automation-home-assistant ];
@@ -68,6 +71,8 @@
                   "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"
                   "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
                   "/run/dbus:/run/dbus:ro"
+                  # Integration requirements install here at runtime; keyed by image tag so an upgrade starts clean.
+                  "home-assistant-site-packages-${imageTag}:/usr/local/lib/python3.14/site-packages"
                 ];
                 addCapabilities = [
                   "NET_ADMIN"

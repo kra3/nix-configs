@@ -29,6 +29,7 @@
           PIPER_HOST = "10.3.2.15";
           CAMERA_HOST = "192.168.1.22";
           TALK_TRACK = "64";
+          PLAY_URL_PREFIX = "http://10.3.2.10:8123/local/";
         };
         serviceConfig = {
           ExecStart = announce;

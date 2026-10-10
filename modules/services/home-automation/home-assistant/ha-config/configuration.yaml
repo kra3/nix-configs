@@ -56,6 +56,12 @@ rest_command:
     content_type: application/json
     payload: '{"text": {{ message | tojson }}}'
     timeout: 60
+  chime_hallway:
+    url: http://10.3.2.1:8098/play
+    method: post
+    content_type: application/json
+    payload: '{"url": "http://10.3.2.10:8123/local/sounds/doorbell-chimes.mp3"}'
+    timeout: 60
 
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml

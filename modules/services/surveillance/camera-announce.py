@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""POST /say {"text": "..."} speaks through a camera speaker: Piper (Wyoming) -> AAC -> DHHTTP talk."""
+"""Camera speaker over DHHTTP talk: POST /say {"text"} via Piper (Wyoming), POST /play {"url"} for a sound file."""
 
 import base64
 import hashlib
@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 RATE = 16000
@@ -49,10 +50,10 @@ def wyoming_say(host, port, text):
                 return bytes(pcm), fmt["rate"], fmt["width"], fmt["channels"]
 
 
-def to_aac(pcm, rate, channels):
-    cmd = ["ffmpeg", "-loglevel", "error", "-f", "s16le", "-ar", str(rate), "-ac", str(channels), "-i", "-",
+def to_aac(data, *input_args):
+    cmd = ["ffmpeg", "-loglevel", "error", *input_args, "-i", "-",
            "-ar", str(RATE), "-ac", "1", "-c:a", "aac", "-b:a", "32k", "-f", "adts", "-"]
-    return subprocess.run(cmd, input=pcm, capture_output=True, check=True).stdout
+    return subprocess.run(cmd, input=data, capture_output=True, check=True).stdout
 
 
 def adts_frames(data):
@@ -163,7 +164,18 @@ LOCK = threading.Lock()
 def say(text):
     cfg = os.environ
     pcm, rate, _, channels = wyoming_say(cfg["PIPER_HOST"], int(cfg.get("PIPER_PORT", 10200)), text)
-    adts = to_aac(pcm, rate, channels)
+    speak(to_aac(pcm, "-f", "s16le", "-ar", str(rate), "-ac", str(channels)))
+
+
+def play(url):
+    if not url.startswith(os.environ["PLAY_URL_PREFIX"]):
+        raise ValueError("url not allowed")
+    with urllib.request.urlopen(url, timeout=10) as r:
+        speak(to_aac(r.read(5_000_000)))
+
+
+def speak(adts):
+    cfg = os.environ
     with LOCK:
         talk = Talk(cfg["CAMERA_HOST"], cfg["CAMERA_USER"], cfg["CAMERA_PASSWORD"], int(cfg.get("TALK_TRACK", 64)))
         try:
@@ -175,13 +187,19 @@ def say(text):
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
-            if self.path != "/say":
+            if self.path not in ("/say", "/play"):
                 return self.reply(404, "not found")
-            text = str(json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0)))).get("text", "")).strip()
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+            if self.path == "/play":
+                play(str(body.get("url", "")))
+                return self.reply(200, "ok")
+            text = str(body.get("text", "")).strip()
             if not text or len(text) > 500:
                 return self.reply(400, "text must be 1-500 characters")
             say(text)
             self.reply(200, "ok")
+        except ValueError as e:
+            self.reply(400, str(e))
         except Exception as e:
             print(f"say failed: {e!r}", file=sys.stderr, flush=True)
             self.reply(502, str(e))

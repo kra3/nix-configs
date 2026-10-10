@@ -2,9 +2,9 @@
 - id: front_door_knock_announcements
   alias: "Front Door: Knock TTS & Notifications"
   description: >-
-    On a valid knock (door closed, no recent lock/open activity), pauses
-    the TV, plays a TTS chime on the home theater, resumes the TV, then
-    notifies whoever's home (or everyone, if the house is empty).
+    On a valid knock (door closed, no recent lock/open activity), notifies
+    whoever's home and plays a chime on the hallway camera speaker (or
+    notifies everyone, if the house is empty).
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration
@@ -29,49 +29,11 @@
             arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
             anyone_home: "{{ anjali_home or arun_home }}"
 
-        # If someone home: Play Announcement on HT and Notify present people
+        # If someone home: Notify present people and chime
         - if:
             - condition: template
               value_template: "{{ anyone_home }}"
           then:
-            # Toggle TV pause
-            - if:
-                - condition: state
-                  entity_id: media_player.lg_webos_tv_oled77c35la
-                  state: "playing"
-              then:
-                - action: media_player.media_play_pause
-                  target: { entity_id: media_player.lg_webos_tv_oled77c35la }
-
-            # Snapshot Denon (HT_2) source
-            - action: input_text.set_value
-              target: { entity_id: input_text.doorbell_return_source }
-              data:
-                value: "{{ state_attr('media_player.home_theater_2', 'source') }}"
-
-            # Announce
-            - action: music_assistant.play_announcement
-              target: { entity_id: media_player.ma_home_theater }
-              data:
-                url: "https://ha.karunagath.in/local/sounds/doorbell-chimes.mp3"
-                announce_volume: 60
-
-            # Restore HT_2 (Denon) source
-            - delay: "00:00:10"
-            - action: media_player.select_source
-              target: { entity_id: media_player.home_theater_2 }
-              data:
-                source: "{{ states('input_text.doorbell_return_source') }}"
-
-            # Resume TV
-            - if:
-                - condition: state
-                  entity_id: media_player.lg_webos_tv_oled77c35la
-                  state: "paused"
-              then:
-                - action: media_player.media_play_pause
-                  target: { entity_id: media_player.lg_webos_tv_oled77c35la }
-
             # Notify present people
             - if:
                 - condition: template
@@ -87,6 +49,10 @@
                 - action: notify.send_message
                   target: { entity_id: notify.meghanadha }
                   data: { title: "Front Door", message: "Someone is knocking at the front door." }
+
+            # Chime on the hallway speaker
+            - action: rest_command.chime_hallway
+              continue_on_error: true
 
           # If no one home: Notify all phones
           else:

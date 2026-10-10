@@ -56,7 +56,7 @@
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
   description: >-
-    Turns off living+dining lights when Stremio/Jellyfin/Apple TV plays;
+    Turns off living+dining lights when Litefin/Moonfin/Jellyfin/Apple TV plays;
     restores full brightness on stop (skips a room only if its presence
     sensor reads a definite off). On pause, dims living room to 20% at
     15s, then hands it back to Adaptive Lighting at 38s.
@@ -94,7 +94,7 @@
       - condition: template
         value_template: >-
           {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
-             in ['Stremio', 'Jellyfin', 'Apple TV'] }}
+             in ['Litefin', 'Moonfin', 'Jellyfin', 'Apple TV'] }}
       sequence:
       - target:
           entity_id:

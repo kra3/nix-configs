@@ -131,6 +131,20 @@ alarm_force_arm_away:
       force: true
       code: !secret alarm_code
 
+announce_hallway:
+  alias: "Announce: hallway speaker"
+  description: Speaks a message through the hallway camera speaker using local Piper TTS.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - action: rest_command.announce_hallway
+    data:
+      message: "{{ message }}"
+  mode: queued
+
 lights_hand_back:
   alias: "Lights: hand back to Adaptive"
   description: Resets both room scenes to Auto and returns every light to Adaptive Lighting.

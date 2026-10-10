@@ -103,6 +103,7 @@ except where noted:
 | Music Assistant | `home-auto/music-assistant/default.nix` | `modules/services/home-automation/music-assistant.nix` |
 | Wyoming Piper (TTS) | `home-auto/wyoming-piper/default.nix` | `modules/services/home-automation/wyoming-piper.nix` |
 | Wyoming Whisper (STT) | `home-auto/wyoming-whisper/default.nix` | `modules/services/home-automation/wyoming-whisper.nix` |
+| Hallway announce (Piper → Uno camera speaker, `10.3.2.1:8098`) | host service, no container | `modules/services/surveillance/camera-announce.nix` |
 
 ### Stream-first pipeline (movies/TV/anime)
 

@@ -177,7 +177,7 @@ def say(text):
 def siren_wav(seconds):
     rate, phase, samples = 22050, 0.0, array.array("h")
     for i in range(rate * seconds):
-        phase += 2 * math.pi * (960 if (i // (rate // 2)) % 2 == 0 else 770) / rate
+        phase += 2 * math.pi * (650 + 850 * (i / rate % 0.4) / 0.4) / rate
         samples.append(int(20000 * math.sin(phase)))
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:

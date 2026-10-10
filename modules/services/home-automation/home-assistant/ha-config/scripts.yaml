@@ -197,6 +197,14 @@ alarm_speakers_play:
         url: "{{ url }}"
         use_pre_announce: false
         announce_volume: 60
+    - sequence:
+      - delay: "00:00:02"
+      - action: media_player.select_sound_mode
+        continue_on_error: true
+        target:
+          entity_id: media_player.home_theater_2
+        data:
+          sound_mode: MCH STEREO
   mode: parallel
 
 alarm_speakers_off:

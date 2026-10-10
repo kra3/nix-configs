@@ -224,9 +224,9 @@
             systemd.services.jellyfin = lib.mkIf config.vars.localMedia.enable {
               restartTriggers = [ jellyfinSsoAuthXmlHash ];
 
-              # Sized from ~21h process-exporter peaks + safety margin.
+              # Headroom for ffmpeg probing remote Gelato streams; 1 GiB OOM-killed it on playback start.
               serviceConfig = {
-                MemoryMax = "1024M";
+                MemoryMax = "2048M";
                 CPUQuota = "100%";
                 # Dashboard "Restart" exits 0 and relies on the service manager to bring it back.
                 Restart = lib.mkForce "always";

@@ -56,13 +56,6 @@
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Paradox Plugins";
-                Url = "https://www.iamparadox.dev/jellyfin/plugins/manifest.json";
-              };
-            }
-            {
-              tag = "RepositoryInfo";
-              content = {
                 Name = "Gelato";
                 Url = "https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json";
               };

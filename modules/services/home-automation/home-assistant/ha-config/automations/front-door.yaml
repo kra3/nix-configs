@@ -3,7 +3,8 @@
   alias: "Front Door: Knock TTS & Notifications"
   description: >-
     On a double knock, notifies whoever's home and plays a chime on the
-    hallway camera speaker (or notifies everyone, if the house is empty).
+    hallway camera and kitchen speakers (or notifies everyone, if the house
+    is empty).
   trigger:
     - platform: event
       event_type: front_door_knock
@@ -32,8 +33,17 @@
             - action: notify.send_message
               target: { entity_id: notify.meghanadha }
               data: { title: "Front Door", message: "Someone is knocking at the front door." }
-        - action: rest_command.chime_hallway
-          continue_on_error: true
+        - parallel:
+          - action: rest_command.chime_hallway
+            continue_on_error: true
+          - action: music_assistant.play_announcement
+            continue_on_error: true
+            target:
+              entity_id: media_player.kitchen
+            data:
+              url: http://10.3.2.1:8098/chime.wav
+              use_pre_announce: false
+              announce_volume: "{{ ((state_attr('media_player.kitchen', 'volume_level') or 0.25) * 100) | round(0) | int }}"
 
       # If no one home: notify all phones
       else:

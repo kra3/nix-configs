@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /chime, /siren {"seconds"}; GET /siren.wav, /say.wav?text=."""
+"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /chime, /siren {"seconds"}; GET /siren.wav, /say.wav?text=, /chime.wav."""
 
 import array
 import base64
@@ -263,6 +263,8 @@ class Handler(BaseHTTPRequestHandler):
                 data = siren_wav(siren_seconds(query.get("seconds", ["10"])[0]))
             elif url.path == "/say.wav":
                 data = say_wav(speech_text(query.get("text", [""])[0]))
+            elif url.path == "/chime.wav":
+                data = chime_wav()
             else:
                 return self.reply(404, "not found")
         except ValueError as e:

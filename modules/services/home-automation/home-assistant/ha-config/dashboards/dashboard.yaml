@@ -48,6 +48,10 @@ views:
       entity: input_boolean.automations_paused
       name: Manual mode
       icon: mdi:pause-circle
+    - type: tile
+      entity: input_boolean.bedroom_nap
+      name: Bedroom nap
+      icon: mdi:power-sleep
   - type: grid
     cards:
     - type: heading

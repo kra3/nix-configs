@@ -16,7 +16,8 @@
     {
       "matchDatasources": ["docker"],
       "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*|next|\\d+b\\d+)/",
-      "minimumReleaseAge": "3 days"
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
       "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],

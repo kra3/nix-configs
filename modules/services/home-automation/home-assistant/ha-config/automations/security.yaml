@@ -179,8 +179,6 @@
           continue_on_error: true
           data:
             message: "{{ warning }}"
-      - action: script.alarm_speakers_restore
-        continue_on_error: true
     - conditions:
       - condition: trigger
         id: settled
@@ -192,7 +190,7 @@
         target:
           entity_id: "{{ speakers }}"
         continue_on_error: true
-      - action: script.alarm_speakers_restore
+      - action: script.alarm_speakers_off
         continue_on_error: true
     - conditions:
       - condition: or
@@ -234,7 +232,7 @@
               - action: rest_command.siren_hallway
                 continue_on_error: true
             - delay: "00:00:10"
-      - action: script.alarm_speakers_restore
+      - action: script.alarm_speakers_off
         continue_on_error: true
   mode: restart
 

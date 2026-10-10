@@ -10,7 +10,7 @@ network topology, ports, and firewall rules, see
 | Host | Role | Arch | Deploy |
 |---|---|---|---|
 | `sutala` | Home server + desktop (niri) | x86_64-linux | `just switch sutala` (local) |
-| `surasa` | Secondary DNS resolver + Snapcast client + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
+| `surasa` | Secondary DNS resolver + Snapcast and Sendspin clients + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
 | `mac-work` | Work laptop (nix-darwin, Home Manager only) | aarch64-darwin | `just switch mac-work` (local, Determinate-managed nix) |
 
 ---
@@ -187,6 +187,7 @@ independent of sutala.
 |---|---|---|
 | AdGuard Home + Unbound | `modules/services/dns/rpi-secondary.nix` | Secondary resolver; forwards over DoT, same upstream philosophy as sutala's |
 | Snapcast client | `modules/services/media/snapclient.nix` | Multi-room audio playback endpoint |
+| Sendspin player | `modules/services/media/sendspin.nix` | Music Assistant player "Kitchen Sendspin" (mDNS, port 8927), also owns PipeWire/Bluetooth; replaces Snapcast once verified |
 | sutala-watchdog | `modules/services/monitoring/sutala-watchdog.nix` | Plain script+timer pinging sutala; Telegram alert on down (same bot as Grafana's) — not Prometheus-based, deliberately lightweight for 1GB RAM |
 | Alloy agent | `modules/services/monitoring/alloy-host.nix` | `lokiUrl` overridden to `https://loki.${domain}/loki/api/v1/push` (nginx vhost) since surasa can't reach the monitoring container's veth directly |
 | node-exporter + blackbox-exporter | inline in `hosts/surasa/configuration.nix` | blackbox probes sutala's HTTPS vhosts and DNS from an independent LAN vantage point — see `blackbox-http`/`blackbox-dns` Prometheus jobs below |

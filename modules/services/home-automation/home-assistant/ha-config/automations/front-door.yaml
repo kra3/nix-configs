@@ -43,7 +43,7 @@
             data:
               url: http://10.3.2.1:8098/chime.wav
               use_pre_announce: false
-              announce_volume: "{{ ((state_attr('media_player.kitchen', 'volume_level') or 0.25) * 100) | round(0) | int }}"
+              announce_volume: 60
 
       # If no one home: notify all phones
       else:

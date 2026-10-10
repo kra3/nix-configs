@@ -172,7 +172,7 @@ alarm_speakers_prepare:
 
 alarm_speakers_play:
   alias: "Alarm speakers: play"
-  description: Plays a sound URL on the home theater at 50 % and the kitchen at 65 %.
+  description: Plays a sound URL on the home theater at 50 % and the kitchen at 60 %.
   fields:
     url:
       required: true
@@ -195,7 +195,7 @@ alarm_speakers_play:
       data:
         url: "{{ url }}"
         use_pre_announce: false
-        announce_volume: 65
+        announce_volume: 60
   mode: parallel
 
 alarm_speakers_off:

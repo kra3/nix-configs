@@ -173,12 +173,12 @@
             entity_id: tts.piper
           data:
             media_player_entity_id: "{{ speakers }}"
-            message: The alarm has been triggered. Disarm it now, or the siren will sound in two minutes.
+            message: The alarm has been triggered. Disarm it now.
           continue_on_error: true
         - action: script.announce_hallway
           continue_on_error: true
           data:
-            message: The alarm has been triggered. Disarm it now, or the siren will sound in two minutes.
+            message: The alarm has been triggered. Disarm it now.
     - conditions:
       - condition: trigger
         id: settled

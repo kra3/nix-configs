@@ -168,6 +168,7 @@ alarm_speakers_prepare:
       entity_id: media_player.home_theater_2
     data:
       sound_mode: MCH STEREO
+  - delay: "00:00:03"
   mode: restart
 
 alarm_speakers_play:

@@ -157,6 +157,7 @@
     speakers:
     - media_player.ma_home_theater
     - media_player.kitchen
+    warning: The alarm has been triggered. Disarm it now.
   actions:
   - choose:
     - conditions:
@@ -167,18 +168,19 @@
       - action: timer.start
         target:
           entity_id: timer.alarm_siren_grace
+      - action: script.alarm_speakers_prepare
+        continue_on_error: true
       - parallel:
-        - action: tts.speak
-          target:
-            entity_id: tts.piper
-          data:
-            media_player_entity_id: "{{ speakers }}"
-            message: The alarm has been triggered. Disarm it now.
+        - action: script.alarm_speakers_play
           continue_on_error: true
+          data:
+            url: "http://10.3.2.1:8098/say.wav?text={{ warning | urlencode }}"
         - action: script.announce_hallway
           continue_on_error: true
           data:
-            message: The alarm has been triggered. Disarm it now.
+            message: "{{ warning }}"
+      - action: script.alarm_speakers_restore
+        continue_on_error: true
     - conditions:
       - condition: trigger
         id: settled
@@ -189,6 +191,8 @@
       - action: media_player.media_stop
         target:
           entity_id: "{{ speakers }}"
+        continue_on_error: true
+      - action: script.alarm_speakers_restore
         continue_on_error: true
     - conditions:
       - condition: or
@@ -211,6 +215,8 @@
         continue_on_error: true
         data:
           message: This property is monitored. Leave now.
+      - action: script.alarm_speakers_prepare
+        continue_on_error: true
       - repeat:
           while:
           - condition: state
@@ -219,17 +225,17 @@
           - "{{ repeat.index <= 30 }}"
           sequence:
           - parallel:
-            - action: music_assistant.play_announcement
-              target:
-                entity_id: "{{ speakers }}"
+            - action: script.alarm_speakers_play
+              continue_on_error: true
               data:
                 url: http://10.3.2.1:8098/siren.wav?seconds=10
-                announce_volume: 50
-                use_pre_announce: false
-              continue_on_error: true
-            - action: rest_command.siren_hallway
-              continue_on_error: true
+            - sequence:
+              - delay: "00:00:04"
+              - action: rest_command.siren_hallway
+                continue_on_error: true
             - delay: "00:00:10"
+      - action: script.alarm_speakers_restore
+        continue_on_error: true
   mode: restart
 
 - id: alarm_not_armed_escalate

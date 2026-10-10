@@ -145,6 +145,114 @@ announce_hallway:
       message: "{{ message }}"
   mode: queued
 
+alarm_speakers_prepare:
+  alias: "Alarm speakers: prepare"
+  description: Saves the home theater state, then powers the receiver on in multi-channel stereo at 50 %.
+  sequence:
+  - if: "{{ states('input_text.alarm_speakers_restore') in ['', 'unknown'] }}"
+    then:
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.alarm_speakers_restore
+      data:
+        value: >-
+          {{ state_attr('media_player.ma_home_theater', 'volume_level') }}|{{ states('media_player.home_theater_2') }}|{{ state_attr('media_player.home_theater_2', 'source') }}|{{ state_attr('media_player.home_theater_2', 'sound_mode') }}
+  - if: "{{ is_state('media_player.home_theater_2', 'off') }}"
+    then:
+    - action: media_player.turn_on
+      target:
+        entity_id: media_player.home_theater_2
+    - wait_template: "{{ not is_state('media_player.home_theater_2', 'off') }}"
+      timeout: "00:00:20"
+      continue_on_timeout: true
+  - action: media_player.select_sound_mode
+    continue_on_error: true
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      sound_mode: MCH STEREO
+  - action: media_player.volume_set
+    continue_on_error: true
+    target:
+      entity_id: media_player.ma_home_theater
+    data:
+      volume_level: 0.5
+  mode: restart
+
+alarm_speakers_play:
+  alias: "Alarm speakers: play"
+  description: Plays a sound URL on the home theater (as set by prepare) and the kitchen at 65 %.
+  fields:
+    url:
+      required: true
+      selector:
+        text:
+  sequence:
+  - parallel:
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.ma_home_theater
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.kitchen
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 65
+  mode: parallel
+
+alarm_speakers_restore:
+  alias: "Alarm speakers: put back"
+  description: Restores the home theater volume, sound mode, source and power from the saved state.
+  sequence:
+  - delay: "00:00:03"
+  - variables:
+      saved: "{{ states('input_text.alarm_speakers_restore').split('|') }}"
+  - if: "{{ saved | count == 4 }}"
+    then:
+    - if: "{{ saved[0] not in ['None', ''] }}"
+      then:
+      - action: media_player.volume_set
+        continue_on_error: true
+        target:
+          entity_id: media_player.ma_home_theater
+        data:
+          volume_level: "{{ saved[0] | float }}"
+    - if: "{{ saved[1] == 'off' }}"
+      then:
+      - action: media_player.turn_off
+        continue_on_error: true
+        target:
+          entity_id: media_player.home_theater_2
+      else:
+      - if: "{{ saved[3] not in ['None', ''] }}"
+        then:
+        - action: media_player.select_sound_mode
+          continue_on_error: true
+          target:
+            entity_id: media_player.home_theater_2
+          data:
+            sound_mode: "{{ saved[3] }}"
+      - if: "{{ saved[2] not in ['None', ''] }}"
+        then:
+        - action: media_player.select_source
+          continue_on_error: true
+          target:
+            entity_id: media_player.home_theater_2
+          data:
+            source: "{{ saved[2] }}"
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.alarm_speakers_restore
+      data:
+        value: ""
+  mode: single
+
 lights_hand_back:
   alias: "Lights: hand back to Adaptive"
   description: Resets both room scenes to Auto and returns every light to Adaptive Lighting.

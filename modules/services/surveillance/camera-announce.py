@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /chime, /siren {"seconds"}; GET /siren.wav."""
+"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /chime, /siren {"seconds"}; GET /siren.wav, /say.wav?text=."""
 
 import array
 import base64
@@ -166,25 +166,26 @@ class Talk:
 LOCK = threading.Lock()
 
 
-def say(text):
-    cfg = os.environ
-    pcm, rate, _, channels = wyoming_say(cfg["PIPER_HOST"], int(cfg.get("PIPER_PORT", 10200)), text)
-    speak(to_aac(pcm, "-f", "s16le", "-ar", str(rate), "-ac", str(channels)))
-
-
 RATE_WAV = 22050
 CHIME_NOTES = [(1046.5, 0.0), (784.0, 0.3), (1046.5, 0.6), (784.0, 0.9)]
 BELL_PARTIALS = ((1.0, 1.0), (2.0, 0.5), (2.76, 0.35), (5.4, 0.15))
 
 
-def wav_bytes(samples):
+def wav_bytes(frames, rate=RATE_WAV, channels=1):
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
-        w.setnchannels(1)
+        w.setnchannels(channels)
         w.setsampwidth(2)
-        w.setframerate(RATE_WAV)
-        w.writeframes(array.array("h", samples).tobytes())
+        w.setframerate(rate)
+        w.writeframes(frames)
     return buf.getvalue()
+
+
+@lru_cache(maxsize=16)
+def say_wav(text):
+    cfg = os.environ
+    pcm, rate, _, channels = wyoming_say(cfg["PIPER_HOST"], int(cfg.get("PIPER_PORT", 10200)), text)
+    return wav_bytes(pcm, rate, channels)
 
 
 @lru_cache(maxsize=8)
@@ -193,7 +194,7 @@ def siren_wav(seconds):
     for i in range(RATE_WAV * seconds):
         phase += 2 * math.pi * (650 + 850 * (i / RATE_WAV % 0.4) / 0.4) / RATE_WAV
         samples.append(int(20000 * math.sin(phase)))
-    return wav_bytes(samples)
+    return wav_bytes(array.array("h", samples).tobytes())
 
 
 @lru_cache(maxsize=1)
@@ -207,7 +208,14 @@ def chime_wav():
             env = math.exp(-3 * t) * min(1.0, t / 0.005)
             mix[offset + i] += env * sum(a * math.sin(2 * math.pi * freq * k * t) for k, a in BELL_PARTIALS)
     peak = max(abs(v) for v in mix)
-    return wav_bytes(int(20000 * v / peak) for v in mix)
+    return wav_bytes(array.array("h", (int(20000 * v / peak) for v in mix)).tobytes())
+
+
+def speech_text(value):
+    text = str(value).strip()
+    if not text or len(text) > 500:
+        raise ValueError("text must be 1-500 characters")
+    return text
 
 
 def siren_seconds(value):
@@ -239,10 +247,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/siren":
                 speak(to_aac(siren_wav(siren_seconds(body.get("seconds", 10)))))
                 return self.reply(200, "ok")
-            text = str(body.get("text", "")).strip()
-            if not text or len(text) > 500:
-                return self.reply(400, "text must be 1-500 characters")
-            say(text)
+            speak(to_aac(say_wav(speech_text(body.get("text", "")))))
             self.reply(200, "ok")
         except ValueError as e:
             self.reply(400, str(e))
@@ -253,9 +258,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
         try:
-            if url.path != "/siren.wav":
+            query = parse_qs(url.query)
+            if url.path == "/siren.wav":
+                data = siren_wav(siren_seconds(query.get("seconds", ["10"])[0]))
+            elif url.path == "/say.wav":
+                data = say_wav(speech_text(query.get("text", [""])[0]))
+            else:
                 return self.reply(404, "not found")
-            data = siren_wav(siren_seconds(parse_qs(url.query).get("seconds", ["10"])[0]))
         except ValueError as e:
             return self.reply(400, str(e))
         self.send_response(200)

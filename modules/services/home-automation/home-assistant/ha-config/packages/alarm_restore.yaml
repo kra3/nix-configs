@@ -20,6 +20,9 @@ timer:
     restore: true
 
 input_text:
+  alarm_speakers_restore:
+    name: Home theater state to restore after the alarm sounds
+    max: 255
   alarm_lights_revert:
     name: Unmanaged lights to turn off after the alarm
     max: 255

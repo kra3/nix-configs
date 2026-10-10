@@ -147,7 +147,7 @@ announce_hallway:
 
 alarm_speakers_prepare:
   alias: "Alarm speakers: prepare"
-  description: Saves the home theater state, then powers the receiver on in multi-channel stereo at 50 %.
+  description: Saves the home theater state, then powers the receiver on in multi-channel stereo.
   sequence:
   - if: "{{ states('input_text.alarm_speakers_restore') in ['', 'unknown'] }}"
     then:
@@ -156,7 +156,7 @@ alarm_speakers_prepare:
         entity_id: input_text.alarm_speakers_restore
       data:
         value: >-
-          {{ state_attr('media_player.ma_home_theater', 'volume_level') }}|{{ states('media_player.home_theater_2') }}|{{ state_attr('media_player.home_theater_2', 'source') }}|{{ state_attr('media_player.home_theater_2', 'sound_mode') }}
+          {{ state_attr('media_player.home_theater_2', 'volume_level') }}|{{ states('media_player.home_theater_2') }}|{{ state_attr('media_player.home_theater_2', 'source') }}|{{ state_attr('media_player.home_theater_2', 'sound_mode') }}
   - if: "{{ is_state('media_player.home_theater_2', 'off') }}"
     then:
     - action: media_player.turn_on
@@ -171,17 +171,11 @@ alarm_speakers_prepare:
       entity_id: media_player.home_theater_2
     data:
       sound_mode: MCH STEREO
-  - action: media_player.volume_set
-    continue_on_error: true
-    target:
-      entity_id: media_player.ma_home_theater
-    data:
-      volume_level: 0.5
   mode: restart
 
 alarm_speakers_play:
   alias: "Alarm speakers: play"
-  description: Plays a sound URL on the home theater (as set by prepare) and the kitchen at 65 %.
+  description: Plays a sound URL on the home theater at 50 % and the kitchen at 65 %.
   fields:
     url:
       required: true
@@ -196,6 +190,7 @@ alarm_speakers_play:
       data:
         url: "{{ url }}"
         use_pre_announce: false
+        announce_volume: 50
     - action: music_assistant.play_announcement
       continue_on_error: true
       target:
@@ -210,7 +205,7 @@ alarm_speakers_restore:
   alias: "Alarm speakers: put back"
   description: Restores the home theater volume, sound mode, source and power from the saved state.
   sequence:
-  - delay: "00:00:03"
+  - delay: "00:00:05"
   - variables:
       saved: "{{ states('input_text.alarm_speakers_restore').split('|') }}"
   - if: "{{ saved | count == 4 }}"
@@ -220,7 +215,7 @@ alarm_speakers_restore:
       - action: media_player.volume_set
         continue_on_error: true
         target:
-          entity_id: media_player.ma_home_theater
+          entity_id: media_player.home_theater_2
         data:
           volume_level: "{{ saved[0] | float }}"
     - if: "{{ saved[1] == 'off' }}"
@@ -230,14 +225,6 @@ alarm_speakers_restore:
         target:
           entity_id: media_player.home_theater_2
       else:
-      - if: "{{ saved[3] not in ['None', ''] }}"
-        then:
-        - action: media_player.select_sound_mode
-          continue_on_error: true
-          target:
-            entity_id: media_player.home_theater_2
-          data:
-            sound_mode: "{{ saved[3] }}"
       - if: "{{ saved[2] not in ['None', ''] }}"
         then:
         - action: media_player.select_source
@@ -246,6 +233,15 @@ alarm_speakers_restore:
             entity_id: media_player.home_theater_2
           data:
             source: "{{ saved[2] }}"
+        - delay: "00:00:02"
+      - if: "{{ saved[3] not in ['None', ''] }}"
+        then:
+        - action: media_player.select_sound_mode
+          continue_on_error: true
+          target:
+            entity_id: media_player.home_theater_2
+          data:
+            sound_mode: "{{ saved[3] }}"
     - action: input_text.set_value
       target:
         entity_id: input_text.alarm_speakers_restore

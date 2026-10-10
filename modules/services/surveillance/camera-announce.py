@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /play {"url"}, /siren {"seconds"}; GET /siren.wav."""
+"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /chime, /siren {"seconds"}; GET /siren.wav."""
 
 import array
 import base64
@@ -15,7 +15,6 @@ import subprocess
 import sys
 import threading
 import time
-import urllib.request
 import wave
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -173,19 +172,42 @@ def say(text):
     speak(to_aac(pcm, "-f", "s16le", "-ar", str(rate), "-ac", str(channels)))
 
 
-@lru_cache(maxsize=8)
-def siren_wav(seconds):
-    rate, phase, samples = 22050, 0.0, array.array("h")
-    for i in range(rate * seconds):
-        phase += 2 * math.pi * (650 + 850 * (i / rate % 0.4) / 0.4) / rate
-        samples.append(int(20000 * math.sin(phase)))
+RATE_WAV = 22050
+CHIME_NOTES = [(1046.5, 0.0), (784.0, 0.3), (1046.5, 0.6), (784.0, 0.9)]
+BELL_PARTIALS = ((1.0, 1.0), (2.0, 0.5), (2.76, 0.35), (5.4, 0.15))
+
+
+def wav_bytes(samples):
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
-        w.setframerate(rate)
-        w.writeframes(samples.tobytes())
+        w.setframerate(RATE_WAV)
+        w.writeframes(array.array("h", samples).tobytes())
     return buf.getvalue()
+
+
+@lru_cache(maxsize=8)
+def siren_wav(seconds):
+    phase, samples = 0.0, []
+    for i in range(RATE_WAV * seconds):
+        phase += 2 * math.pi * (650 + 850 * (i / RATE_WAV % 0.4) / 0.4) / RATE_WAV
+        samples.append(int(20000 * math.sin(phase)))
+    return wav_bytes(samples)
+
+
+@lru_cache(maxsize=1)
+def chime_wav():
+    ring = int(RATE_WAV * 1.6)
+    mix = [0.0] * (int(CHIME_NOTES[-1][1] * RATE_WAV) + ring)
+    for freq, start in CHIME_NOTES:
+        offset = int(start * RATE_WAV)
+        for i in range(ring):
+            t = i / RATE_WAV
+            env = math.exp(-3 * t) * min(1.0, t / 0.005)
+            mix[offset + i] += env * sum(a * math.sin(2 * math.pi * freq * k * t) for k, a in BELL_PARTIALS)
+    peak = max(abs(v) for v in mix)
+    return wav_bytes(int(20000 * v / peak) for v in mix)
 
 
 def siren_seconds(value):
@@ -193,13 +215,6 @@ def siren_seconds(value):
     if not 1 <= seconds <= 30:
         raise ValueError("seconds must be 1-30")
     return seconds
-
-
-def play(url):
-    if not url.startswith(os.environ["PLAY_URL_PREFIX"]):
-        raise ValueError("url not allowed")
-    with urllib.request.urlopen(url, timeout=10) as r:
-        speak(to_aac(r.read(5_000_000)))
 
 
 def speak(adts):
@@ -215,14 +230,14 @@ def speak(adts):
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
-            if self.path not in ("/say", "/play", "/siren"):
+            if self.path not in ("/say", "/siren", "/chime"):
                 return self.reply(404, "not found")
-            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            if self.path == "/chime":
+                speak(to_aac(chime_wav()))
+                return self.reply(200, "ok")
             if self.path == "/siren":
                 speak(to_aac(siren_wav(siren_seconds(body.get("seconds", 10)))))
-                return self.reply(200, "ok")
-            if self.path == "/play":
-                play(str(body.get("url", "")))
                 return self.reply(200, "ok")
             text = str(body.get("text", "")).strip()
             if not text or len(text) > 500:
@@ -267,6 +282,7 @@ def self_check():
     assert sha1_b64("a", "b", "c") == base64.b64encode(hashlib.sha1(b"abc").digest()).decode()
     wav = wave.open(io.BytesIO(siren_wav(2)))
     assert wav.getnframes() == 2 * 22050 and wav.getframerate() == 22050
+    assert wave.open(io.BytesIO(chime_wav())).getnframes() > 22050
     print("ok")
 
 

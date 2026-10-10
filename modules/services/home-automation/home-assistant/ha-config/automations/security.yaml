@@ -113,13 +113,124 @@
           message: "{{ message }}"
           critical: true
           escalated: "{{ (now() - states.alarm_control_panel.vasudha_secure.last_changed).total_seconds() >= 600 }}"
-      - action: script.announce_hallway
-        continue_on_error: true
-        data:
-          message: "Alarm triggered. {{ message | replace('(', '') | replace(')', '') }}."
+      - if:
+        - condition: or
+          conditions:
+          - condition: state
+            entity_id: person.arun_karunagath
+            state: home
+          - condition: state
+            entity_id: person.anjalipc
+            state: home
+        then:
+        - action: script.announce_hallway
+          continue_on_error: true
+          data:
+            message: "Alarm triggered. {{ message | replace('(', '') | replace(')', '') }}."
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
         timeout: "00:02:30"
   mode: single
+
+- id: alarm_no_one_home_siren
+  alias: "Security: warn, then siren when triggered with nobody home"
+  description: Spoken warning, then after 2 min a siren on the home theater, kitchen and hallway speakers; stops on disarm, 5 min cap.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: triggered
+    trigger: state
+    id: triggered
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_siren_grace
+    id: siren
+  - entity_id: alarm_control_panel.vasudha_secure
+    from: triggered
+    not_to: triggered
+    trigger: state
+    id: settled
+  - trigger: homeassistant
+    event: start
+    id: startup
+  variables:
+    nobody_home: "{{ not (is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home')) }}"
+    speakers:
+    - media_player.ma_home_theater
+    - media_player.kitchen
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: triggered
+      - "{{ nobody_home }}"
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.alarm_siren_grace
+      - parallel:
+        - action: tts.speak
+          target:
+            entity_id: tts.piper
+          data:
+            media_player_entity_id: "{{ speakers }}"
+            message: The alarm has been triggered. Disarm it now, or the siren will sound in two minutes.
+          continue_on_error: true
+        - action: script.announce_hallway
+          continue_on_error: true
+          data:
+            message: The alarm has been triggered. Disarm it now, or the siren will sound in two minutes.
+    - conditions:
+      - condition: trigger
+        id: settled
+      sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.alarm_siren_grace
+      - action: media_player.media_stop
+        target:
+          entity_id: "{{ speakers }}"
+        continue_on_error: true
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: siren
+        - condition: and
+          conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: timer.alarm_siren_grace
+            state: idle
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: triggered
+      - "{{ nobody_home }}"
+      sequence:
+      - action: script.announce_hallway
+        continue_on_error: true
+        data:
+          message: This property is monitored. Leave now.
+      - repeat:
+          while:
+          - condition: state
+            entity_id: alarm_control_panel.vasudha_secure
+            state: triggered
+          - "{{ repeat.index <= 30 }}"
+          sequence:
+          - parallel:
+            - action: music_assistant.play_announcement
+              target:
+                entity_id: "{{ speakers }}"
+              data:
+                url: http://10.3.2.1:8098/siren.wav?seconds=10
+                announce_volume: 50
+                use_pre_announce: false
+              continue_on_error: true
+            - action: rest_command.siren_hallway
+              continue_on_error: true
+            - delay: "00:00:10"
+  mode: restart
 
 - id: alarm_not_armed_escalate
   alias: "Security: escalate a failed arm after 10 min"

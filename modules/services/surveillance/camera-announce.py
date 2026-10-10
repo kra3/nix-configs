@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Camera speaker over DHHTTP talk: POST /say {"text"} via Piper (Wyoming), POST /play {"url"} for a sound file."""
+"""Camera speaker over DHHTTP talk: POST /say {"text"} (Piper), /play {"url"}, /siren {"seconds"}; GET /siren.wav."""
 
+import array
 import base64
 import hashlib
+import io
 import json
+import math
 import os
 import re
 import socket
@@ -13,7 +16,10 @@ import sys
 import threading
 import time
 import urllib.request
+import wave
+from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
 RATE = 16000
 AAC_FRAME_SECONDS = 1024 / RATE
@@ -167,6 +173,28 @@ def say(text):
     speak(to_aac(pcm, "-f", "s16le", "-ar", str(rate), "-ac", str(channels)))
 
 
+@lru_cache(maxsize=8)
+def siren_wav(seconds):
+    rate, phase, samples = 22050, 0.0, array.array("h")
+    for i in range(rate * seconds):
+        phase += 2 * math.pi * (960 if (i // (rate // 2)) % 2 == 0 else 770) / rate
+        samples.append(int(20000 * math.sin(phase)))
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(samples.tobytes())
+    return buf.getvalue()
+
+
+def siren_seconds(value):
+    seconds = int(value)
+    if not 1 <= seconds <= 30:
+        raise ValueError("seconds must be 1-30")
+    return seconds
+
+
 def play(url):
     if not url.startswith(os.environ["PLAY_URL_PREFIX"]):
         raise ValueError("url not allowed")
@@ -187,9 +215,12 @@ def speak(adts):
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
-            if self.path not in ("/say", "/play"):
+            if self.path not in ("/say", "/play", "/siren"):
                 return self.reply(404, "not found")
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+            if self.path == "/siren":
+                speak(to_aac(siren_wav(siren_seconds(body.get("seconds", 10)))))
+                return self.reply(200, "ok")
             if self.path == "/play":
                 play(str(body.get("url", "")))
                 return self.reply(200, "ok")
@@ -203,6 +234,20 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             print(f"say failed: {e!r}", file=sys.stderr, flush=True)
             self.reply(502, str(e))
+
+    def do_GET(self):
+        url = urlparse(self.path)
+        try:
+            if url.path != "/siren.wav":
+                return self.reply(404, "not found")
+            data = siren_wav(siren_seconds(parse_qs(url.query).get("seconds", ["10"])[0]))
+        except ValueError as e:
+            return self.reply(400, str(e))
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/wav")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def reply(self, code, msg):
         body = json.dumps({"result": msg}).encode()
@@ -220,6 +265,8 @@ def self_check():
     adts = bytes.fromhex("fff15040035ffc") + b"\x00" * 19
     assert list(adts_frames(adts + adts)) == [adts, adts]
     assert sha1_b64("a", "b", "c") == base64.b64encode(hashlib.sha1(b"abc").digest()).decode()
+    wav = wave.open(io.BytesIO(siren_wav(2)))
+    assert wav.getnframes() == 2 * 22050 and wav.getframerate() == 22050
     print("ok")
 
 

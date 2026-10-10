@@ -298,7 +298,7 @@
                         datasourceUid = lokiDatasourceUid;
                         model = {
                           refId = "A";
-                          expr = ''sum by (systemd_unit) (count_over_time({systemd_unit=~".+", systemd_unit!~"loki\\.service|user@.+"} |~ "(?i)(fatal error|exiting due to|panic:|level=fatal)" [1h]))'';
+                          expr = ''sum by (systemd_unit) (count_over_time({systemd_unit=~".+", systemd_unit!~"loki\\.service|user@.+"} != "logger=tsdb.loki" |~ "(?i)(fatal error|exiting due to|panic:|level=fatal)" [1h]))'';
                           queryType = "instant";
                           instant = true;
                           range = false;

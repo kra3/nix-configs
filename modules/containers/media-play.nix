@@ -227,6 +227,8 @@
               serviceConfig = {
                 MemoryMax = "1024M";
                 CPUQuota = "100%";
+                # Dashboard "Restart" exits 0 and relies on the service manager to bring it back.
+                Restart = lib.mkForce "always";
                 # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).
                 ExecStartPre = lib.mkForce (
                   "+"

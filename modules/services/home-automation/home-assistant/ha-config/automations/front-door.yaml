@@ -2,66 +2,45 @@
 - id: front_door_knock_announcements
   alias: "Front Door: Knock TTS & Notifications"
   description: >-
-    On a valid knock (door closed, no recent lock/open activity), notifies
-    whoever's home and plays a chime on the hallway camera speaker (or
-    notifies everyone, if the house is empty).
+    On a double knock, notifies whoever's home and plays a chime on the
+    hallway camera speaker (or notifies everyone, if the house is empty).
   trigger:
-    - platform: state
-      entity_id: binary_sensor.front_door_knock_vibration
-      to: "on"
+    - platform: event
+      event_type: front_door_knock
   action:
-    # 1. Wait 2 seconds to let contact/lock sensor state settle
-    - delay: "00:00:02"
+    - variables:
+        anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
+        arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
+        anyone_home: "{{ anjali_home or arun_home }}"
 
-    # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
-    - if: &valid_knock_check
-        - condition: state
-          entity_id: binary_sensor.front_door_open
-          state: "off"
+    # If someone home: notify present people and chime
+    - if:
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
-        - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
+          value_template: "{{ anyone_home }}"
       then:
-        # Determine Presence
-        - variables:
-            anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
-            arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
-            anyone_home: "{{ anjali_home or arun_home }}"
-
-        # If someone home: Notify present people and chime
         - if:
             - condition: template
-              value_template: "{{ anyone_home }}"
+              value_template: "{{ anjali_home }}"
           then:
-            # Notify present people
-            - if:
-                - condition: template
-                  value_template: "{{ anjali_home }}"
-              then:
-                - action: notify.send_message
-                  target: { entity_id: notify.anjalis_iphone }
-                  data: { title: "Front Door", message: "Someone is knocking at the front door." }
-            - if:
-                - condition: template
-                  value_template: "{{ arun_home }}"
-              then:
-                - action: notify.send_message
-                  target: { entity_id: notify.meghanadha }
-                  data: { title: "Front Door", message: "Someone is knocking at the front door." }
-
-            # Chime on the hallway speaker
-            - action: rest_command.chime_hallway
-              continue_on_error: true
-
-          # If no one home: Notify all phones
-          else:
-            - action: script.notify_all_phones
+            - action: notify.send_message
+              target: { entity_id: notify.anjalis_iphone }
               data: { title: "Front Door", message: "Someone is knocking at the front door." }
+        - if:
+            - condition: template
+              value_template: "{{ arun_home }}"
+          then:
+            - action: notify.send_message
+              target: { entity_id: notify.meghanadha }
+              data: { title: "Front Door", message: "Someone is knocking at the front door." }
+        - action: rest_command.chime_hallway
+          continue_on_error: true
 
-        # Cooldown delay to prevent rapid back-to-back announcements
-        - delay: "00:00:30"
+      # If no one home: notify all phones
+      else:
+        - action: script.notify_all_phones
+          data: { title: "Front Door", message: "Someone is knocking at the front door." }
   mode: single
+  max_exceeded: silent
 
 - id: front_door_knock_detect
   alias: "Front Door: Knock detect"
@@ -72,8 +51,14 @@
       to: "on"
   action:
     - delay: "00:00:02"
-    - condition: and
-      conditions: *valid_knock_check
+    # Door closed, and not recently opened/closed/locked/unlocked
+    - condition: state
+      entity_id: binary_sensor.front_door_open
+      state: "off"
+    - condition: template
+      value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
+    - condition: template
+      value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
     - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.front_door_knock_vibration

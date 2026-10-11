@@ -187,7 +187,7 @@ independent of sutala.
 |---|---|---|
 | AdGuard Home + Unbound | `modules/services/dns/rpi-secondary.nix` | Secondary resolver; forwards over DoT, same upstream philosophy as sutala's |
 | Snapcast client | `modules/services/media/snapclient.nix` | Multi-room audio playback endpoint |
-| Sendspin player | `modules/services/media/sendspin.nix` | Music Assistant player "Kitchen Eneby" (dials MA directly on port 8927), also owns PipeWire/Bluetooth; replaces Snapcast once verified |
+| Sendspin player | `modules/services/media/sendspin.nix` | Official `sendspin-cli` (release binary) as Music Assistant player "Kitchen Eneby", dials MA directly on port 8927, also owns PipeWire/Bluetooth; replaces Snapcast once verified |
 | Nightly deploy (runs on sutala) | `modules/services/system/surasa-autodeploy.nix` | Timer 08:00 builds `main` on sutala and switches surasa over SSH as kra3 (`surasa-autodeploy.service`) |
 | sutala-watchdog | `modules/services/monitoring/sutala-watchdog.nix` | Plain script+timer pinging sutala; Telegram alert on down (same bot as Grafana's) — not Prometheus-based, deliberately lightweight for 1GB RAM |
 | Alloy agent | `modules/services/monitoring/alloy-host.nix` | `lokiUrl` overridden to `https://loki.${domain}/loki/api/v1/push` (nginx vhost) since surasa can't reach the monitoring container's veth directly |

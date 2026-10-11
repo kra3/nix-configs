@@ -12,6 +12,7 @@
         bc
         lesspipe
         glow
+        lazydocker
 
         # Fonts
         nerd-fonts.meslo-lg

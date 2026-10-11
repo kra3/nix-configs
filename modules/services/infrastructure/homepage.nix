@@ -41,7 +41,6 @@
         HOMEPAGE_VAR_TAILSCALE_KEY=${config.sops.placeholder."homepage.tailscale_key"}
         HOMEPAGE_VAR_TAILSCALE_DEVICE_ID=${config.sops.placeholder."homepage.tailscale_device_id"}
         HOMEPAGE_VAR_HOMEASSISTANT_TOKEN=${config.sops.placeholder."homepage.homeassistant_token"}
-        HOMEPAGE_VAR_ARCANE_KEY=${config.sops.placeholder."homepage.arcane_key"}
         HOMEPAGE_VAR_NAVIDROME_TOKEN=${config.sops.placeholder."homepage.navidrome_token"}
         HOMEPAGE_VAR_NAVIDROME_SALT=${config.sops.placeholder."homepage.navidrome_salt"}
         HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY=${config.sops.placeholder."homepage.audiobookshelf_key"}
@@ -57,7 +56,6 @@
       sops.secrets."homepage.tailscale_device_id" = { };
       sops.secrets."homepage.adguard_password" = { };
       sops.secrets."homepage.homeassistant_token" = { };
-      sops.secrets."homepage.arcane_key" = { };
       sops.secrets."homepage.navidrome_token" = { };
       sops.secrets."homepage.navidrome_salt" = { };
       sops.secrets."homepage.audiobookshelf_key" = { };
@@ -496,20 +494,6 @@
                     type = "tailscale";
                     deviceid = "{{HOMEPAGE_VAR_TAILSCALE_DEVICE_ID}}";
                     key = "{{HOMEPAGE_VAR_TAILSCALE_KEY}}";
-                  };
-                };
-              }
-              {
-                Arcane = {
-                  description = "Container management";
-                  icon = "arcane.png";
-                  href = "https://oci.${domain}";
-                  siteMonitor = "https://oci.${domain}";
-                  widget = {
-                    type = "arcane";
-                    url = "http://127.0.0.1:3552";
-                    env = 0;
-                    key = "{{HOMEPAGE_VAR_ARCANE_KEY}}";
                   };
                 };
               }

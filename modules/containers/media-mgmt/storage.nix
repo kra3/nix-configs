@@ -35,7 +35,7 @@
         # Ringtone-extraction destination for the music-library reorg (Task 8 runbook).
         "d /srv/media/bkup 2775 root media - -"
         "d /srv/media/bkup/Ringtones 2775 root media - -"
-        # 0755 not 2770: traversal only, so non-media consumers (e.g. arcane) can reach their own subdir.
+        # 0755 not 2770: traversal only, so non-media consumers (e.g. other rootless apps) can reach their own subdir.
         "d /srv/appdata 0755 root media - -"
         "d /srv/appdata/media-mgmt 2770 root media - -"
         "d /srv/appdata/media-mgmt/prowlarr 2770 root media - -"

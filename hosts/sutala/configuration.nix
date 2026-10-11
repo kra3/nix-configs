@@ -250,6 +250,7 @@
 
   services.sendspin-player = {
     name = "Office Speaker";
+    server = "10.3.2.13";
     output = "pulse:bluez_output.D2_C0_BF_FC_91_25.1";
   };
 

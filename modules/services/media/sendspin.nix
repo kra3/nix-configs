@@ -51,6 +51,11 @@
           type = lib.types.str;
           description = "Player name shown in Music Assistant";
         };
+        server = lib.mkOption {
+          type = lib.types.str;
+          default = config.vars.network.macvlanAddresses.musicAssistant;
+          description = "Music Assistant address; sutala itself can't reach the macvlan one";
+        };
         output = lib.mkOption {
           type = lib.types.str;
           default = "pipewire";
@@ -64,7 +69,7 @@
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${config.vars.network.macvlanAddresses.musicAssistant}:8927 -o ${cfg.output}";
+          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}";
           Restart = "always";
           RestartSec = "5s";
         };

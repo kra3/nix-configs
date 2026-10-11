@@ -2,16 +2,13 @@
 - id: ble_integrations_periodic_reload
   alias: "BLE integrations: periodic reload (range/stability stopgap)"
   description: >-
-    Reloads the PlejD and Fresh Intellivent Sky BLE integrations every
-    30min — marginal range, neither reconnects cleanly on its own.
+    Reloads the PlejD BLE integration every 30min — marginal range, it
+    doesn't reconnect cleanly on its own.
   triggers:
   - trigger: time_pattern
     minutes: "/30"
   actions:
   - action: homeassistant.reload_config_entry
-    data:
-      entry_id: 01JE7EG5ZJEQBM1887Q1VCEGCR # PlejD (Salviegatan 4)
-  - action: homeassistant.reload_config_entry
-    data:
-      entry_id: 01JE7F2D803DDWPQ63RP0VY71P # Fresh Intellivent Sky (Fresh kitchen fan)
+    target:
+      entity_id: light.hallway_hall_lights
   mode: single

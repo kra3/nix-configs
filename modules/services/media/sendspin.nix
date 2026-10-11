@@ -54,17 +54,17 @@
         server = lib.mkOption {
           type = lib.types.str;
           default = config.vars.network.macvlanAddresses.musicAssistant;
-          description = "Music Assistant address; sutala itself can't reach the macvlan one";
+          description = "Music Assistant address";
         };
         output = lib.mkOption {
           type = lib.types.str;
           default = "pipewire";
-          description = "sendspin-cli -o value: pipewire follows the default sink, pulse:<sink> pins one";
+          description = "sendspin-cli -o value; pulse:<sink> pins a sink";
         };
         bufferMs = lib.mkOption {
           type = lib.types.nullOr lib.types.int;
           default = null;
-          description = "sendspin-cli --buffer-ms (its default is 100); raise it for jittery outputs such as Bluetooth";
+          description = "sendspin-cli --buffer-ms; raise for Bluetooth";
         };
       };
 

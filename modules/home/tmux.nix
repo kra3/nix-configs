@@ -164,6 +164,9 @@
           # ============================================================================
           set -ag terminal-overrides ",xterm-256color:RGB"
 
+          # The server starts at boot, before the Wayland session exists; take these from the attaching client.
+          set -ga update-environment " WAYLAND_DISPLAY XDG_SESSION_TYPE"
+
           # Undercurl support
           set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'
           set -as terminal-overrides ',*:Setulc=\E[58::2::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m'

@@ -90,16 +90,11 @@
             # uid/gid, so /app/data (owned by arcane:arcane above) is
             # writable without the old rootful setup's PUID/PGID dance.
             userns = "keep-id";
-            # Rootless slirp4netns can't hairpin back to the host's own LAN
-            # IP, so DNS-resolving auth.${domain} to 192.168.x.x during OIDC
-            # discovery gets "connection refused" (same class of problem as
-            # home-assistant/container.nix's addHosts, solved there via the
-            # bridge gateway; here there's no bridge, so route via podman's
-            # host-gateway alias, which slirp4netns forwards to the host's
-            # loopback interface instead).
+            # pasta runs with --no-map-gw, so 10.0.2.2 is mapped to the host loopback for auth and the socket proxy.
+            networks = [ "pasta:--map-host-loopback,10.0.2.2" ];
             addHosts = [
-              "auth.${domain}:host-gateway"
-              "socket-proxy:host-gateway"
+              "auth.${domain}:10.0.2.2"
+              "socket-proxy:10.0.2.2"
             ];
             volumes = [ "/srv/appdata/arcane:/app/data" ];
             environments = {

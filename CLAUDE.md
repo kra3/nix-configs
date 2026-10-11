@@ -23,7 +23,7 @@ just fmt                              # Format all Nix files (treefmt / nix fmt)
 just check                            # Validate flake (nix flake check)
 just update                           # Update flake.lock inputs
 just build [host]                     # Build host config (default: sutala)
-just switch [host]                    # Apply config locally (nixos-rebuild / darwin-rebuild)
+just switch [host]                    # Apply config here; a host other than this machine goes via switch-remote (built here, SSH alias = host name)
 just switch-remote [host] [target]    # Apply via SSH with sudo
 just sops-edit [file]                 # Edit an encrypted secrets file
 ```

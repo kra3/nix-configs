@@ -12,12 +12,27 @@
       arcaneEnvPath = config.sops.templates."arcane.env".path;
     in
     {
-      # Runs under the dedicated "arcane" user's own rootless podman instance
-      # (modules/users/arcane.nix), not the system's rootful one — a compromise
-      # of this container reaches only its own unprivileged podman, not host
-      # root. Isolated by construction from the app fleet's rootful quadlet
-      # networks/storage; it can't see or manage sonarr/radarr/etc, which is
-      # fine since deployment is handled by nix, not by Arcane.
+      # Arcane itself runs under the dedicated "arcane" user's rootless podman
+      # (modules/users/arcane.nix); it sees the system's rootful containers
+      # only through this GET-only proxy (POST=0), so a compromise can't
+      # start/stop/create anything or reach host root.
+      virtualisation.quadlet.containers.arcane-socket-proxy.containerConfig = {
+        image = "docker.io/tecnativa/docker-socket-proxy:v0.5.0";
+        publishPorts = [ "127.0.0.1:2375:2375" ];
+        volumes = [ "/run/podman/podman.sock:/var/run/docker.sock:ro" ];
+        environments = {
+          POST = "0";
+          EVENTS = "1";
+          PING = "1";
+          VERSION = "1";
+          INFO = "1";
+          CONTAINERS = "1";
+          IMAGES = "1";
+          NETWORKS = "1";
+          VOLUMES = "1";
+        };
+      };
+
       services.nginx.virtualHosts."oci.${domain}" = flakeLib.nginx.mkProxyVhost {
         domain = domain;
         cidrs = config.vars.network.nginxAllowCidrs;
@@ -61,75 +76,46 @@
         '';
       };
 
-      home-manager.users.arcane =
-        { pkgs, ... }:
-        {
-          imports = [ inputs.quadlet-nix.homeManagerModules.quadlet ];
+      home-manager.users.arcane = {
+        imports = [ inputs.quadlet-nix.homeManagerModules.quadlet ];
 
-          home.stateVersion = lib.mkDefault "25.11";
+        home.stateVersion = lib.mkDefault "25.11";
 
-          # Rootless podman's API socket (ships in the podman package as
-          # share/systemd/user/podman.{socket,service}) isn't enabled by
-          # default the way quadlet-nix's own generated container units are —
-          # Arcane needs it explicitly to talk to "its" podman at all.
-          systemd.user.sockets.podman = {
-            Unit.Description = "Podman API Socket";
-            Socket = {
-              ListenStream = "%t/podman/podman.sock";
-              SocketMode = "0660";
+        virtualisation.quadlet.containers.arcane = {
+          autoStart = true;
+          containerConfig = {
+            image = "ghcr.io/getarcaneapp/arcane:v2.15.1";
+            publishPorts = [ "127.0.0.1:3552:3552" ];
+            # Maps the container's internal user 1:1 onto the host "arcane"
+            # uid/gid, so /app/data (owned by arcane:arcane above) is
+            # writable without the old rootful setup's PUID/PGID dance.
+            userns = "keep-id";
+            # Rootless slirp4netns can't hairpin back to the host's own LAN
+            # IP, so DNS-resolving auth.${domain} to 192.168.x.x during OIDC
+            # discovery gets "connection refused" (same class of problem as
+            # home-assistant/container.nix's addHosts, solved there via the
+            # bridge gateway; here there's no bridge, so route via podman's
+            # host-gateway alias, which slirp4netns forwards to the host's
+            # loopback interface instead).
+            addHosts = [
+              "auth.${domain}:host-gateway"
+              "socket-proxy:host-gateway"
+            ];
+            volumes = [ "/srv/appdata/arcane:/app/data" ];
+            environments = {
+              DOCKER_HOST = "tcp://socket-proxy:2375";
+              APP_URL = "https://oci.${domain}";
+              LOG_LEVEL = "info";
+              LOG_JSON = "false";
+              OIDC_ENABLED = "true";
+              OIDC_CLIENT_ID = "arcane";
+              OIDC_ISSUER_URL = "https://auth.${domain}";
+              OIDC_SCOPES = "openid profile email groups";
+              DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
             };
-            Install.WantedBy = [ "sockets.target" ];
-          };
-          systemd.user.services.podman = {
-            Unit = {
-              Description = "Podman API Service";
-              Requires = [ "podman.socket" ];
-              After = [ "podman.socket" ];
-            };
-            Service = {
-              Delegate = "true";
-              Type = "exec";
-              KillMode = "process";
-              ExecStart = "${pkgs.podman}/bin/podman system service";
-            };
-          };
-
-          virtualisation.quadlet.containers.arcane = {
-            autoStart = true;
-            containerConfig = {
-              image = "ghcr.io/getarcaneapp/arcane:v2.15.1";
-              publishPorts = [ "127.0.0.1:3552:3552" ];
-              # Maps the container's internal user 1:1 onto the host "arcane"
-              # uid/gid, so /app/data (owned by arcane:arcane above) is
-              # writable without the old rootful setup's PUID/PGID dance.
-              userns = "keep-id";
-              # Rootless slirp4netns can't hairpin back to the host's own LAN
-              # IP, so DNS-resolving auth.${domain} to 192.168.x.x during OIDC
-              # discovery gets "connection refused" (same class of problem as
-              # home-assistant/container.nix's addHosts, solved there via the
-              # bridge gateway; here there's no bridge, so route via podman's
-              # host-gateway alias, which slirp4netns forwards to the host's
-              # loopback interface instead).
-              addHosts = [
-                "auth.${domain}:host-gateway"
-              ];
-              volumes = [
-                "%t/podman/podman.sock:/var/run/docker.sock"
-                "/srv/appdata/arcane:/app/data"
-              ];
-              environments = {
-                APP_URL = "https://oci.${domain}";
-                LOG_LEVEL = "info";
-                LOG_JSON = "false";
-                OIDC_ENABLED = "true";
-                OIDC_CLIENT_ID = "arcane";
-                OIDC_ISSUER_URL = "https://auth.${domain}";
-                OIDC_SCOPES = "openid profile email groups";
-                DATABASE_URL = "file:data/arcane.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(2500)&_txlock=immediate";
-              };
-              environmentFiles = [ arcaneEnvPath ];
-            };
+            environmentFiles = [ arcaneEnvPath ];
           };
         };
+      };
     };
 }

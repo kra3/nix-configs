@@ -200,6 +200,14 @@
               }
             ];
 
+            services.declarative-jellyfin.livetv.listingProviders = [
+              {
+                id = "3b8e5d1c7a904f26b0c1d9e8f2a64d17";
+                type = "xmltv";
+                path = "http://${config.vars.network.containers.mediaPlay.hostAddress}:8099/epg.xml";
+              }
+            ];
+
             hardware.graphics = {
               enable = true;
               extraPackages = with pkgs; [

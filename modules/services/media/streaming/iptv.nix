@@ -40,7 +40,7 @@
         path = [ ytDlp ];
         environment.XDG_CACHE_HOME = "/var/cache/iptv";
         serviceConfig = sandbox // {
-          ExecStart = "${python} ${./iptv/yt_resolver.py} --bind ${bind} --port ${toString port} --allow ${channels} --m3u ${stateDir}/news.m3u";
+          ExecStart = "${python} ${./iptv/yt_resolver.py} --bind ${bind} --port ${toString port} --allow ${channels} --m3u ${stateDir}/news.m3u --epg ${stateDir}/epg.xml";
           CacheDirectory = "iptv";
           Restart = "on-failure";
           RestartSec = 10;
@@ -62,6 +62,29 @@
           StateDirectoryMode = "0755";
           TimeoutStartSec = "10min";
           MemoryMax = "256M";
+        };
+      };
+
+      systemd.services.iptv-epg = {
+        description = "Fetch the iptv-epg.org India guide, filtered to our channels";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        serviceConfig = sandbox // {
+          Type = "oneshot";
+          ExecStart = "${python} ${./iptv/epg.py} --allow ${channels} --out ${stateDir}/epg.xml";
+          StateDirectory = "iptv";
+          StateDirectoryMode = "0755";
+          TimeoutStartSec = "5min";
+          MemoryMax = "256M";
+        };
+      };
+
+      systemd.timers.iptv-epg = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "3min";
+          OnUnitActiveSec = "6h";
+          RandomizedDelaySec = "5min";
         };
       };
 

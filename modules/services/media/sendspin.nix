@@ -59,12 +59,12 @@
         output = lib.mkOption {
           type = lib.types.str;
           default = "pipewire";
-          description = "sendspin-cli -o value; pulse:<sink> pins a sink";
+          description = "sendspin-cli -o value";
         };
-        bufferMs = lib.mkOption {
-          type = lib.types.nullOr lib.types.int;
+        pipewireNode = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
           default = null;
-          description = "sendspin-cli --buffer-ms; raise for Bluetooth";
+          description = "PipeWire sink the player is pinned to; the default sink when null";
         };
       };
 
@@ -74,9 +74,8 @@
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}${
-            lib.optionalString (cfg.bufferMs != null) " --buffer-ms ${toString cfg.bufferMs}"
-          }";
+          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}";
+          Environment = lib.optional (cfg.pipewireNode != null) "PIPEWIRE_NODE=${cfg.pipewireNode}";
           Restart = "always";
           RestartSec = "5s";
         };

@@ -77,6 +77,8 @@ switch host=default_host:
     set -euo pipefail
     if [ "{{ host }}" = "mac-work" ]; then
         darwin-rebuild switch --flake .#{{host}}
+    elif [ "{{ host }}" != "$(hostname)" ]; then
+        just switch-remote {{host}} {{host}} localhost
     else
         nixos-rebuild build --flake .#{{host}}
         just _prepull-images ./result

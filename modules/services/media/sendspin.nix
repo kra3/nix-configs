@@ -64,7 +64,7 @@
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${config.vars.network.macvlanAddresses.musicAssistant}:8927 -o ${cfg.output} --allow-unpaired";
+          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${config.vars.network.macvlanAddresses.musicAssistant}:8927 -o ${cfg.output}";
           Restart = "always";
           RestartSec = "5s";
         };

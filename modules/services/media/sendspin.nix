@@ -27,7 +27,7 @@
         wantedBy = [ "default.target" ];
         serviceConfig = {
           # The player dials out; mDNS found no server, so point it at Music Assistant directly.
-          ExecStart = "${pkgs.sendspin-go}/bin/sendspin-go -daemon -name \"Kitchen Sendspin\" -server ${config.vars.network.macvlanAddresses.musicAssistant}:8927";
+          ExecStart = "${pkgs.sendspin-go}/bin/sendspin-go -daemon -name \"Kitchen Eneby\" -server ${config.vars.network.macvlanAddresses.musicAssistant}:8927";
           Restart = "always";
           RestartSec = "5s";
         };

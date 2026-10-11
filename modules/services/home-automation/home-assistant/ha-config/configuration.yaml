@@ -33,12 +33,6 @@ prometheus:
   namespace: ha
 
 logger:
-  logs:
-    custom_components.fresh_intellivent_sky: debug
-    pyfreshintellivent: debug
-    habluetooth: debug
-    bleak_retry_connector: debug
-    homeassistant.components.bluetooth: debug
 
 # Noisy, high-frequency entities already covered by Prometheus/Grafana for
 # long-term graphing — excluded here to keep the recorder DB small.

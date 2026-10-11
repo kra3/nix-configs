@@ -33,6 +33,9 @@ prometheus:
   namespace: ha
 
 logger:
+  logs:
+    custom_components.fresh_intellivent_sky: debug
+    pyfreshintellivent: debug
 
 # Noisy, high-frequency entities already covered by Prometheus/Grafana for
 # long-term graphing — excluded here to keep the recorder DB small.

@@ -61,6 +61,11 @@
           default = "pipewire";
           description = "sendspin-cli -o value: pipewire follows the default sink, pulse:<sink> pins one";
         };
+        bufferMs = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "sendspin-cli --buffer-ms (its default is 100); raise it for jittery outputs such as Bluetooth";
+        };
       };
 
       config.systemd.user.services.sendspin = {
@@ -69,7 +74,9 @@
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}";
+          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}${
+            lib.optionalString (cfg.bufferMs != null) " --buffer-ms ${toString cfg.bufferMs}"
+          }";
           Restart = "always";
           RestartSec = "5s";
         };

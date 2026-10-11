@@ -200,6 +200,14 @@
               }
             ];
 
+            services.declarative-jellyfin.livetv.listingProviders = [
+              {
+                id = "3b8e5d1c7a904f26b0c1d9e8f2a64d17";
+                type = "xmltv";
+                path = "http://${config.vars.network.containers.mediaPlay.hostAddress}:8099/epg.xml";
+              }
+            ];
+
             hardware.graphics = {
               enable = true;
               extraPackages = with pkgs; [
@@ -227,7 +235,7 @@
               # Headroom for ffmpeg probing remote Gelato streams; 1 GiB OOM-killed it on playback start.
               serviceConfig = {
                 MemoryMax = "2048M";
-                CPUQuota = "100%";
+                CPUQuota = "150%";
                 # Dashboard "Restart" exits 0 and relies on the service manager to bring it back.
                 Restart = lib.mkForce "always";
                 # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).

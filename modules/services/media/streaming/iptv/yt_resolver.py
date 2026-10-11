@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import collections
 import http.server
 import json
 import subprocess
@@ -7,8 +8,9 @@ import threading
 import time
 
 CACHE_SECS = 300
+FAIL_SECS = 60
 cache = {}
-lock = threading.Lock()
+locks = collections.defaultdict(threading.Lock)
 
 
 def pick_live(handle, prefer):
@@ -24,33 +26,35 @@ def pick_live(handle, prefer):
 
 
 def resolve(handle, prefer):
-    with lock:
+    with locks[handle]:
         hit = cache.get(handle)
-        if hit and time.monotonic() - hit[0] < CACHE_SECS:
+        if hit and time.monotonic() - hit[0] < (CACHE_SECS if hit[1] else FAIL_SECS):
             return hit[1]
-        out = subprocess.run(
-            ["yt-dlp", "--no-warnings", "--no-playlist", "-j", pick_live(handle, prefer)],
-            capture_output=True, text=True, timeout=45,
-        )
-        if out.returncode != 0:
-            return None
-        info = json.loads(out.stdout)
-        url = next((f["manifest_url"] for f in info.get("formats", []) if f.get("manifest_url")), None)
-        if url:
+        url = None
+        try:
+            out = subprocess.run(
+                ["yt-dlp", "--no-warnings", "--no-playlist", "-j", pick_live(handle, prefer)],
+                capture_output=True, text=True, timeout=45,
+            )
+            if out.returncode == 0:
+                info = json.loads(out.stdout)
+                url = next((f["manifest_url"] for f in info.get("formats", []) if f.get("manifest_url")), None)
+        finally:
             cache[handle] = (time.monotonic(), url)
         return url
 
 
-def make_handler(handles, m3u):
+def make_handler(handles, files):
     class H(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
-            if self.path == "/news.m3u":
+            if self.path in files:
+                path, ctype = files[self.path]
                 try:
-                    body = open(m3u, "rb").read()
+                    body = open(path, "rb").read()
                 except OSError:
                     return self.send_error(404)
                 self.send_response(200)
-                self.send_header("Content-Type", "audio/x-mpegurl")
+                self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
@@ -80,7 +84,9 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=8099)
     ap.add_argument("--allow", required=True)
     ap.add_argument("--m3u", required=True)
+    ap.add_argument("--epg", required=True)
     a = ap.parse_args()
+    files = {"/news.m3u": (a.m3u, "audio/x-mpegurl"), "/epg.xml": (a.epg, "application/xml")}
     handles = {}
     for line in open(a.allow):
         if line.strip() and not line.startswith("#"):
@@ -88,4 +94,4 @@ if __name__ == "__main__":
                 if i.startswith("yt:"):
                     handle, _, prefer = i[3:].partition("|")
                     handles[handle.lstrip("@")] = prefer
-    http.server.ThreadingHTTPServer((a.bind, a.port), make_handler(handles, a.m3u)).serve_forever()
+    http.server.ThreadingHTTPServer((a.bind, a.port), make_handler(handles, files)).serve_forever()

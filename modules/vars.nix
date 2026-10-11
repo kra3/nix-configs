@@ -200,6 +200,11 @@
               default = "10.3.0.4";
               description = "Pinned br-life IP for ghostfolio";
             };
+            musicAssistant = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.2.13";
+              description = "Pinned br-home-auto IP for music-assistant";
+            };
           };
           # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's snapclient).
           macvlanAddresses = {

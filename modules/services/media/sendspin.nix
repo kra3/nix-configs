@@ -1,7 +1,7 @@
 {
   # The tmpfiles rule is `loginctl enable-linger` for kra3: PipeWire only runs in a logged-in session and this host has no graphical login.
   flake.nixosModules.services-media-sendspin =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       hardware.bluetooth = {
         enable = true;
@@ -20,15 +20,14 @@
         "f /var/lib/systemd/linger/kra3 0644 root root -"
       ];
 
-      networking.firewall.interfaces.wlan0.allowedTCPPorts = [ 8927 ];
-
       systemd.user.services.sendspin = {
         description = "Sendspin player";
         after = [ "pipewire-pulse.service" ];
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${pkgs.sendspin-go}/bin/sendspin-go -daemon -name \"Kitchen Sendspin\"";
+          # The player dials out; mDNS found no server, so point it at Music Assistant directly.
+          ExecStart = "${pkgs.sendspin-go}/bin/sendspin-go -daemon -name \"Kitchen Sendspin\" -server ${config.vars.network.macvlanAddresses.musicAssistant}:8927";
           Restart = "always";
           RestartSec = "5s";
         };

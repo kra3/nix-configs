@@ -114,7 +114,7 @@
                 ["beet", "--config", BEETS_BASE, "ls", "-f", "$path"] + query,
                 env=env, capture_output=True, text=True,
             ).stdout.splitlines()
-            return (os.path.dirname(os.path.dirname(out[0])) if out else None), len(out)
+            return (os.path.dirname(os.path.dirname(out[0])) if out else None), len(out), any(p.lower().endswith(".flac") for p in out)
 
 
         def beets_artist_dir(query, env):
@@ -178,10 +178,11 @@
             else:
                 release, album_title = rel
                 env = dict(os.environ, BEETSDIR=BEETS_INDIAN_DIR) if lib == "indian" else dict(os.environ)
-                have, have_n = beets_lookup(["mb_albumid:" + release], env)
+                have, have_n, have_flac = beets_lookup(["mb_albumid:" + release], env)
                 if not have:
-                    have, have_n = beets_lookup(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
-                if have and have_n < 0.9 * audio_count(folder):
+                    have, have_n, have_flac = beets_lookup(["album:" + album_title, "albumartist:" + artist["artistName"].split()[0]], env)
+                keep_lossless = have_flac and not any(n.lower().endswith(".flac") for _, _, files in os.walk(folder) for n in files)
+                if have and not keep_lossless and have_n < 0.9 * audio_count(folder):
                     reason = "library holds only " + str(have_n) + " of " + str(audio_count(folder)) + " tracks, needs a replace import | " + why
                     if recent:
                         print("SKIP tried recently:", title)

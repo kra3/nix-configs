@@ -104,8 +104,6 @@
                   - policy: 'one_factor'
                     subject: 'group:admin'
             clients:
-                response_types:
-                  - 'code'
               - client_id: 'grafana'
                 client_name: 'Grafana'
                 client_secret: '${

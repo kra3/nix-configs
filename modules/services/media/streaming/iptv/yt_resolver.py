@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import collections
 import http.server
 import json
 import subprocess
@@ -7,8 +8,9 @@ import threading
 import time
 
 CACHE_SECS = 300
+FAIL_SECS = 60
 cache = {}
-lock = threading.Lock()
+locks = collections.defaultdict(threading.Lock)
 
 
 def pick_live(handle, prefer):
@@ -24,19 +26,20 @@ def pick_live(handle, prefer):
 
 
 def resolve(handle, prefer):
-    with lock:
+    with locks[handle]:
         hit = cache.get(handle)
-        if hit and time.monotonic() - hit[0] < CACHE_SECS:
+        if hit and time.monotonic() - hit[0] < (CACHE_SECS if hit[1] else FAIL_SECS):
             return hit[1]
-        out = subprocess.run(
-            ["yt-dlp", "--no-warnings", "--no-playlist", "-j", pick_live(handle, prefer)],
-            capture_output=True, text=True, timeout=45,
-        )
-        if out.returncode != 0:
-            return None
-        info = json.loads(out.stdout)
-        url = next((f["manifest_url"] for f in info.get("formats", []) if f.get("manifest_url")), None)
-        if url:
+        url = None
+        try:
+            out = subprocess.run(
+                ["yt-dlp", "--no-warnings", "--no-playlist", "-j", pick_live(handle, prefer)],
+                capture_output=True, text=True, timeout=45,
+            )
+            if out.returncode == 0:
+                info = json.loads(out.stdout)
+                url = next((f["manifest_url"] for f in info.get("formats", []) if f.get("manifest_url")), None)
+        finally:
             cache[handle] = (time.monotonic(), url)
         return url
 

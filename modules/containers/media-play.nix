@@ -227,7 +227,7 @@
               # Headroom for ffmpeg probing remote Gelato streams; 1 GiB OOM-killed it on playback start.
               serviceConfig = {
                 MemoryMax = "2048M";
-                CPUQuota = "100%";
+                CPUQuota = "150%";
                 # Dashboard "Restart" exits 0 and relies on the service manager to bring it back.
                 Restart = lib.mkForce "always";
                 # Replaces declarative-jellyfin's own ExecStartPre, which chmod/chowns the whole dataDir and always errors on SSO-Auth.xml (bind-mounted read-only here).

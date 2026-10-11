@@ -49,6 +49,8 @@ card:
     - binary_sensor.house_exits_open_status
     - lock.front_front_door_nw
     - binary_sensor.front_front_door_nw_door
+    - lock.yale_front_door
+    - lock.yale_front_door_secure_mode
   rooms:
     - name: Dining Room
       areas:

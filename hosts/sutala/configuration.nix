@@ -19,6 +19,7 @@
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
     flakeModules.nixos.services-system-surasa-autodeploy
+    flakeModules.nixos.services-media-sendspin
     flakeModules.nixos.hardware-intel-igpu
     flakeModules.nixos.nixpkgs-overlays-nixos
     flakeModules.nixos.vars
@@ -246,6 +247,11 @@
   };
 
   time.timeZone = "UTC";
+
+  services.sendspin-player = {
+    name = "Office Speaker";
+    output = "pulse:bluez_output.D2_C0_BF_FC_91_25.1";
+  };
 
   services.journald.extraConfig = ''
     SystemMaxUse=200M

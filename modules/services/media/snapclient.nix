@@ -1,5 +1,5 @@
 {
-  # PipeWire and linger come from services-media-sendspin.
+  # PipeWire and linger come from services-media-pi-audio.
   flake.nixosModules.services-media-snapclient =
     { config, pkgs, ... }:
     {

@@ -255,6 +255,22 @@
 
   users.users.kra3.linger = true;
 
+  systemd.services.office-amp-connect = {
+    description = "Keep the office amp connected over Bluetooth";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "bluetooth.service" ];
+    after = [ "bluetooth.service" ];
+    serviceConfig.Restart = "always";
+    script = ''
+      amp=D2:C0:BF:FC:91:25
+      while true; do
+        ${pkgs.bluez}/bin/bluetoothctl info $amp | grep -q "Connected: yes" \
+          || ${pkgs.bluez}/bin/bluetoothctl connect $amp || true
+        sleep 15
+      done
+    '';
+  };
+
   services.journald.extraConfig = ''
     SystemMaxUse=200M
     SystemMaxFileSize=50M

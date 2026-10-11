@@ -1,6 +1,5 @@
 {
-  # Snapcast client for Music Assistant's bundled server (sutala, via its macvlan address) -- outbound-only, no server-side change needed.
-  # PipeWire and linger come from services-media-sendspin; no NixOS services.snapclient module exists, hence the manual unit.
+  # PipeWire and linger come from services-media-sendspin.
   flake.nixosModules.services-media-snapclient =
     { config, pkgs, ... }:
     {

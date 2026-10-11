@@ -251,7 +251,7 @@
   services.sendspin-player = {
     name = "Office Speaker";
     server = config.vars.network.podmanAddresses.musicAssistant;
-    pipewireNode = "bluez_output.D2_C0_BF_FC_91_25.1";
+    output = "pulse:bluez_output.D2_C0_BF_FC_91_25.1";
   };
 
   services.journald.extraConfig = ''

@@ -127,6 +127,7 @@
             "fromfilename"
             "edit"
             "normalize_names"
+            "strip_junk_tags"
             "permissions"
           ];
           permissions = {
@@ -196,7 +197,7 @@
         directory: /srv/media/library/music/Indian
         library: ${config.home.homeDirectory}/.config/beets/indian-film.db
         # aisauce is opt-in (see beet-indian-film-cleanup), not run on every regular import.
-        plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names permissions
+        plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names strip_junk_tags permissions
         permissions:
           file: "664"
           dir: "2755"
@@ -237,7 +238,7 @@
       home.file.".config/beets-classical/config.yaml".text = ''
         directory: /srv/media/library/music/Classical/Western
         library: ${config.home.homeDirectory}/.config/beets/classical.db
-        plugins: musicbrainz chroma spotify fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names permissions
+        plugins: musicbrainz chroma spotify fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names strip_junk_tags permissions
         permissions:
           file: "664"
           dir: "2755"

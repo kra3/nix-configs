@@ -57,7 +57,7 @@
         owner = "kra3";
         mode = "0400";
         content = ''
-          plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names
+          plugins: musicbrainz chroma spotify jiosaavn aisauce fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names strip_junk_tags
           acoustid:
             apikey: ${config.sops.placeholder."music.acoustid_api_key"}
           spotify:

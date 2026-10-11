@@ -14,7 +14,6 @@
     flakeModules.nixos.services-dns-rpi-secondary
     flakeModules.nixos.services-media-pi-audio
     flakeModules.nixos.services-media-sendspin
-    flakeModules.nixos.services-media-snapclient
     flakeModules.nixos.services-monitoring-sutala-watchdog
     flakeModules.nixos.services-monitoring-alloy-host
     flakeModules.nixos.services-system-nix-defaults-nixos

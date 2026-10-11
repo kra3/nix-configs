@@ -250,8 +250,11 @@
 
   services.sendspin-player = {
     name = "Office Speaker";
+    server = config.vars.network.podmanAddresses.musicAssistant;
     output = "pulse:bluez_output.D2_C0_BF_FC_91_25.1";
   };
+
+  users.users.kra3.linger = true;
 
   services.journald.extraConfig = ''
     SystemMaxUse=200M

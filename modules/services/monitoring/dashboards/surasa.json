@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Surasa (Raspberry Pi 3B+ secondary DNS resolver + Snapcast client) -- node_exporter metrics plus the systemd-journal logs it now pushes to Loki via the loki.<domain> vhost.",
+  "description": "Surasa (Raspberry Pi 3B+ secondary DNS resolver + Sendspin player) -- node_exporter metrics plus the systemd-journal logs it now pushes to Loki via the loki.<domain> vhost.",
   "editable": true,
   "graphTooltip": 0,
   "id": null,

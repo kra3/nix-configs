@@ -1,6 +1,5 @@
 {
-  # Sendspin player for Music Assistant, found over mDNS; runs on PipeWire/WirePlumber so it follows whichever output (jack or a paired A2DP speaker) is the default sink.
-  # The tmpfiles rule is `loginctl enable-linger` for kra3, since PipeWire only runs in a logged-in session and this host has no graphical login.
+  # The tmpfiles rule is `loginctl enable-linger` for kra3: PipeWire only runs in a logged-in session and this host has no graphical login.
   flake.nixosModules.services-media-sendspin =
     { pkgs, ... }:
     {

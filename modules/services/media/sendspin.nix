@@ -1,17 +1,36 @@
 {
-  # The tmpfiles rule is `loginctl enable-linger` for kra3: PipeWire only runs in a logged-in session and this host has no graphical login.
   flake.nixosModules.services-media-sendspin =
-    { config, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
+      cfg = config.services.sendspin-player;
+
       avahiCompat = pkgs.avahi.override { withLibdnssdCompat = true; };
+
+      release = {
+        aarch64-linux = {
+          arch = "arm64";
+          hash = "sha256-SQNbJ50UDQmcibSWg3N5vZvlDss6if5iorYMj1JD4mQ=";
+        };
+        x86_64-linux = {
+          arch = "x86_64";
+          hash = "sha256-FeUjZKvjbIKbBNif98M0f/vVxZ0bmJYFvYBRx/QCgS4=";
+        };
+      };
 
       # The release binary: building from source fetches sendspin-cpp and its dependencies at configure time.
       sendspin-cli = pkgs.stdenv.mkDerivation rec {
         pname = "sendspin-cli";
         version = "0.3.0";
         src = pkgs.fetchurl {
-          url = "https://github.com/Sendspin/sendspin-cpp-cli/releases/download/v${version}/sendspin-cli-${version}-linux-arm64.tar.gz";
-          hash = "sha256-SQNbJ50UDQmcibSWg3N5vZvlDss6if5iorYMj1JD4mQ=";
+          url = "https://github.com/Sendspin/sendspin-cpp-cli/releases/download/v${version}/sendspin-cli-${version}-linux-${
+            release.${pkgs.stdenv.hostPlatform.system}.arch
+          }.tar.gz";
+          inherit (release.${pkgs.stdenv.hostPlatform.system}) hash;
         };
         nativeBuildInputs = [ pkgs.autoPatchelfHook ];
         buildInputs = [
@@ -23,34 +42,29 @@
           pkgs.stdenv.cc.cc.lib
         ];
         installPhase = "install -Dm755 usr/local/bin/sendspin-cli $out/bin/sendspin-cli";
-        meta.platforms = [ "aarch64-linux" ];
+        meta.platforms = builtins.attrNames release;
       };
     in
     {
-      hardware.bluetooth = {
-        enable = true;
-        powerOnBoot = true;
+      options.services.sendspin-player = {
+        name = lib.mkOption {
+          type = lib.types.str;
+          description = "Player name shown in Music Assistant";
+        };
+        output = lib.mkOption {
+          type = lib.types.str;
+          default = "pipewire";
+          description = "sendspin-cli -o value: pipewire follows the default sink, pulse:<sink> pins one";
+        };
       };
 
-      security.rtkit.enable = true;
-      services.pipewire = {
-        enable = true;
-        alsa.enable = true;
-        pulse.enable = true;
-        wireplumber.enable = true;
-      };
-
-      systemd.tmpfiles.rules = [
-        "f /var/lib/systemd/linger/kra3 0644 root root -"
-      ];
-
-      systemd.user.services.sendspin = {
+      config.systemd.user.services.sendspin = {
         description = "Sendspin player";
         after = [ "pipewire-pulse.service" ];
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
-          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"Kitchen Eneby\" -s ${config.vars.network.macvlanAddresses.musicAssistant}:8927 -o pipewire --allow-unpaired";
+          ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${config.vars.network.macvlanAddresses.musicAssistant}:8927 -o ${cfg.output} --allow-unpaired";
           Restart = "always";
           RestartSec = "5s";
         };

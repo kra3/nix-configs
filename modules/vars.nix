@@ -206,7 +206,7 @@
               description = "Pinned br-home-auto IP for music-assistant";
             };
           };
-          # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's snapclient).
+          # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's sendspin player).
           macvlanAddresses = {
             musicAssistant = lib.mkOption {
               type = lib.types.str;

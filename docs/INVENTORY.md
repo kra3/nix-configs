@@ -10,7 +10,7 @@ network topology, ports, and firewall rules, see
 | Host | Role | Arch | Deploy |
 |---|---|---|---|
 | `sutala` | Home server + desktop (niri) | x86_64-linux | `just switch sutala` (local) |
-| `surasa` | Secondary DNS resolver + Snapcast and Sendspin clients + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
+| `surasa` | Secondary DNS resolver + Sendspin player + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
 | `mac-work` | Work laptop (nix-darwin, Home Manager only) | aarch64-darwin | `just switch mac-work` (local, Determinate-managed nix) |
 
 ---
@@ -162,7 +162,7 @@ Jellyfin-compatible server (untested).
 
 ### Role
 Secondary/off-box DNS resolver (AdGuard Home + Unbound, DoT upstreams),
-Snapcast client, and an independent "is sutala up" watchdog — deliberately
+Sendspin audio player, and an independent "is sutala up" watchdog — deliberately
 placed off sutala so it can alert even if sutala itself is unreachable.
 Config: `hosts/surasa/configuration.nix`.
 
@@ -186,8 +186,7 @@ independent of sutala.
 | Service | Defining file | Notes |
 |---|---|---|
 | AdGuard Home + Unbound | `modules/services/dns/rpi-secondary.nix` | Secondary resolver; forwards over DoT, same upstream philosophy as sutala's |
-| Snapcast client | `modules/services/media/snapclient.nix` | Multi-room audio playback endpoint |
-| Sendspin player | `modules/services/media/sendspin.nix` | Official `sendspin-cli` (release binary) as Music Assistant players "Kitchen Speaker" (surasa) and "Office Speaker" (sutala), dials MA directly on port 8927, also owns PipeWire/Bluetooth; replaces Snapcast once verified |
+| Sendspin player | `modules/services/media/sendspin.nix` | Official `sendspin-cli` (release binary) as Music Assistant players "Kitchen Speaker" (surasa) and "Office Speaker" (sutala), dials MA directly on port 8927 (surasa via the macvlan address, sutala via the bridge address); surasa's PipeWire/Bluetooth come from `modules/services/media/pi-audio.nix` |
 | Nightly deploy (runs on sutala) | `modules/services/system/surasa-autodeploy.nix` | Timer 08:00 builds `main` on sutala and switches surasa over SSH as kra3 (`surasa-autodeploy.service`) |
 | sutala-watchdog | `modules/services/monitoring/sutala-watchdog.nix` | Plain script+timer pinging sutala; Telegram alert on down (same bot as Grafana's) — not Prometheus-based, deliberately lightweight for 1GB RAM |
 | Alloy agent | `modules/services/monitoring/alloy-host.nix` | `lokiUrl` overridden to `https://loki.${domain}/loki/api/v1/push` (nginx vhost) since surasa can't reach the monitoring container's veth directly |

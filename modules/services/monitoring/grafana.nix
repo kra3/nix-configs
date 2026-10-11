@@ -979,6 +979,7 @@
         "grafana-dashboards/unbound.json".source = ./dashboards/unbound.json;
         "grafana-dashboards/zfs.json".source = ./dashboards/zfs.json;
         "grafana-dashboards/logs-overview.json".source = ./dashboards/logs-overview.json;
+        "grafana-dashboards/container-logs.json".source = ./dashboards/container-logs.json;
         "grafana-dashboards/system-monitor.json".source = ./dashboards/system-monitor.json;
         "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
         "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;

@@ -57,7 +57,7 @@
       }
       // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "life-network.service" ]; };
 
-      # No forwardAuth: authenticates natively via its own OIDC login (like Arcane).
+      # No forwardAuth: authenticates natively via its own OIDC login.
       services.nginx.virtualHosts."actualbudget.${config.vars.acme.domain}" =
         flakeLib.nginx.mkProxyVhost
           {

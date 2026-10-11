@@ -39,8 +39,8 @@ explicit inter-zone allow-list; Tailscale exit node + subnet route for
 (`monitoring`, `media-play`, `home-auto`, each its own veth on
 `10.3.255.0/24`), podman quadlet zones (`br-life` 10.3.0.0/24,
 `br-media-mgmt` 10.3.1.0/24, `br-home-auto` 10.3.2.0/24, plus a macvlan for
-LAN-discoverable home-auto pods), and two standalone rootless podman
-instances (arcane, authelia). Full diagram, port list, and the FORWARD
+LAN-discoverable home-auto pods), and one standalone rootless podman
+instance (authelia). Full diagram, port list, and the FORWARD
 allow-table: [`network-diagram.md`](./network-diagram.md).
 
 ### Services
@@ -61,7 +61,6 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |
 | Redis | `modules/services/redis.nix` | Ghostfolio's cache; password-protected, `FLUSHALL` renamed off |
 | Podman | `modules/services/virtualisation/podman.nix` | Rootful backend for the quadlet app fleet |
-| Arcane (container UI) | `modules/services/virtualisation/arcane.nix` | `oci.${domain}`; own **rootless** podman instance, isolated from the app fleet |
 | fail2ban | `modules/fail2ban.nix` | sshd + nginx jails, nftables-multiport ban action |
 | Avahi (mDNS reflector) | `modules/services/discovery/avahi.nix` | Relays mDNS between LAN and `ve-media-play` |
 | niri (desktop) | `modules/services/niri/default.nix` | Wayland compositor for interactive desktop use; Claude Desktop, gnome-keyring, fcitx5 |

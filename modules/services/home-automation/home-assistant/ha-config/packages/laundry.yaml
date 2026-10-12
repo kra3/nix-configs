@@ -75,7 +75,7 @@ template:
         state: >-
           {% if is_state('binary_sensor.washer_running', 'on') %}Running
           {% elif is_state('input_boolean.washer_unemptied', 'on') %}Done
-          {% elif is_state('binary_sensor.washer_running', 'off') %}Idle
+          {% elif is_number(states('sensor.washer_power_monitor_power')) %}Idle
           {% else %}Unknown{% endif %}
 
       - name: "Dryer Status"
@@ -84,7 +84,7 @@ template:
         state: >-
           {% if is_state('binary_sensor.dryer_running', 'on') %}Running
           {% elif is_state('input_boolean.dryer_unemptied', 'on') %}Done
-          {% elif is_state('binary_sensor.dryer_running', 'off') %}Idle
+          {% elif is_number(states('sensor.dryer_power_monitor_power')) %}Idle
           {% else %}Unknown{% endif %}
 
   - trigger:

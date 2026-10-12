@@ -86,11 +86,13 @@ views:
           Running: info
           Done: warning
           Idle: inactive
+          Unknown: inactive
           other: error
         hints:
           Running: Cycle in progress
           Done: Finished, waiting to be emptied
           Idle: Nothing running
+          Unknown: Waiting for the plug to report
       - entity: sensor.dryer_status
         name: Dryer
         icon: mdi:tumble-dryer
@@ -98,11 +100,13 @@ views:
           Running: info
           Done: warning
           Idle: inactive
+          Unknown: inactive
           other: error
         hints:
           Running: Cycle in progress
           Done: Finished, waiting to be emptied
           Idle: Nothing running
+          Unknown: Waiting for the plug to report
     - &washer_emptied
       type: custom:status-row-card
       grid_options:
@@ -2559,8 +2563,12 @@ views:
     - *dryer_emptied
     - <<: *washer_power_tile
       visibility: []
+      grid_options:
+        columns: 12
     - <<: *dryer_power_tile
       visibility: []
+      grid_options:
+        columns: 12
   - type: grid
     column_span: 1
     cards:
@@ -2658,13 +2666,9 @@ views:
         {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost'), ('Sutala', 'sensor.sutala_cost')] %}
         | kr | Week | Month | Quarter | Last month |
         |---|--:|--:|--:|--:|
-        {% for n, e in rows %}| {{ n }} | {{ state_attr(e, 'week') }} | {{ states(e) }} | {{ state_attr(e, 'quarter') }} | {{ state_attr(e, 'last_month') }} |
+        {% for n, e in rows %}| {{ n }} | {{ '%.2f' | format(state_attr(e, 'week') | float(0)) }} | {{ '%.2f' | format(states(e) | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'last_month') | float(0)) }} |
         {% endfor %}
-        Priced at the month's average spot price so far plus E.ON, grid and tax costs, with VAT. The final price is set after the month ends.
-    - type: tile
-      entity: sensor.electricity_price_per_kwh
-      name: Price per kWh now
-      icon: mdi:cash
+        Price now **{{ '%.2f' | format(states('sensor.electricity_price_per_kwh') | float(0)) }} kr/kWh** with VAT, from this month's average spot. E.ON sets the final price after the month ends.
   - type: grid
     column_span: 1
     cards:
@@ -2681,7 +2685,7 @@ views:
         {% set c = state_attr(e, 'cycles') or [] %}
         {% if c %}| Started | Min | kWh | kr |
         |---|--:|--:|--:|
-        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ r.kwh }} | {{ r.cost }} |
+        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ '%.2f' | format(r.kwh | float(0)) }} | {{ '%.2f' | format(r.cost | float(0)) }} |
         {% endfor %}{% else %}No runs recorded yet.
         {% endif %}
         {% endfor %}
@@ -2694,7 +2698,7 @@ views:
       heading_style: title
     - type: tile
       entity: counter.washer_care
-      name: Washer, washes since drum clean
+      name: Washes since drum clean (due at 40)
       icon: mdi:washing-machine-alert
       grid_options:
         columns: full
@@ -2707,7 +2711,7 @@ views:
           text: Drum cleaned? This resets the count.
     - type: tile
       entity: counter.dryer_care
-      name: Dryer, cycles since filter care
+      name: Dryer cycles since filter care (due at 30)
       icon: mdi:tumble-dryer
       grid_options:
         columns: full
@@ -2724,11 +2728,10 @@ views:
       icon: mdi:timer-sand
       grid_options:
         columns: full
-    - type: markdown
-      grid_options:
-        columns: full
-      content: |-
-        Tap a counter after the care is done to reset it. Reminders come at 40 washes and 30 dryer cycles. Each dryer cycle is checked against the median of the earlier ones, and an idle machine drawing more than 6 W for half an hour is flagged.
+      visibility:
+      - condition: numeric_state
+        entity: input_number.laundry_gap_minutes
+        above: 0
 - type: sections
   title: System Health
   path: system-health

@@ -10,6 +10,7 @@ sensor:
       - sensor.bedroom_occupancy_temperature
       - sensor.laundry_occupancy_temperature
       - sensor.toilet_occupancy_temperature
+      - sensor.living_room_occupancy_temperature
 
   - platform: min_max
     name: "Average Humidity"
@@ -20,6 +21,7 @@ sensor:
       - sensor.bedroom_occupancy_humidity
       - sensor.laundry_occupancy_humidity
       - sensor.toilet_occupancy_humidity
+      - sensor.living_room_occupancy_humidity
 
   - platform: min_max
     name: "Average Illuminance"

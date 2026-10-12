@@ -2,56 +2,28 @@
 - id: living_darkness
   alias: Living room — Darkness detection
   description: >-
-    Dark while it is gloomy outside (no local sensor).
+    Dark while it is gloomy outside and the living room reads below 30 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
-      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
+      occupancy_sensor: binary_sensor.living_room_occupancy_presence
+      illuminance_sensor: sensor.living_room_occupancy_illuminance
+      dark_below: 30
       light_entity: light.living_room_lights
       dark_boolean: input_boolean.living_room_is_dark
 
 - id: living_room_lighting
   alias: Living room — Lighting
   description: >-
-    Presence + darkness via ranger_duo_fxd's Frigate person detection.
-    KNOWN ISSUE: motion sensor rarely fires, so occupancy rarely
-    populates for turn-on.
+    Presence + darkness via the living room mmWave sensor; brightness left to Adaptive Lighting.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.living_room_lights
-      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
-      motion_sensor: binary_sensor.ranger_duo_fxd_motion
+      occupancy_sensor: binary_sensor.living_room_occupancy_presence
+      motion_sensor: binary_sensor.living_room_occupancy_presence
       dark_boolean: input_boolean.living_room_is_dark
       media_player_entity: media_player.lg_webos_tv_oled77c35la
-
-- id: living_room_motion_lights_on
-  alias: Living room — Lights on for motion
-  description: >-
-    Turns the lights on for camera motion when dark, so Frigate has light to
-    detect a person; the Lighting automation above turns them off again.
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.ranger_duo_fxd_motion
-    to: "on"
-    for: "00:00:03"
-  conditions:
-  - condition: state
-    entity_id: input_boolean.living_room_is_dark
-    state: "on"
-  - condition: state
-    entity_id: input_boolean.party_mode
-    state: "off"
-  - condition: template
-    value_template: >-
-      {{ is_state('media_player.lg_webos_tv_oled77c35la', ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
-  actions:
-  - action: light.turn_on
-    target:
-      entity_id: light.living_room_lights
-    data:
-      transition: 1
-  mode: single
 
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
@@ -115,7 +87,7 @@
         - condition: not
           conditions:
           - condition: state
-            entity_id: binary_sensor.ranger_duo_fxd_person_occupancy
+            entity_id: binary_sensor.living_room_occupancy_presence
             state: "off"
         then:
         - target:
@@ -177,7 +149,7 @@
   - id: presence_clear
     trigger: template
     value_template: >-
-      {{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'off')
+      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
          and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off') }}
     for: "00:15:00"
   - id: sleep_start
@@ -190,9 +162,9 @@
     state: "on"
   - condition: template
     value_template: >-
-      {{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'off')
+      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
          and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off')
-         and now() - states.binary_sensor.ranger_duo_fxd_person_occupancy.last_changed
+         and now() - states.binary_sensor.living_room_occupancy_presence.last_changed
              >= timedelta(minutes=15)
          and now() - states.binary_sensor.ranger_duo_ptz_person_occupancy.last_changed
              >= timedelta(minutes=15) }}

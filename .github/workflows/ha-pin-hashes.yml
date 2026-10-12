@@ -1,0 +1,39 @@
+---
+name: Refresh HA pin hashes
+
+on:
+  pull_request:
+    paths:
+      - modules/services/home-automation/home-assistant/ha-pins.json
+
+permissions:
+  contents: write
+
+jobs:
+  hashes:
+    # Fork PRs get no secrets and a read-only token
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          # A PAT push (unlike GITHUB_TOKEN) re-triggers the required checks
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Recompute hashes
+        run: .github/scripts/update-ha-pin-hashes.sh
+
+      - name: Commit refreshed hashes
+        run: |
+          if git diff --quiet; then
+            echo "hashes already current"
+            exit 0
+          fi
+          git config user.name "Flake Bot"
+          git config user.email "actions@github.com"
+          git commit -am "chore(deps): refresh ha-pins hashes"
+          git push

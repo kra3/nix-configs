@@ -11,6 +11,10 @@
     let
       network = config.virtualisation.quadlet.networks.home-auto;
       macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
+      pins = flakeLib.ha-pins pkgs;
+      haData = "/srv/appdata/home-auto/home-assistant/data";
+      haConfig = ../../../services/home-automation/home-assistant/ha-config;
+      lovelace = pkgs.replaceVars (haConfig + "/lovelace.yaml") pins.frontendVersions;
     in
     {
       imports = [ flakeModules.nixos.services-home-automation-home-assistant ];
@@ -43,10 +47,10 @@
                   "auth.${config.vars.acme.domain}:10.3.2.1"
                 ];
                 volumes = [
-                  "/srv/appdata/home-auto/home-assistant/data:/config"
+                  "${haData}:/config"
                   "${../../../services/home-automation/home-assistant/ha-config/configuration.yaml}:/config/configuration.yaml:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/automations}:/config/automations:ro"
-                  "${../../../services/home-automation/home-assistant/ha-config/lovelace.yaml}:/config/lovelace.yaml:ro"
+                  "${lovelace}:/config/lovelace.yaml:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/dashboards}:/config/dashboards:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
@@ -68,6 +72,11 @@
                   "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"
                   "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
                   "/run/dbus:/run/dbus:ro"
+                ]
+                ++ lib.mapAttrsToList (n: drv: "${drv}:/config/custom_components/${n}:ro") pins.integrations
+                ++ lib.mapAttrsToList (n: drv: "${drv}:/config/www/community/${n}:ro") pins.frontend
+                ++ [
+                  "${haData}/custom_components/scene_presets/userdata:/config/custom_components/scene_presets/userdata"
                 ];
                 addCapabilities = [
                   "NET_ADMIN"

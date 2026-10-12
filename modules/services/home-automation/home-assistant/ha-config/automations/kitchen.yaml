@@ -28,8 +28,7 @@
   description: >-
     After 5 min of continuous presence the kitchen lights go to 100 % and the
     kitchen-dining lights come on with them when it is dark; when the room empties or
-    the lights go off, Adaptive Lighting takes over again and kitchen-dining goes off
-    unless someone is there.
+    the lights go off, Adaptive Lighting takes over again and kitchen-dining goes off.
   triggers:
   - trigger: state
     entity_id: binary_sensor.room_presence_kitchen
@@ -97,16 +96,11 @@
           - light.kitchen_lights
           - light.kitchen_dining_lights
           manual_control: false
-      - if:
-        - condition: state
-          entity_id: binary_sensor.room_presence_dining
-          state: "off"
-        then:
-        - action: light.turn_off
-          target:
-            entity_id: light.kitchen_dining_lights
-          data:
-            transition: 5
+      - action: light.turn_off
+        target:
+          entity_id: light.kitchen_dining_lights
+        data:
+          transition: 5
       - action: adaptive_lighting.apply
         target:
           entity_id: switch.home_adaptive_lighting_home

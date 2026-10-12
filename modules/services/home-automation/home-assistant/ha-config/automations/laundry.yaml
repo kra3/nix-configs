@@ -1,0 +1,95 @@
+# ── Laundry ─────────────────────────────────────────────────────
+- id: laundry_cycle_finished
+  alias: "Laundry: cycle finished"
+  description: Marks a machine as waiting to be emptied when its cycle ends, and tells whoever is home.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washer_running
+      from: "on"
+      to: "off"
+      id: washer
+    - platform: state
+      entity_id: binary_sensor.dryer_running
+      from: "on"
+      to: "off"
+      id: dryer
+  action:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: "input_boolean.{{ trigger.id }}_unemptied"
+    - action: script.laundry_notify
+      data:
+        machine: "{{ trigger.id }}"
+  mode: queued
+
+- id: laundry_cycle_started
+  alias: "Laundry: cycle started"
+  description: A new cycle clears the waiting-to-be-emptied flag.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washer_running
+      to: "on"
+      id: washer
+    - platform: state
+      entity_id: binary_sensor.dryer_running
+      to: "on"
+      id: dryer
+  action:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: "input_boolean.{{ trigger.id }}_unemptied"
+  mode: queued
+
+- id: laundry_emptying_reminder
+  alias: "Laundry: emptying reminder"
+  description: Reminds after 30 minutes and again after 2 hours if a machine is still waiting to be emptied.
+  trigger:
+    - platform: state
+      entity_id: input_boolean.washer_unemptied
+      to: "on"
+      for: "00:30:00"
+      id: washer
+    - platform: state
+      entity_id: input_boolean.washer_unemptied
+      to: "on"
+      for: "02:00:00"
+      id: washer
+    - platform: state
+      entity_id: input_boolean.dryer_unemptied
+      to: "on"
+      for: "00:30:00"
+      id: dryer
+    - platform: state
+      entity_id: input_boolean.dryer_unemptied
+      to: "on"
+      for: "02:00:00"
+      id: dryer
+  action:
+    - action: script.laundry_notify
+      data:
+        machine: "{{ trigger.id }}"
+        reminder: true
+  mode: queued
+
+- id: laundry_morning_delivery
+  alias: "Laundry: deliver after sleep"
+  description: Delivers what finished during the night once the sleep schedule ends.
+  trigger:
+    - platform: state
+      entity_id: schedule.sleep
+      from: "on"
+      to: "off"
+  action:
+    - repeat:
+        for_each:
+          - washer
+          - dryer
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ is_state('input_boolean.' ~ repeat.item ~ '_unemptied', 'on') }}"
+            then:
+              - action: script.laundry_notify
+                data:
+                  machine: "{{ repeat.item }}"
+  mode: single

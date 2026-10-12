@@ -55,6 +55,113 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Laundry
+      icon: mdi:washing-machine
+      heading_style: title
+      visibility: &laundry_active
+      - condition: or
+        conditions:
+        - condition: state
+          entity: sensor.washer_status
+          state_not: Idle
+        - condition: state
+          entity: sensor.dryer_status
+          state_not: Idle
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      visibility: *laundry_active
+      items:
+      - entity: sensor.washer_status
+        name: Washer
+        icon: mdi:washing-machine
+        colors:
+          Running: info
+          Done: warning
+          Idle: inactive
+          other: error
+        hints:
+          Running: Cycle in progress
+          Done: Finished, waiting to be emptied
+          Idle: Nothing running
+      - entity: sensor.dryer_status
+        name: Dryer
+        icon: mdi:tumble-dryer
+        colors:
+          Running: info
+          Done: warning
+          Idle: inactive
+          other: error
+        hints:
+          Running: Cycle in progress
+          Done: Finished, waiting to be emptied
+          Idle: Nothing running
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      visibility:
+      - condition: state
+        entity: input_boolean.washer_unemptied
+        state: "on"
+      items:
+      - entity: input_boolean.washer_unemptied
+        name: Washer
+        icon: mdi:check-circle-outline
+        tap: toggle
+        colors:
+          "on": warning
+          other: inactive
+        labels:
+          "on": Tap when emptied
+        hints:
+          "on": Clears the reminders
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      visibility:
+      - condition: state
+        entity: input_boolean.dryer_unemptied
+        state: "on"
+      items:
+      - entity: input_boolean.dryer_unemptied
+        name: Dryer
+        icon: mdi:check-circle-outline
+        tap: toggle
+        colors:
+          "on": warning
+          other: inactive
+        labels:
+          "on": Tap when emptied
+        hints:
+          "on": Clears the reminders
+    - type: custom:apexcharts-card
+      grid_options:
+        columns: full
+      visibility: *laundry_active
+      header:
+        show: true
+        title: Power, last 6 h
+        show_states: false
+      graph_span: 6h
+      apex_config:
+        chart:
+          height: 170
+        legend:
+          show: true
+          position: bottom
+        yaxis:
+          min: 0
+          decimalsInFloat: 0
+      series:
+      - entity: sensor.washer_power_monitor_power
+        name: Washer
+        stroke_width: 2
+      - entity: sensor.dryer_power_monitor_power
+        name: Dryer
+        stroke_width: 2
+  - type: grid
+    cards:
+    - type: heading
       heading: Active Rooms
       heading_style: title
     - type: custom:streamline-card

@@ -1,0 +1,45 @@
+# Washer and dryer cycle state from the plug power readings; "done" is remembered until emptied or the next start.
+input_boolean:
+  washer_unemptied:
+    name: Washer waiting to be emptied
+    icon: mdi:washing-machine-alert
+  dryer_unemptied:
+    name: Dryer waiting to be emptied
+    icon: mdi:tumble-dryer
+
+template:
+  - binary_sensor:
+      - name: "Washer Running"
+        unique_id: washer_running
+        device_class: running
+        state: "{{ states('sensor.washer_power_monitor_power') | float > 10 }}"
+        availability: "{{ is_number(states('sensor.washer_power_monitor_power')) }}"
+        delay_on: "00:00:30"
+        delay_off: "00:03:00"
+
+      - name: "Dryer Running"
+        unique_id: dryer_running
+        device_class: running
+        state: "{{ states('sensor.dryer_power_monitor_power') | float > 10 }}"
+        availability: "{{ is_number(states('sensor.dryer_power_monitor_power')) }}"
+        delay_on: "00:00:30"
+        delay_off: "00:03:00"
+
+  - sensor:
+      - name: "Washer Status"
+        unique_id: washer_status
+        icon: mdi:washing-machine
+        state: >-
+          {% if is_state('binary_sensor.washer_running', 'on') %}Running
+          {% elif is_state('input_boolean.washer_unemptied', 'on') %}Done
+          {% elif is_state('binary_sensor.washer_running', 'off') %}Idle
+          {% else %}Unknown{% endif %}
+
+      - name: "Dryer Status"
+        unique_id: dryer_status
+        icon: mdi:tumble-dryer
+        state: >-
+          {% if is_state('binary_sensor.dryer_running', 'on') %}Running
+          {% elif is_state('input_boolean.dryer_unemptied', 'on') %}Done
+          {% elif is_state('binary_sensor.dryer_running', 'off') %}Idle
+          {% else %}Unknown{% endif %}

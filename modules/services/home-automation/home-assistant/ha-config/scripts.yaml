@@ -260,3 +260,53 @@ lights_all_off:
       - switch.hue_light_switch_1
       - switch.hue_light_switch_2
   mode: single
+
+laundry_notify:
+  alias: "Laundry: notify"
+  description: Tells whoever is home that a machine is done, unless the sleep schedule is on.
+  fields:
+    machine:
+      required: true
+      selector:
+        select:
+          options:
+          - washer
+          - dryer
+    reminder:
+      required: false
+      default: false
+      selector:
+        boolean:
+  sequence:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "off"
+  - variables:
+      anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
+      arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
+      title: "{{ 'Washer' if machine == 'washer' else 'Dryer' }}"
+      message: >-
+        {% if reminder %}{{ title }} is still waiting to be emptied.
+        {% elif machine == 'washer' and is_state('binary_sensor.dryer_running', 'off') %}Washer is done and the dryer is free.
+        {% else %}{{ title }} is done.{% endif %}
+  - if:
+    - condition: template
+      value_template: "{{ anjali_home }}"
+    then:
+    - action: notify.send_message
+      target:
+        entity_id: notify.anjalis_iphone
+      data:
+        title: "{{ title }}"
+        message: "{{ message }}"
+  - if:
+    - condition: template
+      value_template: "{{ arun_home }}"
+    then:
+    - action: notify.send_message
+      target:
+        entity_id: notify.meghanadha
+      data:
+        title: "{{ title }}"
+        message: "{{ message }}"
+  mode: queued

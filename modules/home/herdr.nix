@@ -62,6 +62,18 @@
               width = "60%";
               height = "60%";
             }
+            {
+              key = "prefix+t";
+              type = "plugin_action";
+              command = "herdr-tsk.open-board";
+              description = "tsk board";
+            }
+            {
+              key = "prefix+a";
+              type = "plugin_action";
+              command = "herdr-tsk.quick-capture";
+              description = "tsk quick capture";
+            }
           ];
         };
         ui = {

@@ -57,6 +57,11 @@
       mru-spaces = false;
     };
     spaces.spans-displays = false;
+    trackpad.Clicking = true;
+    finder = {
+      CreateDesktop = false;
+      FXPreferredViewStyle = "Nlsv";
+    };
     NSGlobalDomain = {
       AppleInterfaceStyle = "Dark";
       AppleShowAllExtensions = true;

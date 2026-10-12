@@ -64,6 +64,12 @@
             }
           ];
         };
+        ui = {
+          tab_bar_position = "bottom";
+          pane_outer_borders = false;
+          prompt_new_tab_name = false;
+          toast.delivery = "system";
+        };
         experimental.pane_history = true;
       };
 

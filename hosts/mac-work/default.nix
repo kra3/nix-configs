@@ -47,5 +47,24 @@
     home.stateVersion = lib.mkDefault "25.11";
   };
 
+  system.primaryUser = "akarunagath";
+
+  security.pam.services.sudo_local.touchIdAuth = true;
+
+  system.defaults = {
+    dock = {
+      autohide = true;
+      mru-spaces = false;
+    };
+    spaces.spans-displays = false;
+    NSGlobalDomain = {
+      AppleInterfaceStyle = "Dark";
+      AppleShowAllExtensions = true;
+      _HIHideMenuBar = true;
+      InitialKeyRepeat = 15;
+      KeyRepeat = 2;
+    };
+  };
+
   system.stateVersion = 6;
 }

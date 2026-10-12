@@ -47,5 +47,51 @@
     home.stateVersion = lib.mkDefault "25.11";
   };
 
+  system.primaryUser = "akarunagath";
+
+  security.pam.services.sudo_local.touchIdAuth = true;
+
+  system.defaults = {
+    dock = {
+      autohide = true;
+      mru-spaces = false;
+      show-recents = false;
+      minimize-to-application = true;
+    };
+    spaces.spans-displays = false;
+    trackpad = {
+      Clicking = true;
+      Dragging = true;
+    };
+    finder = {
+      CreateDesktop = false;
+      FXPreferredViewStyle = "Nlsv";
+      ShowPathbar = true;
+      ShowStatusBar = true;
+      FXEnableExtensionChangeWarning = false;
+      FXDefaultSearchScope = "SCcf";
+    };
+    screencapture.location = "~/Desktop";
+    loginwindow.GuestEnabled = false;
+    NSGlobalDomain = {
+      AppleInterfaceStyle = "Dark";
+      AppleShowAllExtensions = true;
+      _HIHideMenuBar = true;
+      InitialKeyRepeat = 15;
+      KeyRepeat = 2;
+      ApplePressAndHoldEnabled = false;
+      NSAutomaticQuoteSubstitutionEnabled = false;
+      NSAutomaticDashSubstitutionEnabled = false;
+      NSAutomaticSpellingCorrectionEnabled = false;
+      NSAutomaticCapitalizationEnabled = false;
+      NSWindowShouldDragOnGesture = true;
+    };
+  };
+
+  system.keyboard = {
+    enableKeyMapping = true;
+    remapCapsLockToControl = true;
+  };
+
   system.stateVersion = 6;
 }

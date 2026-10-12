@@ -81,11 +81,23 @@ blueprint:
       name: Defer to media player (optional)
       description: >-
         If set, skips turn-on (not turn-off) while this player is
-        playing/paused/buffering.
+        playing/buffering on one of media_sources. Any other state
+        (paused, TV just on) or app (YouTube, ...) does not block.
       default: ""
       selector:
         entity:
           domain: media_player
+    media_sources:
+      name: Media sources that defer lighting
+      description: Player `source` names that block turn-on (see media_player_entity).
+      default:
+        - Litefin
+        - Moonfin
+        - Jellyfin
+        - Apple TV
+      selector:
+        text:
+          multiple: true
     nap_boolean:
       name: Nap helper (optional)
       description: >-
@@ -145,6 +157,11 @@ variables:
   occupancy_sensor: !input occupancy_sensor
   motion_sensor: !input motion_sensor
   media_player_entity: !input media_player_entity
+  media_sources: !input media_sources
+  media_blocks: >-
+    {{ media_player_entity not in [none, ''] and
+       is_state(media_player_entity, ['playing', 'buffering']) and
+       state_attr(media_player_entity, 'source') in media_sources }}
   nap_boolean: !input nap_boolean
   asleep: "{{ is_state('schedule.sleep', 'on') or (nap_boolean != '' and is_state(nap_boolean, 'on')) }}"
 
@@ -183,9 +200,7 @@ actions:
               - condition: template
                 value_template: "{{ react_during_sleep }}"
           - condition: template
-            value_template: >-
-              {{ media_player_entity in [none, ''] or
-                 is_state(media_player_entity, ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
+            value_template: "{{ not media_blocks }}"
         sequence:
           - target:
               entity_id: !input light_entity
@@ -251,9 +266,7 @@ actions:
               - condition: template
                 value_template: "{{ react_during_sleep }}"
           - condition: template
-            value_template: >-
-              {{ media_player_entity in [none, ''] or
-                 is_state(media_player_entity, ['off', 'idle', 'standby', 'unavailable', 'unknown']) }}
+            value_template: "{{ not media_blocks }}"
         sequence:
           - target:
               entity_id: !input light_entity

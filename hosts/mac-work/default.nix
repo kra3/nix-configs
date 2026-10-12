@@ -58,7 +58,7 @@
       show-recents = false;
       minimize-to-application = true;
     };
-    spaces.spans-displays = false;
+    spaces.spans-displays = true;
     trackpad = {
       Clicking = true;
       Dragging = true;

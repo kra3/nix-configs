@@ -16,7 +16,7 @@ template:
       - name: "Room Presence Living"
         unique_id: room_presence_living
         device_class: occupancy
-        state: "{{ is_state('binary_sensor.ranger_duo_fxd_person_occupancy', 'on') or is_state('binary_sensor.ranger_duo_fxd_motion', 'on') }}"
+        state: "{{ is_state('binary_sensor.living_room_occupancy_presence', 'on') }}"
         delay_off: "00:05:00"
 
       - name: "Room Presence Office"

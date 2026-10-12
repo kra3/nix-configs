@@ -85,6 +85,9 @@ views:
         name: Living Room
         icon: mdi:sofa
         presence: binary_sensor.room_presence_living
+        temperature: sensor.living_room_occupancy_temperature
+        humidity: sensor.living_room_occupancy_humidity
+        illuminance: sensor.living_room_occupancy_illuminance
       visibility:
       - condition: state
         entity: binary_sensor.room_presence_living
@@ -2096,6 +2099,15 @@ views:
       heading: Rooms
       icon: mdi:floor-plan
       heading_style: title
+    - type: custom:climate-room-card
+      name: Living Room
+      icon: mdi:sofa
+      comfort: sensor.living_room_comfort
+      temperature: sensor.living_room_occupancy_temperature
+      humidity: sensor.living_room_occupancy_humidity
+      dew: sensor.living_room_dew_point
+      grid_options:
+        columns: full
     - type: custom:climate-room-card
       name: Bedroom
       icon: mdi:bed

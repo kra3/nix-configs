@@ -42,7 +42,7 @@
 {%- set lim = states('input_number.climate_moisture_limit') | float(3) -%}
 {%- set ns = namespace(r=[]) -%}
 {%- if is_number(o) -%}
-{%- for name, k in [('Bedroom', 'bedroom'), ('Bathroom', 'bathroom'), ('Laundry', 'laundry'), ('Toilet', 'toilet')] -%}
+{%- for name, k in [('Living', 'living_room'), ('Bedroom', 'bedroom'), ('Bathroom', 'bathroom'), ('Laundry', 'laundry'), ('Toilet', 'toilet')] -%}
 {%- set t = states('sensor.' ~ k ~ '_occupancy_temperature') -%}
 {%- set h = states('sensor.' ~ k ~ '_occupancy_humidity') -%}
 {%- if is_number(t) and is_number(h) -%}

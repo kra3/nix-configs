@@ -29,6 +29,20 @@ template:
           {%- from 'climate.jinja' import status -%}
           {% if is_number(states('sensor.bedroom_occupancy_temperature')) %}{{ status(states('sensor.bedroom_occupancy_temperature') | float, states('sensor.bedroom_occupancy_humidity') | float(none), is_state('schedule.sleep', 'on')) | trim }}{% else %}{{ none }}{% endif %}
 
+      - name: "Living room dew point"
+        unique_id: climate_living_room_dew_point
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- from 'climate.jinja' import dew -%}
+          {% if is_number(states('sensor.living_room_occupancy_temperature')) and is_number(states('sensor.living_room_occupancy_humidity')) %}{{ dew(states('sensor.living_room_occupancy_temperature') | float, states('sensor.living_room_occupancy_humidity') | float) }}{% else %}{{ none }}{% endif %}
+
+      - name: "Living room comfort"
+        unique_id: climate_living_room_comfort
+        state: >-
+          {%- from 'climate.jinja' import status -%}
+          {% if is_number(states('sensor.living_room_occupancy_temperature')) %}{{ status(states('sensor.living_room_occupancy_temperature') | float, states('sensor.living_room_occupancy_humidity') | float(none), false) | trim }}{% else %}{{ none }}{% endif %}
+
       - name: "Laundry dew point"
         unique_id: climate_laundry_dew_point
         device_class: temperature
@@ -173,7 +187,7 @@ template:
         unique_id: climate_home_comfort
         icon: mdi:home-thermometer-outline
         state: >-
-          {% set rooms = {'Bedroom': 'sensor.bedroom_comfort', 'Bathroom': 'sensor.bathroom_comfort', 'Laundry': 'sensor.laundry_comfort',
+          {% set rooms = {'Living': 'sensor.living_room_comfort', 'Bedroom': 'sensor.bedroom_comfort', 'Bathroom': 'sensor.bathroom_comfort', 'Laundry': 'sensor.laundry_comfort',
                           'Toilet': 'sensor.toilet_comfort', 'Hall': 'sensor.hall_comfort', 'Kitchen': 'sensor.kitchen_comfort'} %}
           {% set ns = namespace(bad=[], live=0) %}
           {% for name, e in rooms.items() %}
@@ -190,7 +204,8 @@ template:
         unique_id: climate_rooms_not_reporting
         icon: mdi:access-point-network-off
         state: >-
-          {% set rooms = {'Bedroom': ['sensor.bedroom_occupancy_temperature', 'sensor.bedroom_occupancy_humidity'],
+          {% set rooms = {'Living': ['sensor.living_room_occupancy_temperature', 'sensor.living_room_occupancy_humidity'],
+                          'Bedroom': ['sensor.bedroom_occupancy_temperature', 'sensor.bedroom_occupancy_humidity'],
                           'Bathroom': ['sensor.bathroom_occupancy_temperature', 'sensor.bathroom_occupancy_humidity'],
                           'Laundry': ['sensor.laundry_occupancy_temperature', 'sensor.laundry_occupancy_humidity'],
                           'Toilet': ['sensor.toilet_occupancy_temperature', 'sensor.toilet_occupancy_humidity'],

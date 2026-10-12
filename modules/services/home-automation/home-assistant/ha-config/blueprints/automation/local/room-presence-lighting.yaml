@@ -81,8 +81,8 @@ blueprint:
       name: Defer to media player (optional)
       description: >-
         If set, skips turn-on (not turn-off) while this player is
-        playing/paused/buffering on one of media_sources. Any other
-        state or app (TV just on, YouTube, ...) does not block.
+        playing/buffering on one of media_sources. Any other state
+        (paused, TV just on) or app (YouTube, ...) does not block.
       default: ""
       selector:
         entity:
@@ -160,7 +160,7 @@ variables:
   media_sources: !input media_sources
   media_blocks: >-
     {{ media_player_entity not in [none, ''] and
-       is_state(media_player_entity, ['playing', 'paused', 'buffering']) and
+       is_state(media_player_entity, ['playing', 'buffering']) and
        state_attr(media_player_entity, 'source') in media_sources }}
   nap_boolean: !input nap_boolean
   asleep: "{{ is_state('schedule.sleep', 'on') or (nap_boolean != '' and is_state(nap_boolean, 'on')) }}"

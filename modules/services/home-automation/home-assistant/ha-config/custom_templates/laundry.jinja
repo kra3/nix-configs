@@ -15,3 +15,7 @@
 {% set h = states('input_text.' ~ dev ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | map('float') | list -%}
 {{ ((h[:done] | sum) + states('sensor.' ~ dev ~ '_energy_month') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
 {%- endmacro %}
+
+{% macro today(dev) -%}
+{{ (states('sensor.' ~ dev ~ '_energy_day') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
+{%- endmacro %}

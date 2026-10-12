@@ -202,6 +202,24 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Electricity
+      icon: mdi:flash
+      heading_style: title
+    - type: tile
+      entity: sensor.electricity_price_per_kwh
+      name: Price now, with VAT
+      icon: mdi:cash
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.plugs_cost_today
+      name: Washer, dryer and Sutala today
+      icon: mdi:cash-clock
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
       heading: Active Rooms
       heading_style: title
     - type: custom:streamline-card
@@ -2652,46 +2670,6 @@ views:
           name: Washer
         - entity: sensor.dryer_power_monitor_energy
           name: Dryer
-  - type: grid
-    column_span: 1
-    cards:
-    - type: heading
-      heading: Cost, estimated
-      icon: mdi:cash
-      heading_style: title
-    - type: markdown
-      grid_options:
-        columns: full
-      content: |-
-        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost'), ('Sutala', 'sensor.sutala_cost')] %}
-        | kr | Week | Month | Quarter | Last month |
-        |---|--:|--:|--:|--:|
-        {% for n, e in rows %}| {{ n }} | {{ '%.2f' | format(state_attr(e, 'week') | float(0)) }} | {{ '%.2f' | format(states(e) | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'last_month') | float(0)) }} |
-        {% endfor %}
-        Price now **{{ '%.2f' | format(states('sensor.electricity_price_per_kwh') | float(0)) }} kr/kWh** with VAT, from this month's average spot. E.ON sets the final price after the month ends.
-  - type: grid
-    column_span: 1
-    cards:
-    - type: heading
-      heading: Recent runs
-      icon: mdi:history
-      heading_style: title
-    - type: markdown
-      grid_options:
-        columns: full
-      content: |-
-        {% for name, e in [('Washer', 'sensor.washer_last_cycle'), ('Dryer', 'sensor.dryer_last_cycle')] %}
-        **{{ name }}**
-        {% set c = state_attr(e, 'cycles') or [] %}
-        {% if c %}| Started | Min | kWh | kr |
-        |---|--:|--:|--:|
-        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ '%.2f' | format(r.kwh | float(0)) }} | {{ '%.2f' | format(r.cost | float(0)) }} |
-        {% endfor %}{% else %}No runs recorded yet.
-        {% endif %}
-        {% endfor %}
-  - type: grid
-    column_span: 1
-    cards:
     - type: heading
       heading: Care and checks
       icon: mdi:wrench-clock
@@ -2732,6 +2710,40 @@ views:
       - condition: numeric_state
         entity: input_number.laundry_gap_minutes
         above: 0
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost')] %}
+        | kr | Week | Month | Quarter | Last month |
+        |---|--:|--:|--:|--:|
+        {% for n, e in rows %}| {{ n }} | {{ '%.2f' | format(state_attr(e, 'week') | float(0)) }} | {{ '%.2f' | format(states(e) | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'last_month') | float(0)) }} |
+        {% endfor %}
+        Price now **{{ '%.2f' | format(states('sensor.electricity_price_per_kwh') | float(0)) }} kr/kWh** with VAT, from this month's average spot. E.ON sets the final price after the month ends.
+    - type: heading
+      heading: Recent runs
+      icon: mdi:history
+      heading_style: title
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% for name, e in [('Washer', 'sensor.washer_last_cycle'), ('Dryer', 'sensor.dryer_last_cycle')] %}
+        **{{ name }}**
+        {% set c = state_attr(e, 'cycles') or [] %}
+        {% if c %}| Started | Min | kWh | kr |
+        |---|--:|--:|--:|
+        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ '%.2f' | format(r.kwh | float(0)) }} | {{ '%.2f' | format(r.cost | float(0)) }} |
+        {% endfor %}{% else %}No runs recorded yet.
+        {% endif %}
+        {% endfor %}
 - type: sections
   title: System Health
   path: system-health
@@ -3027,6 +3039,14 @@ views:
           type: bar
       grid_options:
         columns: 12
+    - type: markdown
+      grid_options:
+        columns: 12
+      content: |-
+        **Cost, estimated** (kr)
+        | Today | Week | Month | Quarter | Last month |
+        |--:|--:|--:|--:|--:|
+        | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'today') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'week') | float(0)) }} | {{ '%.2f' | format(states('sensor.sutala_cost') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'last_month') | float(0)) }} |
     - type: custom:status-row-card
       color: "#ffd86b"
       items:

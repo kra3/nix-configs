@@ -14,6 +14,8 @@ resources:
     type: module
   - url: /local/status-row-card.js?v=6
     type: module
+  - url: /local/laundry-machine-card.js?v=1
+    type: module
   - url: /local/scene-picker-card.js?v=2
     type: module
   - url: /local/mode-switch-card.js?v=1

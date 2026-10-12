@@ -74,131 +74,26 @@ views:
           state:
           - Running
           - Done
-    - type: custom:status-row-card
+    - &laundry_machines
+      type: custom:laundry-machine-card
       grid_options:
         columns: full
       visibility: *laundry_active
-      items: &laundry_items
-      - entity: sensor.washer_status
-        name: Washer
+      machines:
+      - name: Washer
         icon: mdi:washing-machine
-        colors:
-          Running: info
-          Done: warning
-          Idle: inactive
-          Unknown: inactive
-          other: error
-        hints:
-          Running: Cycle in progress
-          Done: Finished, waiting to be emptied
-          Idle: Nothing running
-          Unknown: Waiting for the plug to report
-      - entity: sensor.dryer_status
-        name: Dryer
+        status: sensor.washer_status
+        power: sensor.washer_power_monitor_power
+        running: binary_sensor.washer_running
+        last_cycle: sensor.washer_last_cycle
+        flag: input_boolean.washer_unemptied
+      - name: Dryer
         icon: mdi:tumble-dryer
-        colors:
-          Running: info
-          Done: warning
-          Idle: inactive
-          Unknown: inactive
-          other: error
-        hints:
-          Running: Cycle in progress
-          Done: Finished, waiting to be emptied
-          Idle: Nothing running
-          Unknown: Waiting for the plug to report
-    - &washer_emptied
-      type: custom:status-row-card
-      grid_options:
-        columns: full
-      visibility:
-      - condition: state
-        entity: input_boolean.washer_unemptied
-        state: "on"
-      items:
-      - entity: input_boolean.washer_unemptied
-        name: Washer
-        icon: mdi:check-circle-outline
-        tap: toggle
-        colors:
-          "on": warning
-          other: inactive
-        labels:
-          "on": Tap when emptied
-        hints:
-          "on": Opening the door also clears it
-    - &dryer_emptied
-      type: custom:status-row-card
-      grid_options:
-        columns: full
-      visibility:
-      - condition: state
-        entity: input_boolean.dryer_unemptied
-        state: "on"
-      items:
-      - entity: input_boolean.dryer_unemptied
-        name: Dryer
-        icon: mdi:check-circle-outline
-        tap: toggle
-        colors:
-          "on": warning
-          other: inactive
-        labels:
-          "on": Tap when emptied
-        hints:
-          "on": Opening the door also clears it
-    - &washer_power_tile
-      type: custom:popup-tile-card
-      entity: sensor.washer_power_monitor_power
-      name: Washer power
-      icon: mdi:washing-machine
-      unit: W
-      grid_options:
-        columns: 6
-      visibility: *laundry_active
-      popup:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Washer power
-          show_states: false
-        graph_span: 12h
-        apex_config:
-          chart:
-            height: 220
-          yaxis:
-            min: 0
-            decimalsInFloat: 0
-        series:
-        - entity: sensor.washer_power_monitor_power
-          name: Washer
-          stroke_width: 2
-    - &dryer_power_tile
-      type: custom:popup-tile-card
-      entity: sensor.dryer_power_monitor_power
-      name: Dryer power
-      icon: mdi:tumble-dryer
-      unit: W
-      grid_options:
-        columns: 6
-      visibility: *laundry_active
-      popup:
-        type: custom:apexcharts-card
-        header:
-          show: true
-          title: Dryer power
-          show_states: false
-        graph_span: 12h
-        apex_config:
-          chart:
-            height: 220
-          yaxis:
-            min: 0
-            decimalsInFloat: 0
-        series:
-        - entity: sensor.dryer_power_monitor_power
-          name: Dryer
-          stroke_width: 2
+        status: sensor.dryer_status
+        power: sensor.dryer_power_monitor_power
+        running: binary_sensor.dryer_running
+        last_cycle: sensor.dryer_last_cycle
+        flag: input_boolean.dryer_unemptied
   - type: grid
     cards:
     - type: heading
@@ -2573,20 +2468,8 @@ views:
       heading: Now
       icon: mdi:washing-machine
       heading_style: title
-    - type: custom:status-row-card
-      grid_options:
-        columns: full
-      items: *laundry_items
-    - *washer_emptied
-    - *dryer_emptied
-    - <<: *washer_power_tile
+    - <<: *laundry_machines
       visibility: []
-      grid_options:
-        columns: 12
-    - <<: *dryer_power_tile
-      visibility: []
-      grid_options:
-        columns: 12
   - type: grid
     column_span: 1
     cards:
@@ -2717,16 +2600,17 @@ views:
       heading: Cost, estimated
       icon: mdi:cash
       heading_style: title
-    - type: markdown
+    - type: custom:laundry-cost-card
       grid_options:
         columns: full
-      content: |-
-        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost')] %}
-        | kr | Week | Month | Quarter | Last month |
-        |---|--:|--:|--:|--:|
-        {% for n, e in rows %}| {{ n }} | {{ '%.2f' | format(state_attr(e, 'week') | float(0)) }} | {{ '%.2f' | format(states(e) | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr(e, 'last_month') | float(0)) }} |
-        {% endfor %}
-        Price now **{{ '%.2f' | format(states('sensor.electricity_price_per_kwh') | float(0)) }} kr/kWh** with VAT, from this month's average spot. E.ON sets the final price after the month ends.
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Washer
+        icon: mdi:washing-machine
+        entity: sensor.washer_cost
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        entity: sensor.dryer_cost
     - type: heading
       heading: Recent runs
       icon: mdi:history

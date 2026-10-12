@@ -293,7 +293,7 @@ laundry_notify:
         {% if text is defined and text %}{{ text }}
         {% elif reminder %}{{ title }} is still waiting to be emptied.
         {% elif machine == 'washer' and is_state('binary_sensor.dryer_running', 'off') %}Washer is done and the dryer is free.
-        {% elif machine == 'dryer' %}Dryer is done. Empty the water container and clean the lint filter.
+        {% elif machine == 'dryer' %}Dryer is done. Clean the lint filter.
         {% else %}{{ title }} is done.{% endif %}
   - if:
     - condition: template

@@ -35,6 +35,9 @@ input_text:
   server_cost_history:
     name: Server cost by month
     max: 255
+  office_cost_history:
+    name: Office cost by month
+    max: 255
 
 utility_meter:
   washer_energy_week:
@@ -54,6 +57,12 @@ utility_meter:
     cycle: weekly
   server_energy_month:
     source: sensor.power_monitor_1_energy
+    cycle: monthly
+  office_energy_week:
+    source: sensor.office_power_monitor_energy
+    cycle: weekly
+  office_energy_month:
+    source: sensor.office_power_monitor_energy
     cycle: monthly
 
 template:
@@ -106,3 +115,13 @@ template:
           week: "{% from 'laundry.jinja' import week %}{{ week('server') }}"
           quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('server') }}"
           last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('server') }}"
+
+      - name: "Office Cost"
+        unique_id: office_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('office') }}"
+        attributes:
+          week: "{% from 'laundry.jinja' import week %}{{ week('office') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('office') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('office') }}"

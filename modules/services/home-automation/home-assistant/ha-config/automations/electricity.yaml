@@ -51,6 +51,7 @@
               - washer
               - dryer
               - server
+              - office
             sequence:
               - action: input_text.set_value
                 target:

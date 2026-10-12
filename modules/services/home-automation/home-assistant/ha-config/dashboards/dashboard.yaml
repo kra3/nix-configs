@@ -2651,7 +2651,7 @@ views:
       grid_options:
         columns: full
       content: |-
-        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost'), ('Server', 'sensor.server_cost'), ('Office', 'sensor.office_cost')] %}
+        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost'), ('Sutala', 'sensor.sutala_cost')] %}
         | kr | Week | Month | Quarter | Last month |
         |---|--:|--:|--:|--:|
         {% for n, e in rows %}| {{ n }} | {{ state_attr(e, 'week') }} | {{ states(e) }} | {{ state_attr(e, 'quarter') }} | {{ state_attr(e, 'last_month') }} |

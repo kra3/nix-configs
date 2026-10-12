@@ -32,11 +32,8 @@ input_text:
   dryer_cost_history:
     name: Dryer cost by month
     max: 255
-  server_cost_history:
-    name: Server cost by month
-    max: 255
-  office_cost_history:
-    name: Office cost by month
+  sutala_cost_history:
+    name: Sutala cost by month
     max: 255
 
 utility_meter:
@@ -52,17 +49,11 @@ utility_meter:
   dryer_energy_month:
     source: sensor.dryer_power_monitor_energy
     cycle: monthly
-  server_energy_week:
+  sutala_energy_week:
     source: sensor.power_monitor_1_energy
     cycle: weekly
-  server_energy_month:
+  sutala_energy_month:
     source: sensor.power_monitor_1_energy
-    cycle: monthly
-  office_energy_week:
-    source: sensor.office_power_monitor_energy
-    cycle: weekly
-  office_energy_month:
-    source: sensor.office_power_monitor_energy
     cycle: monthly
 
 template:
@@ -106,22 +97,13 @@ template:
           quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('dryer') }}"
           last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('dryer') }}"
 
-      - name: "Server Cost"
-        unique_id: server_cost
+      - name: "Sutala Cost"
+        unique_id: sutala_cost
         device_class: monetary
         unit_of_measurement: SEK
-        state: "{% from 'laundry.jinja' import month %}{{ month('server') }}"
+        state: "{% from 'laundry.jinja' import month %}{{ month('sutala') }}"
         attributes:
-          week: "{% from 'laundry.jinja' import week %}{{ week('server') }}"
-          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('server') }}"
-          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('server') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('sutala') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('sutala') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('sutala') }}"
 
-      - name: "Office Cost"
-        unique_id: office_cost
-        device_class: monetary
-        unit_of_measurement: SEK
-        state: "{% from 'laundry.jinja' import month %}{{ month('office') }}"
-        attributes:
-          week: "{% from 'laundry.jinja' import week %}{{ week('office') }}"
-          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('office') }}"
-          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('office') }}"

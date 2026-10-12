@@ -50,8 +50,7 @@
             for_each:
               - washer
               - dryer
-              - server
-              - office
+              - sutala
             sequence:
               - action: input_text.set_value
                 target:

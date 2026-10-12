@@ -1797,6 +1797,9 @@ views:
       - binary_sensor.house_exits_open_status
       - lock.front_front_door_nw
       - binary_sensor.front_front_door_nw_door
+      - lock.yale_front_door
+      - lock.yale_front_door_secure_mode
+      - binary_sensor.yale_front_door_door
       warn:
       - entity: binary_sensor.front_door_ble_degraded
         label: Front door lock on cloud fallback
@@ -1971,6 +1974,8 @@ views:
             - type: lock-commands
         exclude:
         - entity_id: lock.front_front_door_nw
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
       grid_options:
         columns: 12
     - type: custom:auto-entities
@@ -2002,6 +2007,9 @@ views:
         exclude:
         - entity_id: lock.front_front_door_nw
         - entity_id: binary_sensor.front_front_door_nw_door
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
+        - entity_id: binary_sensor.yale_front_door_door
       grid_options:
         columns: 12
   - type: grid
@@ -2040,6 +2048,9 @@ views:
         - entity_id: binary_sensor.house_exits_open_status
         - entity_id: lock.front_front_door_nw
         - entity_id: binary_sensor.front_front_door_nw_door
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
+        - entity_id: binary_sensor.yale_front_door_door
       grid_options:
         columns: full
 - type: sections

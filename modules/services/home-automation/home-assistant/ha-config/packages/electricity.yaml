@@ -44,6 +44,7 @@ utility_meter:
     source: sensor.power_monitor_1_energy
     cycle: monthly
 
+# Endpoint and response shape from https://github.com/danielholm/eon_elpris
 rest:
   - resource: https://eonepapirun.azurewebsites.net/api/getSpotpricesAverage
     scan_interval: 3600

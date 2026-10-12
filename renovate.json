@@ -10,12 +10,26 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/ha-pins\\.json$/"],
+      "matchStrings": [
+        "\"repo\":\\s*\"(?<depName>[^\"]+)\",\\s*\"version\":\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
     }
   ],
   "packageRules": [
     {
       "matchDatasources": ["docker"],
       "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*|next|\\d+b\\d+)/",
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    },
+    {
+      "matchDatasources": ["github-releases"],
       "minimumReleaseAge": "3 days",
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },

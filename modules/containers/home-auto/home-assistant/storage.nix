@@ -5,6 +5,8 @@
       systemd.tmpfiles.rules = [
         "d /srv/appdata/home-auto/home-assistant 0750 root root - -"
         "d /srv/appdata/home-auto/home-assistant/data 0750 root root - -"
+        # scene_presets writes user presets here; the integration itself is a read-only store mount (see container.nix).
+        "d /srv/appdata/home-auto/home-assistant/data/custom_components/scene_presets/userdata 0750 root root - -"
 
         # automations.yaml/scripts.yaml/scenes.yaml are bind-mounted read-only
         # straight from the Nix store in container.nix, so they're pure IaC —

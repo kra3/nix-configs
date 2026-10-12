@@ -1,0 +1,143 @@
+{
+  "integrations": {
+    "adaptive_lighting": {
+      "repo": "basnijholt/adaptive-lighting",
+      "version": "v1.32.0",
+      "kind": "tree",
+      "subpath": "custom_components/adaptive_lighting",
+      "hash": "sha256-+MO9wl4nu/yJ7Lyt1kf/thGcjNjR17cPkFAYZqfVzQ8="
+    },
+    "alarmo": {
+      "repo": "nielsfaber/alarmo",
+      "version": "v1.10.19",
+      "kind": "zip",
+      "asset": "alarmo.zip",
+      "hash": "sha256-0n6Ys5Rpj1i2V9qDmiwreJNN+YjME/VNGDKMCGB64zM="
+    },
+    "area_occupancy": {
+      "repo": "Hankanman/Area-Occupancy-Detection",
+      "version": "2026.10.2",
+      "kind": "zip",
+      "asset": "area_occupancy.zip",
+      "hash": "sha256-Qe1Xx44orN7Ip9aHY0uvlcGKc4TwIJUG+KfN9Cf5cNg="
+    },
+    "auth_oidc": {
+      "repo": "christiaangoossens/hass-oidc-auth",
+      "version": "v1.2.1",
+      "kind": "zip",
+      "asset": "hass-oidc-auth.zip",
+      "hash": "sha256-5braqsqmPP1v5zOSSgXnbXUFiDYZA5hZj7JN5XzUfM0="
+    },
+    "battery_notes": {
+      "repo": "andrew-codechimp/HA-Battery-Notes",
+      "version": "3.7.0",
+      "kind": "zip",
+      "asset": "battery_notes.zip",
+      "hash": "sha256-tcrnmNzwkkCzTeWkSYGfNALcOR1SuPINOIdH0rDM44Y="
+    },
+    "fresh_intellivent_sky": {
+      "repo": "Spit68/Fresh-Intellivent-Sky",
+      "version": "V0.8.0",
+      "kind": "tree",
+      "subpath": "custom_components/fresh_intellivent_sky",
+      "hash": "sha256-RUat4qXd+VC0nMQNsaJdXByNrIGk8woQV2gcFYuymKE="
+    },
+    "frigate": {
+      "repo": "blakeblackshear/frigate-hass-integration",
+      "version": "v5.15.6",
+      "kind": "tree",
+      "subpath": "custom_components/frigate",
+      "hash": "sha256-xh8+X4C6QCb2Y4fbo60xCX3QuXEktbopB2DbOTfzAhA="
+    },
+    "krisinformation": {
+      "repo": "Nicxe/krisinformation",
+      "version": "v2.5.1",
+      "kind": "zip",
+      "asset": "krisinformation.zip",
+      "hash": "sha256-DMxYBYzH/IpFrZPQqZ2ZcSKpJYH2+QKEqA/doSehoiM="
+    },
+    "plejd": {
+      "repo": "thomasloven/hass-plejd",
+      "version": "v0.22.0",
+      "kind": "tree",
+      "subpath": "custom_components/plejd",
+      "hash": "sha256-AR470NlKgUL1oQ08dJL/KbXgs0FJ0fuQqnD8dVD3phQ="
+    },
+    "scene_presets": {
+      "repo": "Hypfer/hass-scene_presets",
+      "version": "2.4.0",
+      "kind": "tree",
+      "subpath": "custom_components/scene_presets",
+      "hash": "sha256-pHY68H0nr7eO3tGtVLtzj6cOZO3+VxC00VZmhZy+2Pk=",
+      "extraDirs": [
+        "userdata"
+      ]
+    },
+    "waste_collection_schedule": {
+      "repo": "mampfes/hacs_waste_collection_schedule",
+      "version": "v2.35.0",
+      "kind": "tree",
+      "subpath": "custom_components/waste_collection_schedule",
+      "hash": "sha256-e3w0RdA7Av1wULMdaxmvaivJfuW/WRTca4/YRqTIh9w="
+    },
+    "watchman": {
+      "repo": "dummylabs/thewatchman",
+      "version": "v0.8.4",
+      "kind": "zip",
+      "asset": "watchman.zip",
+      "hash": "sha256-UDWLWf310xc7FpDO24EmUcF98rYlkjKaDnKVXFRF9cI="
+    }
+  },
+  "frontend": {
+    "advanced-camera-card": {
+      "repo": "dermotduffy/advanced-camera-card",
+      "version": "v8.1.0",
+      "kind": "zip",
+      "asset": "advanced-camera-card.zip",
+      "subpath": "dist",
+      "hash": "sha256-+wTry7UVuHhE2gaOt3O7yEVAGMHFmd0gJEUSFjcpkt8="
+    },
+    "alarmo-card": {
+      "repo": "nielsfaber/alarmo-card",
+      "version": "v1.6.9",
+      "kind": "tree",
+      "subpath": "dist/alarmo-card.js",
+      "hash": "sha256-tQV7cG9c9ACfNXL7WyNPN5t1yGYISni9uDLtUxt4n/8="
+    },
+    "apexcharts-card": {
+      "repo": "RomRider/apexcharts-card",
+      "version": "v2.2.3",
+      "kind": "file",
+      "asset": "apexcharts-card.js",
+      "hash": "sha256-NGeAcHdz+5DEXp7q+KywENFqgInoZWOiQsxOHYmV9xg="
+    },
+    "lovelace-auto-entities": {
+      "repo": "thomasloven/lovelace-auto-entities",
+      "version": "v1.16.1",
+      "kind": "tree",
+      "subpath": "auto-entities.js",
+      "hash": "sha256-yMqf4LA/fBTIrrYwacUTb2fL758ZB1k471vdsHAiOj8="
+    },
+    "lovelace-mushroom": {
+      "repo": "piitaya/lovelace-mushroom",
+      "version": "v5.2.3",
+      "kind": "file",
+      "asset": "mushroom.js",
+      "hash": "sha256-YxZoJo5HTVNX4PF/FhMiSZ6lyTqRBDFHfhEmU9eqRWs="
+    },
+    "mini-media-player": {
+      "repo": "kalkih/mini-media-player",
+      "version": "v1.16.12",
+      "kind": "file",
+      "asset": "mini-media-player-bundle.js",
+      "hash": "sha256-qzs7ccPGnQMQzbRR7gGbXazithJesIZy6JbbF0QLXfk="
+    },
+    "streamline-card": {
+      "repo": "brunosabot/streamline-card",
+      "version": "v0.2.2",
+      "kind": "file",
+      "asset": "streamline-card.js",
+      "hash": "sha256-ZJ3Bt8JAJ+SyI5IQmgBT42JKQLm3jw7P0s8748Iarak="
+    }
+  }
+}

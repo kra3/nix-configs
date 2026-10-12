@@ -1,12 +1,12 @@
 resource_mode: yaml
 resources:
-  - url: /hacsfiles/lovelace-mushroom/mushroom.js
+  - url: /local/community/lovelace-mushroom/mushroom.js?v=@lovelace-mushroom@
     type: module
-  - url: /hacsfiles/advanced-camera-card/advanced-camera-card.js
+  - url: /local/community/advanced-camera-card/advanced-camera-card.js?v=@advanced-camera-card@
     type: module
-  - url: /hacsfiles/alarmo-card/alarmo-card.js
+  - url: /local/community/alarmo-card/alarmo-card.js?v=@alarmo-card@
     type: module
-  - url: /hacsfiles/streamline-card/streamline-card.js
+  - url: /local/community/streamline-card/streamline-card.js?v=@streamline-card@
     type: module
   - url: /local/health-metric-card.js?v=25
     type: module
@@ -34,11 +34,11 @@ resources:
     type: module
   - url: /local/security-plan-card.js?v=15
     type: module
-  - url: /hacsfiles/mini-media-player/mini-media-player-bundle.js
+  - url: /local/community/mini-media-player/mini-media-player-bundle.js?v=@mini-media-player@
     type: module
-  - url: /hacsfiles/apexcharts-card/apexcharts-card.js
+  - url: /local/community/apexcharts-card/apexcharts-card.js?v=@apexcharts-card@
     type: module
-  - url: /hacsfiles/lovelace-auto-entities/auto-entities.js
+  - url: /local/community/lovelace-auto-entities/auto-entities.js?v=@lovelace-auto-entities@
     type: module
 dashboards:
   lovelace-map:

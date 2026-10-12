@@ -17,8 +17,8 @@
   description: >-
     Motion-tiered brightness (45% on motion, 80% if lingering 2min, 15%
     ambient once clear 2min, off at bedtime) instead of Adaptive
-    Lighting. Suppressed during party_mode and while Alarmo is
-    pending/triggered.
+    Lighting. Does not react during sleep hours. Suppressed during
+    party_mode and while Alarmo is pending/triggered.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
     to: "on"
@@ -56,6 +56,20 @@
   - condition: state
     entity_id: input_boolean.hall_is_dark
     state: "on"
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: schedule.sleep
+      state: "off"
+    - condition: trigger
+      id: sleep_started
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
   - condition: not
     conditions:
     - condition: state

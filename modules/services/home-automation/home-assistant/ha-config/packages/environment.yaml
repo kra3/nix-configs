@@ -96,7 +96,7 @@ schedule:
     # HA schedule ranges can't cross midnight, so overnight windows are split into a morning tail + evening start.
     monday: &weekday_night
       - from: "00:00:00"
-        to: "08:00:00"
+        to: "08:30:00"
       - from: "22:30:00"
         to: "24:00:00"
     tuesday: *weekday_night
@@ -104,7 +104,7 @@ schedule:
     thursday: *weekday_night
     friday:
       - from: "00:00:00"
-        to: "08:00:00"
+        to: "08:30:00"
       - from: "23:30:00"
         to: "24:00:00"
     saturday:

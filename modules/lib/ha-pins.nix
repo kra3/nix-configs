@@ -26,12 +26,21 @@
         name: p:
         let
           extra = lib.concatMapStringsSep "\n" (d: "mkdir -p $out/${d}") (p.extraDirs or [ ]);
+          applyPatches = lib.concatMapStringsSep "\n" (
+            pt:
+            "(cd src && git apply ${lib.concatMapStringsSep " " (e: "--exclude=${e}") (pt.excludes or [ ])} ${
+              pkgs.fetchurl { inherit (pt) url hash; }
+            })"
+          ) (p.patches or [ ]);
         in
         {
-          tree = pkgs.runCommand name { } ''
+          tree = pkgs.runCommand name { nativeBuildInputs = [ pkgs.git ]; } ''
+            cp -r ${tarball p} src
+            chmod -R u+w src
+            ${applyPatches}
             mkdir -p $out
-            src=${tarball p}/${p.subpath}
-            if [ -d "$src" ]; then cp -r "$src"/. $out; else cp "$src" $out; fi
+            s=src/${p.subpath}
+            if [ -d "$s" ]; then cp -r "$s"/. $out; else cp "$s" $out; fi
             ${extra}
           '';
           zip = pkgs.runCommand name { nativeBuildInputs = [ pkgs.unzip ]; } ''

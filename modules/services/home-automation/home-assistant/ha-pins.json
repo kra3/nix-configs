@@ -70,7 +70,11 @@
           "hash": "sha256-CRj8VrsOMupio4cAN7jreMxolkl5PWYbHgsnK4J4z1k="
         }
       ],
-      "hash": "sha256-AR470NlKgUL1oQ08dJL/KbXgs0FJ0fuQqnD8dVD3phQ="
+      "hash": "sha256-AR470NlKgUL1oQ08dJL/KbXgs0FJ0fuQqnD8dVD3phQ=",
+      "requirements": [
+        "pyplejd @ https://github.com/thomasloven/pyplejd/archive/b6c48640425f89f9d58fffc0b775650288c38924.zip",
+        "pydantic"
+      ]
     },
     "scene_presets": {
       "repo": "Hypfer/hass-scene_presets",

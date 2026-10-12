@@ -5,6 +5,7 @@
       flakeModules.homeManager.home-mcp-nixos
       flakeModules.homeManager.home-rtk
       flakeModules.homeManager.home-herdr
+      flakeModules.homeManager.home-tsk
     ];
   };
 }

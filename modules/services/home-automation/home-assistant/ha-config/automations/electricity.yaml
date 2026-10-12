@@ -4,7 +4,7 @@
   description: Keeps the last E.ON month-average spot for the current month, so the month rollover can price the month that just ended.
   trigger:
     - platform: state
-      entity_id: sensor.eon_se4_month_average_spot
+      entity_id: sensor.e_on_se4_month_average_spot
   condition:
     - condition: template
       value_template: >-

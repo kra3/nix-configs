@@ -64,7 +64,7 @@ template:
         unit_of_measurement: SEK/kWh
         icon: mdi:chart-bell-curve
         state: >-
-          {% set eon = states('sensor.eon_se4_month_average_spot') %}
+          {% set eon = states('sensor.e_on_se4_month_average_spot') %}
           {% if is_number(eon) %}{{ eon }}
           {% elif states('input_number.electricity_spot_last') | float(0) > 0 %}{{ states('input_number.electricity_spot_last') }}
           {% else %}{{ states('sensor.nord_pool_se4_current_price') | float(0) }}{% endif %}

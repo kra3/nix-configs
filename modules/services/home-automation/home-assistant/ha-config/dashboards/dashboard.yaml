@@ -114,7 +114,7 @@ views:
         labels:
           "on": Tap when emptied
         hints:
-          "on": Clears the reminders
+          "on": Opening the door also clears it
     - type: custom:status-row-card
       grid_options:
         columns: full
@@ -133,7 +133,7 @@ views:
         labels:
           "on": Tap when emptied
         hints:
-          "on": Clears the reminders
+          "on": Opening the door also clears it
     - type: custom:apexcharts-card
       grid_options:
         columns: full

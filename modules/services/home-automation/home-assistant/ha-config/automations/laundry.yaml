@@ -40,6 +40,31 @@
         entity_id: "input_boolean.{{ trigger.id }}_unemptied"
   mode: queued
 
+- id: laundry_door_emptied
+  alias: "Laundry: door opened"
+  description: Opening a machine's door a minute after its cycle ended counts as emptying it.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washing_machine_vibration
+      to: "on"
+      id: washer
+    - platform: state
+      entity_id: binary_sensor.dryer_vibration
+      to: "on"
+      id: dryer
+  condition:
+    - condition: template
+      value_template: "{{ is_state('input_boolean.' ~ trigger.id ~ '_unemptied', 'on') }}"
+    - condition: template
+      value_template: >-
+        {% set r = states['binary_sensor.' ~ trigger.id ~ '_running'] %}
+        {{ r.state == 'off' and (now() - r.last_changed).total_seconds() > 60 }}
+  action:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: "input_boolean.{{ trigger.id }}_unemptied"
+  mode: queued
+
 - id: laundry_emptying_reminder
   alias: "Laundry: emptying reminder"
   description: Reminds after 30 minutes and again after 2 hours if a machine is still waiting to be emptied.

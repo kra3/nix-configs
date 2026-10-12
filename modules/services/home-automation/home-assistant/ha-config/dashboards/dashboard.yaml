@@ -66,10 +66,14 @@ views:
         conditions:
         - condition: state
           entity: sensor.washer_status
-          state_not: Idle
+          state:
+          - Running
+          - Done
         - condition: state
           entity: sensor.dryer_status
-          state_not: Idle
+          state:
+          - Running
+          - Done
     - type: custom:status-row-card
       grid_options:
         columns: full

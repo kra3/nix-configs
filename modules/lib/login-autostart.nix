@@ -13,6 +13,7 @@
         name,
         description,
         script,
+        graphical ? false,
       }:
       { pkgs, ... }:
       let
@@ -33,7 +34,8 @@
         (lib.mkIf pkgs.stdenv.isLinux {
           systemd.user.services.${name} = {
             Unit.Description = description;
-            Install.WantedBy = [ "default.target" ];
+            Unit.After = lib.optional graphical "graphical-session.target";
+            Install.WantedBy = [ (if graphical then "graphical-session.target" else "default.target") ];
             Service = {
               Type = "oneshot";
               RemainAfterExit = true;

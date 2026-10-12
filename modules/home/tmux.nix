@@ -121,6 +121,7 @@
         (flakeLib.login-autostart.mkLoginAgent {
           name = "tmux-server";
           description = "Start tmux server at login";
+          graphical = true;
           script = ''
             ${tmuxEnvExports}
             lock="''${TMPDIR:-/tmp}/tmux-server-start.lock"
@@ -164,8 +165,8 @@
           # ============================================================================
           set -ag terminal-overrides ",xterm-256color:RGB"
 
-          # The server starts at boot, before the Wayland session exists; take these from the attaching client.
-          set -ga update-environment " WAYLAND_DISPLAY XDG_SESSION_TYPE"
+          # Panes created after a client attaches take these from it; the server itself starts after the graphical session.
+          set -ga update-environment " WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DESKTOP_SESSION NIRI_SOCKET"
 
           # Undercurl support
           set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm'

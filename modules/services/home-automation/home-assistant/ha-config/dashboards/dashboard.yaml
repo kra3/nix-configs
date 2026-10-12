@@ -2477,82 +2477,84 @@ views:
       heading: Energy
       icon: mdi:lightning-bolt
       heading_style: title
-    - type: custom:mode-switch-card
-      name: Range
+    - type: custom:health-metric-card
+      entity: sensor.washer_power_monitor_energy
+      name: Washer energy today
+      icon: mdi:washing-machine
+      color: "#6ab7ff"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.washer_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Washer energy per day
+          entities:
+          - sensor.washer_power_monitor_energy
+          days: 30
+          stat: change
+          type: bar
+        - name: Washer and dryer
+          entities:
+          - entity: sensor.washer_power_monitor_energy
+            name: Washer
+            color: "#6ab7ff"
+          - entity: sensor.dryer_power_monitor_energy
+            name: Dryer
+            color: "#ffb06b"
+          days: 30
+          stat: change
+          type: bar
+          stacked: true
       grid_options:
-        columns: full
-      modes:
-      - name: Week
-        icon: mdi:calendar-week
-        hint: Energy per day over the last 7 days.
-      - name: Month
-        icon: mdi:calendar-month
-        entity: input_boolean.laundry_range_month
-        hint: Energy per day over the last 30 days.
-      - name: Quarter
-        icon: mdi:calendar-range
-        entity: input_boolean.laundry_range_quarter
-        hint: Energy per week over the last 13 weeks.
-    - type: conditional
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.dryer_power_monitor_energy
+      name: Dryer energy today
+      icon: mdi:tumble-dryer
+      color: "#ffb06b"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.dryer_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Dryer energy per day
+          entities:
+          - sensor.dryer_power_monitor_energy
+          days: 30
+          stat: change
+          type: bar
+        - name: Washer and dryer
+          entities:
+          - entity: sensor.washer_power_monitor_energy
+            name: Washer
+            color: "#6ab7ff"
+          - entity: sensor.dryer_power_monitor_energy
+            name: Dryer
+            color: "#ffb06b"
+          days: 30
+          stat: change
+          type: bar
+          stacked: true
       grid_options:
-        columns: full
-      conditions:
-      - condition: state
-        entity: input_boolean.laundry_range_month
-        state: "off"
-      - condition: state
-        entity: input_boolean.laundry_range_quarter
-        state: "off"
-      card:
-        type: statistics-graph
-        chart_type: bar
-        period: day
-        days_to_show: 7
-        stat_types:
-        - change
-        entities:
-        - entity: sensor.washer_power_monitor_energy
-          name: Washer
-        - entity: sensor.dryer_power_monitor_energy
-          name: Dryer
-    - type: conditional
-      grid_options:
-        columns: full
-      conditions:
-      - condition: state
-        entity: input_boolean.laundry_range_month
-        state: "on"
-      card:
-        type: statistics-graph
-        chart_type: bar
-        period: day
-        days_to_show: 30
-        stat_types:
-        - change
-        entities:
-        - entity: sensor.washer_power_monitor_energy
-          name: Washer
-        - entity: sensor.dryer_power_monitor_energy
-          name: Dryer
-    - type: conditional
-      grid_options:
-        columns: full
-      conditions:
-      - condition: state
-        entity: input_boolean.laundry_range_quarter
-        state: "on"
-      card:
-        type: statistics-graph
-        chart_type: bar
-        period: week
-        days_to_show: 91
-        stat_types:
-        - change
-        entities:
-        - entity: sensor.washer_power_monitor_energy
-          name: Washer
-        - entity: sensor.dryer_power_monitor_energy
-          name: Dryer
+        columns: 12
     - type: heading
       heading: Care and checks
       icon: mdi:wrench-clock

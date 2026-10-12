@@ -6,10 +6,6 @@ input_boolean:
   dryer_unemptied:
     name: Dryer waiting to be emptied
     icon: mdi:tumble-dryer
-  laundry_range_month:
-    name: Laundry view range month
-  laundry_range_quarter:
-    name: Laundry view range quarter
 
 input_datetime:
   washer_cycle_start:

@@ -61,6 +61,15 @@
       "version": "v0.22.0",
       "kind": "tree",
       "subpath": "custom_components/plejd",
+      "patches": [
+        {
+          "url": "https://github.com/clsjon/hass-plejd/commit/691134319d0251996121ab543aba635d7dc1e208.patch",
+          "excludes": [
+            "pyplejd"
+          ],
+          "hash": "sha256-CRj8VrsOMupio4cAN7jreMxolkl5PWYbHgsnK4J4z1k="
+        }
+      ],
       "hash": "sha256-AR470NlKgUL1oQ08dJL/KbXgs0FJ0fuQqnD8dVD3phQ="
     },
     "scene_presets": {

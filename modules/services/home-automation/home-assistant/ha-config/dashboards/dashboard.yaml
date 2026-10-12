@@ -58,6 +58,9 @@ views:
       heading: Laundry
       icon: mdi:washing-machine
       heading_style: title
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-laundry
       visibility: &laundry_active
       - condition: or
         conditions:
@@ -71,7 +74,7 @@ views:
       grid_options:
         columns: full
       visibility: *laundry_active
-      items:
+      items: &laundry_items
       - entity: sensor.washer_status
         name: Washer
         icon: mdi:washing-machine
@@ -96,7 +99,8 @@ views:
           Running: Cycle in progress
           Done: Finished, waiting to be emptied
           Idle: Nothing running
-    - type: custom:status-row-card
+    - &washer_emptied
+      type: custom:status-row-card
       grid_options:
         columns: full
       visibility:
@@ -115,7 +119,8 @@ views:
           "on": Tap when emptied
         hints:
           "on": Opening the door also clears it
-    - type: custom:status-row-card
+    - &dryer_emptied
+      type: custom:status-row-card
       grid_options:
         columns: full
       visibility:
@@ -134,31 +139,58 @@ views:
           "on": Tap when emptied
         hints:
           "on": Opening the door also clears it
-    - type: custom:apexcharts-card
+    - &washer_power_tile
+      type: custom:popup-tile-card
+      entity: sensor.washer_power_monitor_power
+      name: Washer power
+      icon: mdi:washing-machine
+      unit: W
       grid_options:
-        columns: full
+        columns: 6
       visibility: *laundry_active
-      header:
-        show: true
-        title: Power, last 6 h
-        show_states: false
-      graph_span: 6h
-      apex_config:
-        chart:
-          height: 170
-        legend:
+      popup:
+        type: custom:apexcharts-card
+        header:
           show: true
-          position: bottom
-        yaxis:
-          min: 0
-          decimalsInFloat: 0
-      series:
-      - entity: sensor.washer_power_monitor_power
-        name: Washer
-        stroke_width: 2
-      - entity: sensor.dryer_power_monitor_power
-        name: Dryer
-        stroke_width: 2
+          title: Washer power
+          show_states: false
+        graph_span: 12h
+        apex_config:
+          chart:
+            height: 220
+          yaxis:
+            min: 0
+            decimalsInFloat: 0
+        series:
+        - entity: sensor.washer_power_monitor_power
+          name: Washer
+          stroke_width: 2
+    - &dryer_power_tile
+      type: custom:popup-tile-card
+      entity: sensor.dryer_power_monitor_power
+      name: Dryer power
+      icon: mdi:tumble-dryer
+      unit: W
+      grid_options:
+        columns: 6
+      visibility: *laundry_active
+      popup:
+        type: custom:apexcharts-card
+        header:
+          show: true
+          title: Dryer power
+          show_states: false
+        graph_span: 12h
+        apex_config:
+          chart:
+            height: 220
+          yaxis:
+            min: 0
+            decimalsInFloat: 0
+        series:
+        - entity: sensor.dryer_power_monitor_power
+          name: Dryer
+          stroke_width: 2
   - type: grid
     cards:
     - type: heading
@@ -2502,6 +2534,197 @@ views:
           Now: surplus {{ states('sensor.moisture_surplus') }} g/m³, 24 h average {{ states('sensor.moisture_surplus_24h') }} g/m³.
         entities:
         - entity: input_number.climate_moisture_limit
+- type: sections
+  title: Laundry
+  path: dash-laundry
+  icon: mdi:washing-machine
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Now
+      icon: mdi:washing-machine
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      items: *laundry_items
+    - *washer_emptied
+    - *dryer_emptied
+    - <<: *washer_power_tile
+      visibility: []
+    - <<: *dryer_power_tile
+      visibility: []
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Energy
+      icon: mdi:lightning-bolt
+      heading_style: title
+    - type: custom:mode-switch-card
+      name: Range
+      grid_options:
+        columns: full
+      modes:
+      - name: Week
+        icon: mdi:calendar-week
+        hint: Energy per day over the last 7 days.
+      - name: Month
+        icon: mdi:calendar-month
+        entity: input_boolean.laundry_range_month
+        hint: Energy per day over the last 30 days.
+      - name: Quarter
+        icon: mdi:calendar-range
+        entity: input_boolean.laundry_range_quarter
+        hint: Energy per week over the last 13 weeks.
+    - type: conditional
+      grid_options:
+        columns: full
+      conditions:
+      - condition: state
+        entity: input_boolean.laundry_range_month
+        state: "off"
+      - condition: state
+        entity: input_boolean.laundry_range_quarter
+        state: "off"
+      card:
+        type: statistics-graph
+        chart_type: bar
+        period: day
+        days_to_show: 7
+        stat_types:
+        - change
+        entities:
+        - entity: sensor.washer_power_monitor_energy
+          name: Washer
+        - entity: sensor.dryer_power_monitor_energy
+          name: Dryer
+    - type: conditional
+      grid_options:
+        columns: full
+      conditions:
+      - condition: state
+        entity: input_boolean.laundry_range_month
+        state: "on"
+      card:
+        type: statistics-graph
+        chart_type: bar
+        period: day
+        days_to_show: 30
+        stat_types:
+        - change
+        entities:
+        - entity: sensor.washer_power_monitor_energy
+          name: Washer
+        - entity: sensor.dryer_power_monitor_energy
+          name: Dryer
+    - type: conditional
+      grid_options:
+        columns: full
+      conditions:
+      - condition: state
+        entity: input_boolean.laundry_range_quarter
+        state: "on"
+      card:
+        type: statistics-graph
+        chart_type: bar
+        period: week
+        days_to_show: 91
+        stat_types:
+        - change
+        entities:
+        - entity: sensor.washer_power_monitor_energy
+          name: Washer
+        - entity: sensor.dryer_power_monitor_energy
+          name: Dryer
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% set rows = [('Washer', 'sensor.washer_cost'), ('Dryer', 'sensor.dryer_cost'), ('Server', 'sensor.server_cost')] %}
+        | kr | Week | Month | Quarter | Last month |
+        |---|--:|--:|--:|--:|
+        {% for n, e in rows %}| {{ n }} | {{ state_attr(e, 'week') }} | {{ states(e) }} | {{ state_attr(e, 'quarter') }} | {{ state_attr(e, 'last_month') }} |
+        {% endfor %}
+        Priced at the month's average spot price so far plus E.ON, grid and tax costs, with VAT. The final price is set after the month ends.
+    - type: tile
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh now
+      icon: mdi:cash
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Recent runs
+      icon: mdi:history
+      heading_style: title
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% for name, e in [('Washer', 'sensor.washer_last_cycle'), ('Dryer', 'sensor.dryer_last_cycle')] %}
+        **{{ name }}**
+        {% set c = state_attr(e, 'cycles') or [] %}
+        {% if c %}| Started | Min | kWh | kr |
+        |---|--:|--:|--:|
+        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ r.kwh }} | {{ r.cost }} |
+        {% endfor %}{% else %}No runs recorded yet.
+        {% endif %}
+        {% endfor %}
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Care and checks
+      icon: mdi:wrench-clock
+      heading_style: title
+    - type: tile
+      entity: counter.washer_care
+      name: Washer, washes since drum clean
+      icon: mdi:washing-machine-alert
+      grid_options:
+        columns: full
+      tap_action:
+        action: perform-action
+        perform_action: counter.reset
+        target:
+          entity_id: counter.washer_care
+        confirmation:
+          text: Drum cleaned? This resets the count.
+    - type: tile
+      entity: counter.dryer_care
+      name: Dryer, cycles since filter care
+      icon: mdi:tumble-dryer
+      grid_options:
+        columns: full
+      tap_action:
+        action: perform-action
+        perform_action: counter.reset
+        target:
+          entity_id: counter.dryer_care
+        confirmation:
+          text: Filters cleaned? This resets the count.
+    - type: tile
+      entity: input_number.laundry_gap_minutes
+      name: Last wait between wash and dry
+      icon: mdi:timer-sand
+      grid_options:
+        columns: full
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        Tap a counter after the care is done to reset it. Reminders come at 40 washes and 30 dryer cycles. Each dryer cycle is checked against the median of the earlier ones, and an idle machine drawing more than 6 W for half an hour is flagged.
 - type: sections
   title: System Health
   path: system-health

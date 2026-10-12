@@ -263,7 +263,7 @@ lights_all_off:
 
 laundry_notify:
   alias: "Laundry: notify"
-  description: Tells whoever is home that a machine is done, unless the sleep schedule is on.
+  description: Tells whoever is home about a machine, unless the sleep schedule is on. Uses a default message unless text is given.
   fields:
     machine:
       required: true
@@ -277,6 +277,10 @@ laundry_notify:
       default: false
       selector:
         boolean:
+    text:
+      required: false
+      selector:
+        text:
   sequence:
   - condition: state
     entity_id: schedule.sleep
@@ -286,8 +290,10 @@ laundry_notify:
       arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
       title: "{{ 'Washer' if machine == 'washer' else 'Dryer' }}"
       message: >-
-        {% if reminder %}{{ title }} is still waiting to be emptied.
+        {% if text is defined and text %}{{ text }}
+        {% elif reminder %}{{ title }} is still waiting to be emptied.
         {% elif machine == 'washer' and is_state('binary_sensor.dryer_running', 'off') %}Washer is done and the dryer is free.
+        {% elif machine == 'dryer' %}Dryer is done. Empty the water container and clean the lint filter.
         {% else %}{{ title }} is done.{% endif %}
   - if:
     - condition: template

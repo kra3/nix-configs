@@ -6,6 +6,49 @@ input_boolean:
   dryer_unemptied:
     name: Dryer waiting to be emptied
     icon: mdi:tumble-dryer
+  laundry_range_month:
+    name: Laundry view range month
+  laundry_range_quarter:
+    name: Laundry view range quarter
+
+input_datetime:
+  washer_cycle_start:
+    name: Washer cycle start
+    has_date: true
+    has_time: true
+  dryer_cycle_start:
+    name: Dryer cycle start
+    has_date: true
+    has_time: true
+
+input_number:
+  washer_cycle_start_kwh:
+    name: Washer energy at cycle start
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+  dryer_cycle_start_kwh:
+    name: Dryer energy at cycle start
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+  laundry_gap_minutes:
+    name: Washer to dryer wait
+    min: 0
+    max: 1440
+    step: 1
+    unit_of_measurement: min
+    mode: box
+
+counter:
+  washer_care:
+    name: Washes since drum clean
+    icon: mdi:washing-machine-alert
+  dryer_care:
+    name: Dryer cycles since filter care
+    icon: mdi:tumble-dryer
 
 template:
   - binary_sensor:
@@ -43,3 +86,39 @@ template:
           {% elif is_state('input_boolean.dryer_unemptied', 'on') %}Done
           {% elif is_state('binary_sensor.dryer_running', 'off') %}Idle
           {% else %}Unknown{% endif %}
+
+  - trigger:
+      - platform: state
+        entity_id: binary_sensor.washer_running
+        from: "on"
+        to: "off"
+    sensor:
+      - name: "Washer Last Cycle"
+        unique_id: washer_last_cycle
+        device_class: timestamp
+        state: "{{ (now() - timedelta(minutes=3)).isoformat() }}"
+        attributes:
+          cycles: >-
+            {% set start = state_attr('input_datetime.washer_cycle_start', 'timestamp') | float(0) %}
+            {% set end = as_timestamp(now()) - 180 %}
+            {% set kwh = [states('sensor.washer_power_monitor_energy') | float(0) - states('input_number.washer_cycle_start_kwh') | float(0), 0] | max %}
+            {% set e = {'start': start | timestamp_custom('%a %d %b %H:%M'), 'minutes': (((end - start) / 60) | round(0) | int) if start > 0 else 0, 'kwh': kwh | round(2), 'cost': (kwh * states('sensor.electricity_price_per_kwh') | float(0)) | round(2)} %}
+            {{ ([e] + (state_attr('sensor.washer_last_cycle', 'cycles') or []))[:10] }}
+
+  - trigger:
+      - platform: state
+        entity_id: binary_sensor.dryer_running
+        from: "on"
+        to: "off"
+    sensor:
+      - name: "Dryer Last Cycle"
+        unique_id: dryer_last_cycle
+        device_class: timestamp
+        state: "{{ (now() - timedelta(minutes=3)).isoformat() }}"
+        attributes:
+          cycles: >-
+            {% set start = state_attr('input_datetime.dryer_cycle_start', 'timestamp') | float(0) %}
+            {% set end = as_timestamp(now()) - 180 %}
+            {% set kwh = [states('sensor.dryer_power_monitor_energy') | float(0) - states('input_number.dryer_cycle_start_kwh') | float(0), 0] | max %}
+            {% set e = {'start': start | timestamp_custom('%a %d %b %H:%M'), 'minutes': (((end - start) / 60) | round(0) | int) if start > 0 else 0, 'kwh': kwh | round(2), 'cost': (kwh * states('sensor.electricity_price_per_kwh') | float(0)) | round(2)} %}
+            {{ ([e] + (state_attr('sensor.dryer_last_cycle', 'cycles') or []))[:10] }}

@@ -32,17 +32,30 @@
               pkgs.fetchurl { inherit (pt) url hash; }
             })"
           ) (p.patches or [ ]);
+          requirements = lib.optionalString (p ? requirements) ''
+            jq --argjson r '${builtins.toJSON p.requirements}' '.requirements = $r' $out/manifest.json > manifest.new
+            cp manifest.new $out/manifest.json
+          '';
         in
         {
-          tree = pkgs.runCommand name { nativeBuildInputs = [ pkgs.git ]; } ''
-            cp -r ${tarball p} src
-            chmod -R u+w src
-            ${applyPatches}
-            mkdir -p $out
-            s=src/${p.subpath}
-            if [ -d "$s" ]; then cp -r "$s"/. $out; else cp "$s" $out; fi
-            ${extra}
-          '';
+          tree =
+            pkgs.runCommand name
+              {
+                nativeBuildInputs = [
+                  pkgs.git
+                  pkgs.jq
+                ];
+              }
+              ''
+                cp -r ${tarball p} src
+                chmod -R u+w src
+                ${applyPatches}
+                mkdir -p $out
+                s=src/${p.subpath}
+                if [ -d "$s" ]; then cp -r "$s"/. $out; else cp "$s" $out; fi
+                ${requirements}
+                ${extra}
+              '';
           zip = pkgs.runCommand name { nativeBuildInputs = [ pkgs.unzip ]; } ''
             unzip -q ${release p} -d unpacked
             mkdir -p $out

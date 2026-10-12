@@ -29,5 +29,25 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__nixos__nix",
+      "Bash(nix flake check*)",
+      "Bash(nix develop -c just build sutala)",
+      "Bash(nix develop -c just check)",
+      "Bash(niri validate*)",
+      "Bash(nix-instantiate --parse *)",
+      "Bash(nix flake prefetch*)",
+      "Bash(nix flake metadata*)",
+      "Bash(nix develop -c just fmt)",
+      "Bash(niri msg windows*)",
+      "Bash(nix develop -c nix flake check)",
+      "Bash(niri msg outputs*)",
+      "Bash(nix build --dry-run*)",
+      "Bash(git worktree remove *)",
+      "Bash(git worktree prune*)",
+      "Bash(git branch -D *)"
+    ]
   }
 }

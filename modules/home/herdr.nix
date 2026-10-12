@@ -13,6 +13,7 @@
         keys = {
           prefix = "ctrl+a";
           detach = "prefix+d";
+          last_pane = "prefix+;";
           rename_tab = "prefix+comma";
           split_vertical = "prefix+|";
           split_horizontal = "prefix+minus";

@@ -213,8 +213,7 @@
                   - 'code'
                 access_token_signed_response_alg: 'none'
                 userinfo_signed_response_alg: 'none'
-              # Requires the hass-oidc-auth HACS integration, installed and
-              # configured by hand in HA's own UI (no declarative path).
+              # hass-oidc-auth is pinned in ha-pins.json; its config lives in HA's own UI.
               - client_id: 'homeassistant'
                 client_name: 'Home Assistant'
                 client_secret: '${

@@ -7,9 +7,10 @@
       config = {
         ProgramArguments = [
           "${pkgs.jankyborders}/bin/borders"
-          "active_color=glow(0xff00ffaa)"
+          # Catppuccin mocha blue (matches catppuccin.accent) / surface1.
+          "active_color=glow(0xff89b4fa)"
           "inactive_color=0xff313244"
-          "width=6.0"
+          "width=4.0"
           "style=round"
         ];
         RunAtLoad = true;

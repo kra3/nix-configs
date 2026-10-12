@@ -1,0 +1,28 @@
+input_select:
+  alarm_restore_mode:
+    name: Alarm mode to restore after a restart
+    icon: mdi:shield-sync-outline
+    options:
+      - none
+      - armed_away
+      - armed_night
+
+# All restart-safe, so a restart mid-wait doesn't drop the hand-back or the escalation.
+timer:
+  alarm_lights_handback:
+    duration: "00:07:00"
+    restore: true
+  alarm_arm_escalation:
+    duration: "00:10:00"
+    restore: true
+  alarm_siren_grace:
+    duration: "00:02:00"
+    restore: true
+
+input_text:
+  alarm_speakers_on:
+    name: Home theater powered on by the alarm
+    max: 8
+  alarm_lights_revert:
+    name: Unmanaged lights to turn off after the alarm
+    max: 255

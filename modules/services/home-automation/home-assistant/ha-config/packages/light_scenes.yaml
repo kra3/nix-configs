@@ -1,0 +1,34 @@
+input_text:
+  living_scene:
+    name: Living room scene
+    icon: mdi:palette
+    max: 255
+    initial: Auto
+  office_scene:
+    name: Office scene
+    icon: mdi:palette
+    max: 255
+    initial: Auto
+
+template:
+  - sensor:
+      - name: "Lights summary"
+        unique_id: lights_summary
+        icon: mdi:lightbulb-group
+        state: >-
+          {% set rooms = ['light.living_room_lights', 'light.dining_lights', 'light.kitchen_lights',
+                          'light.kitchen_dining_lights', 'light.bedroom_wardrobe_lights', 'light.office_room_light',
+                          'light.tv_backlight', 'switch.hue_light_switch_1', 'switch.hue_light_switch_2'] %}
+          {% set s = rooms | map('states') | list %}
+          {% set on = s | select('eq', 'on') | list | length %}
+          {% set dead = s | select('in', ['unavailable', 'unknown']) | list | length %}
+          {% set anyon = states.light | selectattr('state', 'eq', 'on') | list | count > 0 %}
+          {% set parts = ([on ~ ' on'] if on else (['Other lights on'] if anyon else [])) + ([dead ~ ' unavailable'] if dead else []) %}
+          {{ parts | join(' · ') if parts else 'All off' }}
+  - binary_sensor:
+      - name: "Lights any on"
+        unique_id: lights_any_on
+        state: "{{ states.light | selectattr('state', 'eq', 'on') | list | count > 0 or is_state('switch.hue_light_switch_1', 'on') or is_state('switch.hue_light_switch_2', 'on') }}"
+      - name: "Lights in manual control"
+        unique_id: lights_in_manual_control
+        state: "{{ state_attr('switch.home_adaptive_lighting_home', 'manual_control') | default([], true) | length > 0 }}"

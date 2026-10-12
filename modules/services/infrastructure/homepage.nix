@@ -11,15 +11,25 @@
       net = config.vars.network;
       ip = net.podmanAddresses;
       listenPort = 8082;
+      localMedia = config.vars.localMedia.enable;
 
       envContent = ''
-        HOMEPAGE_VAR_RADARR_KEY=${config.sops.placeholder."media.radarr.api_key"}
-        HOMEPAGE_VAR_SONARR_KEY=${config.sops.placeholder."media.sonarr.api_key"}
+        ${lib.optionalString localMedia "HOMEPAGE_VAR_RADARR_KEY=${
+          config.sops.placeholder."media.radarr.api_key"
+        }"}
+        ${lib.optionalString localMedia "HOMEPAGE_VAR_SONARR_KEY=${
+          config.sops.placeholder."media.sonarr.api_key"
+        }"}
         HOMEPAGE_VAR_LIDARR_KEY=${config.sops.placeholder."media.lidarr.api_key"}
         HOMEPAGE_VAR_PROWLARR_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
-        HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}
+        ${lib.optionalString (config.virtualisation.quadlet.containers ? bazarr)
+          "HOMEPAGE_VAR_BAZARR_KEY=${config.sops.placeholder."media.bazarr.api_key"}"
+        }
         HOMEPAGE_VAR_SABNZBD_KEY=${config.sops.placeholder."media.sabnzbd.api_key"}
-        HOMEPAGE_VAR_JELLYFIN_KEY=${config.sops.placeholder."media.jellyfin.apikeys.seerr"}
+        HOMEPAGE_VAR_SLSKD_KEY=${config.sops.placeholder."media.slskd.api_key"}
+        ${lib.optionalString localMedia "HOMEPAGE_VAR_JELLYFIN_KEY=${
+          config.sops.placeholder."media.jellyfin.apikeys.seerr"
+        }"}
         HOMEPAGE_VAR_BOOKSHELF_KEY=${config.sops.placeholder."media.bookshelf.api_key"}
         HOMEPAGE_VAR_GRAFANA_USER=${config.sops.placeholder."monitoring.grafana.admin.user"}
         HOMEPAGE_VAR_GRAFANA_PASSWORD=${config.sops.placeholder."monitoring.grafana.admin.password"}
@@ -31,7 +41,6 @@
         HOMEPAGE_VAR_TAILSCALE_KEY=${config.sops.placeholder."homepage.tailscale_key"}
         HOMEPAGE_VAR_TAILSCALE_DEVICE_ID=${config.sops.placeholder."homepage.tailscale_device_id"}
         HOMEPAGE_VAR_HOMEASSISTANT_TOKEN=${config.sops.placeholder."homepage.homeassistant_token"}
-        HOMEPAGE_VAR_ARCANE_KEY=${config.sops.placeholder."homepage.arcane_key"}
         HOMEPAGE_VAR_NAVIDROME_TOKEN=${config.sops.placeholder."homepage.navidrome_token"}
         HOMEPAGE_VAR_NAVIDROME_SALT=${config.sops.placeholder."homepage.navidrome_salt"}
         HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY=${config.sops.placeholder."homepage.audiobookshelf_key"}
@@ -47,7 +56,6 @@
       sops.secrets."homepage.tailscale_device_id" = { };
       sops.secrets."homepage.adguard_password" = { };
       sops.secrets."homepage.homeassistant_token" = { };
-      sops.secrets."homepage.arcane_key" = { };
       sops.secrets."homepage.navidrome_token" = { };
       sops.secrets."homepage.navidrome_salt" = { };
       sops.secrets."homepage.audiobookshelf_key" = { };
@@ -148,62 +156,66 @@
           {
             Media = [
               {
-                Play = [
-                  {
-                    Jellyfin = {
-                      description = "Movie & TV streaming";
-                      icon = "jellyfin.png";
-                      href = "https://jellyfin.${domain}";
-                      siteMonitor = "https://jellyfin.${domain}";
-                      widget = {
-                        type = "jellyfin";
-                        url = "http://${net.containers.mediaPlay.localAddress}:8096";
-                        key = "{{HOMEPAGE_VAR_JELLYFIN_KEY}}";
+                Play =
+                  lib.optionals localMedia [
+                    {
+                      Jellyfin = {
+                        description = "Movie & TV streaming";
+                        icon = "jellyfin.png";
+                        href = "https://jellyfin.${domain}";
+                        siteMonitor = "https://jellyfin.${domain}";
+                        widget = {
+                          type = "jellyfin";
+                          version = 2;
+                          url = "http://${net.containers.mediaPlay.localAddress}:8096";
+                          key = "{{HOMEPAGE_VAR_JELLYFIN_KEY}}";
+                        };
                       };
-                    };
-                  }
-                  {
-                    Navidrome = {
-                      description = "Music streaming";
-                      icon = "navidrome.png";
-                      href = "https://navidrome.${domain}";
-                      siteMonitor = "https://navidrome.${domain}";
-                      widget = {
-                        type = "navidrome";
-                        url = "http://${net.containers.mediaPlay.localAddress}:4533";
-                        user = "homepage";
-                        token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
-                        salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
+                    }
+                  ]
+                  ++ [
+                    {
+                      Navidrome = {
+                        description = "Music streaming";
+                        icon = "navidrome.png";
+                        href = "https://navidrome.${domain}";
+                        siteMonitor = "https://navidrome.${domain}";
+                        widget = {
+                          type = "navidrome";
+                          url = "http://${net.containers.mediaPlay.localAddress}:4533";
+                          user = "homepage";
+                          token = "{{HOMEPAGE_VAR_NAVIDROME_TOKEN}}";
+                          salt = "{{HOMEPAGE_VAR_NAVIDROME_SALT}}";
+                        };
                       };
-                    };
-                  }
-                  {
-                    Seerr = {
-                      description = "Media requests";
-                      icon = "overseerr.png";
-                      href = "https://seerr.${domain}";
-                      siteMonitor = "https://seerr.${domain}";
-                      widget = {
-                        type = "seerr";
-                        url = "http://${ip.seerr}:5055";
-                        key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
+                    }
+                    {
+                      Seerr = {
+                        description = "Media requests";
+                        icon = "overseerr.png";
+                        href = "https://seerr.${domain}";
+                        siteMonitor = "https://seerr.${domain}";
+                        widget = {
+                          type = "seerr";
+                          url = "http://${ip.seerr}:5055";
+                          key = "{{HOMEPAGE_VAR_SEERR_KEY}}";
+                        };
                       };
-                    };
-                  }
-                  {
-                    Audiobookshelf = {
-                      description = "Audiobook & podcast server";
-                      icon = "audiobookshelf.png";
-                      href = "https://audiobookshelf.${domain}";
-                      siteMonitor = "https://audiobookshelf.${domain}";
-                      widget = {
-                        type = "audiobookshelf";
-                        url = "http://${ip.audiobookshelf}:80";
-                        key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
+                    }
+                    {
+                      Audiobookshelf = {
+                        description = "Audiobook & podcast server";
+                        icon = "audiobookshelf.png";
+                        href = "https://audiobookshelf.${domain}";
+                        siteMonitor = "https://audiobookshelf.${domain}";
+                        widget = {
+                          type = "audiobookshelf";
+                          url = "http://${ip.audiobookshelf}:80";
+                          key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
+                        };
                       };
-                    };
-                  }
-                ];
+                    }
+                  ];
               }
               {
                 Acquisition = [
@@ -216,6 +228,17 @@
                       siteMonitor = "https://aiostreams.${domain}";
                     };
                   }
+                  {
+                    # No dedicated Homepage widget for AIOMetadata, plain link.
+                    AIOMetadata = {
+                      description = "Stremio metadata addon";
+                      icon = "mdi-database-search";
+                      href = "https://aiometadata.${domain}";
+                      siteMonitor = "https://aiometadata.${domain}";
+                    };
+                  }
+                ]
+                ++ lib.optionals localMedia [
                   {
                     Radarr = {
                       description = "Movie management";
@@ -242,6 +265,8 @@
                       };
                     };
                   }
+                ]
+                ++ [
                   {
                     Lidarr = {
                       description = "Music management";
@@ -252,6 +277,23 @@
                         type = "lidarr";
                         url = "http://${ip.lidarr}:8686";
                         key = "{{HOMEPAGE_VAR_LIDARR_KEY}}";
+                      };
+                    };
+                  }
+                  {
+                    Slskd = {
+                      description = "Soulseek client";
+                      icon = "slskd.png";
+                      href = "https://slskd.${domain}";
+                      siteMonitor = "https://slskd.${domain}";
+                      widget = {
+                        type = "slskd";
+                        url = "http://${ip.slskd}:5030";
+                        key = "{{HOMEPAGE_VAR_SLSKD_KEY}}";
+                        fields = [
+                          "downloads"
+                          "uploads"
+                        ];
                       };
                     };
                   }
@@ -269,19 +311,6 @@
                     };
                   }
                   {
-                    Bazarr = {
-                      description = "Subtitle management";
-                      icon = "bazarr.png";
-                      href = "https://bazarr.${domain}";
-                      siteMonitor = "https://bazarr.${domain}";
-                      widget = {
-                        type = "bazarr";
-                        url = "http://${ip.bazarr}:6767";
-                        key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
-                      };
-                    };
-                  }
-                  {
                     SABnzbd = {
                       description = "Usenet downloader";
                       icon = "sabnzbd.png";
@@ -295,6 +324,21 @@
                     };
                   }
                   {
+                    Bookshelf = {
+                      description = "Book tracking";
+                      icon = "mdi-book-open-page-variant";
+                      href = "https://bookshelf.${domain}";
+                      siteMonitor = "https://bookshelf.${domain}";
+                      widget = {
+                        type = "readarr";
+                        url = "http://${ip.bookshelf}:8787";
+                        key = "{{HOMEPAGE_VAR_BOOKSHELF_KEY}}";
+                      };
+                    };
+                  }
+                ]
+                ++ lib.optionals (config.virtualisation.quadlet.containers ? maintainerr) [
+                  {
                     Maintainerr = {
                       description = "Library cleanup automation";
                       icon = "maintainerr.png";
@@ -306,16 +350,18 @@
                       };
                     };
                   }
+                ]
+                ++ lib.optionals (config.virtualisation.quadlet.containers ? bazarr) [
                   {
-                    Bookshelf = {
-                      description = "Book tracking";
-                      icon = "mdi-book-open-page-variant";
-                      href = "https://bookshelf.${domain}";
-                      siteMonitor = "https://bookshelf.${domain}";
+                    Bazarr = {
+                      description = "Subtitle management";
+                      icon = "bazarr.png";
+                      href = "https://bazarr.${domain}";
+                      siteMonitor = "https://bazarr.${domain}";
                       widget = {
-                        type = "readarr";
-                        url = "http://${ip.bookshelf}:8787";
-                        key = "{{HOMEPAGE_VAR_BOOKSHELF_KEY}}";
+                        type = "bazarr";
+                        url = "http://${ip.bazarr}:6767";
+                        key = "{{HOMEPAGE_VAR_BAZARR_KEY}}";
                       };
                     };
                   }
@@ -448,20 +494,6 @@
                     type = "tailscale";
                     deviceid = "{{HOMEPAGE_VAR_TAILSCALE_DEVICE_ID}}";
                     key = "{{HOMEPAGE_VAR_TAILSCALE_KEY}}";
-                  };
-                };
-              }
-              {
-                Arcane = {
-                  description = "Container management";
-                  icon = "arcane.png";
-                  href = "https://oci.${domain}";
-                  siteMonitor = "https://oci.${domain}";
-                  widget = {
-                    type = "arcane";
-                    url = "http://127.0.0.1:3552";
-                    env = 0;
-                    key = "{{HOMEPAGE_VAR_ARCANE_KEY}}";
                   };
                 };
               }

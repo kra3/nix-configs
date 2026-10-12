@@ -1,6 +1,6 @@
 {
   flake.nixosModules.containers-media-mgmt-storage =
-    { ... }:
+    { config, lib, ... }:
     {
       users.groups.media.gid = 2000;
 
@@ -17,39 +17,51 @@
         "d /srv/media/downloads/torrent 2775 root media - -"
         "d /srv/media/downloads/torrent/incomplete 2775 root media - -"
         "d /srv/media/downloads/torrent/complete 2775 root media - -"
+        "d /srv/media/downloads/youtube 2775 root media - -"
         "d /srv/media/library 2775 root media - -"
         "d /srv/media/library/movies 2775 root media - -"
         "d /srv/media/library/tv 2775 root media - -"
         "d /srv/media/library/music 2775 root media - -"
-        # Migration staging tree for the music-library reorg (Task 8 runbook).
-        "d /srv/media/library/music.new 2775 root media - -"
         "d /srv/media/library/books 2775 root media - -"
         "d /srv/media/library/anime 2775 root media - -"
         "d /srv/media/library/anime/movies 2775 root media - -"
         "d /srv/media/library/anime/tv 2775 root media - -"
         "d /srv/media/library/audiobooks 2775 root media - -"
         "d /srv/media/library/homevideos 2775 root media - -"
+        # Stub-file folders for the Gelato Jellyfin plugin; movies and shows must be separate.
+        "d /srv/media/library/gelato 2775 root media - -"
+        "d /srv/media/library/gelato/movies 2775 root media - -"
+        "d /srv/media/library/gelato/shows 2775 root media - -"
         # Ringtone-extraction destination for the music-library reorg (Task 8 runbook).
         "d /srv/media/bkup 2775 root media - -"
         "d /srv/media/bkup/Ringtones 2775 root media - -"
-        # 0755 not 2770: traversal only, so non-media consumers (e.g. arcane) can reach their own subdir.
+        # 0755 not 2770: traversal only, so non-media consumers (e.g. other rootless apps) can reach their own subdir.
         "d /srv/appdata 0755 root media - -"
         "d /srv/appdata/media-mgmt 2770 root media - -"
-        "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/prowlarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/sabnzbd 2770 root media - -"
-        "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/lidarr 2770 root media - -"
         "d /srv/appdata/media-mgmt/bookshelf 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf/config 2770 root media - -"
         "d /srv/appdata/media-mgmt/audiobookshelf/metadata 2770 root media - -"
         "d /srv/appdata/media-mgmt/seerr 2770 kra3 media - -"
-        "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
         "d /srv/appdata/media-mgmt/aiostreams 2770 root media - -"
+        "d /srv/appdata/media-mgmt/aiometadata 2770 root media - -"
+        "d /srv/appdata/media-mgmt/slskd 2770 root media - -"
+        "d /srv/media/downloads/slskd 2770 root media - -"
+        "d /srv/media/downloads/slskd/complete 2770 root media - -"
+        "d /srv/media/downloads/slskd/incomplete 2770 root media - -"
+      ]
+      ++ lib.optionals config.vars.localMedia.enable [
+        "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
+      ]
+      ++ lib.optionals (config.vars.localMedia.enable && config.vars.localMedia.extras.enable) [
+        "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
+        "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
       ];
     };
 }

@@ -26,6 +26,7 @@
 
         system = {
           serverName = "sutala";
+          enableMetrics = true;
           trickplayOptions = {
             enableHwAcceleration = true;
             enableHwEncoding = true;
@@ -42,7 +43,7 @@
               tag = "RepositoryInfo";
               content = {
                 Name = "SSO";
-                Url = "https://raw.githubusercontent.com/9p4/jellyfin-plugin-sso/manifest-release/manifest.json";
+                Url = "https://raw.githubusercontent.com/k0lin/jellyfin-plugin-sso/manifest-release/manifest.json";
               };
             }
             {
@@ -55,22 +56,22 @@
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Paradox Plugins";
-                Url = "https://www.iamparadox.dev/jellyfin/plugins/manifest.json";
+                Name = "Gelato";
+                Url = "https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json";
               };
             }
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Jellyfin Tweaks + Enhanced";
-                Url = "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/10.11/manifest.json";
+                Name = "Litefin";
+                Url = "https://raw.githubusercontent.com/MoazSalem/litefin-plugin/release/manifest.json";
               };
             }
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Streamyfin";
-                Url = "https://raw.githubusercontent.com/streamyfin/jellyfin-plugin-streamyfin/main/manifest.json";
+                Name = "Moonfin";
+                Url = "https://raw.githubusercontent.com/Moonfin-Client/Plugin/refs/heads/master/manifest.json";
               };
             }
           ];
@@ -127,6 +128,14 @@
             contentType = "tvshows";
             pathInfos = [ "/data/library/anime/tv" ];
           };
+          "Gelato Movies" = {
+            contentType = "movies";
+            pathInfos = [ "/data/library/gelato/movies" ];
+          };
+          "Gelato Shows" = {
+            contentType = "tvshows";
+            pathInfos = [ "/data/library/gelato/shows" ];
+          };
           "Home Videos" = {
             contentType = "homevideos";
             pathInfos = [ "/data/library/homevideos" ];
@@ -179,7 +188,7 @@
         };
       };
 
-      users.users.jellyfin = {
+      users.users.jellyfin = lib.mkIf config.services.declarative-jellyfin.enable {
         extraGroups = [
           "media"
           "render"
@@ -187,12 +196,12 @@
         ];
       };
 
-      systemd.services.jellyfin = {
+      systemd.services.jellyfin = lib.mkIf config.services.declarative-jellyfin.enable {
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
       };
 
-      systemd.tmpfiles.rules = [
+      systemd.tmpfiles.rules = lib.mkIf config.services.declarative-jellyfin.enable [
         "d /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
         "f /var/lib/jellyfin/log/jellyfin.log 0640 jellyfin jellyfin - -"
         "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"

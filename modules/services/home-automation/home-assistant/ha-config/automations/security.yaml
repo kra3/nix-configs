@@ -1,88 +1,321 @@
 # ── Security ───────────────────────────────────────────────────
 - id: alarm_pending_or_triggered_lights
   alias: "Security: lights on when alarm pending or triggered"
-  description: >-
-    Lights on when Alarmo goes pending/triggered and it's dark. Alarmo
-    itself already owns the entry-delay (60s, armed_away) via its own
-    sensor config — this only adds the light response.
+  description: Alarm lights on when pending/triggered after dark; 7 min after it settles, room automations take back over.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
     - pending
     - triggered
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: sun.sun
-    state: below_horizon
+    id: alarm
+  - entity_id: alarm_control_panel.vasudha_secure
+    from:
+    - pending
+    - triggered
+    not_to:
+    - pending
+    - triggered
+    trigger: state
+    id: settled
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_lights_handback
+    id: handback
+  variables:
+    revert: "{{ states('input_text.alarm_lights_revert') }}"
   actions:
-  - action: light.turn_on
-    target:
-      entity_id:
-      - light.kitchen_lights
-      - light.hall
-      - light.bedroom_wardrobe_lights
-      - light.living_room_lights
-      - light.dining_lights
-      - light.kitchen_dining_lights
-      - light.office_room_light
-  mode: single
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: alarm
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - if: "{{ not revert.startswith('on:') }}"
+        then:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.alarm_lights_revert
+          data:
+            value: >-
+              on:{{ ['light.kitchen_dining_lights', 'light.office_room_light'] | select('is_state', 'off') | join(',') }}
+      - action: timer.cancel
+        target:
+          entity_id: timer.alarm_lights_handback
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.kitchen_lights
+          - light.hallway_hall_lights
+          - light.bedroom_wardrobe_lights
+          - light.living_room_lights
+          - light.dining_lights
+          - light.kitchen_dining_lights
+          - light.office_room_light
+    - conditions:
+      - condition: trigger
+        id: settled
+      - "{{ revert.startswith('on:') }}"
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.alarm_lights_handback
+    - conditions:
+      - condition: trigger
+        id: handback
+      - "{{ revert.startswith('on:') }}"
+      sequence:
+      - variables:
+          to_off: "{{ revert[3:].split(',') | reject('eq', '') | list }}"
+      - if: "{{ to_off | count > 0 }}"
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ to_off }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.alarm_lights_revert
+        data:
+          value: ""
+      - event: automations_resumed
+  mode: queued
 
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
-  description: >-
-    Alarmo has no notification action of its own - this is the only
-    alert a triggered alarm produces.
+  description: Critical alert and hallway speech naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
     trigger: state
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: triggered
+  variables:
+    message: >-
+      {%- set tripped = (state_attr('alarm_control_panel.vasudha_secure', 'open_sensors') or {}).keys() | list -%}
+      {{ tripped | map('state_attr', 'friendly_name') | join(', ') or 'Unknown sensor' }}
+  actions:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: triggered
+      sequence:
+      - action: script.notify_all_phones
+        data:
+          title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
+          message: "{{ message }}"
+          critical: true
+          escalated: "{{ (now() - states.alarm_control_panel.vasudha_secure.last_changed).total_seconds() >= 600 }}"
+      - if:
+        - condition: or
+          conditions:
+          - condition: state
+            entity_id: person.arun_karunagath
+            state: home
+          - condition: state
+            entity_id: person.anjalipc
+            state: home
+        then:
+        - action: script.announce_hallway
+          continue_on_error: true
+          data:
+            message: "Alarm triggered. {{ message | replace('(', '') | replace(')', '') }}."
+      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'triggered') }}"
+        timeout: "00:02:30"
+  mode: single
+
+- id: alarm_no_one_home_siren
+  alias: "Security: warn, then siren when triggered with nobody home"
+  description: Spoken warning, then after 2 min a siren on the home theater, kitchen and hallway speakers; stops on disarm, 5 min cap.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: triggered
+    trigger: state
+    id: triggered
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_siren_grace
+    id: siren
+  - entity_id: alarm_control_panel.vasudha_secure
+    from: triggered
+    not_to: triggered
+    trigger: state
+    id: settled
+  - trigger: homeassistant
+    event: start
+    id: startup
+  variables:
+    nobody_home: "{{ not (is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home')) }}"
+    speakers:
+    - media_player.ma_home_theater
+    - media_player.kitchen
+    warning: The alarm has been triggered. Disarm it now.
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: triggered
+      - "{{ nobody_home }}"
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.alarm_siren_grace
+      - action: script.alarm_speakers_prepare
+        continue_on_error: true
+      - parallel:
+        - action: script.alarm_speakers_play
+          continue_on_error: true
+          data:
+            url: "http://10.3.2.1:8098/say.wav?text={{ warning | urlencode }}"
+        - action: script.announce_hallway
+          continue_on_error: true
+          data:
+            message: "{{ warning }}"
+    - conditions:
+      - condition: trigger
+        id: settled
+      sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.alarm_siren_grace
+      - action: media_player.media_stop
+        target:
+          entity_id: "{{ speakers }}"
+        continue_on_error: true
+      - action: script.alarm_speakers_off
+        continue_on_error: true
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: siren
+        - condition: and
+          conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: timer.alarm_siren_grace
+            state: idle
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: triggered
+      - "{{ nobody_home }}"
+      sequence:
+      - action: script.announce_hallway
+        continue_on_error: true
+        data:
+          message: This property is monitored. Leave now.
+      - action: script.alarm_speakers_prepare
+        continue_on_error: true
+      - repeat:
+          while:
+          - condition: state
+            entity_id: alarm_control_panel.vasudha_secure
+            state: triggered
+          - "{{ repeat.index <= 30 }}"
+          sequence:
+          - parallel:
+            - action: script.alarm_speakers_play
+              continue_on_error: true
+              data:
+                url: http://10.3.2.1:8098/siren.wav?seconds=10
+            - sequence:
+              - delay: "00:00:04"
+              - action: rest_command.siren_hallway
+                continue_on_error: true
+            - delay: "00:00:10"
+      - action: script.alarm_speakers_off
+        continue_on_error: true
+  mode: restart
+
+- id: alarm_not_armed_escalate
+  alias: "Security: escalate a failed arm after 10 min"
+  description: Critical alert to Arun and Anjali if the alarm is still disarmed 10 min after a failed arm.
+  triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_arm_escalation
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
   actions:
   - action: script.notify_all_phones
     data:
-      title: "Alarm triggered"
+      title: Alarm still not armed
       message: >-
-        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown sensor' }}
+        Still disarmed 10 min after a failed arm — open:
+        {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'nothing' }}.
+        Force-arm from the dashboard if needed.
+      critical: true
+      escalated: true
   mode: single
 
 - id: alarm_triggered_auto_disarm_on_arrival
-  alias: "Security: auto-disarm on triggered if a resident just arrived"
+  alias: "Security: auto-disarm if a resident just arrived or used the keypad"
   description: >-
-    A triggered alarm otherwise only clears via sleep_alarmo_disarm_morning
-    (sleep.yaml), which can leave it triggered for up to the length of the
-    sleep window. Auto-clears if either a resident's device just arrived
-    home, or the front door was unlocked via keypad (a valid code is
-    stronger proof of legitimate entry than phone geofencing, which can
-    lag or drift).
+    Disarms on entry (pending, retried at triggered) if a resident's
+    device arrived home in the last 5min, or the front door was
+    unlocked via keypad. Waits up to 15s for the lock's operator
+    report, which lags the door opening. Notifies only if it disarmed.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
-    to: triggered
+    to:
+    - pending
+    - triggered
     trigger: state
-  conditions:
-  - condition: or
-    conditions:
-    - condition: template
-      value_template: >-
-        {%- set window = 300 -%}
-        {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
-                          + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
-        {%- set ns = namespace(recent_arrival=false) -%}
-        {%- for t in trackers -%}
-          {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
-            {%- set ns.recent_arrival = true -%}
-          {%- endif -%}
-        {%- endfor -%}
-        {{ ns.recent_arrival }}
-    - condition: template
-      value_template: >-
-        {{ state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
-           and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < 300 }}
   actions:
-  - action: alarm_control_panel.alarm_disarm
-    target:
+  - wait_template: &resident_or_keypad >-
+      {%- set window = 300 -%}
+      {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
+                        + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
+      {%- set ns = namespace(ok=false) -%}
+      {%- for t in trackers -%}
+        {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
+          {%- set ns.ok = true -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.ok or (state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
+         and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < window) }}
+    timeout: "00:00:15"
+    continue_on_timeout: true
+  - if:
+    - condition: state
       entity_id: alarm_control_panel.vasudha_secure
-  - action: script.notify_all_phones
-    data:
-      title: "Alarm auto-disarmed"
-      message: "Front door opened right after a resident arrived home - disarmed automatically."
+      state:
+      - pending
+      - triggered
+    - condition: template
+      value_template: *resident_or_keypad
+    then:
+    - action: alarm_control_panel.alarm_disarm
+      target:
+        entity_id: alarm_control_panel.vasudha_secure
+      data:
+        code: !secret alarm_code
+    - delay: "00:00:02"
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: alarm_control_panel.vasudha_secure
+          state: disarmed
+        sequence:
+        - action: script.notify_all_phones
+          data:
+            title: "Alarm auto-disarmed"
+            message: "Front door opened right after a resident arrived home - disarmed automatically."
+      default:
+      - action: script.notify_all_phones
+        data:
+          title: "Alarm auto-disarm failed"
+          message: "Alarm is still {{ states('alarm_control_panel.vasudha_secure') }} after a resident entry."
   mode: single

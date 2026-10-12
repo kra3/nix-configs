@@ -10,7 +10,7 @@ network topology, ports, and firewall rules, see
 | Host | Role | Arch | Deploy |
 |---|---|---|---|
 | `sutala` | Home server + desktop (niri) | x86_64-linux | `just switch sutala` (local) |
-| `surasa` | Secondary DNS resolver + Snapcast client + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
+| `surasa` | Secondary DNS resolver + Sendspin player + off-box watchdog | aarch64-linux (RPi 3B+) | `just switch-remote surasa <target>`, built on sutala |
 | `mac-work` | Work laptop (nix-darwin, Home Manager only) | aarch64-darwin | `just switch mac-work` (local, Determinate-managed nix) |
 
 ---
@@ -39,8 +39,8 @@ explicit inter-zone allow-list; Tailscale exit node + subnet route for
 (`monitoring`, `media-play`, `home-auto`, each its own veth on
 `10.3.255.0/24`), podman quadlet zones (`br-life` 10.3.0.0/24,
 `br-media-mgmt` 10.3.1.0/24, `br-home-auto` 10.3.2.0/24, plus a macvlan for
-LAN-discoverable home-auto pods), and two standalone rootless podman
-instances (arcane, authelia). Full diagram, port list, and the FORWARD
+LAN-discoverable home-auto pods), and one standalone rootless podman
+instance (authelia). Full diagram, port list, and the FORWARD
 allow-table: [`network-diagram.md`](./network-diagram.md).
 
 ### Services
@@ -61,7 +61,6 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |
 | Redis | `modules/services/redis.nix` | Ghostfolio's cache; password-protected, `FLUSHALL` renamed off |
 | Podman | `modules/services/virtualisation/podman.nix` | Rootful backend for the quadlet app fleet |
-| Arcane (container UI) | `modules/services/virtualisation/arcane.nix` | `oci.${domain}`; own **rootless** podman instance, isolated from the app fleet |
 | fail2ban | `modules/fail2ban.nix` | sshd + nginx jails, nftables-multiport ban action |
 | Avahi (mDNS reflector) | `modules/services/discovery/avahi.nix` | Relays mDNS between LAN and `ve-media-play` |
 | niri (desktop) | `modules/services/niri/default.nix` | Wayland compositor for interactive desktop use; Claude Desktop, gnome-keyring, fcitx5 |
@@ -103,6 +102,44 @@ except where noted:
 | Music Assistant | `home-auto/music-assistant/default.nix` | `modules/services/home-automation/music-assistant.nix` |
 | Wyoming Piper (TTS) | `home-auto/wyoming-piper/default.nix` | `modules/services/home-automation/wyoming-piper.nix` |
 | Wyoming Whisper (STT) | `home-auto/wyoming-whisper/default.nix` | `modules/services/home-automation/wyoming-whisper.nix` |
+| Hallway announce (Piper → Uno camera speaker, `10.3.2.1:8098`) | host service, no container | `modules/services/surveillance/camera-announce.nix` |
+
+### Stream-first pipeline (movies/TV/anime)
+
+Streaming is the default; disk is the exception.
+
+- **Watch:** Jellyfin (Litefin client on the TV) browses Gelato libraries,
+  which surface AIOStreams/AIOMetadata catalogs. Nothing touches disk.
+- **Fallback:** when no stream exists, request it in Seerr (Litefin's Seerr
+  page or the Seerr web UI) with no tag. Default profiles: Radarr `HD-1080p`,
+  Sonarr `WEB-1080p`. Radarr/Sonarr -> Prowlarr -> SABnzbd -> import into the
+  normal libraries; Maintainerr reaps it later.
+- **Keep:** tag `keep` (Seerr advanced request, later in Radarr/Sonarr, or by
+  excluding the item in Maintainerr, which writes the tag back for
+  movies/shows). Keep profiles: Radarr `UHD Bluray + WEB` / Sonarr `Ultra-HD`
+  grab >=1080p and upgrade to UHD. Tagged items are never reaped.
+
+| Cleanup rule | Timing |
+|---|---|
+| Movie | deleted 7 days after watched |
+| Season | deleted 21 days after fully watched, once its finale exists (season unmonitored; show removed if empty) |
+| Unwatched download | removed after 90 days total |
+
+Deletes go through the Radarr/Sonarr recycle bin (purged after 7 days).
+Gelato libraries are never touched.
+
+**Toggles:** `vars.localMedia.enable` (Jellyfin, Radarr, Sonarr, Recyclarr,
+Maintainerr); `vars.localMedia.extras.enable` (Bazarr, Unpackerr; off by
+default, Unpackerr kept for future P2P).
+
+**App-internal state:** the keep tag, recycle bin, Maintainerr rules, Seerr
+defaults/library scope, Litefin's Seerr link and Gelato's daily catalog sync
+live in each app's appdata and were applied once. Restore from an appdata
+backup rather than re-deriving.
+
+**If Gelato breaks:** (1) AIOStreams as a SABnzbd-compatible download client
+for Radarr/Sonarr; (2) Moonfin's unified multi-server view with AIOStreams'
+Jellyfin-compatible server (untested).
 
 ### Logs/metrics → Grafana (sutala-specific)
 - Host + all nspawn/podman journald logs ship via each unit's Alloy agent
@@ -124,7 +161,7 @@ except where noted:
 
 ### Role
 Secondary/off-box DNS resolver (AdGuard Home + Unbound, DoT upstreams),
-Snapcast client, and an independent "is sutala up" watchdog — deliberately
+Sendspin audio player, and an independent "is sutala up" watchdog — deliberately
 placed off sutala so it can alert even if sutala itself is unreachable.
 Config: `hosts/surasa/configuration.nix`.
 
@@ -148,7 +185,8 @@ independent of sutala.
 | Service | Defining file | Notes |
 |---|---|---|
 | AdGuard Home + Unbound | `modules/services/dns/rpi-secondary.nix` | Secondary resolver; forwards over DoT, same upstream philosophy as sutala's |
-| Snapcast client | `modules/services/media/snapclient.nix` | Multi-room audio playback endpoint |
+| Sendspin player | `modules/services/media/sendspin.nix` | Official `sendspin-cli` as MA players "Kitchen Speaker" (surasa) and "Office Speaker" (sutala); dials MA on port 8927 (sutala via the bridge address). Surasa's PipeWire/Bluetooth are in `pi-audio.nix` |
+| Nightly deploy (runs on sutala) | `modules/services/system/surasa-autodeploy.nix` | Timer 08:00 builds `main` on sutala and switches surasa over SSH as kra3 (`surasa-autodeploy.service`) |
 | sutala-watchdog | `modules/services/monitoring/sutala-watchdog.nix` | Plain script+timer pinging sutala; Telegram alert on down (same bot as Grafana's) — not Prometheus-based, deliberately lightweight for 1GB RAM |
 | Alloy agent | `modules/services/monitoring/alloy-host.nix` | `lokiUrl` overridden to `https://loki.${domain}/loki/api/v1/push` (nginx vhost) since surasa can't reach the monitoring container's veth directly |
 | node-exporter + blackbox-exporter | inline in `hosts/surasa/configuration.nix` | blackbox probes sutala's HTTPS vhosts and DNS from an independent LAN vantage point — see `blackbox-http`/`blackbox-dns` Prometheus jobs below |

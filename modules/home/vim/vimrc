@@ -17,7 +17,6 @@ call plug#begin('~/.vim/plugged')
 "==============================================================================
 " Startup & Sessions
 Plug 'tpope/vim-obsession', { 'on': 'Obsession' }    " Session management
-Plug 'editorconfig/editorconfig-vim'                 " EditorConfig support
 
 "==============================================================================
 " NAVIGATION & SEARCH
@@ -27,12 +26,12 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'                              " FZF integration for vim
 
 " File Navigation - NERDTree preferred over built-in netrw
-Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTree', 'NERDTreeFind'] }
+Plug 'preservim/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTree', 'NERDTreeFind'] }
   \ | Plug 'Xuyuanp/nerdtree-git-plugin'            " File explorer with git integration
 Plug 'airblade/vim-rooter'                          " Change working dir to project root
 
 " Code Navigation
-Plug 'easymotion/vim-easymotion'                " Efficient text navigation
+Plug 'justinmk/vim-sneak'                       " Efficient 2-char motion navigation
 
 "==============================================================================
 " VERSION CONTROL & COLLABORATION
@@ -51,7 +50,7 @@ Plug 'tpope/vim-repeat'                             " Enable repeating supported
 Plug 'tpope/vim-commentary'                          " Comment stuff out
 Plug 'tpope/vim-abolish', { 'on': ['Abolish', 'Subvert'] } " Search/substitute/abbreviate variants
 Plug 'tpope/vim-unimpaired'                         " Pairs of handy bracket mappings
-Plug 'jiangmiao/auto-pairs'                         " Insert/delete brackets in pairs
+Plug 'LunarWatcher/auto-pairs'                      " Insert/delete brackets in pairs (maintained fork)
 
 " Clipboard & History
 Plug 'junegunn/vim-peekaboo'                        " Preview registers
@@ -64,7 +63,6 @@ Plug 'michaeljsmith/vim-indent-object'              " Text objects for indented 
 " WINDOW & BUFFER MANAGEMENT
 "==============================================================================
 Plug 'schickling/vim-bufonly', { 'on': 'BufOnly' }  " Delete all buffers except current
-Plug 'gioele/vim-autoswap'                          " Handle swap files intelligently
 Plug 'moll/vim-bbye', { 'on': ['Bdelete', 'Bwipeout'] } " Better buffer closing
 Plug 'christoomey/vim-tmux-navigator'               " Seamless vim/tmux navigation
 
@@ -98,18 +96,23 @@ Plug 'dense-analysis/ale', { 'for': ['python', 'javascript', 'typescript', 'css'
 "==============================================================================
 " LSP & COMPLETION
 "==============================================================================
+" This whole stack is lazy-loaded per-buffer for coding filetypes only, so
+" plain-editing sessions (config, notes) stay fast. Neovim will own coding later.
+let g:coding_langs = ['python', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact',
+    \ 'scala', 'java', 'sh', 'sql', 'css', 'html', 'json', 'yaml', 'markdown', 'vimwiki']
+
 " Language Server Protocol Support
-Plug 'prabirshrestha/vim-lsp'                " Vim LSP client
-Plug 'mattn/vim-lsp-settings'                " Auto configurations for LSP
+Plug 'prabirshrestha/vim-lsp', { 'for': g:coding_langs }                " Vim LSP client
+Plug 'mattn/vim-lsp-settings', { 'for': g:coding_langs }                " Auto configurations for LSP
 
 " Async Completion
-Plug 'prabirshrestha/asyncomplete.vim'       " Async completion framework
-Plug 'prabirshrestha/asyncomplete-lsp.vim'   " LSP source for asyncomplete
+Plug 'prabirshrestha/asyncomplete.vim', { 'for': g:coding_langs }       " Async completion framework
+Plug 'prabirshrestha/asyncomplete-lsp.vim', { 'for': g:coding_langs }   " LSP source for asyncomplete
 
 " Snippet Support
-Plug 'hrsh7th/vim-vsnip'                     " Snippet engine (VSCode format)
-Plug 'hrsh7th/vim-vsnip-integ'               " Integration with asyncomplete
-Plug 'rafamadriz/friendly-snippets'          " Collection of community snippets
+Plug 'hrsh7th/vim-vsnip', { 'for': g:coding_langs }                     " Snippet engine (VSCode format)
+Plug 'hrsh7th/vim-vsnip-integ', { 'for': g:coding_langs }               " Integration with asyncomplete
+Plug 'rafamadriz/friendly-snippets', { 'for': g:coding_langs }          " Collection of community snippets
 
 "==============================================================================
 " PRODUCTIVITY & UTILITIES
@@ -199,7 +202,6 @@ set updatetime=300
 
 " More responsive UI
 set lazyredraw          " Don't redraw while executing macros
-set ttyfast             " Faster terminal connection
 set synmaxcol=200       " Only syntax highlight first 200 columns for performance
 
 " Check for file changes more efficiently
@@ -285,9 +287,12 @@ augroup MyAutoCmd
   autocmd WinEnter,BufRead * setlocal cursorcolumn
 augroup END
 
-" Spell checking
-set spell
+" Spell checking - only in prose filetypes, not code
 set spelllang=en
+augroup spell_prose
+  autocmd!
+  autocmd FileType markdown,gitcommit,text,vimwiki setlocal spell
+augroup END
 
 " ========================================
 " Editor Behavior
@@ -309,13 +314,12 @@ set fileformat=unix
 au BufNewFile * set fileformat=unix
 
 " Spacing and indenting
-set tabstop=4           " A tab is 4 spaces
-set softtabstop=4       " Insert 4 spaces when Tab is pressed
-set shiftwidth=4        " An indent is 4 spaces
+set tabstop=2           " A tab is 2 spaces
+set softtabstop=2       " Insert 2 spaces when Tab is pressed
+set shiftwidth=2        " An indent is 2 spaces
 set shiftround          " Round spaces to nearest shiftwidth multiple
 set expandtab           " Use spaces instead of tabs
 set nojoinspaces        " Don't convert spaces to tabs
-set smartindent         " Smart auto-indenting
 
 " ========================================
 " Search Settings
@@ -639,9 +643,12 @@ if PluginAvailable('vim-lsp')
         let g:lsp_settings_enable_suggestions = 1
 
         " Language-specific server configurations
-        " Python: pyright (fast, accurate type checking)
+        " Python: basedpyright (maintained pyright superset) for types/nav/hover.
+        " Lint + format is handled by ruff via ALE, not the LSP (see ALE section).
+        " basedpyright honours the python.analysis.* namespace for compatibility.
+        let g:lsp_settings_filetype_python = ['basedpyright']
         call extend(g:lsp_settings, {
-            \ 'pyright-langserver': {
+            \ 'basedpyright': {
             \   'workspace_config': {
             \     'python': {
             \       'analysis': {
@@ -702,7 +709,8 @@ endif
 
 " FZF {{{
     " Replaces CtrlP functionality
-    let g:fzf_layout = { 'down': '~40%' }
+    " Floating popup window (Vim 8.2+ / modern terminals like alacritty, ghostty)
+    let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
     let g:fzf_action = {
       \ 'ctrl-t': 'tab split',
       \ 'ctrl-s': 'split',
@@ -749,19 +757,16 @@ endif
     let g:undotree_HelpLine = 0
 " }}}
 
-" EasyMotion {{{
-    let g:EasyMotion_do_mapping = 0  " Disable default mappings
-    let g:EasyMotion_smartcase = 1   " Turn on case-insensitive feature
-    let g:EasyMotion_smartsign_us = 1
-    
-    " Jump to anywhere with 2-character search
-    nmap <Leader><Leader> <Plug>(easymotion-s2)
-    " Jump to anywhere with n-character search
-    nmap <Leader>s <Plug>(easymotion-sn)
-    
-    " JK motions: Line motions
-    map <Leader>ej <Plug>(easymotion-j)
-    map <Leader>ek <Plug>(easymotion-k)
+" vim-sneak {{{
+    " Labeled 2-char jump, triggered via <Leader> so standard s/S/f/t stay intact.
+    " Mapping <Leader><Leader> to Sneak_s also makes sneak skip its default
+    " auto-hijack of bare s/S (it sees a Sneak_s mapping already exists).
+    let g:sneak#label = 1        " label matches (easymotion-style jump target)
+    let g:sneak#use_ic_scs = 1   " respect ignorecase/smartcase
+
+    map <Leader><Leader> <Plug>Sneak_s   " forward 2-char jump
+    map <Leader>S        <Plug>Sneak_S   " backward 2-char jump
+    " No n-char search or vertical j/k label-jump — those were easymotion-only.
 " }}}
 
 
@@ -882,12 +887,16 @@ endif
             \ 'sh': []
             \ }
         
-        " Python linters
-        if HasExecutable('flake8')
-            call add(g:ale_linters.python, 'flake8')
-        endif
-        if HasExecutable('pylint')
-            call add(g:ale_linters.python, 'pylint')
+        " Python linters - ruff (fast, replaces flake8 + pylint); fall back if absent
+        if HasExecutable('ruff')
+            call add(g:ale_linters.python, 'ruff')
+        else
+            if HasExecutable('flake8')
+                call add(g:ale_linters.python, 'flake8')
+            endif
+            if HasExecutable('pylint')
+                call add(g:ale_linters.python, 'pylint')
+            endif
         endif
         
         " JavaScript/TypeScript linters
@@ -920,7 +929,7 @@ endif
         
         " Configure fixers
         let g:ale_fixers = {
-            \ 'python': ['black', 'isort'],
+            \ 'python': ['ruff', 'ruff_format'],
             \ 'javascript': ['prettier', 'eslint'],
             \ 'typescript': ['prettier', 'eslint'],
             \ 'sql': ['pgformatter'],
@@ -1499,19 +1508,19 @@ function! SetupDevEnvironment()
   " Common coding settings
   setlocal number
   setlocal autoindent
-  setlocal smartindent
 endfunction
 
 " Python settings
 augroup python_settings
   autocmd!
-  autocmd FileType python setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
   autocmd FileType python setlocal textwidth=88  " Black formatter default
   autocmd FileType python setlocal colorcolumn=88
   autocmd FileType python nnoremap <buffer> <Leader>r :update<CR>:exec '!python3' shellescape(@%, 1)<CR>
   autocmd FileType python nnoremap <buffer> <Leader>i :update<CR>:exec '!python3 -i' shellescape(@%, 1)<CR>
-  " Linting/formatting if available
-  if executable('black')
+  " Formatting shortcut - prefer ruff, fall back to black
+  if executable('ruff')
+    autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !ruff format % && ruff check --fix %<CR>:e<CR>
+  elseif executable('black')
     autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !black %<CR>:e<CR>
   endif
   autocmd FileType python call SetupDevEnvironment()
@@ -1520,7 +1529,6 @@ augroup END
 " Java settings
 augroup java_settings
   autocmd!
-  autocmd FileType java setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
   autocmd FileType java nnoremap <buffer> <F9> :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
   autocmd FileType java nnoremap <buffer> <Leader>r :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
   autocmd FileType java call SetupDevEnvironment()
@@ -1541,7 +1549,6 @@ augroup END
 " Scala settings - with Metals LSP and Gradle support
 augroup scala_settings
   autocmd!
-  autocmd FileType scala setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
 
   " Gradle/Build commands (Space + m prefix to avoid conflicts)
   autocmd FileType scala nnoremap <buffer> <Leader>mc :!gw compileScala<CR>
@@ -1574,10 +1581,7 @@ augroup END
 " TypeScript/JavaScript settings
 augroup js_ts_settings
   autocmd!
-  " Common settings for JS/TS files
-  autocmd FileType javascript,typescript,javascriptreact,typescriptreact 
-    \ setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
-  
+
   " JavaScript execution
   autocmd FileType javascript nnoremap <buffer> <Leader>r :update<CR>:exec '!node "%"'<CR>
   
@@ -1600,7 +1604,6 @@ augroup END
 " SQL settings
 augroup sql_settings
   autocmd!
-  autocmd FileType sql setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
   autocmd FileType sql setlocal commentstring=--\ %s
   
   " SQL formatting if sqlformat is available
@@ -1632,7 +1635,6 @@ augroup END
 " Shell script settings
 augroup sh_settings
   autocmd!
-  autocmd FileType sh setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
   autocmd FileType sh setlocal commentstring=#\ %s
   autocmd FileType sh nnoremap <buffer> <Leader>r :update<CR>:exec '!bash "%"'<CR>
   
@@ -1650,7 +1652,6 @@ augroup END
 " Markdown settings
 augroup markdown_settings
   autocmd!
-  autocmd FileType markdown setlocal spell
   autocmd FileType markdown setlocal textwidth=80
   
   " Preview markdown in browser

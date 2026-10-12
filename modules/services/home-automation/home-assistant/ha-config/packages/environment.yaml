@@ -10,6 +10,7 @@ sensor:
       - sensor.bedroom_occupancy_temperature
       - sensor.laundry_occupancy_temperature
       - sensor.toilet_occupancy_temperature
+      - sensor.living_room_occupancy_temperature
 
   - platform: min_max
     name: "Average Humidity"
@@ -20,6 +21,7 @@ sensor:
       - sensor.bedroom_occupancy_humidity
       - sensor.laundry_occupancy_humidity
       - sensor.toilet_occupancy_humidity
+      - sensor.living_room_occupancy_humidity
 
   - platform: min_max
     name: "Average Illuminance"
@@ -54,6 +56,9 @@ sensor:
 input_boolean:
   bedroom_is_dark:
     name: Bedroom is dark
+  bedroom_nap:
+    name: Bedroom nap
+    icon: mdi:power-sleep
   dining_is_dark:
     name: Dining is dark
   living_room_is_dark:
@@ -85,9 +90,6 @@ timer:
   everyone_left_home_confirm:
     duration: "00:05:00"
     restore: true
-  exit_open_notify:
-    duration: "00:05:00"
-    restore: true
 
 schedule:
   sleep:
@@ -96,27 +98,27 @@ schedule:
     # HA schedule ranges can't cross midnight, so overnight windows are split into a morning tail + evening start.
     monday: &weekday_night
       - from: "00:00:00"
-        to: "07:00:00"
+        to: "08:30:00"
       - from: "22:30:00"
-        to: "23:59:59"
+        to: "24:00:00"
     tuesday: *weekday_night
     wednesday: *weekday_night
     thursday: *weekday_night
     friday:
       - from: "00:00:00"
-        to: "07:00:00"
-      - from: "23:00:00"
-        to: "23:59:59"
+        to: "08:30:00"
+      - from: "23:30:00"
+        to: "24:00:00"
     saturday:
       - from: "00:00:00"
-        to: "08:30:00"
-      - from: "23:00:00"
-        to: "23:59:59"
+        to: "09:00:00"
+      - from: "23:30:00"
+        to: "24:00:00"
     sunday:
       - from: "00:00:00"
-        to: "08:30:00"
+        to: "09:00:00"
       - from: "22:30:00"
-        to: "23:59:59"
+        to: "24:00:00"
 
 template:
   - binary_sensor:

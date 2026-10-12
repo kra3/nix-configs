@@ -49,6 +49,7 @@ template:
             'media_player.lg_webos_tv_oled77c35la',
             'media_player.home_theater',
             'media_player.home_theater_2',
+            'media_player.kitchen',
           ] -%}
           {%- set playing = players | select('is_state', 'playing') | list -%}
           {{ playing[0] if playing else players[0] }}
@@ -62,7 +63,9 @@ template:
              or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
                  and is_state('binary_sensor.house_exits_open_status', 'on'))
              or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
-                 and is_state('schedule.sleep', 'on')) }}
+                 and is_state('schedule.sleep', 'on'))
+             or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
+                 and states('zone.home') | int(0) < 1) }}
 
       - name: "Dashboard Alert: Device Health"
         unique_id: dashboard_alert_device_health
@@ -88,6 +91,26 @@ template:
               {%- endif -%}
             {%- endfor -%}
             {{ ns.names | join(', ') }}
+
+      - name: "Dashboard Alert: System"
+        unique_id: dashboard_alert_system
+        device_class: problem
+        delay_on: "00:05:00"
+        state: >-
+          {{ states('sensor.system_monitor_processor_use') | float(0) > 90
+             or states('sensor.system_monitor_memory_usage') | float(0) > 90
+             or states('sensor.system_monitor_disk_usage') | float(0) > 85
+             or states('sensor.system_monitor_processor_temperature') | float(0) > 90
+             or is_state('binary_sensor.zfs_pool_problem', 'on') }}
+        attributes:
+          reasons: >-
+            {%- set ns = namespace(r=[]) -%}
+            {%- if states('sensor.system_monitor_processor_use') | float(0) > 90 -%}{%- set ns.r = ns.r + ['CPU ' ~ (states('sensor.system_monitor_processor_use') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_memory_usage') | float(0) > 90 -%}{%- set ns.r = ns.r + ['Memory ' ~ (states('sensor.system_monitor_memory_usage') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_disk_usage') | float(0) > 85 -%}{%- set ns.r = ns.r + ['Disk ' ~ (states('sensor.system_monitor_disk_usage') | float(0) | round(0)) ~ '%'] -%}{%- endif -%}
+            {%- if states('sensor.system_monitor_processor_temperature') | float(0) > 90 -%}{%- set ns.r = ns.r + ['CPU temp ' ~ (states('sensor.system_monitor_processor_temperature') | float(0) | round(0)) ~ '°C'] -%}{%- endif -%}
+            {%- if is_state('binary_sensor.zfs_pool_problem', 'on') -%}{%- set ns.r = ns.r + ['ZFS pool'] -%}{%- endif -%}
+            {{ ns.r | join(', ') }}
 
       - name: "Dashboard Alert: Override Active"
         unique_id: dashboard_alert_override_active

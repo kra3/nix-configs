@@ -12,6 +12,7 @@
       noisyUnitsRegex = "(nix-optimise|nixos-rebuild-switch-to-configuration|podman-prune|getty@.+|bluetooth)\\.service";
       # Grafana's auto-generated datasource uid; setting it explicitly via provisioning breaks reconciliation (broke Grafana 2026-09-02) — re-fetch from the API if the DB is ever recreated.
       prometheusDatasourceUid = "PBFA97CFB590B2093";
+      lokiDatasourceUid = "P8E80F9AEF21F6940";
     in
     {
       services.grafana = {
@@ -77,6 +78,19 @@
                 type = "loki";
                 access = "proxy";
                 url = "http://${networkVars.containers.monitoring.localAddress}:3100";
+              }
+              {
+                name = "Home Assistant";
+                type = "grafana-postgresql-datasource";
+                access = "proxy";
+                url = "${networkVars.containers.monitoring.hostAddress}:5432";
+                user = "grafana_ro";
+                jsonData = {
+                  database = "hass";
+                  sslmode = "disable";
+                  postgresVersion = 1600;
+                };
+                secureJsonData.password = "$__file{/run/secrets/db.grafana_ro_password}";
               }
             ];
           };
@@ -267,6 +281,76 @@
                     annotations = {
                       summary = "{{ $labels.name }} has restarted more than once in the last 15 minutes.";
                       description = "Early warning for a possible OOM-restart loop — worth checking before it escalates to the failed-state alert.";
+                    };
+                    isPaused = false;
+                  }
+                  {
+                    uid = "service-fatal-log";
+                    title = "Service logged a fatal error";
+                    condition = "C";
+                    data = [
+                      {
+                        refId = "A";
+                        relativeTimeRange = {
+                          from = 3600;
+                          to = 0;
+                        };
+                        datasourceUid = lokiDatasourceUid;
+                        model = {
+                          refId = "A";
+                          expr = ''sum by (systemd_unit) (count_over_time({systemd_unit=~".+", systemd_unit!~"loki\\.service|user@.+"} != "logger=tsdb.loki" |~ "(?i)(fatal error|exiting due to|panic:|level=fatal)" [1h]))'';
+                          queryType = "instant";
+                          instant = true;
+                          range = false;
+                        };
+                      }
+                      {
+                        refId = "B";
+                        datasourceUid = "__expr__";
+                        model = {
+                          refId = "B";
+                          type = "reduce";
+                          expression = "A";
+                          reducer = "last";
+                          datasource = {
+                            type = "__expr__";
+                            uid = "__expr__";
+                          };
+                        };
+                      }
+                      {
+                        refId = "C";
+                        datasourceUid = "__expr__";
+                        model = {
+                          refId = "C";
+                          type = "threshold";
+                          expression = "B";
+                          conditions = [
+                            {
+                              evaluator = {
+                                type = "gt";
+                                params = [ 0 ];
+                              };
+                              operator.type = "and";
+                              query.params = [ "C" ];
+                              reducer.type = "last";
+                              type = "query";
+                            }
+                          ];
+                          datasource = {
+                            type = "__expr__";
+                            uid = "__expr__";
+                          };
+                        };
+                      }
+                    ];
+                    noDataState = "OK";
+                    execErrState = "Error";
+                    for = "0s";
+                    labels.severity = "warning";
+                    annotations = {
+                      summary = "{{ $labels.systemd_unit }} logged a fatal error in the last hour.";
+                      description = "The service or its scheduled job is failing without systemd noticing. Check `journalctl -u {{ $labels.systemd_unit }}`.";
                     };
                     isPaused = false;
                   }
@@ -895,11 +979,13 @@
         "grafana-dashboards/unbound.json".source = ./dashboards/unbound.json;
         "grafana-dashboards/zfs.json".source = ./dashboards/zfs.json;
         "grafana-dashboards/logs-overview.json".source = ./dashboards/logs-overview.json;
+        "grafana-dashboards/container-logs.json".source = ./dashboards/container-logs.json;
         "grafana-dashboards/system-monitor.json".source = ./dashboards/system-monitor.json;
         "grafana-dashboards/system-overview.json".source = ./dashboards/system-overview.json;
         "grafana-dashboards/frigate.json".source = ./dashboards/frigate.json;
         "grafana-dashboards/smart.json".source = ./dashboards/smart.json;
         "grafana-dashboards/container-resources.json".source = ./dashboards/container-resources.json;
+        "grafana-dashboards/media-stack.json".source = ./dashboards/media-stack.json;
         "grafana-dashboards-surasa/surasa.json".source = ./dashboards/surasa.json;
       };
 

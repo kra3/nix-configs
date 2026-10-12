@@ -12,13 +12,16 @@
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-dns-rpi-secondary
-    flakeModules.nixos.services-media-snapclient
+    flakeModules.nixos.services-media-pi-audio
+    flakeModules.nixos.services-media-sendspin
     flakeModules.nixos.services-monitoring-sutala-watchdog
     flakeModules.nixos.services-monitoring-alloy-host
     flakeModules.nixos.services-system-nix-defaults-nixos
   ];
 
   networking.hostName = "surasa";
+
+  services.sendspin-player.name = "Kitchen Speaker";
 
   # The minimal profiles/base.nix this board's sd-image imports doesn't add systemd's own
   # package to services.dbus.packages (a standard-profile default), so systemd's D-Bus policy

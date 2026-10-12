@@ -3,6 +3,7 @@
     home.packages = [
       inputs.llm-agents.packages.${pkgs.system}.claude-code
       pkgs.sox # audio I/O for Claude Code voice mode
+      pkgs.nodejs # required by some Claude Code plugin hooks (e.g. i-have-adhd, ponytail)
     ];
 
     # settings.json and RTK.md are excluded: both are live-mutated at runtime

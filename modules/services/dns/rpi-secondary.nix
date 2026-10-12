@@ -167,6 +167,13 @@
             ])
           ) flakeLib.adguard-filters;
 
+          # Same Akashvani (BitGravity CDN) allow rules as sutala's.
+          user_rules = [
+            "@@||air.pc.cdn.bitgravity.com^$important"
+            "@@||airhlspush.pc.cdn.bitgravity.com^$important"
+            "@@||cdncache.bitg.net^$important"
+          ];
+
           # Placeholders -- substituted from sops at runtime by the preStart script above.
           users = [
             {

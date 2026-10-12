@@ -48,6 +48,23 @@ tn() {
     tmux new-session -A -s "$session_name"
 }
 
+# Start/attach tmux safely after a kill-server. Bare `tmux` attaches instantly, so
+# resurrect's restore hook declines (restoring under a live client tears the server
+# down) and the workspace is lost. Create the server DETACHED first so the hook
+# restores headless, wait for the restore marker, then attach.
+tm() {
+    if ! tmux has-session 2>/dev/null; then
+        local m="${XDG_STATE_HOME:-$HOME/.local/state}/tmux/last-restore" t0 i=0
+        t0=$(stat -c %Y "$m" 2>/dev/null || stat -f %m "$m" 2>/dev/null || echo 0)
+        tmux new-session -d               # fires the headless restore hook
+        while [ "$i" -lt 20 ]; do         # wait ≤10s for restore to finish
+            [ "$(stat -c %Y "$m" 2>/dev/null || stat -f %m "$m" 2>/dev/null || echo 0)" != "$t0" ] && break
+            sleep 0.5; i=$((i + 1))
+        done
+    fi
+    tmux attach
+}
+
 # Kill tmux session with fzf
 tk() {
     if [ -z "$1" ]; then

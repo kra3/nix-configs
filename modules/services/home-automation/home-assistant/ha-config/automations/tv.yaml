@@ -1,12 +1,24 @@
 # ── TV ─────────────────────────────────────────────────────────
 - id: tv_power_on
-  alias: TV — Power on + backlight
-  description: WoL if TV is off; turn on ambient backlight if dark or overcast
+  alias: TV — Power on + backlight + HT
+  description: >-
+    WoL if TV is off; turn on ambient backlight if dark or overcast; turn on
+    the home theater and switch it to TV audio.
   triggers:
+  # webostv.turn_on only fires when HA's own turn_on service is called (confirmed
+  # against webostv/media_player.py) -- never on remote/CEC power-on, so the
+  # backlight never followed real-world use. This state trigger covers that.
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: webostv
     type: webostv.turn_on
     trigger: device
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    from: "off"
+    not_to:
+    - "off"
+    - unavailable
+    - unknown
+    trigger: state
   actions:
   - if:
     - condition: device
@@ -18,6 +30,7 @@
     - action: wake_on_lan.send_magic_packet
       data:
         mac: 20:28:bc:b7:ff:3e
+        broadcast_address: 192.168.1.255
         broadcast_port: 7
   - if:
     - condition: or
@@ -34,11 +47,55 @@
       device_id: 5c2c4c65f834231378af61d835ec513a
       entity_id: light.tv_backlight
       domain: light
+  - action: media_player.turn_on
+    target:
+      entity_id: media_player.home_theater_2
+  # Denon needs a moment after power-on before it accepts a source select
+  # (same slow-to-respond behavior already worked around in front-door.yaml).
+  - delay: "00:00:03"
+  - if:
+    - condition: template
+      value_template: >-
+        {{ state_attr('media_player.home_theater_2', 'source') != 'PlayStation 5' }}
+    then:
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.home_theater_2
+      data:
+        source: TV Audio
+  mode: single
+
+- id: tv_ht_on_when_playing
+  alias: TV — HT on when playback starts
+  description: >-
+    Turn the home theater back on with TV Audio when the TV starts playing
+    while it is off (it powers off with the TV, and a resume does not always
+    go through the TV's off state).
+  triggers:
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    to: playing
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: media_player.home_theater_2
+    state: "off"
+  actions:
+  - action: media_player.turn_on
+    target:
+      entity_id: media_player.home_theater_2
+  - delay: "00:00:05"
+  - action: media_player.select_source
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      source: TV Audio
   mode: single
 
 - id: tv_backlight_off
-  alias: TV — Backlight off
-  description: Turn off ambient backlight when TV powers off
+  alias: TV — Backlight off + HT
+  description: >-
+    Turns off backlight when TV powers off; also turns off the home
+    theater, but only if its source was TV Audio or PS5 passthrough.
   triggers:
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: media_player
@@ -50,4 +107,13 @@
     device_id: 5c2c4c65f834231378af61d835ec513a
     entity_id: light.tv_backlight
     domain: light
+  - if:
+    - condition: template
+      value_template: >-
+        {{ state_attr('media_player.home_theater_2', 'source')
+           in ['PlayStation 5', 'TV Audio'] }}
+    then:
+    - action: media_player.turn_off
+      target:
+        entity_id: media_player.home_theater_2
   mode: single

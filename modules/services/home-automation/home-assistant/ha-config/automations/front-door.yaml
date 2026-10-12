@@ -1,120 +1,108 @@
 # ── Front Door Management ──────────────────────────────────────
 - id: front_door_knock_announcements
   alias: "Front Door: Knock TTS & Notifications"
-  description: Plays TTS and sends notifications when someone knocks at the front door.
+  description: >-
+    On a double knock, notifies whoever's home and plays a chime on the
+    hallway camera and kitchen speakers (or notifies everyone, if the house
+    is empty).
+  trigger:
+    - platform: event
+      event_type: front_door_knock
+  action:
+    - variables:
+        anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
+        arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
+        anyone_home: "{{ anjali_home or arun_home }}"
+
+    # If someone home: notify present people and chime
+    - if:
+        - condition: template
+          value_template: "{{ anyone_home }}"
+      then:
+        - if:
+            - condition: template
+              value_template: "{{ anjali_home }}"
+          then:
+            - action: notify.send_message
+              target: { entity_id: notify.anjalis_iphone }
+              data: { title: "Front Door", message: "Someone is knocking at the front door." }
+        - if:
+            - condition: template
+              value_template: "{{ arun_home }}"
+          then:
+            - action: notify.send_message
+              target: { entity_id: notify.meghanadha }
+              data: { title: "Front Door", message: "Someone is knocking at the front door." }
+        - parallel:
+          - action: rest_command.chime_hallway
+            continue_on_error: true
+          - action: music_assistant.play_announcement
+            continue_on_error: true
+            target:
+              entity_id: media_player.kitchen
+            data:
+              url: http://10.3.2.1:8098/chime.wav
+              use_pre_announce: false
+              announce_volume: 60
+
+      # If no one home: notify all phones
+      else:
+        - action: script.notify_all_phones
+          data: { title: "Front Door", message: "Someone is knocking at the front door." }
+  mode: single
+  max_exceeded: silent
+
+- id: front_door_knock_detect
+  alias: "Front Door: Knock detect"
+  description: Fires front_door_knock on two short vibration pulses within 20s, ignoring door/lock activity and long pulses.
   trigger:
     - platform: state
       entity_id: binary_sensor.front_door_knock_vibration
       to: "on"
   action:
-    # 1. Wait 2 seconds to let contact/lock sensor state settle
     - delay: "00:00:02"
-
-    # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
-    - if: &valid_knock_check
-        - condition: state
-          entity_id: binary_sensor.front_door_open
-          state: "off"
-        - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
-        - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
-      then:
-        # Determine Presence
-        - variables:
-            anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
-            arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
-            anyone_home: "{{ anjali_home or arun_home }}"
-
-        # If someone home: Play Announcement on HT and Notify present people
-        - if:
-            - condition: template
-              value_template: "{{ anyone_home }}"
-          then:
-            # Toggle TV pause
-            - if:
-                - condition: state
-                  entity_id: media_player.lg_webos_tv_oled77c35la
-                  state: "playing"
-              then:
-                - action: media_player.media_play_pause
-                  target: { entity_id: media_player.lg_webos_tv_oled77c35la }
-
-            # Snapshot Denon (HT_2) source
-            - action: input_text.set_value
-              target: { entity_id: input_text.doorbell_return_source }
-              data:
-                value: "{{ state_attr('media_player.home_theater_2', 'source') }}"
-
-            # Announce
-            - action: music_assistant.play_announcement
-              target: { entity_id: media_player.ma_home_theater }
-              data:
-                url: "https://ha.karunagath.in/local/sounds/doorbell-chimes.mp3"
-                announce_volume: 60
-
-            # Restore HT_2 (Denon) source
-            - delay: "00:00:10"
-            - action: media_player.select_source
-              target: { entity_id: media_player.home_theater_2 }
-              data:
-                source: "{{ states('input_text.doorbell_return_source') }}"
-
-            # Resume TV
-            - if:
-                - condition: state
-                  entity_id: media_player.lg_webos_tv_oled77c35la
-                  state: "paused"
-              then:
-                - action: media_player.media_play_pause
-                  target: { entity_id: media_player.lg_webos_tv_oled77c35la }
-
-            # Notify present people
-            - if:
-                - condition: template
-                  value_template: "{{ anjali_home }}"
-              then:
-                - action: notify.send_message
-                  target: { entity_id: notify.anjalis_iphone }
-                  data: { title: "Front Door", message: "Someone is knocking at the front door." }
-            - if:
-                - condition: template
-                  value_template: "{{ arun_home }}"
-              then:
-                - action: notify.send_message
-                  target: { entity_id: notify.iphone }
-                  data: { title: "Front Door", message: "Someone is knocking at the front door." }
-
-          # If no one home: Notify all phones
-          else:
-            - action: script.notify_all_phones
-              data: { title: "Front Door", message: "Someone is knocking at the front door." }
-
-        # Cooldown delay to prevent rapid back-to-back announcements
-        - delay: "00:00:30"
+    # Door closed, and not recently opened/closed/locked/unlocked
+    - condition: state
+      entity_id: binary_sensor.front_door_open
+      state: "off"
+    - condition: template
+      value_template: "{{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.front_door_open.last_changed)) > 15 }}"
+    - condition: template
+      value_template: "{{ (as_timestamp(now()) - as_timestamp(states.lock.front_door.last_changed | default(now()))) > 15 }}"
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "off"
+      timeout: "00:00:06"
+      continue_on_timeout: false
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "on"
+      timeout: "00:00:20"
+      continue_on_timeout: false
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.front_door_knock_vibration
+          to: "off"
+      timeout: "00:00:08"
+      continue_on_timeout: false
+    - event: front_door_knock
+    - delay: "00:00:30"
   mode: single
+  max_exceeded: silent
 
 - id: front_door_knock_lights
   alias: "Front Door: Knock Lights"
-  description: >-
-    Handles smart lighting logic for the front entrance when someone
-    knocks. Auto-off runs on timer.front_door_knock_auto_off (restore:
-    true): started after a knock (10 min - "did anyone come in?"),
-    cancelled if the door opens, then restarted on door-close (10 min
-    - "off after they're in"). An HA restart mid-countdown just resumes.
+  description: Entrance light on a double knock in the dark once hall motion follows; 5min timer, door open cancels.
   trigger:
-    - platform: state
-      entity_id: binary_sensor.front_door_knock_vibration
-      to: "on"
+    - platform: event
+      event_type: front_door_knock
       id: knock
     - platform: state
       entity_id: binary_sensor.front_door_open
       to: "on"
       id: door_open
-    - platform: state
-      entity_id: binary_sensor.front_door_open
-      to: "off"
-      id: door_close
     - platform: event
       event_type: timer.finished
       event_data:
@@ -126,47 +114,21 @@
             - condition: trigger
               id: knock
           sequence:
-            # Cancel any auto-off still counting down from a prior knock.
-            - action: timer.cancel
-              target:
-                entity_id: timer.front_door_knock_auto_off
-
-            # 1. Wait 2 seconds to let contact/lock sensor state settle
-            - delay: "00:00:02"
-
-            # 2. Check if this was a valid knock (door is closed, and was not recently opened/closed/locked/unlocked)
-            - if: *valid_knock_check
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.hue_pir_hallway_occupancy
+                  to: "on"
+              timeout: "00:02:00"
+            - if:
+                - condition: template
+                  value_template: "{{ wait.trigger is not none }}"
+                - condition: state
+                  entity_id: binary_sensor.front_door_area_dark
+                  state: "on"
               then:
-                # Was gated on schedule.sleep (fixed clock, not sun-relative) —
-                # turned this on in broad Swedish-summer daylight. Use sun.sun.
-                - if:
-                    - condition: state
-                      entity_id: sun.sun
-                      state: below_horizon
-                  then:
-                    - action: switch.turn_on
-                      target:
-                        entity_id: switch.front_entrance_double_switch_right
-
-                # Entrance Light: Turn on only if motion detected after knock (someone going to the door)
-                # and someone's actually home to be going to answer it.
-                - wait_for_trigger:
-                    - platform: state
-                      entity_id: binary_sensor.hue_pir_hallway_occupancy
-                      to: "on"
-                  timeout: "00:02:00"
-                - if:
-                    - condition: template
-                      value_template: "{{ wait.trigger is not none }}"
-                    - condition: numeric_state
-                      entity_id: zone.home
-                      above: 0
-                  then:
-                    - action: switch.turn_on
-                      target:
-                        entity_id: switch.front_entrance_double_switch_left
-
-                # Auto-off if no one comes to the door within 10 min
+                - action: switch.turn_on
+                  target:
+                    entity_id: switch.front_entrance_double_switch_left
                 - action: timer.start
                   target:
                     entity_id: timer.front_door_knock_auto_off
@@ -174,23 +136,7 @@
             - condition: trigger
               id: door_open
           sequence:
-            # Someone came in - cancel the "no one showed up" countdown.
             - action: timer.cancel
-              target:
-                entity_id: timer.front_door_knock_auto_off
-        - conditions:
-            - condition: trigger
-              id: door_close
-            - condition: or
-              conditions:
-                - condition: state
-                  entity_id: switch.front_entrance_double_switch_left
-                  state: "on"
-                - condition: state
-                  entity_id: switch.front_entrance_double_switch_right
-                  state: "on"
-          sequence:
-            - action: timer.start
               target:
                 entity_id: timer.front_door_knock_auto_off
         - conditions:
@@ -199,23 +145,15 @@
           sequence:
             - action: switch.turn_off
               target:
-                entity_id:
-                  - switch.front_entrance_double_switch_right
-                  - switch.front_entrance_double_switch_left
+                entity_id: switch.front_entrance_double_switch_left
   mode: restart
 
 - id: front_door_open_entrance_light
   alias: "Front Door: Entrance light on open (dark)"
   description: >-
-    Turns on the interior entrance light whenever the front door opens
-    and it's dark - sun below horizon OR sensor.toilet_occupancy_illuminance
-    reading low (that sensor's range - near 0 lux at night, hundreds to
-    thousands in daylight, confirmed via Prometheus history - also
-    catches overcast daytime dimness sun.sun alone would miss). Stays
-    on for as long as the door is open: the 10-min countdown (via
-    timer.front_door_entrance_light_off, restore: true) only starts
-    once the door closes, so propping it open holds the light rather
-    than racing it off, and an HA restart mid-countdown just resumes.
+    Turns on entrance light when the front door opens in the dark; off
+    via timer.front_door_entrance_light_off (5min after close,
+    restart-safe). Falls back to unlock-as-open-proxy when BLE degraded.
   triggers:
   - entity_id: binary_sensor.front_door_open
     to: "on"
@@ -230,19 +168,18 @@
     event_data:
       entity_id: timer.front_door_entrance_light_off
     id: timer_finished
+  - entity_id: lock.front_front_door_nw
+    to: "unlocked"
+    trigger: state
+    id: unlock_fallback
   actions:
   - choose:
       - conditions:
           - condition: trigger
             id: door_open
-          - condition: or
-            conditions:
-            - condition: state
-              entity_id: sun.sun
-              state: below_horizon
-            - condition: numeric_state
-              entity_id: sensor.toilet_occupancy_illuminance
-              below: 30
+          - condition: state
+            entity_id: binary_sensor.front_door_area_dark
+            state: "on"
         sequence:
           - action: timer.cancel
             target:
@@ -250,6 +187,22 @@
           - action: switch.turn_on
             target:
               entity_id: switch.front_entrance_double_switch_left
+      - conditions:
+          - condition: trigger
+            id: unlock_fallback
+          - condition: state
+            entity_id: binary_sensor.front_door_ble_degraded
+            state: "on"
+          - condition: state
+            entity_id: binary_sensor.front_door_area_dark
+            state: "on"
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.front_entrance_double_switch_left
+          - action: timer.start
+            target:
+              entity_id: timer.front_door_entrance_light_off
       - conditions:
           - condition: trigger
             id: door_close

@@ -14,6 +14,7 @@
           Address = "0.0.0.0";
           Port = 4533;
           MusicFolder = "/data/library/music";
+          PlaylistsPath = "playlists";
           DataFolder = "/var/lib/navidrome/data";
           "Prometheus.Enabled" = true;
         };

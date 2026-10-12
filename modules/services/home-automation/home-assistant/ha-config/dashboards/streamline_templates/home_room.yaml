@@ -1,0 +1,12 @@
+default:
+- temperature: ""
+- humidity: ""
+- illuminance: ""
+card:
+  type: custom:room-tile-card
+  name: "[[name]]"
+  icon: "[[icon]]"
+  presence: "[[presence]]"
+  temperature: "[[temperature]]"
+  humidity: "[[humidity]]"
+  illuminance: "[[illuminance]]"

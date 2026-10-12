@@ -2,19 +2,14 @@
 # when it's actually connected, falling back to the yale cloud integration
 # when it isn't. Automations/dashboards should reference these, not the raw
 # yalexs_ble or yale entities directly.
-input_text:
-  doorbell_return_source:
-    name: Doorbell return source
-    icon: mdi:doorbell
-
 # restore: true so a pending auto-off survives an HA restart instead of
 # needing hand-rolled elapsed-time recovery in the automation itself.
 timer:
   front_door_entrance_light_off:
-    duration: "00:10:00"
+    duration: "00:05:00"
     restore: true
   front_door_knock_auto_off:
-    duration: "00:10:00"
+    duration: "00:05:00"
     restore: true
 
 template:
@@ -35,6 +30,15 @@ template:
         state: >-
           {{ states('binary_sensor.yale_front_door_door') not in ['on', 'off']
              or states('lock.yale_front_door') not in ['locked', 'unlocked'] }}
+
+      # sun.sun alone misses overcast daytime dimness; illuminance alone
+      # misses briefly-shaded readings around sunset/sunrise. Used by the
+      # entrance-light automations so the OR isn't duplicated per trigger.
+      - name: "Front Door Area Dark"
+        unique_id: front_door_area_dark
+        state: >-
+          {{ is_state('sun.sun', 'below_horizon')
+             or states('sensor.toilet_occupancy_illuminance') | float(999) < 30 }}
 
   - lock:
       - name: "Front Door"

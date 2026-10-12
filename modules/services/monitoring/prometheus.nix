@@ -1,11 +1,35 @@
 {
   flake.nixosModules.services-monitoring-prometheus =
-    { networkVars, domain, ... }:
+    {
+      networkVars,
+      localMedia,
+      domain,
+      lib,
+      ...
+    }:
     let
       hostAddr = networkVars.containers.monitoring.hostAddress;
       monAddr = networkVars.containers.monitoring.localAddress;
       mediaAddr = networkVars.containers.mediaPlay.localAddress;
       haAddr = networkVars.containers.homeAuto.localAddress;
+      systemdUnitTrim = [
+        {
+          source_labels = [
+            "__name__"
+            "state"
+          ];
+          regex = "node_systemd_unit_state;(activating|deactivating|inactive)";
+          action = "drop";
+        }
+        {
+          source_labels = [
+            "__name__"
+            "name"
+          ];
+          regex = "node_systemd_unit_state;.+\\.(socket|target|timer|path|swap)";
+          action = "drop";
+        }
+      ];
     in
     {
       services.prometheus = {
@@ -36,6 +60,7 @@
                 labels.instance = "sutala";
               }
             ];
+            metric_relabel_configs = systemdUnitTrim;
           }
           {
             job_name = "node-surasa";
@@ -45,6 +70,7 @@
                 labels.instance = "surasa";
               }
             ];
+            metric_relabel_configs = systemdUnitTrim;
           }
           {
             job_name = "node-containers";
@@ -65,6 +91,7 @@
                 labels.instance = "home-auto";
               }
             ];
+            metric_relabel_configs = systemdUnitTrim;
           }
           {
             job_name = "nginx";
@@ -110,6 +137,33 @@
                 labels.instance = "sutala";
               }
             ];
+            metric_relabel_configs = [
+              {
+                source_labels = [ "__name__" ];
+                regex = "namedprocess_namegroup_(states|context_switches_total|minor_page_faults_total|num_threads|threads_wchan|worst_fd_ratio|oldest_start_time_seconds)";
+                action = "drop";
+              }
+              {
+                source_labels = [
+                  "__name__"
+                  "memtype"
+                ];
+                regex = "namedprocess_namegroup_memory_bytes;(virtual|proportionalResident|proportionalSwapped)";
+                action = "drop";
+              }
+              {
+                source_labels = [ "groupname" ];
+                regex = "\\[/user\\.slice/user-1000\\.slice/.*";
+                action = "drop";
+              }
+              # The payload cgroup's hash changes on every container restart.
+              {
+                source_labels = [ "groupname" ];
+                regex = "(.*)/libpod-payload-[0-9a-f]+(.*)";
+                target_label = "groupname";
+                replacement = "$1/libpod-payload$2";
+              }
+            ];
           }
           {
             job_name = "frigate";
@@ -130,6 +184,16 @@
                 targets = [ "${mediaAddr}:4533" ];
                 labels.container = "media-play";
                 labels.instance = "media-play";
+              }
+            ];
+          }
+          {
+            job_name = "slskd";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${networkVars.podmanAddresses.slskd}:5030" ];
+                labels.instance = "slskd";
               }
             ];
           }
@@ -199,6 +263,45 @@
               {
                 targets = [ "10.3.2.10:8123" ];
                 labels.instance = "ha";
+              }
+            ];
+            metric_relabel_configs = [
+              {
+                source_labels = [ "__name__" ];
+                regex = "ha_.*_created|ha_last_updated_time_seconds";
+                action = "drop";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals localMedia.enable [
+          {
+            job_name = "jellyfin";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${mediaAddr}:8096" ];
+                labels.container = "media-play";
+                labels.instance = "media-play";
+              }
+            ];
+            metric_relabel_configs = [
+              {
+                source_labels = [ "__name__" ];
+                regex = ".*_bucket";
+                action = "drop";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals (localMedia.enable && localMedia.extras.enable) [
+          {
+            job_name = "unpackerr";
+            metrics_path = "/metrics";
+            static_configs = [
+              {
+                targets = [ "${networkVars.podmanAddresses.unpackerr}:5656" ];
+                labels.instance = "unpackerr";
               }
             ];
           }

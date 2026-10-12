@@ -127,6 +127,7 @@
                 "::1/128"
               ];
               cache_size = 4194304;
+              ratelimit = 1000;
               cache_ttl_min = 0;
               cache_ttl_max = 0;
               bogus_nxdomain = [ ];
@@ -228,6 +229,14 @@
               "||statcounter.com^$important"
               # thexem.info: legit Sonarr/Radarr scene-numbering API; needs $important to beat a blocklist rule that also has it.
               "@@||thexem.info^$important"
+              # AIOStreams addon hosts that blocklists resolve to 0.0.0.0 (ECONNREFUSED).
+              "@@||yastream.tamthai.de^$important"
+              "@@||torrent-catalogs.strem.fun^$important"
+              "@@||torrentgalaxy.one^$important"
+              # Akashvani (All India Radio) streams via BitGravity CDN; blocklists resolve these to 0.0.0.0.
+              "@@||air.pc.cdn.bitgravity.com^$important"
+              "@@||airhlspush.pc.cdn.bitgravity.com^$important"
+              "@@||cdncache.bitg.net^$important"
             ];
 
             querylog = {

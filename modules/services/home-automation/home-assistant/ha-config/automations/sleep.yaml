@@ -23,24 +23,15 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: >-
-    Arms at bedtime; Alarmo silently refuses if a sensor's open, so this
-    checks the result and notifies if it failed. No actionable button on
-    the notification (mobile_app's entity-based notify doesn't support
-    one) — force-arming a failed attempt is a button on the dashboard
-    instead (dashboard.yaml), next to the Dashboard Alert: Security
-    row that lights up for this same case. Exits early if already armed
-    for the night, so it doesn't re-trigger the entry-delay/notify dance.
+  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun and the hallway speaker, escalated after 10 min.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: alarm_control_panel.vasudha_secure
-      state: armed_night
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
   actions:
   - action: alarm_control_panel.alarm_arm_night
     target:
@@ -58,19 +49,28 @@
     - action: script.notify_all_phones
       data:
         title: Alarm not armed
+        critical: true
         message: >-
           Couldn't arm for the night — still open:
           {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
           Force-arm from the dashboard if needed.
+    - action: script.announce_hallway
+      continue_on_error: true
+      data:
+        message: >-
+          Alarm not armed. Still open:
+          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') | replace('(', '') | replace(')', '') }}.
+    - action: timer.start
+      target:
+        entity_id: timer.alarm_arm_escalation
   mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Kept separate from wakeup_lighting so a fault there can't also block
-    the disarm. Only disarms if someone's actually home — an empty house
-    shouldn't lose its alarm just because the sleep schedule ended.
+    Disarms Alarmo when the sleep schedule ends (or on HA startup if it
+    ended while still armed_night), only if someone's home.
   triggers:
   - id: schedule_off
     entity_id: schedule.sleep
@@ -113,45 +113,75 @@
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting
   description: >-
-    When sleep schedule ends, gradually brighten bedroom and hall over 10 minutes.
+    When sleep schedule ends, ramps bedroom+hall lights 5%→15%→40%→60%
+    over 10 minutes; the bedroom also warms-to-neutral (2000K→3500K)
+    like a sunrise.
   triggers:
   - entity_id: schedule.sleep
     to: "off"
+    # skips the 23:59:59 midnight split
+    for: "00:00:30"
     trigger: state
   actions:
+  # Adaptive Lighting would otherwise reset the ramp to its daytime brightness when sleep mode ends.
+  - action: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.home_adaptive_lighting_home
+      lights: light.bedroom_wardrobe_lights
+      manual_control: true
   - target:
-      entity_id:
-      - light.bedroom_wardrobe_lights
-      - light.hall
+      entity_id: light.hallway_hall_lights
     data:
       brightness_pct: 5
       transition: 1
     action: light.turn_on
+  - target:
+      entity_id: light.bedroom_wardrobe_lights
+    data:
+      brightness_pct: 5
+      color_temp_kelvin: 2000
+      transition: 1
+    action: light.turn_on
   - delay: "00:02:00"
   - target:
-      entity_id:
-      - light.bedroom_wardrobe_lights
-      - light.hall
+      entity_id: light.hallway_hall_lights
     data:
       brightness_pct: 15
       transition: 60
     action: light.turn_on
+  - target:
+      entity_id: light.bedroom_wardrobe_lights
+    data:
+      brightness_pct: 15
+      color_temp_kelvin: 2200
+      transition: 60
+    action: light.turn_on
   - delay: "00:03:00"
   - target:
-      entity_id:
-      - light.bedroom_wardrobe_lights
-      - light.hall
+      entity_id: light.hallway_hall_lights
     data:
       brightness_pct: 40
       transition: 60
     action: light.turn_on
+  - target:
+      entity_id: light.bedroom_wardrobe_lights
+    data:
+      brightness_pct: 40
+      color_temp_kelvin: 2700
+      transition: 60
+    action: light.turn_on
   - delay: "00:05:00"
   - target:
-      entity_id:
-      - light.bedroom_wardrobe_lights
-      - light.hall
+      entity_id: light.hallway_hall_lights
     data:
       brightness_pct: 60
+      transition: 60
+    action: light.turn_on
+  - target:
+      entity_id: light.bedroom_wardrobe_lights
+    data:
+      brightness_pct: 60
+      color_temp_kelvin: 3500
       transition: 60
     action: light.turn_on
   mode: restart

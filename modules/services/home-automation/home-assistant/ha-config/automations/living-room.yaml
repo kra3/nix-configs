@@ -2,61 +2,36 @@
 - id: living_darkness
   alias: Living room — Darkness detection
   description: >-
-    Hysteresis darkness state machine for living room, using the
-    house-wide average illuminance (living room has no illuminance
-    sensor of its own) rather than hall_is_dark — same fix as
-    dining_darkness, for the same reason: living room is one of the
-    brightest rooms, so gating it on the hall's dim interior PIR
-    turned its lights on in broad daylight. dark_below/dark_below_daytime
-    pinned to 45, matching dining_darkness (same sensor) — left at the
-    blueprint's 1000 default, normal daytime dips in average_illuminance
-    read as dark and got stuck on (bright_above's trigger needs a fresh
-    below→above crossing to clear it, which lux never dropped low enough
-    to produce).
+    Dark while it is gloomy outside and the living room reads below 30 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
-      illuminance_sensor: sensor.average_illuminance
-      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
+      occupancy_sensor: binary_sensor.living_room_occupancy_presence
+      illuminance_sensor: sensor.living_room_occupancy_illuminance
+      dark_below: 30
       light_entity: light.living_room_lights
       dark_boolean: input_boolean.living_room_is_dark
-      dark_below: 45
-      dark_below_daytime: 45
-      dark_sustain_daytime: "00:15:00"
 
 - id: living_room_lighting
   alias: Living room — Lighting
   description: >-
-    Presence + darkness via ranger_duo_fxd's Frigate person detection.
-    KNOWN ISSUE: ranger_duo_fxd's motion sensor is barely firing (verified
-    2026-09-04 — one event all day despite confirmed presence), so
-    Frigate's detect-on-motion gate rarely enables long enough for
-    person_occupancy to populate. Needs a Frigate motion-mask/sensitivity
-    tuning pass before this reliably turns lights on; shipped anyway
-    since darkness-edge-only was equally unreliable.
+    Presence + darkness via the living room mmWave sensor; brightness left to Adaptive Lighting.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.living_room_lights
-      occupancy_sensor: binary_sensor.ranger_duo_fxd_person_occupancy
-      motion_sensor: binary_sensor.ranger_duo_fxd_motion
+      occupancy_sensor: binary_sensor.living_room_occupancy_presence
+      motion_sensor: binary_sensor.living_room_occupancy_presence
       dark_boolean: input_boolean.living_room_is_dark
       media_player_entity: media_player.lg_webos_tv_oled77c35la
 
 - id: living_room_media_aware
   alias: Living room — Media-aware lighting
   description: >-
-    Turn off living + dining lights when watching content on
-    Stremio, Jellyfin, or Apple TV. Restore when stopped, unless a
-    room's presence sensor already reports it empty — otherwise this
-    would flicker the light back on right before living_room_lighting/
-    dining_room_lighting's own occupancy-clear branch turns it off
-    again. Only skips on a definite "off"; unknown/unavailable still
-    restores, since the underlying Frigate person_occupancy sensors
-    are known to false-negative (see living_room_lighting's KNOWN ISSUE).
-    Darkness gate is either room's own boolean now (was hall_is_dark) -
-    living and dining each have their own since both moved to
-    sensor.average_illuminance.
+    Turns off living+dining lights when Litefin/Moonfin/Jellyfin/Apple TV plays;
+    restores full brightness on stop (skips a room only if its presence
+    sensor reads a definite off). On pause, dims living room to 20% at
+    15s, then hands it back to Adaptive Lighting at 38s.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -70,6 +45,10 @@
     - standby
     trigger: state
     id: not_playing
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    to: paused
+    trigger: state
+    id: paused
   conditions:
   - condition: or
     conditions:
@@ -87,7 +66,7 @@
       - condition: template
         value_template: >-
           {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
-             in ['Stremio', 'Jellyfin', 'Apple TV'] }}
+             in ['Litefin', 'Moonfin', 'Jellyfin', 'Apple TV'] }}
       sequence:
       - target:
           entity_id:
@@ -108,7 +87,7 @@
         - condition: not
           conditions:
           - condition: state
-            entity_id: binary_sensor.ranger_duo_fxd_person_occupancy
+            entity_id: binary_sensor.living_room_occupancy_presence
             state: "off"
         then:
         - target:
@@ -116,16 +95,89 @@
           data:
             transition: 60
           action: light.turn_on
-      - if:
-        - condition: not
-          conditions:
-          - condition: state
-            entity_id: binary_sensor.ranger_duo_ptz_person_occupancy
-            state: "off"
-        then:
-        - target:
-            entity_id: light.dining_lights
-          data:
-            transition: 60
-          action: light.turn_on
+      - target:
+          entity_id: light.dining_lights
+        data:
+          transition: 60
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: paused
+      - condition: state
+        entity_id: schedule.sleep
+        state: "off"
+      sequence:
+      - delay: "00:00:15"
+      - repeat:
+          for_each:
+          - light.living_room_lights
+          - light.dining_lights
+          sequence:
+          - if:
+            - condition: template
+              value_template: "{{ is_state(repeat.item, 'off') }}"
+            then:
+            - target:
+                entity_id: "{{ repeat.item }}"
+              data:
+                brightness_pct: 20
+                transition: 10
+              action: light.turn_on
+            - target:
+                entity_id: switch.home_adaptive_lighting_home
+              data:
+                lights: "{{ repeat.item }}"
+                manual_control: true
+              action: adaptive_lighting.set_manual_control
+      - delay: "00:00:23"
+      - target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights:
+          - light.living_room_lights
+          - light.dining_lights
+          manual_control: false
+        action: adaptive_lighting.set_manual_control
   mode: restart
+
+- id: living_room_bedtime_lights_off
+  alias: Living room — Lights off (bedtime, no presence)
+  description: >-
+    Turns off living+dining lights once past bedtime with no presence
+    for 15 minutes and nothing playing on the TV or home theater.
+  triggers:
+  - id: presence_clear
+    trigger: template
+    value_template: >-
+      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
+         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off') }}
+    for: "00:15:00"
+  - id: sleep_start
+    trigger: state
+    entity_id: schedule.sleep
+    to: "on"
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  - condition: template
+    value_template: >-
+      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
+         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off')
+         and now() - states.binary_sensor.living_room_occupancy_presence.last_changed
+             >= timedelta(minutes=15)
+         and now() - states.binary_sensor.ranger_duo_ptz_person_occupancy.last_changed
+             >= timedelta(minutes=15) }}
+  - condition: template
+    value_template: >-
+      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
+         and states('media_player.home_theater_2') != 'playing' }}
+  actions:
+  - target:
+      entity_id:
+      - light.living_room_lights
+      - light.dining_lights
+    data:
+      transition: 5
+    action: light.turn_off
+  mode: single

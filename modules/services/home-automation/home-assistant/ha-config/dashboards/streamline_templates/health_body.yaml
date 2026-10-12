@@ -1,0 +1,53 @@
+card:
+  type: custom:health-metric-card
+  entity: sensor.office_room_withings_[[w]]_weight
+  name: Weight
+  icon: mdi:scale-bathroom
+  color: "#9fa8ff"
+  date_entity: "[[date_entity]]"
+  chart:
+    type: line
+    days: 30
+    stat: reading
+  delta:
+    mode: percent
+    good: down
+    points: 2
+  items:
+  - entity: sensor.office_room_withings_[[w]]_muscle_mass
+    per: sensor.office_room_withings_[[w]]_weight
+    name: Muscle
+    also:
+      entity: sensor.office_room_withings_[[w]]_muscle_mass
+    color: "#8fd9c0"
+    stat: reading
+    good: up
+    points: 2
+  - entity: sensor.office_room_withings_[[w]]_fat_ratio
+    name: Fat
+    also:
+      entity: sensor.office_room_withings_[[w]]_fat_mass
+    color: "#c9a7e8"
+    good: down
+    points: 2
+    stat: reading
+  popup:
+    graphs:
+    - name: Weight
+      entities:
+      - sensor.office_room_withings_[[w]]_weight
+      days: 180
+      period: week
+    - name: Body fat
+      entities:
+      - sensor.office_room_withings_[[w]]_fat_ratio
+      days: 180
+      period: week
+    - name: Fat and muscle mass
+      entities:
+      - entity: sensor.office_room_withings_[[w]]_fat_mass
+        name: Fat mass
+      - entity: sensor.office_room_withings_[[w]]_muscle_mass
+        name: Muscle mass
+      days: 180
+      period: week

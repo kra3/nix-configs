@@ -17,7 +17,6 @@
             base_url: http://radarr:7878
             api_key: !secret radarr_api_key
             delete_old_custom_formats: true
-            replace_existing_custom_formats: true
 
             media_naming:
               folder: jellyfin-tmdb
@@ -25,20 +24,42 @@
                 rename: true
                 standard: jellyfin-tmdb
 
-            include:
-              # Movies
-              - template: radarr-quality-definition-movie
-              # UHD Bluray + WEB (4K)
-              - template: radarr-quality-profile-uhd-bluray-web
-              - template: radarr-custom-formats-uhd-bluray-web
-              # Remux + WEB 1080p
-              # - template: radarr-quality-profile-remux-web-1080p
-              # - template: radarr-custom-formats-remux-web-1080p
+            quality_definition:
+              type: movie
 
-              # Anime
-              - template: radarr-quality-definition-anime
-              - template: radarr-quality-profile-anime
-              - template: radarr-custom-formats-anime
+            quality_profiles:
+              - trash_id: 64fb5f9858489bdac2af690e27c8f42f # UHD Bluray + WEB
+                name: UHD Bluray + WEB
+                upgrade:
+                  allowed: true
+                  until_quality: Bluray-2160p
+                qualities:
+                  - name: Bluray-2160p
+                  - name: WEB 2160p
+                    qualities:
+                      - WEBDL-2160p
+                      - WEBRip-2160p
+                  - name: Bluray-1080p
+                  - name: WEB 1080p
+                    qualities:
+                      - WEBDL-1080p
+                      - WEBRip-1080p
+                reset_unmatched_scores:
+                  enabled: true
+
+              - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
+                name: Remux-1080p - Anime
+                reset_unmatched_scores:
+                  enabled: true
+
+            custom_format_groups:
+              skip:
+                - 9d5acd8f1da78dfbae788182f7605200 # [Audio] Audio Formats
+              add:
+                - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats
+                  exclude:
+                    - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
+                    - cc444569854e9de0b084ab2b8b1532b2 # Black and White Editions
 
             custom_formats:
               # Audio
@@ -125,7 +146,6 @@
             base_url: http://sonarr:8989
             api_key: !secret sonarr_api_key
             delete_old_custom_formats: true
-            replace_existing_custom_formats: true
 
             media_naming:
               season: default
@@ -136,17 +156,39 @@
                 daily: default
                 anime: default
 
-            include:
-              - template: sonarr-quality-definition-series
-              # pick one of next 2
-              - template: sonarr-v4-quality-profile-web-1080p
-              # - template: sonarr-v4-quality-profile-web-1080p-alternative
-              - template: sonarr-v4-custom-formats-web-1080p
+            quality_definition:
+              type: series
 
-              # Anime
-              - template: sonarr-quality-definition-anime
-              - template: sonarr-v4-quality-profile-anime
-              - template: sonarr-v4-custom-formats-anime
+            quality_profiles:
+              - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+                name: WEB-1080p
+                reset_unmatched_scores:
+                  enabled: true
+              - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
+                name: Remux-1080p - Anime
+                reset_unmatched_scores:
+                  enabled: true
+              - trash_id: d1498e7d189fbe6c7110ceaabb7473e6 # WEB-2160p
+                name: Ultra-HD
+                reset_unmatched_scores:
+                  enabled: true
+                upgrade:
+                  allowed: true
+                  until_quality: WEB 2160p
+                qualities:
+                  - name: Bluray-2160p
+                  - name: WEB 2160p
+                    qualities:
+                      - WEBDL-2160p
+                      - WEBRip-2160p
+                  - name: HDTV-2160p
+                  - name: WEB 1080p
+                    qualities:
+                      - WEBDL-1080p
+                      - WEBRip-1080p
+            custom_format_groups:
+              skip:
+                - 74aff4168620ed49dcc67e92b2c2a5b4 # [Optional] Language Profiles
 
             custom_formats:
               - assign_scores_to:

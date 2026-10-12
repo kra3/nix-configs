@@ -1,0 +1,32 @@
+card:
+  type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: "[[entity]]"
+    above: 0
+  card:
+    type: custom:health-metric-card
+    entity: "[[entity]]"
+    name: "[[name]]"
+    icon: "[[icon]]"
+    color: "[[color]]"
+    decimals: "[[decimals]]"
+    show_date: false
+    chart:
+      type: line
+      days: "[[days]]"
+    delta:
+      mode: absolute
+      good: "[[good]]"
+      points: 2
+      decimals: "[[decimals]]"
+      unit: "[[delta_unit]]"
+    popup:
+      graphs:
+      - name: "[[popup]]"
+        entities:
+        - "[[entity]]"
+        days: "[[popup_days]]"
+default:
+- decimals: 0
+- delta_unit: auto

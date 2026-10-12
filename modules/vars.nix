@@ -14,6 +14,18 @@
     { lib, ... }:
     {
       options.vars = {
+        localMedia = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Local media stack: Jellyfin, Radarr, Sonarr, Recyclarr, Maintainerr (with their scrape jobs, tiles, firewall rules)";
+          };
+          extras.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Bazarr, Unpackerr; only takes effect when localMedia.enable is set";
+          };
+        };
         network = {
           lanIf = lib.mkOption {
             type = lib.types.str;
@@ -143,6 +155,11 @@
               # .16 collided with an existing dynamic lease; .50 clears that range.
               description = "Pinned br-media-mgmt IP for aiostreams";
             };
+            aiometadata = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.51";
+              description = "Pinned br-media-mgmt IP for aiometadata";
+            };
             seerr = lib.mkOption {
               type = lib.types.str;
               default = "10.3.1.11";
@@ -168,6 +185,11 @@
               default = "10.3.1.7";
               description = "Pinned br-media-mgmt IP for recyclarr";
             };
+            slskd = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.17";
+              description = "Pinned br-media-mgmt IP for slskd";
+            };
             actualbudget = lib.mkOption {
               type = lib.types.str;
               default = "10.3.0.2";
@@ -178,8 +200,13 @@
               default = "10.3.0.4";
               description = "Pinned br-life IP for ghostfolio";
             };
+            musicAssistant = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.2.13";
+              description = "Pinned br-home-auto IP for music-assistant";
+            };
           };
-          # Centralized since consumers outside the pod's own file need the address too (e.g. surasa's snapclient).
+          # Centralized since consumers outside the pod's own file need the address too.
           macvlanAddresses = {
             musicAssistant = lib.mkOption {
               type = lib.types.str;

@@ -97,25 +97,13 @@
               id_token_groups:
                 id_token:
                   - 'groups'
+            authorization_policies:
+              admin_only:
+                default_policy: 'deny'
+                rules:
+                  - policy: 'one_factor'
+                    subject: 'group:admin'
             clients:
-              - client_id: 'arcane'
-                client_name: 'Arcane'
-                client_secret: '${
-                  config.sops.placeholder."authelia.oidc_clients.arcane.client_secret_hash"
-                }'
-                public: false
-                authorization_policy: 'one_factor'
-                redirect_uris:
-                  - 'https://oci.${domain}/auth/oidc/callback'
-                scopes:
-                  - 'openid'
-                  - 'profile'
-                  - 'email'
-                  - 'groups'
-                grant_types:
-                  - 'authorization_code'
-                response_types:
-                  - 'code'
               - client_id: 'grafana'
                 client_name: 'Grafana'
                 client_secret: '${
@@ -208,7 +196,7 @@
                   config.sops.placeholder."authelia.oidc_clients.jellyfin.client_secret_hash"
                 }'
                 public: false
-                authorization_policy: 'one_factor'
+                authorization_policy: 'admin_only'
                 require_pkce: true
                 pkce_challenge_method: 'S256'
                 token_endpoint_auth_method: 'client_secret_post'
@@ -256,11 +244,31 @@
                   config.sops.placeholder."authelia.oidc_clients.aiostreams.client_secret_hash"
                 }'
                 public: false
-                authorization_policy: 'one_factor'
+                authorization_policy: 'admin_only'
                 # AIOStreams posts the client secret in the token body, not a header.
                 token_endpoint_auth_method: 'client_secret_post'
                 redirect_uris:
                   - 'https://aiostreams.${domain}/api/v1/auth/oidc/callback'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                  - 'groups'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
+              # Dashboard-only login (see aiometadata.nix), never the Stremio addon URLs.
+              - client_id: 'aiometadata'
+                client_name: 'AIOMetadata'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.aiometadata.client_secret_hash"
+                }'
+                public: false
+                authorization_policy: 'admin_only'
+                token_endpoint_auth_method: 'client_secret_basic'
+                redirect_uris:
+                  - 'https://aiometadata.${domain}/api/auth/oidc/callback'
                 scopes:
                   - 'openid'
                   - 'profile'
@@ -297,20 +305,14 @@
       configHash = builtins.hashString "sha256" (configurationYmlContent + usersDatabaseYmlContent);
     in
     {
-      # Authelia OIDC identity provider. Runs rootless under its own dedicated
-      # user (uid 2301, modules/users/authelia.nix) for the same reasons Arcane
-      # does (see modules/services/virtualisation/arcane.nix). Currently wired
-      # to exactly one OIDC client (Arcane) as a pilot.
+      # Authelia OIDC identity provider. Runs rootless under its own dedicated user (uid 2301, modules/users/authelia.nix).
       services.nginx.virtualHosts."auth.${domain}" = flakeLib.nginx.mkProxyVhost {
         domain = domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:9091";
       };
 
-      # Sibling of /srv/appdata for the same reason as /srv/arcane (see
-      # modules/services/virtualisation/arcane.nix): /srv/appdata's ZFS
-      # dataset has no acltype=posixacl, so ACLs for a non-root app there
-      # silently no-op.
+      # Sibling of /srv/appdata, whose ZFS dataset has no acltype=posixacl, so ACLs for a non-root app there silently no-op.
       systemd.tmpfiles.rules = [
         "d /srv/authelia 0750 authelia authelia - -"
       ];
@@ -356,11 +358,6 @@
         group = "authelia";
         mode = "0400";
       };
-      sops.secrets."authelia.oidc_clients.arcane.client_secret_hash" = {
-        owner = "authelia";
-        group = "authelia";
-        mode = "0400";
-      };
       sops.secrets."authelia.oidc_clients.grafana.client_secret_hash" = {
         owner = "authelia";
         group = "authelia";
@@ -396,6 +393,11 @@
         group = "authelia";
         mode = "0400";
       };
+      sops.secrets."authelia.oidc_clients.aiometadata.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
 
       sops.templates."authelia-configuration.yml" = {
         owner = "authelia";
@@ -423,14 +425,6 @@
             containerConfig = {
               image = "ghcr.io/authelia/authelia:4.39.28";
               publishPorts = [ "127.0.0.1:9091:9091" ];
-              # Unlike Arcane, this container never talks to the podman socket
-              # directly, so it doesn't need systemd.user.sockets/services.podman
-              # (see arcane.nix) — quadlet-nix's generated container units work
-              # without it by default.
-              # If keep-id doesn't map cleanly onto Authelia's image the way it
-              # does for Arcane's (proven), Authelia's official image separately
-              # supports PUID/PGID env vars as a fallback, so its entrypoint
-              # chowns /data itself.
               userns = "keep-id";
               volumes = [
                 "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"

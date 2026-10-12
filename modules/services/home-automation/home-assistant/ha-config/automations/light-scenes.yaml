@@ -1,0 +1,134 @@
+- id: light_scene_living
+  alias: "Lights: living room scene"
+  description: >-
+    Applies the chosen scene to the living room bulbs and keeps Adaptive
+    Lighting from overwriting it; Auto hands the bulbs back to Adaptive Lighting.
+  triggers:
+  - trigger: state
+    entity_id: input_text.living_scene
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+  variables:
+    scene: "{{ trigger.to_state.state }}"
+    bulbs:
+    - light.living_room_light_1
+    - light.living_room_light_2
+    - light.living_room_light_3
+    - light.living_room_light_4
+    - light.living_room_light_5
+  actions:
+  - choose:
+    - conditions: "{{ scene == 'Auto' }}"
+      sequence:
+      - action: adaptive_lighting.set_manual_control
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          manual_control: false
+      - action: adaptive_lighting.apply
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          turn_on_lights: false
+    - conditions: "{{ scene | regex_match('^[0-9a-f-]{36}$') }}"
+      sequence:
+      - action: adaptive_lighting.set_manual_control
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          manual_control: true
+      - action: scene_presets.apply_preset
+        data:
+          preset_id: "{{ scene }}"
+          targets:
+            entity_id: "{{ bulbs }}"
+          transition: 2
+  mode: queued
+
+- id: light_scene_office
+  alias: "Lights: office scene"
+  description: >-
+    Applies the chosen scene to the office light and keeps Adaptive Lighting
+    from overwriting it; Auto hands the light back to Adaptive Lighting.
+  triggers:
+  - trigger: state
+    entity_id: input_text.office_scene
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+  variables:
+    scene: "{{ trigger.to_state.state }}"
+    bulbs:
+    - light.office_room_light
+  actions:
+  - choose:
+    - conditions: "{{ scene == 'Auto' }}"
+      sequence:
+      - action: adaptive_lighting.set_manual_control
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          manual_control: false
+      - action: adaptive_lighting.apply
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          turn_on_lights: false
+    - conditions: "{{ scene | regex_match('^[0-9a-f-]{36}$') }}"
+      sequence:
+      - action: adaptive_lighting.set_manual_control
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: "{{ bulbs }}"
+          manual_control: true
+      - action: scene_presets.apply_preset
+        data:
+          preset_id: "{{ scene }}"
+          targets:
+            entity_id: "{{ bulbs }}"
+          transition: 2
+  mode: queued
+
+- id: light_scene_reset
+  alias: "Lights: scenes back to Auto when the room empties"
+  description: >-
+    Returns a room to Auto once its presence sensor has cleared, and both rooms
+    when sleep starts, so the next arrival gets normal lighting.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.room_presence_living
+    to: "off"
+    id: living
+  - trigger: state
+    entity_id: binary_sensor.room_presence_office
+    to: "off"
+    id: office
+  - trigger: state
+    entity_id: schedule.sleep
+    to: "on"
+    id: sleep
+  actions:
+  - repeat:
+      for_each:
+      - living
+      - office
+      sequence:
+      - if:
+        - condition: template
+          value_template: >-
+            {{ (trigger.id == 'sleep' or trigger.id == repeat.item)
+               and not is_state('input_text.' ~ repeat.item ~ '_scene', 'Auto') }}
+        then:
+        - action: input_text.set_value
+          target:
+            entity_id: "input_text.{{ repeat.item }}_scene"
+          data:
+            value: Auto
+  mode: queued

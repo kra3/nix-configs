@@ -48,8 +48,6 @@ LAN 192.168.1.0/24
         |     -- direct LAN L2 presence for SSDP/mDNS/Matter discovery;
         |        bypasses host nftables (see Security Notes)
         |
-        |-- default podman network (rootful)
-              arcane (127.0.0.1:3552) — has /run/podman/podman.sock bind-mounted
         |-- authelia rootless podman (own dedicated user, uid 2301)
               authelia (127.0.0.1:9091)
 ```
@@ -87,7 +85,8 @@ listed here):
 
 | # | Flow | Ports |
 |---|---|---|
-| 1 | monitoring → media-play | 9100 (node-exporter), 4533 (navidrome) |
+| 1 | monitoring → media-play | 9100 (node-exporter), 4533 (navidrome), 8096 (jellyfin metrics) |
+| 1a| monitoring → media-mgmt (unpackerr, slskd) | 5656 (unpackerr), 5030 (slskd) |
 | 2 | monitoring → home-auto (nspawn) | 9100, 80 (frigate) |
 | 3 | monitoring → home-auto pods (br-home-auto) | 8123 (HA prometheus) |
 | 4 | home-auto (nspawn) → monitoring | 3100 (loki) |
@@ -154,7 +153,6 @@ Unbound -> DoT upstreams (1.1.1.1:853 family, 9.9.9.11:853 quad9)
 | `ha.${domain}` | `127.0.0.1:8123` (home-assistant) |
 | `nvr.${domain}` | frigate (home-auto nspawn, port 80) |
 | `z2m.${domain}` | zigbee2mqtt (home-auto nspawn, port 8080) |
-| `oci.${domain}` | `127.0.0.1:3552` (arcane) |
 | `auth.${domain}` | `127.0.0.1:9091` (authelia) |
 | `ghostfolio.${domain}` | `127.0.0.1:3333` |
 | `actualbudget.${domain}` | `127.0.0.1:5006` |
@@ -195,6 +193,10 @@ from LAN), node-exporter `9100`.
 radarr `7878`, sonarr `8989`, prowlarr `9696`, sabnzbd `8080`, bazarr `6767`,
 lidarr `8686`, seerr `5055`, bookshelf `8787`, audiobookshelf `13378`→80,
 maintainerr `6246`, unpackerr `5656` — all published to `127.0.0.1` only.
+lidarr's On Track Retag Custom Script reaches the host's
+`lidarr-beets-webhook` (port `8942`, `networking.firewall.interfaces.
+br-media-mgmt.allowedTCPPorts`) via `host.containers.internal`, same
+reachability pattern as ghostfolio → postgres/redis below.
 
 ### br-life pods (10.3.0.0/24)
 
@@ -207,16 +209,11 @@ home-assistant `8123`, otbr `8081`, matter-server `5580`, music-assistant
 `8095` + snapcast `1704/1705/1780` — loopback-published for nginx, **plus**
 a second NIC on `home-auto-macvlan` for LAN-local discovery.
 
-### rootful podman default network
-
-arcane `127.0.0.1:3552` — separately networked from the three zone bridges;
-holds `/run/podman/podman.sock` (rootful) bind-mounted in.
-
 ### authelia rootless podman (own dedicated user)
 
 authelia `127.0.0.1:9091` — runs under its own dedicated rootless podman
 instance (uid 2301, `modules/users/authelia.nix`), separately networked from
-the three zone bridges and from arcane's own podman.
+the three zone bridges.
 
 ## Discovery and Multicast
 
@@ -243,7 +240,5 @@ nginx.
 - `home-auto-macvlan` gives 4 pods a real LAN presence that bypasses host
   nftables — traffic to/from other LAN devices doesn't traverse the
   `extraForwardRules` allow-list above.
-- Arcane holds the **rootful** podman socket — full host-root equivalent
-  from inside that one container.
 - SSH: password auth off, root login disabled (`PermitRootLogin = "no"`),
   deploy goes through `kra3` + sudo only.

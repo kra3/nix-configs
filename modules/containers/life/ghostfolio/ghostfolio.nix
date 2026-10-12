@@ -71,7 +71,7 @@
         ];
       };
 
-      # No forwardAuth: authenticates natively via its own OIDC login (like Arcane).
+      # No forwardAuth: authenticates natively via its own OIDC login.
       services.nginx.virtualHosts."ghostfolio.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;

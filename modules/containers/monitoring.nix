@@ -148,6 +148,8 @@
           enabledCollectors = [
             "systemd"
           ];
+          # thermal_zone has no data on this host, same as the nspawn containers (common.nix).
+          disabledCollectors = [ "thermal_zone" ];
           # unit-exclude adds podman's per-invocation healthcheck transient units to the upstream default.
           extraFlags = [
             "--collector.systemd.enable-restarts-metrics"
@@ -308,6 +310,7 @@
             domain = config.vars.acme.domain;
             monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
             networkVars = config.vars.network;
+            localMedia = config.vars.localMedia;
           };
         }
         // flakeLib.container-definition.mkContainerNetwork {
@@ -391,6 +394,10 @@
             };
             "/run/secrets/homeassistant.token" = {
               hostPath = "/run/secrets/homeassistant.token";
+              isReadOnly = true;
+            };
+            "/run/secrets/db.grafana_ro_password" = {
+              hostPath = "/run/secrets/db.grafana_ro_password";
               isReadOnly = true;
             };
             "/run/secrets/monitoring.grafana.telegram_contactpoint.yaml" = {

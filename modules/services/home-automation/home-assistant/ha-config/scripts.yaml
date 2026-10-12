@@ -1,11 +1,7 @@
 notify_all_phones:
   alias: "Notify: all phones"
   description: >-
-    Fan out a plain notification to both phones via notify.send_message.
-    The old per-device notify.mobile_app_* services were removed by the
-    mobile_app integration's move to entity-based notify (HA 2026.9), and
-    the replacement doesn't support actionable buttons (data.actions) —
-    anything needing a tappable action belongs on the dashboard instead.
+    Notifies the phones; critical (iOS critical alert, via mobile_app actions) goes to Arun only unless escalated.
   fields:
     title:
       required: false
@@ -15,15 +11,50 @@ notify_all_phones:
       required: true
       selector:
         text:
+    critical:
+      required: false
+      default: false
+      selector:
+        boolean:
+    escalated:
+      required: false
+      default: false
+      selector:
+        boolean:
   sequence:
-  - action: notify.send_message
-    target:
-      entity_id:
-      - notify.iphone
-      - notify.anjalis_iphone
-    data:
-      title: "{{ title | default(omit) }}"
-      message: "{{ message }}"
+  - if: "{{ critical | default(false) }}"
+    then:
+    - parallel:
+      - &critical_push
+        action: notify.mobile_app_meghanadha
+        continue_on_error: true
+        data:
+          title: "{{ title | default(omit) }}"
+          message: "{{ message }}"
+          data:
+            push:
+              interruption-level: critical
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+      - <<: *critical_push
+        action: notify.mobile_app_hiranyagarbha
+    - if: "{{ escalated | default(false) }}"
+      then:
+      - <<: *critical_push
+        action: notify.mobile_app_anjalis_iphone
+    else:
+    - action: notify.send_message
+      target:
+        entity_id:
+        - notify.meghanadha
+        - notify.anjalis_iphone
+        - notify.hiranyagarbha
+      data:
+        title: "{{ title | default(omit) }}"
+        message: "{{ message }}"
+  mode: parallel
 
 frigate_sync_detect_to_alarm_state:
   alias: "Frigate: sync detect/audio switches to alarm state"
@@ -42,11 +73,21 @@ frigate_sync_detect_to_alarm_state:
         target:
           entity_id:
           - switch.ranger_duo_fxd_detect
-          - switch.ranger_duo_fxd_audio_detection
           - switch.ranger_duo_ptz_detect
-          - switch.ranger_duo_ptz_audio_detection
           - switch.ranger_uno_detect
           - switch.ranger_uno_audio_detection
+      - if:
+        - condition: not
+          conditions:
+          - condition: state
+            entity_id: media_player.lg_webos_tv_oled77c35la
+            state: playing
+        then:
+        - action: switch.turn_on
+          target:
+            entity_id:
+            - switch.ranger_duo_fxd_audio_detection
+            - switch.ranger_duo_ptz_audio_detection
     - conditions:
       - condition: state
         entity_id: alarm_control_panel.vasudha_secure
@@ -76,3 +117,146 @@ alarm_force_arm_night:
       mode: night
       force: true
       code: !secret alarm_code
+
+alarm_force_arm_away:
+  alias: "Alarm: force arm away (bypass open sensors)"
+  description: >-
+    Arms away mode via alarmo.arm's force option, which auto-bypasses
+    any currently-open sensor instead of refusing to arm.
+  sequence:
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: away
+      force: true
+      code: !secret alarm_code
+
+announce_hallway:
+  alias: "Announce: hallway speaker"
+  description: Speaks a message through the hallway camera speaker using local Piper TTS.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - action: rest_command.announce_hallway
+    data:
+      message: "{{ message }}"
+  mode: queued
+
+alarm_speakers_prepare:
+  alias: "Alarm speakers: prepare"
+  description: Powers the home theater receiver on in multi-channel stereo and notes that the alarm did.
+  sequence:
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.alarm_speakers_on
+    data:
+      value: "on"
+  - if: "{{ is_state('media_player.home_theater_2', 'off') }}"
+    then:
+    - action: media_player.turn_on
+      target:
+        entity_id: media_player.home_theater_2
+    - wait_template: "{{ not is_state('media_player.home_theater_2', 'off') }}"
+      timeout: "00:00:20"
+      continue_on_timeout: true
+  - action: media_player.select_sound_mode
+    continue_on_error: true
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      sound_mode: MCH STEREO
+  - delay: "00:00:03"
+  mode: restart
+
+alarm_speakers_play:
+  alias: "Alarm speakers: play"
+  description: Plays a sound URL on the home theater (announce 65, about 50 on the receiver) and the kitchen at 60 %.
+  fields:
+    url:
+      required: true
+      selector:
+        text:
+  sequence:
+  - parallel:
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.ma_home_theater
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 65
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.kitchen
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 60
+    - sequence:
+      - delay: "00:00:02"
+      - action: media_player.select_sound_mode
+        continue_on_error: true
+        target:
+          entity_id: media_player.home_theater_2
+        data:
+          sound_mode: MCH STEREO
+  mode: parallel
+
+alarm_speakers_off:
+  alias: "Alarm speakers: power off"
+  description: Powers the home theater receiver off again if the alarm powered it on.
+  sequence:
+  - if: "{{ is_state('input_text.alarm_speakers_on', 'on') }}"
+    then:
+    - action: media_player.turn_off
+      continue_on_error: true
+      target:
+        entity_id: media_player.home_theater_2
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.alarm_speakers_on
+      data:
+        value: ""
+  mode: single
+
+lights_hand_back:
+  alias: "Lights: hand back to Adaptive"
+  description: Resets both room scenes to Auto and returns every light to Adaptive Lighting.
+  sequence:
+  - action: input_text.set_value
+    target:
+      entity_id:
+      - input_text.living_scene
+      - input_text.office_scene
+    data:
+      value: Auto
+  - action: adaptive_lighting.set_manual_control
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+    data:
+      manual_control: false
+  - action: adaptive_lighting.apply
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+    data:
+      turn_on_lights: false
+  mode: single
+
+lights_all_off:
+  alias: "Lights: all off"
+  description: Turns off every light and the Focus and Shelf light plugs.
+  sequence:
+  - action: light.turn_off
+    target:
+      entity_id: all
+  - action: switch.turn_off
+    target:
+      entity_id:
+      - switch.hue_light_switch_1
+      - switch.hue_light_switch_2
+  mode: single

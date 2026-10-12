@@ -538,6 +538,11 @@
         ];
       };
 
-      catppuccin.cursors.enable = true;
+      # nixpkgs' catppuccin-cursors is cached; the catppuccin.nix module's own
+      # cursors builder rebuilds all flavor/accent combos from source via Inkscape.
+      home.pointerCursor = {
+        package = pkgs.catppuccin-cursors.mochaBlue;
+        name = "catppuccin-mocha-blue-cursors";
+      };
     };
 }

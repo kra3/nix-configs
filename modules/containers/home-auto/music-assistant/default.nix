@@ -16,7 +16,7 @@
       virtualisation.quadlet.containers.music-assistant = {
         containerConfig = {
           networks = [
-            "${network.ref}:ip=10.3.2.13"
+            "${network.ref}:ip=${config.vars.network.podmanAddresses.musicAssistant}"
             "${macvlan.ref}:ip=${config.vars.network.macvlanAddresses.musicAssistant},mac=02:42:c0:a8:01:24"
           ];
           # Bypasses macvlan isolation by forcing host domains to the bridge gateway
@@ -68,7 +68,7 @@
         ];
         extraConfig = flakeLib.nginx.mkAllowBlock config.vars.network.nginxAllowCidrs;
         locations."/" = {
-          proxyPass = "http://10.3.2.13:1705";
+          proxyPass = "http://${config.vars.network.podmanAddresses.musicAssistant}:1705";
           proxyWebsockets = true;
         };
       };

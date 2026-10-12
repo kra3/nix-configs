@@ -1,0 +1,42 @@
+- id: climate_seed_defaults
+  alias: "Climate: seed comfort thresholds once"
+  description: >-
+    Sets the comfort thresholds on the first start after they were added, so
+    later edits on the Climate tab survive restarts.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: input_boolean.climate_defaults_v5
+    state: "off"
+  actions:
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.climate_temp_low
+    data:
+      value: 22
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.climate_temp_high
+    data:
+      value: 25
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.climate_temp_high_summer
+    data:
+      value: 27
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.climate_night_offset
+    data:
+      value: 2
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.climate_moisture_limit
+    data:
+      value: 3
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.climate_defaults_v5
+  mode: single

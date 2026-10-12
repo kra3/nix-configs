@@ -1,22 +1,12 @@
+streamline_templates: !include_dir_named streamline_templates/
 views:
 - title: Home
   path: home
   sections:
   - type: grid
     cards:
-    - type: custom:mushroom-template-card
-      primary: >-
-        {%- if is_state('sensor.dashboard_presence_state', 'away') -%}
-          Away
-        {%- elif is_state('sensor.dashboard_presence_state', 'home_both') -%}
-          Everyone's home
-        {%- else -%}
-          Home
-        {%- endif -%}
-      secondary: >-
-        {{ states('sensor.dashboard_time_period') | title }}{% if states('sensor.dashboard_eta') not in ['none', 'unknown', 'unavailable'] %} · {{ states('sensor.dashboard_eta') }}{% endif %}
-      icon: >-
-        {% if is_state('sensor.dashboard_presence_state', 'away') %}mdi:home-export-outline{% else %}mdi:home-heart{% endif %}
+    - type: custom:streamline-card
+      template: home_hero
       grid_options:
         columns: full
       visibility:
@@ -24,11 +14,10 @@ views:
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
         - 6edcc5a09c3144d684077ee362e7394a
-    - type: custom:mushroom-template-card
-      primary: "Vasudha"
-      secondary: >-
-        {{ states('sensor.dashboard_presence_state') | replace('_', ' ') | title }} · {{ states('sensor.dashboard_time_period') | title }}
-      icon: mdi:home
+    - type: custom:streamline-card
+      template: home_hero
+      variables:
+        name: Vasudha
       grid_options:
         columns: full
       visibility:
@@ -38,11 +27,145 @@ views:
           users:
           - a1d4401b8b714ebb83f07c5316ab399c
           - 6edcc5a09c3144d684077ee362e7394a
+    - type: custom:alarmo-card
+      entity: alarm_control_panel.vasudha_secure
+      name: Alarm
+      use_code_dialog: true
+      states:
+        armed_home:
+          hide: true
+        armed_vacation:
+          hide: true
+        armed_custom_bypass:
+          hide: true
+      grid_options:
+        columns: full
+    - type: tile
+      entity: input_boolean.party_mode
+      name: Party mode
+      icon: mdi:party-popper
+    - type: tile
+      entity: input_boolean.automations_paused
+      name: Manual mode
+      icon: mdi:pause-circle
+    - type: tile
+      entity: input_boolean.bedroom_nap
+      name: Bedroom nap
+      icon: mdi:power-sleep
   - type: grid
     cards:
     - type: heading
       heading: Active Rooms
       heading_style: title
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Kitchen
+        icon: mdi:silverware-fork-knife
+        presence: binary_sensor.room_presence_kitchen
+        temperature: sensor.hue_pir_kitchen_temperature
+        illuminance: sensor.hue_pir_kitchen_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.room_presence_kitchen
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Dining Room
+        icon: mdi:table-furniture
+        presence: binary_sensor.room_presence_dining
+      visibility:
+      - condition: state
+        entity: binary_sensor.room_presence_dining
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Living Room
+        icon: mdi:sofa
+        presence: binary_sensor.room_presence_living
+        temperature: sensor.living_room_occupancy_temperature
+        humidity: sensor.living_room_occupancy_humidity
+        illuminance: sensor.living_room_occupancy_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.room_presence_living
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Office
+        icon: mdi:desk
+        presence: binary_sensor.room_presence_office
+      visibility:
+      - condition: state
+        entity: binary_sensor.room_presence_office
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Hall
+        icon: mdi:door
+        presence: binary_sensor.room_presence_hall
+        temperature: sensor.hue_pir_hallway_temperature
+        illuminance: sensor.hue_pir_hallway_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.room_presence_hall
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Bedroom
+        icon: mdi:bed
+        presence: binary_sensor.bedroom_occupancy_presence
+        temperature: sensor.bedroom_occupancy_temperature
+        humidity: sensor.bedroom_occupancy_humidity
+        illuminance: sensor.bedroom_occupancy_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.bedroom_occupancy_presence
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Bathroom
+        icon: mdi:shower
+        presence: binary_sensor.bathroom_occupancy_presence
+        temperature: sensor.bathroom_occupancy_temperature
+        humidity: sensor.bathroom_occupancy_humidity
+        illuminance: sensor.bathroom_occupancy_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.bathroom_occupancy_presence
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Laundry
+        icon: mdi:washing-machine
+        presence: binary_sensor.laundry_occupancy_presence
+        temperature: sensor.laundry_occupancy_temperature
+        humidity: sensor.laundry_occupancy_humidity
+        illuminance: sensor.laundry_occupancy_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.laundry_occupancy_presence
+        state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      variables:
+        name: Toilet
+        icon: mdi:toilet
+        presence: binary_sensor.toilet_occupancy_presence
+        temperature: sensor.toilet_occupancy_temperature
+        humidity: sensor.toilet_occupancy_humidity
+        illuminance: sensor.toilet_occupancy_illuminance
+      visibility:
+      - condition: state
+        entity: binary_sensor.toilet_occupancy_presence
+        state: "on"
     - type: tile
       entity: light.kitchen_lights
       name: Kitchen
@@ -52,9 +175,6 @@ views:
       visibility:
       - condition: or
         conditions:
-        - condition: state
-          entity: binary_sensor.hue_pir_kitchen_occupancy
-          state: "on"
         - condition: state
           entity: light.kitchen_lights
           state: "on"
@@ -78,14 +198,9 @@ views:
       features:
       - type: light-brightness
       visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.ranger_duo_ptz_person_occupancy
-          state: "on"
-        - condition: state
-          entity: light.dining_lights
-          state: "on"
+      - condition: state
+        entity: light.dining_lights
+        state: "on"
     - type: tile
       entity: light.living_room_lights
       name: Living Room
@@ -95,9 +210,6 @@ views:
       visibility:
       - condition: or
         conditions:
-        - condition: state
-          entity: binary_sensor.ranger_duo_fxd_person_occupancy
-          state: "on"
         - condition: state
           entity: light.living_room_lights
           state: "on"
@@ -123,20 +235,15 @@ views:
           entity: media_player.lg_webos_tv_oled77c35la
           state: playing
     - type: tile
-      entity: light.hall
+      entity: light.hallway_hall_lights
       name: Hall
       area: hall
       features:
       - type: light-brightness
       visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.hue_pir_hallway_occupancy
-          state: "on"
-        - condition: state
-          entity: light.hall
-          state: "on"
+      - condition: state
+        entity: light.hallway_hall_lights
+        state: "on"
     - type: tile
       entity: light.bedroom_wardrobe_lights
       name: Bedroom
@@ -144,14 +251,9 @@ views:
       features:
       - type: light-brightness
       visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.bedroom_occupancy_presence
-          state: "on"
-        - condition: state
-          entity: light.bedroom_wardrobe_lights
-          state: "on"
+      - condition: state
+        entity: light.bedroom_wardrobe_lights
+        state: "on"
     - type: tile
       entity: light.office_room_light
       name: Office
@@ -167,22 +269,6 @@ views:
         - condition: user
           users:
           - a1d4401b8b714ebb83f07c5316ab399c
-    - type: tile
-      entity: sensor.bathroom_occupancy_temperature
-      name: Bathroom
-      area: bathroom
-      visibility:
-      - condition: state
-        entity: binary_sensor.bathroom_occupancy_presence
-        state: "on"
-    - type: tile
-      entity: sensor.laundry_occupancy_temperature
-      name: Laundry
-      area: laundry
-      visibility:
-      - condition: state
-        entity: binary_sensor.laundry_occupancy_presence
-        state: "on"
     - type: tile
       entity: lock.front_door
       name: Front
@@ -203,225 +289,8 @@ views:
       - condition: state
         entity: switch.front_entrance_double_switch_right
         state: "on"
-    - type: tile
-      entity: sensor.toilet_occupancy_temperature
-      name: Toilet
-      area: toilet
   - type: grid
     cards:
-    - type: heading
-      heading: Right Now
-      heading_style: title
-      badges:
-      - type: entity
-        entity: binary_sensor.dashboard_alert_security
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_device_health
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_device_health
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_override_active
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_override_active
-          state: "on"
-      - type: entity
-        entity: binary_sensor.dashboard_alert_crisis
-        show_state: false
-        visibility:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_crisis
-          state: "on"
-    - type: tile
-      entity: alarm_control_panel.vasudha_secure
-      name: Alarm
-      features:
-      - type: alarm-modes
-        modes:
-        - armed_night
-        - armed_away
-        - disarmed
-      grid_options:
-        columns: full
-    - type: tile
-      entity: input_boolean.party_mode
-      name: Party mode
-      icon: mdi:party-popper
-    - type: tile
-      entity: input_boolean.automations_paused
-      name: Manual mode
-      icon: mdi:pause-circle
-    - type: vertical-stack
-      cards:
-      - type: heading
-        heading: Needs attention
-        heading_style: subtitle
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Open door/window
-          secondary: >-
-            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown' }}
-          icon: mdi:door-open
-          icon_color: red
-          tap_action:
-            action: more-info
-            entity: binary_sensor.house_exits_open_status
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "on"
-        - condition: state
-          entity: alarm_control_panel.vasudha_secure
-          state: disarmed
-        card:
-          type: custom:mushroom-template-card
-          primary: Force arm for the night
-          icon: mdi:shield-lock
-          icon_color: amber
-          tap_action:
-            action: call-service
-            service: script.alarm_force_arm_night
-            confirmation:
-              text: Force-arm for the night, bypassing any open sensors?
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.house_exits_open_status
-          state: "on"
-        - condition: state
-          entity: binary_sensor.dashboard_alert_security
-          state: "off"
-        card:
-          type: custom:mushroom-template-card
-          primary: Open (FYI, not armed)
-          secondary: >-
-            {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') or 'Unknown' }}
-          icon: mdi:door-open
-          icon_color: blue
-          tap_action:
-            action: more-info
-            entity: binary_sensor.house_exits_open_status
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_device_health
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Device unavailable
-          secondary: >-
-            {{ state_attr('binary_sensor.dashboard_alert_device_health', 'unavailable_names') or 'Unknown' }}
-          icon: mdi:alert-circle
-          icon_color: orange
-          tap_action:
-            action: more-info
-            entity: binary_sensor.dashboard_alert_device_health
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.dashboard_alert_crisis
-          state: "on"
-        card:
-          type: custom:mushroom-template-card
-          primary: Crisis information
-          secondary: >-
-            {{ state_attr('binary_sensor.dashboard_alert_crisis', 'headlines') or 'Unknown' }}
-          icon: mdi:alert
-          icon_color: red
-          tap_action:
-            action: more-info
-            entity: binary_sensor.dashboard_alert_crisis
-      - type: markdown
-        content: "Nothing needs attention right now."
-        visibility:
-        - condition: and
-          conditions:
-          - condition: state
-            entity: binary_sensor.dashboard_alert_security
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_device_health
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_override_active
-            state: "off"
-          - condition: state
-            entity: binary_sensor.house_exits_open_status
-            state: "off"
-          - condition: state
-            entity: binary_sensor.dashboard_alert_crisis
-            state: "off"
-    - type: sensor
-      graph: line
-      entity: sensor.average_temperature
-      name: Temperature
-      icon: mdi:thermometer
-      detail: 2
-      hours_to_show: 168
-      grid_options:
-        columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_humidity
-      name: Humidity
-      icon: mdi:water-percent
-      detail: 2
-      hours_to_show: 168
-      grid_options:
-        columns: 4
-    - type: sensor
-      graph: line
-      entity: sensor.average_illuminance
-      name: Illuminance
-      icon: mdi:brightness-6
-      detail: 2
-      hours_to_show: 168
-      grid_options:
-        columns: 4
-  - type: grid
-    cards:
-    - type: heading
-      heading: Media
-      heading_style: title
-    - type: custom:mini-media-player
-      entity: media_player.lg_webos_tv_oled77c35la
-      visibility:
-      - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.lg_webos_tv_oled77c35la
-    - type: custom:mini-media-player
-      entity: media_player.home_theater
-      visibility:
-      - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.home_theater
-    - type: custom:mini-media-player
-      entity: media_player.home_theater_2
-      visibility:
-      - condition: state
-        entity: sensor.dashboard_active_media_player
-        state: media_player.home_theater_2
-  - type: grid
-    cards:
-    - type: todo-list
-      entity: todo.shopping_list
-      title: Shopping List
-      hide_completed: true
     - show_current: true
       show_forecast: true
       type: weather-forecast
@@ -431,6 +300,229 @@ views:
       forecast_slots: 7
       tap_action:
         action: more-info
+    - type: heading
+      heading: Media
+      heading_style: title
+    - type: custom:mushroom-template-card
+      primary: Media activity
+      secondary: >-
+        {% set q = states('sensor.sabnzbd_karunagath_in_queue_count') | int(0) %}
+        {% set p = states('sensor.seerr_pending_requests') | int(0) %}
+        {% set parts = [] %}
+        {% if q > 0 %}{% set parts = parts + [q ~ ' downloading'] %}{% endif %}
+        {% if p > 0 %}{% set parts = parts + [p ~ ' pending requests'] %}{% endif %}
+        {{ parts | join(' · ') }}
+      icon: mdi:download
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/media
+      visibility:
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity: sensor.sabnzbd_karunagath_in_queue_count
+          above: 0
+        - condition: numeric_state
+          entity: sensor.seerr_pending_requests
+          above: 0
+      grid_options:
+        columns: full
+    - type: custom:mini-media-player
+      entity: media_player.lg_webos_tv_oled77c35la
+      name: TV
+      artwork: cover
+      info: short
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state: [playing, paused]
+    - type: custom:mini-media-player
+      entity: media_player.ma_home_theater
+      name: Living room
+      artwork: cover
+      info: scroll
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.ma_home_theater
+        state: [playing, paused]
+    - type: custom:mini-media-player
+      entity: media_player.kitchen
+      name: Kitchen
+      artwork: cover
+      info: scroll
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.kitchen
+        state: [playing, paused]
+    - type: tile
+      entity: media_player.lg_webos_tv_oled77c35la
+      name: Watch TV
+      icon: mdi:television-play
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: media_player.turn_on
+        target:
+          entity_id: media_player.lg_webos_tv_oled77c35la
+      grid_options:
+        columns: 6
+      visibility:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.ma_home_theater
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.kitchen
+        state_not: [playing, paused]
+    - type: tile
+      entity: media_player.ma_home_theater
+      name: Play music
+      icon: mdi:music
+      hide_state: true
+      tap_action:
+        action: navigate
+        navigation_path: /media-browser
+      grid_options:
+        columns: 6
+      visibility:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.ma_home_theater
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.kitchen
+        state_not: [playing, paused]
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Climate
+      heading_style: title
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_temperature
+        name: Temperature
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
+      grid_options:
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_humidity
+        name: Humidity
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
+      grid_options:
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_illuminance
+        name: Illuminance
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
+      grid_options:
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_temperature
+        name: Temperature
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_humidity
+        name: Humidity
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:streamline-card
+      template: metric_line
+      variables:
+        entity: sensor.average_illuminance
+        name: Illuminance
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+  - type: grid
+    cards:
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        above: 0
+      card:
+        type: todo-list
+        entity: todo.shopping_list
+        title: Shopping List
+        hide_completed: true
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        below: 1
+      card:
+        type: custom:popup-tile-card
+        entity: todo.shopping_list
+        name: Shopping list
+        icon: mdi:cart-outline
+        unit: items
+        popup:
+          type: todo-list
+          entity: todo.shopping_list
+          title: Shopping List
+          hide_completed: true
   badges:
   - type: entity
     show_name: true
@@ -448,11 +540,6 @@ views:
     show_name: false
     show_state: true
     show_icon: true
-    entity: alarm_control_panel.vasudha_secure
-  - type: entity
-    show_name: false
-    show_state: true
-    show_icon: true
     entity: lock.front_door
   - type: entity
     show_name: false
@@ -465,16 +552,6 @@ views:
     show_state: true
     show_icon: true
     entity: sensor.hue_pir_hallway_temperature
-  - type: entity
-    show_name: false
-    show_state: true
-    show_icon: true
-    entity: weather.forecast_vasudha
-    state_content:
-    - temperature
-    - state
-    - wind_speed
-    - uv_index
   - type: entity
     show_name: false
     show_state: true
@@ -504,118 +581,1811 @@ views:
   - type: entity
     entity: sensor.season
   cards: []
-- title: Cameras
-  path: cameras
-  icon: mdi:cctv
-  sections:
-  - type: grid
-    cards:
-    - type: custom:advanced-camera-card
-      cameras:
-      - camera_entity: camera.ranger_duo_fxd
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_duo_ptz
-        live_provider: go2rtc
-      - camera_entity: camera.ranger_uno
-        live_provider: go2rtc
-      live:
-        display:
-          mode: grid
-      view:
-        dim: true
-      menu:
-        buttons:
-          microphone:
-            enabled: true
-      status_bar:
-        style: overlay
-      image:
-        mode: camera
-      grid_options:
-        columns: full
-    - type: heading
-      heading: Person detected
-      heading_style: subtitle
-    - type: tile
-      entity: binary_sensor.ranger_duo_fxd_person_occupancy
-      name: Living Room
-      area: living_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_duo_ptz_person_occupancy
-      name: Dining Room
-      area: dining_room
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.ranger_uno_person_occupancy
-      name: Office Room
-      area: office
-      grid_options:
-        columns: 4
 - title: Media
   path: media
   icon: mdi:play-circle
   sections:
   - type: grid
     cards:
+    - type: heading
+      heading: Players
+      heading_style: title
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
+      name: TV
+      toggle_power: false
+      artwork: cover
+      info: scroll
+      hide:
+        source: true
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        hide_when_off: true
+        label: Apps
+        list:
+        - name: YouTube
+          type: source
+          id: YouTube AdFree
+        - name: Stremio
+          type: source
+          id: Stremio
+        - name: SVT Play
+          type: source
+          id: SVT Play
+        - name: Breezyfin
+          type: source
+          id: Breezyfin
+        - name: Litefin
+          type: source
+          id: Litefin
+        - name: PS5
+          type: source
+          id: PlayStation 5
+        - name: Live TV
+          type: source
+          id: Live TV
     - type: custom:mini-media-player
       entity: media_player.home_theater
+      name: Now playing
+      max_volume: 64
+      artwork: material
+      info: scroll
+      hide:
+        power: true
+        source: true
+        volume: true
+        mute: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.home_theater
+        state: [playing, paused]
     - type: custom:mini-media-player
       entity: media_player.home_theater_2
+      name: Home theater
+      toggle_power: false
+      max_volume: 64
+      hide:
+        source: true
+        controls: true
+      sound_mode: full
+      idle_view:
+        when_idle: true
+        when_standby: true
+      shortcuts:
+        attribute: source
+        hide_when_off: true
+        label: Input or radio
+        list:
+        - name: TV
+          type: source
+          id: TV Audio
+        - name: Bluetooth
+          type: source
+          id: Bluetooth
+        - name: HEOS (Net)
+          type: source
+          id: HEOS Music
+        - name: PS5
+          type: source
+          id: PlayStation 5
+        - name: HitCity
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: HitCity (Malmö)
+        - name: BBC World Service
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: BBC World Service
+        - name: Radio Relax International
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: Radio Relax International
+        - name: AIR Kochi FM 102.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR KOCHI FM 102.3 | (Classical Indian)
+        - name: AIR FM Rainbow 101.3
+          type: service
+          id: media_player.select_source
+          data:
+            entity_id: media_player.home_theater
+            source: AIR FM Rainbow 101.3 (Indian Music)
+    - type: custom:mini-media-player
+      entity: media_player.kitchen
+      name: Kitchen
+      artwork: material
+      info: scroll
+      hide:
+        power: true
+      idle_view:
+        when_idle: true
   - type: grid
     cards:
     - type: heading
-      heading: Media Acquisition
+      heading: Downloads
+      icon: mdi:download
       heading_style: title
-    - type: tile
-      entity: sensor.media_play_active_clients
-      name: Jellyfin watching
+    - type: custom:health-metric-card
+      entity: sensor.sabnzbd_karunagath_in_speed
+      name: SABnzbd
+      icon: mdi:download
+      color: "#6bb6ff"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+        stat: max
+      items:
+      - entity: sensor.sabnzbd_karunagath_in_queue_count
+        name: Queue
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.sabnzbd_karunagath_in_left_to_download
+        name: Left
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+      popup:
+        graphs:
+        - name: Speed (daily peak)
+          entities:
+          - sensor.sabnzbd_karunagath_in_speed
+          days: 7
+          stat: max
+        - name: Queue
+          entities:
+          - sensor.sabnzbd_karunagath_in_queue_count
+          days: 7
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sonarr_upcoming
-      name: Sonarr upcoming
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.sabnzbd_karunagath_in_overall_total
+      name: SABnzbd today
+      icon: mdi:cloud-download-outline
+      color: "#8fd9c0"
+      decimals: 1
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      popup:
+        graphs:
+        - name: Downloaded per day
+          entities:
+          - sensor.sabnzbd_karunagath_in_overall_total
+          days: 30
+          stat: change
+          type: bar
       grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.radarr_health
-      name: Radarr health
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.slskd_download_speed
+      name: Soulseek
+      icon: mdi:music-note-plus
+      color: "#f5c28b"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+        stat: max
+      items:
+      - entity: sensor.slskd_active_downloads
+        name: Active
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.slskd_queued_downloads
+        name: Queued
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.slskd_completed_downloads
+        name: Done
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Speed (daily peak)
+          entities:
+          - sensor.slskd_download_speed
+          days: 7
+          stat: max
+        - name: Queued and active
+          entities:
+          - entity: sensor.slskd_queued_downloads
+            name: Queued
+          - entity: sensor.slskd_active_downloads
+            name: Active
+          days: 7
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.radarr_disk_space_movies
-      name: Movies disk space
+        columns: 12
+    - type: custom:download-control-card
+      switch: switch.sabnzbd_downloading
+      number: number.sabnzbd_karunagath_in_speedlimit
+      color: "#6bb6ff"
+      limit_label: Limit
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sabnzbd_karunagath_in_queue
-      name: SABnzbd queue
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.sabnzbd_karunagath_in_warnings
+        state: "on"
+      card:
+        type: tile
+        entity: binary_sensor.sabnzbd_karunagath_in_warnings
+        name: SABnzbd warnings
       grid_options:
-        columns: 4
-    - type: tile
-      entity: binary_sensor.sabnzbd_karunagath_in_warnings
-      name: SABnzbd warnings
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Requests & imports
+      icon: mdi:movie-search-outline
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.seerr_total_requests
+      name: Seerr
+      icon: mdi:movie-open-plus-outline
+      color: "#c9a7e8"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.seerr_processing_requests
+        name: Processing
+        mode: now
+        range: false
+        decimals: 0
+        unit: ""
+      - entity: sensor.seerr_film_requests
+        name: Movies
+        mode: now
+        range: false
+        decimals: 0
+        unit: ""
+        chips:
+        - entity: sensor.radarr_download_queue
+          icon: mdi:download
+          name: Downloading
+          color: "#6fd0a8"
+        - entity: sensor.radarr_movies_unreleased
+          icon: mdi:calendar-clock
+          name: Not released yet
+          color: "#7fb2ff"
+        - entity: sensor.radarr_movies_searching
+          icon: mdi:magnify-close
+          name: Released, nothing found
+          color: "#f0b45a"
+      - entity: sensor.seerr_tv_requests
+        name: TV
+        mode: now
+        range: false
+        decimals: 0
+        unit: ""
+        chips:
+        - entity: sensor.sonarr_download_queue
+          icon: mdi:download
+          name: Downloading
+          color: "#6fd0a8"
+        - entity: sensor.sonarr_series_incomplete
+          icon: mdi:magnify-close
+          name: Episodes missing
+          color: "#f0b45a"
+        - entity: sensor.sonarr_series_complete
+          icon: mdi:check
+          name: Complete
+          color: "#7bd88f"
+      popup:
+        graphs:
+        - name: Total requests
+          entities:
+          - sensor.seerr_total_requests
+          days: 7
+        - name: Pending and processing
+          entities:
+          - entity: sensor.seerr_pending_requests
+            name: Pending
+          - entity: sensor.seerr_processing_requests
+            name: Processing
+          days: 7
+        - name: Movies and TV
+          entities:
+          - entity: sensor.seerr_film_requests
+            name: Movies
+          - entity: sensor.seerr_tv_requests
+            name: TV
+          days: 7
+        - name: Movies by state
+          entities:
+          - entity: sensor.radarr_download_queue
+            name: Downloading
+          - entity: sensor.radarr_movies_unreleased
+            name: Not released yet
+          - entity: sensor.radarr_movies_searching
+            name: Released, nothing found
+          days: 7
+        - name: TV by state
+          entities:
+          - entity: sensor.sonarr_download_queue
+            name: Downloading
+          - entity: sensor.sonarr_series_incomplete
+            name: Episodes missing
+          - entity: sensor.sonarr_series_complete
+            name: Complete
+          days: 7
       grid_options:
-        columns: 4
-- title: Lights
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.arr_queue_total
+      name: Arr queues
+      icon: mdi:package-down
+      color: "#6bb6ff"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      items:
+      - entity: sensor.lidarr_download_queue
+        name: Lidarr
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.radarr_download_queue
+        name: Radarr
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.sonarr_download_queue
+        name: Sonarr
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Queues
+          entities:
+          - entity: sensor.lidarr_download_queue
+            name: Lidarr
+          - entity: sensor.radarr_download_queue
+            name: Radarr
+          - entity: sensor.sonarr_download_queue
+            name: Sonarr
+          days: 7
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.seerr_pending_requests
+        above: 0
+      card:
+        type: tile
+        entity: sensor.seerr_pending_requests
+        name: Pending requests
+        icon: mdi:clock-alert-outline
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.seerr_open_issues
+        above: 0
+      card:
+        type: tile
+        entity: sensor.seerr_open_issues
+        name: Open issues
+        icon: mdi:alert-circle-outline
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: event.seerr_last_media_event
+      name: Last event
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Library
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.jellyfin_movies
+      name: Jellyfin
+      icon: mdi:filmstrip-box-multiple
+      color: "#9d8cff"
+      decimals: 0
+      unit: movies
+      show_date: false
+      chart:
+        type: line
+        days: 30
+      delta:
+        mode: absolute
+        decimals: 0
+      items:
+      - entity: sensor.jellyfin_series
+        name: Series
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.jellyfin_episodes
+        name: Episodes
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Movies
+          entities:
+          - sensor.jellyfin_movies
+          days: 30
+        - name: Series and episodes
+          entities:
+          - entity: sensor.jellyfin_series
+            name: Series
+          - entity: sensor.jellyfin_episodes
+            name: Episodes
+          days: 30
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.navidrome_tracks
+      name: Navidrome
+      icon: mdi:music-box-multiple-outline
+      color: "#f5c28b"
+      decimals: 0
+      unit: tracks
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: absolute
+        decimals: 0
+      items:
+      - entity: sensor.navidrome_albums
+        name: Albums
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: ""
+      - entity: sensor.navidrome_artists
+        name: Artists
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: ""
+      popup:
+        graphs:
+        - name: Tracks
+          entities:
+          - entity: sensor.navidrome_tracks
+            name: Tracks
+          days: 7
+        - name: Albums and artists
+          entities:
+          - entity: sensor.navidrome_albums
+            name: Albums
+          - entity: sensor.navidrome_artists
+            name: Artists
+          days: 7
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.navidrome_last_scan
+      name: Last library scan
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.media_play_active_clients
+        above: 0
+      card:
+        type: tile
+        entity: sensor.media_play_active_clients
+        name: Watching now
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: media_player
+          state: /^(playing|paused)$/
+          options:
+            type: tile
+            state_content:
+            - media_title
+            - state
+        exclude:
+        - entity_id: media_player.*webos*
+        - entity_id: media_player.*oled77c35la*
+        - entity_id: media_player.*home_theater*
+        - entity_id: media_player.*lg_smart_tv*
+        - entity_id: media_player.ma_*
+        - entity_id: media_player.kitchen
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Storage
+      icon: mdi:harddisk
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.media_disk_used_gb
+      name: Media disk
+      icon: mdi:harddisk
+      color: "#8fd9c0"
+      decimals: 0
+      secondary:
+        entity: sensor.media_disk_used
+        inline: true
+        decimals: 0
+        unit: " %"
+      show_date: false
+      chart:
+        type: line
+        days: 30
+      delta:
+        mode: absolute
+        decimals: 0
+      items:
+      - entity: sensor.radarr_disk_space_movies
+        name: Free
+        mode: now
+        growth: true
+        days: 7
+        good: up
+        decimals: 0
+        unit: GB
+      - entity: sensor.sabnzbd_karunagath_in_total_disk_space
+        name: Total
+        mode: now
+        range: false
+        days: 7
+        decimals: 1
+        scale: 0.001
+        unit: TB
+      popup:
+        graphs:
+        - name: Media disk used
+          entities:
+          - sensor.media_disk_used_gb
+          days: 90
+        - name: Media disk used (percent)
+          entities:
+          - sensor.media_disk_used
+          days: 90
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.radarr_health
+        state: "on"
+      card:
+        type: tile
+        entity: binary_sensor.radarr_health
+        name: Radarr health
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Upcoming
+      heading_style: title
+    - type: calendar
+      initial_view: listWeek
+      entities:
+      - calendar.sonarr
+      - calendar.radarr
+      grid_options:
+        columns: 12
+- type: sections
+  title: Health
+  path: health-arun
+  icon: mdi:scale-bathroom
+  visible:
+  - user: a1d4401b8b714ebb83f07c5316ab399c
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Body composition
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_body
+      variables:
+        date_entity: input_datetime.withings_arun_last_weigh_in
+        w: kra
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_sleep
+      variables:
+        p: meghanadha
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.meghanadha_heart_rate_variability
+        good: up
+        icon: mdi:pulse
+        name: Heart rate variability
+        popup: "Heart rate variability (ms)"
+        popup_days: 30
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#5ec4c4"
+        days: 90
+        decimals: 1
+        delta_unit: ""
+        entity: sensor.meghanadha_vo2_max
+        good: up
+        icon: mdi:run-fast
+        name: VO2 max
+        popup: "VO2 max"
+        popup_days: 180
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#6bb8ff"
+        days: 30
+        entity: sensor.meghanadha_blood_oxygen
+        good: up
+        icon: mdi:water-percent
+        name: Blood oxygen
+        popup: "Blood oxygen (%)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Past 7 days
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.meghanadha_health_steps
+        goal: 10000
+        icon: mdi:shoe-print
+        name: Steps
+        per_day: "Steps per day"
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        entity: sensor.meghanadha_walking_running_distance
+        format: distance
+        icon: mdi:map-marker-distance
+        name: Distance
+        per_day: "Distance per day (km)"
+        scale: 1000
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.meghanadha_floors_ascended
+        icon: mdi:stairs-up
+        name: Floors climbed
+        per_day: "Floors climbed per day"
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        color: "#ff9f43"
+        decimals: 0
+        entity: sensor.meghanadha_active_energy
+        icon: mdi:fire
+        name: Active energy
+        per_day: "Active energy per day (kcal)"
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Heart
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.meghanadha_resting_heart_rate
+        good: down
+        icon: mdi:heart-pulse
+        name: Resting heart rate
+        popup: "Resting heart rate (bpm)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#f48fb1"
+        days: 14
+        entity: sensor.meghanadha_heart_rate
+        icon: mdi:heart
+        name: Heart rate
+        popup: "Heart rate (bpm)"
+        popup_days: 30
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.meghanadha_walking_heart_rate_average
+        good: down
+        icon: mdi:walk
+        name: Walking heart rate
+        popup: "Walking heart rate (bpm)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#6bb8ff"
+        days: 30
+        entity: sensor.meghanadha_respiratory_rate
+        icon: mdi:lungs
+        name: Respiratory rate
+        popup: "Respiratory rate (breaths/min)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+- type: sections
+  title: Health
+  path: health-anjali
+  icon: mdi:scale-bathroom
+  visible:
+  - user: 6edcc5a09c3144d684077ee362e7394a
+  cards: []
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Body composition
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_body
+      variables:
+        date_entity: input_datetime.withings_anjali_last_weigh_in
+        w: anj
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Sleep and vitals
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_sleep
+      variables:
+        p: anjalis_iphone
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.anjalis_iphone_heart_rate_variability
+        good: up
+        icon: mdi:pulse
+        name: Heart rate variability
+        popup: "Heart rate variability (ms)"
+        popup_days: 30
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#5ec4c4"
+        days: 90
+        decimals: 1
+        delta_unit: ""
+        entity: sensor.anjalis_iphone_vo2_max
+        good: up
+        icon: mdi:run-fast
+        name: VO2 max
+        popup: "VO2 max"
+        popup_days: 180
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#6bb8ff"
+        days: 30
+        entity: sensor.anjalis_iphone_blood_oxygen
+        good: up
+        icon: mdi:water-percent
+        name: Blood oxygen
+        popup: "Blood oxygen (%)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Past 7 days
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.anjalis_iphone_steps
+        goal: 10000
+        icon: mdi:shoe-print
+        name: Steps
+        per_day: "Steps per day"
+      grid_options:
+        columns: 12
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        entity: sensor.anjalis_iphone_distance
+        format: distance
+        icon: mdi:map-marker-distance
+        name: Distance
+        per_day: "Distance per day (m)"
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        above: -1
+        color: "#f2c14e"
+        decimals: 0
+        entity: sensor.anjalis_iphone_floors_ascended
+        icon: mdi:stairs-up
+        name: Floors climbed
+        per_day: "Floors climbed per day"
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_cumulative
+      variables:
+        color: "#ff9f43"
+        decimals: 0
+        entity: sensor.anjalis_iphone_active_energy
+        icon: mdi:fire
+        name: Active energy
+        per_day: "Active energy per day (kcal)"
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Heart
+      heading_style: title
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.anjalis_iphone_resting_heart_rate
+        good: down
+        icon: mdi:heart-pulse
+        name: Resting heart rate
+        popup: "Resting heart rate (bpm)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#f48fb1"
+        days: 14
+        entity: sensor.anjalis_iphone_heart_rate
+        icon: mdi:heart
+        name: Heart rate
+        popup: "Heart rate (bpm)"
+        popup_days: 30
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line_delta
+      variables:
+        color: "#f48fb1"
+        days: 30
+        entity: sensor.anjalis_iphone_walking_heart_rate_average
+        good: down
+        icon: mdi:walk
+        name: Walking heart rate
+        popup: "Walking heart rate (bpm)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+    - type: custom:streamline-card
+      template: health_line
+      variables:
+        color: "#6bb8ff"
+        days: 30
+        entity: sensor.anjalis_iphone_respiratory_rate
+        icon: mdi:lungs
+        name: Respiratory rate
+        popup: "Respiratory rate (breaths/min)"
+        popup_days: 90
+      grid_options:
+        columns: 6
+- type: sections
+  title: Lights
   path: dash-lights
   icon: mdi:lightbulb-group
-  strategy:
-    type: light
-- title: Security
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:mode-switch-card
+      name: House mode
+      grid_options:
+        columns: full
+      modes:
+      - name: Automatic
+        icon: mdi:home-automation
+        hint: Lights, TV and doors react by themselves.
+      - name: Party
+        icon: mdi:party-popper
+        entity: input_boolean.party_mode
+        hint: Room lights stop switching themselves, so they stay as you set them.
+      - name: Paused
+        icon: mdi:pause-circle
+        entity: input_boolean.automations_paused
+        tone: warning
+        confirm: Pause the lighting, TV, door and bedtime automations (this includes arming the alarm at night)?
+        hint: Lighting, TV, door and bedtime automations are off, including arming the alarm at night.
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Rooms
+      icon: mdi:lightbulb-group
+      heading_style: title
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.lights_any_on
+        state: "on"
+      card:
+        type: tile
+        entity: sensor.lights_summary
+        name: All lights off
+        icon: mdi:lightbulb-off
+        state_content: state
+        tap_action:
+          action: perform-action
+          perform_action: script.lights_all_off
+      grid_options:
+        columns: full
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.lights_in_manual_control
+        state: "on"
+      card:
+        type: tile
+        entity: script.lights_hand_back
+        name: Hand back to Adaptive
+        icon: mdi:theme-light-dark
+        hide_state: true
+        tap_action:
+          action: toggle
+      grid_options:
+        columns: full
+    - type: grid
+      columns: 2
+      square: false
+      grid_options:
+        columns: full
+      cards:
+      - type: custom:mushroom-light-card
+        entity: light.dining_lights
+        name: Dining Room
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.living_room_lights
+        name: Living Room
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.bedroom_wardrobe_lights
+        name: Wardrobe
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.kitchen_dining_lights
+        name: Kitchen Dining
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.kitchen_lights
+        name: Kitchen
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+      - type: custom:mushroom-light-card
+        entity: light.office_room_light
+        name: Office
+        icon: mdi:ceiling-light
+        fill_container: true
+        use_light_color: true
+        show_brightness_control: true
+        collapsible_controls: true
+        hold_action:
+          action: more-info
+    - type: heading
+      heading: Accessories
+      heading_style: subtitle
+    - type: grid
+      columns: 3
+      square: false
+      grid_options:
+        columns: full
+      cards:
+      - type: custom:mushroom-entity-card
+        entity: light.tv_backlight
+        name: TV Backlight
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+      - type: custom:mushroom-entity-card
+        entity: switch.hue_light_switch_1
+        name: Focus light
+        icon: mdi:lamp
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+      - type: custom:mushroom-entity-card
+        entity: switch.hue_light_switch_2
+        name: Shelf lights
+        icon: mdi:led-strip-variant
+        layout: vertical
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:streamline-card
+      template: floor_plan
+      variables:
+        layer: lights
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Scenes
+      heading_style: subtitle
+    - type: custom:scene-picker-card
+      rooms:
+      - name: Living Room
+        entity: input_text.living_scene
+      - name: Office
+        entity: input_text.office_scene
+      toggles_label: Whole house
+      toggles:
+      - entity: switch.home_adaptive_lighting_home
+        name: Adaptive colour
+        icon: mdi:theme-light-dark
+        hints:
+          "on": Warm and dim in the evening, bright and cool by day
+          "off": Lights stay exactly as you set them
+      - entity: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+        name: Sleep lighting
+        icon: mdi:sleep
+        hints:
+          "on": Very dim and warm, for night walks
+          "off": Switches on by itself at bedtime
+      grid_options:
+        columns: full
+- type: sections
+  title: Security
   path: dash-security
   icon: mdi:shield-home
-  strategy:
-    type: security
-- title: Climate
+  max_columns: 4
+  sections:
+  - type: grid
+    column_span: 4
+    cards:
+    - type: custom:security-status-card
+      exclude:
+      - binary_sensor.house_exits_open_status
+      - lock.front_front_door_nw
+      - binary_sensor.front_front_door_nw_door
+      - lock.yale_front_door
+      - lock.yale_front_door_secure_mode
+      - binary_sensor.yale_front_door_door
+      warn:
+      - entity: binary_sensor.front_door_ble_degraded
+        label: Front door lock on cloud fallback
+        icon: mdi:bluetooth-off
+      area_override:
+        camera.ranger_duo_fxd: Living Room
+        binary_sensor.ranger_duo_fxd_person_occupancy: Living Room
+        binary_sensor.living_room_person_occupancy: Living Room
+        binary_sensor.dining_room_person_occupancy: Dining Room
+        binary_sensor.hallway_person_occupancy: Hallway
+        image.ranger_duo_fxd_person: Living Room
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:streamline-card
+      template: floor_plan
+      variables:
+        layer: security
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Cameras
+      icon: mdi:cctv
+      heading_style: title
+    - type: custom:advanced-camera-card
+      cameras: &sec_cams
+      - &cam_fxd
+        camera_entity: camera.ranger_duo_fxd
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_fxd_person_occupancy
+          reviews:
+            severities:
+            - high
+      - &cam_ptz
+        camera_entity: camera.ranger_duo_ptz
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_duo_ptz_person_occupancy
+          reviews:
+            severities:
+            - high
+      - &cam_uno
+        camera_entity: camera.ranger_uno
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - binary_sensor.ranger_uno_person_occupancy
+          reviews:
+            severities:
+            - high
+      live:
+        display:
+          mode: grid
+      view:
+        dim: true
+        triggers:
+          filter_selected_camera: false
+          show_trigger_status: true
+          untrigger_delay_seconds: 20
+          actions:
+            trigger: live
+            untrigger: default
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+          clips:
+            enabled: true
+          reviews:
+            enabled: true
+          ptz_controls:
+            enabled: true
+          ptz_home:
+            enabled: true
+          screenshot:
+            enabled: true
+          pip:
+            enabled: true
+          download:
+            enabled: false
+          folders:
+            enabled: false
+          gallery:
+            enabled: false
+          camera_ui:
+            enabled: false
+      overrides:
+      - conditions:
+        - condition: screen
+          media_query: "(max-width: 700px)"
+        merge:
+          live.display:
+            mode: single
+      automations:
+      - triggers:
+        - trigger: state
+          entity_id: alarm_control_panel.vasudha_secure
+          to: triggered
+        actions:
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: live
+        - action: custom:advanced-camera-card-action
+          advanced_camera_card_action: display_mode_select
+          display_mode: grid
+      status_bar:
+        style: overlay
+      image:
+        mode: camera
+      grid_options:
+        columns: full
+    - type: custom:popup-tile-card
+      entity: camera.ranger_uno
+      name: Recent events
+      icon: mdi:history
+      subtitle: Reviews and clips
+      title: Recent events
+      width: 900px
+      popup:
+        type: custom:advanced-camera-card
+        cameras:
+        - <<: *cam_fxd
+          dependencies:
+            all_cameras: true
+        - <<: *cam_ptz
+          dependencies:
+            all_cameras: true
+        - <<: *cam_uno
+          dependencies:
+            all_cameras: true
+        view:
+          default: reviews
+          camera_select: current
+        status_bar:
+          style: overlay
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Locks
+      icon: mdi:lock
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 1
+        square: false
+      card_param: cards
+      show_empty: false
+      filter:
+        include:
+        - domain: lock
+          state: /^(locked|unlocked|locking|unlocking|jammed|open|opening)$/
+          options:
+            type: tile
+            state_content:
+            - state
+            - area_name
+            features:
+            - type: lock-commands
+        exclude:
+        - entity_id: lock.front_front_door_nw
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
+      grid_options:
+        columns: 12
+    - type: custom:auto-entities
+      card:
+        type: entities
+        title: Not reporting
+        show_header_toggle: false
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+          state: /^(unknown|unavailable)$/
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+          state: /^(unknown|unavailable)$/
+        - domain: lock
+          state: /^(unknown|unavailable)$/
+        exclude:
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
+        - entity_id: binary_sensor.yale_front_door_door
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Activity
+      icon: mdi:history
+      heading_style: title
+    - type: custom:auto-entities
+      card:
+        type: logbook
+        hours_to_show: 24
+      show_empty: false
+      filter:
+        include:
+        - domain: binary_sensor
+          attributes:
+            device_class: door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: window
+
+        - domain: binary_sensor
+          attributes:
+            device_class: garage_door
+
+        - domain: binary_sensor
+          attributes:
+            device_class: opening
+
+        - domain: lock
+        - domain: alarm_control_panel
+        exclude:
+        - entity_id: binary_sensor.house_exits_open_status
+        - entity_id: lock.front_front_door_nw
+        - entity_id: binary_sensor.front_front_door_nw_door
+        - entity_id: lock.yale_front_door
+        - entity_id: lock.yale_front_door_secure_mode
+        - entity_id: binary_sensor.yale_front_door_door
+      grid_options:
+        columns: full
+- type: sections
+  title: Climate
   path: dash-climate
   icon: mdi:thermostat
-  strategy:
-    type: climate
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      items:
+      - entity: sensor.home_comfort
+        name: Comfort
+        icon: mdi:home-thermometer-outline
+        hint: Rooms outside your comfort range, or indoor humidity above today's ceiling
+        colors:
+          All comfortable: success
+          No data: inactive
+          other: warning
+      - entity: sensor.ventilation_advice
+        name: Ventilation
+        icon: mdi:window-open-variant
+        hint: Rooms holding more moisture than the outside air, past the moisture limit
+        color_attribute: action
+        colors:
+          air_out: info
+          air_out_briefly: info
+          keep_closed: info
+          not_needed: inactive
+        hints:
+          air_out: These rooms hold more moisture than the outside air can take away; open a window there
+          air_out_briefly: Open a window in these rooms, but keep it short; it is much colder outside
+          keep_closed: The outside air is more humid than inside
+          not_needed: Every room is within the moisture limit of the outside air
+      - entity: sensor.open_doors_and_windows
+        name: Open
+        icon: mdi:window-open
+        hint: Doors and windows that currently read open
+        colors:
+          All closed: inactive
+          other: info
+      - entity: sensor.rooms_not_reporting
+        name: Sensors
+        icon: mdi:access-point-network
+        hint: Whether every room sensor is sending data
+        colors:
+          All reporting: success
+          other: warning
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Rooms
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:climate-room-card
+      name: Living Room
+      icon: mdi:sofa
+      comfort: sensor.living_room_comfort
+      temperature: sensor.living_room_occupancy_temperature
+      humidity: sensor.living_room_occupancy_humidity
+      dew: sensor.living_room_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Bedroom
+      icon: mdi:bed
+      comfort: sensor.bedroom_comfort
+      temperature: sensor.bedroom_occupancy_temperature
+      humidity: sensor.bedroom_occupancy_humidity
+      dew: sensor.bedroom_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Bathroom
+      icon: mdi:shower
+      comfort: sensor.bathroom_comfort
+      temperature: sensor.bathroom_occupancy_temperature
+      humidity: sensor.bathroom_occupancy_humidity
+      dew: sensor.bathroom_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Laundry
+      icon: mdi:washing-machine
+      comfort: sensor.laundry_comfort
+      temperature: sensor.laundry_occupancy_temperature
+      humidity: sensor.laundry_occupancy_humidity
+      dew: sensor.laundry_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Toilet
+      icon: mdi:toilet
+      comfort: sensor.toilet_comfort
+      temperature: sensor.toilet_occupancy_temperature
+      humidity: sensor.toilet_occupancy_humidity
+      dew: sensor.toilet_dew_point
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Hall
+      icon: mdi:door
+      comfort: sensor.hall_comfort
+      temperature: sensor.hue_pir_hallway_temperature
+      approx: true
+      grid_options:
+        columns: full
+    - type: custom:climate-room-card
+      name: Kitchen
+      icon: mdi:silverware-fork-knife
+      comfort: sensor.kitchen_comfort
+      temperature: sensor.hue_pir_kitchen_temperature
+      approx: true
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Indoor · house average
+      icon: mdi:home-thermometer
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.average_temperature
+      name: Temperature
+      icon: mdi:thermometer
+      color: "#ff9f6b"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 1
+        label: 7 d
+      items:
+      - entity: sensor.average_humidity
+        name: Humidity
+        mode: now
+        days: 7
+        decimals: 0
+        rangeLabel: 7 d
+        color: "#6bb6ff"
+      - entity: sensor.indoor_dew_point
+        name: Dew point
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Temperature
+          entities:
+          - sensor.average_temperature
+          days: 7
+        - name: Humidity
+          entities:
+          - sensor.average_humidity
+          days: 7
+        - name: Dew point
+          entities:
+          - sensor.indoor_dew_point
+          days: 7
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Outdoor
+      icon: mdi:weather-partly-cloudy
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.openweathermap_temperature
+      name: Temperature
+      icon: mdi:thermometer
+      color: "#9fa8ff"
+      decimals: 1
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 1
+        label: 7 d
+      items:
+      - entity: sensor.openweathermap_humidity
+        name: Humidity
+        mode: now
+        days: 7
+        decimals: 0
+        rangeLabel: 7 d
+        color: "#6bb6ff"
+      - entity: sensor.openweathermap_apparent_temperature
+        name: Feels like
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#ff9f6b"
+      - entity: sensor.outdoor_dew_point
+        name: Dew point
+        mode: now
+        days: 7
+        decimals: 1
+        rangeLabel: 7 d
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Temperature
+          entities:
+          - sensor.openweathermap_temperature
+          days: 7
+        - name: Humidity
+          entities:
+          - sensor.openweathermap_humidity
+          days: 7
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Forecast
+      icon: mdi:weather-cloudy-clock
+      heading_style: title
+    - type: custom:mushroom-template-card
+      entity: sensor.low_today
+      primary: Low today
+      secondary: >-
+        {% set lo = states('sensor.low_today') %}{% set t = states('sensor.average_temperature') %}{% if is_number(lo) and is_number(t) %}{{ lo }} °C · {% if t | float > lo | float %}{{ (t | float - lo | float) | round(1) }} °C cooler than inside{% else %}not cooler than inside{% endif %}{% else %}No forecast{% endif %}
+      icon: mdi:weather-night
+      icon_color: blue
+      tap_action:
+        action: none
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      entity: sensor.airing_window
+      primary: >-
+        {% set w = states('sensor.airing_window') %}{{ 'No good time to air out in the next 24 h' if w in ['No good window', 'unavailable', 'unknown'] else 'Air out ' ~ w }}
+      secondary: >-
+        {{ state_attr('sensor.airing_window', 'note') or '' }}
+      icon: mdi:window-open-variant
+      icon_color: >-
+        {{ 'grey' if states('sensor.airing_window') in ['No good window', 'unavailable', 'unknown'] else 'blue' }}
+      multiline_secondary: true
+      tap_action:
+        action: none
+      grid_options:
+        columns: full
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Outdoor temperature, next 24 h
+        show_states: false
+      graph_span: 24h
+      span:
+        start: hour
+      now:
+        show: false
+      apex_config:
+        chart:
+          height: 170
+        legend:
+          show: true
+          position: bottom
+        yaxis:
+          decimalsInFloat: 0
+      series:
+      - entity: sensor.airing_window
+        name: Outdoor
+        color: "#9fa8ff"
+        stroke_width: 3
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), h.temp]);
+      - entity: sensor.airing_window
+        name: Comfort low
+        color: "#43a047"
+        stroke_width: 1
+        stroke_dash: 5
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), entity.attributes.low]);
+      - entity: sensor.airing_window
+        name: Comfort high
+        color: "#ffa600"
+        stroke_width: 1
+        stroke_dash: 5
+        data_generator: |
+          return entity.attributes.hours.map((h) => [new Date(h.t).getTime(), entity.attributes.high]);
+      grid_options:
+        columns: full
+    - type: weather-forecast
+      entity: weather.forecast_vasudha
+      forecast_type: daily
+      show_current: false
+      grid_options:
+        columns: full
+        rows: auto
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Comfort
+      icon: mdi:tune
+      heading_style: title
+    - type: custom:comfort-card
+      grid_options:
+        columns: full
+      season: sensor.season
+      low: input_number.climate_temp_low
+      high: input_number.climate_temp_high
+      high_summer: input_number.climate_temp_high_summer
+      guideline_min: sensor.guideline_temp_min
+      guideline_max: sensor.guideline_temp_max
+      scale: [14, 30]
+      night_offset: input_number.climate_night_offset
+      humidity:
+        entity: sensor.average_humidity
+        ceiling: sensor.humidity_ceiling
+      advanced:
+      - name: Moisture limit
+        effect: "Swedish winter guideline (Folkhälsomyndigheten): at most 3 g/m³ more water vapour indoors than outdoors."
+        when:
+          entity: sensor.season
+          state_not: summer
+        now: >-
+          Now: surplus {{ states('sensor.moisture_surplus') }} g/m³, 24 h average {{ states('sensor.moisture_surplus_24h') }} g/m³.
+        entities:
+        - entity: input_number.climate_moisture_limit
 - type: sections
   title: System Health
   path: system-health
@@ -624,162 +2394,394 @@ views:
   sections:
   - type: grid
     cards:
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:server
-        heading_style: title
-        heading: Sutala (Intel Comet Lake)
-      - type: heading
-        icon: mdi:camera-timer
-        heading: Last Boot
-        heading_style: subtitle
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_last_boot
-      - show_name: false
-        show_icon: true
-        show_state: true
-        type: glance
-        entities:
-        - entity: sensor.system_monitor_processor_use
-        - entity: sensor.system_monitor_memory_usage
-        - entity: sensor.system_monitor_disk_usage
-        - entity: sensor.system_monitor_swap_usage
-        state_color: true
+    - type: heading
+      heading: Compute
+      icon: mdi:cpu-64-bit
+      heading_style: title
+      badges:
+      - type: entity
+        entity: sensor.system_monitor_last_boot
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_processor_use
+      name: CPU
+      icon: mdi:cpu-64-bit
+      color: "#ff9f6b"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 0
+      items:
+      - entity: sensor.system_monitor_processor_temperature
+        name: Temperature
+        mode: now
+        days: 7
+        decimals: 0
+        unit: "°C"
+        color: "#ff7b7b"
+      - entity: sensor.system_monitor_load_1m
+        name: Load 1 min
+        mode: now
+        days: 7
+        decimals: 2
+        unit: ""
+        color: "#c9a7e8"
+      popup:
+        graphs:
+        - name: CPU use
+          entities:
+          - sensor.system_monitor_processor_use
+          days: 7
+        - name: Temperature
+          entities:
+          - sensor.system_monitor_processor_temperature
+          days: 7
+        - name: Load average
+          entities:
+          - entity: sensor.system_monitor_load_1m
+            name: 1 min
+          - entity: sensor.system_monitor_load_5m
+            name: 5 min
+          - entity: sensor.system_monitor_load_15m
+            name: 15 min
+          days: 7
       grid_options:
-        columns: 18
-        rows: auto
-  - type: grid
-    cards:
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:cpu-64-bit
-        heading_style: title
-        heading: CPU
-      - type: heading
-        icon: mdi:cpu-64-bit
-        heading: Use / Temp
-        heading_style: subtitle
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_processor_use
-        - type: entity
-          entity: sensor.system_monitor_processor_temperature
-      - square: true
-        type: grid
-        cards:
-        - type: gauge
-          entity: sensor.system_monitor_load_1m
-          name: 1m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        - type: gauge
-          entity: sensor.system_monitor_load_5m
-          name: 5m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        - type: gauge
-          entity: sensor.system_monitor_load_15m
-          name: 15m
-          min: 0
-          max: 8
-          severity:
-            green: 0
-            yellow: 4
-            red: 6.5
-        columns: 3
-      grid_options:
-        columns: 14
-        rows: auto
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:memory
-        heading_style: title
-        heading: Memory
-      - type: heading
-        icon: mdi:memory
-        heading_style: subtitle
-        heading: Memory
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_memory_use
-        - type: entity
-          entity: sensor.system_monitor_memory_free
-      - type: gauge
-        entity: sensor.system_monitor_memory_usage
-        name: RAM
-        min: 0
-        max: 100
-        needle: false
-        severity:
-          green: 0
-          yellow: 55
-          red: 85
-      grid_options:
-        columns: 6
-        rows: auto
-    - type: vertical-stack
-      cards:
-      - type: heading
-        icon: mdi:harddisk
-        heading_style: title
-        heading: Storage
-      - type: heading
-        icon: mdi:harddisk
-        heading_style: subtitle
-        heading: Used / Free
-        badges:
-        - type: entity
-          entity: sensor.system_monitor_disk_use
-        - type: entity
-          entity: sensor.system_monitor_disk_free
-      - type: gauge
-        entity: sensor.system_monitor_disk_usage
-        max: 100
-        min: 0
-        name: /
-        needle: false
-        severity:
-          green: 0
-          yellow: 60
-          red: 85
-      grid_options:
-        columns: 6
-        rows: auto
+        columns: 12
   - type: grid
     cards:
     - type: heading
-      heading: Power Monitor
+      heading: Memory and storage
+      icon: mdi:memory
       heading_style: title
-    - type: tile
-      entity: switch.power_monitor_1
-    - type: tile
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_memory_use
+      name: Memory
+      icon: mdi:memory
+      color: "#6bb6ff"
+      decimals: 1
+      scale: 0.0009765625
+      unit: GiB
+      secondary:
+        entity: sensor.system_monitor_memory_usage
+        inline: true
+        decimals: 0
+        unit: " %"
+      show_date: false
+      chart:
+        type: line
+        days: 7
+        scale: 0.0009765625
+      delta:
+        mode: range
+        decimals: 1
+      items:
+      - entity: sensor.system_monitor_swap_usage
+        name: Swap
+        mode: now
+        days: 7
+        decimals: 0
+        unit: "%"
+        color: "#9fa8ff"
+      popup:
+        graphs:
+        - name: Memory use
+          entities:
+          - sensor.system_monitor_memory_usage
+          days: 7
+        - name: Swap use
+          entities:
+          - sensor.system_monitor_swap_usage
+          days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.system_monitor_disk_use
+      name: Disk
+      icon: mdi:harddisk
+      color: "#8fd9c0"
+      decimals: 1
+      secondary:
+        entity: sensor.system_monitor_disk_usage
+        inline: true
+        decimals: 1
+        unit: " %"
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: absolute
+        decimals: 1
+      items:
+      - entity: sensor.system_monitor_disk_free
+        name: Free
+        mode: now
+        growth: true
+        good: up
+        days: 7
+        decimals: 0
+        color: "#8fd9c0"
+      popup:
+        graphs:
+        - name: Disk used
+          entities:
+          - sensor.system_monitor_disk_use
+          days: 7
+        - name: Disk used (percent)
+          entities:
+          - sensor.system_monitor_disk_usage
+          days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.zfs_tank_used_gib
+      name: ZFS tank
+      icon: mdi:database
+      color: "#8fd9c0"
+      decimals: 0
+      secondary:
+        entity: sensor.zfs_tank_used
+        inline: true
+        decimals: 1
+        unit: " %"
+      show_date: false
+      chart:
+        type: line
+        days: 30
+      delta:
+        mode: absolute
+        decimals: 1
+      items:
+      - entity: sensor.zfs_rpool_used
+        name: rpool used
+        mode: now
+        growth: true
+        days: 7
+        decimals: 1
+        unit: "%"
+      - entity: sensor.zfs_tank_fragmentation
+        name: tank frag
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: "%"
+      - entity: sensor.zfs_rpool_fragmentation
+        name: rpool frag
+        mode: now
+        growth: true
+        days: 7
+        decimals: 0
+        unit: "%"
+      popup:
+        graphs:
+        - name: Tank used
+          entities:
+          - entity: sensor.zfs_tank_used_gib
+            name: tank
+          days: 30
+        - name: Pool usage (percent)
+          entities:
+          - entity: sensor.zfs_tank_used
+            name: tank
+          - entity: sensor.zfs_rpool_used
+            name: rpool
+          days: 30
+        - name: Fragmentation
+          entities:
+          - entity: sensor.zfs_tank_fragmentation
+            name: tank
+          - entity: sensor.zfs_rpool_fragmentation
+            name: rpool
+          days: 30
+      grid_options:
+        columns: 12
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.zfs_pool_problem
+        state: "on"
+      card:
+        type: tile
+        entity: binary_sensor.zfs_pool_problem
+        name: ZFS pool problem
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: heading
+      heading: Power monitor
+      icon: mdi:flash
+      heading_style: title
+    - type: custom:health-metric-card
       entity: sensor.power_monitor_1_power
-    - type: tile
-      entity: select.power_monitor_1_power_on_behavior
-    - type: tile
+      name: Power
+      icon: mdi:flash
+      color: "#ffd86b"
+      decimals: 0
+      show_date: false
+      chart:
+        type: line
+        days: 7
+      delta:
+        mode: range
+        decimals: 0
+      items:
+      - entity: sensor.power_monitor_1_voltage
+        name: Voltage
+        mode: now
+        range: false
+        days: 7
+        decimals: 0
+        color: "#c9a7e8"
+      - entity: sensor.power_monitor_1_current
+        name: Current
+        mode: now
+        days: 7
+        decimals: 2
+        color: "#ff9f6b"
+      popup:
+        graphs:
+        - name: Power
+          entities:
+          - sensor.power_monitor_1_power
+          days: 7
+        - name: Voltage
+          entities:
+          - sensor.power_monitor_1_voltage
+          days: 7
+        - name: Current
+          entities:
+          - sensor.power_monitor_1_current
+          days: 7
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
       entity: sensor.power_monitor_1_energy
-    - type: tile
-      entity: sensor.power_monitor_1_voltage
-    - type: tile
-      entity: sensor.power_monitor_1_current
-    - type: tile
-      entity: switch.power_monitor_1_child_lock
+      name: Energy today
+      icon: mdi:lightning-bolt
+      color: "#ffd86b"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      popup:
+        graphs:
+        - name: Energy per day
+          entities:
+          - sensor.power_monitor_1_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:status-row-card
+      color: "#ffd86b"
+      items:
+      - entity: switch.power_monitor_1
+        name: Socket
+        icon: mdi:power-socket-eu
+      - entity: switch.power_monitor_1_child_lock
+        name: Child lock
+        icon: mdi:lock
+        labels:
+          "on": Locked
+          "off": Unlocked
+      - entity: select.power_monitor_1_power_on_behavior
+        name: Power-on
+        icon: mdi:power-settings
+      grid_options:
+        columns: 12
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
-- title: Maintenance
+- type: sections
+  title: Maintenance
   path: dash-maintenance
   icon: mdi:wrench
-  strategy:
-    type: maintenance
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: custom:status-row-card
+      grid_options:
+        columns: full
+      items:
+      - entity: sensor.needs_attention
+        name: Needs attention
+        icon: mdi:wrench-clock
+        hint: Low batteries, offline devices and updates waiting
+        color_attribute: severity
+        colors:
+          clear: success
+          info: info
+          warning: warning
+          error: error
+      - entity: sensor.lowest_battery
+        name: Lowest battery
+        icon: mdi:battery-alert-variant-outline
+        hint: The lowest device battery, phones excluded
+        colors:
+          All OK: success
+          No data: inactive
+          other: warning
+      - entity: sensor.devices_offline
+        name: Offline
+        icon: mdi:lan-disconnect
+        hint: Devices whose battery sensor is unavailable, phones excluded
+        colors:
+          All online: success
+          other: error
+      - entity: sensor.updates_available
+        name: Updates
+        icon: mdi:update
+        hint: Integrations, cards and servers with an update waiting
+        colors:
+          All current: success
+          other: info
+      - entity: sensor.broken_references
+        name: Config references
+        icon: mdi:link-variant-off
+        hint: Entities your automations and dashboards use that no longer exist
+        colors:
+          All resolved: success
+          other: warning
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Needs attention
+      icon: mdi:wrench-clock
+      heading_style: title
+    - type: custom:attention-list-card
+      entity: sensor.needs_attention
+      details:
+        entity: sensor.broken_references
+        title: Config references
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Personal devices
+      icon: mdi:cellphone
+      heading_style: title
+    - type: custom:personal-list-card
+      entity: sensor.personal_devices
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Batteries
+      icon: mdi:battery-heart-variant
+      heading_style: title
+    - type: custom:battery-list-card
+      entity: sensor.battery_report
+      grid_options:
+        columns: full

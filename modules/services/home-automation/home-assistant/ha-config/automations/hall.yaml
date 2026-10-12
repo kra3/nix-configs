@@ -2,38 +2,23 @@
 - id: hall_darkness
   alias: Hall — Darkness detection
   description: >-
-    Hysteresis darkness state machine for hall.
-    ON: lux < 10 sustained 2 min (or < 5 sustained 15 min if sun is up and
-    the forecast doesn't corroborate overcast). OFF: lux > 30 sustained
-    2 min AND sun above horizon; turns off light.
-    Thresholds lowered from the blueprint's 30/120 defaults - this room's
-    Hue PIR tops out around 70 lux even at midday, so 120 was unreachable.
+    Dark while it is gloomy outside and the hall reads below 10 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
       illuminance_sensor: sensor.hall_illuminance_filtered
       occupancy_sensor: binary_sensor.hue_pir_hallway_occupancy
-      light_entity: light.hall
+      light_entity: light.hallway_hall_lights
       dark_boolean: input_boolean.hall_is_dark
       dark_below: 10
-      bright_above: 30
-      dark_below_daytime: 5
-      dark_sustain_daytime: "00:15:00"
 
 - id: hall_lighting
   alias: Hall — Lighting
   description: >-
-    Motion-tiered brightness instead of Adaptive Lighting's brightness
-    curve: hall is a transit space, not somewhere to linger, so it
-    doesn't need AL's daytime-brightness levels at night. 45% on
-    motion, 80% if occupancy stays continuously on for 2 min
-    (lingering, not passing through), 15% ambient instead of fully off
-    once occupancy's been clear for 2 min — including immediately at
-    dusk if already unoccupied. Off immediately at bedtime. Both
-    dim-down paths suppressed during input_boolean.party_mode, same as
-    the room-presence-lighting blueprint this replaces. Suppressed
-    entirely while Alarmo is pending/triggered so it can't undo
-    security.yaml's alarm-response lighting on the next motion event.
+    Motion-tiered brightness (45% on motion, 80% if lingering 2min, 15%
+    ambient once clear 2min, off at bedtime) instead of Adaptive
+    Lighting. Does not react during sleep hours. Suppressed during
+    party_mode and while Alarmo is pending/triggered.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
     to: "on"
@@ -64,10 +49,27 @@
   - trigger: homeassistant
     event: start
     id: startup
+  - trigger: event
+    event_type: automations_resumed
+    id: startup
   conditions:
   - condition: state
     entity_id: input_boolean.hall_is_dark
     state: "on"
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: schedule.sleep
+      state: "off"
+    - condition: trigger
+      id: sleep_started
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
   - condition: not
     conditions:
     - condition: state
@@ -87,7 +89,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           transition: 2
         action: light.turn_off
@@ -96,7 +98,7 @@
         id: persistent
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 80
           transition: 1
@@ -113,7 +115,7 @@
         state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 45
           transition: 1
@@ -135,7 +137,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 15
           transition: 3
@@ -146,6 +148,9 @@
       - condition: state
         entity_id: schedule.sleep
         state: "on"
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
       - condition: not
         conditions:
         - condition: state
@@ -153,7 +158,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           transition: 2
         action: light.turn_off
@@ -169,7 +174,7 @@
           {{ elapsed_ge('binary_sensor.hue_pir_hallway_occupancy', 120) }}
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 80
           transition: 1
@@ -182,7 +187,7 @@
         state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 45
           transition: 1
@@ -204,7 +209,7 @@
           state: "on"
       sequence:
       - target:
-          entity_id: light.hall
+          entity_id: light.hallway_hall_lights
         data:
           brightness_pct: 15
           transition: 3

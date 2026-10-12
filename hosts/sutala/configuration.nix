@@ -1,6 +1,7 @@
 {
   inputs,
   config,
+  lib,
   pkgs,
   flakeModules,
   flakeLib,
@@ -17,6 +18,8 @@
     flakeModules.nixos.services-system-nix-defaults-nixos
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
+    flakeModules.nixos.services-system-surasa-autodeploy
+    flakeModules.nixos.services-media-sendspin
     flakeModules.nixos.hardware-intel-igpu
     flakeModules.nixos.nixpkgs-overlays-nixos
     flakeModules.nixos.vars
@@ -32,7 +35,11 @@
     flakeModules.nixos.services-dns-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
+    flakeModules.nixos.services-media-lidarr-beets-webhook
+    flakeModules.nixos.services-media-lidarr-failed-import-recovery
+    flakeModules.nixos.services-media-streaming-iptv
     flakeModules.nixos.services-surveillance-proxy
+    flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
     flakeModules.nixos.containers-monitoring
     flakeModules.nixos.containers-media-mgmt-default
@@ -49,10 +56,10 @@
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-system-power-tuning
+    flakeModules.nixos.services-system-zram-swap
     flakeModules.nixos.services-virtualisation-default
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
-    flakeModules.nixos.users-arcane
     flakeModules.nixos.users-authelia
   ];
 
@@ -156,13 +163,18 @@
           mmNet = p.mediaMgmt;
           liNet = p.life;
           lan = config.vars.network.lanCidr;
+          jellyfin = config.vars.localMedia.enable;
+          unpackerr = config.vars.localMedia.enable && config.vars.localMedia.extras.enable;
         in
         ''
           # Allow established and related traffic (replies to allowed connections)
           ct state established,related accept
 
-          # 1. monitoring → media-play: scrape node-exporter + navidrome metrics
-          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533 } accept
+          # 1. monitoring → media-play: scrape node-exporter + navidrome + jellyfin metrics
+          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533${lib.optionalString jellyfin ", 8096"} } accept
+          # 1a. monitoring → media-mgmt: scrape slskd (+ unpackerr) metrics
+          ${lib.optionalString unpackerr "ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.unpackerr} tcp dport 5656 accept"}
+          ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.slskd} tcp dport 5030 accept
           # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
           ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
           # 3. monitoring → HA pod: scrape Home Assistant Prometheus endpoint
@@ -178,9 +190,11 @@
           # 7. home-auto → HA pod: Frigate notifications / automations
           ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
           # 8. HA pod → media-play: HA media_player integration (Jellyfin)
-          ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept
+          ${lib.optionalString jellyfin "ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept"}
           # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
-          ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept
+          ${lib.optionalString jellyfin "ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept"}
+          # 9a. media-play → Seerr: Jellyfin plugins (Home Screen Sections, Litefin) call its API
+          ${lib.optionalString jellyfin "ip saddr ${mp} ip daddr ${config.vars.network.podmanAddresses.seerr} tcp dport 5055 accept"}
           # 10. LAN → home-auto: DNAT for MQTT + WebRTC
           ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
           ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
@@ -191,7 +205,10 @@
         '';
     };
     nftables.enable = true;
-    nameservers = [ config.vars.network.lanIp ];
+    nameservers = [
+      config.vars.network.lanIp
+      "192.168.1.39"
+    ];
     nat = {
       enable = true;
       externalInterface = config.vars.network.lanIf;
@@ -229,6 +246,30 @@
   };
 
   time.timeZone = "UTC";
+
+  services.sendspin-player = {
+    name = "Office Speaker";
+    server = config.vars.network.podmanAddresses.musicAssistant;
+    output = "pulse:bluez_output.D2_C0_BF_FC_91_25.1";
+  };
+
+  users.users.kra3.linger = true;
+
+  systemd.services.office-amp-connect = {
+    description = "Keep the office amp connected over Bluetooth";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "bluetooth.service" ];
+    after = [ "bluetooth.service" ];
+    serviceConfig.Restart = "always";
+    script = ''
+      amp=D2:C0:BF:FC:91:25
+      while true; do
+        ${pkgs.bluez}/bin/bluetoothctl info $amp | grep -q "Connected: yes" \
+          || ${pkgs.bluez}/bin/bluetoothctl connect $amp || true
+        sleep 15
+      done
+    '';
+  };
 
   services.journald.extraConfig = ''
     SystemMaxUse=200M

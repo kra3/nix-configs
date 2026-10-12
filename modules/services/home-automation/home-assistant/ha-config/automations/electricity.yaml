@@ -1,33 +1,30 @@
 # ── Electricity price ───────────────────────────────────────────
-- id: electricity_spot_sample
-  alias: "Electricity: sample spot price"
-  description: Adds the Nord Pool SE4 price to the month's running sum every quarter hour.
+- id: electricity_spot_remember
+  alias: "Electricity: remember month average"
+  description: Keeps the last E.ON month-average spot for the current month, so the month rollover can price the month that just ended.
   trigger:
-    - platform: time_pattern
-      minutes: "/15"
-      seconds: 30
+    - platform: state
+      entity_id: sensor.eon_se4_month_average_spot
   condition:
     - condition: template
-      value_template: "{{ is_number(states('sensor.nord_pool_se4_current_price')) }}"
+      value_template: >-
+        {{ is_number(trigger.to_state.state)
+           and trigger.to_state.attributes.Month is defined
+           and trigger.to_state.attributes.Month[:7] == now().strftime('%Y-%m') }}
   action:
     - action: input_number.set_value
       target:
-        entity_id: input_number.electricity_spot_sum
+        entity_id: input_number.electricity_spot_last
       data:
-        value: "{{ states('input_number.electricity_spot_sum') | float(0) + states('sensor.nord_pool_se4_current_price') | float }}"
-    - action: input_number.set_value
-      target:
-        entity_id: input_number.electricity_spot_count
-      data:
-        value: "{{ states('input_number.electricity_spot_count') | float(0) + 1 }}"
+        value: "{{ trigger.to_state.state }}"
   mode: queued
 
 - id: electricity_month_rollover
   alias: "Electricity: month rollover"
   description: >-
-    On the first run of a new month, stores last month's cost per device and its
-    average spot price, then restarts the running sum. The first run after
-    install only records the month.
+    On the first run of a new month, stores last month's cost per device at the
+    last seen month-average price. The first run after install only records the
+    month.
   trigger:
     - platform: time
       at: "00:00:20"
@@ -42,10 +39,7 @@
           value_template: "{{ states('input_number.electricity_month_marker') | int(0) != 0 }}"
       then:
         - variables:
-            price: "{{ states('sensor.electricity_price_per_kwh') | float(0) }}"
-            spot_avg: >-
-              {% set n = states('input_number.electricity_spot_count') | float(0) %}
-              {{ (states('input_number.electricity_spot_sum') | float(0) / n) | round(4) if n > 0 else 0 }}
+            price: "{{ ((states('input_number.electricity_spot_last') | float(0) * 1.09 + 0.06 + 0.734 + 0.36) * 1.25) | round(4) }}"
         - repeat:
             for_each:
               - washer
@@ -60,18 +54,6 @@
                     {% set kwh = state_attr('sensor.' ~ repeat.item ~ '_energy_month', 'last_period') | float(0) %}
                     {% set old = states('input_text.' ~ repeat.item ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | list %}
                     {{ ([(kwh * price) | round(2) | string] + old)[:12] | join(',') }}
-        - action: input_number.set_value
-          target:
-            entity_id: input_number.electricity_spot_prev_avg
-          data:
-            value: "{{ spot_avg }}"
-        - action: input_number.set_value
-          target:
-            entity_id:
-              - input_number.electricity_spot_sum
-              - input_number.electricity_spot_count
-          data:
-            value: 0
     - action: input_number.set_value
       target:
         entity_id: input_number.electricity_month_marker

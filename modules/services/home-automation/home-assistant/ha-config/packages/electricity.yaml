@@ -1,19 +1,7 @@
-# Estimated price for a variable E.ON contract: Nord Pool SE4 month average plus fixed E.ON and grid costs, with VAT; device cost is month kWh at that price.
+# Estimated price for a variable E.ON contract: E.ON's published SE4 month-average spot plus fixed E.ON and grid costs, with VAT; device cost is month kWh at that price.
 input_number:
-  electricity_spot_sum:
-    name: Spot price sum this month
-    min: 0
-    max: 1000000
-    step: 0.0001
-    mode: box
-  electricity_spot_count:
-    name: Spot price samples this month
-    min: 0
-    max: 100000
-    step: 1
-    mode: box
-  electricity_spot_prev_avg:
-    name: Spot average last month
+  electricity_spot_last:
+    name: Last seen E.ON month-average spot
     min: 0
     max: 100
     step: 0.0001
@@ -56,6 +44,18 @@ utility_meter:
     source: sensor.power_monitor_1_energy
     cycle: monthly
 
+rest:
+  - resource: https://eonepapirun.azurewebsites.net/api/getSpotpricesAverage
+    scan_interval: 3600
+    sensor:
+      - name: "E.ON SE4 Month Average Spot"
+        unique_id: eon_se4_month_average_spot
+        unit_of_measurement: SEK/kWh
+        value_template: "{{ ((value_json.MonthlyAveragePrice | selectattr('PriceArea', 'eq', 'SE4') | map(attribute='Price') | first) / 100) | round(4) }}"
+        json_attributes:
+          - Month
+          - ToDate
+
 template:
   - sensor:
       - name: "Electricity Spot Month Average"
@@ -63,10 +63,9 @@ template:
         unit_of_measurement: SEK/kWh
         icon: mdi:chart-bell-curve
         state: >-
-          {% set n = states('input_number.electricity_spot_count') | float(0) %}
-          {% set prev = states('input_number.electricity_spot_prev_avg') | float(0) %}
-          {% if n >= 96 %}{{ (states('input_number.electricity_spot_sum') | float(0) / n) | round(4) }}
-          {% elif prev > 0 %}{{ prev }}
+          {% set eon = states('sensor.eon_se4_month_average_spot') %}
+          {% if is_number(eon) %}{{ eon }}
+          {% elif states('input_number.electricity_spot_last') | float(0) > 0 %}{{ states('input_number.electricity_spot_last') }}
           {% else %}{{ states('sensor.nord_pool_se4_current_price') | float(0) }}{% endif %}
 
       - name: "Electricity Price per kWh"
@@ -75,7 +74,7 @@ template:
         icon: mdi:cash
         state: "{{ ((states('sensor.electricity_spot_month_average') | float(0) * 1.09 + 0.06 + 0.734 + 0.36) * 1.25) | round(4) }}"
         attributes:
-          includes: Month average spot plus 9 % E.ON variable costs, 6 öre påslag, 73.4 öre grid transfer, 36 öre energy tax and 25 % VAT
+          includes: E.ON's month-average spot plus 9 % E.ON variable costs, 6 öre påslag, 73.4 öre grid transfer, 36 öre energy tax and 25 % VAT
 
       - name: "Washer Cost"
         unique_id: washer_cost
@@ -106,4 +105,3 @@ template:
           week: "{% from 'laundry.jinja' import week %}{{ week('sutala') }}"
           quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('sutala') }}"
           last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('sutala') }}"
-

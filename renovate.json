@@ -30,6 +30,7 @@
     },
     {
       "matchDatasources": ["github-releases"],
+      "allowedVersions": "/^[vV]?\\d+\\.\\d+(\\.\\d+)?$/",
       "minimumReleaseAge": "3 days",
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },

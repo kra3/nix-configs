@@ -138,7 +138,7 @@ views:
       template: home_room
       variables:
         name: Office
-        icon: mdi:desk
+        icon: mdi:monitor
         presence: binary_sensor.room_presence_office
       visibility:
       - condition: state
@@ -706,7 +706,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
-      icon: mdi:countertop
+      icon: mdi:silverware-fork-knife
       artwork: cover
       adaptive_color: true
       info: scroll
@@ -726,7 +726,7 @@ views:
     - type: custom:mini-media-player
       entity: media_player.office_speaker
       name: Office
-      icon: mdi:desk
+      icon: mdi:monitor
       artwork: cover
       adaptive_color: true
       info: scroll

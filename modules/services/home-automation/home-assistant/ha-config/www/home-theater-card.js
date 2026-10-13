@@ -67,7 +67,7 @@ class HomeTheaterCard extends HTMLElement {
 
   _miniConfig(mode) {
     const c = this._config;
-    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", adaptive_color: true, icon: c.icon || "mdi:sofa", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
+    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", icon: c.icon || "mdi:sofa", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
     if (mode === "tv") {
       return { ...base, entity: c.tv, toggle_power: false, shortcuts: { attribute: "source", label: "Apps", list: (c.tv_shortcuts || []).map((p) => ({ name: p.name, type: "source", id: p.id })) } };
     }

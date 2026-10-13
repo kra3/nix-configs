@@ -111,6 +111,8 @@ actions:
               - condition: state
                 entity_id: !input light_entity
                 state: "on"
+              - condition: template
+                value_template: "{{ state_attr('automation.wake_up_gradual_lighting', 'current') | int(0) == 0 }}"
             then:
               - target:
                   entity_id: !input light_entity
@@ -127,6 +129,8 @@ actions:
           - condition: state
             entity_id: !input light_entity
             state: "on"
+          - condition: template
+            value_template: "{{ state_attr('automation.wake_up_gradual_lighting', 'current') | int(0) == 0 }}"
         sequence:
           - target:
               entity_id: !input light_entity

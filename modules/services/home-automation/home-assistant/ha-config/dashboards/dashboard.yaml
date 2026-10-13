@@ -703,34 +703,44 @@ views:
         columns: full
   - type: grid
     cards:
-    - type: custom:speaker-card
+    - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
-      icon: countertop-outline
-      group_with:
-      - media_player.ma_home_theater
-      - media_player.office_speaker
-      labels:
-        media_player.ma_home_theater: Living room
-        media_player.kitchen_speaker: Kitchen
-        media_player.office_speaker: Office
+      artwork: cover
+      info: scroll
+      hide:
+        power: true
+      idle_view:
+        when_idle: true
+      speaker_group:
+        platform: media_player
+        entities:
+        - entity_id: media_player.ma_home_theater
+          name: Living room
+        - entity_id: media_player.office_speaker
+          name: Office
       grid_options:
-        columns: 12
+        columns: full
   - type: grid
     cards:
-    - type: custom:speaker-card
+    - type: custom:mini-media-player
       entity: media_player.office_speaker
       name: Office
-      icon: desk
-      group_with:
-      - media_player.ma_home_theater
-      - media_player.kitchen_speaker
-      labels:
-        media_player.ma_home_theater: Living room
-        media_player.kitchen_speaker: Kitchen
-        media_player.office_speaker: Office
+      artwork: cover
+      info: scroll
+      hide:
+        power: true
+      idle_view:
+        when_idle: true
+      speaker_group:
+        platform: media_player
+        entities:
+        - entity_id: media_player.ma_home_theater
+          name: Living room
+        - entity_id: media_player.kitchen_speaker
+          name: Kitchen
       grid_options:
-        columns: 12
+        columns: full
   - type: grid
     cards:
     - type: heading

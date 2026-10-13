@@ -662,125 +662,47 @@ views:
 - title: Media
   path: media
   icon: mdi:play-circle
+  max_columns: 2
   sections:
   - type: grid
+    column_span: 2
     cards:
     - type: heading
       heading: Players
+      icon: mdi:speaker-multiple
       heading_style: title
-    - type: custom:mini-media-player
-      entity: media_player.lg_webos_tv_oled77c35la
-      name: TV
-      toggle_power: false
-      artwork: cover
-      info: scroll
-      hide:
-        source: true
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        hide_when_off: true
-        label: Apps
-        list:
-        - name: YouTube
-          type: source
-          id: YouTube AdFree
-        - name: Stremio
-          type: source
-          id: Stremio
-        - name: SVT Play
-          type: source
-          id: SVT Play
-        - name: Breezyfin
-          type: source
-          id: Breezyfin
-        - name: Litefin
-          type: source
-          id: Litefin
-        - name: PS5
-          type: source
-          id: PlayStation 5
-        - name: Live TV
-          type: source
-          id: Live TV
-    - type: custom:mini-media-player
-      entity: media_player.home_theater
-      name: Now playing
-      max_volume: 64
-      artwork: material
-      info: scroll
-      hide:
-        power: true
-        source: true
-        volume: true
-        mute: true
-        shuffle: true
-        repeat: true
-      visibility:
-      - condition: state
-        entity: media_player.home_theater
-        state: [playing, paused]
-    - type: custom:mini-media-player
-      entity: media_player.home_theater_2
-      name: Home theater
-      toggle_power: false
-      max_volume: 64
-      hide:
-        source: true
-        controls: true
-      sound_mode: full
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        hide_when_off: true
-        label: Input or radio
-        list:
-        - name: TV
-          type: source
-          id: TV Audio
-        - name: Bluetooth
-          type: source
-          id: Bluetooth
-        - name: HEOS (Net)
-          type: source
-          id: HEOS Music
-        - name: PS5
-          type: source
-          id: PlayStation 5
-        - name: HitCity
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: HitCity (Malmö)
-        - name: BBC World Service
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: BBC World Service
-        - name: Radio Relax International
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: Radio Relax International
-        - name: AIR Kochi FM 102.3
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: AIR KOCHI FM 102.3 | (Classical Indian)
-        - name: AIR FM Rainbow 101.3
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: AIR FM Rainbow 101.3 (Indian Music)
+    - type: markdown
+      content: >-
+        TV, music and speakers by room. Group speakers from their own card;
+        the rest keep playing their own music.
+      grid_options:
+        columns: full
+    - type: custom:home-theater-card
+      name: Living room
+      tv: media_player.lg_webos_tv_oled77c35la
+      ma: media_player.ma_home_theater
+      heos: media_player.home_theater
+      receiver: media_player.home_theater_2
+      group_with:
+      - media_player.kitchen_speaker
+      - media_player.office_speaker
+      tv_shortcuts:
+      - name: YouTube
+        id: YouTube AdFree
+      - name: Stremio
+        id: Stremio
+      - name: SVT Play
+        id: SVT Play
+      - name: Breezyfin
+        id: Breezyfin
+      - name: Litefin
+        id: Litefin
+      - name: PS5
+        id: PlayStation 5
+      - name: Live TV
+        id: Live TV
+      grid_options:
+        columns: full
     - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
@@ -790,6 +712,13 @@ views:
         power: true
       idle_view:
         when_idle: true
+      speaker_group:
+        platform: media_player
+        entities:
+        - entity_id: media_player.ma_home_theater
+          name: Living room
+        - entity_id: media_player.office_speaker
+          name: Office
     - type: custom:mini-media-player
       entity: media_player.office_speaker
       name: Office
@@ -799,6 +728,13 @@ views:
         power: true
       idle_view:
         when_idle: true
+      speaker_group:
+        platform: media_player
+        entities:
+        - entity_id: media_player.ma_home_theater
+          name: Living room
+        - entity_id: media_player.kitchen_speaker
+          name: Kitchen
   - type: grid
     cards:
     - type: heading
@@ -1111,6 +1047,7 @@ views:
     cards:
     - type: heading
       heading: Library
+      icon: mdi:multimedia
       heading_style: title
     - type: custom:health-metric-card
       entity: sensor.jellyfin_movies
@@ -1217,32 +1154,6 @@ views:
         name: Watching now
       grid_options:
         columns: 12
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: media_player
-          state: /^(playing|paused)$/
-          options:
-            type: tile
-            state_content:
-            - media_title
-            - state
-        exclude:
-        - entity_id: media_player.*webos*
-        - entity_id: media_player.*oled77c35la*
-        - entity_id: media_player.*home_theater*
-        - entity_id: media_player.*lg_smart_tv*
-        - entity_id: media_player.ma_*
-        - entity_id: media_player.kitchen_speaker
-        - entity_id: media_player.office_speaker
-      grid_options:
-        columns: 12
   - type: grid
     cards:
     - type: heading
@@ -1311,6 +1222,7 @@ views:
     cards:
     - type: heading
       heading: Upcoming
+      icon: mdi:calendar-clock
       heading_style: title
     - type: calendar
       initial_view: listWeek

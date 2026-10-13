@@ -687,24 +687,19 @@ views:
         attribute: source
         columns: 5
         buttons:
-        - name: YouTube
-          type: source
+        - type: source
           id: YouTube AdFree
           icon: mdi:youtube
-        - name: Litefin
-          type: source
+        - type: source
           id: Litefin
           icon: mdi:movie
-        - name: SVT Play
-          type: source
+        - type: source
           id: SVT Play
           icon: mdi:play-circle
-        - name: Moonfin
-          type: source
+        - type: source
           id: Moonfin
           icon: mdi:moon-waning-crescent
-        - name: PS5
-          type: source
+        - type: source
           id: PlayStation 5
           icon: mdi:sony-playstation
       grid_options:

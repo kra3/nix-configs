@@ -43,10 +43,15 @@ class TvCard extends HTMLElement {
     const st = hass.states[c.entity];
     const on = isOn(st);
     const cur = st && st.attributes.source;
-    const sig = JSON.stringify([on, cur]);
+    const live = (st && st.attributes.source_list) || [];
+    const sig = JSON.stringify([on, cur, live]);
     if (sig !== this._sig) {
       this._sig = sig;
-      const apps = (c.apps || []).map((a) => `<button class="app ${on && cur === a.id ? "on" : ""}" data-id="${esc(a.id)}" ${on ? "" : "disabled"}><ha-icon icon="${esc(a.icon || "mdi:application")}"></ha-icon><span>${esc(a.name)}</span></button>`).join("");
+      const hide = new Set(c.hide || []);
+      const pinned = (c.apps || []).filter((a) => !live.length || live.includes(a.id));
+      const known = new Set(pinned.map((a) => a.id));
+      const rest = live.filter((n) => n && !known.has(n) && !hide.has(n)).map((n) => ({ name: n, id: n, icon: /^HDMI/i.test(n) ? "mdi:hdmi-port" : "mdi:application" }));
+      const apps = [...pinned, ...rest].map((a) => `<button class="app ${on && cur === a.id ? "on" : ""}" data-id="${esc(a.id)}" ${on ? "" : "disabled"}><ha-icon icon="${esc(a.icon || "mdi:application")}"></ha-icon><span>${esc(a.name)}</span></button>`).join("");
       this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div id="mini"></div><div class="apps">${apps}</div>${on ? "" : `<div class="hint">Turn the TV on to launch an app.</div>`}</ha-card>`;
       try {
         if (!this._mini) this._mini = document.createElement("mini-media-player");

@@ -36,7 +36,7 @@ resources:
     type: module
   - url: /local/tv-card.js?v=15
     type: module
-  - url: /local/speaker-group-card.js?v=10
+  - url: /local/speaker-group-card.js?v=11
     type: module
   - url: /local/security-status-card.js?v=8
     type: module

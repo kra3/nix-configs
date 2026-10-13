@@ -2,8 +2,9 @@
 
 const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
-ha-card { position: relative; box-sizing: border-box; height: 100%; min-width: 0; overflow: hidden; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
-#mini { min-width: 0; max-width: 100%; border-radius: 12px; overflow: hidden; }
+ha-card { position: relative; box-sizing: border-box; height: 100%; min-width: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; background: none; border: 0; box-shadow: none; }
+ha-card.f { padding: 6px 10px; background: var(--ha-card-background, var(--card-background-color, #1c1c1c)); border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color)); border-radius: var(--ha-card-border-radius, 12px); overflow: hidden; }
+#mini { min-width: 0; max-width: 100%; }
 .mwrap { position: relative; min-width: 0; }
 .bi { position: absolute; top: 8px; right: 56px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
   color: var(--primary-text-color); background: none; }
@@ -44,7 +45,6 @@ class SpeakerTile extends HTMLElement {
         icon: c.icon,
         artwork: "cover",
         info: "scroll",
-        group: true,
         hide: { power: true },
         speaker_group: { platform: "media_player", entities: (c.peers || []).map((p) => ({ entity_id: p.entity, name: p.name })) },
       });
@@ -71,6 +71,7 @@ class SpeakerTile extends HTMLElement {
       const root = this.shadowRoot;
       const peer = (c.peers || []).find((p) => p.entity === lead);
       root.querySelector(".mwrap").hidden = !!lead;
+      root.querySelector("ha-card").classList.toggle("f", !!lead);
       const f = root.querySelector(".folded");
       f.hidden = !lead;
       f.innerHTML = lead ? `<b>${esc(c.name)}</b><span>Playing with ${esc(peer ? peer.name : lead)}</span><button class="btn" data-a="ungroup"><ha-icon icon="mdi:link-off"></ha-icon>Ungroup</button>` : "";

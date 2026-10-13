@@ -4,6 +4,7 @@
     {
       virtualisation.podman = {
         enable = true;
+        dockerSocket.enable = true;
         autoPrune = {
           enable = true;
           flags = [ "--all" ];

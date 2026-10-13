@@ -398,7 +398,7 @@ views:
         entity: media_player.ma_home_theater
         state: [playing, paused]
     - type: custom:mini-media-player
-      entity: media_player.kitchen
+      entity: media_player.kitchen_speaker
       name: Kitchen
       artwork: cover
       info: scroll
@@ -409,7 +409,21 @@ views:
         repeat: true
       visibility:
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state: [playing, paused]
+    - type: custom:mini-media-player
+      entity: media_player.office_speaker
+      name: Office
+      artwork: cover
+      info: scroll
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.office_speaker
         state: [playing, paused]
     - type: tile
       entity: media_player.lg_webos_tv_oled77c35la
@@ -431,7 +445,10 @@ views:
         entity: media_player.ma_home_theater
         state_not: [playing, paused]
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.office_speaker
         state_not: [playing, paused]
     - type: tile
       entity: media_player.ma_home_theater
@@ -451,7 +468,10 @@ views:
         entity: media_player.ma_home_theater
         state_not: [playing, paused]
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.office_speaker
         state_not: [playing, paused]
   - type: grid
     column_span: 2
@@ -762,8 +782,17 @@ views:
             entity_id: media_player.home_theater
             source: AIR FM Rainbow 101.3 (Indian Music)
     - type: custom:mini-media-player
-      entity: media_player.kitchen
+      entity: media_player.kitchen_speaker
       name: Kitchen
+      artwork: material
+      info: scroll
+      hide:
+        power: true
+      idle_view:
+        when_idle: true
+    - type: custom:mini-media-player
+      entity: media_player.office_speaker
+      name: Office
       artwork: material
       info: scroll
       hide:
@@ -1210,7 +1239,8 @@ views:
         - entity_id: media_player.*home_theater*
         - entity_id: media_player.*lg_smart_tv*
         - entity_id: media_player.ma_*
-        - entity_id: media_player.kitchen
+        - entity_id: media_player.kitchen_speaker
+        - entity_id: media_player.office_speaker
       grid_options:
         columns: 12
   - type: grid

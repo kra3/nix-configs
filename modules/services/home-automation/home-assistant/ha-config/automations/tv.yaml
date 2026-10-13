@@ -86,6 +86,20 @@
         entity_id: media_player.home_theater_2
       data:
         source: TV Audio
+  - alias: Open YouTube when the TV boots into Live TV
+    wait_template: "{{ is_state('media_player.lg_webos_tv_oled77c35la', 'on') }}"
+    timeout: "00:01:00"
+    continue_on_timeout: false
+  - delay: "00:00:05"
+  - if:
+    - condition: template
+      value_template: "{{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source') == 'Live TV' }}"
+    then:
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.lg_webos_tv_oled77c35la
+      data:
+        source: YouTube AdFree
   mode: single
 
 - id: tv_ht_on_when_playing

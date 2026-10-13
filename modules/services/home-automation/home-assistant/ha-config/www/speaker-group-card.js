@@ -4,11 +4,11 @@ const STYLE = `
 :host { display: block; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
 .wrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .wrap > * { min-width: 0; max-width: 100%; }
-.browse { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 0; border-radius: 16px; cursor: pointer; font: inherit; font-size: 13px;
-  color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 12%, transparent); }
-.chip:hover { background: color-mix(in srgb, var(--secondary-text-color) 20%, transparent); }
-ha-icon { --mdc-icon-size: 18px; }
+.item { position: relative; min-width: 0; }
+.bi { position: absolute; top: 8px; right: 56px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  color: var(--primary-text-color); background: none; }
+.bi:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
+ha-icon { --mdc-icon-size: 22px; }
 .hint { font-size: 12px; color: var(--secondary-text-color); padding: 2px 6px; }
 `;
 
@@ -21,11 +21,10 @@ class SpeakerGroupCard extends HTMLElement {
     this._els = {};
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div><div class="browse"></div>`;
+      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div>`;
     }
     this._wrap = this.shadowRoot.querySelector(".wrap");
-    this._browse = this.shadowRoot.querySelector(".browse");
-    this._browse.onclick = (e) => {
+    this._wrap.onclick = (e) => {
       const b = e.target.closest("[data-e]");
       if (b) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: b.dataset.e }, bubbles: true, composed: true }));
     };
@@ -42,7 +41,7 @@ class SpeakerGroupCard extends HTMLElement {
   getGridOptions() { return { columns: 12, min_columns: 6 }; }
 
   _miniConfig(s) {
-    const c = this._config;
+    const peers = this._config.speakers.filter((p) => p.entity !== s.entity);
     return {
       type: "custom:mini-media-player",
       entity: s.entity,
@@ -51,6 +50,7 @@ class SpeakerGroupCard extends HTMLElement {
       artwork: "cover",
       info: "scroll",
       hide: { power: true },
+      speaker_group: { platform: "media_player", entities: peers.map((p) => ({ entity_id: p.entity, name: p.name })) },
     };
   }
 
@@ -68,18 +68,22 @@ class SpeakerGroupCard extends HTMLElement {
     for (const s of c.speakers) {
       let el = this._els[s.entity];
       if (!el) {
-        el = this._els[s.entity] = document.createElement("mini-media-player");
-        el.setConfig(this._miniConfig(s));
+        el = this._els[s.entity] = document.createElement("div");
+        el.className = "item";
+        const mini = document.createElement("mini-media-player");
+        mini.setConfig(this._miniConfig(s));
+        el.innerHTML = `<button class="bi" title="Browse media" data-e="${s.entity}"><ha-icon icon="mdi:folder-music"></ha-icon></button>`;
+        el.appendChild(mini);
+        el.mini = mini;
         this._wrap.appendChild(el);
       }
       el.style.display = followers[s.entity] ? "none" : "";
-      el.hass = hass;
+      el.mini.hass = hass;
     }
     if (sig === this._sig) return;
     this._sig = sig;
     const label = (id) => (id === (c.living || {}).entity ? c.living.name : (c.speakers.find((s) => s.entity === id) || {}).name || id);
     const folded = c.speakers.filter((s) => followers[s.entity]);
-    this._browse.innerHTML = c.speakers.filter((s) => !followers[s.entity]).map((s) => `<button class="chip" data-e="${s.entity}"><ha-icon icon="mdi:folder-music"></ha-icon>${s.name}</button>`).join("");
     this._hint.hidden = !folded.length;
     this._hint.textContent = folded.length ? `${folded.map((s) => s.name).join(", ")} playing with ${label(followers[folded[0].entity])}` : "";
   }

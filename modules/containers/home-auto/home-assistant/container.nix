@@ -65,7 +65,6 @@
                   "${../../../services/home-automation/home-assistant/ha-config/www/home-theater-card.js}:/config/www/home-theater-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/tv-card.js}:/config/www/tv-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/speaker-group-card.js}:/config/www/speaker-group-card.js:ro"
-                  "${../../../services/home-automation/home-assistant/ha-config/www/speaker-groups-card.js}:/config/www/speaker-groups-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/laundry-machine-card.js}:/config/www/laundry-machine-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/scene-picker-card.js}:/config/www/scene-picker-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/mode-switch-card.js}:/config/www/mode-switch-card.js:ro"

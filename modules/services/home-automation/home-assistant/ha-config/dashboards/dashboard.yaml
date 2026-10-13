@@ -754,14 +754,6 @@ views:
         - entity: media_player.office_speaker
           name: Office
           icon: mdi:speaker-wireless
-      - type: custom:speaker-groups-card
-        speakers:
-        - entity: media_player.kitchen_speaker
-          name: Kitchen
-          icon: mdi:speaker
-        - entity: media_player.office_speaker
-          name: Office
-          icon: mdi:speaker-wireless
   - type: grid
     cards:
     - type: heading

@@ -681,21 +681,21 @@ views:
       - name: YouTube
         id: YouTube AdFree
         icon: mdi:youtube
-      - name: Stremio
-        id: Stremio
-        icon: mdi:movie-open-play
-      - name: SVT Play
-        id: SVT Play
-        icon: mdi:play-circle
-      - name: Breezyfin
-        id: Breezyfin
-        icon: mdi:filmstrip
       - name: Litefin
         id: Litefin
         icon: mdi:movie
+      - name: SVT Play
+        id: SVT Play
+        icon: mdi:play-circle
+      - name: Moonlight
+        id: Moonlight
+        icon: mdi:moon-waning-crescent
       - name: PS5
         id: PlayStation 5
         icon: mdi:sony-playstation
+      - name: Breezyfin
+        id: Breezyfin
+        icon: mdi:filmstrip
       - name: Live TV
         id: Live TV
         icon: mdi:television-classic

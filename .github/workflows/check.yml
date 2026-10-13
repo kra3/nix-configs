@@ -40,3 +40,14 @@ jobs:
           nix eval --raw .#darwinConfigurations.mac-work.system.drvPath
           echo
 
+
+  fetch-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Build claude-code (catches upstream release 404s)
+        run: nix build --no-link --inputs-from . llm-agents#claude-code

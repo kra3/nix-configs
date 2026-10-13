@@ -41,7 +41,7 @@ class SpeakerGroupCard extends HTMLElement {
   getGridOptions() { return { columns: 12, min_columns: 6 }; }
 
   _miniConfig(s) {
-    const peers = this._config.speakers.filter((p) => p.entity !== s.entity);
+    const peers = [this._config.living, ...this._config.speakers].filter((p) => p && p.entity !== s.entity);
     return {
       type: "custom:mini-media-player",
       entity: s.entity,

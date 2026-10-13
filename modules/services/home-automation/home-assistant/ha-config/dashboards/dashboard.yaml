@@ -734,6 +734,13 @@ views:
         ma: media_player.ma_home_theater
         heos: media_player.home_theater
         receiver: media_player.home_theater_2
+        group_with:
+        - media_player.kitchen_speaker
+        - media_player.office_speaker
+        labels:
+          media_player.ma_home_theater: Living room
+          media_player.kitchen_speaker: Kitchen
+          media_player.office_speaker: Office
         heos_exclude:
         - Game
         - PlayStation 5

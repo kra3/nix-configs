@@ -1,4 +1,4 @@
-// Living-room player: a mini-media-player re-pointed per mode (TV, Music Assistant, HEOS) plus receiver volume, input and sound mode.
+// Living-room music player: a mini-media-player re-pointed per mode (Music Assistant, HEOS) plus receiver volume, input and sound mode.
 
 const STYLE = `
 :host { display: block; --mini-media-player-artwork-opacity: 0.5; }
@@ -78,8 +78,7 @@ class HomeTheaterCard extends HTMLElement {
 
   _mode() {
     const c = this._config;
-    if (isOn(this._st(c.tv))) return "tv";
-    if (this._pick && this._pick !== "tv") return this._pick;
+    if (this._pick) return this._pick;
     const heos = this._st(c.heos);
     const ma = this._st(c.ma);
     if (heos && ["playing", "paused", "buffering"].includes(heos.state) && !(ma && ma.state === "playing")) return "heos";
@@ -89,12 +88,15 @@ class HomeTheaterCard extends HTMLElement {
   _miniConfig(mode) {
     const c = this._config;
     const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", icon: c.icon || "mdi:home-theater", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
-    if (mode === "tv") {
-      return { ...base, entity: c.tv, toggle_power: false, shortcuts: { attribute: "source", label: "Apps", list: (c.tv_shortcuts || []).map((p) => ({ name: p.name, type: "source", id: p.id })) } };
-    }
     if (mode === "heos") {
-      const list = ((this._st(c.heos) || { attributes: {} }).attributes.source_list || []).filter(Boolean);
-      return { ...base, entity: c.heos, shortcuts: { attribute: "source", label: "Radio and inputs", list: list.map((p) => ({ name: p, type: "source", id: p })) } };
+      const skip = new Set(c.heos_exclude || []);
+      const list = ((this._st(c.heos) || { attributes: {} }).attributes.source_list || []).filter((x) => x && !skip.has(x));
+      return {
+        ...base,
+        entity: c.heos,
+        hide: { ...base.hide, play_pause: true, play_stop: false, prev: true, next: true },
+        shortcuts: { attribute: "source", label: "Radio", list: list.map((p) => ({ name: p, type: "source", id: p })) },
+      };
     }
     return {
       ...base,
@@ -111,7 +113,6 @@ class HomeTheaterCard extends HTMLElement {
     const v = el.dataset.v;
     const svc = (domain, service, data) => this._hass.callService(domain, service, data);
     if (a === "power") svc("media_player", isOn(this._st(c.receiver)) ? "turn_off" : "turn_on", { entity_id: c.receiver });
-    else if (a === "tvpower") svc("media_player", isOn(this._st(c.tv)) ? "turn_off" : "turn_on", { entity_id: c.tv });
     else if (a === "browse") this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._mode() === "heos" ? c.heos : c.ma }, bubbles: true, composed: true }));
     else if (a === "tune") { this._tune = !this._tune; this._sig = ""; this._render(); }
     else if (a === "mode") {
@@ -136,25 +137,23 @@ class HomeTheaterCard extends HTMLElement {
     const c = this._config;
     const rcv = this._st(c.receiver);
     const mode = this._mode();
-    const tvOn = isOn(this._st(c.tv));
     const on = isOn(rcv);
     const ra = (rcv && rcv.attributes) || {};
     const heos = this._st(c.heos);
     const tune = !!this._tune;
     const miniCfg = this._miniConfig(mode);
 
-    const sig = JSON.stringify([mode, rcv && rcv.state, ra.source, ra.sound_mode, ra.source_list, tvOn, tune, miniCfg, heos && heos.attributes.source_list]);
+    const sig = JSON.stringify([mode, rcv && rcv.state, ra.source, ra.sound_mode, ra.source_list, tune, miniCfg, heos && heos.attributes.source_list]);
     if (sig === this._sig) return;
     this._sig = sig;
 
     const pick = (a, icon, label, cur, list) => `<label class="pick" title="${label}">${ic(icon)}<span class="cap"><small>${label}</small>${esc(cur || "—")}</span>${ic("chevron-down")}<select data-a="${a}">${opts(list, cur)}</select></label>`;
-    const modeBtn =(m, icon, label) => `<button class="btn ${mode === m ? "on" : ""}" title="${label}" data-a="mode" data-v="${m}" ${tvOn ? "disabled" : ""}>${ic(icon)}</button>`;
+    const modeBtn = (m, icon, label) => `<button class="btn ${mode === m ? "on" : ""}" title="${label}" data-a="mode" data-v="${m}">${ic(icon)}</button>`;
     const v = Math.round((ra.volume_level ?? 0) * 100);
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
       <div id="mini"></div>
       <div class="bar">
         <div class="modes">
-          ${c.tv ? `<button class="btn ${tvOn ? "on" : ""}" title="TV" data-a="tvpower">${ic("television")}</button>` : ""}
           ${modeBtn("ma", "music", "Music")}${modeBtn("heos", "radio", "HEOS")}
         </div>
         <div class="vol ${on ? "" : "off"}" title="${on ? `Receiver volume ${v}` : "Receiver off"}">${ic(on && v === 0 ? "volume-off" : "volume-medium")}<input type="range" min="0" max="100" value="${v}" style="--p:${v}%" data-a="volume" ${on ? "" : "disabled"}></div>

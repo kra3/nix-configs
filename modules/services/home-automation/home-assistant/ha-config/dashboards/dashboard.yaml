@@ -673,30 +673,55 @@ views:
       heading_style: title
   - type: grid
     cards:
+    - type: custom:mini-media-player
+      entity: media_player.lg_webos_tv_oled77c35la
+      name: TV
+      icon: mdi:television
+      artwork: cover
+      info: scroll
+      hide:
+        volume: true
+        mute: true
+      shortcuts:
+        attribute: source
+        label: Apps
+        list:
+        - name: YouTube
+          type: source
+          id: YouTube AdFree
+        - name: Stremio
+          type: source
+          id: Stremio
+        - name: SVT Play
+          type: source
+          id: SVT Play
+        - name: Breezyfin
+          type: source
+          id: Breezyfin
+        - name: Litefin
+          type: source
+          id: Litefin
+        - name: PS5
+          type: source
+          id: PlayStation 5
+        - name: Live TV
+          type: source
+          id: Live TV
+      grid_options:
+        columns: full
     - type: custom:home-theater-card
       name: Living room
-      tv: media_player.lg_webos_tv_oled77c35la
       ma: media_player.ma_home_theater
       heos: media_player.home_theater
       receiver: media_player.home_theater_2
       group_with:
       - media_player.kitchen_speaker
       - media_player.office_speaker
-      tv_shortcuts:
-      - name: YouTube
-        id: YouTube AdFree
-      - name: Stremio
-        id: Stremio
-      - name: SVT Play
-        id: SVT Play
-      - name: Breezyfin
-        id: Breezyfin
-      - name: Litefin
-        id: Litefin
-      - name: PS5
-        id: PlayStation 5
-      - name: Live TV
-        id: Live TV
+      heos_exclude:
+      - Game
+      - PlayStation 5
+      - Media Player
+      - TV Audio
       labels:
         media_player.ma_home_theater: Living room
         media_player.kitchen_speaker: Kitchen

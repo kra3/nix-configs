@@ -112,6 +112,7 @@ class HomeTheaterCard extends HTMLElement {
     const svc = (domain, service, data) => this._hass.callService(domain, service, data);
     if (a === "power") svc("media_player", isOn(this._st(c.receiver)) ? "turn_off" : "turn_on", { entity_id: c.receiver });
     else if (a === "tvpower") svc("media_player", isOn(this._st(c.tv)) ? "turn_off" : "turn_on", { entity_id: c.tv });
+    else if (a === "browse") this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._mode() === "heos" ? c.heos : c.ma }, bubbles: true, composed: true }));
     else if (a === "tune") { this._tune = !this._tune; this._sig = ""; this._render(); }
     else if (a === "mode") {
       const ma = this._st(c.ma);
@@ -157,6 +158,7 @@ class HomeTheaterCard extends HTMLElement {
           ${modeBtn("ma", "music", "Music")}${modeBtn("heos", "radio", "HEOS")}
         </div>
         <div class="vol ${on ? "" : "off"}" title="${on ? `Receiver volume ${v}` : "Receiver off"}">${ic(on && v === 0 ? "volume-off" : "volume-medium")}<input type="range" min="0" max="100" value="${v}" style="--p:${v}%" data-a="volume" ${on ? "" : "disabled"}></div>
+        <button class="btn" title="Browse media" data-a="browse">${ic("folder-music")}</button>
         <button class="btn ${tune ? "on" : ""}" title="Input and sound mode" data-a="tune">${ic("tune-variant")}</button>
         <button class="btn ${on ? "on" : ""}" title="Receiver power" data-a="power">${ic("power")}</button>
       </div>

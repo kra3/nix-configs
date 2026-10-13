@@ -3,6 +3,11 @@
 const STYLE = `
 :host { display: block; --mini-media-player-artwork-opacity: 0.5; }
 .wrap { display: flex; flex-direction: column; gap: 8px; }
+.browse { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; cursor: pointer; font: inherit; font-size: 13px;
+  color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 12%, transparent); }
+.chip:hover { background: color-mix(in srgb, var(--secondary-text-color) 20%, transparent); }
+ha-icon { --mdc-icon-size: 18px; }
 .hint { font-size: 12px; color: var(--secondary-text-color); padding: 2px 6px; }
 `;
 
@@ -15,9 +20,14 @@ class SpeakerGroupCard extends HTMLElement {
     this._els = {};
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div>`;
+      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div><div class="browse"></div>`;
     }
     this._wrap = this.shadowRoot.querySelector(".wrap");
+    this._browse = this.shadowRoot.querySelector(".browse");
+    this._browse.onclick = (e) => {
+      const b = e.target.closest("[data-e]");
+      if (b) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: b.dataset.e }, bubbles: true, composed: true }));
+    };
     this._wrap.textContent = "";
     this._hint = document.createElement("div");
     this._hint.className = "hint";
@@ -70,6 +80,7 @@ class SpeakerGroupCard extends HTMLElement {
     this._sig = sig;
     const label = (id) => (id === (c.living || {}).entity ? c.living.name : (c.speakers.find((s) => s.entity === id) || {}).name || id);
     const folded = c.speakers.filter((s) => followers[s.entity]);
+    this._browse.innerHTML = c.speakers.filter((s) => !followers[s.entity]).map((s) => `<button class="chip" data-e="${s.entity}"><ha-icon icon="mdi:folder-music"></ha-icon>Browse ${s.name}</button>`).join("");
     this._hint.hidden = !folded.length;
     this._hint.textContent = folded.length ? `${folded.map((s) => s.name).join(", ")} playing with ${label(followers[folded[0].entity])}` : "";
   }

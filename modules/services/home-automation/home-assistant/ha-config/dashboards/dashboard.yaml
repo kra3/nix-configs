@@ -671,12 +671,6 @@ views:
       heading: Players
       icon: mdi:speaker-multiple
       heading_style: title
-    - type: markdown
-      content: >-
-        TV, music and speakers by room. Group speakers from their own card;
-        the rest keep playing their own music.
-      grid_options:
-        columns: full
     - type: custom:home-theater-card
       name: Living room
       tv: media_player.lg_webos_tv_oled77c35la
@@ -701,40 +695,42 @@ views:
         id: PlayStation 5
       - name: Live TV
         id: Live TV
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
       grid_options:
         columns: full
-    - type: custom:mini-media-player
+  - type: grid
+    cards:
+    - type: custom:speaker-card
       entity: media_player.kitchen_speaker
       name: Kitchen
-      artwork: material
-      info: scroll
-      hide:
-        power: true
-      idle_view:
-        when_idle: true
-      speaker_group:
-        platform: media_player
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.office_speaker
-          name: Office
-    - type: custom:mini-media-player
+      icon: countertop-outline
+      group_with:
+      - media_player.ma_home_theater
+      - media_player.office_speaker
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
+      grid_options:
+        columns: 12
+  - type: grid
+    cards:
+    - type: custom:speaker-card
       entity: media_player.office_speaker
       name: Office
-      artwork: material
-      info: scroll
-      hide:
-        power: true
-      idle_view:
-        when_idle: true
-      speaker_group:
-        platform: media_player
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.kitchen_speaker
-          name: Kitchen
+      icon: desk
+      group_with:
+      - media_player.ma_home_theater
+      - media_player.kitchen_speaker
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
+      grid_options:
+        columns: 12
   - type: grid
     cards:
     - type: heading

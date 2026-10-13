@@ -1,9 +1,10 @@
 // Living-room music player: a mini-media-player re-pointed per mode (Music Assistant, HEOS) plus receiver volume, input and sound mode.
 
 const STYLE = `
-:host { display: block; --mini-media-player-artwork-opacity: 0.5; }
-ha-card { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
-.bar { display: flex; align-items: center; gap: 8px; }
+:host { display: block; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
+#mini { min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
+ha-card { min-width: 0; overflow: hidden; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .modes { display: flex; gap: 2px; padding: 2px; border-radius: 18px; background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; flex: none;
   color: var(--secondary-text-color); background: none; }
@@ -13,7 +14,7 @@ ha-card { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6p
 .modes .btn.on { color: var(--text-primary-color, #fff); background: var(--primary-color); }
 .btn[disabled] { opacity: 0.4; cursor: default; }
 ha-icon { --mdc-icon-size: 20px; }
-.vol { flex: 1; min-width: 80px; display: flex; align-items: center; gap: 6px; color: var(--secondary-text-color); }
+.vol { flex: 1 1 120px; min-width: 120px; display: flex; align-items: center; gap: 6px; color: var(--secondary-text-color); }
 .vol input { flex: 1; min-width: 0; height: 24px; margin: 0; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
 .vol input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--primary-color) var(--p, 0%), color-mix(in srgb, var(--secondary-text-color) 30%, transparent) var(--p, 0%)); }
 .vol input::-moz-range-track { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--secondary-text-color) 30%, transparent); }

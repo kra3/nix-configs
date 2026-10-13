@@ -1,8 +1,9 @@
 // Room speakers as mini-media-players; a speaker grouped under another leader is folded into the leader's card.
 
 const STYLE = `
-:host { display: block; --mini-media-player-artwork-opacity: 0.5; }
-.wrap { display: flex; flex-direction: column; gap: 8px; }
+:host { display: block; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
+.wrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.wrap > * { min-width: 0; max-width: 100%; }
 .browse { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; cursor: pointer; font: inherit; font-size: 13px;
   color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 12%, transparent); }

@@ -39,7 +39,7 @@
           - action: music_assistant.play_announcement
             continue_on_error: true
             target:
-              entity_id: media_player.kitchen
+              entity_id: media_player.kitchen_speaker
             data:
               url: http://10.3.2.1:8098/chime.wav
               use_pre_announce: false

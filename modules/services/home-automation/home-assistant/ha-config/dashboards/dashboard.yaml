@@ -692,6 +692,7 @@ views:
       - name: PS5
         id: PlayStation 5
         icon: mdi:sony-playstation
+      inputs:
       - name: Live TV
         id: Live TV
         icon: mdi:television-classic
@@ -707,12 +708,6 @@ views:
       - name: Media Player
         id: Media Player
         icon: mdi:folder-play
-      - name: LG Channels
-        id: LG Channels
-        icon: mdi:television-play
-      - name: Web Browser
-        id: Web Browser
-        icon: mdi:web
       hide:
       - Amazon Alexa
       - Apps
@@ -720,6 +715,7 @@ views:
       - Developer Mode
       - Home Hub
       - Homebrew Channel
+      - LG Channels
       - LG Gallery+
       - LG Link
       - Memory Care

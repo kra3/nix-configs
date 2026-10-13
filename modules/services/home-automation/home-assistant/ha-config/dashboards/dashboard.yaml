@@ -2502,18 +2502,6 @@ views:
           days: 30
           stat: change
           type: bar
-        - name: Washer and dryer
-          entities:
-          - entity: sensor.washer_power_monitor_energy
-            name: Washer
-            color: "#6ab7ff"
-          - entity: sensor.dryer_power_monitor_energy
-            name: Dryer
-            color: "#ffb06b"
-          days: 30
-          stat: change
-          type: bar
-          stacked: true
       grid_options:
         columns: 12
     - type: custom:health-metric-card
@@ -2541,18 +2529,6 @@ views:
           days: 30
           stat: change
           type: bar
-        - name: Washer and dryer
-          entities:
-          - entity: sensor.washer_power_monitor_energy
-            name: Washer
-            color: "#6ab7ff"
-          - entity: sensor.dryer_power_monitor_energy
-            name: Dryer
-            color: "#ffb06b"
-          days: 30
-          stat: change
-          type: bar
-          stacked: true
       grid_options:
         columns: 12
     - type: heading
@@ -2610,9 +2586,11 @@ views:
       - name: Washer
         icon: mdi:washing-machine
         entity: sensor.washer_cost
+        color: "#6ab7ff"
       - name: Dryer
         icon: mdi:tumble-dryer
         entity: sensor.dryer_cost
+        color: "#ffb06b"
     - type: heading
       heading: Recent runs
       icon: mdi:history

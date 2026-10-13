@@ -2,7 +2,7 @@
 
 const STYLE = `
   :host { display: block; }
-  ha-card { padding: 10px; }
+  ha-card { padding: 0; background: none; border: none; box-shadow: none; }
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
   .m { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; outline: none; min-width: 0;
        background: color-mix(in srgb, var(--c) 9%, transparent); border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
@@ -142,7 +142,7 @@ const COST_STYLE = `
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
   .d { padding: 12px 14px; border-radius: 12px; min-width: 0; background: var(--secondary-background-color); }
   .top { display: flex; align-items: center; gap: 10px; }
-  .top ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
+  .top ha-icon { --mdc-icon-size: 22px; color: var(--c); flex: none; }
   .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); flex: 1; }
   .hero { font-size: 22px; font-weight: 700; color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
   .hero small { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); margin-left: 4px; }
@@ -177,7 +177,7 @@ class LaundryCostCard extends HTMLElement {
         const s = hass.states[d.entity];
         const a = (s && s.attributes) || {};
         const k = (t, v) => `<div class="k"><div class="t">${t}</div><div class="v">${esc(num(v))}</div></div>`;
-        return `<div class="d"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
+        return `<div class="d" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
           <div class="hero">${esc(num(s && s.state))}<small>kr this month</small></div></div>
           <div class="grid">${k("Today", a.today)}${k("Week", a.week)}${k("Quarter", a.quarter)}${k("Last month", a.last_month)}</div></div>`;
       })

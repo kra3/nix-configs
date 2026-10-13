@@ -12,6 +12,7 @@ button, select { font: inherit; color: var(--primary-text-color); background: va
   border: 1px solid var(--divider-color); border-radius: 18px; min-height: 44px; padding: 0 14px; cursor: pointer; }
 button.on { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
 button.icon { width: 44px; padding: 0; --mdc-icon-size: 22px; display: inline-flex; align-items: center; justify-content: center; }
+button[hidden] { display: none; }
 button[disabled] { opacity: 0.45; cursor: default; }
 select { flex: 1 1 140px; min-width: 0; border-radius: 12px; }
 .now { display: flex; gap: 12px; align-items: center; }
@@ -184,13 +185,13 @@ class HomeTheaterCard extends HTMLElement {
       </div>
       <div class="now">
         <div class="art" style="${a.entity_picture ? `background-image:url('${esc(a.entity_picture)}')` : ""}"></div>
-        <div class="meta"><div class="t">${esc(a.media_title || (on ? "Nothing playing" : "Off"))}</div><div class="s">${esc(a.media_artist || a.source || "")}</div></div>
+        <div class="meta"><div class="t">${esc(a.media_title || (mode === "tv" ? a.source : on ? "Nothing playing" : "Off") || "")}</div><div class="s">${esc(a.media_artist || (mode === "tv" ? "" : a.source) || "")}</div></div>
         ${fav}
       </div>
       <div class="row">
-        <button class="icon" data-a="transport" data-v="media_previous_track" ${on ? "" : "disabled"}><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+        <button class="icon" data-a="transport" data-v="media_previous_track" ${on && mode !== "tv" ? "" : "hidden"}><ha-icon icon="mdi:skip-previous"></ha-icon></button>
         <button class="icon" data-a="transport" data-v="media_play_pause" ${on ? "" : "disabled"}>${playing ? '<ha-icon icon="mdi:pause"></ha-icon>' : '<ha-icon icon="mdi:play"></ha-icon>'}</button>
-        <button class="icon" data-a="transport" data-v="media_next_track" ${on ? "" : "disabled"}><ha-icon icon="mdi:skip-next"></ha-icon></button>
+        <button class="icon" data-a="transport" data-v="media_next_track" ${on && mode !== "tv" ? "" : "hidden"}><ha-icon icon="mdi:skip-next"></ha-icon></button>
         <input type="range" min="0" max="100" value="${vol}" data-a="volume" ${on ? "" : "disabled"}>
       </div>
       ${modeBody}

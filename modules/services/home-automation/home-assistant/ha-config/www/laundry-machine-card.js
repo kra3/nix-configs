@@ -153,9 +153,9 @@ const COST_STYLE = `
   .foot { margin: 10px 4px 2px; font-size: 12px; line-height: 1.4; color: var(--secondary-text-color); }
 `;
 
-class LaundryCostCard extends HTMLElement {
+class PlugCostCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !Array.isArray(config.devices) || !config.devices.length) throw new Error("laundry-cost-card: devices are required");
+    if (!config || !Array.isArray(config.devices) || !config.devices.length) throw new Error("plug-cost-card: devices are required");
     this._config = config;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
   }
@@ -189,7 +189,7 @@ class LaundryCostCard extends HTMLElement {
 }
 
 customElements.define("laundry-machine-card", LaundryMachineCard);
-customElements.define("laundry-cost-card", LaundryCostCard);
+customElements.define("plug-cost-card", PlugCostCard);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "laundry-machine-card", name: "Laundry machines", description: "Washer and dryer state, elapsed time, power and last cycle" });
-window.customCards.push({ type: "laundry-cost-card", name: "Laundry cost", description: "Estimated cost per device: this month, today, week, quarter and last month" });
+window.customCards.push({ type: "plug-cost-card", name: "Plug cost", description: "Estimated cost per plug: this month, today, week, quarter and last month" });

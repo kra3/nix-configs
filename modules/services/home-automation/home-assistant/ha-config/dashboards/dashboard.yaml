@@ -2576,7 +2576,7 @@ views:
       heading: Cost, estimated
       icon: mdi:cash
       heading_style: title
-    - type: custom:laundry-cost-card
+    - type: custom:plug-cost-card
       grid_options:
         columns: full
       price: sensor.electricity_price_per_kwh
@@ -2901,14 +2901,15 @@ views:
           type: bar
       grid_options:
         columns: 12
-    - type: markdown
+    - type: custom:plug-cost-card
       grid_options:
         columns: 12
-      content: |-
-        **Cost, estimated** (kr)
-        | Today | Week | Month | Quarter | Last month |
-        |--:|--:|--:|--:|--:|
-        | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'today') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'week') | float(0)) }} | {{ '%.2f' | format(states('sensor.sutala_cost') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'quarter') | float(0)) }} | {{ '%.2f' | format(state_attr('sensor.sutala_cost', 'last_month') | float(0)) }} |
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Sutala
+        icon: mdi:flash
+        entity: sensor.sutala_cost
+        color: "#ffd86b"
     - type: custom:status-row-card
       color: "#ffd86b"
       items:

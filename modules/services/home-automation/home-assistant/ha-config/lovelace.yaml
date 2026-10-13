@@ -32,7 +32,9 @@ resources:
     type: module
   - url: /local/room-tile-card.js?v=2
     type: module
-  - url: /local/home-theater-card.js?v=16
+  - url: /local/home-theater-card.js?v=17
+    type: module
+  - url: /local/tv-card.js?v=1
     type: module
   - url: /local/speaker-group-card.js?v=2
     type: module

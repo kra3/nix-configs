@@ -679,14 +679,13 @@ views:
       icon: mdi:television
       artwork: cover
       info: scroll
+      source: icon
       hide:
         volume: true
         mute: true
-        source: true
       shortcuts:
         attribute: source
         columns: 5
-        label: Inputs
         buttons:
         - name: YouTube
           type: source
@@ -708,27 +707,6 @@ views:
           type: source
           id: PlayStation 5
           icon: mdi:sony-playstation
-        list:
-        - name: Live TV
-          type: source
-          id: Live TV
-          icon: mdi:television-classic
-        - name: HDMI 1
-          type: source
-          id: HDMI 1
-          icon: mdi:hdmi-port
-        - name: HDMI 3
-          type: source
-          id: HDMI 3
-          icon: mdi:hdmi-port
-        - name: HDMI 4
-          type: source
-          id: HDMI 4
-          icon: mdi:hdmi-port
-        - name: Media Player
-          type: source
-          id: Media Player
-          icon: mdi:folder-play
       grid_options:
         columns: full
         rows: 2

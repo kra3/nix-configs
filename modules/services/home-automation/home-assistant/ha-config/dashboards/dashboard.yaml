@@ -671,38 +671,44 @@ views:
       heading: Players
       icon: mdi:speaker-multiple
       heading_style: title
+  - type: grid
+    cards:
+    - type: custom:home-theater-card
+      name: Living room
+      tv: media_player.lg_webos_tv_oled77c35la
+      ma: media_player.ma_home_theater
+      heos: media_player.home_theater
+      receiver: media_player.home_theater_2
+      group_with:
+      - media_player.kitchen_speaker
+      - media_player.office_speaker
+      tv_shortcuts:
+      - name: YouTube
+        id: YouTube AdFree
+      - name: Stremio
+        id: Stremio
+      - name: SVT Play
+        id: SVT Play
+      - name: Breezyfin
+        id: Breezyfin
+      - name: Litefin
+        id: Litefin
+      - name: PS5
+        id: PlayStation 5
+      - name: Live TV
+        id: Live TV
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
     - type: vertical-stack
       grid_options:
         columns: full
       cards:
-      - type: custom:home-theater-card
-        name: Living room
-        tv: media_player.lg_webos_tv_oled77c35la
-        ma: media_player.ma_home_theater
-        heos: media_player.home_theater
-        receiver: media_player.home_theater_2
-        group_with:
-        - media_player.kitchen_speaker
-        - media_player.office_speaker
-        tv_shortcuts:
-        - name: YouTube
-          id: YouTube AdFree
-        - name: Stremio
-          id: Stremio
-        - name: SVT Play
-          id: SVT Play
-        - name: Breezyfin
-          id: Breezyfin
-        - name: Litefin
-          id: Litefin
-        - name: PS5
-          id: PlayStation 5
-        - name: Live TV
-          id: Live TV
-        labels:
-          media_player.ma_home_theater: Living room
-          media_player.kitchen_speaker: Kitchen
-          media_player.office_speaker: Office
       - type: custom:mini-media-player
         entity: media_player.kitchen_speaker
         name: Kitchen

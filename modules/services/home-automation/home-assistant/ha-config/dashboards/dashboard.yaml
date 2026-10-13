@@ -723,7 +723,7 @@ views:
       - Sports
       grid_options:
         columns: full
-        rows: 3
+        rows: 2
   - type: grid
     cards:
     - type: custom:home-theater-card
@@ -745,7 +745,7 @@ views:
       - TV Audio
       grid_options:
         columns: full
-        rows: 3
+        rows: 2
   - type: grid
     cards:
     - type: custom:speaker-group-card

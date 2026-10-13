@@ -4,7 +4,7 @@ const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
 #mini { flex: none; min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
 ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-sizing: border-box; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
-.apps { flex: 1; min-height: 0; overflow: hidden; display: grid; grid-auto-flow: column; gap: 8px; }
+.apps { flex: 1 1 0; height: 0; min-height: 44px; overflow: hidden; display: grid; grid-auto-flow: column; gap: 8px; }
 .apps .app { flex-direction: column; justify-content: center; gap: 6px; padding: 4px; font-size: 12px; text-align: center; }
 .apps .app span { max-width: 100%; }
 .app { display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500; text-align: left;
@@ -73,7 +73,7 @@ class TvCard extends HTMLElement {
 
   getCardSize() { return 6; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 3 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 2 }; }
 
   set hass(hass) {
     this._hass = hass;

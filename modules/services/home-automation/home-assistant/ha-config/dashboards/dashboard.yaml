@@ -673,70 +673,62 @@ views:
       heading_style: title
   - type: grid
     cards:
-    - type: custom:tv-card
+    - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
-      apps:
-      - name: YouTube
-        id: YouTube AdFree
-        icon: mdi:youtube
-      - name: Litefin
-        id: Litefin
-        icon: mdi:movie
-      - name: SVT Play
-        id: SVT Play
-        icon: mdi:play-circle
-      - name: Moonfin
-        id: Moonfin
-        icon: mdi:moon-waning-crescent
-      - name: PS5
-        id: PlayStation 5
-        icon: mdi:sony-playstation
-      inputs:
-      - name: Live TV
-        id: Live TV
-        icon: mdi:television-classic
-      - name: HDMI 1
-        id: HDMI 1
-        icon: mdi:hdmi-port
-      - name: HDMI 3
-        id: HDMI 3
-        icon: mdi:hdmi-port
-      - name: HDMI 4
-        id: HDMI 4
-        icon: mdi:hdmi-port
-      - name: Media Player
-        id: Media Player
-        icon: mdi:folder-play
+      icon: mdi:television
+      artwork: cover
+      info: scroll
       hide:
-      - Amazon Alexa
-      - Apps
-      - Camera
-      - Developer Mode
-      - Home Hub
-      - Homebrew Channel
-      - LG Channels
-      - LG Gallery+
-      - LG Link
-      - Memory Care
-      - Multi View
-      - Sports
-      speaker_group:
-        platform: media_player
-        show_group_count: true
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.office_speaker
-          name: Office
-      speaker_group:
-        platform: media_player
-        show_group_count: true
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.kitchen_speaker
-          name: Kitchen
+        volume: true
+        mute: true
+        source: true
+      shortcuts:
+        attribute: source
+        columns: 5
+        label: Inputs
+        buttons:
+        - name: YouTube
+          type: source
+          id: YouTube AdFree
+          icon: mdi:youtube
+        - name: Litefin
+          type: source
+          id: Litefin
+          icon: mdi:movie
+        - name: SVT Play
+          type: source
+          id: SVT Play
+          icon: mdi:play-circle
+        - name: Moonfin
+          type: source
+          id: Moonfin
+          icon: mdi:moon-waning-crescent
+        - name: PS5
+          type: source
+          id: PlayStation 5
+          icon: mdi:sony-playstation
+        list:
+        - name: Live TV
+          type: source
+          id: Live TV
+          icon: mdi:television-classic
+        - name: HDMI 1
+          type: source
+          id: HDMI 1
+          icon: mdi:hdmi-port
+        - name: HDMI 3
+          type: source
+          id: HDMI 3
+          icon: mdi:hdmi-port
+        - name: HDMI 4
+          type: source
+          id: HDMI 4
+          icon: mdi:hdmi-port
+        - name: Media Player
+          type: source
+          id: Media Player
+          icon: mdi:folder-play
       grid_options:
         columns: full
         rows: 2

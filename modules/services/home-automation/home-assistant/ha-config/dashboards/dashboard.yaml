@@ -706,12 +706,12 @@ views:
     - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
+      icon: mdi:countertop
       artwork: cover
+      adaptive_color: true
       info: scroll
       hide:
         power: true
-      idle_view:
-        when_idle: true
       speaker_group:
         platform: media_player
         entities:
@@ -726,12 +726,12 @@ views:
     - type: custom:mini-media-player
       entity: media_player.office_speaker
       name: Office
+      icon: mdi:desk
       artwork: cover
+      adaptive_color: true
       info: scroll
       hide:
         power: true
-      idle_view:
-        when_idle: true
       speaker_group:
         platform: media_player
         entities:

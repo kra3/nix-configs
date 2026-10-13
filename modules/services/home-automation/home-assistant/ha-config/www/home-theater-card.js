@@ -50,6 +50,7 @@ class HomeTheaterCard extends HTMLElement {
     if (!this._config) return;
     this._render();
     if (this._mini) this._mini.hass = hass;
+    if (this._rcv) this._rcv.hass = hass;
   }
 
   _st(id) { return id ? this._hass.states[id] : undefined; }
@@ -66,7 +67,7 @@ class HomeTheaterCard extends HTMLElement {
 
   _miniConfig(mode) {
     const c = this._config;
-    const base = { name: c.name || "Living room", artwork: "cover", info: "scroll", group: true, hide: { volume: true, mute: true, power: true, source: true } };
+    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", adaptive_color: true, icon: c.icon || "mdi:sofa", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
     if (mode === "tv") {
       return { ...base, entity: c.tv, toggle_power: false, shortcuts: { attribute: "source", label: "Apps", list: (c.tv_shortcuts || []).map((p) => ({ name: p.name, type: "source", id: p.id })) } };
     }
@@ -137,17 +138,26 @@ class HomeTheaterCard extends HTMLElement {
         <button class="btn ${tune ? "on" : ""}" title="Input and sound mode" data-a="tune">${ic("tune-variant")}</button>
         <button class="btn ${on ? "on" : ""}" title="Receiver power" data-a="power">${ic("power")}</button>
       </div>
-      ${tune ? `<div class="two">
-        <select data-a="input" title="Input" ${on ? "" : "disabled"}>${opts(ra.source_list || [], ra.source)}</select>
-        <select data-a="sound" title="Sound mode" ${on ? "" : "disabled"}>${opts(ra.sound_mode_list || [], ra.sound_mode)}</select>
-      </div>` : ""}
+      ${tune ? `<div id="rcv"></div>` : ""}
     </ha-card>`;
 
-    const host = this.shadowRoot.getElementById("mini");
-    if (!this._mini) this._mini = document.createElement("mini-media-player");
-    this._mini.setConfig(miniCfg);
-    this._mini.hass = this._hass;
-    host.appendChild(this._mini);
+    try {
+      if (!this._mini) this._mini = document.createElement("mini-media-player");
+      this._mini.setConfig(miniCfg);
+      this._mini.hass = this._hass;
+      this.shadowRoot.getElementById("mini").appendChild(this._mini);
+      if (tune) {
+        if (!this._rcv) this._rcv = document.createElement("mini-media-player");
+        this._rcv.setConfig({
+          type: "custom:mini-media-player", entity: c.receiver, group: true, source: "full", sound_mode: "full",
+          hide: { icon: true, name: true, info: true, controls: true, volume: true, mute: true, power: true, progress: true, sound_mode: false },
+        });
+        this._rcv.hass = this._hass;
+        this.shadowRoot.getElementById("rcv").appendChild(this._rcv);
+      }
+    } catch (err) {
+      this.shadowRoot.getElementById("mini").textContent = `home-theater-card: ${err.message}`;
+    }
   }
 }
 

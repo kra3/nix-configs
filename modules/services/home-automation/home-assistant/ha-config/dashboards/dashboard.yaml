@@ -1215,8 +1215,8 @@ views:
       grid_options:
         columns: 12
   - type: grid
-    cards:
     column_span: 2
+    cards:
     - type: heading
       heading: Upcoming
       icon: mdi:calendar-clock

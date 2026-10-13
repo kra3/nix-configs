@@ -113,28 +113,25 @@
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting
   description: >-
-    When sleep schedule ends, ramps bedroom+hall lights 5%→15%→40%→60%
-    over 10 minutes; the bedroom also warms-to-neutral (2000K→3500K)
-    like a sunrise.
+    Ramps the bedroom light 5%→100% over the 15 minutes before the sleep
+    schedule ends, warming 2000K→3500K like a sunrise. Then hands the light
+    back to Adaptive Lighting and keeps it on if the room is dark, else turns
+    it off.
   triggers:
-  - entity_id: schedule.sleep
-    to: "off"
-    # skips the 23:59:59 midnight split
-    for: "00:00:30"
-    trigger: state
+  - trigger: template
+    # next_event is the end of the current on-block; hour < 12 skips the 23:59:59 midnight split
+    value_template: >-
+      {% set n = state_attr('schedule.sleep', 'next_event') %}
+      {{ is_state('schedule.sleep', 'on') and n is not none
+         and as_local(n).hour < 12
+         and (n - now()).total_seconds() <= 900 }}
   actions:
-  # Adaptive Lighting would otherwise reset the ramp to its daytime brightness when sleep mode ends.
+  # Adaptive Lighting would otherwise reset the ramp to its own brightness.
   - action: adaptive_lighting.set_manual_control
     data:
       entity_id: switch.home_adaptive_lighting_home
       lights: light.bedroom_wardrobe_lights
       manual_control: true
-  - target:
-      entity_id: light.hallway_hall_lights
-    data:
-      brightness_pct: 5
-      transition: 1
-    action: light.turn_on
   - target:
       entity_id: light.bedroom_wardrobe_lights
     data:
@@ -142,13 +139,7 @@
       color_temp_kelvin: 2000
       transition: 1
     action: light.turn_on
-  - delay: "00:02:00"
-  - target:
-      entity_id: light.hallway_hall_lights
-    data:
-      brightness_pct: 15
-      transition: 60
-    action: light.turn_on
+  - delay: "00:03:00"
   - target:
       entity_id: light.bedroom_wardrobe_lights
     data:
@@ -156,13 +147,7 @@
       color_temp_kelvin: 2200
       transition: 60
     action: light.turn_on
-  - delay: "00:03:00"
-  - target:
-      entity_id: light.hallway_hall_lights
-    data:
-      brightness_pct: 40
-      transition: 60
-    action: light.turn_on
+  - delay: "00:04:00"
   - target:
       entity_id: light.bedroom_wardrobe_lights
     data:
@@ -170,18 +155,40 @@
       color_temp_kelvin: 2700
       transition: 60
     action: light.turn_on
-  - delay: "00:05:00"
-  - target:
-      entity_id: light.hallway_hall_lights
-    data:
-      brightness_pct: 60
-      transition: 60
-    action: light.turn_on
+  - delay: "00:04:00"
   - target:
       entity_id: light.bedroom_wardrobe_lights
     data:
-      brightness_pct: 60
+      brightness_pct: 70
+      color_temp_kelvin: 3200
+      transition: 60
+    action: light.turn_on
+  - delay: "00:03:00"
+  - target:
+      entity_id: light.bedroom_wardrobe_lights
+    data:
+      brightness_pct: 100
       color_temp_kelvin: 3500
       transition: 60
     action: light.turn_on
+  - delay: "00:01:00"
+  - action: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.home_adaptive_lighting_home
+      lights: light.bedroom_wardrobe_lights
+      manual_control: false
+  - if:
+    - condition: state
+      entity_id: input_boolean.bedroom_is_dark
+      state: "on"
+    then:
+    - action: adaptive_lighting.apply
+      data:
+        entity_id: switch.home_adaptive_lighting_home
+        lights: light.bedroom_wardrobe_lights
+        turn_on_lights: false
+    else:
+    - action: light.turn_off
+      target:
+        entity_id: light.bedroom_wardrobe_lights
   mode: restart

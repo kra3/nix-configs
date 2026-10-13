@@ -5,8 +5,10 @@ const STYLE = `
 #mini { flex: none; min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
 ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-sizing: border-box; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
 .apps { flex: 1 1 0; height: 0; min-height: 44px; overflow: hidden; display: grid; grid-auto-flow: column; gap: 8px; }
-.apps .app { flex-direction: column; justify-content: center; gap: 6px; padding: 4px; font-size: 12px; text-align: center; }
-.apps .app span { max-width: 100%; }
+.apps .app { justify-content: center; padding: 4px; }
+.apps .app span { display: none; }
+.app img { width: 36px; height: 36px; border-radius: 8px; object-fit: contain; flex: none; }
+.apps .app ha-icon { --mdc-icon-size: 32px; }
 .app { display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500; text-align: left;
   color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .app:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); }
@@ -40,6 +42,7 @@ const PAD = [
   ["CHANNELDOWN", "minus", "Channel down"], ["DOWN", "chevron-down", "Down"], ["CHANNELUP", "plus", "Channel up"], ["MUTE", "volume-off", "Mute"],
   ["PLAY", "play", "Play"], ["PAUSE", "pause", "Pause"], ["VOLUMEDOWN", "volume-minus", "Volume down"], ["VOLUMEUP", "volume-plus", "Volume up"],
 ];
+const iconStore = () => { try { return JSON.parse(localStorage.getItem("tv-card-icons") || "{}"); } catch (e) { return {}; } };
 const isOn = (st) => st && !["off", "unavailable", "unknown"].includes(st.state);
 
 class TvCard extends HTMLElement {
@@ -48,6 +51,8 @@ class TvCard extends HTMLElement {
     this._config = config;
     this._sig = "";
     this._open = "";
+    this._icons = iconStore();
+    this._tried = {};
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (e) => {
@@ -83,7 +88,14 @@ class TvCard extends HTMLElement {
     const on = isOn(st);
     const cur = st && st.attributes.source;
     const live = (st && st.attributes.source_list) || [];
-    const sig = JSON.stringify([on, cur, live, this._open]);
+    const picture = st && st.attributes.entity_picture;
+    if (on && picture && cur && (c.apps || []).some((a) => a.id === cur) && !this._icons[cur] && !this._tried[cur]) {
+      this._tried[cur] = true;
+      fetch(picture).then((r) => (r.ok ? r.blob() : Promise.reject())).then((b) => new Promise((res) => { const f = new FileReader(); f.onload = () => res(f.result); f.readAsDataURL(b); }))
+        .then((d) => { this._icons[cur] = d; try { localStorage.setItem("tv-card-icons", JSON.stringify(this._icons)); } catch (e) { /* storage full */ } this._sig = ""; this.hass = this._hass; })
+        .catch(() => {});
+    }
+    const sig = JSON.stringify([on, cur, live, this._open, Object.keys(this._icons)]);
     if (sig !== this._sig) {
       this._sig = sig;
       const present = (a) => !live.length || live.includes(a.id);
@@ -92,7 +104,7 @@ class TvCard extends HTMLElement {
       const known = new Set([...pinned, ...inputs].map((a) => a.id));
       const hide = new Set(c.hide || []);
       const more = live.filter((n) => n && !known.has(n) && !hide.has(n)).map((n) => ({ name: n, id: n, icon: "mdi:application" }));
-      const btn = (a) => `<button class="app ${on && cur === a.id ? "on" : ""}" data-id="${esc(a.id)}" ${on ? "" : "disabled"}><ha-icon icon="${esc(a.icon || "mdi:application")}"></ha-icon><span>${esc(a.name)}</span></button>`;
+      const btn = (a) => `<button class="app ${on && cur === a.id ? "on" : ""}" data-id="${esc(a.id)}" title="${esc(a.name)}" ${on ? "" : "disabled"}>${this._icons[a.id] ? `<img src="${this._icons[a.id]}" alt="">` : `<ha-icon icon="${esc(a.icon || "mdi:application")}"></ha-icon>`}<span>${esc(a.name)}</span></button>`;
       const menu = this._open === "apps" ? more : this._open === "inputs" ? inputs : null;
       const curIn = inputs.find((i) => i.id === cur);
       const curApp = more.find((i) => i.id === cur);

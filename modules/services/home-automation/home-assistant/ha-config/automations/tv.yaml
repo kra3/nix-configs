@@ -21,6 +21,18 @@
     trigger: state
   actions:
   - if:
+    - condition: device
+      device_id: 346b2b9e49e306b3d7e24530babb842c
+      domain: media_player
+      entity_id: d82eff522a62e356a89979d2dd74f5df
+      type: is_off
+    then:
+    - action: wake_on_lan.send_magic_packet
+      data:
+        mac: 20:28:bc:b7:ff:3e
+        broadcast_address: 192.168.1.255
+        broadcast_port: 7
+  - if:
     - condition: template
       value_template: >-
         {{ state_attr('media_player.ma_home_theater', 'group_members') | default([], true) | count > 1 }}
@@ -39,22 +51,10 @@
         - condition: template
           value_template: "{{ is_state(repeat.item, 'playing') }}"
         then:
-        - action: media_player.media_pause
+        - action: "{{ 'media_player.media_stop' if repeat.item == 'media_player.home_theater' else 'media_player.media_pause' }}"
           continue_on_error: true
           target:
             entity_id: "{{ repeat.item }}"
-  - if:
-    - condition: device
-      device_id: 346b2b9e49e306b3d7e24530babb842c
-      domain: media_player
-      entity_id: d82eff522a62e356a89979d2dd74f5df
-      type: is_off
-    then:
-    - action: wake_on_lan.send_magic_packet
-      data:
-        mac: 20:28:bc:b7:ff:3e
-        broadcast_address: 192.168.1.255
-        broadcast_port: 7
   - if:
     - condition: or
       conditions:

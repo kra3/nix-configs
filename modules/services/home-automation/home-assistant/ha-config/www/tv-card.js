@@ -23,10 +23,21 @@ ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-
 .menu .app { min-height: 44px; background: none; }
 .menu .app:hover { background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
 .menu .app.on { background: var(--primary-color); }
+.pad { grid-template-columns: repeat(4, 1fr); left: auto; width: min(100%, 320px); }
+.pad button { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 12px; cursor: pointer; padding: 0; color: var(--primary-text-color);
+  background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
+.pad button:hover { background: color-mix(in srgb, var(--secondary-text-color) 20%, transparent); }
+.pad button.ok { color: var(--text-primary-color, #fff); background: var(--primary-color); }
 ha-icon { --mdc-icon-size: 22px; flex: none; }
 `;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const PAD = [
+  ["BACK", "arrow-left", "Back"], ["UP", "chevron-up", "Up"], ["HOME", "home", "Home"], ["EXIT", "close", "Exit"],
+  ["LEFT", "chevron-left", "Left"], ["ENTER", "circle", "OK"], ["RIGHT", "chevron-right", "Right"], ["INFO", "information-outline", "Info"],
+  ["CHANNELDOWN", "minus", "Channel down"], ["DOWN", "chevron-down", "Down"], ["CHANNELUP", "plus", "Channel up"], ["MUTE", "volume-off", "Mute"],
+  ["PLAY", "play", "Play"], ["PAUSE", "pause", "Pause"], ["VOLUMEDOWN", "volume-minus", "Volume down"], ["VOLUMEUP", "volume-plus", "Volume up"],
+];
 const isOn = (st) => st && !["off", "unavailable", "unknown"].includes(st.state);
 
 class TvCard extends HTMLElement {
@@ -38,8 +49,9 @@ class TvCard extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (e) => {
-        const t = e.target.closest("[data-id],[data-m]");
+        const t = e.target.closest("[data-id],[data-m],[data-b]");
         if (t && t.disabled) return;
+        if (t && t.dataset.b) { this._hass.callService("webostv", "button", { entity_id: this._config.entity, button: t.dataset.b }); return; }
         if (t && t.dataset.m) this._open = this._open === t.dataset.m ? "" : t.dataset.m;
         else {
           this._open = "";
@@ -80,7 +92,8 @@ class TvCard extends HTMLElement {
       this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
         <div id="mini"></div>
         <div class="apps">${pinned.map(btn).join("")}</div>
-        <div class="foot">${tool("apps", "apps", "Apps", more, curApp)}${tool("inputs", "video-input-hdmi", "Inputs", inputs, curIn)}${on ? "" : `<span class="hint">Turn the TV on to launch an app.</span>`}</div>
+        <div class="foot">${tool("apps", "apps", "Apps", more, curApp)}${tool("inputs", "video-input-hdmi", "Inputs", inputs, curIn)}<button class="btn ${this._open === "remote" ? "on" : ""}" data-m="remote" title="Remote" ${on ? "" : "disabled"}><ha-icon icon="mdi:remote"></ha-icon>Remote</button>${on ? "" : `<span class="hint">Turn the TV on to launch an app.</span>`}</div>
+        ${this._open === "remote" ? `<div class="menu pad">${PAD.map(([b, i, l]) => `<button class="${b === "ENTER" ? "ok" : ""}" data-b="${b}" title="${l}"><ha-icon icon="mdi:${i}"></ha-icon></button>`).join("")}</div>` : ""}
         ${menu ? `<div class="menu">${menu.map(btn).join("")}</div>` : ""}
       </ha-card>`;
       try {

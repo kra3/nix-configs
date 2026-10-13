@@ -16,9 +16,13 @@ ha-icon { --mdc-icon-size: 20px; }
 .vol { flex: 1; min-width: 80px; display: flex; align-items: center; gap: 6px; color: var(--secondary-text-color); }
 .vol input { flex: 1; min-width: 0; height: 24px; accent-color: var(--primary-color); }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
-select { width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; font-weight: 500; min-height: 36px; padding: 0 10px; border-radius: 10px;
-  border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); }
-select[disabled] { opacity: 0.4; }
+.pick { position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer;
+  color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
+.pick:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); }
+.pick .cap { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; font-weight: 500; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick small { font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
+.pick select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.hint { font-size: 12px; color: var(--secondary-text-color); padding: 2px 6px; }
 option { background: var(--card-background-color, #1c1c1c); color: var(--primary-text-color, #eee); }
 `;
 
@@ -50,7 +54,6 @@ class HomeTheaterCard extends HTMLElement {
     if (!this._config) return;
     this._render();
     if (this._mini) this._mini.hass = hass;
-    if (this._rcv) this._rcv.hass = hass;
   }
 
   _st(id) { return id ? this._hass.states[id] : undefined; }
@@ -125,7 +128,8 @@ class HomeTheaterCard extends HTMLElement {
     if (sig === this._sig) return;
     this._sig = sig;
 
-    const modeBtn = (m, icon, label) => `<button class="btn ${mode === m ? "on" : ""}" title="${label}" data-a="mode" data-v="${m}" ${tvOn ? "disabled" : ""}>${ic(icon)}</button>`;
+    const pick = (a, icon, label, cur, list) => `<label class="pick" title="${label}">${ic(icon)}<span class="cap"><small>${label}</small>${esc(cur || "—")}</span>${ic("chevron-down")}<select data-a="${a}">${opts(list, cur)}</select></label>`;
+    const modeBtn =(m, icon, label) => `<button class="btn ${mode === m ? "on" : ""}" title="${label}" data-a="mode" data-v="${m}" ${tvOn ? "disabled" : ""}>${ic(icon)}</button>`;
     const v = Math.round((ra.volume_level ?? 0) * 100);
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
       <div id="mini"></div>
@@ -138,7 +142,10 @@ class HomeTheaterCard extends HTMLElement {
         <button class="btn ${tune ? "on" : ""}" title="Input and sound mode" data-a="tune">${ic("tune-variant")}</button>
         <button class="btn ${on ? "on" : ""}" title="Receiver power" data-a="power">${ic("power")}</button>
       </div>
-      ${tune ? `<div id="rcv"></div>` : ""}
+      ${tune ? (on ? `<div class="two">
+        ${pick("input", "import", "Input", ra.source, ra.source_list || [])}
+        ${pick("sound", "surround-sound", "Sound mode", ra.sound_mode, ra.sound_mode_list || [])}
+      </div>` : `<div class="hint">Turn the receiver on to change input or sound mode.</div>`) : ""}
     </ha-card>`;
 
     try {
@@ -146,15 +153,6 @@ class HomeTheaterCard extends HTMLElement {
       this._mini.setConfig(miniCfg);
       this._mini.hass = this._hass;
       this.shadowRoot.getElementById("mini").appendChild(this._mini);
-      if (tune) {
-        if (!this._rcv) this._rcv = document.createElement("mini-media-player");
-        this._rcv.setConfig({
-          type: "custom:mini-media-player", entity: c.receiver, group: true, source: "full", sound_mode: "full",
-          hide: { icon: true, name: true, info: true, controls: true, volume: true, mute: true, power: true, progress: true, sound_mode: false },
-        });
-        this._rcv.hass = this._hass;
-        this.shadowRoot.getElementById("rcv").appendChild(this._rcv);
-      }
     } catch (err) {
       this.shadowRoot.getElementById("mini").textContent = `home-theater-card: ${err.message}`;
     }

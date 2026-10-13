@@ -4,6 +4,7 @@ const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
 ha-card { position: relative; box-sizing: border-box; height: 100%; min-width: 0; overflow: hidden; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 #mini { min-width: 0; max-width: 100%; border-radius: 12px; overflow: hidden; }
+.mwrap { position: relative; min-width: 0; }
 .bi { position: absolute; top: 8px; right: 56px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
   color: var(--primary-text-color); background: none; }
 .bi:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
@@ -32,8 +33,8 @@ class SpeakerTile extends HTMLElement {
     }
     const c = config;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
-      <button class="bi" data-a="browse" title="Browse media"><ha-icon icon="mdi:folder-music"></ha-icon></button>
-      <div id="mini"></div><div class="folded" hidden></div></ha-card>`;
+      <div class="mwrap"><button class="bi" data-a="browse" title="Browse media"><ha-icon icon="mdi:folder-music"></ha-icon></button>
+      <div id="mini"></div></div><div class="folded" hidden></div></ha-card>`;
     this._mini = document.createElement("mini-media-player");
     try {
       this._mini.setConfig({
@@ -55,7 +56,7 @@ class SpeakerTile extends HTMLElement {
 
   getCardSize() { return 4; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 3 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 2 }; }
 
   set hass(hass) {
     this._hass = hass;
@@ -69,8 +70,7 @@ class SpeakerTile extends HTMLElement {
       this._sig = sig;
       const root = this.shadowRoot;
       const peer = (c.peers || []).find((p) => p.entity === lead);
-      root.getElementById("mini").hidden = !!lead;
-      root.querySelector(".bi").hidden = !!lead;
+      root.querySelector(".mwrap").hidden = !!lead;
       const f = root.querySelector(".folded");
       f.hidden = !lead;
       f.innerHTML = lead ? `<b>${esc(c.name)}</b><span>Playing with ${esc(peer ? peer.name : lead)}</span><button class="btn" data-a="ungroup"><ha-icon icon="mdi:link-off"></ha-icon>Ungroup</button>` : "";

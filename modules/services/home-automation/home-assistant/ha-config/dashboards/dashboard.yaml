@@ -723,7 +723,7 @@ views:
       - Sports
       grid_options:
         columns: full
-        rows: 9
+        rows: 3
   - type: grid
     cards:
     - type: custom:home-theater-card
@@ -759,7 +759,7 @@ views:
         name: Office
       grid_options:
         columns: full
-        rows: 3
+        rows: 2
   - type: grid
     cards:
     - type: custom:speaker-group-card
@@ -773,7 +773,7 @@ views:
         name: Kitchen
       grid_options:
         columns: full
-        rows: 3
+        rows: 2
   - type: grid
     cards:
     - type: heading

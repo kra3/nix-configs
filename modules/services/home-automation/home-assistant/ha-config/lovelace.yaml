@@ -34,9 +34,9 @@ resources:
     type: module
   - url: /local/home-theater-card.js?v=23
     type: module
-  - url: /local/tv-card.js?v=9
+  - url: /local/tv-card.js?v=10
     type: module
-  - url: /local/speaker-group-card.js?v=9
+  - url: /local/speaker-group-card.js?v=10
     type: module
   - url: /local/security-status-card.js?v=8
     type: module

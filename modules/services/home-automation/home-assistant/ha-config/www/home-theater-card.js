@@ -1,7 +1,7 @@
 // Living-room player: a mini-media-player re-pointed per mode (TV, Music Assistant, HEOS) plus receiver volume, input and sound mode.
 
 const STYLE = `
-:host { display: block; }
+:host { display: block; --mini-media-player-artwork-opacity: 0.5; }
 ha-card { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
 .bar { display: flex; align-items: center; gap: 8px; }
 .modes { display: flex; gap: 2px; padding: 2px; border-radius: 18px; background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
@@ -14,7 +14,14 @@ ha-card { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6p
 .btn[disabled] { opacity: 0.4; cursor: default; }
 ha-icon { --mdc-icon-size: 20px; }
 .vol { flex: 1; min-width: 80px; display: flex; align-items: center; gap: 6px; color: var(--secondary-text-color); }
-.vol input { flex: 1; min-width: 0; height: 24px; accent-color: var(--primary-color); }
+.vol input { flex: 1; min-width: 0; height: 24px; margin: 0; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.vol input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--primary-color) var(--p, 0%), color-mix(in srgb, var(--secondary-text-color) 30%, transparent) var(--p, 0%)); }
+.vol input::-moz-range-track { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--secondary-text-color) 30%, transparent); }
+.vol input::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--primary-color); }
+.vol input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; border: 0; background: var(--primary-color); }
+.vol input::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; border: 0; background: var(--primary-color); }
+.vol input:disabled { opacity: 0.35; cursor: default; }
+.vol.off { opacity: 0.6; }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .pick { position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer;
   color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
@@ -42,6 +49,7 @@ class HomeTheaterCard extends HTMLElement {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (e) => this._click(e));
       this.shadowRoot.addEventListener("change", (e) => this._change(e));
+      this.shadowRoot.addEventListener("input", (e) => { if (e.target.dataset.a === "volume") e.target.style.setProperty("--p", `${e.target.value}%`); });
     }
   }
 
@@ -54,6 +62,16 @@ class HomeTheaterCard extends HTMLElement {
     if (!this._config) return;
     this._render();
     if (this._mini) this._mini.hass = hass;
+    this._syncVolume();
+  }
+
+  _syncVolume() {
+    const inp = this.shadowRoot && this.shadowRoot.querySelector(".vol input");
+    const rcv = this._st(this._config.receiver);
+    if (!inp || !rcv || this.shadowRoot.activeElement === inp) return;
+    const v = Math.round((rcv.attributes.volume_level ?? 0) * 100);
+    inp.value = v;
+    inp.style.setProperty("--p", `${v}%`);
   }
 
   _st(id) { return id ? this._hass.states[id] : undefined; }
@@ -70,7 +88,7 @@ class HomeTheaterCard extends HTMLElement {
 
   _miniConfig(mode) {
     const c = this._config;
-    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "material", icon: c.icon || "mdi:home-theater", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
+    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", icon: c.icon || "mdi:home-theater", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
     if (mode === "tv") {
       return { ...base, entity: c.tv, toggle_power: false, shortcuts: { attribute: "source", label: "Apps", list: (c.tv_shortcuts || []).map((p) => ({ name: p.name, type: "source", id: p.id })) } };
     }
@@ -124,7 +142,7 @@ class HomeTheaterCard extends HTMLElement {
     const tune = !!this._tune;
     const miniCfg = this._miniConfig(mode);
 
-    const sig = JSON.stringify([mode, rcv && rcv.state, ra.source, ra.sound_mode, ra.volume_level, ra.source_list, tvOn, tune, miniCfg, heos && heos.attributes.source_list]);
+    const sig = JSON.stringify([mode, rcv && rcv.state, ra.source, ra.sound_mode, ra.source_list, tvOn, tune, miniCfg, heos && heos.attributes.source_list]);
     if (sig === this._sig) return;
     this._sig = sig;
 
@@ -138,7 +156,7 @@ class HomeTheaterCard extends HTMLElement {
           ${c.tv ? `<button class="btn ${tvOn ? "on" : ""}" title="TV" data-a="tvpower">${ic("television")}</button>` : ""}
           ${modeBtn("ma", "music", "Music")}${modeBtn("heos", "radio", "HEOS")}
         </div>
-        <div class="vol" title="Receiver volume ${v}">${ic(v === 0 ? "volume-off" : "volume-medium")}<input type="range" min="0" max="100" value="${v}" data-a="volume" ${on ? "" : "disabled"}></div>
+        <div class="vol ${on ? "" : "off"}" title="${on ? `Receiver volume ${v}` : "Receiver off"}">${ic(on && v === 0 ? "volume-off" : "volume-medium")}<input type="range" min="0" max="100" value="${v}" style="--p:${v}%" data-a="volume" ${on ? "" : "disabled"}></div>
         <button class="btn ${tune ? "on" : ""}" title="Input and sound mode" data-a="tune">${ic("tune-variant")}</button>
         <button class="btn ${on ? "on" : ""}" title="Receiver power" data-a="power">${ic("power")}</button>
       </div>

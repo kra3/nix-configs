@@ -705,42 +705,19 @@ views:
         columns: full
   - type: grid
     cards:
-    - type: vertical-stack
-      grid_options:
-        columns: full
-      cards:
-      - type: custom:mini-media-player
-        entity: media_player.kitchen_speaker
+    - type: custom:speaker-group-card
+      living:
+        entity: media_player.ma_home_theater
+        name: Living room
+      speakers:
+      - entity: media_player.kitchen_speaker
         name: Kitchen
         icon: mdi:speaker
-        artwork: cover
-        adaptive_color: true
-        info: scroll
-        hide:
-          power: true
-        speaker_group:
-          platform: media_player
-          entities:
-          - entity_id: media_player.ma_home_theater
-            name: Living room
-          - entity_id: media_player.office_speaker
-            name: Office
-      - type: custom:mini-media-player
-        entity: media_player.office_speaker
+      - entity: media_player.office_speaker
         name: Office
         icon: mdi:speaker-wireless
-        artwork: cover
-        adaptive_color: true
-        info: scroll
-        hide:
-          power: true
-        speaker_group:
-          platform: media_player
-          entities:
-          - entity_id: media_player.ma_home_theater
-            name: Living room
-          - entity_id: media_player.kitchen_speaker
-            name: Kitchen
+      grid_options:
+        columns: full
   - type: grid
     cards:
     - type: heading

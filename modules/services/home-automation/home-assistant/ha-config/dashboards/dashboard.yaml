@@ -672,7 +672,6 @@ views:
       icon: mdi:speaker-multiple
       heading_style: title
   - type: grid
-    column_span: 2
     cards:
     - type: custom:tv-card
       entity: media_player.lg_webos_tv_oled77c35la
@@ -727,10 +726,12 @@ views:
       - Multi View
       - Sports
       grid_options:
-        columns: 7
+        columns: full
+  - type: grid
+    cards:
     - type: vertical-stack
       grid_options:
-        columns: 5
+        columns: full
       cards:
       - type: custom:home-theater-card
         name: Living room

@@ -2,9 +2,9 @@
 
 const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
-#mini { min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
+#mini { flex: none; min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
 ha-card { min-width: 0; overflow: hidden; height: 100%; box-sizing: border-box; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
-.apps { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); grid-auto-rows: minmax(52px, 1fr); gap: 8px; align-content: stretch; }
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); grid-auto-rows: 48px; gap: 8px; }
 .app { display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500; text-align: left;
   color: var(--primary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .app:hover { background: color-mix(in srgb, var(--secondary-text-color) 16%, transparent); }
@@ -32,9 +32,9 @@ class TvCard extends HTMLElement {
     }
   }
 
-  getCardSize() { return 6; }
+  getCardSize() { return 5; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 8 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6 }; }
 
   set hass(hass) {
     this._hass = hass;

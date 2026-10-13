@@ -687,18 +687,45 @@ views:
       - name: SVT Play
         id: SVT Play
         icon: mdi:play-circle
-      - name: Moonlight
-        id: Moonlight
+      - name: Moonfin
+        id: Moonfin
         icon: mdi:moon-waning-crescent
       - name: PS5
         id: PlayStation 5
         icon: mdi:sony-playstation
-      - name: Breezyfin
-        id: Breezyfin
-        icon: mdi:filmstrip
       - name: Live TV
         id: Live TV
         icon: mdi:television-classic
+      - name: HDMI 1
+        id: HDMI 1
+        icon: mdi:hdmi-port
+      - name: HDMI 3
+        id: HDMI 3
+        icon: mdi:hdmi-port
+      - name: HDMI 4
+        id: HDMI 4
+        icon: mdi:hdmi-port
+      - name: Media Player
+        id: Media Player
+        icon: mdi:folder-play
+      - name: LG Channels
+        id: LG Channels
+        icon: mdi:television-play
+      - name: Web Browser
+        id: Web Browser
+        icon: mdi:web
+      hide:
+      - Amazon Alexa
+      - Apps
+      - Camera
+      - Developer Mode
+      - Home Hub
+      - Homebrew Channel
+      - LG Gallery+
+      - LG Link
+      - Memory Care
+      - Multi View
+      - Sports
       grid_options:
         columns: 7
     - type: vertical-stack

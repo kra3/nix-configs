@@ -65,7 +65,7 @@ class TvCard extends HTMLElement {
 
   getCardSize() { return 6; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 6 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 5 }; }
 
   set hass(hass) {
     this._hass = hass;

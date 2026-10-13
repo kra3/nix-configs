@@ -55,7 +55,7 @@ class SpeakerTile extends HTMLElement {
 
   getCardSize() { return 4; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 6 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 3 }; }
 
   set hass(hass) {
     this._hass = hass;

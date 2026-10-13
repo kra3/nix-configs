@@ -2,8 +2,9 @@
 
 const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
-#mini { flex: none; min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
-ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-sizing: border-box; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+#mini { flex: none; min-width: 0; max-width: 100%; --ha-card-background: transparent; --ha-card-border-width: 0px; --ha-card-box-shadow: none; --ha-card-border-radius: 0; border-radius: 0; overflow: hidden; }
+ha-card > :not(#mini):not(.menu) { margin: 0 10px; }
+ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-sizing: border-box; padding: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
 .apps { flex: 1 1 0; height: 0; min-height: 44px; overflow: hidden; display: grid; grid-auto-flow: column; gap: 8px; }
 .apps .app { justify-content: center; padding: 4px; }
 .apps .app span { display: none; }
@@ -125,7 +126,6 @@ class TvCard extends HTMLElement {
           icon: c.icon || "mdi:television",
           artwork: "cover",
           info: "scroll",
-          group: true,
           hide: { volume: true, mute: true },
         });
         this.shadowRoot.getElementById("mini").appendChild(this._mini);

@@ -2,8 +2,9 @@
 
 const STYLE = `
 :host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
-#mini { min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
-ha-card { box-sizing: border-box; height: 100%; min-width: 0; overflow-x: hidden; overflow-y: auto; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+#mini { min-width: 0; max-width: 100%; --ha-card-background: transparent; --ha-card-border-width: 0px; --ha-card-box-shadow: none; --ha-card-border-radius: 0; border-radius: 0; overflow: hidden; }
+ha-card > :not(#mini) { margin-left: 10px; margin-right: 10px; }
+ha-card { box-sizing: border-box; height: 100%; min-width: 0; overflow-x: hidden; overflow-y: auto; padding: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .modes { display: flex; gap: 2px; padding: 2px; border-radius: 18px; background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; flex: none;
@@ -88,7 +89,7 @@ class HomeTheaterCard extends HTMLElement {
 
   _miniConfig(mode) {
     const c = this._config;
-    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", icon: c.icon || "mdi:home-theater", info: "scroll", group: true, hide: { volume: true, mute: true, power: true } };
+    const base = { type: "custom:mini-media-player", name: c.name || "Living room", artwork: "cover", icon: c.icon || "mdi:home-theater", info: "scroll", hide: { volume: true, mute: true, power: true } };
     if (mode === "heos") {
       const skip = new Set(c.heos_exclude || []);
       const list = ((this._st(c.heos) || { attributes: {} }).attributes.source_list || []).filter((x) => x && !skip.has(x));

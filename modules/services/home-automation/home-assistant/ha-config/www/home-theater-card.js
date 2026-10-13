@@ -102,7 +102,7 @@ class HomeTheaterCard extends HTMLElement {
     return {
       ...base,
       entity: c.ma,
-      speaker_group: { platform: "media_player", entities: (c.group_with || []).map((id) => ({ entity_id: id, name: (c.labels || {})[id] })) },
+      ...((c.group_with || []).length ? { speaker_group: { platform: "media_player", entities: (c.group_with || []).map((id) => ({ entity_id: id, name: (c.labels || {})[id] })) } } : {}),
     };
   }
 

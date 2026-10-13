@@ -43,7 +43,6 @@ class SpeakerGroupCard extends HTMLElement {
 
   _miniConfig(s) {
     const c = this._config;
-    const peers = [c.living, ...c.speakers].filter((p) => p && p.entity !== s.entity);
     return {
       type: "custom:mini-media-player",
       entity: s.entity,
@@ -52,7 +51,6 @@ class SpeakerGroupCard extends HTMLElement {
       artwork: "cover",
       info: "scroll",
       hide: { power: true },
-      speaker_group: { platform: "media_player", entities: peers.map((p) => ({ entity_id: p.entity, name: p.name })) },
     };
   }
 

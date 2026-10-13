@@ -738,22 +738,23 @@ views:
         ma: media_player.ma_home_theater
         heos: media_player.home_theater
         receiver: media_player.home_theater_2
-        group_with:
-        - media_player.kitchen_speaker
-        - media_player.office_speaker
         heos_exclude:
         - Game
         - PlayStation 5
         - Media Player
         - TV Audio
-        labels:
-          media_player.ma_home_theater: Living room
-          media_player.kitchen_speaker: Kitchen
-          media_player.office_speaker: Office
       - type: custom:speaker-group-card
         living:
           entity: media_player.ma_home_theater
           name: Living room
+        speakers:
+        - entity: media_player.kitchen_speaker
+          name: Kitchen
+          icon: mdi:speaker
+        - entity: media_player.office_speaker
+          name: Office
+          icon: mdi:speaker-wireless
+      - type: custom:speaker-groups-card
         speakers:
         - entity: media_player.kitchen_speaker
           name: Kitchen

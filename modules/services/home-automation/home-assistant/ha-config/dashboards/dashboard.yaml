@@ -103,7 +103,7 @@ views:
       template: home_room
       variables:
         name: Kitchen
-        icon: mdi:silverware-fork-knife
+        icon: mdi:speaker
         presence: binary_sensor.room_presence_kitchen
         temperature: sensor.hue_pir_kitchen_temperature
         illuminance: sensor.hue_pir_kitchen_illuminance
@@ -138,7 +138,7 @@ views:
       template: home_room
       variables:
         name: Office
-        icon: mdi:desk
+        icon: mdi:speaker-wireless
         presence: binary_sensor.room_presence_office
       visibility:
       - condition: state
@@ -398,7 +398,7 @@ views:
         entity: media_player.ma_home_theater
         state: [playing, paused]
     - type: custom:mini-media-player
-      entity: media_player.kitchen
+      entity: media_player.kitchen_speaker
       name: Kitchen
       artwork: cover
       info: scroll
@@ -409,7 +409,21 @@ views:
         repeat: true
       visibility:
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state: [playing, paused]
+    - type: custom:mini-media-player
+      entity: media_player.office_speaker
+      name: Office
+      artwork: cover
+      info: scroll
+      hide:
+        source: true
+        power: true
+        shuffle: true
+        repeat: true
+      visibility:
+      - condition: state
+        entity: media_player.office_speaker
         state: [playing, paused]
     - type: tile
       entity: media_player.lg_webos_tv_oled77c35la
@@ -431,7 +445,10 @@ views:
         entity: media_player.ma_home_theater
         state_not: [playing, paused]
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.office_speaker
         state_not: [playing, paused]
     - type: tile
       entity: media_player.ma_home_theater
@@ -451,7 +468,10 @@ views:
         entity: media_player.ma_home_theater
         state_not: [playing, paused]
       - condition: state
-        entity: media_player.kitchen
+        entity: media_player.kitchen_speaker
+        state_not: [playing, paused]
+      - condition: state
+        entity: media_player.office_speaker
         state_not: [playing, paused]
   - type: grid
     column_span: 2
@@ -642,134 +662,95 @@ views:
 - title: Media
   path: media
   icon: mdi:play-circle
+  max_columns: 2
   sections:
   - type: grid
+    column_span: 2
     cards:
     - type: heading
       heading: Players
+      icon: mdi:speaker-multiple
       heading_style: title
+  - type: grid
+    cards:
     - type: custom:mini-media-player
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
-      toggle_power: false
+      icon: mdi:television
+      artwork: cover
+      info: scroll
+      source: icon
+      hide:
+        volume: true
+        mute: true
+      shortcuts:
+        attribute: source
+        columns: 5
+        buttons:
+        - type: source
+          id: YouTube AdFree
+          icon: mdi:youtube
+        - type: source
+          id: Litefin
+          icon: mdi:movie
+        - type: source
+          id: SVT Play
+          icon: mdi:play-circle
+        - type: source
+          id: Moonfin
+          icon: mdi:moon-waning-crescent
+        - type: source
+          id: PlayStation 5
+          icon: mdi:sony-playstation
+      grid_options:
+        columns: full
+        rows: 2
+  - type: grid
+    cards:
+    - type: custom:home-theater-card
+      name: Living room
+      ma: media_player.ma_home_theater
+      heos: media_player.home_theater
+      receiver: media_player.home_theater_2
+      group_with:
+      - media_player.kitchen_speaker
+      - media_player.office_speaker
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
+      heos_exclude:
+      - Game
+      - PlayStation 5
+      - Media Player
+      - TV Audio
+      grid_options:
+        columns: full
+        rows: 2
+  - type: grid
+    cards:
+    - type: custom:mini-media-player
+      entity: media_player.kitchen_speaker
+      name: Kitchen
+      icon: mdi:speaker
       artwork: cover
       info: scroll
       hide:
-        source: true
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        hide_when_off: true
-        label: Apps
-        list:
-        - name: YouTube
-          type: source
-          id: YouTube AdFree
-        - name: Stremio
-          type: source
-          id: Stremio
-        - name: SVT Play
-          type: source
-          id: SVT Play
-        - name: Breezyfin
-          type: source
-          id: Breezyfin
-        - name: Litefin
-          type: source
-          id: Litefin
-        - name: PS5
-          type: source
-          id: PlayStation 5
-        - name: Live TV
-          type: source
-          id: Live TV
+        power: true
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
     - type: custom:mini-media-player
-      entity: media_player.home_theater
-      name: Now playing
-      max_volume: 64
-      artwork: material
+      entity: media_player.office_speaker
+      name: Office
+      icon: mdi:speaker-wireless
+      artwork: cover
       info: scroll
       hide:
         power: true
-        source: true
-        volume: true
-        mute: true
-        shuffle: true
-        repeat: true
-      visibility:
-      - condition: state
-        entity: media_player.home_theater
-        state: [playing, paused]
-    - type: custom:mini-media-player
-      entity: media_player.home_theater_2
-      name: Home theater
-      toggle_power: false
-      max_volume: 64
-      hide:
-        source: true
-        controls: true
-      sound_mode: full
-      idle_view:
-        when_idle: true
-        when_standby: true
-      shortcuts:
-        attribute: source
-        hide_when_off: true
-        label: Input or radio
-        list:
-        - name: TV
-          type: source
-          id: TV Audio
-        - name: Bluetooth
-          type: source
-          id: Bluetooth
-        - name: HEOS (Net)
-          type: source
-          id: HEOS Music
-        - name: PS5
-          type: source
-          id: PlayStation 5
-        - name: HitCity
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: HitCity (Malmö)
-        - name: BBC World Service
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: BBC World Service
-        - name: Radio Relax International
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: Radio Relax International
-        - name: AIR Kochi FM 102.3
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: AIR KOCHI FM 102.3 | (Classical Indian)
-        - name: AIR FM Rainbow 101.3
-          type: service
-          id: media_player.select_source
-          data:
-            entity_id: media_player.home_theater
-            source: AIR FM Rainbow 101.3 (Indian Music)
-    - type: custom:mini-media-player
-      entity: media_player.kitchen
-      name: Kitchen
-      artwork: material
-      info: scroll
-      hide:
-        power: true
-      idle_view:
-        when_idle: true
+      grid_options:
+        columns: full
   - type: grid
     cards:
     - type: heading
@@ -1082,6 +1063,7 @@ views:
     cards:
     - type: heading
       heading: Library
+      icon: mdi:multimedia
       heading_style: title
     - type: custom:health-metric-card
       entity: sensor.jellyfin_movies
@@ -1188,31 +1170,6 @@ views:
         name: Watching now
       grid_options:
         columns: 12
-    - type: custom:auto-entities
-      card:
-        type: grid
-        columns: 1
-        square: false
-      card_param: cards
-      show_empty: false
-      filter:
-        include:
-        - domain: media_player
-          state: /^(playing|paused)$/
-          options:
-            type: tile
-            state_content:
-            - media_title
-            - state
-        exclude:
-        - entity_id: media_player.*webos*
-        - entity_id: media_player.*oled77c35la*
-        - entity_id: media_player.*home_theater*
-        - entity_id: media_player.*lg_smart_tv*
-        - entity_id: media_player.ma_*
-        - entity_id: media_player.kitchen
-      grid_options:
-        columns: 12
   - type: grid
     cards:
     - type: heading
@@ -1278,9 +1235,11 @@ views:
       grid_options:
         columns: 12
   - type: grid
+    column_span: 2
     cards:
     - type: heading
       heading: Upcoming
+      icon: mdi:calendar-clock
       heading_style: title
     - type: calendar
       initial_view: listWeek
@@ -2232,7 +2191,7 @@ views:
         columns: full
     - type: custom:climate-room-card
       name: Kitchen
-      icon: mdi:silverware-fork-knife
+      icon: mdi:speaker
       comfort: sensor.kitchen_comfort
       temperature: sensor.hue_pir_kitchen_temperature
       approx: true

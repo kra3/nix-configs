@@ -62,6 +62,7 @@
                   "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/room-tile-card.js}:/config/www/room-tile-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/status-row-card.js}:/config/www/status-row-card.js:ro"
+                  "${../../../services/home-automation/home-assistant/ha-config/www/home-theater-card.js}:/config/www/home-theater-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/laundry-machine-card.js}:/config/www/laundry-machine-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/scene-picker-card.js}:/config/www/scene-picker-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/mode-switch-card.js}:/config/www/mode-switch-card.js:ro"

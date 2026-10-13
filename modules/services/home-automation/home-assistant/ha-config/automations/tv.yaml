@@ -33,6 +33,29 @@
         broadcast_address: 192.168.1.255
         broadcast_port: 7
   - if:
+    - condition: template
+      value_template: >-
+        {{ state_attr('media_player.ma_home_theater', 'group_members') | default([], true) | count > 1 }}
+    then:
+    - action: media_player.unjoin
+      continue_on_error: true
+      target:
+        entity_id: media_player.ma_home_theater
+  - alias: Pause other streams on the home theater
+    repeat:
+      for_each:
+      - media_player.ma_home_theater
+      - media_player.home_theater
+      sequence:
+      - if:
+        - condition: template
+          value_template: "{{ is_state(repeat.item, 'playing') }}"
+        then:
+        - action: "{{ 'media_player.media_stop' if repeat.item == 'media_player.home_theater' else 'media_player.media_pause' }}"
+          continue_on_error: true
+          target:
+            entity_id: "{{ repeat.item }}"
+  - if:
     - condition: or
       conditions:
       - condition: template
@@ -63,6 +86,20 @@
         entity_id: media_player.home_theater_2
       data:
         source: TV Audio
+  - alias: Open YouTube when the TV boots into Live TV
+    wait_template: "{{ is_state('media_player.lg_webos_tv_oled77c35la', 'on') }}"
+    timeout: "00:01:00"
+    continue_on_timeout: false
+  - delay: "00:00:05"
+  - if:
+    - condition: template
+      value_template: "{{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source') == 'Live TV' }}"
+    then:
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.lg_webos_tv_oled77c35la
+      data:
+        source: YouTube AdFree
   mode: single
 
 - id: tv_ht_on_when_playing

@@ -1,0 +1,131 @@
+# Estimated price for a variable E.ON contract: E.ON's published SE4 month-average spot plus fixed E.ON and grid costs, with VAT; device cost is month kWh at that price.
+input_number:
+  electricity_spot_last:
+    name: Last seen E.ON month-average spot
+    min: 0
+    max: 100
+    step: 0.0001
+    mode: box
+  electricity_month_marker:
+    name: Month the price helpers were last rolled over
+    min: 0
+    max: 12
+    step: 1
+    mode: box
+
+input_text:
+  washer_cost_history:
+    name: Washer cost by month
+    max: 255
+  dryer_cost_history:
+    name: Dryer cost by month
+    max: 255
+  sutala_cost_history:
+    name: Sutala cost by month
+    max: 255
+
+utility_meter:
+  washer_energy_day:
+    source: sensor.washer_power_monitor_energy
+    cycle: daily
+  washer_energy_week:
+    source: sensor.washer_power_monitor_energy
+    cycle: weekly
+  washer_energy_month:
+    source: sensor.washer_power_monitor_energy
+    cycle: monthly
+  dryer_energy_day:
+    source: sensor.dryer_power_monitor_energy
+    cycle: daily
+  dryer_energy_week:
+    source: sensor.dryer_power_monitor_energy
+    cycle: weekly
+  dryer_energy_month:
+    source: sensor.dryer_power_monitor_energy
+    cycle: monthly
+  sutala_energy_day:
+    source: sensor.power_monitor_1_energy
+    cycle: daily
+  sutala_energy_week:
+    source: sensor.power_monitor_1_energy
+    cycle: weekly
+  sutala_energy_month:
+    source: sensor.power_monitor_1_energy
+    cycle: monthly
+
+# Endpoint and response shape from https://github.com/danielholm/eon_elpris
+rest:
+  - resource: https://eonepapirun.azurewebsites.net/api/getSpotpricesAverage
+    scan_interval: 3600
+    sensor:
+      - name: "E.ON SE4 Month Average Spot"
+        unique_id: eon_se4_month_average_spot
+        unit_of_measurement: SEK/kWh
+        value_template: "{{ ((value_json.MonthlyAveragePrice | selectattr('PriceArea', 'eq', 'SE4') | map(attribute='Price') | first) / 100) | round(4) }}"
+        json_attributes:
+          - Month
+          - ToDate
+
+template:
+  - sensor:
+      - name: "Electricity Spot Month Average"
+        unique_id: electricity_spot_month_average
+        unit_of_measurement: SEK/kWh
+        icon: mdi:chart-bell-curve
+        state: >-
+          {% set eon = states('sensor.e_on_se4_month_average_spot') %}
+          {% if is_number(eon) %}{{ eon }}
+          {% elif states('input_number.electricity_spot_last') | float(0) > 0 %}{{ states('input_number.electricity_spot_last') }}
+          {% else %}{{ states('sensor.nord_pool_se4_current_price') | float(0) }}{% endif %}
+
+      - name: "Electricity Price per kWh"
+        unique_id: electricity_price_per_kwh
+        unit_of_measurement: SEK/kWh
+        icon: mdi:cash
+        state: "{{ ((states('sensor.electricity_spot_month_average') | float(0) * 1.09 + 0.06 + 0.734 + 0.36) * 1.25) | round(2) }}"
+        attributes:
+          includes: E.ON's month-average spot plus 9 % E.ON variable costs, 6 öre påslag, 73.4 öre grid transfer, 36 öre energy tax and 25 % VAT
+
+      - name: "Washer Cost"
+        unique_id: washer_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('washer') }}"
+        attributes:
+          today: "{% from 'laundry.jinja' import today %}{{ today('washer') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('washer') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('washer') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('washer') }}"
+
+      - name: "Dryer Cost"
+        unique_id: dryer_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('dryer') }}"
+        attributes:
+          today: "{% from 'laundry.jinja' import today %}{{ today('dryer') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('dryer') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('dryer') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('dryer') }}"
+
+      - name: "Sutala Cost"
+        unique_id: sutala_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('sutala') }}"
+        attributes:
+          today: "{% from 'laundry.jinja' import today %}{{ today('sutala') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('sutala') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('sutala') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('sutala') }}"
+
+      - name: "Plugs Cost Today"
+        unique_id: plugs_cost_today
+        device_class: monetary
+        unit_of_measurement: SEK
+        icon: mdi:cash-clock
+        state: >-
+          {% from 'laundry.jinja' import today %}
+          {{ (today('washer') | float(0) + today('dryer') | float(0) + today('sutala') | float(0)) | round(2) }}
+        attributes:
+          covers: Washer, dryer and the Sutala plug, not the whole home

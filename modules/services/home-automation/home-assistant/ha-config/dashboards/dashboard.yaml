@@ -55,6 +55,48 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Laundry
+      icon: mdi:washing-machine
+      heading_style: title
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-laundry
+      visibility: &laundry_active
+      - condition: or
+        conditions:
+        - condition: state
+          entity: sensor.washer_status
+          state:
+          - Running
+          - Done
+        - condition: state
+          entity: sensor.dryer_status
+          state:
+          - Running
+          - Done
+    - &laundry_machines
+      type: custom:laundry-machine-card
+      grid_options:
+        columns: full
+      visibility: *laundry_active
+      machines:
+      - name: Washer
+        icon: mdi:washing-machine
+        status: sensor.washer_status
+        power: sensor.washer_power_monitor_power
+        running: binary_sensor.washer_running
+        last_cycle: sensor.washer_last_cycle
+        flag: input_boolean.washer_unemptied
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        status: sensor.dryer_status
+        power: sensor.dryer_power_monitor_power
+        running: binary_sensor.dryer_running
+        last_cycle: sensor.dryer_last_cycle
+        flag: input_boolean.dryer_unemptied
+  - type: grid
+    cards:
+    - type: heading
       heading: Active Rooms
       heading_style: title
     - type: custom:streamline-card
@@ -495,6 +537,22 @@ views:
       visibility:
       - condition: screen
         media_query: "(max-width: 699px)"
+    - type: heading
+      heading: Electricity
+      icon: mdi:flash
+      heading_style: title
+    - type: tile
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh
+      icon: mdi:cash
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.plugs_cost_today
+      name: Plugs today
+      icon: mdi:cash-clock
+      grid_options:
+        columns: 12
   - type: grid
     cards:
     - type: conditional
@@ -2396,6 +2454,159 @@ views:
         entities:
         - entity: input_number.climate_moisture_limit
 - type: sections
+  title: Laundry
+  path: dash-laundry
+  icon: mdi:washing-machine
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Now
+      icon: mdi:washing-machine
+      heading_style: title
+    - <<: *laundry_machines
+      visibility: []
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Energy
+      icon: mdi:lightning-bolt
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.washer_power_monitor_energy
+      name: Washer energy today
+      icon: mdi:washing-machine
+      color: "#6ab7ff"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.washer_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Washer energy per day
+          entities:
+          - sensor.washer_power_monitor_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.dryer_power_monitor_energy
+      name: Dryer energy today
+      icon: mdi:tumble-dryer
+      color: "#ffb06b"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.dryer_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Dryer energy per day
+          entities:
+          - sensor.dryer_power_monitor_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: heading
+      heading: Care and checks
+      icon: mdi:wrench-clock
+      heading_style: title
+    - type: tile
+      entity: counter.washer_care
+      name: Washes since drum clean (due at 40)
+      icon: mdi:washing-machine-alert
+      grid_options:
+        columns: full
+      tap_action:
+        action: perform-action
+        perform_action: counter.reset
+        target:
+          entity_id: counter.washer_care
+        confirmation:
+          text: Drum cleaned? This resets the count.
+    - type: tile
+      entity: counter.dryer_care
+      name: Dryer cycles since filter care (due at 30)
+      icon: mdi:tumble-dryer
+      grid_options:
+        columns: full
+      tap_action:
+        action: perform-action
+        perform_action: counter.reset
+        target:
+          entity_id: counter.dryer_care
+        confirmation:
+          text: Filters cleaned? This resets the count.
+    - type: tile
+      entity: input_number.laundry_gap_minutes
+      name: Last wait between wash and dry
+      icon: mdi:timer-sand
+      grid_options:
+        columns: full
+      visibility:
+      - condition: numeric_state
+        entity: input_number.laundry_gap_minutes
+        above: 0
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: custom:plug-cost-card
+      grid_options:
+        columns: full
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Washer
+        icon: mdi:washing-machine
+        entity: sensor.washer_cost
+        color: "#6ab7ff"
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        entity: sensor.dryer_cost
+        color: "#ffb06b"
+    - type: heading
+      heading: Recent runs
+      icon: mdi:history
+      heading_style: title
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% for name, e in [('Washer', 'sensor.washer_last_cycle'), ('Dryer', 'sensor.dryer_last_cycle')] %}
+        **{{ name }}**
+        {% set c = state_attr(e, 'cycles') or [] %}
+        {% if c %}| Started | Min | kWh | kr |
+        |---|--:|--:|--:|
+        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ '%.2f' | format(r.kwh | float(0)) }} | {{ '%.2f' | format(r.cost | float(0)) }} |
+        {% endfor %}{% else %}No runs recorded yet.
+        {% endif %}
+        {% endfor %}
+- type: sections
   title: System Health
   path: system-health
   icon: mdi:server
@@ -2690,6 +2901,15 @@ views:
           type: bar
       grid_options:
         columns: 12
+    - type: custom:plug-cost-card
+      grid_options:
+        columns: 12
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Sutala
+        icon: mdi:flash
+        entity: sensor.sutala_cost
+        color: "#ffd86b"
     - type: custom:status-row-card
       color: "#ffd86b"
       items:

@@ -1,0 +1,21 @@
+{% macro week(dev) -%}
+{{ (states('sensor.' ~ dev ~ '_energy_week') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
+{%- endmacro %}
+
+{% macro month(dev) -%}
+{{ (states('sensor.' ~ dev ~ '_energy_month') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
+{%- endmacro %}
+
+{% macro last_month(dev) -%}
+{{ (states('input_text.' ~ dev ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | map('float') | list | first | default(0)) }}
+{%- endmacro %}
+
+{% macro quarter(dev) -%}
+{% set done = (now().month - 1) % 3 -%}
+{% set h = states('input_text.' ~ dev ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | map('float') | list -%}
+{{ ((h[:done] | sum) + states('sensor.' ~ dev ~ '_energy_month') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
+{%- endmacro %}
+
+{% macro today(dev) -%}
+{{ (states('sensor.' ~ dev ~ '_energy_day') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
+{%- endmacro %}

@@ -791,7 +791,7 @@ class HealthMetricCard extends HTMLElement {
       if (isFinite(sv)) {
         const txt = c.secondary.format === "duration" ? durationText(sv, lang) : fmt(sv, c.secondary.decimals || 0, lang);
         if (c.secondary.inline) heroHtml += `<span class="alt">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</span>`;
-        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}</div>`;
+        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</div>`;
       }
     }
 

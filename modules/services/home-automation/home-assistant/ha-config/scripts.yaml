@@ -192,7 +192,7 @@ alarm_speakers_play:
     - action: music_assistant.play_announcement
       continue_on_error: true
       target:
-        entity_id: media_player.kitchen
+        entity_id: media_player.kitchen_speaker
       data:
         url: "{{ url }}"
         use_pre_announce: false

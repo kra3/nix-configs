@@ -723,40 +723,57 @@ views:
       - Sports
       grid_options:
         columns: full
+        rows: 6
   - type: grid
     cards:
-    - type: vertical-stack
+    - type: custom:home-theater-card
+      name: Living room
+      ma: media_player.ma_home_theater
+      heos: media_player.home_theater
+      receiver: media_player.home_theater_2
+      group_with:
+      - media_player.kitchen_speaker
+      - media_player.office_speaker
+      labels:
+        media_player.ma_home_theater: Living room
+        media_player.kitchen_speaker: Kitchen
+        media_player.office_speaker: Office
+      heos_exclude:
+      - Game
+      - PlayStation 5
+      - Media Player
+      - TV Audio
       grid_options:
         columns: full
-      cards:
-      - type: custom:home-theater-card
+        rows: 6
+  - type: grid
+    cards:
+    - type: custom:speaker-group-card
+      entity: media_player.kitchen_speaker
+      name: Kitchen
+      icon: mdi:speaker
+      peers:
+      - entity: media_player.ma_home_theater
         name: Living room
-        ma: media_player.ma_home_theater
-        heos: media_player.home_theater
-        receiver: media_player.home_theater_2
-        group_with:
-        - media_player.kitchen_speaker
-        - media_player.office_speaker
-        labels:
-          media_player.ma_home_theater: Living room
-          media_player.kitchen_speaker: Kitchen
-          media_player.office_speaker: Office
-        heos_exclude:
-        - Game
-        - PlayStation 5
-        - Media Player
-        - TV Audio
-      - type: custom:speaker-group-card
-        living:
-          entity: media_player.ma_home_theater
-          name: Living room
-        speakers:
-        - entity: media_player.kitchen_speaker
-          name: Kitchen
-          icon: mdi:speaker
-        - entity: media_player.office_speaker
-          name: Office
-          icon: mdi:speaker-wireless
+      - entity: media_player.office_speaker
+        name: Office
+      grid_options:
+        columns: full
+        rows: 6
+  - type: grid
+    cards:
+    - type: custom:speaker-group-card
+      entity: media_player.office_speaker
+      name: Office
+      icon: mdi:speaker-wireless
+      peers:
+      - entity: media_player.ma_home_theater
+        name: Living room
+      - entity: media_player.kitchen_speaker
+        name: Kitchen
+      grid_options:
+        columns: full
+        rows: 6
   - type: grid
     cards:
     - type: heading

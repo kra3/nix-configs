@@ -23,7 +23,7 @@ ha-card { position: relative; min-width: 0; overflow: hidden; height: 100%; box-
 .menu .app { min-height: 44px; background: none; }
 .menu .app:hover { background: color-mix(in srgb, var(--secondary-text-color) 14%, transparent); }
 .menu .app.on { background: var(--primary-color); }
-.pad { grid-template-columns: repeat(4, 1fr); left: auto; width: min(100%, 320px); }
+.pad { grid-template-columns: repeat(4, 1fr); left: auto; width: min(100%, 260px); max-height: none; }
 .pad button { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 12px; cursor: pointer; padding: 0; color: var(--primary-text-color);
   background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .pad button:hover { background: color-mix(in srgb, var(--secondary-text-color) 20%, transparent); }
@@ -65,7 +65,7 @@ class TvCard extends HTMLElement {
 
   getCardSize() { return 6; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6, rows: 10 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 6 }; }
 
   set hass(hass) {
     this._hass = hass;

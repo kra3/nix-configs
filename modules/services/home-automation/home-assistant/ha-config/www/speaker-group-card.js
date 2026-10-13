@@ -1,96 +1,86 @@
-// Room speakers as mini-media-players; a speaker grouped under another leader is folded into the leader's card.
+// One speaker as a tile: a mini-media-player, or a "playing with" placeholder while it is grouped under another leader.
 
 const STYLE = `
-:host { display: block; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
-.wrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.wrap > * { min-width: 0; max-width: 100%; }
-.item { position: relative; min-width: 0; }
+:host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
+ha-card { position: relative; box-sizing: border-box; height: 100%; min-width: 0; overflow: hidden; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+#mini { min-width: 0; max-width: 100%; border-radius: 12px; overflow: hidden; }
 .bi { position: absolute; top: 8px; right: 56px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
   color: var(--primary-text-color); background: none; }
 .bi:hover { background: color-mix(in srgb, var(--primary-text-color) 14%, transparent); }
+.folded { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: var(--secondary-text-color); font-size: 14px; }
+.folded b { color: var(--primary-text-color); font-size: 16px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; cursor: pointer; font: inherit; font-size: 13px;
+  color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 16%, transparent); }
 ha-icon { --mdc-icon-size: 22px; }
-.hint { font-size: 12px; color: var(--secondary-text-color); padding: 2px 6px; }
 `;
 
-class SpeakerGroupCard extends HTMLElement {
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+class SpeakerTile extends HTMLElement {
   setConfig(config) {
-    if (!config || !Array.isArray(config.speakers) || !config.speakers.length) {
-      throw new Error("speaker-group-card: speakers is required");
-    }
+    if (!config || !config.entity) throw new Error("speaker-group-card: entity is required");
     this._config = config;
-    this._els = {};
+    this._sig = "";
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="wrap"></div>`;
+      this.shadowRoot.addEventListener("click", (e) => {
+        const t = e.target.closest("[data-a]");
+        if (!t) return;
+        if (t.dataset.a === "browse") this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: this._config.entity }, bubbles: true, composed: true }));
+        else if (t.dataset.a === "ungroup") this._hass.callService("media_player", "unjoin", { entity_id: this._config.entity });
+      });
     }
-    this._wrap = this.shadowRoot.querySelector(".wrap");
-    this._wrap.onclick = (e) => {
-      const b = e.target.closest("[data-e]");
-      if (b) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: b.dataset.e }, bubbles: true, composed: true }));
-    };
-    this._wrap.textContent = "";
-    this._hint = document.createElement("div");
-    this._hint.className = "hint";
-    this._hint.hidden = true;
-    this._wrap.appendChild(this._hint);
-    this._sig = "";
+    const c = config;
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
+      <button class="bi" data-a="browse" title="Browse media"><ha-icon icon="mdi:folder-music"></ha-icon></button>
+      <div id="mini"></div><div class="folded" hidden></div></ha-card>`;
+    this._mini = document.createElement("mini-media-player");
+    try {
+      this._mini.setConfig({
+        type: "custom:mini-media-player",
+        entity: c.entity,
+        name: c.name,
+        icon: c.icon,
+        artwork: "cover",
+        info: "scroll",
+        group: true,
+        hide: { power: true },
+        speaker_group: { platform: "media_player", entities: (c.peers || []).map((p) => ({ entity_id: p.entity, name: p.name })) },
+      });
+    } catch (err) {
+      this.shadowRoot.getElementById("mini").textContent = `speaker-group-card: ${err.message}`;
+    }
+    this.shadowRoot.getElementById("mini").appendChild(this._mini);
   }
 
-  getCardSize() { return 3; }
+  getCardSize() { return 4; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6 }; }
-
-  _miniConfig(s) {
-    const peers = [this._config.living, ...this._config.speakers].filter((p) => p && p.entity !== s.entity);
-    return {
-      type: "custom:mini-media-player",
-      entity: s.entity,
-      name: s.name,
-      icon: s.icon,
-      artwork: "cover",
-      info: "scroll",
-      hide: { power: true },
-      speaker_group: { platform: "media_player", entities: peers.map((p) => ({ entity_id: p.entity, name: p.name })) },
-    };
-  }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 6 }; }
 
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
     const c = this._config;
-    const followers = {};
-    for (const s of c.speakers) {
-      const st = hass.states[s.entity];
-      const members = (st && st.attributes.group_members) || [];
-      if (members.length > 1 && members[0] !== s.entity) followers[s.entity] = members[0];
+    const st = hass.states[c.entity];
+    const members = (st && st.attributes.group_members) || [];
+    const lead = members.length > 1 && members[0] !== c.entity ? members[0] : "";
+    const sig = JSON.stringify(lead);
+    if (sig !== this._sig) {
+      this._sig = sig;
+      const root = this.shadowRoot;
+      const peer = (c.peers || []).find((p) => p.entity === lead);
+      root.getElementById("mini").hidden = !!lead;
+      root.querySelector(".bi").hidden = !!lead;
+      const f = root.querySelector(".folded");
+      f.hidden = !lead;
+      f.innerHTML = lead ? `<b>${esc(c.name)}</b><span>Playing with ${esc(peer ? peer.name : lead)}</span><button class="btn" data-a="ungroup"><ha-icon icon="mdi:link-off"></ha-icon>Ungroup</button>` : "";
     }
-    const sig = JSON.stringify(followers);
-    for (const s of c.speakers) {
-      let el = this._els[s.entity];
-      if (!el) {
-        el = this._els[s.entity] = document.createElement("div");
-        el.className = "item";
-        const mini = document.createElement("mini-media-player");
-        mini.setConfig(this._miniConfig(s));
-        el.innerHTML = `<button class="bi" title="Browse media" data-e="${s.entity}"><ha-icon icon="mdi:folder-music"></ha-icon></button>`;
-        el.appendChild(mini);
-        el.mini = mini;
-        this._wrap.appendChild(el);
-      }
-      el.style.display = followers[s.entity] ? "none" : "";
-      el.mini.hass = hass;
-    }
-    if (sig === this._sig) return;
-    this._sig = sig;
-    const label = (id) => (id === (c.living || {}).entity ? c.living.name : (c.speakers.find((s) => s.entity === id) || {}).name || id);
-    const folded = c.speakers.filter((s) => followers[s.entity]);
-    this._hint.hidden = !folded.length;
-    this._hint.textContent = folded.length ? `${folded.map((s) => s.name).join(", ")} playing with ${label(followers[folded[0].entity])}` : "";
+    this._mini.hass = hass;
   }
 }
 
 if (typeof customElements !== "undefined" && !customElements.get("speaker-group-card")) {
-  customElements.define("speaker-group-card", SpeakerGroupCard);
+  customElements.define("speaker-group-card", SpeakerTile);
   window.customCards = window.customCards || [];
-  window.customCards.push({ type: "speaker-group-card", name: "Speaker group card", description: "Room speakers as mini-media-players, folded into the group leader when grouped." });
+  window.customCards.push({ type: "speaker-group-card", name: "Speaker tile", description: "A speaker as a mini-media-player tile with a grouped placeholder." });
 }

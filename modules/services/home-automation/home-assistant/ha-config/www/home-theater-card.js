@@ -1,9 +1,9 @@
 // Living-room music player: a mini-media-player re-pointed per mode (Music Assistant, HEOS) plus receiver volume, input and sound mode.
 
 const STYLE = `
-:host { display: block; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
+:host { display: block; height: 100%; min-width: 0; --mini-media-player-artwork-opacity: 0.35; }
 #mini { min-width: 0; max-width: 100%; overflow: hidden; border-radius: 12px; }
-ha-card { min-width: 0; overflow: hidden; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+ha-card { box-sizing: border-box; height: 100%; min-width: 0; overflow-x: hidden; overflow-y: auto; padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .modes { display: flex; gap: 2px; padding: 2px; border-radius: 18px; background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
 .btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; flex: none;
@@ -56,7 +56,7 @@ class HomeTheaterCard extends HTMLElement {
 
   getCardSize() { return 3; }
 
-  getGridOptions() { return { columns: 12, min_columns: 6 }; }
+  getGridOptions() { return { columns: 12, min_columns: 6, rows: 6 }; }
 
   set hass(hass) {
     this._hass = hass;

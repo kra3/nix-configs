@@ -97,24 +97,6 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Electricity
-      icon: mdi:flash
-      heading_style: title
-    - type: tile
-      entity: sensor.electricity_price_per_kwh
-      name: Price now, with VAT
-      icon: mdi:cash
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.plugs_cost_today
-      name: Washer, dryer and Sutala today
-      icon: mdi:cash-clock
-      grid_options:
-        columns: 6
-  - type: grid
-    cards:
-    - type: heading
       heading: Active Rooms
       heading_style: title
     - type: custom:streamline-card
@@ -555,6 +537,22 @@ views:
       visibility:
       - condition: screen
         media_query: "(max-width: 699px)"
+    - type: heading
+      heading: Electricity
+      icon: mdi:flash
+      heading_style: title
+    - type: tile
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh
+      icon: mdi:cash
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.plugs_cost_today
+      name: Plugs today
+      icon: mdi:cash-clock
+      grid_options:
+        columns: 12
   - type: grid
     cards:
     - type: conditional

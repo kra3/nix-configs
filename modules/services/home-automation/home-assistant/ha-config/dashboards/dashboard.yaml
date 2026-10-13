@@ -103,7 +103,7 @@ views:
       template: home_room
       variables:
         name: Kitchen
-        icon: mdi:silverware-fork-knife
+        icon: mdi:speaker
         presence: binary_sensor.room_presence_kitchen
         temperature: sensor.hue_pir_kitchen_temperature
         illuminance: sensor.hue_pir_kitchen_illuminance
@@ -138,7 +138,7 @@ views:
       template: home_room
       variables:
         name: Office
-        icon: mdi:monitor
+        icon: mdi:speaker-wireless
         presence: binary_sensor.room_presence_office
       visibility:
       - condition: state
@@ -671,76 +671,70 @@ views:
       heading: Players
       icon: mdi:speaker-multiple
       heading_style: title
-    - type: custom:home-theater-card
-      name: Living room
-      tv: media_player.lg_webos_tv_oled77c35la
-      ma: media_player.ma_home_theater
-      heos: media_player.home_theater
-      receiver: media_player.home_theater_2
-      group_with:
-      - media_player.kitchen_speaker
-      - media_player.office_speaker
-      tv_shortcuts:
-      - name: YouTube
-        id: YouTube AdFree
-      - name: Stremio
-        id: Stremio
-      - name: SVT Play
-        id: SVT Play
-      - name: Breezyfin
-        id: Breezyfin
-      - name: Litefin
-        id: Litefin
-      - name: PS5
-        id: PlayStation 5
-      - name: Live TV
-        id: Live TV
-      labels:
-        media_player.ma_home_theater: Living room
-        media_player.kitchen_speaker: Kitchen
-        media_player.office_speaker: Office
+    - type: vertical-stack
       grid_options:
         columns: full
-  - type: grid
-    cards:
-    - type: custom:mini-media-player
-      entity: media_player.kitchen_speaker
-      name: Kitchen
-      icon: mdi:silverware-fork-knife
-      artwork: cover
-      adaptive_color: true
-      info: scroll
-      hide:
-        power: true
-      speaker_group:
-        platform: media_player
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.office_speaker
-          name: Office
-      grid_options:
-        columns: full
-  - type: grid
-    cards:
-    - type: custom:mini-media-player
-      entity: media_player.office_speaker
-      name: Office
-      icon: mdi:monitor
-      artwork: cover
-      adaptive_color: true
-      info: scroll
-      hide:
-        power: true
-      speaker_group:
-        platform: media_player
-        entities:
-        - entity_id: media_player.ma_home_theater
-          name: Living room
-        - entity_id: media_player.kitchen_speaker
-          name: Kitchen
-      grid_options:
-        columns: full
+      cards:
+      - type: custom:home-theater-card
+        name: Living room
+        tv: media_player.lg_webos_tv_oled77c35la
+        ma: media_player.ma_home_theater
+        heos: media_player.home_theater
+        receiver: media_player.home_theater_2
+        group_with:
+        - media_player.kitchen_speaker
+        - media_player.office_speaker
+        tv_shortcuts:
+        - name: YouTube
+          id: YouTube AdFree
+        - name: Stremio
+          id: Stremio
+        - name: SVT Play
+          id: SVT Play
+        - name: Breezyfin
+          id: Breezyfin
+        - name: Litefin
+          id: Litefin
+        - name: PS5
+          id: PlayStation 5
+        - name: Live TV
+          id: Live TV
+        labels:
+          media_player.ma_home_theater: Living room
+          media_player.kitchen_speaker: Kitchen
+          media_player.office_speaker: Office
+      - type: custom:mini-media-player
+        entity: media_player.kitchen_speaker
+        name: Kitchen
+        icon: mdi:speaker
+        artwork: cover
+        adaptive_color: true
+        info: scroll
+        hide:
+          power: true
+        speaker_group:
+          platform: media_player
+          entities:
+          - entity_id: media_player.ma_home_theater
+            name: Living room
+          - entity_id: media_player.office_speaker
+            name: Office
+      - type: custom:mini-media-player
+        entity: media_player.office_speaker
+        name: Office
+        icon: mdi:speaker-wireless
+        artwork: cover
+        adaptive_color: true
+        info: scroll
+        hide:
+          power: true
+        speaker_group:
+          platform: media_player
+          entities:
+          - entity_id: media_player.ma_home_theater
+            name: Living room
+          - entity_id: media_player.kitchen_speaker
+            name: Kitchen
   - type: grid
     cards:
     - type: heading
@@ -2181,7 +2175,7 @@ views:
         columns: full
     - type: custom:climate-room-card
       name: Kitchen
-      icon: mdi:silverware-fork-knife
+      icon: mdi:speaker
       comfort: sensor.kitchen_comfort
       temperature: sensor.hue_pir_kitchen_temperature
       approx: true

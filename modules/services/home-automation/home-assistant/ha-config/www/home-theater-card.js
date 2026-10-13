@@ -33,6 +33,8 @@ ha-icon { --mdc-icon-size: 20px; }
 select { width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; font-weight: 500; min-height: 36px; padding: 0 10px; border-radius: 10px;
   border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); }
 select[disabled] { opacity: 0.4; }
+option { background: var(--card-background-color, #1c1c1c); color: var(--primary-text-color, #eee); }
+ha-card.cover { background-size: cover; background-position: center; --primary-text-color: #fff; --secondary-text-color: rgba(255, 255, 255, 0.78); --divider-color: rgba(255, 255, 255, 0.3); }
 `;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -84,6 +86,10 @@ class PlayerBase extends HTMLElement {
   _volume(level, enabled) {
     const v = Math.round((level ?? 0) * 100);
     return `<div class="vol" title="Volume ${v}">${ic(v === 0 ? "volume-off" : "volume-medium")}<input type="range" min="0" max="100" value="${v}" data-a="volume" ${enabled ? "" : "disabled"}></div>`;
+  }
+
+  _cover(picture) {
+    return picture ? `class="cover" style="background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.78)), url('${esc(picture)}')"` : "";
   }
 
   _badge(on, picture, icon) {
@@ -182,14 +188,14 @@ class HomeTheaterCard extends PlayerBase {
       row = `<div class="chips">${ic("apps")}${(c.tv_shortcuts || []).map((p) => `<button class="chip ${p.id === cur ? "on" : ""}" data-a="tvsource" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
     } else if (mode === "heos") {
       const cur = heos && heos.attributes.source;
-      row = `<div class="chips">${ic("radio")}${((heos && heos.attributes.source_list) || []).map((p) => `<button class="chip ${p === cur ? "on" : ""}" data-a="preset" data-v="${esc(p)}">${esc(p)}</button>`).join("")}</div>`;
+      row = `<div class="chips">${ic("radio")}${((heos && heos.attributes.source_list) || []).filter(Boolean).map((p) => `<button class="chip ${p === cur ? "on" : ""}" data-a="preset" data-v="${esc(p)}">${esc(p)}</button>`).join("")}</div>`;
     } else {
       row = this._groupRow(c.ma, c.group_with || []);
     }
 
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card ${this._cover(on || tvOn ? a.entity_picture : "")}>
       <div class="top">
-        ${this._badge(on || tvOn, on || tvOn ? a.entity_picture : "", { tv: "television", ma: "music", heos: "radio" }[mode])}
+        ${this._badge(on || tvOn, "", { tv: "television", ma: "music", heos: "radio" }[mode])}
         <div class="txt"><div class="name">${esc(c.name || "Home theater")}</div><div class="line">${esc(line)}</div></div>
         <div class="modes">
           ${c.tv ? `<button class="btn ${tvOn ? "on" : ""}" title="TV" data-a="tvpower">${ic("television")}</button>` : ""}
@@ -252,9 +258,9 @@ class SpeakerCard extends PlayerBase {
     this._sig = sig;
 
     const line = unavailable ? "Unavailable" : a.media_title ? [a.media_title, a.media_artist].filter(Boolean).join(" · ") : members.length > 1 ? "Grouped" : s.state === "idle" ? "Idle" : s.state;
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card ${this._cover(unavailable ? "" : a.entity_picture)}>
       <div class="top">
-        ${this._badge(playing || members.length > 1, a.entity_picture, c.icon || "speaker")}
+        ${this._badge(playing || members.length > 1, "", c.icon || "speaker")}
         <div class="txt"><div class="name">${esc(c.name || a.friendly_name)}</div><div class="line">${esc(line)}</div></div>
         ${c.favourite && playing ? `<button class="btn" title="Favourite this song" data-a="favourite">${ic("heart-outline")}</button>` : ""}
         <button class="btn ${playing ? "on" : ""}" data-a="play" ${unavailable ? "disabled" : ""}>${ic(playing ? "pause" : "play")}</button>

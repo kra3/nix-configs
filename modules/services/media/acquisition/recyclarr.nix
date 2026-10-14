@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.recyclarr = {
         containerConfig = {
-          image = "ghcr.io/recyclarr/recyclarr:8.7.3";
+          image = "ghcr.io/recyclarr/recyclarr:8.8.0";
           logDriver = "journald";
           # Image ignores PUID/PGID and defaults to 1000:1000, which can't write /config (2770 root:media).
           user = "1000:2000";

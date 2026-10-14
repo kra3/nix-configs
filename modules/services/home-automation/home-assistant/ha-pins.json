@@ -124,6 +124,13 @@
       "asset": "apexcharts-card.js",
       "hash": "sha256-NGeAcHdz+5DEXp7q+KywENFqgInoZWOiQsxOHYmV9xg="
     },
+    "card-mod": {
+      "repo": "thomasloven/lovelace-card-mod",
+      "version": "v4.2.1",
+      "kind": "tree",
+      "subpath": "card-mod.js",
+      "hash": "sha256-16aA9VaSuWZ1i9UBGp9vb7N1H5vfcLOiqppjPoqphM0="
+    },
     "lovelace-auto-entities": {
       "repo": "thomasloven/lovelace-auto-entities",
       "version": "v1.16.1",

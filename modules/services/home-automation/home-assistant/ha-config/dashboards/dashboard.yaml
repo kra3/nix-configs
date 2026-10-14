@@ -677,63 +677,114 @@ views:
       entity: media_player.lg_webos_tv_oled77c35la
       name: TV
       icon: mdi:television
-      artwork: cover
+      artwork: material
       info: scroll
-      source: icon
-      hide:
-        volume: true
-        mute: true
       shortcuts:
         attribute: source
         columns: 5
         buttons:
         - type: source
           id: YouTube AdFree
-          icon: mdi:youtube
+          image: /local/tv-icons/youtube-adfree.png
         - type: source
           id: Litefin
-          icon: mdi:movie
+          image: /local/tv-icons/litefin.png
         - type: source
           id: SVT Play
-          icon: mdi:play-circle
+          image: /local/tv-icons/svt-play.png
         - type: source
           id: Moonfin
-          icon: mdi:moon-waning-crescent
+          image: /local/tv-icons/moonfin.png
         - type: source
           id: PlayStation 5
           icon: mdi:sony-playstation
+      card_mod:
+        style:
+          .: |
+            .mmp-player {
+              padding-top: 5px !important;
+              padding-bottom: 5px !important;
+            }
+          mmp-shortcuts$: |
+            mmp-button {
+              border-radius: 50% !important;
+              flex: 0 0 40px !important;
+              width: 40px !important;
+              min-width: 40px !important;
+              min-height: 40px !important;
+              margin: 4px 6px !important;
+            }
+            .mmp-shortcuts__buttons {
+              justify-content: flex-start !important;
+            }
+            img {
+              width: 28px !important;
+              height: 28px !important;
+              border-radius: 50% !important;
+              object-fit: cover;
+            }
       grid_options:
         columns: full
-        rows: 2
+        rows: auto
   - type: grid
     cards:
-    - type: custom:home-theater-card
+    - type: custom:mini-media-player
+      entity: media_player.ma_home_theater
       name: Living room
-      ma: media_player.ma_home_theater
-      heos: media_player.home_theater
-      receiver: media_player.home_theater_2
-      group_with:
-      - media_player.kitchen_speaker
-      - media_player.office_speaker
-      labels:
-        media_player.ma_home_theater: Living room
-        media_player.kitchen_speaker: Kitchen
-        media_player.office_speaker: Office
-      heos_exclude:
-      - Game
-      - PlayStation 5
-      - Media Player
-      - TV Audio
+      icon: mdi:home-theater
+      artwork: material
+      info: scroll
+      hide:
+        power: true
+      card_mod:
+        style: |
+          :host {
+            margin-bottom: -8px !important;
+            --mmp-border-radius: 12px 12px 0 0 !important;
+          }
       grid_options:
         columns: full
-        rows: 2
+    - type: custom:mini-media-player
+      entity: media_player.home_theater_2
+      name: Receiver
+      hide:
+        icon: true
+        name: true
+        info: true
+        volume: true
+        controls: true
+        progress: true
+        sound_mode: false
+      card_mod:
+        style:
+          .: |
+            :host {
+              --mmp-unit: 34px !important;
+              --mmp-border-radius: 0 0 12px 12px !important;
+            }
+            .mmp-player {
+              padding-top: 2px !important;
+              padding-bottom: 2px !important;
+            }
+            .mmp-player__core {
+              height: 36px !important;
+              min-height: 0 !important;
+            }
+          mmp-powerstrip$: |
+            {% if not is_state('media_player.home_theater_2', 'on') %}
+            mmp-source-menu, mmp-sound-menu { display: none !important; }
+            :host { justify-content: flex-end !important; width: 100% !important; }
+            {% endif %}
+      grid_options:
+        columns: full
+        rows: auto
   - type: grid
     cards:
     - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
       icon: mdi:speaker
-      artwork: cover
+      artwork: material
       info: scroll
       hide:
         power: true
@@ -745,7 +796,7 @@ views:
       entity: media_player.office_speaker
       name: Office
       icon: mdi:speaker-wireless
-      artwork: cover
+      artwork: material
       info: scroll
       hide:
         power: true

@@ -2550,12 +2550,12 @@ views:
         days: 30
         stat: max
       grid_options:
-        columns: 12
+        columns: 7
     - type: custom:popup-tile-card
       title: Electricity price
       width: 900px
       grid_options:
-        columns: 12
+        columns: 17
       inline: &price_timeline
         type: custom:price-timeline-card
         price: sensor.electricity_price_timeline

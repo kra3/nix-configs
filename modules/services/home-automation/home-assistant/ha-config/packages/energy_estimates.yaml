@@ -1,0 +1,274 @@
+# Estimated power for what has no meter: every bulb and a few appliances (https://github.com/bramstroker/homeassistant-powercalc).
+# Bulbs use library profiles keyed by manufacturer/model; the rest are fixed per state from datasheets, marked approx. on the dashboard.
+powercalc:
+  create_standby_group: false
+  ignore_unavailable_state: true
+  discovery:
+    enabled: false
+  sensors:
+    - create_group: Lights
+      entities:
+        - create_group: Lights Bedroom
+          entities:
+            - entity_id: light.bedroom_wardrobe_light_1
+              manufacturer: signify
+              model: LWW001
+            - entity_id: light.bedroom_wardrobe_light_2
+              manufacturer: signify
+              model: LWA011
+        - create_group: Lights Kitchen
+          entities:
+            - entity_id: light.kitchen_light_1
+              manufacturer: ikea
+              model: LED2005R5
+            - entity_id: light.kitchen_light_2
+              manufacturer: ikea
+              model: LED2005R5
+            - entity_id: light.kitchen_light_3
+              manufacturer: ikea
+              model: LED2005R5
+        - create_group: Lights Kitchen Dining
+          entities:
+            - entity_id: light.kitchen_dining_light_1
+              manufacturer: signify
+              model: LWW001
+            - entity_id: light.kitchen_dining_light_2
+              manufacturer: signify
+              model: LWW001
+        - create_group: Lights Dining Room
+          entities:
+            - entity_id: light.dining_room_light_1
+              manufacturer: signify
+              model: LWU002
+            - entity_id: light.dining_room_light_2
+              manufacturer: signify
+              model: LWU002
+            - entity_id: light.dining_room_light_3
+              manufacturer: signify
+              model: LWU002
+        - create_group: Lights Living Room
+          entities:
+            - entity_id: light.living_room_light_1
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_2
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_3
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_4
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_5
+              manufacturer: signify
+              model: LCG006
+        - create_group: Lights Office
+          entities:
+            - entity_id: light.office_room_light
+              manufacturer: ikea
+              model: LED1924G9
+        - create_group: Lights Hall
+          entities:
+            - entity_id: light.hallway_hall_lights
+              name: Hall dimmer
+              linear:
+                min_power: 0.5
+                max_power: 50
+
+    - create_group: Estimated devices
+      entities:
+        - entity_id: media_player.lg_webos_tv_oled77c35la
+          name: LG TV
+          standby_power: 2
+          fixed:
+            power: 126
+            states_power:
+              source|HDMI 1: 239
+              source|HDMI 3: 239
+              source|HDMI 4: 239
+              source|Litefin: 239
+              source|Moonfin: 239
+              source|PlayStation 5: 239
+        - entity_id: media_player.home_theater_2
+          name: Marantz NR1711
+          standby_power: 3.7
+          fixed:
+            power: 40
+        - entity_id: camera.ranger_duo_fxd
+          name: Camera Duo
+          standby_power: 0
+          fixed:
+            power: 5.65
+        - entity_id: camera.ranger_uno
+          name: Camera Uno
+          standby_power: 0
+          fixed:
+            power: 5
+        - entity_id: media_player.kitchen_speaker
+          name: Kitchen speaker
+          standby_power: 0
+          fixed:
+            power: 2
+        - power_sensor_id: sensor.fridge_power
+          energy_sensor_id: sensor.fridge_energy
+
+template:
+  - sensor:
+      # Electrolux EN3441JOX label: 0.844 kWh/day = 35.2 W average; swap for a plug reading
+      - name: "Fridge Power"
+        unique_id: fridge_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "35.2"
+
+      - name: "Energy Cost Month"
+        unique_id: energy_cost_month
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: >-
+          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
+
+      - name: "Cost Today All lights"
+        unique_id: cost_today_all_lights
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights') }}"
+        attributes:
+          power: "{{ states('sensor.lights_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Bedroom"
+        unique_id: cost_today_bedroom
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_bedroom') }}"
+        attributes:
+          power: "{{ states('sensor.lights_bedroom_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen"
+        unique_id: cost_today_kitchen
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen') }}"
+        attributes:
+          power: "{{ states('sensor.lights_kitchen_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen dining"
+        unique_id: cost_today_kitchen_dining
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen_dining') }}"
+        attributes:
+          power: "{{ states('sensor.lights_kitchen_dining_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Dining room"
+        unique_id: cost_today_dining_room
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_dining_room') }}"
+        attributes:
+          power: "{{ states('sensor.lights_dining_room_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Living room"
+        unique_id: cost_today_living_room
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_living_room') }}"
+        attributes:
+          power: "{{ states('sensor.lights_living_room_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Office"
+        unique_id: cost_today_office
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_office') }}"
+        attributes:
+          power: "{{ states('sensor.lights_office_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Hall"
+        unique_id: cost_today_hall
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_hall') }}"
+        attributes:
+          power: "{{ states('sensor.lights_hall_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today TV"
+        unique_id: cost_today_tv
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lg_tv') }}"
+        attributes:
+          power: "{{ states('sensor.lg_tv_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Receiver"
+        unique_id: cost_today_receiver
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('marantz_nr1711') }}"
+        attributes:
+          power: "{{ states('sensor.marantz_nr1711_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Camera Duo"
+        unique_id: cost_today_camera_duo
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('camera_duo') }}"
+        attributes:
+          power: "{{ states('sensor.camera_duo_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Camera Uno"
+        unique_id: cost_today_camera_uno
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('camera_uno') }}"
+        attributes:
+          power: "{{ states('sensor.camera_uno_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Fridge"
+        unique_id: cost_today_fridge
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('fridge') }}"
+        attributes:
+          power: "{{ states('sensor.fridge_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen speaker"
+        unique_id: cost_today_kitchen_speaker
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('kitchen_speaker') }}"
+        attributes:
+          power: "{{ states('sensor.kitchen_speaker_power') | float(0) | round(1) }} W"
+
+sensor:
+  - platform: integration
+    source: sensor.fridge_power
+    name: Fridge Energy
+    unique_id: fridge_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+
+utility_meter:
+  lg_tv_energy_day:
+    source: sensor.lg_tv_energy
+    cycle: daily
+  marantz_nr1711_energy_day:
+    source: sensor.marantz_nr1711_energy
+    cycle: daily
+  camera_duo_energy_day:
+    source: sensor.camera_duo_energy
+    cycle: daily
+  camera_uno_energy_day:
+    source: sensor.camera_uno_energy
+    cycle: daily
+  fridge_energy_day:
+    source: sensor.fridge_energy
+    cycle: daily
+  kitchen_speaker_energy_day:
+    source: sensor.kitchen_speaker_energy
+    cycle: daily

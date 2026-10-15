@@ -23,6 +23,12 @@ input_text:
   sutala_cost_history:
     name: Sutala cost by month
     max: 255
+  lights_cost_history:
+    name: Lights cost by month
+    max: 255
+  devices_cost_history:
+    name: Devices cost by month
+    max: 255
 
 utility_meter:
   washer_energy_day:
@@ -52,6 +58,45 @@ utility_meter:
   sutala_energy_month:
     source: sensor.power_monitor_1_energy
     cycle: monthly
+  lights_energy_day:
+    source: sensor.lights_energy
+    cycle: daily
+  lights_energy_week:
+    source: sensor.lights_energy
+    cycle: weekly
+  lights_energy_month:
+    source: sensor.lights_energy
+    cycle: monthly
+  devices_energy_day:
+    source: sensor.estimated_devices_energy
+    cycle: daily
+  devices_energy_week:
+    source: sensor.estimated_devices_energy
+    cycle: weekly
+  devices_energy_month:
+    source: sensor.estimated_devices_energy
+    cycle: monthly
+  lights_bedroom_energy_day:
+    source: sensor.lights_bedroom_energy
+    cycle: daily
+  lights_kitchen_energy_day:
+    source: sensor.lights_kitchen_energy
+    cycle: daily
+  lights_kitchen_dining_energy_day:
+    source: sensor.lights_kitchen_dining_energy
+    cycle: daily
+  lights_dining_room_energy_day:
+    source: sensor.lights_dining_room_energy
+    cycle: daily
+  lights_living_room_energy_day:
+    source: sensor.lights_living_room_energy
+    cycle: daily
+  lights_office_energy_day:
+    source: sensor.lights_office_energy
+    cycle: daily
+  lights_hall_energy_day:
+    source: sensor.lights_hall_energy
+    cycle: daily
 
 # Endpoint and response shape from https://github.com/danielholm/eon_elpris
 rest:
@@ -119,13 +164,35 @@ template:
           quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('sutala') }}"
           last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('sutala') }}"
 
-      - name: "Plugs Cost Today"
-        unique_id: plugs_cost_today
+      - name: "Lights Cost"
+        unique_id: lights_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('lights') }}"
+        attributes:
+          today: "{% from 'laundry.jinja' import today %}{{ today('lights') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('lights') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('lights') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('lights') }}"
+
+      - name: "Devices Cost"
+        unique_id: devices_cost
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import month %}{{ month('devices') }}"
+        attributes:
+          today: "{% from 'laundry.jinja' import today %}{{ today('devices') }}"
+          week: "{% from 'laundry.jinja' import week %}{{ week('devices') }}"
+          quarter: "{% from 'laundry.jinja' import quarter %}{{ quarter('devices') }}"
+          last_month: "{% from 'laundry.jinja' import last_month %}{{ last_month('devices') }}"
+
+      - name: "Energy Cost Today"
+        unique_id: energy_cost_today
         device_class: monetary
         unit_of_measurement: SEK
         icon: mdi:cash-clock
         state: >-
           {% from 'laundry.jinja' import today %}
-          {{ (today('washer') | float(0) + today('dryer') | float(0) + today('sutala') | float(0)) | round(2) }}
+          {{ (today('washer') | float(0) + today('dryer') | float(0) + today('sutala') | float(0) + today('lights') | float(0) + today('devices') | float(0)) | round(2) }}
         attributes:
-          covers: Washer, dryer and the Sutala plug, not the whole home
+          covers: Washer, dryer, home server, lights and estimated devices, not the whole home

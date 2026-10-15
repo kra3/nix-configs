@@ -45,6 +45,8 @@
               - washer
               - dryer
               - sutala
+              - lights
+              - devices
             sequence:
               - action: input_text.set_value
                 target:

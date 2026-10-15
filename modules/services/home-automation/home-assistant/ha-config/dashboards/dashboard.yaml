@@ -341,6 +341,7 @@ views:
         card_mod:
           style: |
             ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
               border-bottom-left-radius: 0;
               border-bottom-right-radius: 0;
               box-shadow: none;
@@ -352,12 +353,13 @@ views:
         entity: weather.forecast_vasudha
         forecast_type: daily
         secondary_info_attribute: wind_speed
-        forecast_slots: 7
+        forecast_slots: 5
         tap_action:
           action: more-info
         card_mod:
           style: |
             ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
               border-top-left-radius: 0;
               border-top-right-radius: 0;
               box-shadow: none;
@@ -585,24 +587,126 @@ views:
       tap_action:
         action: navigate
         navigation_path: /dashboard-home/dash-energy
-    - type: tile
+    - type: custom:health-metric-card
       entity: sensor.electricity_price_per_kwh
       name: Price per kWh
       icon: mdi:cash
+      color: "#79c0ff"
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
       grid_options:
-        columns: 12
-    - type: tile
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
       icon: mdi:cash-clock
+      color: "#7fdbca"
+      unit: kr
+      decimals: 2
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: max
+      secondary:
+        entity: sensor.energy_cost_month
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
       grid_options:
-        columns: 12
-    - type: tile
-      entity: sensor.lights_power
-      name: Lights now (approx.)
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:health-metric-card
+      entity: sensor.lights_cost
+      name: Lights this month (approx.)
       icon: mdi:lightbulb-group
+      color: "#c3e88d"
+      unit: kr
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
+      secondary:
+        entity: sensor.lights_power
+        prefix: "Now "
+        unit: " W"
+        decimals: 1
+      grid_options:
+        columns: 8
+      visibility:
+      - condition: screen
+        media_query: "(min-width: 700px)"
+    - type: custom:health-metric-card
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh
+      icon: mdi:cash
+      color: "#79c0ff"
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
       grid_options:
         columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:health-metric-card
+      entity: sensor.energy_cost_today
+      name: Energy today
+      icon: mdi:cash-clock
+      color: "#7fdbca"
+      unit: kr
+      decimals: 2
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: max
+      secondary:
+        entity: sensor.energy_cost_month
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
+    - type: custom:health-metric-card
+      entity: sensor.lights_cost
+      name: Lights this month (approx.)
+      icon: mdi:lightbulb-group
+      color: "#c3e88d"
+      unit: kr
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
+      secondary:
+        entity: sensor.lights_power
+        prefix: "Now "
+        unit: " W"
+        decimals: 1
+      grid_options:
+        columns: 12
+      visibility:
+      - condition: screen
+        media_query: "(max-width: 699px)"
   - type: grid
     cards:
     - type: conditional

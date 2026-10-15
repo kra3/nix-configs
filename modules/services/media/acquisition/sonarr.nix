@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.sonarr = {
         containerConfig = {
-          image = "lscr.io/linuxserver/sonarr:4.0.20.3014-ls328";
+          image = "lscr.io/linuxserver/sonarr:4.0.20.3014-ls329";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

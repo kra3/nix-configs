@@ -498,6 +498,11 @@ function sparkSvg(series, type, days, color) {
 
 const STYLE = `
   :host { display: block; }
+  :host([stack]) ha-card { box-shadow: none; }
+  :host([stack="top"]) ha-card { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: var(--divider-color); }
+  :host([stack="mid"]) ha-card { border-radius: 0; border-top: none; border-bottom-color: var(--divider-color); }
+  :host([stack="bot"]) ha-card { border-top-left-radius: 0; border-top-right-radius: 0; border-top: none; }
+  :host([stack="mid"]), :host([stack="bot"]) { margin-top: calc(-1 * var(--vertical-stack-card-gap, var(--stack-card-gap, 8px))); }
   ha-card { overflow: hidden; }
   .card { padding: 14px 16px 12px; cursor: pointer; outline: none; }
   .card:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent); }
@@ -607,6 +612,8 @@ class HealthMetricCard extends HTMLElement {
     this._data = {};
     this._lastFetch = 0;
     this._html = "";
+    if (this._config.stack) this.setAttribute("stack", this._config.stack);
+    else this.removeAttribute("stack");
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
   }
 

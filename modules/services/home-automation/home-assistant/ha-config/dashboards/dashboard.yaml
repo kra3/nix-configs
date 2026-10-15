@@ -514,13 +514,13 @@ views:
             --vertical-stack-card-gap: 0px;
             --stack-card-gap: 0px;
           }
-          #root { height: 100%; }
       cards:
       - type: heading
         heading: Climate
         heading_style: title
       - type: custom:health-metric-card
         entity: sensor.average_temperature
+        stack: top
         name: Temperature
         icon: mdi:thermometer
         color: "#ff9f6b"
@@ -539,18 +539,9 @@ views:
             entities:
             - sensor.average_temperature
             days: 7
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              box-shadow: none;
-              border-bottom-left-radius: 0;
-              border-bottom-right-radius: 0;
-              border-bottom-color: var(--divider-color);
-              height: 100%;
-            }
       - type: custom:health-metric-card
         entity: sensor.average_humidity
+        stack: mid
         name: Humidity
         icon: mdi:water-percent
         color: "#6bb6ff"
@@ -569,18 +560,9 @@ views:
             entities:
             - sensor.average_humidity
             days: 7
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              box-shadow: none;
-              border-radius: 0;
-              border-top: none;
-              border-bottom-color: var(--divider-color);
-              height: 100%;
-            }
       - type: custom:health-metric-card
         entity: sensor.average_illuminance
+        stack: bot
         name: Illuminance
         icon: mdi:brightness-5
         color: "#ffd86b"
@@ -599,16 +581,6 @@ views:
             entities:
             - sensor.average_illuminance
             days: 7
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              box-shadow: none;
-              border-top-left-radius: 0;
-              border-top-right-radius: 0;
-              border-top: none;
-              height: 100%;
-            }
     - type: vertical-stack
       grid_options:
         columns: 12
@@ -618,7 +590,6 @@ views:
             --vertical-stack-card-gap: 0px;
             --stack-card-gap: 0px;
           }
-          #root { height: 100%; }
       cards:
       - type: heading
         heading: Electricity
@@ -629,6 +600,7 @@ views:
           navigation_path: /dashboard-home/dash-energy
       - type: custom:health-metric-card
         entity: sensor.electricity_price_per_kwh
+        stack: top
         name: Price per kWh
         icon: mdi:cash
         color: "#79c0ff"
@@ -642,18 +614,9 @@ views:
           mode: range
           decimals: 2
           unit: auto
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              box-shadow: none;
-              border-bottom-left-radius: 0;
-              border-bottom-right-radius: 0;
-              border-bottom-color: var(--divider-color);
-              height: 100%;
-            }
       - type: custom:health-metric-card
         entity: sensor.energy_cost_today
+        stack: bot
         name: Energy today
         icon: mdi:cash-clock
         color: "#7fdbca"
@@ -669,16 +632,6 @@ views:
           prefix: "Now "
           unit: " W"
           decimals: 0
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              box-shadow: none;
-              border-top-left-radius: 0;
-              border-top-right-radius: 0;
-              border-top: none;
-              height: 100%;
-            }
   - type: grid
     cards:
     - type: conditional

@@ -8,7 +8,7 @@ resources:
     type: module
   - url: /local/community/streamline-card/streamline-card.js?v=@streamline-card@
     type: module
-  - url: /local/health-metric-card.js?v=29
+  - url: /local/health-metric-card.js?v=30
     type: module
   - url: /local/download-control-card.js?v=2
     type: module

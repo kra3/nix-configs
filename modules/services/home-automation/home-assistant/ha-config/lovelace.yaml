@@ -8,7 +8,7 @@ resources:
     type: module
   - url: /local/community/streamline-card/streamline-card.js?v=@streamline-card@
     type: module
-  - url: /local/health-metric-card.js?v=26
+  - url: /local/health-metric-card.js?v=30
     type: module
   - url: /local/download-control-card.js?v=2
     type: module
@@ -28,7 +28,7 @@ resources:
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module
-  - url: /local/popup-tile-card.js?v=2
+  - url: /local/popup-tile-card.js?v=4
     type: module
   - url: /local/room-tile-card.js?v=2
     type: module
@@ -43,6 +43,10 @@ resources:
   - url: /local/community/apexcharts-card/apexcharts-card.js?v=@apexcharts-card@
     type: module
   - url: /local/community/card-mod/card-mod.js?v=@card-mod@
+    type: module
+  - url: /local/community/horizon-card/lovelace-horizon-card.js?v=@horizon-card@
+    type: module
+  - url: /local/community/ha-price-timeline-card/price-timeline-card.js?v=@ha-price-timeline-card@
     type: module
   - url: /local/community/lovelace-auto-entities/auto-entities.js?v=@lovelace-auto-entities@
     type: module

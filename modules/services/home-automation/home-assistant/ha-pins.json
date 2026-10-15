@@ -138,6 +138,20 @@
       "subpath": "card-mod.js",
       "hash": "sha256-16aA9VaSuWZ1i9UBGp9vb7N1H5vfcLOiqppjPoqphM0="
     },
+    "horizon-card": {
+      "repo": "rejuvenate/lovelace-horizon-card",
+      "version": "v1.5.3",
+      "kind": "file",
+      "asset": "lovelace-horizon-card.js",
+      "hash": "sha256-dl9qDVzIfl6lVhAQr/EVWtYuUxhmZT9QkmBfLOk0VDM="
+    },
+    "ha-price-timeline-card": {
+      "repo": "Neisi/ha-price-timeline-card",
+      "version": "v1.3.0",
+      "kind": "file",
+      "asset": "price-timeline-card.js",
+      "hash": "sha256-sJYEzmzE70bZfE0sIvofh9HDImzl9x8kt498b5+BsMU="
+    },
     "lovelace-auto-entities": {
       "repo": "thomasloven/lovelace-auto-entities",
       "version": "v1.16.1",

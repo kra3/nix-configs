@@ -130,6 +130,16 @@ template:
         state: >-
           {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
 
+      - name: "Home Power Estimate"
+        unique_id: home_power_estimate
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: >-
+          {{ (states('sensor.power_monitor_1_power') | float(0) + states('sensor.washer_power_monitor_power') | float(0) + states('sensor.dryer_power_monitor_power') | float(0) + states('sensor.lights_power') | float(0) + states('sensor.estimated_devices_power') | float(0)) | round(0) }}
+        attributes:
+          covers: Washer, dryer, home server, lights and estimated devices, not the whole home
+
       - name: "Cost Today All lights"
         unique_id: cost_today_all_lights
         device_class: monetary

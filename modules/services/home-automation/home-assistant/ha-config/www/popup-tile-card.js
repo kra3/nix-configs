@@ -19,7 +19,7 @@ const POPUP_STYLE = `
 
 class PopupTileCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !config.entity || !config.popup) throw new Error("popup-tile-card: entity and popup are required");
+    if (!config || !config.popup || !(config.entity || config.inline)) throw new Error("popup-tile-card: popup and entity (or inline) are required");
     this._config = config;
     this._html = "";
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -30,17 +30,37 @@ class PopupTileCard extends HTMLElement {
   }
 
   getGridOptions() {
-    return { columns: 6, min_columns: 3 };
+    return this._config && this._config.inline ? { columns: "full" } : { columns: 6, min_columns: 3 };
   }
 
   set hass(hass) {
     this._hass = hass;
     if (this._popupCard) this._popupCard.hass = hass;
+    if (this._inlineCard) this._inlineCard.hass = hass;
     if (this._config) this._render();
+  }
+
+  async _renderInline() {
+    if (this._inlineStarted) return;
+    this._inlineStarted = true;
+    const helpers = await window.loadCardHelpers();
+    const card = await helpers.createCardElement(this._config.inline);
+    card.hass = this._hass;
+    this._inlineCard = card;
+    this.shadowRoot.innerHTML = `<style>:host { display: block; cursor: pointer; height: 100%; } ha-card, :host > * { height: 100%; box-sizing: border-box; }</style>`;
+    this.shadowRoot.appendChild(card);
+    this.shadowRoot.addEventListener("click", (e) => {
+      const hit = e.composedPath().some((n) => n.tagName && /^(INPUT|BUTTON|LABEL|SELECT)$/.test(n.tagName));
+      if (!hit) this._open();
+    });
   }
 
   _render() {
     const c = this._config;
+    if (c.inline) {
+      this._renderInline();
+      return;
+    }
     const s = this._hass.states[c.entity];
     const state = s ? s.state : "unavailable";
     const html = `<ha-card><div class="tile" tabindex="0"><ha-icon class="icon" icon="${c.icon || "mdi:format-list-bulleted"}"></ha-icon><div><div class="name"></div><div class="state"></div></div></div></ha-card>`;

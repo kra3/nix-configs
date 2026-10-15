@@ -498,6 +498,11 @@ function sparkSvg(series, type, days, color) {
 
 const STYLE = `
   :host { display: block; }
+  :host([stack]) ha-card { box-shadow: none; }
+  :host([stack="top"]) ha-card { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: var(--divider-color); }
+  :host([stack="mid"]) ha-card { border-radius: 0; border-top: none; border-bottom-color: var(--divider-color); }
+  :host([stack="bot"]) ha-card { border-top-left-radius: 0; border-top-right-radius: 0; border-top: none; }
+  :host([stack="mid"]), :host([stack="bot"]) { margin-top: calc(-1 * var(--vertical-stack-card-gap, var(--stack-card-gap, 8px))); }
   ha-card { overflow: hidden; }
   .card { padding: 14px 16px 12px; cursor: pointer; outline: none; }
   .card:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent); }
@@ -524,6 +529,13 @@ const STYLE = `
   .vv { white-space: nowrap; }
   .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
+  .bd { margin-top: 2px; }
+  .bd .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
+  .bd .bar span { min-width: 2px; }
+  .bd .lg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 10px; margin-top: 4px; font-size: 11px; line-height: 1.35; color: var(--secondary-text-color); }
+  .bd .lg div { display: flex; align-items: center; gap: 5px; white-space: nowrap; min-width: 0; }
+  .bd .lg i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c); }
+  .bd .lg b { margin-left: auto; font-weight: 600; color: var(--primary-text-color); }
   .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }
   .sc ha-icon { --mdc-icon-size: 16px; color: var(--c); }
   .footer { display: grid; margin-top: 12px; border-top: 1px solid var(--divider-color); }
@@ -600,6 +612,8 @@ class HealthMetricCard extends HTMLElement {
     this._data = {};
     this._lastFetch = 0;
     this._html = "";
+    if (this._config.stack) this.setAttribute("stack", this._config.stack);
+    else this.removeAttribute("stack");
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
   }
 
@@ -852,6 +866,19 @@ class HealthMetricCard extends HTMLElement {
       .filter(Boolean);
     const items = itemHtml.join("");
 
+    let bdHtml = "";
+    if (c.breakdown && st) {
+      const parts = c.breakdown
+        .map((b) => ({ b, v: parseFloat(st.attributes[b.attribute]) }))
+        .filter((x) => isFinite(x.v) && x.v > 0);
+      if (parts.length) {
+        const dec = c.breakdown_decimals !== undefined ? c.breakdown_decimals : 2;
+        bdHtml =
+          `<div class="bd"><div class="bar">${parts.map((x) => `<span style="flex:${x.v};background:${x.b.color}" title="${x.b.name}"></span>`).join("")}</div>` +
+          `<div class="lg">${parts.map((x) => `<div style="--c:${x.b.color}"><i></i>${x.b.name}<b>${fmt(x.v, dec, lang)}</b></div>`).join("")}</div></div>`;
+      }
+    }
+
     const date = c.show_date === false ? "" : this._metaDate();
     const html =
       `<style>${STYLE}</style><ha-card style="--accent:${accent}">` +
@@ -860,6 +887,7 @@ class HealthMetricCard extends HTMLElement {
       `<span class="meta">${date}<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>` +
       `<div class="body"><div class="left"><div class="hero">${heroHtml}</div>${under}</div>` +
       `<div class="spark">${spark}</div></div>` +
+      bdHtml +
       (items ? `<div class="footer" style="grid-template-columns:repeat(${itemHtml.length},1fr)">${items}</div>` : "") +
       `</div></ha-card>`;
 

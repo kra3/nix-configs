@@ -123,6 +123,118 @@ template:
         state_class: measurement
         state: "35.2"
 
+      - name: "Cost Today All lights"
+        unique_id: cost_today_all_lights
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights') }}"
+        attributes:
+          power: "{{ states('sensor.lights_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Bedroom"
+        unique_id: cost_today_bedroom
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_bedroom') }}"
+        attributes:
+          power: "{{ states('sensor.lights_bedroom_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen"
+        unique_id: cost_today_kitchen
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen') }}"
+        attributes:
+          power: "{{ states('sensor.lights_kitchen_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen dining"
+        unique_id: cost_today_kitchen_dining
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen_dining') }}"
+        attributes:
+          power: "{{ states('sensor.lights_kitchen_dining_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Dining room"
+        unique_id: cost_today_dining_room
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_dining_room') }}"
+        attributes:
+          power: "{{ states('sensor.lights_dining_room_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Living room"
+        unique_id: cost_today_living_room
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_living_room') }}"
+        attributes:
+          power: "{{ states('sensor.lights_living_room_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Office"
+        unique_id: cost_today_office
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_office') }}"
+        attributes:
+          power: "{{ states('sensor.lights_office_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Hall"
+        unique_id: cost_today_hall
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lights_hall') }}"
+        attributes:
+          power: "{{ states('sensor.lights_hall_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today TV"
+        unique_id: cost_today_tv
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('lg_tv') }}"
+        attributes:
+          power: "{{ states('sensor.lg_tv_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Receiver"
+        unique_id: cost_today_receiver
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('marantz_nr1711') }}"
+        attributes:
+          power: "{{ states('sensor.marantz_nr1711_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Camera Duo"
+        unique_id: cost_today_camera_duo
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('camera_duo') }}"
+        attributes:
+          power: "{{ states('sensor.camera_duo_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Camera Uno"
+        unique_id: cost_today_camera_uno
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('camera_uno') }}"
+        attributes:
+          power: "{{ states('sensor.camera_uno_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Fridge"
+        unique_id: cost_today_fridge
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('fridge') }}"
+        attributes:
+          power: "{{ states('sensor.fridge_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Kitchen speaker"
+        unique_id: cost_today_kitchen_speaker
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import today %}{{ today('kitchen_speaker') }}"
+        attributes:
+          power: "{{ states('sensor.kitchen_speaker_power') | float(0) | round(1) }} W"
+
 sensor:
   - platform: integration
     source: sensor.fridge_power
@@ -133,3 +245,23 @@ sensor:
     method: left
     max_sub_interval:
       minutes: 10
+
+utility_meter:
+  lg_tv_energy_day:
+    source: sensor.lg_tv_energy
+    cycle: daily
+  marantz_nr1711_energy_day:
+    source: sensor.marantz_nr1711_energy
+    cycle: daily
+  camera_duo_energy_day:
+    source: sensor.camera_duo_energy
+    cycle: daily
+  camera_uno_energy_day:
+    source: sensor.camera_uno_energy
+    cycle: daily
+  fridge_energy_day:
+    source: sensor.fridge_energy
+    cycle: daily
+  kitchen_speaker_energy_day:
+    source: sensor.kitchen_speaker_energy
+    cycle: daily

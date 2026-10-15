@@ -195,4 +195,4 @@ template:
           {% from 'laundry.jinja' import today %}
           {{ (today('washer') | float(0) + today('dryer') | float(0) + today('sutala') | float(0) + today('lights') | float(0) + today('devices') | float(0)) | round(2) }}
         attributes:
-          covers: Washer, dryer, Sutala, lights and estimated devices, not the whole home
+          covers: Washer, dryer, home server, lights and estimated devices, not the whole home

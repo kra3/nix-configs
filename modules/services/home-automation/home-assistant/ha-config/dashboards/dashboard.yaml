@@ -2571,55 +2571,79 @@ views:
       grid_options:
         columns: 12
     - type: heading
-      heading: Lights by room (approx.)
+      heading: Lights by room, cost today (approx.)
       icon: mdi:lightbulb-group
       heading_style: title
     - type: tile
-      entity: sensor.lights_power
+      entity: sensor.cost_today_all_lights
       name: All lights
       icon: mdi:lightbulb-group
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 12
     - type: tile
-      entity: sensor.lights_bedroom_power
+      entity: sensor.cost_today_bedroom
       name: Bedroom
       icon: mdi:bed
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_kitchen_power
+      entity: sensor.cost_today_kitchen
       name: Kitchen
       icon: mdi:countertop
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_kitchen_dining_power
+      entity: sensor.cost_today_kitchen_dining
       name: Kitchen dining
       icon: mdi:table-chair
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_dining_room_power
+      entity: sensor.cost_today_dining_room
       name: Dining room
       icon: mdi:silverware-fork-knife
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_living_room_power
+      entity: sensor.cost_today_living_room
       name: Living room
       icon: mdi:sofa
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_office_power
+      entity: sensor.cost_today_office
       name: Office
       icon: mdi:desk
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.lights_hall_power
+      entity: sensor.cost_today_hall
       name: Hall
       icon: mdi:door
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 12
   - type: grid
@@ -2650,48 +2674,66 @@ views:
         icon: mdi:tumble-dryer
         entity: sensor.dryer_cost
         color: "#ffb06b"
-      - name: Sutala
+      - name: Home server
         icon: mdi:flash
         entity: sensor.sutala_cost
         color: "#ffd86b"
     - type: heading
-      heading: Devices (approx.)
+      heading: Devices, cost today (approx.)
       icon: mdi:television
       heading_style: title
     - type: tile
-      entity: sensor.lg_tv_power
+      entity: sensor.cost_today_tv
       name: TV
       icon: mdi:television
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.marantz_nr1711_power
+      entity: sensor.cost_today_receiver
       name: Receiver
       icon: mdi:speaker
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.camera_duo_power
+      entity: sensor.cost_today_camera_duo
       name: Camera Duo
       icon: mdi:cctv
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.camera_uno_power
+      entity: sensor.cost_today_camera_uno
       name: Camera Uno
       icon: mdi:cctv
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.fridge_power
+      entity: sensor.cost_today_fridge
       name: Fridge
       icon: mdi:fridge
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.kitchen_speaker_power
+      entity: sensor.cost_today_kitchen_speaker
       name: Kitchen speaker
       icon: mdi:speaker
+      state_content:
+      - state
+      - power
       grid_options:
         columns: 6
 - type: sections

@@ -2485,54 +2485,55 @@ views:
       heading: Now
       icon: mdi:flash
       heading_style: title
-    - type: tile
+    - type: custom:health-metric-card
       entity: sensor.electricity_price_per_kwh
       name: Price per kWh
       icon: mdi:cash
+      color: "#79c0ff"
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
       grid_options:
         columns: 12
-    - type: tile
+    - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
       icon: mdi:cash-clock
-      grid_options:
-        columns: 12
-    - type: tile
-      entity: sensor.lights_power
-      name: Lights now (approx.)
-      icon: mdi:lightbulb-group
-      grid_options:
-        columns: 12
-    - type: tile
-      entity: sensor.estimated_devices_power
-      name: Devices now (approx.)
-      icon: mdi:television
-      grid_options:
-        columns: 12
-  - type: grid
-    column_span: 1
-    cards:
-    - type: heading
-      heading: Energy, estimated
-      icon: mdi:lightning-bolt
-      heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.lights_energy
-      name: Lights energy today
-      icon: mdi:lightbulb-group
-      color: "#c3e88d"
+      color: "#7fdbca"
+      unit: kr
       decimals: 2
-      hero_from: chart
       show_date: false
       chart:
         type: bar
         days: 14
-        stat: change
+        stat: max
       secondary:
-        entity: sensor.lights_cost
+        entity: sensor.energy_cost_month
         prefix: "This month "
         unit: " kr"
         decimals: 2
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.lights_cost
+      name: Lights this month (approx.)
+      icon: mdi:lightbulb-group
+      color: "#c3e88d"
+      unit: kr
+      decimals: 2
+      show_date: false
+      chart:
+        type: line
+        days: 30
+        stat: max
+      secondary:
+        entity: sensor.lights_power
+        prefix: "Now "
+        unit: " W"
+        decimals: 1
       popup:
         graphs:
         - name: Lights energy per day
@@ -2544,22 +2545,22 @@ views:
       grid_options:
         columns: 12
     - type: custom:health-metric-card
-      entity: sensor.estimated_devices_energy
-      name: Devices energy today
+      entity: sensor.devices_cost
+      name: Devices this month (approx.)
       icon: mdi:television
       color: "#c792ea"
+      unit: kr
       decimals: 2
-      hero_from: chart
       show_date: false
       chart:
-        type: bar
-        days: 14
-        stat: change
+        type: line
+        days: 30
+        stat: max
       secondary:
-        entity: sensor.devices_cost
-        prefix: "This month "
-        unit: " kr"
-        decimals: 2
+        entity: sensor.estimated_devices_power
+        prefix: "Now "
+        unit: " W"
+        decimals: 1
       popup:
         graphs:
         - name: Devices energy per day
@@ -2570,6 +2571,9 @@ views:
           type: bar
       grid_options:
         columns: 12
+  - type: grid
+    column_span: 1
+    cards:
     - type: heading
       heading: Lights by room, cost today (approx.)
       icon: mdi:lightbulb-group
@@ -2646,38 +2650,6 @@ views:
       - power
       grid_options:
         columns: 12
-  - type: grid
-    column_span: 1
-    cards:
-    - type: heading
-      heading: Cost, estimated
-      icon: mdi:cash
-      heading_style: title
-    - type: custom:plug-cost-card
-      grid_options:
-        columns: full
-      price: sensor.electricity_price_per_kwh
-      devices:
-      - name: Lights
-        icon: mdi:lightbulb-group
-        entity: sensor.lights_cost
-        color: "#c3e88d"
-      - name: Devices
-        icon: mdi:television
-        entity: sensor.devices_cost
-        color: "#c792ea"
-      - name: Washer
-        icon: mdi:washing-machine
-        entity: sensor.washer_cost
-        color: "#6ab7ff"
-      - name: Dryer
-        icon: mdi:tumble-dryer
-        entity: sensor.dryer_cost
-        color: "#ffb06b"
-      - name: Home server
-        icon: mdi:flash
-        entity: sensor.sutala_cost
-        color: "#ffd86b"
     - type: heading
       heading: Devices, cost today (approx.)
       icon: mdi:television
@@ -2736,6 +2708,38 @@ views:
       - power
       grid_options:
         columns: 6
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: custom:plug-cost-card
+      grid_options:
+        columns: full
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Lights
+        icon: mdi:lightbulb-group
+        entity: sensor.lights_cost
+        color: "#c3e88d"
+      - name: Devices
+        icon: mdi:television
+        entity: sensor.devices_cost
+        color: "#c792ea"
+      - name: Washer
+        icon: mdi:washing-machine
+        entity: sensor.washer_cost
+        color: "#6ab7ff"
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        entity: sensor.dryer_cost
+        color: "#ffb06b"
+      - name: Home server
+        icon: mdi:flash
+        entity: sensor.sutala_cost
+        color: "#ffd86b"
 - type: sections
   title: Laundry
   path: dash-laundry

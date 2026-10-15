@@ -123,6 +123,13 @@ template:
         state_class: measurement
         state: "35.2"
 
+      - name: "Energy Cost Month"
+        unique_id: energy_cost_month
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: >-
+          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
+
       - name: "Cost Today All lights"
         unique_id: cost_today_all_lights
         device_class: monetary

@@ -76,6 +76,13 @@
         "pydantic"
       ]
     },
+    "powercalc": {
+      "repo": "bramstroker/homeassistant-powercalc",
+      "version": "v1.26.0",
+      "kind": "zip",
+      "asset": "powercalc.zip",
+      "hash": "sha256-UNbjvQXQbym58sgb+qx5MoabKzs3uNk0ppQ1DkrHJiQ="
+    },
     "scene_presets": {
       "repo": "Hypfer/hass-scene_presets",
       "version": "2.4.0",

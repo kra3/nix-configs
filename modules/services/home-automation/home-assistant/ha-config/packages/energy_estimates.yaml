@@ -1,0 +1,111 @@
+# Estimated power for what has no meter: every bulb and a few appliances (https://github.com/bramstroker/homeassistant-powercalc).
+# Bulbs use library profiles keyed by manufacturer/model; the rest are fixed per state from datasheets, marked approx. on the dashboard.
+powercalc:
+  create_standby_group: false
+  discovery:
+    enabled: false
+  sensors:
+    - create_group: Lights
+      entities:
+        - create_group: Lights Bedroom
+          entities:
+            - entity_id: light.bedroom_wardrobe_light_1
+              manufacturer: signify
+              model: LWW001
+            - entity_id: light.bedroom_wardrobe_light_2
+              manufacturer: signify
+              model: LWA011
+        - create_group: Lights Kitchen
+          entities:
+            - entity_id: light.kitchen_light_1
+              manufacturer: ikea
+              model: LED2005R5
+            - entity_id: light.kitchen_light_2
+              manufacturer: ikea
+              model: LED2005R5
+            - entity_id: light.kitchen_light_3
+              manufacturer: ikea
+              model: LED2005R5
+        - create_group: Lights Kitchen Dining
+          entities:
+            - entity_id: light.kitchen_dining_light_1
+              manufacturer: signify
+              model: LWW001
+            - entity_id: light.kitchen_dining_light_2
+              manufacturer: signify
+              model: LWW001
+        - create_group: Lights Dining Room
+          entities:
+            - entity_id: light.dining_room_light_1
+              manufacturer: signify
+              model: LWU002
+            - entity_id: light.dining_room_light_2
+              manufacturer: signify
+              model: LWU002
+            - entity_id: light.dining_room_light_3
+              manufacturer: signify
+              model: LWU002
+        - create_group: Lights Living Room
+          entities:
+            - entity_id: light.living_room_light_1
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_2
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_3
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_4
+              manufacturer: signify
+              model: LCG006
+            - entity_id: light.living_room_light_5
+              manufacturer: signify
+              model: LCG006
+        - create_group: Lights Office
+          entities:
+            - entity_id: light.office_room_light
+              manufacturer: ikea
+              model: LED1924G9
+        - create_group: Lights Hall
+          entities:
+            - entity_id: light.hallway_hall_lights
+              name: Hall dimmer
+              linear:
+                min_power: 0.5
+                max_power: 50
+
+    - create_group: Estimated devices
+      entities:
+        - entity_id: media_player.lg_webos_tv_oled77c35la
+          name: LG TV
+          standby_power: 2
+          fixed:
+            power: 126
+            states_power:
+              source|HDMI 1: 239
+              source|HDMI 3: 239
+              source|HDMI 4: 239
+              source|Litefin: 239
+              source|Moonfin: 239
+              source|PlayStation 5: 239
+        - entity_id: media_player.home_theater_2
+          name: Marantz NR1711
+          standby_power: 3.7
+          fixed:
+            power: 40
+        - entity_id: camera.ranger_duo_fxd
+          name: Camera Duo
+          standby_power: 0
+          fixed:
+            power: 5.65
+        - entity_id: camera.ranger_uno
+          name: Camera Uno
+          standby_power: 0
+          fixed:
+            power: 5
+        - entity_id: media_player.kitchen
+          name: Surasa
+          standby_power: 0
+          fixed:
+            power: 2

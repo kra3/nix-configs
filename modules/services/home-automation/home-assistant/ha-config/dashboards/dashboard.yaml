@@ -561,6 +561,9 @@ views:
       heading: Electricity
       icon: mdi:flash
       heading_style: title
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-energy
     - type: tile
       entity: sensor.electricity_price_per_kwh
       name: Price per kWh
@@ -568,9 +571,15 @@ views:
       grid_options:
         columns: 12
     - type: tile
-      entity: sensor.plugs_cost_today
-      name: Plugs today
+      entity: sensor.energy_cost_today
+      name: Energy today
       icon: mdi:cash-clock
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.lights_power
+      name: Lights now (approx.)
+      icon: mdi:lightbulb-group
       grid_options:
         columns: 12
   - type: grid
@@ -2464,6 +2473,228 @@ views:
         entities:
         - entity: input_number.climate_moisture_limit
 - type: sections
+  title: Energy
+  path: dash-energy
+  icon: mdi:flash
+  max_columns: 2
+  sections:
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Now
+      icon: mdi:flash
+      heading_style: title
+    - type: tile
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh
+      icon: mdi:cash
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.energy_cost_today
+      name: Energy today
+      icon: mdi:cash-clock
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.lights_power
+      name: Lights now (approx.)
+      icon: mdi:lightbulb-group
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.estimated_devices_power
+      name: Devices now (approx.)
+      icon: mdi:television
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Energy, estimated
+      icon: mdi:lightning-bolt
+      heading_style: title
+    - type: custom:health-metric-card
+      entity: sensor.lights_energy
+      name: Lights energy today
+      icon: mdi:lightbulb-group
+      color: "#c3e88d"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.lights_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Lights energy per day
+          entities:
+          - sensor.lights_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+    - type: custom:health-metric-card
+      entity: sensor.estimated_devices_energy
+      name: Devices energy today
+      icon: mdi:television
+      color: "#c792ea"
+      decimals: 2
+      hero_from: chart
+      show_date: false
+      chart:
+        type: bar
+        days: 14
+        stat: change
+      secondary:
+        entity: sensor.devices_cost
+        prefix: "This month "
+        unit: " kr"
+        decimals: 2
+      popup:
+        graphs:
+        - name: Devices energy per day
+          entities:
+          - sensor.estimated_devices_energy
+          days: 30
+          stat: change
+          type: bar
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: custom:plug-cost-card
+      grid_options:
+        columns: full
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Lights
+        icon: mdi:lightbulb-group
+        entity: sensor.lights_cost
+        color: "#c3e88d"
+      - name: Devices
+        icon: mdi:television
+        entity: sensor.devices_cost
+        color: "#c792ea"
+      - name: Washer
+        icon: mdi:washing-machine
+        entity: sensor.washer_cost
+        color: "#6ab7ff"
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        entity: sensor.dryer_cost
+        color: "#ffb06b"
+      - name: Sutala
+        icon: mdi:flash
+        entity: sensor.sutala_cost
+        color: "#ffd86b"
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Lights by room (approx.)
+      icon: mdi:lightbulb-group
+      heading_style: title
+    - type: tile
+      entity: sensor.lights_power
+      name: All lights
+      icon: mdi:lightbulb-group
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.lights_bedroom_power
+      name: Bedroom
+      icon: mdi:bed
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_kitchen_power
+      name: Kitchen
+      icon: mdi:countertop
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_kitchen_dining_power
+      name: Kitchen dining
+      icon: mdi:table-chair
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_dining_room_power
+      name: Dining room
+      icon: mdi:silverware-fork-knife
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_living_room_power
+      name: Living room
+      icon: mdi:sofa
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_office_power
+      name: Office
+      icon: mdi:desk
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.lights_hall_power
+      name: Hall
+      icon: mdi:door
+      grid_options:
+        columns: 12
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Devices (approx.)
+      icon: mdi:television
+      heading_style: title
+    - type: tile
+      entity: sensor.lg_tv_power
+      name: TV
+      icon: mdi:television
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.marantz_nr1711_power
+      name: Receiver
+      icon: mdi:speaker
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.camera_duo_power
+      name: Camera Duo
+      icon: mdi:cctv
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.camera_uno_power
+      name: Camera Uno
+      icon: mdi:cctv
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.surasa_power
+      name: Surasa
+      icon: mdi:raspberry-pi
+      grid_options:
+        columns: 12
+- type: sections
   title: Laundry
   path: dash-laundry
   icon: mdi:washing-machine
@@ -2582,23 +2813,6 @@ views:
   - type: grid
     column_span: 1
     cards:
-    - type: heading
-      heading: Cost, estimated
-      icon: mdi:cash
-      heading_style: title
-    - type: custom:plug-cost-card
-      grid_options:
-        columns: full
-      price: sensor.electricity_price_per_kwh
-      devices:
-      - name: Washer
-        icon: mdi:washing-machine
-        entity: sensor.washer_cost
-        color: "#6ab7ff"
-      - name: Dryer
-        icon: mdi:tumble-dryer
-        entity: sensor.dryer_cost
-        color: "#ffb06b"
     - type: heading
       heading: Recent runs
       icon: mdi:history
@@ -2911,15 +3125,6 @@ views:
           type: bar
       grid_options:
         columns: 12
-    - type: custom:plug-cost-card
-      grid_options:
-        columns: 12
-      price: sensor.electricity_price_per_kwh
-      devices:
-      - name: Sutala
-        icon: mdi:flash
-        entity: sensor.sutala_cost
-        color: "#ffd86b"
     - type: custom:status-row-card
       color: "#ffd86b"
       items:

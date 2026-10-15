@@ -48,6 +48,12 @@ recorder:
       - binary_sensor.*_occupancy
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection
+      - sensor.*_light_[0-9]_power
+      - sensor.*_light_[0-9]_energy
+      - sensor.office_room_light_power
+      - sensor.office_room_light_energy
+      - sensor.hall_dimmer_power
+      - sensor.hall_dimmer_energy
 
 rest_command:
   announce_hallway:

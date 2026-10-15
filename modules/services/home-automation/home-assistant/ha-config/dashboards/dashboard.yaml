@@ -2624,6 +2624,16 @@ views:
       heading: Now
       icon: mdi:flash
       heading_style: title
+    - type: custom:price-timeline-card
+      price: sensor.electricity_price_timeline
+      theme: theme
+      day_switch: true
+      cheap_times: true
+      currency:
+        name: Öre
+        symbol: öre
+      grid_options:
+        columns: 12
     - type: custom:health-metric-card
       entity: sensor.electricity_price_per_kwh
       name: Price per kWh

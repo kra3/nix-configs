@@ -46,6 +46,8 @@ resources:
     type: module
   - url: /local/community/horizon-card/lovelace-horizon-card.js?v=@horizon-card@
     type: module
+  - url: /local/community/ha-price-timeline-card/price-timeline-card.js?v=@ha-price-timeline-card@
+    type: module
   - url: /local/community/lovelace-auto-entities/auto-entities.js?v=@lovelace-auto-entities@
     type: module
 dashboards:

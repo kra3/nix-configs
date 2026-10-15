@@ -145,6 +145,13 @@
       "asset": "lovelace-horizon-card.js",
       "hash": "sha256-dl9qDVzIfl6lVhAQr/EVWtYuUxhmZT9QkmBfLOk0VDM="
     },
+    "ha-price-timeline-card": {
+      "repo": "Neisi/ha-price-timeline-card",
+      "version": "v1.3.0",
+      "kind": "file",
+      "asset": "price-timeline-card.js",
+      "hash": "sha256-sJYEzmzE70bZfE0sIvofh9HDImzl9x8kt498b5+BsMU="
+    },
     "lovelace-auto-entities": {
       "repo": "thomasloven/lovelace-auto-entities",
       "version": "v1.16.1",

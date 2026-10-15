@@ -112,6 +112,47 @@ rest:
           - ToDate
 
 template:
+  - triggers:
+      - trigger: time_pattern
+        minutes: "/15"
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: nordpool.get_prices_for_date
+        data:
+          config_entry: 01M4S4QXXDABV4E0B6DZQ92ASE
+          date: "{{ now().date() }}"
+          areas: SE4
+          currency: SEK
+        response_variable: today_price
+      - action: nordpool.get_prices_for_date
+        data:
+          config_entry: 01M4S4QXXDABV4E0B6DZQ92ASE
+          date: "{{ now().date() + timedelta(days=1) }}"
+          areas: SE4
+          currency: SEK
+        continue_on_error: true
+        response_variable: tomorrow_price
+    sensor:
+      - name: "Electricity Price Timeline"
+        unique_id: electricity_price_timeline
+        unit_of_measurement: SEK/kWh
+        state: "{{ now().isoformat() }}"
+        attributes:
+          includes: Nord Pool SE4 spot plus the same fees as Electricity Price per kWh (9 % E.ON costs, 6 öre påslag, 73.4 öre grid, 36 öre tax, 25 % VAT)
+          data: >-
+            {% set ns = namespace(rows=[]) %}
+            {% for resp in [today_price, tomorrow_price] if resp and resp.SE4 is defined %}
+              {% for i in resp.SE4 %}
+                {% set ns.rows = ns.rows + [{
+                  'start_time': (i.start | as_datetime | as_local).isoformat(),
+                  'end_time': (i.end | as_datetime | as_local).isoformat(),
+                  'price_per_kwh': (((i.price / 1000) * 1.09 + 0.06 + 0.734 + 0.36) * 1.25) | round(4)
+                }] %}
+              {% endfor %}
+            {% endfor %}
+            {{ ns.rows | sort(attribute='start_time') }}
+
   - sensor:
       - name: "Electricity Spot Month Average"
         unique_id: electricity_spot_month_average

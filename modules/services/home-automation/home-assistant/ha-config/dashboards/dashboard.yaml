@@ -2550,7 +2550,26 @@ views:
         days: 30
         stat: max
       grid_options:
-        columns: 6
+        columns: 12
+    - type: custom:popup-tile-card
+      title: Electricity price
+      width: 900px
+      grid_options:
+        columns: 12
+      inline: &price_timeline
+        type: custom:price-timeline-card
+        price: sensor.electricity_price_timeline
+        theme: theme
+        slider: true
+        currency:
+          name: Öre
+          symbol: öre
+      popup:
+        <<: *price_timeline
+        view: graph
+        slider: true
+        cheap_times: true
+        day_switch: false
     - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
@@ -2569,7 +2588,7 @@ views:
         unit: " kr"
         decimals: 2
       grid_options:
-        columns: 6
+        columns: 8
     - type: custom:health-metric-card
       entity: sensor.lights_cost
       name: Lights this month (approx.)
@@ -2596,7 +2615,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 6
+        columns: 8
     - type: custom:health-metric-card
       entity: sensor.devices_cost
       name: Devices this month (approx.)
@@ -2623,27 +2642,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 6
-    - type: custom:popup-tile-card
-      title: Electricity price
-      width: 900px
-      grid_options:
-        columns: full
-      inline: &price_timeline
-        type: custom:price-timeline-card
-        price: sensor.electricity_price_timeline
-        theme: theme
-        slider: true
-        day_switch: true
-        currency:
-          name: Öre
-          symbol: öre
-      popup:
-        <<: *price_timeline
-        view: graph
-        slider: true
-        cheap_times: true
-        day_switch: false
+        columns: 8
   - type: grid
     column_span: 1
     cards:

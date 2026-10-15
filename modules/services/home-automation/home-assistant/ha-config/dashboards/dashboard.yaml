@@ -333,15 +333,36 @@ views:
         state: "on"
   - type: grid
     cards:
-    - show_current: true
-      show_forecast: true
-      type: weather-forecast
-      entity: weather.forecast_vasudha
-      forecast_type: daily
-      secondary_info_attribute: wind_speed
-      forecast_slots: 7
-      tap_action:
-        action: more-info
+    - type: vertical-stack
+      grid_options:
+        columns: full
+      cards:
+      - type: custom:horizon-card
+        card_mod:
+          style: |
+            ha-card {
+              border-bottom-left-radius: 0;
+              border-bottom-right-radius: 0;
+              box-shadow: none;
+              border-bottom: none;
+            }
+      - show_current: true
+        show_forecast: true
+        type: weather-forecast
+        entity: weather.forecast_vasudha
+        forecast_type: daily
+        secondary_info_attribute: wind_speed
+        forecast_slots: 7
+        tap_action:
+          action: more-info
+        card_mod:
+          style: |
+            ha-card {
+              border-top-left-radius: 0;
+              border-top-right-radius: 0;
+              box-shadow: none;
+              border-top: none;
+            }
     - type: heading
       heading: Media
       heading_style: title

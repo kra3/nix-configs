@@ -604,6 +604,10 @@ views:
         type: line
         days: 30
         stat: max
+      delta:
+        mode: range
+        decimals: 2
+        unit: auto
       grid_options:
         columns: 8
       visibility:
@@ -622,10 +626,10 @@ views:
         days: 14
         stat: max
       secondary:
-        entity: sensor.energy_cost_month
-        prefix: "Month "
-        unit: " kr"
-        decimals: 2
+        entity: sensor.home_power_estimate
+        prefix: "Now "
+        unit: " W (approx.)"
+        decimals: 0
       grid_options:
         columns: 8
       visibility:
@@ -664,6 +668,10 @@ views:
         type: line
         days: 30
         stat: max
+      delta:
+        mode: range
+        decimals: 2
+        unit: auto
       grid_options:
         columns: 12
       visibility:
@@ -682,10 +690,10 @@ views:
         days: 14
         stat: max
       secondary:
-        entity: sensor.energy_cost_month
-        prefix: "Month "
-        unit: " kr"
-        decimals: 2
+        entity: sensor.home_power_estimate
+        prefix: "Now "
+        unit: " W (approx.)"
+        decimals: 0
       grid_options:
         columns: 12
       visibility:

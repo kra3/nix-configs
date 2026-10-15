@@ -2,6 +2,7 @@
 # Bulbs use library profiles keyed by manufacturer/model; the rest are fixed per state from datasheets, marked approx. on the dashboard.
 powercalc:
   create_standby_group: false
+  ignore_unavailable_state: true
   discovery:
     enabled: false
   sensors:
@@ -104,12 +105,13 @@ powercalc:
           standby_power: 0
           fixed:
             power: 5
-        - entity_id: media_player.kitchen
-          name: Surasa
+        - entity_id: media_player.kitchen_speaker
+          name: Kitchen speaker
           standby_power: 0
           fixed:
             power: 2
         - power_sensor_id: sensor.fridge_power
+          energy_sensor_id: sensor.fridge_energy
 
 template:
   - sensor:
@@ -120,3 +122,12 @@ template:
         unit_of_measurement: W
         state_class: measurement
         state: "35.2"
+
+sensor:
+  - platform: integration
+    source: sensor.fridge_power
+    name: Fridge Energy
+    unique_id: fridge_energy
+    unit_prefix: k
+    round: 4
+    method: left

@@ -2570,41 +2570,6 @@ views:
           type: bar
       grid_options:
         columns: 12
-  - type: grid
-    column_span: 1
-    cards:
-    - type: heading
-      heading: Cost, estimated
-      icon: mdi:cash
-      heading_style: title
-    - type: custom:plug-cost-card
-      grid_options:
-        columns: full
-      price: sensor.electricity_price_per_kwh
-      devices:
-      - name: Lights
-        icon: mdi:lightbulb-group
-        entity: sensor.lights_cost
-        color: "#c3e88d"
-      - name: Devices
-        icon: mdi:television
-        entity: sensor.devices_cost
-        color: "#c792ea"
-      - name: Washer
-        icon: mdi:washing-machine
-        entity: sensor.washer_cost
-        color: "#6ab7ff"
-      - name: Dryer
-        icon: mdi:tumble-dryer
-        entity: sensor.dryer_cost
-        color: "#ffb06b"
-      - name: Sutala
-        icon: mdi:flash
-        entity: sensor.sutala_cost
-        color: "#ffd86b"
-  - type: grid
-    column_span: 1
-    cards:
     - type: heading
       heading: Lights by room (approx.)
       icon: mdi:lightbulb-group
@@ -2661,6 +2626,35 @@ views:
     column_span: 1
     cards:
     - type: heading
+      heading: Cost, estimated
+      icon: mdi:cash
+      heading_style: title
+    - type: custom:plug-cost-card
+      grid_options:
+        columns: full
+      price: sensor.electricity_price_per_kwh
+      devices:
+      - name: Lights
+        icon: mdi:lightbulb-group
+        entity: sensor.lights_cost
+        color: "#c3e88d"
+      - name: Devices
+        icon: mdi:television
+        entity: sensor.devices_cost
+        color: "#c792ea"
+      - name: Washer
+        icon: mdi:washing-machine
+        entity: sensor.washer_cost
+        color: "#6ab7ff"
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        entity: sensor.dryer_cost
+        color: "#ffb06b"
+      - name: Sutala
+        icon: mdi:flash
+        entity: sensor.sutala_cost
+        color: "#ffd86b"
+    - type: heading
       heading: Devices (approx.)
       icon: mdi:television
       heading_style: title
@@ -2695,9 +2689,9 @@ views:
       grid_options:
         columns: 6
     - type: tile
-      entity: sensor.surasa_power
-      name: Surasa
-      icon: mdi:raspberry-pi
+      entity: sensor.kitchen_speaker_power
+      name: Kitchen speaker
+      icon: mdi:speaker
       grid_options:
         columns: 6
 - type: sections

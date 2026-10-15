@@ -612,83 +612,7 @@ views:
         decimals: 2
         unit: auto
       grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:health-metric-card
-      entity: sensor.energy_cost_today
-      name: Energy today
-      icon: mdi:cash-clock
-      color: "#7fdbca"
-      unit: kr
-      decimals: 2
-      show_date: false
-      card_mod:
-        style: |
-          ha-card { height: 100%; }
-      chart:
-        type: bar
-        days: 14
-        stat: max
-      secondary:
-        entity: sensor.home_power_estimate
-        prefix: "Now "
-        unit: " W"
-        decimals: 0
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:health-metric-card
-      entity: sensor.lights_cost
-      name: Lights (approx.)
-      icon: mdi:lightbulb-group
-      color: "#c3e88d"
-      unit: kr
-      decimals: 2
-      show_date: false
-      card_mod:
-        style: |
-          ha-card { height: 100%; }
-      chart:
-        type: line
-        days: 30
-        stat: max
-      secondary:
-        entity: sensor.lights_power
-        prefix: "Now "
-        unit: " W"
-        decimals: 1
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:health-metric-card
-      entity: sensor.electricity_price_per_kwh
-      name: Price per kWh
-      icon: mdi:cash
-      color: "#79c0ff"
-      decimals: 2
-      show_date: false
-      card_mod:
-        style: |
-          ha-card { height: 100%; }
-      chart:
-        type: line
-        days: 30
-        stat: max
-      delta:
-        mode: range
-        decimals: 2
-        unit: auto
-      grid_options:
         columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
     - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
@@ -711,34 +635,6 @@ views:
         decimals: 0
       grid_options:
         columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
-    - type: custom:health-metric-card
-      entity: sensor.lights_cost
-      name: Lights (approx.)
-      icon: mdi:lightbulb-group
-      color: "#c3e88d"
-      unit: kr
-      decimals: 2
-      show_date: false
-      card_mod:
-        style: |
-          ha-card { height: 100%; }
-      chart:
-        type: line
-        days: 30
-        stat: max
-      secondary:
-        entity: sensor.lights_power
-        prefix: "Now "
-        unit: " W"
-        decimals: 1
-      grid_options:
-        columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
   - type: grid
     cards:
     - type: conditional
@@ -2654,7 +2550,7 @@ views:
         days: 30
         stat: max
       grid_options:
-        columns: 12
+        columns: 6
     - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
@@ -2673,7 +2569,7 @@ views:
         unit: " kr"
         decimals: 2
       grid_options:
-        columns: 12
+        columns: 6
     - type: custom:health-metric-card
       entity: sensor.lights_cost
       name: Lights this month (approx.)
@@ -2700,7 +2596,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 12
+        columns: 6
     - type: custom:health-metric-card
       entity: sensor.devices_cost
       name: Devices this month (approx.)
@@ -2727,7 +2623,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 12
+        columns: 6
     - type: custom:popup-tile-card
       title: Electricity price
       width: 900px

@@ -47,7 +47,7 @@ class PopupTileCard extends HTMLElement {
     const card = await helpers.createCardElement(this._config.inline);
     card.hass = this._hass;
     this._inlineCard = card;
-    this.shadowRoot.innerHTML = `<style>:host { display: block; cursor: pointer; }</style>`;
+    this.shadowRoot.innerHTML = `<style>:host { display: block; cursor: pointer; height: 100%; } ha-card, :host > * { height: 100%; box-sizing: border-box; }</style>`;
     this.shadowRoot.appendChild(card);
     this.shadowRoot.addEventListener("click", (e) => {
       const hit = e.composedPath().some((n) => n.tagName && /^(INPUT|BUTTON|LABEL|SELECT)$/.test(n.tagName));

@@ -524,10 +524,10 @@ const STYLE = `
   .vv { white-space: nowrap; }
   .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
-  .bd { margin-top: 6px; }
+  .bd { margin-top: 2px; }
   .bd .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
   .bd .bar span { min-width: 2px; }
-  .bd .lg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px 10px; margin-top: 6px; font-size: 11px; line-height: 1.5; color: var(--secondary-text-color); }
+  .bd .lg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 10px; margin-top: 4px; font-size: 11px; line-height: 1.35; color: var(--secondary-text-color); }
   .bd .lg div { display: flex; align-items: center; gap: 5px; white-space: nowrap; min-width: 0; }
   .bd .lg i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c); }
   .bd .lg b { margin-left: auto; font-weight: 600; color: var(--primary-text-color); }

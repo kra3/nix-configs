@@ -2538,24 +2538,44 @@ views:
       heading: Now
       icon: mdi:flash
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.electricity_price_per_kwh
-      name: Price per kWh
-      icon: mdi:cash
-      color: "#79c0ff"
-      decimals: 2
-      show_date: false
-      chart:
-        type: line
-        days: 30
-        stat: max
+    - type: vertical-stack
       grid_options:
-        columns: 7
+        columns: 10
+      card_mod:
+        style: |
+          #root { height: 100%; }
+      cards:
+      - type: custom:health-metric-card
+        entity: sensor.electricity_price_per_kwh
+        name: Price per kWh
+        icon: mdi:cash
+        color: "#79c0ff"
+        decimals: 2
+        show_date: false
+        chart:
+          type: line
+          days: 30
+          stat: max
+      - type: markdown
+        card_mod:
+          style: |
+            :host { flex: 1; }
+            ha-card { height: 100%; }
+        content: |
+          | SEK/kWh | |
+          |---|--:|
+          | Spot, E.ON month average | {{ state_attr('sensor.electricity_price_per_kwh', 'spot') }} |
+          | E.ON variable costs (9 %) | {{ state_attr('sensor.electricity_price_per_kwh', 'variable') }} |
+          | Påslag | {{ state_attr('sensor.electricity_price_per_kwh', 'markup') }} |
+          | Grid transfer | {{ state_attr('sensor.electricity_price_per_kwh', 'grid') }} |
+          | Energy tax | {{ state_attr('sensor.electricity_price_per_kwh', 'tax') }} |
+          | VAT (25 %) | {{ state_attr('sensor.electricity_price_per_kwh', 'vat') }} |
+          | **Total** | **{{ states('sensor.electricity_price_per_kwh') }}** |
     - type: custom:popup-tile-card
       title: Electricity price
       width: 900px
       grid_options:
-        columns: 17
+        columns: 14
       inline: &price_timeline
         type: custom:price-timeline-card
         price: sensor.electricity_price_timeline

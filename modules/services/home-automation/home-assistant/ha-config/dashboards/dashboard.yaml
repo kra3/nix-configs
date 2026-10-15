@@ -336,6 +336,12 @@ views:
     - type: vertical-stack
       grid_options:
         columns: full
+      card_mod:
+        style: |
+          :host {
+            --vertical-stack-card-gap: 0px;
+            --stack-card-gap: 0px;
+          }
       cards:
       - type: custom:horizon-card
         card_mod:
@@ -617,7 +623,7 @@ views:
         stat: max
       secondary:
         entity: sensor.energy_cost_month
-        prefix: "This month "
+        prefix: "Month "
         unit: " kr"
         decimals: 2
       grid_options:
@@ -627,7 +633,7 @@ views:
         media_query: "(min-width: 700px)"
     - type: custom:health-metric-card
       entity: sensor.lights_cost
-      name: Lights this month (approx.)
+      name: Lights (approx.)
       icon: mdi:lightbulb-group
       color: "#c3e88d"
       unit: kr
@@ -677,7 +683,7 @@ views:
         stat: max
       secondary:
         entity: sensor.energy_cost_month
-        prefix: "This month "
+        prefix: "Month "
         unit: " kr"
         decimals: 2
       grid_options:
@@ -687,7 +693,7 @@ views:
         media_query: "(max-width: 699px)"
     - type: custom:health-metric-card
       entity: sensor.lights_cost
-      name: Lights this month (approx.)
+      name: Lights (approx.)
       icon: mdi:lightbulb-group
       color: "#c3e88d"
       unit: kr

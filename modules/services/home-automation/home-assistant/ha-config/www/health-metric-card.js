@@ -524,11 +524,11 @@ const STYLE = `
   .vv { white-space: nowrap; }
   .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
-  .bd { margin-top: 10px; }
+  .bd { margin-top: 6px; }
   .bd .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
   .bd .bar span { min-width: 2px; }
-  .bd .lg { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 2px 12px; margin-top: 8px; font-size: 12px; color: var(--secondary-text-color); }
-  .bd .lg div { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .bd .lg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px 10px; margin-top: 6px; font-size: 11px; line-height: 1.5; color: var(--secondary-text-color); }
+  .bd .lg div { display: flex; align-items: center; gap: 5px; white-space: nowrap; min-width: 0; }
   .bd .lg i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c); }
   .bd .lg b { margin-left: auto; font-weight: 600; color: var(--primary-text-color); }
   .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }

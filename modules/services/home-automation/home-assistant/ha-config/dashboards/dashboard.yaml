@@ -505,136 +505,180 @@ views:
   - type: grid
     column_span: 2
     cards:
-    - type: heading
-      heading: Climate
-      heading_style: title
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_temperature
-        name: Temperature
-        icon: mdi:thermometer
-        color: "#ff9f6b"
-        decimals: 1
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_humidity
-        name: Humidity
-        icon: mdi:water-percent
-        color: "#6bb6ff"
-        decimals: 0
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_illuminance
-        name: Illuminance
-        icon: mdi:brightness-5
-        color: "#ffd86b"
-        decimals: 0
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: screen
-        media_query: "(min-width: 700px)"
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_temperature
-        name: Temperature
-        icon: mdi:thermometer
-        color: "#ff9f6b"
-        decimals: 1
+    - type: vertical-stack
       grid_options:
         columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_humidity
-        name: Humidity
-        icon: mdi:water-percent
-        color: "#6bb6ff"
-        decimals: 0
-      grid_options:
-        columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
-    - type: custom:streamline-card
-      template: metric_line
-      variables:
-        entity: sensor.average_illuminance
-        name: Illuminance
-        icon: mdi:brightness-5
-        color: "#ffd86b"
-        decimals: 0
-      grid_options:
-        columns: 12
-      visibility:
-      - condition: screen
-        media_query: "(max-width: 699px)"
-    - type: heading
-      heading: Electricity
-      icon: mdi:flash
-      heading_style: title
-      tap_action:
-        action: navigate
-        navigation_path: /dashboard-home/dash-energy
-    - type: custom:health-metric-card
-      entity: sensor.electricity_price_per_kwh
-      name: Price per kWh
-      icon: mdi:cash
-      color: "#79c0ff"
-      decimals: 2
-      show_date: false
       card_mod:
         style: |
-          ha-card { height: 100%; }
-      chart:
-        type: line
-        days: 30
-        stat: max
-      delta:
-        mode: range
+          :host {
+            --vertical-stack-card-gap: 0px;
+            --stack-card-gap: 0px;
+          }
+          #root { height: 100%; }
+      cards:
+      - type: heading
+        heading: Climate
+        heading_style: title
+      - type: custom:health-metric-card
+        entity: sensor.average_temperature
+        name: Temperature
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 1
+          unit: auto
+        popup:
+          graphs:
+          - name: Temperature
+            entities:
+            - sensor.average_temperature
+            days: 7
+        card_mod:
+          style: |
+            ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
+              box-shadow: none;
+              border-bottom-left-radius: 0;
+              border-bottom-right-radius: 0;
+              border-bottom-color: var(--divider-color);
+              height: 100%;
+            }
+      - type: custom:health-metric-card
+        entity: sensor.average_humidity
+        name: Humidity
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 0
+          unit: auto
+        popup:
+          graphs:
+          - name: Humidity
+            entities:
+            - sensor.average_humidity
+            days: 7
+        card_mod:
+          style: |
+            ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
+              box-shadow: none;
+              border-radius: 0;
+              border-top: none;
+              border-bottom-color: var(--divider-color);
+              height: 100%;
+            }
+      - type: custom:health-metric-card
+        entity: sensor.average_illuminance
+        name: Illuminance
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 0
+          unit: auto
+        popup:
+          graphs:
+          - name: Illuminance
+            entities:
+            - sensor.average_illuminance
+            days: 7
+        card_mod:
+          style: |
+            ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
+              box-shadow: none;
+              border-top-left-radius: 0;
+              border-top-right-radius: 0;
+              border-top: none;
+              height: 100%;
+            }
+    - type: vertical-stack
+      grid_options:
+        columns: 12
+      card_mod:
+        style: |
+          :host {
+            --vertical-stack-card-gap: 0px;
+            --stack-card-gap: 0px;
+          }
+          #root { height: 100%; }
+      cards:
+      - type: heading
+        heading: Electricity
+        icon: mdi:flash
+        heading_style: title
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-home/dash-energy
+      - type: custom:health-metric-card
+        entity: sensor.electricity_price_per_kwh
+        name: Price per kWh
+        icon: mdi:cash
+        color: "#79c0ff"
         decimals: 2
-        unit: auto
-      grid_options:
-        columns: 12
-    - type: custom:health-metric-card
-      entity: sensor.energy_cost_today
-      name: Energy today
-      icon: mdi:cash-clock
-      color: "#7fdbca"
-      unit: kr
-      decimals: 2
-      show_date: false
-      card_mod:
-        style: |
-          ha-card { height: 100%; }
-      chart:
-        type: bar
-        days: 14
-        stat: max
-      secondary:
-        entity: sensor.home_power_estimate
-        prefix: "Now "
-        unit: " W"
-        decimals: 0
-      grid_options:
-        columns: 12
+        show_date: false
+        chart:
+          type: line
+          days: 30
+          stat: max
+        delta:
+          mode: range
+          decimals: 2
+          unit: auto
+        card_mod:
+          style: |
+            ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
+              box-shadow: none;
+              border-bottom-left-radius: 0;
+              border-bottom-right-radius: 0;
+              border-bottom-color: var(--divider-color);
+              height: 100%;
+            }
+      - type: custom:health-metric-card
+        entity: sensor.energy_cost_today
+        name: Energy today
+        icon: mdi:cash-clock
+        color: "#7fdbca"
+        decimals: 2
+        unit: kr
+        show_date: false
+        chart:
+          type: bar
+          days: 14
+          stat: max
+        secondary:
+          entity: sensor.home_power_estimate
+          prefix: "Now "
+          unit: " W"
+          decimals: 0
+        card_mod:
+          style: |
+            ha-card {
+              background: var(--ha-card-background, var(--card-background-color));
+              box-shadow: none;
+              border-top-left-radius: 0;
+              border-top-right-radius: 0;
+              border-top: none;
+              height: 100%;
+            }
   - type: grid
     cards:
     - type: conditional

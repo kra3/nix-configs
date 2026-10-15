@@ -109,3 +109,14 @@ powercalc:
           standby_power: 0
           fixed:
             power: 2
+        - power_sensor_id: sensor.fridge_power
+
+template:
+  - sensor:
+      # Electrolux EN3441JOX label: 0.844 kWh/day = 35.2 W average; swap for a plug reading
+      - name: "Fridge Power"
+        unique_id: fridge_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "35.2"

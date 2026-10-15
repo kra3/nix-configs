@@ -600,6 +600,9 @@ views:
       color: "#79c0ff"
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: line
         days: 30
@@ -621,6 +624,9 @@ views:
       unit: kr
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: bar
         days: 14
@@ -628,7 +634,7 @@ views:
       secondary:
         entity: sensor.home_power_estimate
         prefix: "Now "
-        unit: " W (approx.)"
+        unit: " W"
         decimals: 0
       grid_options:
         columns: 8
@@ -643,6 +649,9 @@ views:
       unit: kr
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: line
         days: 30
@@ -664,6 +673,9 @@ views:
       color: "#79c0ff"
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: line
         days: 30
@@ -685,6 +697,9 @@ views:
       unit: kr
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: bar
         days: 14
@@ -692,7 +707,7 @@ views:
       secondary:
         entity: sensor.home_power_estimate
         prefix: "Now "
-        unit: " W (approx.)"
+        unit: " W"
         decimals: 0
       grid_options:
         columns: 12
@@ -707,6 +722,9 @@ views:
       unit: kr
       decimals: 2
       show_date: false
+      card_mod:
+        style: |
+          ha-card { height: 100%; }
       chart:
         type: line
         days: 30
@@ -2624,16 +2642,6 @@ views:
       heading: Now
       icon: mdi:flash
       heading_style: title
-    - type: custom:price-timeline-card
-      price: sensor.electricity_price_timeline
-      theme: theme
-      day_switch: true
-      cheap_times: true
-      currency:
-        name: Öre
-        symbol: öre
-      grid_options:
-        columns: 12
     - type: custom:health-metric-card
       entity: sensor.electricity_price_per_kwh
       name: Price per kWh
@@ -2720,6 +2728,26 @@ views:
           type: bar
       grid_options:
         columns: 12
+    - type: custom:popup-tile-card
+      title: Electricity price
+      width: 900px
+      grid_options:
+        columns: full
+      inline: &price_timeline
+        type: custom:price-timeline-card
+        price: sensor.electricity_price_timeline
+        theme: theme
+        slider: true
+        day_switch: true
+        currency:
+          name: Öre
+          symbol: öre
+      popup:
+        <<: *price_timeline
+        view: graph
+        slider: true
+        cheap_times: true
+        day_switch: false
   - type: grid
     column_span: 1
     cards:

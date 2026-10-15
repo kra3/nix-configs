@@ -524,6 +524,13 @@ const STYLE = `
   .vv { white-space: nowrap; }
   .grw { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .scs { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; margin-left: 10px; font-size: 13px; font-weight: 600; vertical-align: middle; }
+  .bd { margin-top: 10px; }
+  .bd .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
+  .bd .bar span { min-width: 2px; }
+  .bd .lg { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 2px 12px; margin-top: 8px; font-size: 12px; color: var(--secondary-text-color); }
+  .bd .lg div { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .bd .lg i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--c); }
+  .bd .lg b { margin-left: auto; font-weight: 600; color: var(--primary-text-color); }
   .sc { display: inline-flex; align-items: center; gap: 3px; color: var(--secondary-text-color); }
   .sc ha-icon { --mdc-icon-size: 16px; color: var(--c); }
   .footer { display: grid; margin-top: 12px; border-top: 1px solid var(--divider-color); }
@@ -852,6 +859,19 @@ class HealthMetricCard extends HTMLElement {
       .filter(Boolean);
     const items = itemHtml.join("");
 
+    let bdHtml = "";
+    if (c.breakdown && st) {
+      const parts = c.breakdown
+        .map((b) => ({ b, v: parseFloat(st.attributes[b.attribute]) }))
+        .filter((x) => isFinite(x.v) && x.v > 0);
+      if (parts.length) {
+        const dec = c.breakdown_decimals !== undefined ? c.breakdown_decimals : 2;
+        bdHtml =
+          `<div class="bd"><div class="bar">${parts.map((x) => `<span style="flex:${x.v};background:${x.b.color}" title="${x.b.name}"></span>`).join("")}</div>` +
+          `<div class="lg">${parts.map((x) => `<div style="--c:${x.b.color}"><i></i>${x.b.name}<b>${fmt(x.v, dec, lang)}</b></div>`).join("")}</div></div>`;
+      }
+    }
+
     const date = c.show_date === false ? "" : this._metaDate();
     const html =
       `<style>${STYLE}</style><ha-card style="--accent:${accent}">` +
@@ -860,6 +880,7 @@ class HealthMetricCard extends HTMLElement {
       `<span class="meta">${date}<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>` +
       `<div class="body"><div class="left"><div class="hero">${heroHtml}</div>${under}</div>` +
       `<div class="spark">${spark}</div></div>` +
+      bdHtml +
       (items ? `<div class="footer" style="grid-template-columns:repeat(${itemHtml.length},1fr)">${items}</div>` : "") +
       `</div></ha-card>`;
 

@@ -2538,39 +2538,29 @@ views:
       heading: Now
       icon: mdi:flash
       heading_style: title
-    - type: vertical-stack
-      grid_options:
-        columns: 10
+    - type: custom:health-metric-card
+      entity: sensor.electricity_price_per_kwh
+      name: Price per kWh
+      icon: mdi:cash
+      color: "#79c0ff"
+      decimals: 2
+      show_date: false
       card_mod:
         style: |
-          #root { height: 100%; }
-      cards:
-      - type: custom:health-metric-card
-        entity: sensor.electricity_price_per_kwh
-        name: Price per kWh
-        icon: mdi:cash
-        color: "#79c0ff"
-        decimals: 2
-        show_date: false
-        chart:
-          type: line
-          days: 30
-          stat: max
-      - type: markdown
-        card_mod:
-          style: |
-            :host { flex: 1; }
-            ha-card { height: 100%; }
-        content: |
-          | SEK/kWh | |
-          |---|--:|
-          | Spot, E.ON month average | {{ state_attr('sensor.electricity_price_per_kwh', 'spot') }} |
-          | E.ON variable costs (9 %) | {{ state_attr('sensor.electricity_price_per_kwh', 'variable') }} |
-          | Påslag | {{ state_attr('sensor.electricity_price_per_kwh', 'markup') }} |
-          | Grid transfer | {{ state_attr('sensor.electricity_price_per_kwh', 'grid') }} |
-          | Energy tax | {{ state_attr('sensor.electricity_price_per_kwh', 'tax') }} |
-          | VAT (25 %) | {{ state_attr('sensor.electricity_price_per_kwh', 'vat') }} |
-          | **Total** | **{{ states('sensor.electricity_price_per_kwh') }}** |
+          ha-card { height: 100%; }
+      chart:
+        type: line
+        days: 30
+        stat: max
+      breakdown:
+      - {name: Spot, attribute: spot, color: "#79c0ff"}
+      - {name: Variable, attribute: variable, color: "#7fdbca"}
+      - {name: Påslag, attribute: markup, color: "#c3e88d"}
+      - {name: Grid, attribute: grid, color: "#ffd86b"}
+      - {name: Tax, attribute: tax, color: "#ff9f6b"}
+      - {name: VAT, attribute: vat, color: "#c792ea"}
+      grid_options:
+        columns: 10
     - type: custom:popup-tile-card
       title: Electricity price
       width: 900px

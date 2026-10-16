@@ -1,0 +1,64 @@
+# Outage totals from the router's WAN status; monthly and yearly figures come from utility_meter cycles.
+template:
+  - trigger:
+      - platform: state
+        entity_id: binary_sensor.office_room_ex3600_t0_wan_status
+        from: "off"
+        to: "on"
+        id: up
+      - platform: homeassistant
+        event: start
+        id: start
+    sensor:
+      - name: "WAN Downtime Total"
+        unique_id: wan_downtime_total
+        unit_of_measurement: min
+        device_class: duration
+        state_class: total_increasing
+        state: >-
+          {% set m = ((now() - trigger.from_state.last_changed).total_seconds() / 60) if trigger.id == 'up' else 0 %}
+          {{ ((this.state | float(0)) + (m if m >= 1 else 0)) | round(1) }}
+
+      - name: "WAN Outages Total"
+        unique_id: wan_outages_total
+        state_class: total_increasing
+        state: >-
+          {% set m = ((now() - trigger.from_state.last_changed).total_seconds() / 60) if trigger.id == 'up' else 0 %}
+          {{ (this.state | int(0)) + (1 if m >= 1 else 0) }}
+
+  - sensor:
+      - name: "WAN Speed"
+        unique_id: wan_speed
+        state: >-
+          {% set d = states('sensor.office_room_ex3600_t0_download_speed') %}
+          {% set u = states('sensor.office_room_ex3600_t0_upload_speed') %}
+          {% set dm = (d | float(0)) * 0.008192 %}
+          {% set um = (u | float(0)) * 0.008192 %}
+          ↓ {{ dm | round(2 if dm < 1 else 1) }} · ↑ {{ um | round(2 if um < 1 else 1) }} Mb/s
+        availability: "{{ is_number(states('sensor.office_room_ex3600_t0_download_speed')) }}"
+
+      - name: "WAN Down This Month"
+        unique_id: wan_down_this_month
+        state: >-
+          {% set n = states('sensor.wan_outages_month') | int(0) %}
+          {{ states('sensor.wan_downtime_month') | float(0) | round(0) | int }} min{{ " · %d outage%s" | format(n, "" if n == 1 else "s") if n }}
+
+      - name: "WAN Down This Year"
+        unique_id: wan_down_this_year
+        state: >-
+          {% set n = states('sensor.wan_outages_year') | int(0) %}
+          {{ states('sensor.wan_downtime_year') | float(0) | round(0) | int }} min{{ " · %d outage%s" | format(n, "" if n == 1 else "s") if n }}
+
+utility_meter:
+  wan_downtime_month:
+    source: sensor.wan_downtime_total
+    cycle: monthly
+  wan_downtime_year:
+    source: sensor.wan_downtime_total
+    cycle: yearly
+  wan_outages_month:
+    source: sensor.wan_outages_total
+    cycle: monthly
+  wan_outages_year:
+    source: sensor.wan_outages_total
+    cycle: yearly

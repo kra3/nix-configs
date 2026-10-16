@@ -103,24 +103,40 @@ views:
       template: home_room
       variables:
         name: Kitchen
-        icon: mdi:speaker
+        icon: mdi:fridge
         presence: binary_sensor.room_presence_kitchen
         temperature: sensor.hue_pir_kitchen_temperature
         illuminance: sensor.hue_pir_kitchen_illuminance
+        light: light.kitchen_lights
+        comfort: sensor.kitchen_comfort
       visibility:
-      - condition: state
-        entity: binary_sensor.room_presence_kitchen
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_kitchen
+          state: "on"
+        - condition: state
+          entity: light.kitchen_lights
+          state: "on"
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
     - type: custom:streamline-card
       template: home_room
       variables:
         name: Dining Room
-        icon: mdi:table-furniture
+        icon: mdi:silverware
         presence: binary_sensor.room_presence_dining
+        light: light.dining_lights
       visibility:
-      - condition: state
-        entity: binary_sensor.room_presence_dining
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_dining
+          state: "on"
+        - condition: state
+          entity: light.dining_lights
+          state: "on"
     - type: custom:streamline-card
       template: home_room
       variables:
@@ -130,32 +146,61 @@ views:
         temperature: sensor.living_room_occupancy_temperature
         humidity: sensor.living_room_occupancy_humidity
         illuminance: sensor.living_room_occupancy_illuminance
+        light: light.living_room_lights
+        comfort: sensor.living_room_comfort
       visibility:
-      - condition: state
-        entity: binary_sensor.room_presence_living
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_living
+          state: "on"
+        - condition: state
+          entity: light.living_room_lights
+          state: "on"
+        - condition: state
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
     - type: custom:streamline-card
       template: home_room
       variables:
         name: Office
-        icon: mdi:speaker-wireless
+        icon: mdi:laptop
         presence: binary_sensor.room_presence_office
+        light: light.office_room_light
       visibility:
-      - condition: state
-        entity: binary_sensor.room_presence_office
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_office
+          state: "on"
+        - condition: state
+          entity: light.office_room_light
+          state: "on"
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
     - type: custom:streamline-card
       template: home_room
       variables:
         name: Hall
-        icon: mdi:door
+        icon: mdi:road
         presence: binary_sensor.room_presence_hall
         temperature: sensor.hue_pir_hallway_temperature
         illuminance: sensor.hue_pir_hallway_illuminance
+        light: light.hallway_hall_lights
+        comfort: sensor.hall_comfort
       visibility:
-      - condition: state
-        entity: binary_sensor.room_presence_hall
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_hall
+          state: "on"
+        - condition: state
+          entity: light.hallway_hall_lights
+          state: "on"
     - type: custom:streamline-card
       template: home_room
       variables:
@@ -165,19 +210,27 @@ views:
         temperature: sensor.bedroom_occupancy_temperature
         humidity: sensor.bedroom_occupancy_humidity
         illuminance: sensor.bedroom_occupancy_illuminance
+        light: light.bedroom_wardrobe_lights
+        comfort: sensor.bedroom_comfort
       visibility:
-      - condition: state
-        entity: binary_sensor.bedroom_occupancy_presence
-        state: "on"
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.bedroom_occupancy_presence
+          state: "on"
+        - condition: state
+          entity: light.bedroom_wardrobe_lights
+          state: "on"
     - type: custom:streamline-card
       template: home_room
       variables:
         name: Bathroom
-        icon: mdi:shower
+        icon: mdi:bathtub
         presence: binary_sensor.bathroom_occupancy_presence
         temperature: sensor.bathroom_occupancy_temperature
         humidity: sensor.bathroom_occupancy_humidity
         illuminance: sensor.bathroom_occupancy_illuminance
+        comfort: sensor.bathroom_comfort
       visibility:
       - condition: state
         entity: binary_sensor.bathroom_occupancy_presence
@@ -186,11 +239,12 @@ views:
       template: home_room
       variables:
         name: Laundry
-        icon: mdi:washing-machine
+        icon: mdi:tumble-dryer
         presence: binary_sensor.laundry_occupancy_presence
         temperature: sensor.laundry_occupancy_temperature
         humidity: sensor.laundry_occupancy_humidity
         illuminance: sensor.laundry_occupancy_illuminance
+        comfort: sensor.laundry_comfort
       visibility:
       - condition: state
         entity: binary_sensor.laundry_occupancy_presence
@@ -204,25 +258,11 @@ views:
         temperature: sensor.toilet_occupancy_temperature
         humidity: sensor.toilet_occupancy_humidity
         illuminance: sensor.toilet_occupancy_illuminance
+        comfort: sensor.toilet_comfort
       visibility:
       - condition: state
         entity: binary_sensor.toilet_occupancy_presence
         state: "on"
-    - type: tile
-      entity: light.kitchen_lights
-      name: Kitchen
-      area: kitchen
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: light.kitchen_lights
-          state: "on"
-        - condition: user
-          users:
-          - 6edcc5a09c3144d684077ee362e7394a
     - type: tile
       entity: light.kitchen_dining_lights
       name: Kitchen Dining
@@ -233,34 +273,6 @@ views:
       - condition: state
         entity: light.kitchen_dining_lights
         state: "on"
-    - type: tile
-      entity: light.dining_lights
-      name: Dining Room
-      area: dining_room
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: state
-        entity: light.dining_lights
-        state: "on"
-    - type: tile
-      entity: light.living_room_lights
-      name: Living Room
-      area: living_room
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: light.living_room_lights
-          state: "on"
-        - condition: state
-          entity: media_player.lg_webos_tv_oled77c35la
-          state: playing
-        - condition: user
-          users:
-          - 6edcc5a09c3144d684077ee362e7394a
     - type: tile
       entity: light.tv_backlight
       name: TV Backlight
@@ -276,41 +288,6 @@ views:
         - condition: state
           entity: media_player.lg_webos_tv_oled77c35la
           state: playing
-    - type: tile
-      entity: light.hallway_hall_lights
-      name: Hall
-      area: hall
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: state
-        entity: light.hallway_hall_lights
-        state: "on"
-    - type: tile
-      entity: light.bedroom_wardrobe_lights
-      name: Bedroom
-      area: bedroom
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: state
-        entity: light.bedroom_wardrobe_lights
-        state: "on"
-    - type: tile
-      entity: light.office_room_light
-      name: Office
-      area: office
-      features:
-      - type: light-brightness
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: light.office_room_light
-          state: "on"
-        - condition: user
-          users:
-          - a1d4401b8b714ebb83f07c5316ab399c
     - type: tile
       entity: lock.front_door
       name: Front

@@ -51,6 +51,7 @@
         flakeModules.nixos.containers-media-mgmt-aiostreams
         flakeModules.nixos.containers-media-mgmt-aiometadata
         flakeModules.nixos.containers-media-mgmt-slskd
+        flakeModules.nixos.containers-media-mgmt-rreading-glasses
       ];
     };
 }

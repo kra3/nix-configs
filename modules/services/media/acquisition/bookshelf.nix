@@ -12,6 +12,7 @@
             PUID = "1000";
             PGID = "2000";
             TZ = "UTC";
+            METADATA_URL = "http://${config.vars.network.podmanAddresses.rreading-glasses}:8788";
           };
           environmentFiles = [ config.sops.templates."media.bookshelf.env".path ];
         }

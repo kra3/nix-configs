@@ -2,6 +2,8 @@ default:
 - temperature: ""
 - humidity: ""
 - illuminance: ""
+- light: ""
+- comfort: ""
 card:
   type: custom:room-tile-card
   name: "[[name]]"
@@ -10,3 +12,5 @@ card:
   temperature: "[[temperature]]"
   humidity: "[[humidity]]"
   illuminance: "[[illuminance]]"
+  light: "[[light]]"
+  comfort: "[[comfort]]"

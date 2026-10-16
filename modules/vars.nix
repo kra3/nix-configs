@@ -190,6 +190,11 @@
               default = "10.3.1.17";
               description = "Pinned br-media-mgmt IP for slskd";
             };
+            rreading-glasses = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.1.18";
+              description = "Pinned br-media-mgmt IP for rreading-glasses";
+            };
             actualbudget = lib.mkOption {
               type = lib.types.str;
               default = "10.3.0.2";

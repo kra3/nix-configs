@@ -27,10 +27,7 @@
 
 - id: laundry_cycle_started
   alias: "Laundry: cycle started"
-  description: >-
-    A new cycle clears the waiting-to-be-emptied flag, records its start for the
-    cycle log, and (for the dryer) notes how long the washed laundry waited and
-    clears the washer's flag as a fallback for a missed door event.
+  description: A new cycle clears its waiting flag and is logged; a dryer start also clears the washer's flag as a door-event fallback.
   trigger:
     - platform: state
       entity_id: binary_sensor.washer_running

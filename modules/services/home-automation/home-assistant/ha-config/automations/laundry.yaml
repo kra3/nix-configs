@@ -27,9 +27,7 @@
 
 - id: laundry_cycle_started
   alias: "Laundry: cycle started"
-  description: >-
-    A new cycle clears the waiting-to-be-emptied flag, records its start for the
-    cycle log, and (for the dryer) notes how long the washed laundry waited.
+  description: A new cycle clears its waiting flag and is logged; a dryer start also clears the washer's flag as a door-event fallback.
   trigger:
     - platform: state
       entity_id: binary_sensor.washer_running
@@ -63,6 +61,9 @@
             {{ trigger.id == 'dryer' and washer_end > dryer_end
                and 0 <= (started - washer_end) / 60 <= 1440 }}
       then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.washer_unemptied
         - action: input_number.set_value
           target:
             entity_id: input_number.laundry_gap_minutes

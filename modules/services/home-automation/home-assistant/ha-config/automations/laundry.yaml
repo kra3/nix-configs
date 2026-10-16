@@ -64,6 +64,7 @@
             {{ trigger.id == 'dryer' and washer_end > dryer_end
                and 0 <= (started - washer_end) / 60 <= 1440 }}
       then:
+        # Fallback for a missed door event: a dryer start implies the washer was emptied.
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.washer_unemptied

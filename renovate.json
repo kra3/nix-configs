@@ -13,9 +13,18 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/ha-pins\\.json$/"],
+      "managerFilePatterns": ["/(ha-pins|sendspin-cli)\\.json$/"],
       "matchStrings": [
         "\"repo\":\\s*\"(?<depName>[^\"]+)\",\\s*\"version\":\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^flake\\.nix$/"],
+      "matchStrings": [
+        "url\\s*=\\s*\"github:(?<depName>smarzban/tsk)/(?<currentValue>v[^\"]+)\""
       ],
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose"

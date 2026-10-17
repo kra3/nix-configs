@@ -58,6 +58,11 @@
       url = "github:farwydi/rtk-nix";
       flake = false;
     };
+
+    tsk = {
+      url = "github:smarzban/tsk/v0.11.6";
+      flake = false;
+    };
   };
 
   outputs =

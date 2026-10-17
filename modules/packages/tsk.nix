@@ -1,22 +1,16 @@
+{ inputs, ... }:
 {
   perSystem =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
     {
-      packages.tsk = pkgs.rustPlatform.buildRustPackage (finalAttrs: {
+      packages.tsk = pkgs.rustPlatform.buildRustPackage {
         pname = "tsk";
-        version = "0.11.6";
-
-        src = pkgs.fetchFromGitHub {
-          owner = "smarzban";
-          repo = "tsk";
-          tag = "v${finalAttrs.version}";
-          hash = "sha256-nkuCSQg6C1EVVYTdXdLDZV+TT0Xdu93kTV/LgBJEwGQ=";
-        };
-
-        cargoHash = "sha256-FMCxgtHvra3AYwL0M2s8x5XbYaLXRGRk1oZ8ezq51Js=";
+        version = (lib.importTOML (inputs.tsk + "/Cargo.toml")).package.version;
+        src = inputs.tsk;
+        cargoLock.lockFile = inputs.tsk + "/Cargo.lock";
         doCheck = false;
 
         meta.mainProgram = "tsk";
-      });
+      };
     };
 }

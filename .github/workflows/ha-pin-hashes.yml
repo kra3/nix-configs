@@ -1,10 +1,12 @@
 ---
-name: Refresh HA pin hashes
+name: Refresh pin hashes
 
 on:
   pull_request:
     paths:
       - modules/services/home-automation/home-assistant/ha-pins.json
+      - modules/packages/sendspin-cli.json
+      - flake.nix
 
 permissions:
   contents: write
@@ -27,6 +29,12 @@ jobs:
       - name: Recompute hashes
         run: .github/scripts/update-ha-pin-hashes.sh
 
+      - name: Recompute sendspin-cli hashes
+        run: .github/scripts/update-sendspin-hashes.sh
+
+      - name: Refresh tsk lock entry
+        run: nix flake update tsk
+
       - name: Commit refreshed hashes
         run: |
           if git diff --quiet; then
@@ -35,5 +43,5 @@ jobs:
           fi
           git config user.name "Flake Bot"
           git config user.email "actions@github.com"
-          git commit -am "chore(deps): refresh ha-pins hashes"
+          git commit -am "chore(deps): refresh pin hashes"
           git push

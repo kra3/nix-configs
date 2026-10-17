@@ -613,7 +613,8 @@
         "quadlet-nix": "quadlet-nix",
         "rtk-nix": "rtk-nix",
         "sops-nix": "sops-nix",
-        "treefmt-nix": "treefmt-nix_4"
+        "treefmt-nix": "treefmt-nix_4",
+        "tsk": "tsk"
       }
     },
     "rtk-nix": {
@@ -762,6 +763,23 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "tsk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790108696,
+        "narHash": "sha256-nkuCSQg6C1EVVYTdXdLDZV+TT0Xdu93kTV/LgBJEwGQ=",
+        "owner": "smarzban",
+        "repo": "tsk",
+        "rev": "22f9285f6bd890089bbcaad98229cacce7737a28",
+        "type": "github"
+      },
+      "original": {
+        "owner": "smarzban",
+        "ref": "v0.11.6",
+        "repo": "tsk",
         "type": "github"
       }
     }

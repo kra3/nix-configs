@@ -8,6 +8,7 @@ result-*
 .claude/*
 !.claude/settings.json
 !.claude/skills/
+!.claude/hooks/
 
 # Local dotfile overrides (sensitive, machine-specific)
 modules/home/gh/gh-dash-repo-paths.yml

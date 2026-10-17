@@ -1,5 +1,6 @@
 {
   "hooks": {
+    "SessionStart": [{"hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/prune-merged-worktrees.sh", "timeout": 60}]}],
     "PreToolUse": [
       {
         "matcher": "Bash",

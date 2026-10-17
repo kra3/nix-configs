@@ -30,7 +30,7 @@
     },
     "battery_notes": {
       "repo": "andrew-codechimp/HA-Battery-Notes",
-      "version": "3.7.0",
+      "version": "3.7.2",
       "kind": "zip",
       "asset": "battery_notes.zip",
       "hash": "sha256-tcrnmNzwkkCzTeWkSYGfNALcOR1SuPINOIdH0rDM44Y="

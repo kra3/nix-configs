@@ -6,8 +6,8 @@ let
   # proxying through. Endpoint/headers per Authelia's documented nginx
   # auth_request integration (server.endpoints.authz."auth-request" ships
   # as one of Authelia's built-in defaults, no extra Authelia config needed).
-  forwardAuthLocationConfig = ''
-    auth_request /internal/authelia/authz;
+  forwardAuthLocationConfig = authzUri: ''
+    auth_request ${authzUri};
     auth_request_set $user $upstream_http_remote_user;
     auth_request_set $groups $upstream_http_remote_groups;
     auth_request_set $name $upstream_http_remote_name;
@@ -19,6 +19,26 @@ let
     auth_request_set $redirection_url $upstream_http_location;
     error_page 401 =302 $redirection_url;
   '';
+  clearAuthHeaders = ''
+    proxy_set_header Remote-User "";
+    proxy_set_header Remote-Groups "";
+    proxy_set_header Remote-Email "";
+    proxy_set_header Remote-Name "";
+  '';
+
+  authzProxyConfig = ''
+    proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
+    proxy_set_header X-Original-Method $request_method;
+    proxy_set_header X-Original-URL $scheme://$host$request_uri;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header Content-Length "";
+    proxy_set_header Connection "";
+    proxy_pass_request_body off;
+    proxy_http_version 1.1;
+  '';
+
+  authzUri = "/internal/authelia/authz";
+  bypassAuthzUri = i: "${authzUri}-bypass-${toString i}";
 in
 {
   flake.lib.nginx = {
@@ -40,6 +60,10 @@ in
         vhostExtraConfig ? "",
         locationExtraConfig ? null,
         forwardAuth ? false,
+        # Prefixes proxied through with no auth_request even when forwardAuth is on (e.g. Navidrome's Subsonic API).
+        forwardAuthExcludePrefixes ? [ ],
+        # { location, from }: a real nginx location (e.g. "/api/" or "= /ws") whose requests from this IP skip Authelia; the vhost CIDR allowlist still applies.
+        forwardAuthBypass ? [ ],
       }:
       {
         useACMEHost = domain;
@@ -56,26 +80,50 @@ in
           }
           // lib.optionalAttrs (forwardAuth || locationExtraConfig != null) {
             extraConfig = lib.concatStringsSep "\n" (
-              lib.optional forwardAuth forwardAuthLocationConfig
+              lib.optional forwardAuth (forwardAuthLocationConfig authzUri)
               ++ lib.optional (locationExtraConfig != null) locationExtraConfig
             );
           };
         }
         // lib.optionalAttrs forwardAuth {
-          "/internal/authelia/authz" = {
-            extraConfig = ''
+          ${authzUri}.extraConfig = ''
+            internal;
+            ${authzProxyConfig}
+          '';
+        }
+        // lib.listToAttrs (
+          lib.imap0 (i: b: {
+            name = bypassAuthzUri i;
+            value.extraConfig = ''
               internal;
-              proxy_pass http://127.0.0.1:9091/api/authz/auth-request;
-              proxy_set_header X-Original-Method $request_method;
-              proxy_set_header X-Original-URL $scheme://$host$request_uri;
-              proxy_set_header X-Forwarded-For $remote_addr;
-              proxy_set_header Content-Length "";
-              proxy_set_header Connection "";
-              proxy_pass_request_body off;
-              proxy_http_version 1.1;
+              if ($remote_addr = "${b.from}") { return 200; }
+              ${authzProxyConfig}
             '';
-          };
-        };
+          }) forwardAuthBypass
+        )
+        // lib.listToAttrs (
+          lib.imap0 (i: b: {
+            name = b.location;
+            value = {
+              proxyPass = upstream;
+              proxyWebsockets = websockets;
+              extraConfig = lib.concatStringsSep "\n" (
+                [ (forwardAuthLocationConfig (bypassAuthzUri i)) ]
+                ++ lib.optional (locationExtraConfig != null) locationExtraConfig
+              );
+            };
+          }) forwardAuthBypass
+        )
+        // lib.listToAttrs (
+          map (prefix: {
+            name = prefix;
+            value = {
+              proxyPass = upstream;
+              proxyWebsockets = websockets;
+              extraConfig = clearAuthHeaders;
+            };
+          }) forwardAuthExcludePrefixes
+        );
       };
   };
 }

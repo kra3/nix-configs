@@ -29,6 +29,7 @@
             "/srv/appdata/media-mgmt/audiobookshelf/metadata:/metadata"
             "/srv/media/library/books:/books"
             "/srv/media/library/audiobooks:/audiobooks"
+            "/srv/media/library/reference:/reference"
             "/srv/media/bkup/Books/Ebooks:/ebooks:ro"
             "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
           ];

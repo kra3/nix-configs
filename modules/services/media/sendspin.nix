@@ -1,6 +1,7 @@
 {
   flake.nixosModules.services-media-sendspin =
     {
+      inputs,
       config,
       lib,
       pkgs,
@@ -9,41 +10,7 @@
     let
       cfg = config.services.sendspin-player;
 
-      avahiCompat = pkgs.avahi.override { withLibdnssdCompat = true; };
-
-      release = {
-        aarch64-linux = {
-          arch = "arm64";
-          hash = "sha256-SQNbJ50UDQmcibSWg3N5vZvlDss6if5iorYMj1JD4mQ=";
-        };
-        x86_64-linux = {
-          arch = "x86_64";
-          hash = "sha256-FeUjZKvjbIKbBNif98M0f/vVxZ0bmJYFvYBRx/QCgS4=";
-        };
-      };
-
-      # The release binary: building from source fetches sendspin-cpp and its dependencies at configure time.
-      sendspin-cli = pkgs.stdenv.mkDerivation rec {
-        pname = "sendspin-cli";
-        version = "0.3.0";
-        src = pkgs.fetchurl {
-          url = "https://github.com/Sendspin/sendspin-cpp-cli/releases/download/v${version}/sendspin-cli-${version}-linux-${
-            release.${pkgs.stdenv.hostPlatform.system}.arch
-          }.tar.gz";
-          inherit (release.${pkgs.stdenv.hostPlatform.system}) hash;
-        };
-        nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-        buildInputs = [
-          pkgs.alsa-lib
-          pkgs.portaudio
-          pkgs.libpulseaudio
-          pkgs.pipewire
-          avahiCompat
-          pkgs.stdenv.cc.cc.lib
-        ];
-        installPhase = "install -Dm755 usr/local/bin/sendspin-cli $out/bin/sendspin-cli";
-        meta.platforms = builtins.attrNames release;
-      };
+      sendspin-cli = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sendspin-cli;
     in
     {
       options.services.sendspin-player = {

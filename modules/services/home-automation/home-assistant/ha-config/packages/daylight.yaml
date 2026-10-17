@@ -22,7 +22,7 @@ template:
           {% set f = states('sensor.daylight_fraction') %}
           {% set r = states('sensor.daylight_reference_5_min') %}
           {% set warm = state_attr('sensor.daylight_peak_24h', 'age_coverage_ratio') | float(0) >= 0.9 %}
-          {% if e < 0 %}true{% elif not warm and is_number(r) %}{{ r | float < 100 }}{% elif not is_number(f) %}false{% elif this.state == 'on' %}{{ f | float < 0.15 }}{% else %}{{ f | float < 0.05 }}{% endif %}
+          {% if e < 0 %}true{% elif not warm and is_number(r) %}{{ r | float < 100 }}{% elif not is_number(f) %}false{% elif this.state == 'on' %}{{ f | float < 0.15 }}{% else %}{{ f | float < 0.09 }}{% endif %}
 
 sensor:
   - platform: min_max

@@ -2996,6 +2996,47 @@ views:
           days: 7
       grid_options:
         columns: 12
+    - type: heading
+      heading: Internet
+      icon: mdi:web
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: 12
+      layout: chips
+      head:
+      - entity: binary_sensor.office_room_ex3600_t0_wan_status
+        name: ""
+        icon: mdi:web
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: sensor.office_room_ex3600_t0_external_ip
+        name: ""
+        icon: mdi:ip-network
+      spark:
+        title: Last 24 h
+        hours: 24
+        scale: 0.008192
+        unit: Mbit/s
+        decimals: 1
+        series:
+        - entity: sensor.office_room_ex3600_t0_download_speed
+          name: Download
+        - entity: sensor.office_room_ex3600_t0_upload_speed
+          name: Upload
+      items:
+      - entity: sensor.wan_speed
+        name: ""
+        icon: mdi:swap-vertical
+      - entity: sensor.wan_down_this_month
+        name: Month
+        icon: mdi:lan-disconnect
+      - entity: sensor.wan_down_this_year
+        name: Year
   - type: grid
     cards:
     - type: heading
@@ -3159,91 +3200,86 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Power monitor
+      heading: Server power
       icon: mdi:flash
       heading_style: title
-    - type: custom:health-metric-card
-      entity: sensor.power_monitor_1_power
-      name: Power
-      icon: mdi:flash
-      color: "#ffd86b"
-      decimals: 0
-      show_date: false
-      chart:
-        type: line
-        days: 7
-      delta:
-        mode: range
-        decimals: 0
-      items:
-      - entity: sensor.power_monitor_1_voltage
-        name: Voltage
-        mode: now
-        range: false
-        days: 7
-        decimals: 0
-        color: "#c9a7e8"
-      - entity: sensor.power_monitor_1_current
-        name: Current
-        mode: now
-        days: 7
+    - type: vertical-stack
+      grid_options:
+        columns: full
+      card_mod:
+        style: |
+          :host {
+            --vertical-stack-card-gap: 1px;
+            --stack-card-gap: 1px;
+            --ha-card-border-radius: 0;
+            --ha-card-border-width: 0px;
+            --ha-card-box-shadow: none;
+            display: block;
+            overflow: hidden;
+            border-radius: 12px;
+            background: var(--divider-color, rgba(127, 127, 127, 0.25));
+            border: 1px solid var(--ha-card-border-color, var(--divider-color, rgba(127, 127, 127, 0.25)));
+          }
+      cards:
+      - type: custom:status-row-card
+        color: "#ffd86b"
+        layout: chips
+        min_width: 120px
+        head:
+        - entity: switch.power_monitor_1
+          name: Socket
+          icon: mdi:power-socket-eu
+          hide_when:
+          - "on"
+        - entity: switch.power_monitor_1_child_lock
+          name: Child lock
+          icon: mdi:lock-open-variant
+          hide_when:
+          - "on"
+        - entity: select.power_monitor_1_power_on_behavior
+          name: After a power cut
+          icon: mdi:power-settings
+          hide_when:
+          - "on"
+          labels:
+            "on": Turns on
+            "off": Stays off
+        spark:
+          entity: sensor.power_monitor_1_power
+          title: Server power, last 24 h
+          hours: 24
+          hero: true
+        items:
+        - entity: sensor.power_monitor_1_voltage
+          name: Voltage
+          icon: mdi:sine-wave
+          unit: true
+          tap: more-info
+        - entity: sensor.power_monitor_1_current
+          name: Current
+          icon: mdi:current-ac
+          unit: true
+          tap: more-info
+      - type: custom:health-metric-card
+        entity: sensor.power_monitor_1_energy
+        name: Energy today
+        icon: mdi:lightning-bolt
+        color: "#ffd86b"
         decimals: 2
-        color: "#ff9f6b"
-      popup:
-        graphs:
-        - name: Power
-          entities:
-          - sensor.power_monitor_1_power
-          days: 7
-        - name: Voltage
-          entities:
-          - sensor.power_monitor_1_voltage
-          days: 7
-        - name: Current
-          entities:
-          - sensor.power_monitor_1_current
-          days: 7
-      grid_options:
-        columns: 12
-    - type: custom:health-metric-card
-      entity: sensor.power_monitor_1_energy
-      name: Energy today
-      icon: mdi:lightning-bolt
-      color: "#ffd86b"
-      decimals: 2
-      hero_from: chart
-      show_date: false
-      chart:
-        type: bar
-        days: 14
-        stat: change
-      popup:
-        graphs:
-        - name: Energy per day
-          entities:
-          - sensor.power_monitor_1_energy
-          days: 30
-          stat: change
+        hero_from: chart
+        show_date: false
+        chart:
           type: bar
-      grid_options:
-        columns: 12
-    - type: custom:status-row-card
-      color: "#ffd86b"
-      items:
-      - entity: switch.power_monitor_1
-        name: Socket
-        icon: mdi:power-socket-eu
-      - entity: switch.power_monitor_1_child_lock
-        name: Child lock
-        icon: mdi:lock
-        labels:
-          "on": Locked
-          "off": Unlocked
-      - entity: select.power_monitor_1_power_on_behavior
-        name: Power-on
-        icon: mdi:power-settings
-      grid_options:
-        columns: 12
+          days: 14
+          stat: change
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.power_monitor_1_energy
+            days: 30
+            stat: change
+            type: bar
   visible:
   - user: a1d4401b8b714ebb83f07c5316ab399c
 - type: sections

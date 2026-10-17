@@ -17,6 +17,8 @@ Before asserting file or config state, re-read it and reference the verification
 ## Working style
 - Ask before destructive or hard-to-reverse actions, even when technically permitted by tool permissions — this applies especially on `sutala` since sessions often run directly on it, not just against a checkout.
 - Prefer editing existing files over creating new ones; no unrequested abstractions, refactors, or cleanup alongside a focused task.
+- Turn a task into a verifiable goal (a test or command that proves it), and loop until that check passes.
+- For changes under ~20 lines, skip the superpowers brainstorming/plan ceremony and follow ponytail; keep it for larger or ambiguous work.
 
 ## Code comments
 - Keep comments to one line by default. Never narrate the decision process, alternatives considered, or tradeoffs weighed — that belongs in the commit message or PR description, not the file.

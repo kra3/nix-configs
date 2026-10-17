@@ -54,6 +54,7 @@
           executable = true;
           force = true;
         };
+        ".claude/.i-have-adhd-always".text = "";
       };
     };
 }

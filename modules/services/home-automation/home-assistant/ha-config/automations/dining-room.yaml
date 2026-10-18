@@ -15,6 +15,7 @@
   description: >-
     Presence + darkness via ranger_duo_ptz's Frigate person detection.
     Manual override via STYRBAR double-tap.
+    On from dark until bedtime while someone is home, dimmed to 20% after 30 min without presence, off when nobody is home.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -23,6 +24,8 @@
       motion_sensor: binary_sensor.ranger_duo_ptz_motion
       dark_boolean: input_boolean.dining_is_dark
       media_player_entity: media_player.lg_webos_tv_oled77c35la
+      evening_hold: true
+      adaptive_lighting_switch: switch.home_adaptive_lighting_home
 
 - id: dining_meal_boost
   alias: Dining room — Full brightness while seated

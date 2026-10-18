@@ -46,6 +46,10 @@ views:
       name: Party mode
       icon: mdi:party-popper
     - type: tile
+      entity: input_boolean.vacation_mode
+      name: Vacation mode
+      icon: mdi:beach
+    - type: tile
       entity: input_boolean.automations_paused
       name: Manual mode
       icon: mdi:pause-circle

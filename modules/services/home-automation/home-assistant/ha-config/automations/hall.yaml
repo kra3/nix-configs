@@ -17,7 +17,8 @@
   description: >-
     Motion-tiered brightness (45% on motion, 80% if lingering 2min, 15%
     ambient once clear 2min, off at bedtime) instead of Adaptive
-    Lighting. Does not react during sleep hours. Suppressed during
+    Lighting. Does not react during sleep hours. Off, and not reacting,
+    while nobody is home (binary_sensor.anyone_home). Suppressed during
     party_mode and while Alarmo is pending/triggered.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
@@ -42,6 +43,14 @@
     to: "on"
     trigger: state
     id: sleep_started
+  - entity_id: binary_sensor.anyone_home
+    to: "off"
+    trigger: state
+    id: away
+  - entity_id: binary_sensor.anyone_home
+    to: "on"
+    trigger: state
+    id: startup
   # Re-derives whichever branch below should currently apply — the
   # persistent/clear triggers' `for: 2m` only arm on a fresh transition,
   # so an HA restart landing mid-state would otherwise strand the
@@ -79,6 +88,34 @@
       - triggered
   actions:
   - choose:
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: away
+        - condition: and
+          conditions:
+          - condition: trigger
+            id: startup
+          - condition: state
+            entity_id: binary_sensor.anyone_home
+            state: "off"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hallway_hall_lights
+        data:
+          transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.anyone_home
+        state: "off"
+      sequence: []
     - conditions:
       - condition: trigger
         id: sleep_started

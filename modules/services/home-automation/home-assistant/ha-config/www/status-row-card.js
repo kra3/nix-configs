@@ -1,4 +1,4 @@
-// Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`. `layout: rows` puts each entry on one line (label left, value right); `spark: {entity, title, hours}` adds an hourly-mean sparkline with its peak above the entries.
+// Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`. `layout: rows` puts each entry on one line (label left, value right); `spark: {entity, title, hours}` adds an hourly-mean sparkline with its peak above the entries; `align: end` on a head entry pushes it to the right edge.
 
 const STYLE = `
   :host { display: block; }
@@ -35,6 +35,7 @@ const STYLE = `
   .chips .lab { font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; }
   .chips .val { font-size: 13px; font-weight: 500; }
   .chips .hint { display: none; }
+  .chips .it.end { margin-left: auto; }
   .sp { cursor: pointer; }
   .hero { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
   .hero b { font-size: 34px; font-weight: 500; line-height: 1; color: var(--primary-text-color); }
@@ -143,7 +144,7 @@ class StatusRowCard extends HTMLElement {
     const color = tone(dead ? "inactive" : (it.colors && (it.colors[key] || it.colors.other)) || (s.state === "off" ? "inactive" : base));
     const tap = (it.tap === "toggle" || it.tap === "more-info") && !dead;
     return (
-      `<div class="it${dead || s.state === "off" ? " off" : ""}${tap ? " tap" : ""}" data-i="${i}" style="--c:${esc(color)}">${it.icon ? `<ha-icon icon="${esc(it.icon)}"></ha-icon>` : ""}` +
+      `<div class="it${dead || s.state === "off" ? " off" : ""}${tap ? " tap" : ""}${it.align === "end" ? " end" : ""}" data-i="${i}" style="--c:${esc(color)}">${it.icon ? `<ha-icon icon="${esc(it.icon)}"></ha-icon>` : ""}` +
       `<div><div class="lab">${esc(it.name ?? ((s && s.attributes.friendly_name) || ""))}</div><div class="val">${esc(shown)}</div>${hint ? `<div class="hint">${esc(hint)}</div>` : ""}</div></div>`
     );
   }

@@ -3027,6 +3027,7 @@ views:
         name: ""
         icon: mdi:speedometer
         unit: true
+        align: end
       spark:
         title: Last 24 h
         hours: 24

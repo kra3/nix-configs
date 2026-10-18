@@ -37,7 +37,7 @@
     },
     "fresh_intellivent_sky": {
       "repo": "Spit68/Fresh-Intellivent-Sky",
-      "version": "V0.8.0",
+      "version": "V0.8.1",
       "kind": "tree",
       "subpath": "custom_components/fresh_intellivent_sky",
       "hash": "sha256-RUat4qXd+VC0nMQNsaJdXByNrIGk8woQV2gcFYuymKE="

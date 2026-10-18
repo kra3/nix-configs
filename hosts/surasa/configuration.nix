@@ -67,7 +67,10 @@
     firewall.enable = true;
     nftables.enable = true;
     nameservers = [ "127.0.0.1" ];
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      wifi.powersave = false;
+    };
   };
 
   # The bootstrap ethernet adapter staying plugged in on the same LAN as wlan0 causes ARP flux, silently missing `iifname "wlan0"` firewall rules.

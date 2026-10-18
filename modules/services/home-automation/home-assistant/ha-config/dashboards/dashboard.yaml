@@ -2995,6 +2995,75 @@ views:
         icon: mdi:lan-disconnect
       - entity: sensor.wan_down_this_year
         name: Year
+    - type: heading
+      heading: Powerline
+      icon: mdi:power-plug
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: 12
+      layout: chips
+      head:
+      - entity: binary_sensor.network_powerline_network_network_problem
+        name: ""
+        icon: mdi:power-plug
+        labels:
+          "off": Healthy
+          "on": Problem
+        colors:
+          "off": success
+          "on": error
+      - entity: sensor.network_powerline_network_adapters_online
+        name: ""
+        icon: mdi:connection
+        labels:
+          "2": 2 adapters online
+          "1": 1 adapter online
+          "0": No adapters online
+        colors:
+          "2": success
+          other: warning
+      spark:
+        title: Last 24 h
+        hours: 24
+        unit: Mbit/s
+        series:
+        - entity: sensor.network_powerline_97_62_9f_tx_rate
+          name: Router to AP
+        - entity: sensor.network_powerline_97_62_8f_tx_rate
+          name: AP to router
+      items:
+      - entity: sensor.network_powerline_network_slowest_link
+        name: Slowest
+        icon: mdi:speedometer
+        unit: true
+      - entity: binary_sensor.network_powerline_97_62_9f_status
+        name: Router side
+        icon: mdi:router-network
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: binary_sensor.network_powerline_97_62_8f_status
+        name: AP side
+        icon: mdi:access-point
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: binary_sensor.network_d_link
+        name: D-Link
+        icon: mdi:wifi
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
   - type: grid
     cards:
     - type: heading

@@ -3055,9 +3055,27 @@ views:
         colors:
           "on": success
           "off": error
+    - type: heading
+      heading: Network devices
+      icon: mdi:lan
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: 12
+      layout: chips
+      items:
       - entity: binary_sensor.network_d_link
         name: D-Link
         icon: mdi:wifi
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: binary_sensor.network_surasa
+        name: Surasa
+        icon: mdi:raspberry-pi
         labels:
           "on": Online
           "off": Offline

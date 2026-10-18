@@ -388,10 +388,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
-        prev: true
-        next: true
       grid_options:
-        columns: 6
+        columns: full
     - type: custom:mini-media-player
       entity: media_player.ma_home_theater
       name: Living room
@@ -405,10 +403,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
-        prev: true
-        next: true
       grid_options:
-        columns: 6
+        columns: full
     - type: custom:mini-media-player
       entity: media_player.kitchen_speaker
       name: Kitchen
@@ -422,10 +418,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
-        prev: true
-        next: true
       grid_options:
-        columns: 6
+        columns: full
     - type: custom:mini-media-player
       entity: media_player.office_speaker
       name: Office
@@ -439,10 +433,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
-        prev: true
-        next: true
       grid_options:
-        columns: 6
+        columns: full
   - type: grid
     column_span: 2
     cards:

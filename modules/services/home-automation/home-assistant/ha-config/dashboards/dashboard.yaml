@@ -387,7 +387,6 @@ views:
         volume: true
         shuffle: true
         repeat: true
-        progress: true
       grid_options:
         columns: full
     - type: custom:mini-media-player
@@ -402,7 +401,6 @@ views:
         volume: true
         shuffle: true
         repeat: true
-        progress: true
       grid_options:
         columns: full
     - type: custom:mini-media-player
@@ -417,7 +415,6 @@ views:
         volume: true
         shuffle: true
         repeat: true
-        progress: true
       grid_options:
         columns: full
     - type: custom:mini-media-player
@@ -432,7 +429,6 @@ views:
         volume: true
         shuffle: true
         repeat: true
-        progress: true
       grid_options:
         columns: full
   - type: grid

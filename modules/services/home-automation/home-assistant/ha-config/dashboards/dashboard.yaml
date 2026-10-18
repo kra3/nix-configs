@@ -3008,7 +3008,7 @@ views:
         name: ""
         icon: mdi:power-plug
         labels:
-          "off": Healthy
+          "off": OK
           "on": Problem
         colors:
           "off": success
@@ -3017,26 +3017,26 @@ views:
         name: ""
         icon: mdi:connection
         labels:
-          "2": 2 adapters online
-          "1": 1 adapter online
-          "0": No adapters online
+          "2": 2/2
+          "1": 1/2
+          "0": 0/2
         colors:
           "2": success
           other: warning
+      - entity: sensor.network_powerline_network_slowest_link
+        name: ""
+        icon: mdi:speedometer
+        unit: true
       spark:
         title: Last 24 h
         hours: 24
         unit: Mbit/s
         series:
         - entity: sensor.network_powerline_97_62_9f_tx_rate
-          name: Router to AP
+          name: To AP
         - entity: sensor.network_powerline_97_62_8f_tx_rate
-          name: AP to router
+          name: To router
       items:
-      - entity: sensor.network_powerline_network_slowest_link
-        name: Slowest
-        icon: mdi:speedometer
-        unit: true
       - entity: binary_sensor.network_powerline_97_62_9f_status
         name: Router side
         icon: mdi:router-network

@@ -23,6 +23,10 @@
 
   services.sendspin-player.name = "Kitchen Speaker";
 
+  # WirePlumber restores the sink at 0.40 and MA's volume doesn't reach it; the sink isn't up when sendspin starts, so retry until set (start timeout bounds it).
+  systemd.user.services.sendspin.serviceConfig.ExecStartPost =
+    "${pkgs.runtimeShell} -c 'until ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1.0; do sleep 1; done'";
+
   # The minimal profiles/base.nix this board's sd-image imports doesn't add systemd's own
   # package to services.dbus.packages (a standard-profile default), so systemd's D-Bus policy
   # (granting root/wheel access to org.freedesktop.systemd1) never gets included -- breaking

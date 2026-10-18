@@ -447,15 +447,6 @@ views:
       - condition: state
         entity: media_player.lg_webos_tv_oled77c35la
         state_not: [playing, paused]
-      - condition: state
-        entity: media_player.ma_home_theater
-        state_not: [playing, paused]
-      - condition: state
-        entity: media_player.kitchen_speaker
-        state_not: [playing, paused]
-      - condition: state
-        entity: media_player.office_speaker
-        state_not: [playing, paused]
     - type: tile
       entity: media_player.ma_home_theater
       name: Play music
@@ -467,9 +458,6 @@ views:
       grid_options:
         columns: 6
       visibility:
-      - condition: state
-        entity: media_player.lg_webos_tv_oled77c35la
-        state_not: [playing, paused]
       - condition: state
         entity: media_player.ma_home_theater
         state_not: [playing, paused]

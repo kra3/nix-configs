@@ -118,9 +118,12 @@
     9115
   ];
 
-  # Logs already ship to Loki via Alloy above -- skip persisting them locally too, to cut SD card writes.
-  services.journald.storage = "volatile";
-  services.journald.extraConfig = "RuntimeMaxUse=32M";
+  # Loki gets nothing while wifi is down, so hangs left no trace; keep a small capped local journal.
+  services.journald.storage = "persistent";
+  services.journald.extraConfig = ''
+    SystemMaxUse=64M
+    SyncIntervalSec=5min
+  '';
 
   # services-infrastructure-openssh only opens port 22 on vars.network.lanIf (wlan0) -- fine
   # for sutala's single interface, but surasa's first boot (and sops bootstrap) happens over

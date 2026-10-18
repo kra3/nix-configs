@@ -2,6 +2,7 @@ streamline_templates: !include_dir_named streamline_templates/
 views:
 - title: Home
   path: home
+  max_columns: 3
   sections:
   - type: grid
     cards:
@@ -94,8 +95,6 @@ views:
         running: binary_sensor.dryer_running
         last_cycle: sensor.dryer_last_cycle
         flag: input_boolean.dryer_unemptied
-  - type: grid
-    cards:
     - type: heading
       heading: Active Rooms
       heading_style: title
@@ -348,6 +347,8 @@ views:
               box-shadow: none;
               border-top: none;
             }
+  - type: grid
+    cards:
     - type: heading
       heading: Media
       heading_style: title
@@ -432,11 +433,10 @@ views:
       grid_options:
         columns: full
   - type: grid
-    column_span: 2
     cards:
     - type: vertical-stack
       grid_options:
-        columns: 12
+        columns: full
       card_mod:
         style: |
           :host {
@@ -510,9 +510,11 @@ views:
             entities:
             - sensor.average_illuminance
             days: 7
+  - type: grid
+    cards:
     - type: vertical-stack
       grid_options:
-        columns: 12
+        columns: full
       card_mod:
         style: |
           :host {

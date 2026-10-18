@@ -13,7 +13,10 @@ blueprint:
     causes an on. Leave on_brightness/sleep_brightness unset for a light
     Adaptive Lighting manages — a bare turn_on lets AL supply
     brightness/color-temp instead. Both off-paths are suppressed while
-    input_boolean.party_mode is on.
+    input_boolean.party_mode is on. With evening_hold, the light stays on
+    from dark until bedtime while binary_sensor.anyone_home is on, dims
+    after dim_after_minutes without presence, and goes off when nobody is
+    home.
   domain: automation
   input:
     light_entity:
@@ -108,6 +111,41 @@ blueprint:
       selector:
         entity:
           domain: input_boolean
+    evening_hold:
+      name: Hold on in the evening
+      description: >-
+        For living areas: skip the 2 min off, keep the light on from dark
+        until bedtime while someone is home, dim it after
+        "Dim after (min)" without presence, and turn it off when nobody is
+        home.
+      default: false
+      selector:
+        boolean:
+    dim_after_minutes:
+      name: Dim after (min)
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 240
+          unit_of_measurement: min
+    dim_brightness:
+      name: Dim brightness (%)
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+    adaptive_lighting_switch:
+      name: Adaptive Lighting switch (optional)
+      description: >-
+        Needed with evening_hold on an Adaptive Lighting light: taken over
+        for the dim level, handed back when presence returns.
+      default: ""
+      selector:
+        entity:
+          domain: switch
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -132,6 +170,17 @@ triggers:
     to: "on"
     trigger: state
     id: sleep_started
+  - entity_id: binary_sensor.anyone_home
+    to: "off"
+    trigger: state
+    id: away
+  - entity_id: binary_sensor.anyone_home
+    to: "on"
+    trigger: state
+    id: arrive
+  - trigger: time_pattern
+    minutes: "/1"
+    id: tick
   # Re-derives whichever branch below should currently apply — the
   # "clear" trigger's `for: 2m` only arms on a fresh transition, so an
   # HA restart landing while occupancy is already clear (or already
@@ -164,6 +213,14 @@ variables:
        state_attr(media_player_entity, 'source') in media_sources }}
   nap_boolean: !input nap_boolean
   asleep: "{{ is_state('schedule.sleep', 'on') or (nap_boolean != '' and is_state(nap_boolean, 'on')) }}"
+  evening_hold: !input evening_hold
+  dim_brightness: !input dim_brightness
+  dim_after_minutes: !input dim_after_minutes
+  al_switch: !input adaptive_lighting_switch
+  light_entity: !input light_entity
+  home: "{{ is_state('binary_sensor.anyone_home', 'on') }}"
+  away: "{{ evening_hold and not home }}"
+  handback: "{{ evening_hold and al_switch != '' }}"
 
 actions:
   - choose:
@@ -182,15 +239,42 @@ actions:
               transition: 2
             action: light.turn_off
       - conditions:
+          - condition: trigger
+            id: [away, startup, tick]
+          - condition: template
+            value_template: "{{ away }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 2
+            action: light.turn_off
+      - conditions:
           - condition: or
             conditions:
               - condition: trigger
                 id: motion
               - condition: trigger
                 id: became_dark
-          - condition: state
-            entity_id: !input occupancy_sensor
-            state: "on"
+              - condition: trigger
+                id: arrive
+          - condition: template
+            value_template: "{{ not away }}"
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input occupancy_sensor
+                state: "on"
+              - condition: template
+                value_template: "{{ evening_hold and home }}"
           - condition: or
             conditions:
               - condition: not
@@ -201,7 +285,24 @@ actions:
                 value_template: "{{ react_during_sleep }}"
           - condition: template
             value_template: "{{ not media_blocks }}"
+          - condition: or
+            conditions:
+              - condition: not
+                conditions:
+                  - condition: trigger
+                    id: arrive
+              - condition: template
+                value_template: "{{ evening_hold and not asleep }}"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ handback }}"
+            then:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: "{{ al_switch }}"
+                  lights: "{{ light_entity }}"
+                  manual_control: false
           - target:
               entity_id: !input light_entity
             data: >-
@@ -211,6 +312,8 @@ actions:
       - conditions:
           - condition: trigger
             id: [clear, motion_clear]
+          - condition: template
+            value_template: "{{ not evening_hold }}"
           - condition: state
             entity_id: !input occupancy_sensor
             state: "off"
@@ -228,6 +331,47 @@ actions:
             data:
               transition: 1
             action: light.turn_off
+      - conditions:
+          - condition: trigger
+            id: tick
+          - condition: template
+            value_template: "{{ evening_hold and home and not asleep }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
+          - condition: template
+            value_template: >-
+              {%- from 'elapsed.jinja' import elapsed_ge -%}
+              {{ (elapsed_ge(occupancy_sensor, dim_after_minutes | int * 60) | bool)
+                 and (elapsed_ge(motion_sensor, dim_after_minutes | int * 60) | bool)
+                 and (state_attr(light_entity, 'brightness') | int(0)) > dim_brightness | int * 2.55 + 8 }}
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ handback }}"
+            then:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: "{{ al_switch }}"
+                  lights: "{{ light_entity }}"
+                  manual_control: true
+          - target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ dim_brightness | int }}"
+              transition: 5
+            action: light.turn_on
       - conditions:
           - condition: trigger
             id: startup
@@ -254,6 +398,8 @@ actions:
       - conditions:
           - condition: trigger
             id: startup
+          - condition: template
+            value_template: "{{ not away }}"
           - condition: state
             entity_id: !input occupancy_sensor
             state: "on"
@@ -277,6 +423,8 @@ actions:
       - conditions:
           - condition: trigger
             id: startup
+          - condition: template
+            value_template: "{{ not evening_hold }}"
           - condition: state
             entity_id: !input occupancy_sensor
             state: "off"

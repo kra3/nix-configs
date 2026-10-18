@@ -70,6 +70,9 @@ input_boolean:
   party_mode:
     name: Party mode
     icon: mdi:party-popper
+  vacation_mode:
+    name: Vacation mode
+    icon: mdi:beach
   automations_paused:
     name: Automations paused (manual mode)
     icon: mdi:pause-octagon

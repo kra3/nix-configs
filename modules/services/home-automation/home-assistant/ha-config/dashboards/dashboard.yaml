@@ -2995,6 +2995,98 @@ views:
         icon: mdi:lan-disconnect
       - entity: sensor.wan_down_this_year
         name: Year
+    - type: heading
+      heading: Powerline
+      icon: mdi:power-plug
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: 12
+      layout: chips
+      head:
+      - entity: binary_sensor.network_powerline_network_network_problem
+        name: ""
+        icon: mdi:power-plug
+        labels:
+          "off": Healthy
+          "on": Problem
+        colors:
+          "off": success
+          "on": error
+      - entity: sensor.network_powerline_network_adapters_online
+        name: ""
+        icon: mdi:connection
+        labels:
+          "2": 2/2
+          "1": 1/2
+          "0": 0/2
+        colors:
+          "2": success
+          other: warning
+      - entity: sensor.network_powerline_network_slowest_link
+        name: ""
+        icon: mdi:speedometer
+        unit: true
+        align: end
+      spark:
+        title: Last 24 h
+        hours: 24
+        unit: Mbit/s
+        series:
+        - entity: sensor.network_powerline_97_62_9f_tx_rate
+          name: To AP
+        - entity: sensor.network_powerline_97_62_8f_tx_rate
+          name: To router
+      items:
+      - entity: binary_sensor.network_powerline_97_62_9f_status
+        name: Router side
+        icon: mdi:router-network
+        hide_when:
+        - "on"
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: binary_sensor.network_powerline_97_62_8f_status
+        name: AP side
+        icon: mdi:access-point
+        hide_when:
+        - "on"
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+    - type: heading
+      heading: Network devices
+      icon: mdi:lan
+      heading_style: title
+    - type: custom:status-row-card
+      grid_options:
+        columns: 12
+      layout: chips
+      items:
+      - entity: binary_sensor.network_d_link
+        name: D-Link
+        icon: mdi:wifi
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
+      - entity: binary_sensor.network_surasa
+        name: Surasa
+        icon: mdi:raspberry-pi
+        labels:
+          "on": Online
+          "off": Offline
+        colors:
+          "on": success
+          "off": error
   - type: grid
     cards:
     - type: heading

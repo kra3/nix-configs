@@ -3040,6 +3040,8 @@ views:
       - entity: binary_sensor.network_powerline_97_62_9f_status
         name: Router side
         icon: mdi:router-network
+        hide_when:
+        - "on"
         labels:
           "on": Online
           "off": Offline
@@ -3049,6 +3051,8 @@ views:
       - entity: binary_sensor.network_powerline_97_62_8f_status
         name: AP side
         icon: mdi:access-point
+        hide_when:
+        - "on"
         labels:
           "on": Online
           "off": Offline

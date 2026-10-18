@@ -3008,7 +3008,7 @@ views:
         name: ""
         icon: mdi:power-plug
         labels:
-          "off": OK
+          "off": Healthy
           "on": Problem
         colors:
           "off": success

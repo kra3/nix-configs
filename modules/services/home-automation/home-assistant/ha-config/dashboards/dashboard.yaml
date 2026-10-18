@@ -462,9 +462,6 @@ views:
         entity: media_player.ma_home_theater
         state_not: [playing, paused]
       - condition: state
-        entity: media_player.kitchen_speaker
-        state_not: [playing, paused]
-      - condition: state
         entity: media_player.office_speaker
         state_not: [playing, paused]
   - type: grid

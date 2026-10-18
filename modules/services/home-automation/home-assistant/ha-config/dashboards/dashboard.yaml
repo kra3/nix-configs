@@ -388,6 +388,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
+        prev: true
+        next: true
       grid_options:
         columns: 6
     - type: custom:mini-media-player
@@ -403,6 +405,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
+        prev: true
+        next: true
       grid_options:
         columns: 6
     - type: custom:mini-media-player
@@ -418,6 +422,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
+        prev: true
+        next: true
       grid_options:
         columns: 6
     - type: custom:mini-media-player
@@ -433,6 +439,8 @@ views:
         shuffle: true
         repeat: true
         progress: true
+        prev: true
+        next: true
       grid_options:
         columns: 6
   - type: grid

@@ -152,6 +152,12 @@
       ipv4.method = "manual";
       ipv4.address1 = "${config.vars.network.lanIp}/24";
       ipv4.gateway = "192.168.1.1";
+      # Main-table default stays so wlan0 works alone (ethernet wins when plugged in); table 100 + rule keep wlan0-received traffic replying out wlan0.
+      ipv4.route1 = "192.168.1.0/24,0.0.0.0";
+      ipv4.route1_options = "table=100";
+      ipv4.route2 = "0.0.0.0/0,192.168.1.1";
+      ipv4.route2_options = "table=100";
+      ipv4.routing-rule1 = "priority 100 from ${config.vars.network.lanIp} table 100";
       ipv6.method = "disabled";
     };
   };

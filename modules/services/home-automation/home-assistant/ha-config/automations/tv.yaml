@@ -27,11 +27,20 @@
       entity_id: d82eff522a62e356a89979d2dd74f5df
       type: is_off
     then:
-    - action: wake_on_lan.send_magic_packet
-      data:
-        mac: 20:28:bc:b7:ff:3e
-        broadcast_address: 192.168.1.255
-        broadcast_port: 7
+    - repeat:
+        count: 5
+        sequence:
+        - if:
+          - condition: state
+            entity_id: media_player.lg_webos_tv_oled77c35la
+            state: "off"
+          then:
+          - action: wake_on_lan.send_magic_packet
+            data:
+              mac: 20:28:bc:b7:ff:3e
+              broadcast_address: 192.168.1.255
+              broadcast_port: 7
+          - delay: 3
   - if:
     - condition: template
       value_template: >-

@@ -30,8 +30,6 @@
             "/srv/media/library/books:/books"
             "/srv/media/library/audiobooks:/audiobooks"
             "/srv/media/library/reference:/reference"
-            "/srv/media/bkup/Books/Ebooks:/ebooks:ro"
-            "/srv/media/bkup/Books/Computer\ Science:/ebbok-compsec:ro"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "896m";

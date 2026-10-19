@@ -18,7 +18,7 @@
           options = {
             parent = config.vars.network.lanIf;
             mode = "bridge";
-            metric = "5000";
+            metric = "50";
           };
         };
       };

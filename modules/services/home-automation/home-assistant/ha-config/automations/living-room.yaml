@@ -2,13 +2,13 @@
 - id: living_darkness
   alias: Living room — Darkness detection
   description: >-
-    Dark while it is gloomy outside and the living room reads below 30 lux for 2 min.
+    Dark while it is gloomy outside and the living room reads below 80 lux for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
       occupancy_sensor: binary_sensor.living_room_occupancy_presence
       illuminance_sensor: sensor.living_room_occupancy_illuminance
-      dark_below: 30
+      dark_below: 80
       light_entity: light.living_room_lights
       dark_boolean: input_boolean.living_room_is_dark
 

@@ -147,6 +147,7 @@
         id = "surasa-wifi";
         type = "wifi";
         autoconnect = true;
+        autoconnect-retries = 0;
       };
       wifi = {
         mode = "infrastructure";
@@ -160,6 +161,32 @@
       ipv4.address1 = "${config.vars.network.lanIp}/24";
       ipv4.gateway = "192.168.1.1";
       ipv6.method = "disabled";
+    };
+  };
+
+  systemd.services.wifi-watchdog = {
+    path = [
+      pkgs.iputils
+      pkgs.networkmanager
+    ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      f=/run/wifi-watchdog-fails
+      if ping -c1 -W3 192.168.1.1 >/dev/null; then
+        rm -f $f
+        exit 0
+      fi
+      n=$(( $(cat $f 2>/dev/null || echo 0) + 1 ))
+      echo $n > $f
+      if [ $n -eq 3 ]; then nmcli connection up surasa-wifi || true; fi
+      if [ $n -ge 10 ]; then systemctl reboot; fi
+    '';
+  };
+  systemd.timers.wifi-watchdog = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "1min";
     };
   };
 

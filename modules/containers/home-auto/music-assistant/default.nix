@@ -8,10 +8,24 @@
     }:
     let
       network = config.virtualisation.quadlet.networks.home-auto;
-      macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan;
+      macvlan = config.virtualisation.quadlet.networks.home-auto-macvlan-ma;
     in
     {
       imports = [ flakeModules.nixos.services-home-automation-music-assistant ];
+
+      # Low metric makes this the default route so shairport's mDNS announces on the LAN.
+      virtualisation.quadlet.networks.home-auto-macvlan-ma = {
+        networkConfig = {
+          driver = "macvlan";
+          ipv6 = false;
+          subnets = [ config.vars.network.lanCidr ];
+          options = {
+            parent = config.vars.network.lanIf;
+            mode = "bridge";
+            metric = "50";
+          };
+        };
+      };
 
       virtualisation.quadlet.containers.music-assistant = {
         containerConfig = {
@@ -40,7 +54,7 @@
       // flakeLib.quadlet.mkNetworkDeps {
         networkServices = [
           "home-auto-network.service"
-          "home-auto-macvlan-network.service"
+          "home-auto-macvlan-ma-network.service"
         ];
       };
 

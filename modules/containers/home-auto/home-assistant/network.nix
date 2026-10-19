@@ -9,7 +9,7 @@
       };
 
       # macvlan network for LAN discovery (SSDP, mDNS, Zeroconf)
-      # No gateway — LAN-only, no internet via this path.
+      # High metric keeps the bridge as default route; MA uses its own macvlan with a lower metric.
       virtualisation.quadlet.networks.home-auto-macvlan = {
         networkConfig = {
           driver = "macvlan";
@@ -18,7 +18,7 @@
           options = {
             parent = config.vars.network.lanIf;
             mode = "bridge";
-            metric = "50";
+            metric = "5000";
           };
         };
       };

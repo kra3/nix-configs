@@ -25,8 +25,8 @@
             {
               containerConfig = {
                 networks = [
-                  "${network.ref}:ip=10.3.2.10"
-                  "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21"
+                  "${network.ref}:ip=10.3.2.10,interface_name=eth0"
+                  "${macvlan.ref}:ip=192.168.1.33,mac=02:42:c0:a8:01:21,interface_name=eth1"
                 ];
                 dns = [ "10.3.2.1" ];
                 # Bypasses macvlan isolation by forcing host domains to the bridge gateway

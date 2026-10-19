@@ -4,11 +4,11 @@
   "assets": {
     "aarch64-linux": {
       "arch": "arm64",
-      "hash": "sha256-SQNbJ50UDQmcibSWg3N5vZvlDss6if5iorYMj1JD4mQ="
+      "hash": "sha256-A1iZi6eR3JcB2uIT/XDEAS+9ASZDLrZ8f/Agiezi8Mo="
     },
     "x86_64-linux": {
       "arch": "x86_64",
-      "hash": "sha256-FeUjZKvjbIKbBNif98M0f/vVxZ0bmJYFvYBRx/QCgS4="
+      "hash": "sha256-QO/Ks57zA9Am2IgK0a2ntTsp6AYRSuN0T57TPa7gxdk="
     }
   }
 }

@@ -108,8 +108,8 @@ except where noted:
 
 Streaming is the default; disk is the exception.
 
-- **Watch:** Jellyfin (Litefin client on the TV) browses Gelato libraries,
-  which surface AIOStreams/AIOMetadata catalogs. Nothing touches disk.
+- **Watch:** stream via the AIOStreams/AIOMetadata catalogs in Moonfin's
+  merged multi-server view next to Jellyfin. Nothing touches disk.
 - **Fallback:** when no stream exists, request it in Seerr (Litefin's Seerr
   page or the Seerr web UI) with no tag. Default profiles: Radarr `HD-1080p`,
   Sonarr `WEB-1080p`. Radarr/Sonarr -> Prowlarr -> SABnzbd -> import into the
@@ -126,20 +126,15 @@ Streaming is the default; disk is the exception.
 | Unwatched download | removed after 90 days total |
 
 Deletes go through the Radarr/Sonarr recycle bin (purged after 7 days).
-Gelato libraries are never touched.
 
 **Toggles:** `vars.localMedia.enable` (Jellyfin, Radarr, Sonarr, Recyclarr,
 Maintainerr); `vars.localMedia.extras.enable` (Bazarr, Unpackerr; off by
 default, Unpackerr kept for future P2P).
 
 **App-internal state:** the keep tag, recycle bin, Maintainerr rules, Seerr
-defaults/library scope, Litefin's Seerr link and Gelato's daily catalog sync
+defaults/library scope and Litefin's Seerr link
 live in each app's appdata and were applied once. Restore from an appdata
 backup rather than re-deriving.
-
-**If Gelato breaks:** (1) AIOStreams as a SABnzbd-compatible download client
-for Radarr/Sonarr; (2) Moonfin's unified multi-server view with AIOStreams'
-Jellyfin-compatible server (untested).
 
 ### Logs/metrics → Grafana (sutala-specific)
 - Host + all nspawn/podman journald logs ship via each unit's Alloy agent

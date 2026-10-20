@@ -17,8 +17,9 @@
   description: >-
     Motion-tiered brightness (45% on motion, 80% if lingering 2min, 15%
     ambient once clear 2min, off at bedtime) instead of Adaptive
-    Lighting. Does not react during sleep hours. Off, and not reacting,
-    while nobody is home (binary_sensor.anyone_home). Suppressed during
+    Lighting. During sleep hours it is a night light: on with motion
+    (brightness left to Adaptive Lighting), off 2min after clear. Off, and
+    not reacting, while nobody is home (binary_sensor.anyone_home). Suppressed during
     party_mode and while Alarmo is pending/triggered.
   triggers:
   - entity_id: binary_sensor.hue_pir_hallway_occupancy
@@ -65,20 +66,6 @@
   - condition: state
     entity_id: input_boolean.hall_is_dark
     state: "on"
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: schedule.sleep
-      state: "off"
-    - condition: trigger
-      id: sleep_started
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: startup
-      - condition: state
-        entity_id: binary_sensor.hue_pir_hallway_occupancy
-        state: "off"
   - condition: not
     conditions:
     - condition: state
@@ -129,6 +116,47 @@
           entity_id: light.hallway_hall_lights
         data:
           transition: 2
+        action: light.turn_off
+    - conditions:
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      - condition: trigger
+        id:
+        - motion
+        - persistent
+        - became_dark
+        - startup
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "on"
+      sequence:
+      - target:
+          entity_id: light.hallway_hall_lights
+        data:
+          transition: 1
+        action: light.turn_on
+    - conditions:
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      - condition: trigger
+        id:
+        - clear
+        - became_dark
+      - condition: state
+        entity_id: binary_sensor.hue_pir_hallway_occupancy
+        state: "off"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: input_boolean.party_mode
+          state: "on"
+      sequence:
+      - target:
+          entity_id: light.hallway_hall_lights
+        data:
+          transition: 3
         action: light.turn_off
     - conditions:
       - condition: trigger

@@ -57,7 +57,7 @@ notify_all_phones:
   mode: parallel
 
 frigate_sync_detect_to_alarm_state:
-  alias: "Frigate: sync detect/audio switches to alarm state"
+  alias: "Frigate: sync detect/audio/snapshot switches to alarm state"
   description: >-
     Shared by frigate_detect_gate_by_alarm (on alarm state change) and
     frigate_detect_resync_on_restart (on Frigate MQTT reconnect) so the
@@ -76,6 +76,9 @@ frigate_sync_detect_to_alarm_state:
           - switch.ranger_duo_ptz_detect
           - switch.ranger_uno_detect
           - switch.ranger_uno_audio_detection
+          - switch.ranger_duo_fxd_snapshots
+          - switch.ranger_duo_ptz_snapshots
+          - switch.ranger_uno_snapshots
       - if:
         - condition: not
           conditions:
@@ -104,6 +107,9 @@ frigate_sync_detect_to_alarm_state:
           - switch.ranger_duo_ptz_audio_detection
           - switch.ranger_uno_detect
           - switch.ranger_uno_audio_detection
+          - switch.ranger_duo_fxd_snapshots
+          - switch.ranger_duo_ptz_snapshots
+          - switch.ranger_uno_snapshots
 
 alarm_force_arm_night:
   alias: "Alarm: force arm night (bypass open sensors)"

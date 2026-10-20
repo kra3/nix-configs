@@ -66,11 +66,13 @@
       - action: tts.speak
         continue_on_error: true
         target:
-          entity_id: tts.google_ai_tts
+          entity_id: tts.piper
         data:
           media_player_entity_id: media_player.kitchen_speaker
           message: "{{ spoken }}"
-          language: en-US
+          language: en_US
+          options:
+            voice: en_US-lessac-medium
     - action: timer.start
       target:
         entity_id: timer.alarm_arm_escalation

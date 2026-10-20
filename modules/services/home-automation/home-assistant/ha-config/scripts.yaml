@@ -153,12 +153,7 @@ announce_hallway:
 
 announce_home:
   alias: "Announce: speak in the occupied rooms"
-  description: >-
-    Speaks in the Unni assistant's English voice (Google AI TTS) on the speaker covering each room with presence:
-    kitchen speaker for kitchen and dining, office speaker for the office,
-    home theater for the living room while the receiver is on. If none of
-    those is occupied it uses the hallway speaker when someone is in the hall,
-    otherwise the kitchen. Does nothing while nobody is home.
+  description: Speaks on the speakers of occupied rooms, kitchen if none; skipped when nobody is home.
   fields:
     message:
       required: true

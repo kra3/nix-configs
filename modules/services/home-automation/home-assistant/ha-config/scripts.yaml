@@ -152,11 +152,13 @@ announce_hallway:
   mode: queued
 
 announce_home:
-  alias: "Announce: speak in the room someone is in"
+  alias: "Announce: speak in the occupied rooms"
   description: >-
-    Speaks with local Piper on the speaker of the room with presence
-    (kitchen, office, living room with the receiver on); kitchen otherwise.
-    Does nothing while nobody is home.
+    Speaks with local Piper on the speaker covering each room with presence:
+    kitchen speaker for kitchen and dining, office speaker for the office,
+    home theater for the living room while the receiver is on. If none of
+    those is occupied it uses the hallway speaker when someone is in the hall,
+    otherwise the kitchen. Does nothing while nobody is home.
   fields:
     message:
       required: true
@@ -167,20 +169,36 @@ announce_home:
     entity_id: binary_sensor.anyone_home
     state: "on"
   - variables:
-      speaker: >-
-        {% if is_state('binary_sensor.room_presence_kitchen', 'on') -%}media_player.kitchen_speaker
-        {%- elif is_state('binary_sensor.room_presence_office', 'on') -%}media_player.office_speaker
-        {%- elif is_state('binary_sensor.room_presence_living', 'on') and not is_state('media_player.home_theater_2', 'off') -%}media_player.ma_home_theater
-        {%- else -%}media_player.kitchen_speaker{%- endif %}
-  - action: tts.speak
-    target:
-      entity_id: tts.piper
-    data:
-      media_player_entity_id: "{{ speaker }}"
-      message: "{{ message }}"
-      language: en_US
-      options:
-        voice: en_US-lessac-medium
+      speakers: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- if is_state('binary_sensor.room_presence_kitchen', 'on') or is_state('binary_sensor.room_presence_dining', 'on') -%}
+          {%- set ns.l = ns.l + ['media_player.kitchen_speaker'] -%}
+        {%- endif -%}
+        {%- if is_state('binary_sensor.room_presence_office', 'on') -%}
+          {%- set ns.l = ns.l + ['media_player.office_speaker'] -%}
+        {%- endif -%}
+        {%- if is_state('binary_sensor.room_presence_living', 'on') and not is_state('media_player.home_theater_2', 'off') -%}
+          {%- set ns.l = ns.l + ['media_player.ma_home_theater'] -%}
+        {%- endif -%}
+        {{ ns.l }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ speakers | length == 0 and is_state('binary_sensor.room_presence_hall', 'on') }}"
+      sequence:
+      - action: script.announce_hallway
+        data:
+          message: "{{ message }}"
+    default:
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        media_player_entity_id: "{{ speakers if speakers | length > 0 else ['media_player.kitchen_speaker'] }}"
+        message: "{{ message }}"
+        language: en_US
+        options:
+          voice: en_US-lessac-medium
   mode: queued
 
 alarm_speakers_prepare:

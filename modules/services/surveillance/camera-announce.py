@@ -184,8 +184,8 @@ def wav_bytes(frames, rate=RATE_WAV, channels=1):
 @lru_cache(maxsize=16)
 def say_wav(text):
     cfg = os.environ
-    pcm, rate, _, channels = wyoming_say(cfg["PIPER_HOST"], int(cfg.get("PIPER_PORT", 10200)), text)
-    return wav_bytes(pcm, rate, channels)
+    pcm, rate, width, channels = wyoming_say(cfg["PIPER_HOST"], int(cfg.get("PIPER_PORT", 10200)), text)
+    return wav_bytes(bytes(int(rate * 0.6) * width * channels) + pcm, rate, channels)
 
 
 @lru_cache(maxsize=8)

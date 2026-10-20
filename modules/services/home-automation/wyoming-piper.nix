@@ -5,7 +5,7 @@
       virtualisation.quadlet.containers.wyoming-piper = {
         containerConfig = {
           image = "docker.io/rhasspy/wyoming-piper:2.5.2";
-          exec = "--voice en_US-lessac-medium --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data";
+          exec = "--voice en_US-lessac-medium --length-scale 1.25 --sentence-silence 0.5 --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data";
           logDriver = "journald";
           environments = {
             TZ = "UTC";

@@ -58,8 +58,8 @@
       continue_on_error: true
       data:
         message: >-
-          Alarm not armed. Still open:
-          {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') | replace('(', '') | replace(')', '') }}.
+          Alarm not armed. These are still open.
+          {{ (state_attr('binary_sensor.house_exits_open_status', 'open_names') | replace(' (L)', ' left') | replace(' (R)', ' right') | replace(', ', '. ')) ~ '.' }}
     - action: timer.start
       target:
         entity_id: timer.alarm_arm_escalation

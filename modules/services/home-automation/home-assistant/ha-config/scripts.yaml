@@ -151,6 +151,51 @@ announce_hallway:
       message: "{{ message }}"
   mode: queued
 
+announce_home:
+  alias: "Announce: speak in the occupied rooms"
+  description: Speaks on the speakers of occupied rooms, kitchen if none; skipped when nobody is home.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - condition: state
+    entity_id: binary_sensor.anyone_home
+    state: "on"
+  - variables:
+      speakers: >-
+        {%- set ns = namespace(l=[]) -%}
+        {%- if is_state('binary_sensor.room_presence_kitchen', 'on') or is_state('binary_sensor.room_presence_dining', 'on') -%}
+          {%- set ns.l = ns.l + ['media_player.kitchen_speaker'] -%}
+        {%- endif -%}
+        {%- if is_state('binary_sensor.room_presence_office', 'on') or is_state('binary_sensor.bedroom_occupancy_presence', 'on') -%}
+          {%- set ns.l = ns.l + ['media_player.office_speaker'] -%}
+        {%- endif -%}
+        {%- if is_state('binary_sensor.room_presence_living', 'on') and not is_state('media_player.home_theater_2', 'off') -%}
+          {%- set ns.l = ns.l + ['media_player.ma_home_theater'] -%}
+        {%- endif -%}
+        {{ ns.l }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ speakers | length == 0 and is_state('binary_sensor.room_presence_hall', 'on') }}"
+      sequence:
+      - action: script.announce_hallway
+        data:
+          message: "{{ message }}"
+    default:
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        media_player_entity_id: "{{ speakers if speakers | length > 0 else ['media_player.kitchen_speaker'] }}"
+        message: "{{ message }}"
+        language: en_US
+        options:
+          voice: en_US-lessac-medium
+  mode: queued
+
 alarm_speakers_prepare:
   alias: "Alarm speakers: prepare"
   description: Powers the home theater receiver on in multi-channel stereo and notes that the alarm did.
@@ -321,4 +366,8 @@ laundry_notify:
       data:
         title: "{{ title }}"
         message: "{{ message }}"
+  - action: script.announce_home
+    continue_on_error: true
+    data:
+      message: "{{ message }}"
   mode: queued

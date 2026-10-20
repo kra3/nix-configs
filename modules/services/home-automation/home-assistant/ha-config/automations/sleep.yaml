@@ -54,12 +54,23 @@
           Couldn't arm for the night — still open:
           {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
           Force-arm from the dashboard if needed.
-    - action: script.announce_hallway
-      continue_on_error: true
-      data:
-        message: >-
+    - variables:
+        spoken: >-
           Alarm not armed. These are still open.
           {{ (state_attr('binary_sensor.house_exits_open_status', 'open_names') | replace(' (L)', ' left') | replace(' (R)', ' right') | replace(', ', '. ')) ~ '.' }}
+    - parallel:
+      - action: script.announce_hallway
+        continue_on_error: true
+        data:
+          message: "{{ spoken }}"
+      - action: music_assistant.play_announcement
+        continue_on_error: true
+        target:
+          entity_id: media_player.kitchen_speaker
+        data:
+          url: "http://10.3.2.1:8098/say.wav?text={{ spoken | urlencode }}"
+          use_pre_announce: false
+          announce_volume: 50
     - action: timer.start
       target:
         entity_id: timer.alarm_arm_escalation

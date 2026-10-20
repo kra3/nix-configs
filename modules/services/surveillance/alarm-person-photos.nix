@@ -57,7 +57,7 @@
 
 
         def email(subject, attachments):
-            password = cred("smtp_password")
+            password = cred("smtp_password").replace(" ", "")
             if not password or password == "unset":
                 log("smtp_password not set, skipping email")
                 return

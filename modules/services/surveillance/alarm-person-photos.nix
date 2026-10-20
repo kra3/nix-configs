@@ -77,8 +77,8 @@
             return f"Alarm triggered: person on {item['cam'].replace('_', ' ')} at {when}"
 
 
-        def send_photos(item, photos):
-            cap = caption(item)
+        def send_photos(item, photos, suffix=""):
+            cap = caption(item) + suffix
             try:
                 for i, jpg in enumerate(photos):
                     telegram("sendPhoto", "photo", f"{item['id']}-{i}.jpg", jpg, cap)
@@ -91,6 +91,11 @@
 
 
         def send_clip(item):
+            try:
+                best = fetch(f"/api/events/{item['id']}/snapshot.jpg?bbox=1")
+                send_photos({**item, "id": item["id"] + "-best"}, [best], " (best frame)")
+            except Exception as e:
+                log("best snapshot unavailable:", item["id"], e)
             cap = caption(item) + " (clip)"
             try:
                 clip = fetch(f"/api/events/{item['id']}/clip.mp4")

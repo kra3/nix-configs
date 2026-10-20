@@ -154,7 +154,7 @@ announce_hallway:
 announce_home:
   alias: "Announce: speak in the occupied rooms"
   description: >-
-    Speaks with local Piper on the speaker covering each room with presence:
+    Speaks in the Unni assistant's English voice (Google AI TTS) on the speaker covering each room with presence:
     kitchen speaker for kitchen and dining, office speaker for the office,
     home theater for the living room while the receiver is on. If none of
     those is occupied it uses the hallway speaker when someone is in the hall,
@@ -192,13 +192,11 @@ announce_home:
     default:
     - action: tts.speak
       target:
-        entity_id: tts.piper
+        entity_id: tts.google_ai_tts
       data:
         media_player_entity_id: "{{ speakers if speakers | length > 0 else ['media_player.kitchen_speaker'] }}"
         message: "{{ message }}"
-        language: en_US
-        options:
-          voice: en_US-lessac-medium
+        language: en-US
   mode: queued
 
 alarm_speakers_prepare:

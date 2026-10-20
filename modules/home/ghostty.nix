@@ -7,7 +7,10 @@
       enableZshIntegration = true;
       enableBashIntegration = true;
       settings = {
-        font-family = "FiraCode Nerd Font Mono";
+        font-family = [
+          "FiraCode Nerd Font Mono"
+          "Manjari"
+        ];
         # retina renders smaller at the same point size.
         font-size = if pkgs.stdenv.isDarwin then 12 else 10;
         font-feature = [

@@ -63,14 +63,16 @@
         continue_on_error: true
         data:
           message: "{{ spoken }}"
-      - action: music_assistant.play_announcement
+      - action: tts.speak
         continue_on_error: true
         target:
-          entity_id: media_player.kitchen_speaker
+          entity_id: tts.piper
         data:
-          url: "http://10.3.2.1:8098/say.wav?text={{ spoken | urlencode }}"
-          use_pre_announce: false
-          announce_volume: 50
+          media_player_entity_id: media_player.kitchen_speaker
+          message: "{{ spoken }}"
+          language: en_US
+          options:
+            voice: en_US-lessac-medium
     - action: timer.start
       target:
         entity_id: timer.alarm_arm_escalation

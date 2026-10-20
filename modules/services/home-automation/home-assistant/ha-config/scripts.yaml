@@ -151,6 +151,38 @@ announce_hallway:
       message: "{{ message }}"
   mode: queued
 
+announce_home:
+  alias: "Announce: speak in the room someone is in"
+  description: >-
+    Speaks with local Piper on the speaker of the room with presence
+    (kitchen, office, living room with the receiver on); kitchen otherwise.
+    Does nothing while nobody is home.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - condition: state
+    entity_id: binary_sensor.anyone_home
+    state: "on"
+  - variables:
+      speaker: >-
+        {% if is_state('binary_sensor.room_presence_kitchen', 'on') -%}media_player.kitchen_speaker
+        {%- elif is_state('binary_sensor.room_presence_office', 'on') -%}media_player.office_speaker
+        {%- elif is_state('binary_sensor.room_presence_living', 'on') and not is_state('media_player.home_theater_2', 'off') -%}media_player.ma_home_theater
+        {%- else -%}media_player.kitchen_speaker{%- endif %}
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      media_player_entity_id: "{{ speaker }}"
+      message: "{{ message }}"
+      language: en_US
+      options:
+        voice: en_US-lessac-medium
+  mode: queued
+
 alarm_speakers_prepare:
   alias: "Alarm speakers: prepare"
   description: Powers the home theater receiver on in multi-channel stereo and notes that the alarm did.
@@ -321,4 +353,8 @@ laundry_notify:
       data:
         title: "{{ title }}"
         message: "{{ message }}"
+  - action: script.announce_home
+    continue_on_error: true
+    data:
+      message: "{{ message }}"
   mode: queued

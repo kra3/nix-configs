@@ -1,29 +1,24 @@
 {
   flake.nixosModules.services-surveillance-alarm-person-photos =
     {
-      config,
       pkgs,
       ...
     }:
     let
-      frigateUrl = "http://${config.vars.network.containers.homeAuto.localAddress}:5000";
-      emailAddress = config.vars.acme.email;
 
       script = pkgs.writeText "alarm-person-photos.py" ''
         import json, os, smtplib, subprocess, sys, threading, time, urllib.request, uuid
         from datetime import datetime
         from email.message import EmailMessage
 
-        FRIGATE = "${frigateUrl}"
-        EMAIL = "${emailAddress}"
-        CRED = os.environ["CREDENTIALS_DIRECTORY"]
+        FRIGATE = "http://localhost:5000"
+        EMAIL = os.environ["ALARM_EMAIL"]
         THROTTLE_S = 60
         MAX_EMAIL_BYTES = 20 * 1024 * 1024
 
 
         def cred(name):
-            with open(os.path.join(CRED, name)) as f:
-                return f.read().strip()
+            return os.environ[name]
 
 
         def log(*a):
@@ -38,7 +33,7 @@
         def telegram(method, field, filename, data, caption):
             boundary = uuid.uuid4().hex
             parts = []
-            for k, v in (("chat_id", cred("telegram_chat_id")), ("caption", caption)):
+            for k, v in (("chat_id", cred("TELEGRAM_CHAT_ID")), ("caption", caption)):
                 parts.append(
                     f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode()
                 )
@@ -49,7 +44,7 @@
             )
             body = b"".join(parts) + f"--{boundary}--\r\n".encode()
             req = urllib.request.Request(
-                f"https://api.telegram.org/bot{cred('telegram_bot_token')}/{method}",
+                f"https://api.telegram.org/bot{cred('TELEGRAM_BOT_TOKEN')}/{method}",
                 data=body,
                 headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
             )
@@ -57,7 +52,7 @@
 
 
         def email(subject, attachments):
-            password = cred("smtp_password").replace(" ", "")
+            password = cred("SMTP_PASSWORD").replace(" ", "")
             if not password or password == "unset":
                 log("smtp_password not set, skipping email")
                 return
@@ -188,7 +183,7 @@
             proc = subprocess.Popen(
                 [
                     "${pkgs.mosquitto}/bin/mosquitto_sub", "-h", "localhost", "-p", "1883",
-                    "-u", cred("mqtt_user"), "-P", cred("mqtt_password"),
+                    "-u", cred("MQTT_USER"), "-P", cred("MQTT_PASSWORD"),
                     "-t", "alarmo/state", "-t", "frigate/events", "-F", "%t %p",
                 ],
                 stdout=subprocess.PIPE, text=True,
@@ -210,28 +205,17 @@
       '';
     in
     {
-      sops.secrets."alarm.smtp_password" = { };
-
       systemd.services.alarm-person-photos = {
         description = "Send person photos and clips to Telegram/email when the alarm triggers";
         wantedBy = [ "multi-user.target" ];
-        after = [
-          "network-online.target"
-          "container@home-auto.service"
-        ];
-        wants = [ "network-online.target" ];
+        after = [ "mosquitto.service" ];
+        wants = [ "mosquitto.service" ];
         serviceConfig = {
           ExecStart = "${pkgs.python3}/bin/python3 ${script}";
-          DynamicUser = true;
+          EnvironmentFile = "/run/secrets/alarm-person-photos.env";
           Restart = "always";
           RestartSec = 10;
-          LoadCredential = [
-            "mqtt_user:${config.sops.secrets."mqtt.user".path}"
-            "mqtt_password:${config.sops.secrets."mqtt.password".path}"
-            "telegram_bot_token:${config.sops.secrets."monitoring.grafana.telegram_bot_token".path}"
-            "telegram_chat_id:${config.sops.secrets."monitoring.grafana.telegram_chat_id".path}"
-            "smtp_password:${config.sops.secrets."alarm.smtp_password".path}"
-          ];
+          DynamicUser = true;
           NoNewPrivileges = true;
           ProtectSystem = "strict";
           ProtectHome = true;

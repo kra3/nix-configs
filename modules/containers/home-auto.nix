@@ -83,6 +83,7 @@
               flakeModules.nixos.containers-common
               flakeModules.nixos.services-home-automation-mosquitto
               flakeModules.nixos.services-surveillance-default
+              flakeModules.nixos.services-surveillance-alarm-person-photos
               flakeModules.nixos.services-home-automation-zigbee2mqtt
             ];
 
@@ -212,6 +213,10 @@
               hostPath = config.sops.templates."surveillance-nvr-frigate.env".path;
               isReadOnly = true;
             };
+            "/run/secrets/alarm-person-photos.env" = {
+              hostPath = config.sops.templates."alarm-person-photos.env".path;
+              isReadOnly = true;
+            };
           };
           allowedDevices = [
             {
@@ -267,6 +272,22 @@
           FRIGATE_RANGER_UNO_PASSWORD=${config.sops.placeholder."surveillance.go2rtc.ranger_uno.password"}
         '';
       };
+
+      sops.templates."alarm-person-photos.env" = {
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        content = ''
+          MQTT_USER=${config.sops.placeholder."mqtt.user"}
+          MQTT_PASSWORD=${config.sops.placeholder."mqtt.password"}
+          TELEGRAM_BOT_TOKEN=${config.sops.placeholder."monitoring.grafana.telegram_bot_token"}
+          TELEGRAM_CHAT_ID=${config.sops.placeholder."monitoring.grafana.telegram_chat_id"}
+          SMTP_PASSWORD=${config.sops.placeholder."alarm.smtp_password"}
+          ALARM_EMAIL=${config.vars.acme.email}
+        '';
+      };
+
+      sops.secrets."alarm.smtp_password" = { };
 
       sops.templates."zigbee2mqtt.env" = {
         owner = "root";

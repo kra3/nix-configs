@@ -154,6 +154,7 @@
     Turns on entrance light when the front door opens in the dark; off
     via timer.front_door_entrance_light_off (5min after close,
     restart-safe). Falls back to unlock-as-open-proxy when BLE degraded.
+    Any switch-on left 10min with the door closed is turned off.
   triggers:
   - entity_id: binary_sensor.front_door_open
     to: "on"
@@ -172,8 +173,23 @@
     to: "unlocked"
     trigger: state
     id: unlock_fallback
+  - entity_id: switch.front_entrance_double_switch_left
+    to: "on"
+    for: "00:10:00"
+    trigger: state
+    id: stale_on
   actions:
   - choose:
+      - conditions:
+          - condition: trigger
+            id: stale_on
+          - condition: state
+            entity_id: binary_sensor.front_door_open
+            state: "off"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: switch.front_entrance_double_switch_left
       - conditions:
           - condition: trigger
             id: door_open

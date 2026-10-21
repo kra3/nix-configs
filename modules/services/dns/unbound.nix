@@ -44,19 +44,28 @@
             control-enable = true;
           };
 
-          forward-zone = [
-            {
-              name = ".";
+          forward-zone =
+            map (name: {
+              inherit name;
               forward-tls-upstream = true;
               forward-addr = [
-                # "1.1.1.1@853#cloudflare-dns.com"
-                # "1.1.1.1@853#security.cloudflare-dns.com"
-                "1.1.1.1@853#family.cloudflare-dns.com"
-                # "9.9.9.9@853#dns.quad9.net"
+                "1.1.1.1@853#cloudflare-dns.com"
                 "9.9.9.11@853#dns11.quad9.net"
               ];
-            }
-          ];
+            }) flakeLib.dns-allowlist.familyBypass
+            ++ [
+              {
+                name = ".";
+                forward-tls-upstream = true;
+                forward-addr = [
+                  # "1.1.1.1@853#cloudflare-dns.com"
+                  # "1.1.1.1@853#security.cloudflare-dns.com"
+                  "1.1.1.1@853#family.cloudflare-dns.com"
+                  # "9.9.9.9@853#dns.quad9.net"
+                  "9.9.9.11@853#dns11.quad9.net"
+                ];
+              }
+            ];
         };
       };
 

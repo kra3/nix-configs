@@ -37,16 +37,25 @@
             do-not-query-localhost = "yes";
           };
           remote-control.control-enable = true;
-          forward-zone = [
-            {
-              name = ".";
+          forward-zone =
+            map (name: {
+              inherit name;
               forward-tls-upstream = true;
               forward-addr = [
-                "1.1.1.1@853#family.cloudflare-dns.com"
+                "1.1.1.1@853#cloudflare-dns.com"
                 "9.9.9.11@853#dns11.quad9.net"
               ];
-            }
-          ];
+            }) flakeLib.dns-allowlist.familyBypass
+            ++ [
+              {
+                name = ".";
+                forward-tls-upstream = true;
+                forward-addr = [
+                  "1.1.1.1@853#family.cloudflare-dns.com"
+                  "9.9.9.11@853#dns11.quad9.net"
+                ];
+              }
+            ];
         };
       };
 
@@ -167,12 +176,7 @@
             ])
           ) flakeLib.adguard-filters;
 
-          # Same Akashvani (BitGravity CDN) allow rules as sutala's.
-          user_rules = [
-            "@@||air.pc.cdn.bitgravity.com^$important"
-            "@@||airhlspush.pc.cdn.bitgravity.com^$important"
-            "@@||cdncache.bitg.net^$important"
-          ];
+          user_rules = map (d: "@@||${d}^$important") flakeLib.dns-allowlist.domains;
 
           # Placeholders -- substituted from sops at runtime by the preStart script above.
           users = [

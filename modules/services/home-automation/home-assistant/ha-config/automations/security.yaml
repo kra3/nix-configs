@@ -85,7 +85,7 @@
 
 - id: alarm_triggered_notify
   alias: "Security: notify on alarm triggered"
-  description: Critical alert and hallway speech naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
+  description: Critical alert and speech in the occupied rooms naming the tripped sensor every 2.5 min while triggered; Arun first, Anjali too after 10 min.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -123,7 +123,7 @@
             entity_id: person.anjalipc
             state: home
         then:
-        - action: script.announce_hallway
+        - action: script.announce_home
           continue_on_error: true
           data:
             message: "Alarm triggered. {{ message | replace('(', '') | replace(')', '') }}."

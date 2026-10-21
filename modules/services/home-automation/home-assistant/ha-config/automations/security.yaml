@@ -133,7 +133,7 @@
 
 - id: alarm_no_one_home_siren
   alias: "Security: warn, then siren when triggered with nobody home"
-  description: Spoken warning, then after 2 min a siren on the home theater, kitchen and hallway speakers; stops on disarm, 5 min cap.
+  description: Spoken warning, then after 2 min a siren on the home theater, kitchen, office and hallway speakers; stops on disarm, 5 min cap.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to: triggered
@@ -157,6 +157,7 @@
     speakers:
     - media_player.ma_home_theater
     - media_player.kitchen_speaker
+    - media_player.office_speaker
     warning: The alarm has been triggered. Disarm it now.
   actions:
   - choose:

@@ -224,7 +224,7 @@ alarm_speakers_prepare:
 
 alarm_speakers_play:
   alias: "Alarm speakers: play"
-  description: Plays a sound URL on the home theater (announce 65, about 50 on the receiver) and the kitchen at 60 %.
+  description: Plays a sound URL on the home theater (announce 65, about 50 on the receiver) and the kitchen and office at 60 %.
   fields:
     url:
       required: true
@@ -244,6 +244,14 @@ alarm_speakers_play:
       continue_on_error: true
       target:
         entity_id: media_player.kitchen_speaker
+      data:
+        url: "{{ url }}"
+        use_pre_announce: false
+        announce_volume: 60
+    - action: music_assistant.play_announcement
+      continue_on_error: true
+      target:
+        entity_id: media_player.office_speaker
       data:
         url: "{{ url }}"
         use_pre_announce: false

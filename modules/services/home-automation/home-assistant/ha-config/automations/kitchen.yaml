@@ -26,14 +26,19 @@
 - id: kitchen_cooking_boost
   alias: Kitchen — Full brightness while cooking
   description: >-
-    After 5 min of continuous presence the kitchen lights go to 100 % and the
+    After 2.5 min of continuous presence the kitchen lights go to 100 % and the
     kitchen-dining lights come on with them when it is dark; when the room empties or
     the lights go off, Adaptive Lighting takes over again and kitchen-dining goes off.
+    If the lights come back on while presence is still held, the boost is applied again.
   triggers:
   - trigger: state
     entity_id: binary_sensor.room_presence_kitchen
     to: "on"
-    for: "00:05:00"
+    for: "00:02:30"
+    id: boost
+  - trigger: state
+    entity_id: light.kitchen_lights
+    to: "on"
     id: boost
   - trigger: state
     entity_id: binary_sensor.room_presence_kitchen
@@ -48,6 +53,10 @@
     - conditions:
       - condition: trigger
         id: boost
+      - condition: state
+        entity_id: binary_sensor.room_presence_kitchen
+        state: "on"
+        for: "00:02:30"
       - condition: state
         entity_id: light.kitchen_lights
         state: "on"

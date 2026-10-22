@@ -113,11 +113,3 @@
           entity_id: light.kitchen_dining_lights
         data:
           transition: 5
-      - action: adaptive_lighting.apply
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights:
-          - light.kitchen_lights
-          - light.kitchen_dining_lights
-          turn_on_lights: false

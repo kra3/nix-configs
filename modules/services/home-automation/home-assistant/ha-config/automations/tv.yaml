@@ -109,7 +109,7 @@
         entity_id: media_player.lg_webos_tv_oled77c35la
       data:
         source: YouTube AdFree
-  mode: single
+  mode: restart
 
 - id: tv_ht_on_when_playing
   alias: TV — HT on when playback starts
@@ -147,6 +147,10 @@
     domain: media_player
     entity_id: d82eff522a62e356a89979d2dd74f5df
     type: turned_off
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
     trigger: device
   actions:
   - type: turn_off

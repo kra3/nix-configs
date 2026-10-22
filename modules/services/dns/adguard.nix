@@ -227,17 +227,8 @@
               "||metric.gstatic.com^$important"
               "||mmstat.com^$important"
               "||statcounter.com^$important"
-              # thexem.info: legit Sonarr/Radarr scene-numbering API; needs $important to beat a blocklist rule that also has it.
-              "@@||thexem.info^$important"
-              # AIOStreams addon hosts that blocklists resolve to 0.0.0.0 (ECONNREFUSED).
-              "@@||yastream.tamthai.de^$important"
-              "@@||torrent-catalogs.strem.fun^$important"
-              "@@||torrentgalaxy.one^$important"
-              # Akashvani (All India Radio) streams via BitGravity CDN; blocklists resolve these to 0.0.0.0.
-              "@@||air.pc.cdn.bitgravity.com^$important"
-              "@@||airhlspush.pc.cdn.bitgravity.com^$important"
-              "@@||cdncache.bitg.net^$important"
-            ];
+            ]
+            ++ map (d: "@@||${d}^$important") flakeLib.dns-allowlist.domains;
 
             querylog = {
               interval = "1h";

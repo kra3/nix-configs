@@ -199,5 +199,11 @@
       name = "Admiral";
       id = 1767444765;
     }
+    {
+      enabled = true;
+      url = "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/nsfw.txt";
+      name = "HaGeZi's NSFW Blocklist";
+      id = 1767444766;
+    }
   ];
 }

@@ -15,6 +15,7 @@
 
       environment.etc."alloy/rreading-glasses.alloy".text = flakeLib.observability.mkAlloyJournalSource {
         name = "rreading-glasses";
+        id = "rreading_glasses";
         hostName = config.networking.hostName;
       };
     };

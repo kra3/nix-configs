@@ -670,7 +670,7 @@ See `~/.inputrc` - this is what we use by default.
 
 - [Bash Configuration](bash.md) - Shell configuration
 - [Zsh Configuration](zsh.md) - Alternative shell
-- [Vim Configuration](vim.md) - Text editor with similar keybindings
+- [Neovim Configuration](neovim.md) - Text editor with similar keybindings
 
 ## Resources
 

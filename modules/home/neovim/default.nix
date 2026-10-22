@@ -26,6 +26,16 @@
         ++ lib.optional pkgs.stdenv.isLinux pkgs.gcc;
       };
 
+      home.sessionVariables = {
+        EDITOR = lib.mkForce "nvim";
+        VISUAL = lib.mkForce "nvim";
+      };
+
+      home.shellAliases = {
+        vi = lib.mkForce "nvim";
+        vim = lib.mkForce "nvim";
+      };
+
       xdg.configFile."nvim" = {
         source = ./nvim;
         recursive = true;

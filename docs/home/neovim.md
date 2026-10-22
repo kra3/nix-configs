@@ -44,7 +44,7 @@ Then run `:Lazy sync` and copy the lockfile back as above.
 
 ## Lean Vim (root/servers)
 
-`modules/home/vim/vimrc` is a plugin-free config: sane options, search/indent settings, a simple statusline, and basic mappings (`<Space>` leader, `Ctrl-hjkl` window navigation, `<leader>w` save). `.gvimrc` and `.ideavimrc` are still installed from `modules/home/vim/`.
+`modules/home/vim/vimrc` is a plugin-free config: sane options, search/indent settings, a simple statusline, and basic mappings (`<Space>` leader, LazyVim-matching keys: `Ctrl-hjkl` window navigation, `Ctrl-s` save, `<leader>bd`/`<leader>bb` buffers, `<leader>wd`/`<leader>-`/`<leader>|` windows, `<leader>qq` quit, `Alt-j/k` move lines). `.gvimrc` and `.ideavimrc` are still installed from `modules/home/vim/`.
 
 ## Related
 

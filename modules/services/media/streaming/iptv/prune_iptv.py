@@ -97,6 +97,7 @@ def probe_once(e):
     if not text.startswith("#EXTM3U"):
         return {"ok": False, "why": "not m3u8"}
     height = bw = 0
+    demux = bool(re.search(r"#EXT-X-MEDIA:[^\n]*TYPE=AUDIO", text))
     cur_url = e["url"]
     if "#EXT-X-STREAM-INF" in text:
         best, lines = None, text.split("\n")
@@ -122,7 +123,7 @@ def probe_once(e):
     code, _, _ = fetch(urllib.parse.urljoin(cur_url, seg), ua, ref, rng="bytes=0-2047")
     if code not in (200, 206):
         return {"ok": False, "why": f"segment {code}"}
-    return {"ok": True, "why": "ok", "height": height or e["label"], "bw": bw, "ms": int(secs * 1000)}
+    return {"ok": True, "why": "ok", "height": height or e["label"], "bw": bw, "ms": int(secs * 1000), "demux": demux}
 
 
 def tier(h):
@@ -235,6 +236,7 @@ def main():
     if len(chosen) < MIN_CHANNELS:
         sys.exit(f"only {len(chosen)} channels live; refusing to overwrite output")
     lines = ["#EXTM3U"]
+    mux = {}
     counts, chno = {}, {}
     for ch, slot, _, _ in allow:
         name, first = GROUPS[slot.split("-")[0]]
@@ -250,8 +252,13 @@ def main():
             lines.append(f'#EXTVLCOPT:http-user-agent={e["ua"]}')
         if e["ref"]:
             lines.append(f'#EXTVLCOPT:http-referrer={e["ref"]}')
-        lines.append(e["url"])
-    for path, data in ((a.out, "\n".join(lines) + "\n"), (a.state, json.dumps(state, indent=1))):
+        if results[(ch, cid)].get("demux") and a.yt_base:
+            mux[base] = {"url": e["url"], "ua": e["ua"], "ref": e["ref"]}
+            lines.append(f"{a.yt_base}/mux/{base}")
+        else:
+            lines.append(e["url"])
+    mux_path = os.path.join(os.path.dirname(os.path.abspath(a.out)), "mux.json")
+    for path, data in ((a.out, "\n".join(lines) + "\n"), (a.state, json.dumps(state, indent=1)), (mux_path, json.dumps(mux, indent=1))):
         fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)))
         with os.fdopen(fd, "w") as f:
             f.write(data)

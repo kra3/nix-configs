@@ -4,7 +4,9 @@ blueprint:
     Turns a room's "is dark" helper on while binary_sensor.gloomy_outside is
     on and, for rooms with their own illuminance sensor, that sensor reads
     below dark_below for 2 min. Turns it off when it is no longer gloomy
-    outside, turning the light off too if the room is empty. Rooms without
+    outside, turning the light off too if the room is empty. While it is not
+    dark, a light left on in an empty room goes off once the room clears or
+    after the light has been on for 2 min, whatever turned it on. Rooms without
     a sensor follow the house-wide state alone.
   domain: automation
   input:
@@ -61,6 +63,11 @@ triggers:
     to: "off"
     trigger: state
     id: occupancy_clear
+  - entity_id: !input light_entity
+    to: "on"
+    for: "00:02:00"
+    trigger: state
+    id: light_on
   - trigger: homeassistant
     event: start
     id: startup
@@ -119,7 +126,7 @@ actions:
                 action: light.turn_off
       - conditions:
           - condition: trigger
-            id: [occupancy_clear, startup]
+            id: [occupancy_clear, light_on, startup]
           - condition: state
             entity_id: !input dark_boolean
             state: "off"

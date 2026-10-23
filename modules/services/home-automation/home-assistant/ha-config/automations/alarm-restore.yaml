@@ -29,7 +29,8 @@
   alias: "Alarm: re-arm after a restart disarmed it"
   description: >-
     After Home Assistant starts, re-arms the remembered mode if Alarmo came
-    back disarmed, skipping the exit delay, and notifies the phones.
+    back disarmed, skipping the exit delay, and notifies the phones. Skipped
+    when a person disarmed it after the restart.
   triggers:
   - trigger: homeassistant
     event: start
@@ -42,6 +43,8 @@
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
     state: disarmed
+  - condition: template
+    value_template: "{{ states.alarm_control_panel.vasudha_secure.context.user_id is none }}"
   - condition: not
     conditions:
     - condition: state

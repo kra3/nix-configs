@@ -56,13 +56,6 @@
             {
               tag = "RepositoryInfo";
               content = {
-                Name = "Gelato";
-                Url = "https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json";
-              };
-            }
-            {
-              tag = "RepositoryInfo";
-              content = {
                 Name = "Litefin";
                 Url = "https://raw.githubusercontent.com/MoazSalem/litefin-plugin/release/manifest.json";
               };
@@ -127,14 +120,6 @@
           "Anime TV" = {
             contentType = "tvshows";
             pathInfos = [ "/data/library/anime/tv" ];
-          };
-          "Gelato Movies" = {
-            contentType = "movies";
-            pathInfos = [ "/data/library/gelato/movies" ];
-          };
-          "Gelato Shows" = {
-            contentType = "tvshows";
-            pathInfos = [ "/data/library/gelato/shows" ];
           };
           "Home Videos" = {
             contentType = "homevideos";

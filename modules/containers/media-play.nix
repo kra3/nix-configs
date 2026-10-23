@@ -232,7 +232,6 @@
             systemd.services.jellyfin = lib.mkIf config.vars.localMedia.enable {
               restartTriggers = [ jellyfinSsoAuthXmlHash ];
 
-              # Headroom for ffmpeg probing remote Gelato streams; 1 GiB OOM-killed it on playback start.
               serviceConfig = {
                 MemoryMax = "2048M";
                 CPUQuota = "150%";

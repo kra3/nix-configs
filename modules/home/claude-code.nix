@@ -49,6 +49,11 @@
           executable = true;
           force = true;
         };
+        ".claude/hooks/ask-main-merge.sh" = {
+          source = ./claude-code/hooks/ask-main-merge.sh;
+          executable = true;
+          force = true;
+        };
         ".claude/hooks/notify.sh" = {
           source = ./claude-code/hooks/notify.sh;
           executable = true;

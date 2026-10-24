@@ -51,6 +51,16 @@
             "command": "rtk hook claude"
           }
         ]
+      },
+      {
+        "matcher": "Bash|mcp__github__merge_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/ask-main-merge.sh",
+            "timeout": 15
+          }
+        ]
       }
     ]
   },

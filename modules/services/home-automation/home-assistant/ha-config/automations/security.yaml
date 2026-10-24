@@ -237,6 +237,31 @@
         continue_on_error: true
   mode: restart
 
+- id: alarm_armed_away_lights_media_off
+  alias: "Security: lights and media off when armed away"
+  description: Turns off every light and stops music, the receiver and the TV once armed away, however it was armed.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - armed_away
+    - armed_vacation
+    trigger: state
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: all
+  - action: media_player.media_stop
+    target:
+      entity_id: all
+    continue_on_error: true
+  - action: media_player.turn_off
+    target:
+      entity_id:
+      - media_player.home_theater_2
+      - media_player.lg_webos_tv_oled77c35la
+    continue_on_error: true
+  mode: single
+
 - id: alarm_not_armed_escalate
   alias: "Security: escalate a failed arm after 10 min"
   description: Critical alert to Arun and Anjali if the alarm is still disarmed 10 min after a failed arm.

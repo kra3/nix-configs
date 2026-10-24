@@ -30,17 +30,20 @@
       users.groups.iptv = { };
 
       systemd.services.iptv-yt-resolver = {
-        description = "Redirect iptv YouTube entries to a fresh live manifest";
+        description = "Serve the iptv M3U/EPG, resolve YouTube entries and remux split-audio streams";
         wantedBy = [ "multi-user.target" ];
         after = [
           "container@media-play.service"
           "network-online.target"
         ];
         wants = [ "network-online.target" ];
-        path = [ ytDlp ];
+        path = [
+          ytDlp
+          pkgs.ffmpeg-headless
+        ];
         environment.XDG_CACHE_HOME = "/var/cache/iptv";
         serviceConfig = sandbox // {
-          ExecStart = "${python} ${./iptv/yt_resolver.py} --bind ${bind} --port ${toString port} --allow ${channels} --m3u ${stateDir}/news.m3u --epg ${stateDir}/epg.xml";
+          ExecStart = "${python} ${./iptv/yt_resolver.py} --bind ${bind} --port ${toString port} --allow ${channels} --m3u ${stateDir}/news.m3u --epg ${stateDir}/epg.xml --mux ${stateDir}/mux.json";
           CacheDirectory = "iptv";
           Restart = "on-failure";
           RestartSec = 10;

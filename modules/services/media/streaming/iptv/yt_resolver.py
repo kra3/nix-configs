@@ -44,8 +44,30 @@ def resolve(handle, prefer):
         return url
 
 
-def make_handler(handles, files):
+def make_handler(handles, files, mux_path):
     class H(http.server.BaseHTTPRequestHandler):
+        def mux(self, key):
+            try:
+                m = json.load(open(mux_path))[key]
+            except (OSError, ValueError, KeyError):
+                return self.send_error(404)
+            cmd = ["ffmpeg", "-nostdin", "-loglevel", "error", "-user_agent", m["ua"]]
+            if m["ref"]:
+                cmd += ["-referer", m["ref"]]
+            cmd += ["-i", m["url"], "-c", "copy", "-f", "mpegts", "pipe:1"]
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "video/mp2t")
+                self.end_headers()
+                for chunk in iter(lambda: p.stdout.read1(65536), b""):
+                    self.wfile.write(chunk)
+            except OSError:
+                pass
+            finally:
+                p.kill()
+                p.wait()
+
         def do_GET(self):
             if self.path in files:
                 path, ctype = files[self.path]
@@ -60,6 +82,8 @@ def make_handler(handles, files):
                 self.wfile.write(body)
                 return
             parts = self.path.strip("/").split("/")
+            if len(parts) == 2 and parts[0] == "mux":
+                return self.mux(parts[1])
             if len(parts) != 2 or parts[0] != "yt" or parts[1] not in handles:
                 return self.send_error(404)
             try:
@@ -85,6 +109,7 @@ if __name__ == "__main__":
     ap.add_argument("--allow", required=True)
     ap.add_argument("--m3u", required=True)
     ap.add_argument("--epg", required=True)
+    ap.add_argument("--mux", required=True)
     a = ap.parse_args()
     files = {"/news.m3u": (a.m3u, "audio/x-mpegurl"), "/epg.xml": (a.epg, "application/xml")}
     handles = {}
@@ -94,4 +119,4 @@ if __name__ == "__main__":
                 if i.startswith("yt:"):
                     handle, _, prefer = i[3:].partition("|")
                     handles[handle.lstrip("@")] = prefer
-    http.server.ThreadingHTTPServer((a.bind, a.port), make_handler(handles, files)).serve_forever()
+    http.server.ThreadingHTTPServer((a.bind, a.port), make_handler(handles, files, a.mux)).serve_forever()

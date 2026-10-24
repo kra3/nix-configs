@@ -108,8 +108,9 @@ except where noted:
 
 Streaming is the default; disk is the exception.
 
-- **Watch:** Jellyfin (Litefin client on the TV) browses Gelato libraries,
-  which surface AIOStreams/AIOMetadata catalogs. Nothing touches disk.
+- **Watch:** search in Jellyfin (Litefin client on the TV); Gelato answers
+  from AIOStreams and adds opened results to the Gelato libraries. No
+  catalog import. Nothing touches disk.
 - **Fallback:** when no stream exists, request it in Seerr (Litefin's Seerr
   page or the Seerr web UI) with no tag. Default profiles: Radarr `HD-1080p`,
   Sonarr `WEB-1080p`. Radarr/Sonarr -> Prowlarr -> SABnzbd -> import into the
@@ -133,7 +134,7 @@ Maintainerr); `vars.localMedia.extras.enable` (Bazarr, Unpackerr; off by
 default, Unpackerr kept for future P2P).
 
 **App-internal state:** the keep tag, recycle bin, Maintainerr rules, Seerr
-defaults/library scope, Litefin's Seerr link and Gelato's daily catalog sync
+defaults/library scope, Litefin's Seerr link and Gelato's settings (catalog import off)
 live in each app's appdata and were applied once. Restore from an appdata
 backup rather than re-deriving.
 

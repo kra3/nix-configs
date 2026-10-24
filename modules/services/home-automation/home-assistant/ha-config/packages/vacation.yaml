@@ -107,7 +107,7 @@ automation:
       min after bedtime only the bedroom light comes on for 10-25 min,
       then the house stays dark until wake-up. Lights go off when it gets
       bright; nothing is touched once someone is home or it is disarmed.
-      Steps are logged.
+      Turns all lights off when it takes over. Steps are logged.
     triggers:
       - trigger: event
         event_type: timer.finished
@@ -164,6 +164,10 @@ automation:
             sequence:
               - condition: template
                 value_template: "{{ trigger.id != 'startup' or is_state('timer.vacation_sim_step', 'idle') }}"
+              - action: light.turn_off
+                continue_on_error: true
+                target:
+                  entity_id: all
               - action: input_select.select_option
                 target:
                   entity_id: input_select.vacation_sim_phase

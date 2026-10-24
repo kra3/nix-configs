@@ -1,12 +1,6 @@
 set nocompatible
 set encoding=utf-8
 
-" vim-lsp-settings reads g:lsp_settings during plug#end(), so overrides must be set before it, not further down.
-" vimwiki gives .md files filetype 'vimwiki', which marksman's default allowlist doesn't cover.
-let g:lsp_settings = {
-    \ 'marksman': {'allowlist': ['markdown', 'vimwiki']},
-    \ }
-
 " ===> Plugins - vim-plug  {{{
 " Plugin manager configuration
 
@@ -47,7 +41,6 @@ Plug 'tpope/vim-rhubarb'                            " GitHub integration (extend
 " Text Operations
 Plug 'tpope/vim-surround'                           " Quoting/parenthesizing
 Plug 'tpope/vim-repeat'                             " Enable repeating supported plugin maps
-Plug 'tpope/vim-commentary'                          " Comment stuff out
 Plug 'tpope/vim-abolish', { 'on': ['Abolish', 'Subvert'] } " Search/substitute/abbreviate variants
 Plug 'tpope/vim-unimpaired'                         " Pairs of handy bracket mappings
 Plug 'LunarWatcher/auto-pairs'                      " Insert/delete brackets in pairs (maintained fork)
@@ -80,53 +73,15 @@ Plug 'tpope/vim-sleuth'                          " Auto-detect indentation
 Plug 'machakann/vim-highlightedyank'             " Highlight yanked text
 
 "==============================================================================
-" LANGUAGE SUPPORT & PROGRAMMING
-"==============================================================================
-Plug 'mattn/emmet-vim', { 'for': ['html', 'css', 'javascript', 'typescript', 'jsx', 'tsx'] }
-
-" Language-specific plugins
-Plug 'derekwyatt/vim-scala', { 'for': 'scala' }
-Plug 'vim-python/python-syntax', { 'for': 'python' }
-Plug 'pangloss/vim-javascript', { 'for': ['javascript', 'javascriptreact'] }
-Plug 'HerringtonDarkholme/yats.vim', { 'for': ['typescript', 'typescriptreact'] }
-
-" Linting & Completion
-Plug 'dense-analysis/ale', { 'for': ['python', 'javascript', 'typescript', 'css', 'html', 'markdown', 'json', 'yaml', 'scala', 'java', 'sql', 'sh'] }
-
-"==============================================================================
-" LSP & COMPLETION
-"==============================================================================
-" This whole stack is lazy-loaded per-buffer for coding filetypes only, so
-" plain-editing sessions (config, notes) stay fast. Neovim will own coding later.
-let g:coding_langs = ['python', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact',
-    \ 'scala', 'java', 'sh', 'sql', 'css', 'html', 'json', 'yaml', 'markdown', 'vimwiki']
-
-" Language Server Protocol Support
-Plug 'prabirshrestha/vim-lsp', { 'for': g:coding_langs }                " Vim LSP client
-Plug 'mattn/vim-lsp-settings', { 'for': g:coding_langs }                " Auto configurations for LSP
-
-" Async Completion
-Plug 'prabirshrestha/asyncomplete.vim', { 'for': g:coding_langs }       " Async completion framework
-Plug 'prabirshrestha/asyncomplete-lsp.vim', { 'for': g:coding_langs }   " LSP source for asyncomplete
-
-" Snippet Support
-Plug 'hrsh7th/vim-vsnip', { 'for': g:coding_langs }                     " Snippet engine (VSCode format)
-Plug 'hrsh7th/vim-vsnip-integ', { 'for': g:coding_langs }               " Integration with asyncomplete
-Plug 'rafamadriz/friendly-snippets', { 'for': g:coding_langs }          " Collection of community snippets
-
-"==============================================================================
 " PRODUCTIVITY & UTILITIES
 "==============================================================================
 Plug 'liuchengxu/vim-which-key'                      " Keybinding helper - shows available key combinations
 Plug 'vimwiki/vimwiki'                               " Personal wiki for notes
 Plug 'tpope/vim-eunuch'                              " Unix shell commands (:Delete, :Move, :Rename, etc.)
 
-"==============================================================================
-" AI/LLM INTEGRATION
-"==============================================================================
-Plug 'madox2/vim-ai'                                 " AI-powered code assistance via Ollama
-
 call plug#end()
+
+packadd! comment
 
 " }}}
 
@@ -187,7 +142,7 @@ endif
 " Terminal buffer settings
 if has('terminal')
   " Vim 8+ terminal support
-  nnoremap <Leader>tt :terminal<CR>
+  nnoremap <Leader>ft :terminal<CR>
   " Exit terminal insert mode with Escape
   tnoremap <Esc> <C-\><C-n>
   " Easy navigation from terminal windows
@@ -446,266 +401,123 @@ endif
 " }}}
 
 " ===> Keybindings {{{
-" For complete keybinding reference, see docs/vim.md
-
-noremap ; :             " convenience for US keyboard
+" Layout follows LazyVim (see docs/home/keymaps.md)
 
 " Sudo to write
 cmap w!! w !sudo tee % >/dev/null
-" Fast saving
-nnoremap <leader>w :w!<cr>
 
 " in the spirit of vim-unimpaired
-nnoremap [om  <Esc>:set mouse=a<CR>  " enable mouse for scrolling
-nnoremap ]om  <Esc>:set mouse=<CR>   " disable mouse
+nnoremap [om <Esc>:set mouse=a<CR>
+nnoremap ]om <Esc>:set mouse=<CR>
 
-nnoremap <leader>s+ zg       " Add word to dictionary
-nnoremap <leader>s? z=       " Correct given word to <from list>
-nnoremap <leader>z  za       " Fold/UnFold a fold
+nnoremap <leader>s+ zg
+nnoremap <leader>s? z=
+nnoremap <leader>z za
 
-" Meta key mapping helper - uncomment if needed for your terminal
-" function! EnableMetaKeyMapping()
-"   let c='a'
-"   while c <= 'z'
-"     exec "set <M-".toupper(c).">=\e".c
-"     exec "imap \e".c." <M-".toupper(c).">"
-"     let c = nr2char(1+char2nr(c))
-"   endw
-" endfunction
-" call EnableMetaKeyMapping()
+" Alt+j/k need explicit terminal codes; the short ttimeoutlen keeps <Esc>j snappy
+if !has('nvim') && !has('gui_running')
+  execute "set <M-j>=\ej"
+  execute "set <M-k>=\ek"
+  set ttimeout ttimeoutlen=50
+endif
 
 " treat long lines as break lines = easier navigation
-noremap j gj
-noremap k gk
+nnoremap <expr> j v:count == 0 ? 'gj' : 'j'
+nnoremap <expr> k v:count == 0 ? 'gk' : 'k'
+xnoremap <expr> j v:count == 0 ? 'gj' : 'j'
+xnoremap <expr> k v:count == 0 ? 'gk' : 'k'
+
+" Move lines
+nnoremap <A-j> :m .+1<CR>==
+nnoremap <A-k> :m .-2<CR>==
+inoremap <A-j> <Esc>:m .+1<CR>==gi
+inoremap <A-k> <Esc>:m .-2<CR>==gi
+xnoremap <A-j> :m '>+1<CR>gv=gv
+xnoremap <A-k> :m '<-2<CR>gv=gv
 
 " Insert mode C-w for word deletion
 inoremap <C-w> <C-o><C-w>
+
+" Add undo breakpoints
+inoremap , ,<C-g>u
+inoremap . .<C-g>u
+inoremap ; ;<C-g>u
 
 " Better visual mode indentation handling
 vnoremap < <gv
 vnoremap > >gv
 
-" Move visual block up/down
-vnoremap J :m '>+1<CR>gv=gv
-vnoremap K :m '<-2<CR>gv=gv
-
 " Keep cursor in place when joining lines
 nnoremap J mzJ`z
 
-" Enhanced search and replace
-vnoremap <Leader>sr "hy:%s/<c-r>h//gc<left><left><left>  " Visual mode search/replace
-vnoremap <Leader>ss :s/\%V//g<left><left><left>          " Substitute within visual selection
-nnoremap <Leader>sr :%s/\<<C-r><C-w>\>//gc<left><left><left>  " Replace word under cursor
-nnoremap <Leader>sc :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>        " Search word under cursor
+" Next search result keeps its direction
+nnoremap <expr> n (v:searchforward ? 'n' : 'N') . 'zv'
+nnoremap <expr> N (v:searchforward ? 'N' : 'n') . 'zv'
+
+" Comment line below/above
+nnoremap gco o<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>
+nnoremap gcO O<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>
+
+" Search and replace
+vnoremap <Leader>sr "hy:%s/<c-r>h//gc<left><left><left>
+nnoremap <Leader>sr :%s/\<<C-r><C-w>\>//gc<left><left><left>
 command! -nargs=+ ReplaceAll call ReplaceAll(<f-args>)
 command! -nargs=+ ProjectReplace call ProjectReplace(<f-args>)
 
-" Toggle highlighting search results
+" Save, quit
+nnoremap <C-s> :update<CR>
+xnoremap <C-s> <Esc>:update<CR>
+inoremap <C-s> <Esc>:update<CR>a
+nnoremap <Leader>qq :qa<CR>
+
+" <Esc> clears search highlight
+nnoremap <silent> <Esc> :nohlsearch<CR><Esc>
+nnoremap <silent> <Leader>ur :nohlsearch<Bar>diffupdate<Bar>redraw!<CR>
 nnoremap <F7> :set hlsearch! hlsearch?<CR>
 
-" Quick save with Ctrl-S (needs terminal flow control disabled)
-" Add "stty -ixon" to your shell config to prevent terminal freeze
-nnoremap <C-s> :update<CR>
-inoremap <C-s> <Esc>:update<CR>a
+" UI toggles
+nnoremap <Leader>us :setlocal spell!<CR>
+nnoremap <Leader>uw :setlocal wrap!<CR>
+nnoremap <Leader>ul :setlocal number!<CR>
+nnoremap <Leader>uL :setlocal relativenumber!<CR>
 
-noremap <silent> <leader><cr> :noh<cr> " Disable highlight when <leader><cr> is pressed
+" Quickfix / location list
+nnoremap <Leader>xq :copen<CR>
+nnoremap <Leader>xl :lopen<CR>
 
-" Buffer and directory management
-nnoremap <leader>ba :bufdo bd<cr>               " Close all buffers
-nnoremap <leader>cd :cd %:p:h<cr>:pwd<cr>       " Switch CWD to current file's directory
+" Buffers ([b ]b come from unimpaired)
+nnoremap <Leader>bb :e #<CR>
+nnoremap <Leader>` :e #<CR>
+nnoremap <Leader>bd :Bdelete<CR>
+nnoremap <Leader>bD :bdelete<CR>
+nnoremap <Leader>bo :BufOnly<CR>
 
-" Window navigation and management
-" Using Leader keys since Ctrl conflicts with tmux navigation
-nnoremap <leader>j <C-w>j
-nnoremap <leader>k <C-w>k
-nnoremap <leader>h <C-w>h
-nnoremap <leader>l <C-w>l
-
-" Arrow keys for window navigation when not using tmux
-nnoremap <C-Down>  <C-W>j
-nnoremap <C-Up>    <C-W>k
-nnoremap <C-Left>  <C-W>h
-nnoremap <C-Right> <C-W>l
-
-" Quick window resize with + and -
-nnoremap <silent> <Leader>+ :exe "resize " . (winheight(0) * 3/2)<CR>
-nnoremap <silent> <Leader>- :exe "resize " . (winheight(0) * 2/3)<CR>
-nnoremap <silent> <Leader>> :exe "vertical resize " . (winwidth(0) * 3/2)<CR>
-nnoremap <silent> <Leader>< :exe "vertical resize " . (winwidth(0) * 2/3)<CR>
-
-" Window layout management
+" Windows (C-h/j/k/l come from vim-tmux-navigator)
+nnoremap <Leader>ww <C-w>p
+nnoremap <Leader>wd <C-w>c
+nnoremap <Leader>w- <C-w>s
+nnoremap <Leader>w<Bar> <C-w>v
+nnoremap <Leader>- <C-w>s
+nnoremap <Leader><Bar> <C-w>v
+nnoremap <C-Up>    :resize +2<CR>
+nnoremap <C-Down>  :resize -2<CR>
+nnoremap <C-Left>  :vertical resize -2<CR>
+nnoremap <C-Right> :vertical resize +2<CR>
 command! ToggleWindowLayout call ToggleWindowLayout()
 nnoremap <silent> <Leader>wt :ToggleWindowLayout<CR>
-nnoremap <silent> <Leader>we <C-w>=  " Equal window sizes
 
-" Tab management
-noremap <leader>tn :tabnew<cr>
-noremap <leader>to :tabonly<cr>
-noremap <leader>tc :tabclose<cr>
-noremap <leader>tm :tabmove
-noremap <leader>tl :tabnext<cr>
-noremap <leader>th :tabprevious<cr>
-
-" Quick tab navigation with numbers
-nnoremap <leader>1 1gt
-nnoremap <leader>2 2gt
-nnoremap <leader>3 3gt
-nnoremap <leader>4 4gt
-nnoremap <leader>5 5gt
-nnoremap <leader>6 6gt
-nnoremap <leader>7 7gt
-nnoremap <leader>8 8gt
-nnoremap <leader>9 9gt
-nnoremap <leader>0 :tablast<cr>
-
-" Opens a new tab with the current buffer's path
-" Super useful when editing files in the same directory
-noremap <leader>te :tabedit <c-r>=expand("%:p:h")<cr>/
-
-
-" Toggle between paste mode
-"nnoremap <silent> <Leader>p :set paste!<cr>
-" set pastetoggle=<F2>     " both F2 and <leader>p does same thing now. Probably I'll remap above to CtrlP
+" Tabs
+nnoremap <Leader><Tab><Tab> :tabnew<CR>
+nnoremap <Leader><Tab>l :tablast<CR>
+nnoremap <Leader><Tab>o :tabonly<CR>
+nnoremap <Leader><Tab>f :tabfirst<CR>
+nnoremap <Leader><Tab>d :tabclose<CR>
+nnoremap <Leader><Tab>] :tabnext<CR>
+nnoremap <Leader><Tab>[ :tabprevious<CR>
 
 " }}}
 
 " ===> Plugin Configurations {{{
-
-" ===> LSP Configuration {{{
-" Language Server Protocol setup for Python, Java, JavaScript, Scala, Shell, SQL
-" Requires: vim-lsp, vim-lsp-settings, asyncomplete
-
-if PluginAvailable('vim-lsp')
-    " LSP general settings
-    let g:lsp_diagnostics_enabled = 1
-    let g:lsp_diagnostics_echo_cursor = 1
-    let g:lsp_diagnostics_float_cursor = 1
-    let g:lsp_diagnostics_signs_enabled = 1
-    let g:lsp_diagnostics_signs_error = {'text': '✗'}
-    let g:lsp_diagnostics_signs_warning = {'text': '⚠'}
-    let g:lsp_diagnostics_signs_information = {'text': 'ℹ'}
-    let g:lsp_diagnostics_signs_hint = {'text': '💡'}
-
-    " Show signature help automatically
-    let g:lsp_signature_help_enabled = 1
-
-    " Highlight references when cursor is on a symbol
-    let g:lsp_document_highlight_enabled = 1
-
-    " Performance optimizations
-    let g:lsp_async_completion = 1
-    let g:lsp_work_done_progress_enabled = 1
-
-    " LSP key bindings - only set in buffers with LSP support
-    function! s:on_lsp_buffer_enabled() abort
-        setlocal omnifunc=lsp#complete
-        setlocal signcolumn=yes
-
-        if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
-
-        " Navigation
-        nmap <buffer> gd <plug>(lsp-definition)
-        nmap <buffer> gD <plug>(lsp-declaration)
-        nmap <buffer> gr <plug>(lsp-references)
-        nmap <buffer> gi <plug>(lsp-implementation)
-        nmap <buffer> gt <plug>(lsp-type-definition)
-        nmap <buffer> <leader>rn <plug>(lsp-rename)
-
-        " Documentation
-        nmap <buffer> K <plug>(lsp-hover)
-        nmap <buffer> <leader>ds <plug>(lsp-document-symbol-search)
-        nmap <buffer> <leader>ws <plug>(lsp-workspace-symbol-search)
-
-        " Code actions
-        nmap <buffer> <leader>ca <plug>(lsp-code-action)
-        nmap <buffer> <leader>cl <plug>(lsp-code-lens)
-
-        " Diagnostics navigation
-        nmap <buffer> [d <plug>(lsp-previous-diagnostic)
-        nmap <buffer> ]d <plug>(lsp-next-diagnostic)
-        nmap <buffer> <leader>dd <plug>(lsp-document-diagnostics)
-
-        " Formatting
-        nmap <buffer> <leader>f <plug>(lsp-document-format)
-        vmap <buffer> <leader>f <plug>(lsp-document-range-format)
-    endfunction
-
-    augroup lsp_install
-        autocmd!
-        " Call on_lsp_buffer_enabled only for languages that support LSP
-        autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
-    augroup END
-
-    " vim-lsp-settings auto-installation
-    " This will auto-install language servers on first use
-    if PluginAvailable('vim-lsp-settings')
-        " Enable automatic installation of language servers
-        let g:lsp_settings_enable_suggestions = 1
-
-        " Language-specific server configurations
-        " Python: basedpyright (maintained pyright superset) for types/nav/hover.
-        " Lint + format is handled by ruff via ALE, not the LSP (see ALE section).
-        " basedpyright honours the python.analysis.* namespace for compatibility.
-        let g:lsp_settings_filetype_python = ['basedpyright']
-        call extend(g:lsp_settings, {
-            \ 'basedpyright': {
-            \   'workspace_config': {
-            \     'python': {
-            \       'analysis': {
-            \         'typeCheckingMode': 'basic',
-            \         'autoSearchPaths': v:true,
-            \         'useLibraryCodeForTypes': v:true,
-            \         'diagnosticMode': 'workspace'
-            \       }
-            \     }
-            \   }
-            \ },
-            \ })
-    endif
-
-    " Asyncomplete integration
-    if PluginAvailable('asyncomplete.vim') && PluginAvailable('asyncomplete-lsp.vim')
-        " Tab completion
-        inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-        inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-        inoremap <expr> <cr>    pumvisible() ? asyncomplete#close_popup() : "\<cr>"
-
-        " Auto-open completion popup
-        let g:asyncomplete_auto_popup = 1
-        let g:asyncomplete_auto_completeopt = 0
-        let g:asyncomplete_popup_delay = 200
-
-        " Preview window for completion
-        set completeopt=menuone,noinsert,noselect,preview
-        autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif
-    endif
-endif
-
-" Configure ALE to work alongside LSP
-" ALE handles linting, LSP handles completion and IDE features
-if PluginAvailable('ale')
-    " Disable ALE's LSP support (we use vim-lsp for that)
-    let g:ale_disable_lsp = 1
-endif
-
-" vim-vsnip configuration
-" Snippet engine with asyncomplete integration
-if PluginAvailable('vim-vsnip')
-    " Expand snippet with <C-j>
-    imap <expr> <C-j> vsnip#expandable() ? '<Plug>(vsnip-expand)' : '<C-j>'
-    smap <expr> <C-j> vsnip#expandable() ? '<Plug>(vsnip-expand)' : '<C-j>'
-
-    " Jump forward/backward in snippet placeholders
-    imap <expr> <C-l> vsnip#jumpable(1) ? '<Plug>(vsnip-jump-next)' : '<C-l>'
-    smap <expr> <C-l> vsnip#jumpable(1) ? '<Plug>(vsnip-jump-next)' : '<C-l>'
-    imap <expr> <C-h> vsnip#jumpable(-1) ? '<Plug>(vsnip-jump-prev)' : '<C-h>'
-    smap <expr> <C-h> vsnip#jumpable(-1) ? '<Plug>(vsnip-jump-prev)' : '<C-h>'
-
-    " Snippet directory (friendly-snippets will be auto-detected)
-    let g:vsnip_snippet_dir = expand('~/.vim/snippets')
-endif
-
-" }}}
 
 " FZF {{{
     " Replaces CtrlP functionality
@@ -730,11 +542,25 @@ endif
         \ 'spinner': ['fg', 'Label'],
         \ 'header':  ['fg', 'Comment'] }
     
-    nnoremap <Leader>/ :Files<CR>
-    nnoremap <Leader>b :Buffers<CR>
-    nnoremap <Leader>ft :Tags<CR>
-    nnoremap <Leader>fm :Marks<CR>
-    nnoremap <Leader>fh :History<CR>
+    nnoremap <Leader><Space> :Files<CR>
+    nnoremap <Leader>ff :Files<CR>
+    nnoremap <Leader>fg :GFiles<CR>
+    nnoremap <Leader>fr :History<CR>
+    nnoremap <Leader>fb :Buffers<CR>
+    nnoremap <Leader>, :Buffers<CR>
+    nnoremap <Leader>/ :Rg<CR>
+    nnoremap <Leader>sg :Rg<CR>
+    nnoremap <Leader>sw :Rg <C-r><C-w><CR>
+    xnoremap <Leader>sw y:Rg <C-r>"<CR>
+    nnoremap <Leader>: :History:<CR>
+    nnoremap <Leader>sc :History:<CR>
+    nnoremap <Leader>sC :Commands<CR>
+    nnoremap <Leader>sb :BLines<CR>
+    nnoremap <Leader>sh :Helptags<CR>
+    nnoremap <Leader>sk :Maps<CR>
+    nnoremap <Leader>sm :Marks<CR>
+    nnoremap <Leader>ss :Tags<CR>
+    nnoremap <Leader>gc :Commits<CR>
     " Use fd (or fallback to ripgrep) with FZF for better performance
     if executable('fd')
         let $FZF_DEFAULT_COMMAND = 'fd --type f --hidden --follow --exclude .git'
@@ -747,7 +573,7 @@ endif
 
 
 " Undo Tree  {{{
-    nnoremap <Leader>u :UndotreeToggle<CR>
+    nnoremap <Leader>U :UndotreeToggle<CR>
     let g:undotree_WindowLayout = 2
     let g:undotree_SplitWidth = 30
     let g:undotree_DiffpanelHeight = 10
@@ -758,15 +584,9 @@ endif
 " }}}
 
 " vim-sneak {{{
-    " Labeled 2-char jump, triggered via <Leader> so standard s/S/f/t stay intact.
-    " Mapping <Leader><Leader> to Sneak_s also makes sneak skip its default
-    " auto-hijack of bare s/S (it sees a Sneak_s mapping already exists).
+    " Default s/S, like flash.nvim in LazyVim; ; and , repeat f/t/s
     let g:sneak#label = 1        " label matches (easymotion-style jump target)
     let g:sneak#use_ic_scs = 1   " respect ignorecase/smartcase
-
-    map <Leader><Leader> <Plug>Sneak_s   " forward 2-char jump
-    map <Leader>S        <Plug>Sneak_S   " backward 2-char jump
-    " No n-char search or vertical j/k label-jump — those were easymotion-only.
 " }}}
 
 
@@ -779,14 +599,19 @@ endif
     " Delete :Gedit buffers when moving to another object
     autocmd BufReadPost fugitive://* set bufhidden=delete
 
-    nnoremap <Leader>gb :Git blame<CR>
-    nnoremap <Leader>gc :Git commit<CR>
-    nnoremap <Leader>gd :Gdiffsplit<CR>
-    nnoremap <Leader>gp :Git push<CR>
-    nnoremap <Leader>gr :Gremove<CR>
+    nnoremap <Leader>gg :Git<CR>
     nnoremap <Leader>gs :Git<CR>
-    nnoremap <Leader>gw :Gwrite<CR>
+    nnoremap <Leader>gb :Git blame<CR>
+    nnoremap <Leader>gB :GBrowse<CR>
+    nnoremap <Leader>gd :Gdiffsplit<CR>
+    nnoremap <Leader>gf :0Gclog<CR>
     nnoremap <Leader>gl :Git log<CR>
+    nnoremap <Leader>gvs :Git<CR>
+    nnoremap <Leader>gvc :Git commit<CR>
+    nnoremap <Leader>gvp :Git push<CR>
+    nnoremap <Leader>gvd :Gdiffsplit<CR>
+    nnoremap <Leader>gvw :Gwrite<CR>
+    nnoremap <Leader>gvr :Gremove<CR>
 " }}}
 
 " Vim signify {{{
@@ -798,16 +623,13 @@ endif
     let g:signify_sign_changedelete = g:signify_sign_change
     
     " Jump between hunks
-    nmap <leader>sj <plug>(signify-next-hunk)
-    nmap <leader>sk <plug>(signify-prev-hunk)
-    
-    " Toggle highlight/signify
-    nnoremap <leader>sh :SignifyToggleHighlight<CR>
-    nnoremap <leader>st :SignifyToggle<CR>
-    
-    " Hunk operations
-    nmap <leader>sd <plug>(signify-hunk-diff)
-    nmap <leader>su <plug>(signify-hunk-undo)
+    nmap ]h <plug>(signify-next-hunk)
+    nmap [h <plug>(signify-prev-hunk)
+
+    nnoremap <leader>uG :SignifyToggle<CR>
+
+    nmap <leader>ghp <plug>(signify-hunk-diff)
+    nmap <leader>ghr <plug>(signify-hunk-undo)
 " }}}
 
 " Airline {{{
@@ -842,9 +664,10 @@ endif
 " }}}
 
 " NERDTree {{{
-    " open nerdTree with Leader + n
-    noremap <Leader>n :NERDTreeToggle<CR>
-    noremap <Leader>nf :NERDTreeFind<CR>  " Open NERDTree and focus on current file
+    nnoremap <Leader>e :NERDTreeToggle<CR>
+    nnoremap <Leader>fe :NERDTreeToggle<CR>
+    nnoremap <Leader>E :NERDTreeFind<CR>
+    nnoremap <Leader>fE :NERDTreeFind<CR>
 
     " Open nerdTree automatically at startup if no file is specified
     " autocmd vimenter * if !argc() | NERDTree ~/src | endif
@@ -859,93 +682,6 @@ endif
     let g:NERDTreeShowHidden = 0
     let g:NERDTreeHijackNetrw = 0  " Don't hijack netrw
     let g:NERDTreeIgnore = ['\.pyc$', '\.pyo$', '\.orig$', '\.rej$', '\~$', '__pycache__', '\.git$']
-" }}}
-
-" ALE (Asynchronous Lint Engine) {{{
-    if PluginAvailable('ale')
-        " NOTE: ALE conflicts with LSP for diagnostics
-        " If using LSP setup, consider using ALE for linting only, not diagnostics
-        let g:ale_sign_error = '✗'
-        let g:ale_sign_warning = '⚠'
-        let g:ale_echo_msg_error_str = 'E'
-        let g:ale_echo_msg_warning_str = 'W'
-        let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
-        let g:ale_lint_on_text_changed = 'normal'
-        let g:ale_lint_on_insert_leave = 1
-        let g:ale_lint_delay = 500
-        let g:ale_list_window_size = 5
-        let g:ale_completion_enabled = 0  " Use asyncomplete instead - prevents conflict
-        
-        " Configure linters for each language
-        let g:ale_linters = {
-            \ 'python': [],
-            \ 'javascript': [],
-            \ 'typescript': [],
-            \ 'java': [],
-            \ 'scala': [],
-            \ 'sql': [],
-            \ 'sh': []
-            \ }
-        
-        " Python linters - ruff (fast, replaces flake8 + pylint); fall back if absent
-        if HasExecutable('ruff')
-            call add(g:ale_linters.python, 'ruff')
-        else
-            if HasExecutable('flake8')
-                call add(g:ale_linters.python, 'flake8')
-            endif
-            if HasExecutable('pylint')
-                call add(g:ale_linters.python, 'pylint')
-            endif
-        endif
-        
-        " JavaScript/TypeScript linters
-        if HasExecutable('eslint')
-            call add(g:ale_linters.javascript, 'eslint')
-        endif
-        if HasExecutable('tsserver')
-            call add(g:ale_linters.typescript, 'tsserver')
-        endif
-        
-        " Java linter
-        if HasExecutable('javac')
-            call add(g:ale_linters.java, 'javac')
-        endif
-        
-        " Scala linter
-        if HasExecutable('scalac')
-            call add(g:ale_linters.scala, 'scalac')
-        endif
-        
-        " SQL linters
-        if HasExecutable('sqlint')
-            call add(g:ale_linters.sql, 'sqlint')
-        endif
-        
-        " Shell script linters
-        if HasExecutable('shellcheck')
-            call add(g:ale_linters.sh, 'shellcheck')
-        endif
-        
-        " Configure fixers
-        let g:ale_fixers = {
-            \ 'python': ['ruff', 'ruff_format'],
-            \ 'javascript': ['prettier', 'eslint'],
-            \ 'typescript': ['prettier', 'eslint'],
-            \ 'sql': ['pgformatter'],
-            \ 'sh': ['shfmt'],
-            \ '*': ['remove_trailing_lines', 'trim_whitespace']
-            \ }
-        
-        " Fast navigation between errors
-        nmap <silent> [e <Plug>(ale_previous_wrap)
-        nmap <silent> ]e <Plug>(ale_next_wrap)
-        
-        " Useful commands
-        nmap <Leader>at :ALEToggle<CR>
-        nmap <Leader>af :ALEFix<CR>
-        nmap <Leader>ad :ALEDetail<CR>
-    endif
 " }}}
 
 " ripgrep (rg) {{{
@@ -1002,12 +738,15 @@ if PluginAvailable('vimwiki')
     " Don't treat all .md files as vimwiki (only files in vimwiki path)
     let g:vimwiki_global_ext = 0
 
+    " <Leader>w is the window group; wiki maps move to <Leader>W
+    let g:vimwiki_map_prefix = '<Leader>W'
+
     " Keybindings
-    " <Leader>ww - Open vimwiki index
-    " <Leader>wt - Open vimwiki index in new tab
-    " <Leader>ws - Select and open vimwiki index
-    " <Leader>wd - Delete vimwiki file
-    " <Leader>wr - Rename vimwiki file
+    " <Leader>Ww - Open vimwiki index
+    " <Leader>Wt - Open vimwiki index in new tab
+    " <Leader>Ws - Select and open vimwiki index
+    " <Leader>Wd - Delete vimwiki file
+    " <Leader>Wr - Rename vimwiki file
     " <Enter> - Follow/create wiki link
     " <Backspace> - Go back to previous wiki page
 endif
@@ -1026,75 +765,6 @@ endif
 " :SudoWrite   Write file using sudo
 " :SudoEdit    Edit file using sudo
 " :Wall        Write all buffers
-" }}}
-
-" vim-ai {{{
-" AI-powered code assistance using local Ollama
-if PluginAvailable('vim-ai')
-    " Configure vim-ai to use local Ollama
-    let g:vim_ai_complete = {
-    \  "engine": "complete",
-    \  "options": {
-    \    "model": "qwen2.5-coder:14b",
-    \    "endpoint_url": "http://localhost:11434/v1/completions",
-    \    "enable_auth": 0,
-    \    "request_timeout": 20,
-    \    "selection_boundary": "",
-    \    "max_tokens": 1000,
-    \    "temperature": 0.1,
-    \  },
-    \}
-
-    let g:vim_ai_chat = {
-    \  "options": {
-    \    "model": "qwen2.5-coder:14b",
-    \    "endpoint_url": "http://localhost:11434/v1/chat/completions",
-    \    "max_tokens": 2000,
-    \    "temperature": 0.2,
-    \    "enable_auth": 0,
-    \    "request_timeout": 30,
-    \  },
-    \  "ui": {
-    \    "open_chat_command": "preset_below",
-    \    "scratch_buffer_keep_open": 0,
-    \    "paste_mode": 1,
-    \  },
-    \}
-
-    let g:vim_ai_edit = {
-    \  "engine": "complete",
-    \  "options": {
-    \    "model": "qwen2.5-coder:14b",
-    \    "endpoint_url": "http://localhost:11434/v1/completions",
-    \    "max_tokens": 2000,
-    \    "temperature": 0.2,
-    \    "enable_auth": 0,
-    \    "request_timeout": 30,
-    \  },
-    \  "ui": {
-    \    "paste_mode": 1,
-    \  },
-    \}
-
-    " Keybindings for AI commands
-    " Visual mode: AI complete selection
-    xnoremap <leader>a :AIEdit<CR>
-    xnoremap <leader>ac :AIChat<CR>
-
-    " Normal mode: AI complete from cursor
-    nnoremap <leader>a :AI<CR>
-    nnoremap <leader>ac :AIChat<CR>
-
-    " Common AI prompts
-    xnoremap <leader>as :AI fix spelling and grammar<CR>
-    xnoremap <leader>ae :AI explain the code<CR>
-    xnoremap <leader>ar :AI refactor this code<CR>
-    xnoremap <leader>at :AI add types to this code<CR>
-    xnoremap <leader>ad :AI add documentation to this code<CR>
-    xnoremap <leader>af :AI fix bugs in this code<CR>
-    xnoremap <leader>ao :AI optimize this code<CR>
-    xnoremap <leader>au :AI add unit tests for this code<CR>
-endif
 " }}}
 
 
@@ -1139,7 +809,7 @@ function! s:RenameFile()
 endfunction
 
 command! RenameFile call s:RenameFile()
-nnoremap <Leader>rf :RenameFile<CR>
+nnoremap <Leader>cR :RenameFile<CR>
 
 " Save file as sudo
 function! s:SudoSave()
@@ -1151,7 +821,6 @@ function! s:SudoSave()
 endfunction
 
 command! SudoSave call s:SudoSave()
-nnoremap <Leader>ss :SudoSave<CR>
 
 " ===> Custom Functions {{{
 
@@ -1184,7 +853,7 @@ augroup END
 
 " Manual whitespace cleanup (like vim-trailing-whitespace plugin)
 command! FixWhitespace call DeleteTrailingWS()
-nnoremap <Leader>fw :FixWhitespace<CR>
+nnoremap <Leader>cw :FixWhitespace<CR>
 
 " Search and replace utilities
 " Simple replace all in current buffer
@@ -1326,7 +995,7 @@ function! HealthCheck()
   
   " Plugin status
   echo "\nPlugin Status:"
-  let l:essential_plugins = ['fzf.vim', 'vim-airline', 'ale']
+  let l:essential_plugins = ['fzf.vim', 'vim-airline']
   for plugin in l:essential_plugins
     echo " - " . plugin . ": " . (PluginAvailable(plugin) ? "Loaded" : "Not loaded")
   endfor
@@ -1387,9 +1056,6 @@ function! s:GenerateLocalConfig()
         \ 'setlocal tabstop=2',
         \ 'setlocal shiftwidth=2',
         \ 'setlocal softtabstop=2',
-        \ '',
-        \ '" Example: Set specific linters',
-        \ '" let b:ale_linters = {''javascript'': [''eslint'']}',
         \ '',
         \ '" Example: Add custom mappings',
         \ '" nnoremap <buffer> <Leader>r :!npm run dev<CR>',
@@ -1519,9 +1185,9 @@ augroup python_settings
   autocmd FileType python nnoremap <buffer> <Leader>i :update<CR>:exec '!python3 -i' shellescape(@%, 1)<CR>
   " Formatting shortcut - prefer ruff, fall back to black
   if executable('ruff')
-    autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !ruff format % && ruff check --fix %<CR>:e<CR>
+    autocmd FileType python nnoremap <buffer> <Leader>cf :update<CR>:silent !ruff format % && ruff check --fix %<CR>:e<CR>
   elseif executable('black')
-    autocmd FileType python nnoremap <buffer> <Leader>fb :update<CR>:silent !black %<CR>:e<CR>
+    autocmd FileType python nnoremap <buffer> <Leader>cf :update<CR>:silent !black %<CR>:e<CR>
   endif
   autocmd FileType python call SetupDevEnvironment()
 augroup END
@@ -1546,7 +1212,7 @@ augroup java_settings
   endfunction
 augroup END
 
-" Scala settings - with Metals LSP and Gradle support
+" Scala settings - Gradle support
 augroup scala_settings
   autocmd!
 
@@ -1555,13 +1221,6 @@ augroup scala_settings
   autocmd FileType scala nnoremap <buffer> <Leader>mt :!gw test<CR>
   autocmd FileType scala nnoremap <buffer> <Leader>mf :!gw scalafmtAll<CR>
   autocmd FileType scala nnoremap <buffer> <Leader>mx :!gw scalaFixAll<CR>
-
-  " Metals LSP commands (Space + m prefix)
-  autocmd FileType scala nnoremap <buffer> <Leader>mi :LspCodeAction source.organizeImports<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mI :LspCodeAction build-import<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mC :LspCodeAction compile-cascade<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mR :LspStopServer metals<CR>:edit<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>ms :LspStatus<CR>
 
   " SBT support (fallback - Space + s prefix)
   if executable('sbt')

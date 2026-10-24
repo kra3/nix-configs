@@ -105,20 +105,26 @@ set NERDTree
 " Don't use Ex mode, use Q for formatting
 map Q gq
 
-" Clear search highlighting
-nnoremap <silent> <Leader><CR> :noh<CR>
+" Esc clears search highlighting
+nnoremap <silent> <Esc> :nohlsearch<CR>
+nnoremap <silent> <Leader>ur :nohlsearch<CR>
 
-" Keep cursor centered when searching
-nnoremap n nzz
-nnoremap N Nzz
+" Wrapped-line motion
+nnoremap j gj
+nnoremap k gk
+
+" Quit all
+nnoremap <Leader>qq :qa<CR>
 
 " Visual mode: maintain selection after indent
 vnoremap < <gv
 vnoremap > >gv
 
-" Move visual block up/down
-vnoremap J :m '>+1<CR>gv=gv
-vnoremap K :m '<-2<CR>gv=gv
+" Move lines
+nmap <A-j> <Action>(MoveLineDown)
+nmap <A-k> <Action>(MoveLineUp)
+vmap <A-j> <Action>(MoveLineDown)
+vmap <A-k> <Action>(MoveLineUp)
 
 " }}}
 
@@ -131,7 +137,10 @@ nmap <Leader>fc <Action>(GotoClass)
 nmap <Leader>fa <Action>(GotoAction)
 nmap <Leader>fs <Action>(GotoSymbol)
 nmap <Leader>fr <Action>(RecentFiles)
-nmap <Leader>fe <Action>(RecentLocations)
+nmap <Leader>fe <Action>(ActivateProjectToolWindow)
+nmap <Leader>fE <Action>(SelectInProjectView)
+nmap <Leader>fb <Action>(Switcher)
+nmap <Leader>, <Action>(Switcher)
 nmap <Leader>fl <Action>(RecentChangedFiles)
 nmap <Leader>ft <Action>(ActivateTerminalToolWindow)
 nmap <Leader><Space> <Action>(GotoFile)
@@ -241,9 +250,21 @@ nmap <C-l> <C-w>l
 " Split actions
 nmap <Leader>\| <Action>(SplitVertically)
 nmap <Leader>- <Action>(SplitHorizontally)
+nmap <Leader>w- <Action>(SplitHorizontally)
+nmap <Leader>w\| <Action>(SplitVertically)
+nmap <Leader>ww <C-w>p
+nmap <Leader>wd <Action>(Unsplit)
 nmap <Leader>wu <Action>(Unsplit)
 nmap <Leader>wm <Action>(MoveEditorToOppositeTabGroup)
 nmap <Leader>wh <Action>(HideAllWindows)
+
+" Buffers
+nmap <Leader>bb <C-^>
+nmap <Leader>` <C-^>
+nmap <Leader>bd <Action>(CloseContent)
+nmap <Leader>bo <Action>(CloseAllEditorsButActive)
+nmap ]b <Action>(NextTab)
+nmap [b <Action>(PreviousTab)
 
 " Tabs (LazyVim <leader><tab> group)
 nmap <Leader><Tab>] <Action>(NextTab)
@@ -258,18 +279,21 @@ nmap <Leader><Tab>p <Action>(PinActiveEditorTab)
 
 " ===> Git/VCS Integration (g) {{{"
 
+nmap <Leader>gg <Action>(Vcs.QuickListPopupAction)
 nmap <Leader>gb <Action>(Annotate)
 nmap <Leader>gB <Action>(Git.Branches)
-nmap <Leader>gc <Action>(CheckinProject)
+nmap <Leader>gc <Action>(Vcs.Show.Log)
 nmap <Leader>gd <Action>(Compare.SameVersion)
-nmap <Leader>gD <Action>(Vcs.ShowTabbedFileHistory)
-nmap <Leader>gh <Action>(Vcs.ShowTabbedFileHistory)
+nmap <Leader>gf <Action>(Vcs.ShowTabbedFileHistory)
 nmap <Leader>gl <Action>(Vcs.Show.Log)
-nmap <Leader>gp <Action>(Vcs.Push)
-nmap <Leader>gr <Action>(Vcs.RollbackChangedLines)
 nmap <Leader>gs <Action>(Vcs.Show.Local.Changes)
-nmap <Leader>gu <Action>(Vcs.UpdateProject)
-nmap <Leader>gv <Action>(Vcs.QuickListPopupAction)
+nmap <Leader>ghr <Action>(Vcs.RollbackChangedLines)
+
+" Same keys as the fugitive group in Vim/Neovim
+nmap <Leader>gvs <Action>(Vcs.Show.Local.Changes)
+nmap <Leader>gvc <Action>(CheckinProject)
+nmap <Leader>gvp <Action>(Vcs.Push)
+nmap <Leader>gvu <Action>(Vcs.UpdateProject)
 
 " }}}
 

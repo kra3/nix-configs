@@ -18,7 +18,16 @@ Before asserting file or config state, re-read it and reference the verification
 - Ask before destructive or hard-to-reverse actions, even when technically permitted by tool permissions — this applies especially on `sutala` since sessions often run directly on it, not just against a checkout.
 - Prefer editing existing files over creating new ones; no unrequested abstractions, refactors, or cleanup alongside a focused task.
 - Turn a task into a verifiable goal (a test or command that proves it), and loop until that check passes.
-- For changes under ~20 lines, skip the superpowers brainstorming/plan ceremony and follow ponytail; keep it for larger or ambiguous work.
+
+## Skills at each step
+Invoke the matching skill at each step, on top of any domain skill:
+- Designing new behaviour: superpowers:brainstorming, then ponytail:ponytail while building.
+- A bug or unexpected behaviour: superpowers:systematic-debugging.
+- Before pushing or opening a PR: ponytail:ponytail-review, then code-review. Touch the review-gate marker only after both ran.
+- Review findings received: superpowers:receiving-code-review.
+- Before claiming done, fixed or passing: superpowers:verification-before-completion.
+
+Escape latch: a change under ~20 lines that touches nothing high-impact skips brainstorming and the reviews, never verification. High-impact is judged by effect (security, access, secrets, data loss, deploy, anything hard to undo), not only by the review-gate hook's path list; only the user may set `CLAUDE_SKIP_REVIEW_GATE=1`.
 
 ## Code comments
 - Keep comments to one line by default. Never narrate the decision process, alternatives considered, or tradeoffs weighed — that belongs in the commit message or PR description, not the file.

@@ -61,6 +61,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/review-gate.sh",
+            "timeout": 15
+          }
+        ]
       }
     ]
   },

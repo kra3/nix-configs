@@ -54,6 +54,11 @@
           executable = true;
           force = true;
         };
+        ".claude/hooks/review-gate.sh" = {
+          source = ./claude-code/hooks/review-gate.sh;
+          executable = true;
+          force = true;
+        };
         ".claude/hooks/notify.sh" = {
           source = ./claude-code/hooks/notify.sh;
           executable = true;

@@ -127,6 +127,14 @@
       {{ is_state('schedule.sleep', 'on') and n is not none
          and 1 <= as_local(n).hour < 12
          and (n - now()).total_seconds() <= 900 }}
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state:
+      - armed_away
+      - armed_vacation
   actions:
   # Adaptive Lighting would otherwise reset the ramp to its own brightness.
   - action: adaptive_lighting.set_manual_control

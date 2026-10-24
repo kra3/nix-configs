@@ -1,5 +1,4 @@
 # High-impact globs for the review-gate hook (read from the default branch), added to its defaults; !glob drops a default match.
-*/ha-config/automations/security.yaml
 */ha-config/automations/presence.yaml
 */ha-config/automations/sleep.yaml
 */ha-config/automations/alarm-restore.yaml
@@ -10,4 +9,3 @@ hosts/*
 *disko.nix
 flake.nix
 modules/home/claude-code/hooks/*
-.github/*

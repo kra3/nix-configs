@@ -63,12 +63,22 @@
         ]
       },
       {
-        "matcher": "mcp__github__push_files|mcp__github__create_or_update_file",
+        "matcher": "mcp__github__push_files|mcp__github__create_or_update_file|mcp__github__delete_file",
         "hooks": [
           {
             "type": "command",
             "command": "echo 'review-gate: push through local git so its pre-push review gate runs.' >&2; exit 2",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 5,
+            "command": "jq -r \".tool_input.command // \\\"\\\"\" | grep -qE -- \"--no-verify|core\\\\.hooksPath|CLAUDECODE|CLAUDE_SKIP_REVIEW_GATE|gh api.*/contents/\" && { echo \"review-gate: bypassing the pre-push review gate (--no-verify, hooksPath, CLAUDECODE, CLAUDE_SKIP_REVIEW_GATE, gh api contents writes) is reserved for the user.\" >&2; exit 2; } || exit 0"
           }
         ]
       }

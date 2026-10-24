@@ -23,7 +23,7 @@ Before asserting file or config state, re-read it and reference the verification
 Invoke the matching skill at each step, on top of any domain skill:
 - Designing new behaviour: superpowers:brainstorming, then ponytail:ponytail while building.
 - A bug or unexpected behaviour: superpowers:systematic-debugging.
-- Before pushing or opening a PR: ponytail:ponytail-review, then code-review. Touch the review-gate marker only after both ran.
+- Before pushing or opening a PR: ponytail:ponytail-review, then code-review. Touch the review-gate marker only after these and verification ran.
 - Review findings received: superpowers:receiving-code-review.
 - Before claiming done, fixed or passing: superpowers:verification-before-completion.
 

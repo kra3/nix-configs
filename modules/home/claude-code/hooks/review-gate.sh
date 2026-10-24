@@ -16,13 +16,13 @@ if [[ -n $tip ]]; then
 fi
 
 check() { # local_sha base -> exit 2 with a message when the range needs review
-  local head=$1 base=$2 c body trailers=1 lines files deleted risky f r hit todo reasons=()
+  local head=$1 base=$2 c parents body trailers=1 lines files deleted risky f r hit todo reasons=()
   [[ -e $(mark "$head") ]] && return 0
-  while IFS= read -r -d '' c && IFS= read -r -d '' body; do
+  while IFS= read -r -d "" c && IFS= read -r -d "" parents && IFS= read -r -d "" body; do
     c=${c#$'\n'}
     [[ -e $(mark "$c") ]] && { base=$c; break; }
-    grep -qi '^Review: skip' <<<"$body" || trailers=0
-  done < <(git log --no-merges --format='%H%x00%B%x00' "$base..$head")
+    [[ $parents == *" "* ]] || grep -qi '^Review: skip' <<<"$body" || trailers=0
+  done < <(git log --format='%H%x00%P%x00%B%x00' "$base..$head")
   files=$(git diff --name-only "$base" "$head")
   [[ -n $files ]] || return 0
   shopt -s nocasematch
@@ -43,7 +43,7 @@ check() { # local_sha base -> exit 2 with a message when the range needs review
   done <<<"$files"
   deleted=$(git diff --diff-filter=D --name-only "$base" "$head")
   [[ -n $deleted ]] && reasons+=("deletes: ${deleted//$'\n'/, }")
-  risky=$(git diff -U0 "$base" "$head" | grep -E '^\+[^+]' | grep -E -o 'DROP[[:space:]]+(TABLE|DATABASE)|TRUNCATE|rm -rf|chmod|sudo |--force|eval\(' | sort -u | paste -sd, -)
+  risky=$(git diff -U0 "$base" "$head" -- . ':!*.md' | grep -E '^\+[^+]' | grep -E -o 'DROP[[:space:]]+(TABLE|DATABASE)|TRUNCATE|rm -rf|chmod|sudo |--force|eval\(' | sort -u | paste -sd, -)
   [[ -n $risky ]] && reasons+=("diff adds: $risky")
   todo="run ponytail:ponytail-review, code-review and superpowers:verification-before-completion on ${base:0:7}..${head:0:7}, then: touch $(mark "$head")"
   if ((${#reasons[@]})); then
@@ -63,8 +63,7 @@ while read -r _ lsha _ rsha; do
   elif [[ -n $tip ]]; then
     base=$(git merge-base "$tip" "$lsha")
   else
-    echo "review-gate: no $remote/HEAD, main or master to compare against; review, then: touch $(mark "$lsha")" >&2
-    [[ -e $(mark "$lsha") ]] || status=2
+    [[ -e $(mark "$lsha") ]] || { echo "review-gate: no $remote/HEAD, main or master to compare against; review, then: touch $(mark "$lsha")" >&2; status=2; }
     continue
   fi
   check "$lsha" "$base" || status=2

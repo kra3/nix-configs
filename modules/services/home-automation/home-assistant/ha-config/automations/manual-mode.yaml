@@ -55,3 +55,23 @@
       - input_boolean.automations_paused
       - input_boolean.party_mode
   mode: single
+
+- id: modes_vacation_end_on_disarm
+  alias: "Modes: end vacation mode when the alarm is disarmed"
+  description: Disarming means someone is back, so vacation mode ends.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: disarmed
+    not_from:
+    - unavailable
+    - unknown
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: "on"
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.vacation_mode
+  mode: single

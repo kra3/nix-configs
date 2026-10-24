@@ -33,7 +33,7 @@
     Turns off living+dining lights when Litefin/Moonfin/Jellyfin/Apple TV plays;
     restores full brightness on stop (skips a room only if its presence
     sensor reads a definite off). On pause, dims living room to 20% at
-    15s, then hands it back to Adaptive Lighting at 38s.
+    15s, then hands it back to Adaptive Lighting at 38s. Off during party mode.
   triggers:
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
@@ -52,6 +52,9 @@
     trigger: state
     id: paused
   conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
   - condition: or
     conditions:
     - condition: state

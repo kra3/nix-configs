@@ -1,4 +1,4 @@
-local langs = require("config.nix-langs").langs
+local langs = require("config.langs").langs
 
 if not langs.nix then
   return {}

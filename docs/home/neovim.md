@@ -31,7 +31,7 @@ nvim          # :Lazy update
 cp ~/.local/state/nvim/lazy-lock.json modules/home/neovim/nvim/lazy-lock.json
 ```
 
-Commit the refreshed lockfile. Existing hosts keep their state-dir lockfile; use `:Lazy restore` to apply a newer committed one.
+Lazy drops pins for plugins not in the spec, so refresh the committed lockfile from a host with every language enabled (mac-work), never from a default-set host. Commit the refreshed lockfile. Existing hosts keep their state-dir lockfile; use `:Lazy restore` to apply a newer committed one.
 
 ## Languages
 
@@ -49,7 +49,7 @@ Each language is a switch, `programs.neovim-langs.<lang>.enable`, set in the hos
 | `go` | off | gopls, gofumpt, golangci-lint, gotools, delve |
 | `cpp` | off | clang-tools, codelldb |
 
-mac-work enables everything; sutala uses the defaults; surasa has no Neovim. Nix writes the enabled set to `lua/config/nix-langs.lua`, which `lazy.lua`, `plugins/*` and `check-tools.lua` read. Rebuild after flipping a switch; the next `nvim` start installs the new plugins.
+mac-work enables everything; sutala uses the defaults; surasa has no Neovim. Nix writes the enabled set to `lua/config/nix-langs.lua` (absent outside Home Manager, where `lua/config/langs.lua` falls back to nix/lua/python), which `lazy.lua`, `plugins/*` and `check-tools.lua` read. Rebuild after flipping a switch; the next `nvim` start installs the new plugins.
 
 ## Adding an Extra or Plugin
 

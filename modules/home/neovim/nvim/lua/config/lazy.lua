@@ -17,7 +17,7 @@ local spec = {
   { import = "lazyvim.plugins.extras.dap.core" },
   { import = "lazyvim.plugins.extras.test.core" },
 }
-for _, extra in ipairs(require("config.nix-langs").extras) do
+for _, extra in ipairs(require("config.langs").extras) do
   spec[#spec + 1] = { import = "lazyvim.plugins.extras." .. extra }
 end
 spec[#spec + 1] = { import = "plugins" }

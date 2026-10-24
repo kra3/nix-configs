@@ -1,6 +1,6 @@
-local langs = require("config.nix-langs").langs
+local langs = require("config.langs").langs
 
-return {
+local specs = {
   { "mason-org/mason.nvim", enabled = false },
   { "mason-org/mason-lspconfig.nvim", enabled = false },
   { "jay-babu/mason-nvim-dap.nvim", enabled = false },
@@ -17,11 +17,16 @@ return {
   },
   { "mfussenegger/nvim-lint", opts = { linters_by_ft = { fish = {} } } },
   { "neovim/nvim-lspconfig", opts = { servers = { lua_ls = { enabled = langs.lua } } } },
-  langs.scala and {
+}
+
+if langs.scala then
+  table.insert(specs, {
     "scalameta/nvim-metals",
     ft = { "scala", "sbt" },
     opts = function(_, opts)
       opts.settings.metalsBinaryPath = vim.fn.exepath("metals")
     end,
-  } or nil,
-}
+  })
+end
+
+return specs

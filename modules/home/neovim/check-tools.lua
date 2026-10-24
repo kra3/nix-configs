@@ -11,9 +11,15 @@ end
 require("lazy").load({ plugins = { "nvim-lspconfig", "conform.nvim", "nvim-lint" } })
 
 -- servers whose plugin starts them itself instead of through vim.lsp.config
-local langs = require("config.nix-langs").langs
+local langs_cfg = require("config.langs")
+local langs = langs_cfg.langs
 local plugin_started = {}
-for lang, server in pairs({ java = { "jdtls", "jdtls" }, scala = { "metals", "metals" }, rust = { "rust_analyzer", "rust-analyzer" } }) do
+local plugin_servers = {
+  java = { "jdtls", "jdtls" },
+  scala = { "metals", "metals" },
+  rust = { "rust_analyzer", "rust-analyzer" },
+}
+for lang, server in pairs(plugin_servers) do
   if langs[lang] then
     plugin_started[server[1]] = server[2]
   end
@@ -61,7 +67,7 @@ for ft, names in pairs(lint.linters_by_ft) do
 end
 
 -- not discoverable from plugin specs; extend when enabling an extra that needs more
-for _, exe in ipairs(vim.list_extend({ "git", "rg", "fd", "tree-sitter", "cc" }, require("config.nix-langs").tools)) do
+for _, exe in ipairs(vim.list_extend({ "git", "rg", "fd", "tree-sitter", "cc" }, langs_cfg.tools)) do
   need("static", "baseline", exe)
 end
 

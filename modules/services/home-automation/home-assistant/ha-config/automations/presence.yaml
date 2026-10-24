@@ -108,11 +108,13 @@
       - action: light.turn_off
         target:
           entity_id: all
-      - action: alarm_control_panel.alarm_arm_away
-        target:
-          entity_id: alarm_control_panel.vasudha_secure
+      - action: alarmo.arm
         data:
+          entity_id: alarm_control_panel.vasudha_secure
+          mode: away
+          skip_delay: true
           code: !secret alarm_code
+        continue_on_error: true
       - delay: "00:00:02"
       - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'arming') }}"
         timeout: "00:01:30"

@@ -106,7 +106,9 @@ automation:
       changing every 10-40 min with occasional 5-15 min dark gaps. 0-40
       min after bedtime only the bedroom light comes on for 10-25 min,
       then the house stays dark until wake-up. Lights go off when it gets
-      bright; nothing is touched once someone is home or it is disarmed.
+      bright. Once someone is home nothing is touched; a disarm with the
+      house empty turns the simulated lights off. After a restart a
+      running step resumes from the restored timer.
       Steps are logged.
     triggers:
       - trigger: event
@@ -150,20 +152,26 @@ automation:
       jitter: "{{ (range(1, 41) | random) * 60 }}"
     actions:
       - choose:
-          - conditions: "{{ not active }}"
+          - conditions: "{{ not active and trigger.id != 'startup' }}"
             sequence:
-              - action: timer.cancel
-                target:
-                  entity_id: timer.vacation_sim_step
               - action: input_select.select_option
                 target:
                   entity_id: input_select.vacation_sim_phase
                 data:
                   option: idle
-          - conditions: "{{ trigger.id in ['rederive', 'startup'] }}"
+              - if: "{{ states('zone.home') | int(1) == 0 }}"
+                then:
+                  - action: script.vacation_sim_step
+                    data:
+                      minutes: 0
+                else:
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.vacation_sim_step
+          - conditions: "{{ active and trigger.id in ['rederive', 'startup'] }}"
             sequence:
               - condition: template
-                value_template: "{{ trigger.id != 'startup' or is_state('timer.vacation_sim_step', 'idle') }}"
+                value_template: "{{ trigger.entity_id | default('') == 'schedule.sleep' or is_state('timer.vacation_sim_step', 'idle') }}"
               - action: input_select.select_option
                 target:
                   entity_id: input_select.vacation_sim_phase

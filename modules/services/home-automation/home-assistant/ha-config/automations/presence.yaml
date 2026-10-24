@@ -93,7 +93,7 @@
             message: >-
               Everyone left — {{ 'alarm stays armed vacation' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else "won't auto-arm" }}, still open:
               {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
-              Force-arm from the dashboard if needed.
+              {{ '' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else 'Force-arm from the dashboard if needed.' }}
         - action: timer.start
           target:
             entity_id: timer.alarm_arm_escalation

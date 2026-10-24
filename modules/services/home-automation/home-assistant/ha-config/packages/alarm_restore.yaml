@@ -16,6 +16,9 @@ timer:
   alarm_arm_escalation:
     duration: "00:10:00"
     restore: true
+  alarm_night_rearm:
+    duration: "00:10:00"
+    restore: true
   alarm_siren_grace:
     duration: "00:02:00"
     restore: true

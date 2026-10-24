@@ -35,17 +35,17 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: Arms night at bedtime if disarmed, or 10 min after someone comes home to an empty house during the sleep schedule; on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min. Skipped during party mode; catches up when it ends.
+  description: Arms night at bedtime if disarmed, or 10 min after the entry auto-disarm during the sleep schedule (timer.alarm_night_rearm); on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min. Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
   - trigger: event
     event_type: modes_ended
-  - trigger: numeric_state
-    entity_id: zone.home
-    above: 0
-    for: "00:10:00"
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_night_rearm
   conditions:
   - condition: numeric_state
     entity_id: zone.home

@@ -5,16 +5,29 @@
     Turn off TV when sleep schedule starts, but only if it hasn't been
     playing anything for the last 15 minutes (a momentary non-playing
     state, e.g. between episodes, shouldn't trigger a shutdown).
+    Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
+    id: sleep_start
+  - entity_id: input_boolean.party_mode
+    to: "off"
+    trigger: state
+    id: party_end
   conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
   - condition: template
     value_template: >-
       {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
-         and now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
-             >= timedelta(minutes=15) }}
+         and (trigger.id == 'party_end'
+              or now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
+                 >= timedelta(minutes=15)) }}
   actions:
   - action: media_player.turn_off
     target:
@@ -23,12 +36,21 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min.
+  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min. Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
+  - entity_id: input_boolean.party_mode
+    to: "off"
+    trigger: state
   conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
     state: disarmed

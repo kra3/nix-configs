@@ -43,15 +43,18 @@
       };
 
       xdg.configFile."nvim" = {
-        source = ./nvim;
+        source = lib.cleanSourceWith {
+          src = ./nvim;
+          filter = path: _: baseNameOf path != "lazy-lock.json";
+        };
         recursive = true;
       };
 
       # lazy-lock.json must stay writable, so it lives in the state dir; seed it from the repo once.
       home.activation.nvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         lock="${config.xdg.stateHome}/nvim/lazy-lock.json"
-        if [ ! -e "$lock" ] && [ -e ${./nvim/lazy-lock.json} ]; then
-          install -Dm644 ${./nvim/lazy-lock.json} "$lock"
+        if [ ! -e "$lock" ]; then
+          run install -Dm644 ${./nvim/lazy-lock.json} "$lock"
         fi
       '';
     };

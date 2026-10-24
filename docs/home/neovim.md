@@ -57,6 +57,8 @@ Lists the LSP servers, formatters and linters the enabled extras expect and flag
 
 `gopls` needs `go` and `rust-analyzer` needs `cargo` on PATH; they come from the project dev shell, not from this module. Java and Scala debug bundles (java-debug-adapter, java-test) are Mason-only, so Java debugging is unavailable. Offline, blink.cmp falls back to its Lua matcher until its binary downloads. On macOS, treesitter parser compilation needs the Xcode command line tools.
 
+LSP clients stop when their last buffer closes (`config/autocmds.lua`), except `metals` and `jdtls`, which are slow to restart and run until Neovim exits.
+
 ## Related
 
 - [Vim Configuration](vim.md)

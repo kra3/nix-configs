@@ -1,6 +1,7 @@
 return {
   {
     "tpope/vim-fugitive",
+    dependencies = { "tpope/vim-rhubarb" },
     cmd = { "Git", "G", "Gdiffsplit", "Gwrite", "Gremove", "Gedit", "Gread", "GBrowse" },
     keys = {
       { "<leader>gv", group = "fugitive" },
@@ -12,5 +13,5 @@ return {
       { "<leader>gvr", "<cmd>Gremove<cr>", desc = "Remove" },
     },
   },
-  { "tpope/vim-rhubarb", dependencies = { "tpope/vim-fugitive" } },
+  { "tpope/vim-rhubarb", lazy = true },
 }

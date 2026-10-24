@@ -4,28 +4,33 @@
   description: >-
     Plejd reconnects by itself within seconds to ~3 min. If the hall
     light is still unavailable after 5 min, reloads the integration up
-    to 3 times, 15 min apart, then notifies.
+    to 3 times, 15 min apart, then notifies. Also checks after startup,
+    since the state trigger does not fire retroactively.
   triggers:
   - entity_id: light.hallway_hall_lights
     to: unavailable
     for: "00:05:00"
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: light.hallway_hall_lights
-    state: unavailable
+  - trigger: homeassistant
+    event: start
   actions:
+  - if: "{{ trigger.platform == 'homeassistant' }}"
+    then:
+    - wait_template: "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] }}"
+      timeout: "00:05:00"
+  - condition: template
+    value_template: "{{ states('light.hallway_hall_lights') in ['unavailable', 'unknown'] }}"
   - repeat:
       sequence:
       - action: homeassistant.reload_config_entry
         target:
           entity_id: light.hallway_hall_lights
         continue_on_error: true
-      - wait_template: "{{ not is_state('light.hallway_hall_lights', 'unavailable') }}"
+      - wait_template: "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] }}"
         timeout: "00:15:00"
       until:
-      - "{{ not is_state('light.hallway_hall_lights', 'unavailable') or repeat.index >= 3 }}"
-  - if: "{{ is_state('light.hallway_hall_lights', 'unavailable') }}"
+      - "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] or repeat.index >= 3 }}"
+  - if: "{{ states('light.hallway_hall_lights') in ['unavailable', 'unknown'] }}"
     then:
     - action: script.notify_all_phones
       data:

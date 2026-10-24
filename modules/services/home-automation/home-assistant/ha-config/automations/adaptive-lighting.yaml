@@ -5,30 +5,14 @@
   triggers:
   - entity_id: schedule.sleep
     trigger: state
-  - entity_id: input_boolean.party_mode
-    to: "off"
-    trigger: state
+  - trigger: event
+    event_type: automations_resumed
   - trigger: homeassistant
     event: start
+  conditions:
+  - "{{ is_state('schedule.sleep', 'off') or is_state('input_boolean.party_mode', 'off') }}"
   actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: schedule.sleep
-        state: "on"
-      - condition: state
-        entity_id: input_boolean.party_mode
-        state: "off"
-      sequence:
-      - action: switch.turn_on
-        target:
-          entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
-    - conditions:
-      - condition: state
-        entity_id: schedule.sleep
-        state: "off"
-      sequence:
-      - action: switch.turn_off
-        target:
-          entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
+  - action: "switch.turn_{{ states('schedule.sleep') }}"
+    target:
+      entity_id: switch.adaptive_lighting_home_adaptive_lighting_sleep_mode_home
   mode: single

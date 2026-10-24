@@ -162,10 +162,9 @@
     trigger: state
     entity_id: schedule.sleep
     to: "on"
-  - id: party_end
-    trigger: state
-    entity_id: input_boolean.party_mode
-    to: "off"
+  - id: resumed
+    trigger: event
+    event_type: automations_resumed
   conditions:
   - condition: state
     entity_id: input_boolean.party_mode

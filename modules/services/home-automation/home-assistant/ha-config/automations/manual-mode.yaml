@@ -13,7 +13,7 @@
     event: start
   variables:
     keep_running: >-
-      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|neelu_|kunsu_|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|everyone_left_home$|1733595301092$)
+      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|neelu_|kunsu_|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|light_scene_|vacation_|everyone_left_home$|1733595301092$)
     targets: >-
       {{ states.automation
          | selectattr('attributes.id', 'defined')
@@ -39,7 +39,7 @@
       target:
         entity_id: "{{ targets }}"
     - event: automations_resumed
-  mode: single
+  mode: queued
 
 - id: modes_end_in_morning
   alias: "Modes: end manual and party mode when the sleep schedule ends"
@@ -54,4 +54,15 @@
       entity_id:
       - input_boolean.automations_paused
       - input_boolean.party_mode
+  mode: single
+
+- id: modes_party_end_hand_back
+  alias: "Modes: hand back to automations when party mode ends"
+  description: Fires automations_resumed so skipped bedtime steps and room lighting catch up.
+  triggers:
+  - entity_id: input_boolean.party_mode
+    to: "off"
+    trigger: state
+  actions:
+  - event: automations_resumed
   mode: single

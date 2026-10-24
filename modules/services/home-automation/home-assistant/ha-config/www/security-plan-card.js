@@ -42,7 +42,7 @@ function badgeFor(s, armed) {
 function planModel(states, areaOf, cfg) {
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
-  const away = !!alarm && alarm.state === "armed_away";
+  const away = !!alarm && ["armed_away", "armed_vacation"].includes(alarm.state);
   const armed = !!alarm && (alarm.state.startsWith("armed_") || ["triggered", "pending"].includes(alarm.state));
   const rooms = (cfg.rooms || []).map((r) => {
     const areas = new Set([].concat(r.areas || r.area || []));

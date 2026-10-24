@@ -11,10 +11,9 @@
     to: "on"
     trigger: state
     id: sleep_start
-  - entity_id: input_boolean.party_mode
-    to: "off"
-    trigger: state
-    id: party_end
+  - trigger: event
+    event_type: automations_resumed
+    id: resumed
   conditions:
   - condition: state
     entity_id: input_boolean.party_mode
@@ -24,8 +23,8 @@
     state: "on"
   - condition: template
     value_template: >-
-      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
-         and (trigger.id == 'party_end'
+      {{ states('media_player.lg_webos_tv_oled77c35la') not in ['playing', 'off']
+         and (trigger.id == 'resumed'
               or now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
                  >= timedelta(minutes=15)) }}
   actions:
@@ -41,9 +40,8 @@
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
-  - entity_id: input_boolean.party_mode
-    to: "off"
-    trigger: state
+  - trigger: event
+    event_type: automations_resumed
   conditions:
   - condition: state
     entity_id: input_boolean.party_mode
@@ -93,16 +91,17 @@
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Disarms Alarmo when the sleep schedule ends (or on HA startup if it
-    ended while still armed_night), only if someone's home.
+    Disarms armed_night when the sleep schedule ends (or on startup or
+    resume after manual mode, if it ended meanwhile), only if someone's
+    home.
   triggers:
-  - id: schedule_off
-    entity_id: schedule.sleep
+  - entity_id: schedule.sleep
     to: "off"
     trigger: state
-  - id: startup
-    trigger: homeassistant
+  - trigger: homeassistant
     event: start
+  - trigger: event
+    event_type: automations_resumed
   conditions:
   - condition: or
     conditions:
@@ -112,20 +111,12 @@
     - condition: state
       entity_id: person.anjalipc
       state: home
-  - condition: or
-    conditions:
-    - condition: trigger
-      id: schedule_off
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: startup
-      - condition: state
-        entity_id: schedule.sleep
-        state: "off"
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state: armed_night
+  - condition: state
+    entity_id: schedule.sleep
+    state: "off"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: armed_night
   actions:
   - action: alarm_control_panel.alarm_disarm
     target:

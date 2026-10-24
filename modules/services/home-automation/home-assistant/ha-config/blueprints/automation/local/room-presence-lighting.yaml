@@ -254,7 +254,7 @@ variables:
   al_switch: !input adaptive_lighting_switch
   light_entity: !input light_entity
   home: "{{ is_state('binary_sensor.anyone_home', 'on') }}"
-  away: "{{ evening_hold and not home }}"
+  away: "{{ evening_hold and not home and not is_state('input_boolean.vacation_mode', 'on') }}"
   handback: "{{ evening_hold and al_switch != '' }}"
 
 actions:

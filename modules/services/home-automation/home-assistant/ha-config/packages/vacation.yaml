@@ -1,0 +1,113 @@
+timer:
+  vacation_sim_step:
+    duration: "00:20:00"
+    restore: true
+
+automation:
+  - id: vacation_presence_simulation
+    alias: "Vacation: simulate presence with the lights"
+    description: >-
+      While vacation mode is on and the house is armed and empty, switches
+      a random living, dining, kitchen or office light set every 10-40 min
+      whenever it is gloomy outside and outside sleep hours. At bedtime only
+      the bedroom light comes on for 10-25 min. Lights go off when it gets
+      bright; nothing is touched once someone is home or it is disarmed.
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.vacation_sim_step
+        id: step
+      - entity_id: binary_sensor.gloomy_outside
+        trigger: state
+        id: light_change
+      - entity_id: schedule.sleep
+        to: "on"
+        trigger: state
+        id: bedtime
+      - entity_id: schedule.sleep
+        to: "off"
+        trigger: state
+        id: step
+      - entity_id:
+          - input_boolean.vacation_mode
+          - alarm_control_panel.vasudha_secure
+        for: "00:00:30"
+        trigger: state
+        id: step
+      - trigger: homeassistant
+        event: start
+        id: startup
+    variables:
+      sim_lights:
+        - light.living_room_lights
+        - light.dining_lights
+        - light.kitchen_lights
+        - light.office_room_light
+        - light.bedroom_wardrobe_lights
+      scenes:
+        - [light.living_room_lights]
+        - [light.living_room_lights]
+        - [light.living_room_lights, light.dining_lights]
+        - [light.kitchen_lights, light.dining_lights]
+        - [light.living_room_lights, light.kitchen_lights]
+        - [light.kitchen_lights]
+        - [light.office_room_light]
+      active: >-
+        {{ is_state('input_boolean.vacation_mode', 'on')
+           and is_state('alarm_control_panel.vasudha_secure', ['armed_away', 'armed_vacation'])
+           and states('zone.home') | int(1) == 0 }}
+      evening: >-
+        {{ is_state('binary_sensor.gloomy_outside', 'on') and is_state('schedule.sleep', 'off') }}
+    actions:
+      - choose:
+          - conditions: "{{ not active }}"
+            sequence:
+              - action: timer.cancel
+                target:
+                  entity_id: timer.vacation_sim_step
+          - conditions:
+              - condition: trigger
+                id: bedtime
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ sim_lights | reject('eq', 'light.bedroom_wardrobe_lights') | list }}"
+                data:
+                  transition: 2
+              - action: light.turn_on
+                target:
+                  entity_id: light.bedroom_wardrobe_lights
+              - action: timer.start
+                target:
+                  entity_id: timer.vacation_sim_step
+                data:
+                  duration: "{{ (range(10, 26) | random) * 60 }}"
+          - conditions: "{{ evening and (trigger.id != 'startup' or is_state('timer.vacation_sim_step', 'idle')) }}"
+            sequence:
+              - variables:
+                  pick: "{{ scenes | random }}"
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ sim_lights | reject('in', pick) | list }}"
+                data:
+                  transition: 2
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ pick }}"
+              - action: timer.start
+                target:
+                  entity_id: timer.vacation_sim_step
+                data:
+                  duration: "{{ (range(10, 41) | random) * 60 }}"
+          - conditions: "{{ not evening and trigger.id in ['step', 'light_change'] }}"
+            sequence:
+              - action: timer.cancel
+                target:
+                  entity_id: timer.vacation_sim_step
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ sim_lights }}"
+                data:
+                  transition: 2
+    mode: queued

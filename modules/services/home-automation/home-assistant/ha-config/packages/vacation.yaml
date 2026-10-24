@@ -7,7 +7,7 @@ automation:
   - id: vacation_presence_simulation
     alias: "Vacation: simulate presence with the lights"
     description: >-
-      While vacation mode is on and the house is armed and empty, switches
+      While the alarm is armed vacation and the house is empty, switches
       a random living, dining, kitchen or office light set every 10-40 min
       whenever it is gloomy outside and outside sleep hours. At bedtime only
       the bedroom light comes on for 10-25 min. Lights go off when it gets
@@ -29,9 +29,7 @@ automation:
         to: "off"
         trigger: state
         id: step
-      - entity_id:
-          - input_boolean.vacation_mode
-          - alarm_control_panel.vasudha_secure
+      - entity_id: alarm_control_panel.vasudha_secure
         for: "00:00:30"
         trigger: state
         id: step
@@ -54,8 +52,7 @@ automation:
         - [light.kitchen_lights]
         - [light.office_room_light]
       active: >-
-        {{ is_state('input_boolean.vacation_mode', 'on')
-           and is_state('alarm_control_panel.vasudha_secure', ['armed_away', 'armed_vacation'])
+        {{ is_state('alarm_control_panel.vasudha_secure', 'armed_vacation')
            and states('zone.home') | int(1) == 0 }}
       evening: >-
         {{ is_state('binary_sensor.gloomy_outside', 'on') and is_state('schedule.sleep', 'off') }}

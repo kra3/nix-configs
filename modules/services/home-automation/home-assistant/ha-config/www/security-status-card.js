@@ -48,7 +48,8 @@ function secModel(states, areaOf, now, cfg) {
     .sort((a, b) => a.since - b.since);
   const unlocked = locks.filter((s) => ["unlocked", "open", "jammed"].includes(s.state)).map((s) => ({ id: s.entity_id, name: name(s), state: s.state }));
   const dead = [...openings, ...locks].filter((s) => GONE.includes(s.state)).map((s) => ({ id: s.entity_id, name: name(s) }));
-  const away = (states[cfg.alarm] || {}).state === "armed_away" || (!cfg.alarm && (all.find((s) => s.entity_id.startsWith("alarm_control_panel.")) || {}).state === "armed_away");
+  const awayStates = ["armed_away", "armed_vacation"];
+  const away = awayStates.includes((states[cfg.alarm] || {}).state) || (!cfg.alarm && awayStates.includes((all.find((s) => s.entity_id.startsWith("alarm_control_panel.")) || {}).state));
   const people = all
     .filter((s) => /^binary_sensor\..*_person_occupancy$/.test(s.entity_id) && !!states["camera." + s.entity_id.slice(14, -17)] !== away && s.state === "on")
     .map((s) => ({ id: s.entity_id, area: where(s) || name(s).replace(/ person.*$/i, "") }));
@@ -227,7 +228,7 @@ class SecurityStatusCard extends HTMLElement {
     if (open.length) {
       card = document.createElement("div");
       card.className = "ssc-force";
-      card.innerHTML = `<h3>Arm with sensors open?</h3><p>${open.map((o) => esc(o.name)).join(", ")} will be bypassed.</p><input type="password" inputmode="numeric" autocomplete="off" placeholder="PIN"><div class="err"></div><div class="row"><button data-mode="night">Night</button><button data-mode="away">Away</button></div>`;
+      card.innerHTML = `<h3>Arm with sensors open?</h3><p>${open.map((o) => esc(o.name)).join(", ")} will be bypassed.</p><input type="password" inputmode="numeric" autocomplete="off" placeholder="PIN"><div class="err"></div><div class="row"><button data-mode="night">Night</button><button data-mode="away">Away</button><button data-mode="vacation">Vacation</button></div>`;
       card.addEventListener("click", async (e) => {
         const b = e.target.closest("button[data-mode]");
         if (!b) return;

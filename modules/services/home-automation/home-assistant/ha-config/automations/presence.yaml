@@ -55,8 +55,8 @@
   description: >-
     When the last tracked person leaves, waits out a 5min confirm timer
     (timer.everyone_left_home_confirm, restart-safe) then ends party and
-    manual mode, turns off all lights and arms Alarmo away (vacation
-    while vacation mode is on), notifying either way.
+    manual mode, turns off all lights and arms Alarmo away, notifying
+    either way.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home
@@ -108,7 +108,7 @@
       - action: light.turn_off
         target:
           entity_id: all
-      - action: "alarm_control_panel.alarm_arm_{{ 'vacation' if is_state('input_boolean.vacation_mode', 'on') else 'away' }}"
+      - action: alarm_control_panel.alarm_arm_away
         target:
           entity_id: alarm_control_panel.vasudha_secure
         data:

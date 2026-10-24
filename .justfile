@@ -105,3 +105,7 @@ switch-surasa target="surasa":
 
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}
+
+# List tools the enabled Neovim extras expect and flag any missing from PATH.
+nvim-check-tools:
+    nvim --headless -c "luafile modules/home/neovim/check-tools.lua"

@@ -41,6 +41,18 @@ Commit the refreshed lockfile. Existing hosts keep their state-dir lockfile; use
 
 Then run `:Lazy sync` and copy the lockfile back as above.
 
+## Checking Tools Are Present
+
+```bash
+just nvim-check-tools
+```
+
+Lists the LSP servers, formatters and linters the enabled extras expect and flags any missing executable (exit 1 if so). Run it after enabling an extra or updating plugins. It cannot see debug adapters or other tools a plugin spawns itself, so the short `static` list at the end of `modules/home/neovim/check-tools.lua` needs extending by hand.
+
+## Nix Language Server
+
+`nixd` replaces LazyVim's default `nil`. In a flake it is pointed at the flake's nixpkgs and, for the NixOS and Home Manager options, at `nixosConfigurations.<hostname>` (falling back to the first one) so option names complete. That evaluates the flake on first use, so completions can lag the first time.
+
 ## Related
 
 - [Vim Configuration](vim.md)

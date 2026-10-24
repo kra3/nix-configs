@@ -27,10 +27,11 @@
           pkgs.jdt-language-server
           pkgs.lua-language-server
           pkgs.metals
-          pkgs.nil
+          pkgs.nixd
           pkgs.nixfmt
           pkgs.ruff
           pkgs.rust-analyzer
+          pkgs.shfmt
           pkgs.statix
           pkgs.stylua
           pkgs.temurin-bin-21

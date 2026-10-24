@@ -7,6 +7,11 @@
       ...
     }:
     {
+      programs.git.settings.hook.review-gate = {
+        event = "pre-push";
+        command = "$HOME/.claude/hooks/review-gate.sh";
+      };
+
       home.packages = [
         inputs.llm-agents.packages.${pkgs.system}.claude-code
         pkgs.sox # audio I/O for Claude Code voice mode

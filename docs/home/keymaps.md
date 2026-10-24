@@ -92,7 +92,7 @@ Neovim is LazyVim, so only local additions and local deviations are listed. Old 
 | (none) | `<leader>W*` | Vimwiki maps | `vimwiki_map_prefix`, so `<leader>w` stays windows |
 | (none) | `<leader>a{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
 
-Plugins added: vim-sleuth, vim-abolish, vim-eunuch, undotree, vimwiki, vim-fugitive, vim-rhubarb, codecompanion.nvim. LazyVim keys are not overridden (`<C-h/j/k/l>` stay plain window moves; tmux pane crossing is Vim-only). Settings: `colorcolumn=120`; python `88`; markdown `textwidth=80`.
+Plugins added: vim-sleuth, vim-abolish, vim-eunuch, undotree, vimwiki, vim-fugitive, vim-rhubarb, codecompanion.nvim. LazyVim keys are not overridden (`<C-h/j/k/l>` stay plain window moves; tmux pane crossing is Vim-only). Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
 
 ## IdeaVim
 

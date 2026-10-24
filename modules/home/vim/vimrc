@@ -1179,8 +1179,6 @@ endfunction
 " Python settings
 augroup python_settings
   autocmd!
-  autocmd FileType python setlocal textwidth=88  " Black formatter default
-  autocmd FileType python setlocal colorcolumn=88
   autocmd FileType python nnoremap <buffer> <Leader>r :update<CR>:exec '!python3' shellescape(@%, 1)<CR>
   autocmd FileType python nnoremap <buffer> <Leader>i :update<CR>:exec '!python3 -i' shellescape(@%, 1)<CR>
   " Formatting shortcut - prefer ruff, fall back to black
@@ -1298,7 +1296,6 @@ augroup END
 " Markdown settings
 augroup markdown_settings
   autocmd!
-  autocmd FileType markdown setlocal textwidth=80
   
   " Preview markdown in browser
   if has('mac')

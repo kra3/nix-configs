@@ -57,21 +57,24 @@
   mode: single
 
 - id: modes_vacation_end_on_disarm
-  alias: "Modes: end vacation mode when the alarm is disarmed"
-  description: Disarming means someone is back, so vacation mode ends.
+  alias: "Modes: vacation mode follows armed vacation and disarm"
+  description: >-
+    Arming vacation turns vacation mode on; disarming means someone is
+    back, so it ends.
   triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to: armed_vacation
+    trigger: state
+    id: vacation
   - entity_id: alarm_control_panel.vasudha_secure
     to: disarmed
     not_from:
     - unavailable
     - unknown
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: input_boolean.vacation_mode
-    state: "on"
+    id: disarmed
   actions:
-  - action: input_boolean.turn_off
+  - action: "input_boolean.turn_{{ 'on' if trigger.id == 'vacation' else 'off' }}"
     target:
       entity_id: input_boolean.vacation_mode
   mode: single

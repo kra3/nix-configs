@@ -5,6 +5,7 @@ input_select:
     options:
       - none
       - armed_away
+      - armed_vacation
       - armed_night
 
 # All restart-safe, so a restart mid-wait doesn't drop the hand-back or the escalation.

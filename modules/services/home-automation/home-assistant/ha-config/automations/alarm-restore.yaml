@@ -9,6 +9,7 @@
     entity_id: alarm_control_panel.vasudha_secure
     to:
     - armed_away
+    - armed_vacation
     - armed_night
     - disarmed
   conditions:
@@ -51,7 +52,7 @@
       entity_id: input_select.alarm_restore_mode
       state: none
   - variables:
-      mode: "{{ 'away' if is_state('input_select.alarm_restore_mode', 'armed_away') else 'night' }}"
+      mode: "{{ {'armed_away': 'away', 'armed_vacation': 'vacation'}.get(states('input_select.alarm_restore_mode'), 'night') }}"
   - action: alarmo.arm
     data:
       entity_id: alarm_control_panel.vasudha_secure

@@ -9,6 +9,8 @@
     let
       cfg = config.programs.neovim-langs;
       codelldb = pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter;
+      javaDebug = "${pkgs.vscode-extensions.vscjava.vscode-java-debug}/share/vscode/extensions/vscjava.vscode-java-debug/server";
+      javaTest = "${pkgs.vscode-extensions.vscjava.vscode-java-test}/share/vscode/extensions/vscjava.vscode-java-test/server";
 
       # Per language: Nix packages, LazyVim extras to import, and debug tools check-tools should expect.
       languages = {
@@ -33,6 +35,7 @@
           default = true;
           packages = [
             pkgs.basedpyright
+            pkgs.python3Packages.debugpy
             pkgs.ruff
           ];
           extras = [ "lang.python" ];
@@ -66,6 +69,10 @@
             pkgs.temurin-bin-21
           ];
           extras = [ "lang.java" ];
+          bundles = [
+            "${javaDebug}/com.microsoft.java.debug.plugin-*.jar"
+            "${javaTest}/*.jar"
+          ];
         };
         rust = {
           default = false;
@@ -82,8 +89,10 @@
             pkgs.delve
             pkgs.gofumpt
             pkgs.golangci-lint
+            pkgs.gomodifytags
             pkgs.gopls
             pkgs.gotools
+            pkgs.impl
           ];
           extras = [ "lang.go" ];
           tools = [ "dlv" ];
@@ -141,15 +150,19 @@
                 // lib.mapAttrs (_: _: false) (lib.removeAttrs languages (lib.attrNames enabled));
               extras = lib.unique (perLang "extras");
               tools = lib.unique (perLang "tools");
+              bundles = perLang "bundles";
             }
           }
         '';
 
-        # lazy-lock.json must stay writable, so it lives in the state dir; seed it from the repo once.
+        # lazy-lock.json must stay writable, so it lives in the state dir; seed it, then add repo pins it lacks.
         home.activation.nvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           lock="${config.xdg.stateHome}/nvim/lazy-lock.json"
           if [ ! -e "$lock" ]; then
             run install -Dm644 ${./nvim/lazy-lock.json} "$lock"
+          else
+            merged="$(${lib.getExe pkgs.jq} -s '.[0] * .[1]' ${./nvim/lazy-lock.json} "$lock")" && \
+              run sh -c 'printf "%s\n" "$1" > "$2"' _ "$merged" "$lock"
           fi
         '';
       };

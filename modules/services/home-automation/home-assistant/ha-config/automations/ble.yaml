@@ -1,14 +1,41 @@
-# ── BLE integration reload stopgap ──────────────────────────────
-- id: ble_integrations_periodic_reload
-  alias: "BLE integrations: periodic reload (range/stability stopgap)"
+# ── Plejd watchdog ───────────────────────────────────────────────
+- id: ble_plejd_watchdog
+  alias: "BLE: reload Plejd if the hall light stays unavailable"
   description: >-
-    Reloads the PlejD BLE integration every 30min — marginal range, it
-    doesn't reconnect cleanly on its own.
+    Plejd reconnects by itself within seconds to ~3 min. If the hall
+    light is still unavailable after 5 min, reloads the integration up
+    to 3 times, 15 min apart, then notifies. Also checks after startup,
+    since the state trigger does not fire retroactively.
   triggers:
-  - trigger: time_pattern
-    minutes: "/30"
+  - entity_id: light.hallway_hall_lights
+    to:
+    - unavailable
+    - unknown
+    for: "00:05:00"
+    trigger: state
+  - trigger: homeassistant
+    event: start
   actions:
-  - action: homeassistant.reload_config_entry
-    target:
-      entity_id: light.hallway_hall_lights
+  - if: "{{ trigger.platform == 'homeassistant' }}"
+    then:
+    - wait_template: "{{ has_value('light.hallway_hall_lights') }}"
+      timeout: "00:05:00"
+  - condition: template
+    value_template: "{{ not has_value('light.hallway_hall_lights') }}"
+  - repeat:
+      sequence:
+      - action: homeassistant.reload_config_entry
+        target:
+          entity_id: light.hallway_hall_lights
+        continue_on_error: true
+      - wait_template: "{{ has_value('light.hallway_hall_lights') }}"
+        timeout: "00:15:00"
+      until:
+      - "{{ has_value('light.hallway_hall_lights') or repeat.index >= 3 }}"
+  - if: "{{ not has_value('light.hallway_hall_lights') }}"
+    then:
+    - action: script.notify_all_phones
+      data:
+        title: Hall lights offline
+        message: Plejd is still unreachable after 3 reloads; the hall lights can't be controlled.
   mode: single

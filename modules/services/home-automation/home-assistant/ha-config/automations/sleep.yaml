@@ -5,16 +5,28 @@
     Turn off TV when sleep schedule starts, but only if it hasn't been
     playing anything for the last 15 minutes (a momentary non-playing
     state, e.g. between episodes, shouldn't trigger a shutdown).
+    Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
+    id: sleep_start
+  - trigger: event
+    event_type: modes_ended
+    id: resumed
   conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
   - condition: template
     value_template: >-
-      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
-         and now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
-             >= timedelta(minutes=15) }}
+      {{ states('media_player.lg_webos_tv_oled77c35la') not in ['playing', 'off']
+         and (trigger.id == 'resumed'
+              or now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
+                 >= timedelta(minutes=15)) }}
   actions:
   - action: media_player.turn_off
     target:
@@ -23,12 +35,27 @@
 
 - id: sleep_alarmo_arm_home
   alias: Sleep — Arm Alarmo (night)
-  description: Arms night at bedtime if disarmed; on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min.
+  description: Arms night at bedtime if disarmed, or 10 min after a resident arrives home during the sleep schedule (sleep_night_rearm_after_arrival, or the entry auto-disarm); on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min. Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
+  - trigger: event
+    event_type: modes_ended
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_night_rearm
   conditions:
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
     state: disarmed
@@ -66,21 +93,47 @@
       target:
         entity_id: timer.alarm_arm_escalation
   mode: single
+  max_exceeded: silent
+
+- id: sleep_night_rearm_after_arrival
+  alias: Sleep — Start the night re-arm timer when a resident arrives
+  description: >-
+    During the sleep schedule each arrival (re)starts timer.alarm_night_rearm;
+    sleep_alarmo_arm_home re-arms night when it finishes if still disarmed.
+  triggers:
+  - entity_id:
+    - person.arun_karunagath
+    - person.anjalipc
+    not_from:
+    - unknown
+    - unavailable
+    to: home
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  actions:
+  - action: timer.start
+    target:
+      entity_id: timer.alarm_night_rearm
+  mode: single
 
 # ── Wake-up ────────────────────────────────────────────────────
 - id: sleep_alarmo_disarm_morning
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
-    Disarms Alarmo when the sleep schedule ends (or on HA startup if it
-    ended while still armed_night), only if someone's home.
+    Disarms armed_night when the sleep schedule ends (or on startup or
+    when party or manual mode ends, if it ended meanwhile), only if someone's
+    home.
   triggers:
-  - id: schedule_off
-    entity_id: schedule.sleep
+  - entity_id: schedule.sleep
     to: "off"
     trigger: state
-  - id: startup
-    trigger: homeassistant
+  - trigger: homeassistant
     event: start
+  - trigger: event
+    event_type: modes_ended
   conditions:
   - condition: or
     conditions:
@@ -90,20 +143,12 @@
     - condition: state
       entity_id: person.anjalipc
       state: home
-  - condition: or
-    conditions:
-    - condition: trigger
-      id: schedule_off
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: startup
-      - condition: state
-        entity_id: schedule.sleep
-        state: "off"
-      - condition: state
-        entity_id: alarm_control_panel.vasudha_secure
-        state: armed_night
+  - condition: state
+    entity_id: schedule.sleep
+    state: "off"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: armed_night
   actions:
   - action: alarm_control_panel.alarm_disarm
     target:
@@ -111,6 +156,7 @@
     data:
       code: !secret alarm_code
   mode: single
+  max_exceeded: silent
 
 - id: wakeup_lighting
   alias: Wake-up — Gradual lighting

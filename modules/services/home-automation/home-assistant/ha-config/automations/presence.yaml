@@ -54,8 +54,10 @@
   alias: Everyone left home
   description: >-
     When the last tracked person leaves, waits out a 5min confirm timer
-    (timer.everyone_left_home_confirm, restart-safe) then turns off all
-    lights and arms Alarmo away, notifying either way.
+    (timer.everyone_left_home_confirm, restart-safe) then ends party and
+    manual mode, turns off all lights and arms Alarmo away, notifying
+    either way. When armed vacation it only ends the modes and notifies:
+    arming already turned the lights off and the simulation owns them.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home
@@ -89,9 +91,9 @@
             title: Home
             critical: true
             message: >-
-              Everyone left — won't auto-arm, still open:
+              Everyone left — {{ 'alarm stays armed vacation' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else "won't auto-arm" }}, still open:
               {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
-              Force-arm from the dashboard if needed.
+              {{ '' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else 'Force-arm from the dashboard if needed.' }}
         - action: timer.start
           target:
             entity_id: timer.alarm_arm_escalation
@@ -99,15 +101,34 @@
       - condition: trigger
         id: timer_finished
       sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id:
+          - input_boolean.party_mode
+          - input_boolean.automations_paused
+      - if:
+        - condition: state
+          entity_id: alarm_control_panel.vasudha_secure
+          state: armed_vacation
+        then:
+        - action: script.notify_all_phones
+          data:
+            title: Home
+            message: Everyone left — the alarm stays armed vacation
+        - stop: Armed vacation
       - action: light.turn_off
         target:
           entity_id: all
-      - action: alarm_control_panel.alarm_arm_away
-        target:
-          entity_id: alarm_control_panel.vasudha_secure
+      - action: alarmo.arm
         data:
+          entity_id: alarm_control_panel.vasudha_secure
+          mode: away
+          skip_delay: true
           code: !secret alarm_code
-      - delay: "00:00:05"
+        continue_on_error: true
+      - delay: "00:00:02"
+      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'arming') }}"
+        timeout: "00:01:30"
       - choose:
         - conditions:
           - condition: state

@@ -35,8 +35,6 @@ views:
       states:
         armed_home:
           hide: true
-        armed_vacation:
-          hide: true
         armed_custom_bypass:
           hide: true
       grid_options:
@@ -45,10 +43,6 @@ views:
       entity: input_boolean.party_mode
       name: Party mode
       icon: mdi:party-popper
-    - type: tile
-      entity: input_boolean.vacation_mode
-      name: Vacation mode
-      icon: mdi:beach
     - type: tile
       entity: input_boolean.automations_paused
       name: Manual mode
@@ -1666,13 +1660,13 @@ views:
       - name: Party
         icon: mdi:party-popper
         entity: input_boolean.party_mode
-        hint: Room lights stop switching themselves, so they stay as you set them.
+        hint: Room lights stay as you set them and bedtime waits until the party ends. Ends at wake-up or when everyone leaves.
       - name: Paused
         icon: mdi:pause-circle
         entity: input_boolean.automations_paused
         tone: warning
         confirm: Pause the lighting, TV, door and bedtime automations (this includes arming the alarm at night)?
-        hint: Lighting, TV, door and bedtime automations are off, including arming the alarm at night.
+        hint: Lighting, Adaptive Lighting, TV, door and bedtime automations are off, including arming the alarm at night. Ends at wake-up or when everyone leaves.
   - type: grid
     column_span: 1
     cards:

@@ -34,4 +34,4 @@ template:
       - name: "Anyone Home"
         unique_id: anyone_home
         device_class: presence
-        state: "{{ is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home') or is_state('input_boolean.vacation_mode', 'on') }}"
+        state: "{{ is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home') }}"

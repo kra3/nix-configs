@@ -32,9 +32,9 @@ resources:
     type: module
   - url: /local/room-tile-card.js?v=16
     type: module
-  - url: /local/security-status-card.js?v=8
+  - url: /local/security-status-card.js?v=9
     type: module
-  - url: /local/security-plan-card.js?v=15
+  - url: /local/security-plan-card.js?v=16
     type: module
   - url: /local/community/mini-media-player/mini-media-player-bundle.js?v=@mini-media-player@
     type: module

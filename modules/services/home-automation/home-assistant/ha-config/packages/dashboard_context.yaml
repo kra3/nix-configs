@@ -60,7 +60,7 @@ template:
         device_class: safety
         state: >-
           {{ is_state('alarm_control_panel.vasudha_secure', 'triggered')
-             or (is_state('alarm_control_panel.vasudha_secure', 'armed_away')
+             or (is_state('alarm_control_panel.vasudha_secure', ['armed_away', 'armed_vacation'])
                  and is_state('binary_sensor.house_exits_open_status', 'on'))
              or (is_state('alarm_control_panel.vasudha_secure', 'disarmed')
                  and is_state('schedule.sleep', 'on'))

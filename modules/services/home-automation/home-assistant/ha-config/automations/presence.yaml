@@ -113,7 +113,9 @@
           entity_id: alarm_control_panel.vasudha_secure
         data:
           code: !secret alarm_code
-      - delay: "00:00:05"
+      - delay: "00:00:02"
+      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'arming') }}"
+        timeout: "00:01:30"
       - choose:
         - conditions:
           - condition: state

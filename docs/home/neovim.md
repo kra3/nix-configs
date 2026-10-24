@@ -51,7 +51,11 @@ Lists the LSP servers, formatters and linters the enabled extras expect and flag
 
 ## Nix Language Server
 
-`nixd` replaces LazyVim's default `nil`. In a flake it is pointed at the flake's nixpkgs and, for the NixOS and Home Manager options, at `nixosConfigurations.<hostname>` (falling back to the first one) so option names complete. That evaluates the flake on first use, so completions can lag the first time.
+`nixd` replaces LazyVim's default `nil`. In a flake it is pointed at the flake's nixpkgs and, for the NixOS and Home Manager options, at `nixosConfigurations.<hostname>` (or `darwinConfigurations.<hostname>`; falling back to the first NixOS one) so option names complete. That evaluates the flake on first use, so completions can lag the first time.
+
+## Toolchains From The Project
+
+`gopls` needs `go` and `rust-analyzer` needs `cargo` on PATH; they come from the project dev shell, not from this module. Java and Scala debug bundles (java-debug-adapter, java-test) are Mason-only, so Java debugging is unavailable. Offline, blink.cmp falls back to its Lua matcher until its binary downloads. On macOS, treesitter parser compilation needs the Xcode command line tools.
 
 ## Related
 

@@ -1216,17 +1216,9 @@ augroup END
 augroup scala_settings
   autocmd!
 
-  " Gradle/Build commands (Space + m prefix to avoid conflicts)
-  autocmd FileType scala nnoremap <buffer> <Leader>mc :!gw compileScala<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mt :!gw test<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mf :!gw scalafmtAll<CR>
-  autocmd FileType scala nnoremap <buffer> <Leader>mx :!gw scalaFixAll<CR>
-
   " SBT support (fallback - Space + s prefix)
   if executable('sbt')
-    autocmd FileType scala nnoremap <buffer> <Leader>sb :update<CR>:!sbt run<CR>
     autocmd FileType scala nnoremap <buffer> <Leader>st :update<CR>:!sbt test<CR>
-    autocmd FileType scala nnoremap <buffer> <Leader>sc :update<CR>:!sbt compile<CR>
   endif
 
   " Run with scala (basic - for script files)
@@ -1299,11 +1291,6 @@ augroup sh_settings
   
   " Make shell scripts executable automatically
   autocmd BufWritePost *.sh silent !chmod +x "%"
-  
-  " Shell syntax checking
-  if executable('shellcheck')
-    autocmd FileType sh nnoremap <buffer> <Leader>sc :!shellcheck %<CR>
-  endif
   
   autocmd FileType sh call SetupDevEnvironment()
 augroup END

@@ -13,10 +13,9 @@ return {
             end
             local flake = ('(builtins.getFlake "%s")'):format(root)
             local host = vim.uv.os_gethostname()
-            local config = ('(let c = %s.nixosConfigurations; in c.${"%s"} or (builtins.head (builtins.attrValues c)))'):format(
-              flake,
-              host
-            )
+            local config = (
+              '(let f = %s; c = (f.nixosConfigurations or {}) // (f.darwinConfigurations or {}); in c.${"%s"} or (builtins.head (builtins.attrValues f.nixosConfigurations)))'
+            ):format(flake, host)
             client.settings = vim.tbl_deep_extend("force", client.settings or {}, {
               nixd = {
                 nixpkgs = { expr = ("import %s.inputs.nixpkgs { }"):format(flake) },

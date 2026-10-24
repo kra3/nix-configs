@@ -32,7 +32,7 @@ Comments use Vim's built-in `comment` package (`packadd! comment`, Vim 9.1.0375+
 
 ### Removed
 
-vim-lsp, vim-lsp-settings, asyncomplete (+ lsp source), vim-vsnip (+ integ), friendly-snippets, ALE, vim-scala, python-syntax, vim-javascript, yats.vim, emmet-vim, vim-ai, and vim-commentary (replaced by the built-in package). basedpyright and ruff were dropped from the Vim home packages; Neovim has its own copies.
+vim-lsp, vim-lsp-settings, asyncomplete (+ lsp source), vim-vsnip (+ integ), friendly-snippets, ALE, vim-scala, python-syntax, vim-javascript, yats.vim, emmet-vim, vim-ai, and vim-commentary (replaced by the built-in package). basedpyright was dropped from the Vim home packages; ruff stays for the python format map.
 
 ## Key Bindings
 

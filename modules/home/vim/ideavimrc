@@ -147,7 +147,6 @@ nmap <Leader><Space> <Action>(GotoFile)
 
 " Code Navigation
 nmap gd <Action>(GotoDeclaration)
-nmap gD <Action>(GotoDeclaration)
 nmap gy <Action>(GotoTypeDeclaration)
 nmap gi <Action>(GotoImplementation)
 nmap gr <Action>(FindUsages)
@@ -254,7 +253,6 @@ nmap <Leader>w- <Action>(SplitHorizontally)
 nmap <Leader>w\| <Action>(SplitVertically)
 nmap <Leader>ww <C-w>p
 nmap <Leader>wd <Action>(Unsplit)
-nmap <Leader>wu <Action>(Unsplit)
 nmap <Leader>wm <Action>(MoveEditorToOppositeTabGroup)
 nmap <Leader>wh <Action>(HideAllWindows)
 
@@ -282,7 +280,6 @@ nmap <Leader><Tab>p <Action>(PinActiveEditorTab)
 nmap <Leader>gg <Action>(Vcs.QuickListPopupAction)
 nmap <Leader>gb <Action>(Annotate)
 nmap <Leader>gB <Action>(Git.Branches)
-nmap <Leader>gc <Action>(Vcs.Show.Log)
 nmap <Leader>gd <Action>(Compare.SameVersion)
 nmap <Leader>gf <Action>(Vcs.ShowTabbedFileHistory)
 nmap <Leader>gl <Action>(Vcs.Show.Log)
@@ -321,7 +318,6 @@ nmap <Leader>6 <Action>(ActivateProblemsViewToolWindow)
 nmap <Leader>7 <Action>(ActivateStructureToolWindow)
 nmap <Leader>8 <Action>(ActivateServicesToolWindow)
 nmap <Leader>9 <Action>(ActivateVersionControlToolWindow)
-nmap <Leader>0 <Action>(ActivateTerminalToolWindow)
 
 " Project view
 nmap <Leader>e <Action>(ActivateProjectToolWindow)

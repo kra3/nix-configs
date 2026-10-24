@@ -77,7 +77,7 @@ LSP maps (`gd` `gD` `gr` `gi` `gt` `K` hover, `<leader>rn` `ca` `cl` `ds` `ws` `
 - Removed: vim-lsp, vim-lsp-settings, asyncomplete, asyncomplete-lsp, vim-vsnip, vim-vsnip-integ, friendly-snippets, ALE, vim-scala, python-syntax, vim-javascript, yats.vim, emmet-vim, vim-ai
 - Swapped: vim-commentary -> built-in `comment` package (`packadd! comment`)
 - Kept: fzf, fzf.vim, nerdtree (+ git plugin), vim-rooter, vim-sneak, fugitive, signify, rhubarb, surround, repeat, abolish, unimpaired, auto-pairs, peekaboo, undotree, indent-object, bufonly, bbye, tmux-navigator, airline (+ themes), catppuccin, sleuth, highlightedyank, which-key, vimwiki, eunuch, obsession
-- Nix: `basedpyright` and `ruff` dropped from `home-vim-default` packages
+- Nix: `basedpyright` dropped from `home-vim-default` packages; `ruff` stays for the `<leader>cf` python map
 
 ## Neovim
 
@@ -90,10 +90,9 @@ Neovim is LazyVim, so only local additions and local deviations are listed. Old 
 | (none) | `<leader>gv{s,c,p,d,w,r}` | Fugitive status / commit / push / diff / write / remove | vim-fugitive, lazy-loaded |
 | (none) | `<leader>U` | Undotree | |
 | (none) | `<leader>W*` | Vimwiki maps | `vimwiki_map_prefix`, so `<leader>w` stays windows |
-| (none) | `<C-h/j/k/l>` | Tmux / window navigation | vim-tmux-navigator (replaces LazyVim's window nav) |
 | (none) | `<leader>a{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
 
-Plugins added: vim-sleuth, vim-abolish, vim-eunuch, nvim-surround, undotree, vimwiki, vim-fugitive, vim-rhubarb, vim-tmux-navigator, codecompanion.nvim. Settings: `colorcolumn=120`; python `88`; markdown `textwidth=80`.
+Plugins added: vim-sleuth, vim-abolish, vim-eunuch, undotree, vimwiki, vim-fugitive, vim-rhubarb, codecompanion.nvim. LazyVim keys are not overridden (`<C-h/j/k/l>` stay plain window moves; tmux pane crossing is Vim-only). Settings: `colorcolumn=120`; python `88`; markdown `textwidth=80`.
 
 ## IdeaVim
 

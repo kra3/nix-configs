@@ -3,11 +3,6 @@ return {
   { "tpope/vim-abolish" },
   { "tpope/vim-eunuch" },
   {
-    "kylechui/nvim-surround",
-    event = "VeryLazy",
-    opts = {},
-  },
-  {
     "mbbill/undotree",
     cmd = "UndotreeToggle",
     keys = { { "<leader>U", "<cmd>UndotreeToggle<cr>", desc = "Undotree" } },

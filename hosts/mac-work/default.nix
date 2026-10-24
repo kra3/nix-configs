@@ -40,6 +40,15 @@
     home.username = "akarunagath";
     home.homeDirectory = lib.mkForce "/Users/akarunagath";
 
+    programs.neovim-langs = {
+      typescript.enable = true;
+      scala.enable = true;
+      java.enable = true;
+      rust.enable = true;
+      go.enable = true;
+      cpp.enable = true;
+    };
+
     catppuccin.enable = true;
     catppuccin.flavor = "mocha";
     catppuccin.accent = "blue";

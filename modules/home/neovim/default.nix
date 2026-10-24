@@ -6,56 +6,152 @@
       pkgs,
       ...
     }:
-    {
-      programs.neovim = {
-        enable = true;
-        withNodeJs = false;
-        withPython3 = false;
-        withRuby = false;
-        # Binaries land on nvim's wrapper PATH only; mason is disabled in the Lua config.
-        extraPackages = [
-          pkgs.basedpyright
-          pkgs.biome
-          pkgs.bloop
-          pkgs.clang-tools
-          pkgs.delve
-          pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter
-          pkgs.gofumpt
-          pkgs.golangci-lint
-          pkgs.gopls
-          pkgs.gotools
-          pkgs.jdt-language-server
-          pkgs.lua-language-server
-          pkgs.metals
-          pkgs.nixd
-          pkgs.nixfmt
-          pkgs.ruff
-          pkgs.rust-analyzer
-          pkgs.shfmt
-          pkgs.statix
-          pkgs.stylua
-          pkgs.temurin-bin-21
-          pkgs.tree-sitter
-          (pkgs.writeShellScriptBin "js-debug-adapter" "exec ${lib.getExe pkgs.vscode-js-debug} \"$@\"")
-          pkgs.vtsls
-        ]
-        ++ lib.optional pkgs.stdenv.isLinux pkgs.gcc;
-      };
+    let
+      cfg = config.programs.neovim-langs;
+      codelldb = pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter;
 
-      xdg.configFile."nvim" = {
-        source = lib.cleanSourceWith {
-          src = ./nvim;
-          filter = path: _: baseNameOf path != "lazy-lock.json";
+      # Per language: Nix packages, LazyVim extras to import, and debug tools check-tools should expect.
+      languages = {
+        nix = {
+          default = true;
+          packages = [
+            pkgs.nixd
+            pkgs.nixfmt
+            pkgs.statix
+          ];
+          extras = [ "lang.nix" ];
         };
-        recursive = true;
+        lua = {
+          default = true;
+          packages = [
+            pkgs.lua-language-server
+            pkgs.stylua
+          ];
+          extras = [ ];
+        };
+        python = {
+          default = true;
+          packages = [
+            pkgs.basedpyright
+            pkgs.ruff
+          ];
+          extras = [ "lang.python" ];
+        };
+        typescript = {
+          default = false;
+          packages = [
+            pkgs.biome
+            pkgs.vtsls
+            (pkgs.writeShellScriptBin "js-debug-adapter" "exec ${lib.getExe pkgs.vscode-js-debug} \"$@\"")
+          ];
+          extras = [
+            "lang.typescript"
+            "lang.typescript.biome"
+          ];
+          tools = [ "js-debug-adapter" ];
+        };
+        scala = {
+          default = false;
+          packages = [
+            pkgs.bloop
+            pkgs.metals
+            pkgs.temurin-bin-21
+          ];
+          extras = [ "lang.scala" ];
+        };
+        java = {
+          default = false;
+          packages = [
+            pkgs.jdt-language-server
+            pkgs.temurin-bin-21
+          ];
+          extras = [ "lang.java" ];
+        };
+        rust = {
+          default = false;
+          packages = [
+            pkgs.rust-analyzer
+            codelldb
+          ];
+          extras = [ "lang.rust" ];
+          tools = [ "codelldb" ];
+        };
+        go = {
+          default = false;
+          packages = [
+            pkgs.delve
+            pkgs.gofumpt
+            pkgs.golangci-lint
+            pkgs.gopls
+            pkgs.gotools
+          ];
+          extras = [ "lang.go" ];
+          tools = [ "dlv" ];
+        };
+        cpp = {
+          default = false;
+          packages = [
+            pkgs.clang-tools
+            codelldb
+          ];
+          extras = [ "lang.clangd" ];
+          tools = [ "codelldb" ];
+        };
       };
 
-      # lazy-lock.json must stay writable, so it lives in the state dir; seed it from the repo once.
-      home.activation.nvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        lock="${config.xdg.stateHome}/nvim/lazy-lock.json"
-        if [ ! -e "$lock" ]; then
-          run install -Dm644 ${./nvim/lazy-lock.json} "$lock"
-        fi
-      '';
+      enabled = lib.filterAttrs (name: _: cfg.${name}.enable) languages;
+      perLang = field: lib.concatMap (l: l.${field} or [ ]) (lib.attrValues enabled);
+    in
+    {
+      options.programs.neovim-langs = lib.mapAttrs (name: l: {
+        enable = lib.mkEnableOption "${name} support in Neovim" // {
+          default = l.default;
+        };
+      }) languages;
+
+      config = {
+        programs.neovim = {
+          enable = true;
+          withNodeJs = false;
+          withPython3 = false;
+          withRuby = false;
+          # Binaries land on nvim's wrapper PATH only; mason is disabled in the Lua config.
+          extraPackages = [
+            pkgs.shfmt
+            pkgs.tree-sitter
+          ]
+          ++ lib.optional pkgs.stdenv.isLinux pkgs.gcc
+          ++ lib.unique (perLang "packages");
+        };
+
+        xdg.configFile."nvim" = {
+          source = lib.cleanSourceWith {
+            src = ./nvim;
+            filter = path: _: baseNameOf path != "lazy-lock.json";
+          };
+          recursive = true;
+        };
+
+        # Read by lua/config/lazy.lua, plugins/* and check-tools.lua.
+        xdg.configFile."nvim/lua/config/nix-langs.lua".text = ''
+          return ${
+            lib.generators.toLua { } {
+              langs =
+                lib.mapAttrs (_: _: true) enabled
+                // lib.mapAttrs (_: _: false) (lib.removeAttrs languages (lib.attrNames enabled));
+              extras = lib.unique (perLang "extras");
+              tools = lib.unique (perLang "tools");
+            }
+          }
+        '';
+
+        # lazy-lock.json must stay writable, so it lives in the state dir; seed it from the repo once.
+        home.activation.nvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          lock="${config.xdg.stateHome}/nvim/lazy-lock.json"
+          if [ ! -e "$lock" ]; then
+            run install -Dm644 ${./nvim/lazy-lock.json} "$lock"
+          fi
+        '';
+      };
     };
 }

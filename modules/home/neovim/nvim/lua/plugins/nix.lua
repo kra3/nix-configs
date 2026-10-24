@@ -1,3 +1,9 @@
+local langs = require("config.nix-langs").langs
+
+if not langs.nix then
+  return {}
+end
+
 return {
   {
     "neovim/nvim-lspconfig",
@@ -30,13 +36,5 @@ return {
         },
       },
     },
-  },
-  {
-    "stevearc/conform.nvim",
-    opts = { formatters_by_ft = { fish = {} } },
-  },
-  {
-    "mfussenegger/nvim-lint",
-    opts = { linters_by_ft = { fish = {} } },
   },
 }

@@ -56,8 +56,8 @@
     When the last tracked person leaves, waits out a 5min confirm timer
     (timer.everyone_left_home_confirm, restart-safe) then ends party and
     manual mode, turns off all lights and arms Alarmo away, notifying
-    either way. When armed vacation it only notifies; the vacation
-    simulation turns the lights off and takes over.
+    either way. When armed vacation it only ends the modes and notifies:
+    arming already turned the lights off and the simulation owns them.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home
@@ -85,18 +85,13 @@
         - condition: state
           entity_id: binary_sensor.house_exits_open_status
           state: "on"
-        - condition: not
-          conditions:
-          - condition: state
-            entity_id: alarm_control_panel.vasudha_secure
-            state: armed_vacation
         then:
         - action: script.notify_all_phones
           data:
             title: Home
             critical: true
             message: >-
-              Everyone left — won't auto-arm, still open:
+              Everyone left — {{ 'alarm stays armed vacation' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else "won't auto-arm" }}, still open:
               {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
               Force-arm from the dashboard if needed.
         - action: timer.start

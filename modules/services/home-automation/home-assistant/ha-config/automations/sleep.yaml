@@ -43,7 +43,9 @@
   - trigger: event
     event_type: modes_ended
   conditions:
-  - "{{ trigger.platform != 'event' or is_state('binary_sensor.anyone_home', 'on') }}"
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
   - condition: state
     entity_id: input_boolean.party_mode
     state: "off"

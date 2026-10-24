@@ -2,43 +2,22 @@
 - id: automations_paused_sync
   alias: "Manual mode: pause/resume automations"
   description: >-
-    Pauses/resumes the automations listed in managed_aliases (matched
-    by alias, not entity_id) via input_boolean.automations_paused.
-    Security, Frigate gating, and notification automations excluded.
+    Pauses/resumes every automation via input_boolean.automations_paused
+    except those whose config id matches keep_running: security, Frigate,
+    bookkeeping, notifications and this one. New automations are paused
+    by default.
   triggers:
   - entity_id: input_boolean.automations_paused
     trigger: state
   - trigger: homeassistant
     event: start
   variables:
-    managed_aliases:
-    - "Kitchen — Darkness detection"
-    - "Kitchen — Lighting"
-    - "Hall — Darkness detection"
-    - "Hall — Lighting"
-    - "Bedroom — Darkness detection"
-    - "Bedroom — Lighting"
-    - "Bedroom — Nap"
-    - "Living room — Darkness detection"
-    - "Living room — Lighting"
-    - "Living room — Media-aware lighting"
-    - "Living room — Lights off (bedtime, no presence)"
-    - "Dining room — Darkness detection"
-    - "Dining room — Lighting"
-    - "Front Door: Knock Lights"
-    - "Front Door: Entrance light on open (dark)"
-    - "TV — Power on + backlight + HT"
-    - "TV — Backlight off + HT"
-    - "Sleep — TV off if idle"
-    - "Sleep — Arm Alarmo (night)"
-    - "Sleep — Disarm Alarmo (morning)"
-    - "Wake-up — Gradual lighting"
-    - "Exterior — Front street light (dusk to sleep)"
-    - "Exterior — Front street light on door vibration (sleep)"
-    - "Adaptive Lighting: sync sleep mode with schedule.sleep"
+    keep_running: >-
+      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|neelu_|kunsu_|front_door_knock_(detect|announcements)$|automations_paused_sync$|everyone_left_home$|1733595301092$)
     targets: >-
       {{ states.automation
-         | selectattr('attributes.friendly_name', 'in', managed_aliases)
+         | selectattr('attributes.id', 'defined')
+         | rejectattr('attributes.id', 'match', keep_running)
          | map(attribute='entity_id') | list }}
   actions:
   - if:

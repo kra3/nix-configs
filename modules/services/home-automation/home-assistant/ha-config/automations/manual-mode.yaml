@@ -42,8 +42,8 @@
   mode: single
 
 - id: modes_end_in_morning
-  alias: "Modes: end manual mode when the sleep schedule ends"
-  description: A forgotten manual mode resumes automations at wake-up.
+  alias: "Modes: end manual and party mode when the sleep schedule ends"
+  description: A forgotten manual or party mode ends at wake-up.
   triggers:
   - entity_id: schedule.sleep
     to: "off"
@@ -51,5 +51,7 @@
   actions:
   - action: input_boolean.turn_off
     target:
-      entity_id: input_boolean.automations_paused
+      entity_id:
+      - input_boolean.automations_paused
+      - input_boolean.party_mode
   mode: single

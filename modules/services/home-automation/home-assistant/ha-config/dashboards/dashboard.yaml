@@ -1666,7 +1666,7 @@ views:
       - name: Party
         icon: mdi:party-popper
         entity: input_boolean.party_mode
-        hint: Room lights stop switching themselves, so they stay as you set them.
+        hint: Room lights stay as you set them and bedtime waits until the party ends. Ends at wake-up or when everyone leaves.
       - name: Paused
         icon: mdi:pause-circle
         entity: input_boolean.automations_paused

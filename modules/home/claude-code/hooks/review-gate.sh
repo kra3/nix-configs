@@ -2,7 +2,6 @@
 # git pre-push hook (hook.review-gate): blocks Claude Code's pushes until the new commits were reviewed (see CLAUDE.md "Skills at each step").
 [[ ${CLAUDECODE:-} == 1 && ${CLAUDE_SKIP_REVIEW_GATE:-0} != 1 ]] || exit 0
 remote=$1
-zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
 gitdir=$(git rev-parse --path-format=absolute --git-common-dir)
 mark() { echo "$gitdir/review-ok-$1"; }
 defaults='auth|security|secret|credential|crypt|permission|payment|billing|migrat|deploy|infra|firewall|sops|(^|/)\.env|\.github/workflows/|dockerfile|\.tf$|helm|k8s|kubernetes|(^|/)\.claude/review-gate\.paths$'
@@ -26,12 +25,11 @@ check() { # local_sha base -> exit 2 with a message when the range needs review
   done < <(git log --no-merges --format='%H%x00%B%x00' "$base..$head")
   files=$(git diff --name-only "$base" "$head")
   [[ -n $files ]] || return 0
+  shopt -s nocasematch
   lines=$(git diff --numstat "$base" "$head" | awk '{n += $1 + $2} END {print n + 0}')
   while IFS= read -r f; do
     hit=0
-    shopt -s nocasematch
     [[ $f =~ $defaults ]] && hit=1
-    shopt -u nocasematch
     for r in "${rules[@]}"; do
       if [[ $r == !* ]]; then
         # shellcheck disable=SC2053
@@ -59,10 +57,8 @@ check() { # local_sha base -> exit 2 with a message when the range needs review
 
 status=0
 while read -r _ lsha _ rsha; do
-  [[ $lsha == "$zero" ]] && continue
-  if [[ $rsha != "$zero" ]] && git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
-    base=$rsha
-  elif [[ $rsha != "$zero" ]] && git cat-file -e "$rsha^{commit}" 2>/dev/null; then
+  [[ $lsha =~ ^0+$ ]] && continue
+  if [[ ! $rsha =~ ^0+$ ]] && git cat-file -e "$rsha^{commit}" 2>/dev/null; then
     base=$(git merge-base "$rsha" "$lsha")
   elif [[ -n $tip ]]; then
     base=$(git merge-base "$tip" "$lsha")

@@ -67,7 +67,9 @@ frigate_sync_detect_to_alarm_state:
     - conditions:
       - condition: state
         entity_id: alarm_control_panel.vasudha_secure
-        state: armed_away
+        state:
+        - armed_away
+        - armed_vacation
       sequence:
       - action: switch.turn_on
         target:

@@ -137,7 +137,9 @@
   conditions:
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
-    state: armed_away
+    state:
+    - armed_away
+    - armed_vacation
   actions:
   - action: switch.turn_on
     target:

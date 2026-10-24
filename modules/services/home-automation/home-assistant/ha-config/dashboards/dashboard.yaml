@@ -1672,7 +1672,7 @@ views:
         entity: input_boolean.automations_paused
         tone: warning
         confirm: Pause the lighting, TV, door and bedtime automations (this includes arming the alarm at night)?
-        hint: Lighting, TV, door and bedtime automations are off, including arming the alarm at night.
+        hint: Lighting, Adaptive Lighting, TV, door and bedtime automations are off, including arming the alarm at night.
   - type: grid
     column_span: 1
     cards:

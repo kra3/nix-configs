@@ -8,7 +8,7 @@ automation:
     alias: "Vacation: simulate presence with the lights"
     description: >-
       While the alarm is armed vacation and the house is empty, switches
-      a random living, dining, kitchen or office light set every 10-40 min
+      a random living, dining, kitchen, office or hall light set every 10-40 min
       whenever it is gloomy outside and outside sleep hours. At bedtime only
       the bedroom light comes on for 10-25 min. Lights go off when it gets
       bright; nothing is touched once someone is home or it is disarmed.
@@ -43,12 +43,13 @@ automation:
         - light.kitchen_lights
         - light.office_room_light
         - light.bedroom_wardrobe_lights
+        - light.hallway_hall_lights
       scenes:
         - [light.living_room_lights]
-        - [light.living_room_lights]
+        - [light.living_room_lights, light.hallway_hall_lights]
         - [light.living_room_lights, light.dining_lights]
         - [light.kitchen_lights, light.dining_lights]
-        - [light.living_room_lights, light.kitchen_lights]
+        - [light.living_room_lights, light.kitchen_lights, light.hallway_hall_lights]
         - [light.kitchen_lights]
         - [light.office_room_light]
       active: >-

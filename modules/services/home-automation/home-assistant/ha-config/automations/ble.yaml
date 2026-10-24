@@ -8,7 +8,9 @@
     since the state trigger does not fire retroactively.
   triggers:
   - entity_id: light.hallway_hall_lights
-    to: unavailable
+    to:
+    - unavailable
+    - unknown
     for: "00:05:00"
     trigger: state
   - trigger: homeassistant
@@ -16,21 +18,21 @@
   actions:
   - if: "{{ trigger.platform == 'homeassistant' }}"
     then:
-    - wait_template: "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] }}"
+    - wait_template: "{{ has_value('light.hallway_hall_lights') }}"
       timeout: "00:05:00"
   - condition: template
-    value_template: "{{ states('light.hallway_hall_lights') in ['unavailable', 'unknown'] }}"
+    value_template: "{{ not has_value('light.hallway_hall_lights') }}"
   - repeat:
       sequence:
       - action: homeassistant.reload_config_entry
         target:
           entity_id: light.hallway_hall_lights
         continue_on_error: true
-      - wait_template: "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] }}"
+      - wait_template: "{{ has_value('light.hallway_hall_lights') }}"
         timeout: "00:15:00"
       until:
-      - "{{ states('light.hallway_hall_lights') not in ['unavailable', 'unknown'] or repeat.index >= 3 }}"
-  - if: "{{ states('light.hallway_hall_lights') in ['unavailable', 'unknown'] }}"
+      - "{{ has_value('light.hallway_hall_lights') or repeat.index >= 3 }}"
+  - if: "{{ not has_value('light.hallway_hall_lights') }}"
     then:
     - action: script.notify_all_phones
       data:

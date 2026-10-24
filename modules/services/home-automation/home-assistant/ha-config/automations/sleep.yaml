@@ -12,7 +12,7 @@
     trigger: state
     id: sleep_start
   - trigger: event
-    event_type: automations_resumed
+    event_type: modes_ended
     id: resumed
   conditions:
   - condition: state
@@ -41,8 +41,11 @@
     to: "on"
     trigger: state
   - trigger: event
-    event_type: automations_resumed
+    event_type: modes_ended
   conditions:
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
   - condition: state
     entity_id: input_boolean.party_mode
     state: "off"
@@ -92,7 +95,7 @@
   alias: Sleep — Disarm Alarmo (morning)
   description: >-
     Disarms armed_night when the sleep schedule ends (or on startup or
-    resume after manual mode, if it ended meanwhile), only if someone's
+    when party or manual mode ends, if it ended meanwhile), only if someone's
     home.
   triggers:
   - entity_id: schedule.sleep
@@ -101,7 +104,7 @@
   - trigger: homeassistant
     event: start
   - trigger: event
-    event_type: automations_resumed
+    event_type: modes_ended
   conditions:
   - condition: or
     conditions:

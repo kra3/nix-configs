@@ -164,7 +164,7 @@
     to: "on"
   - id: resumed
     trigger: event
-    event_type: automations_resumed
+    event_type: modes_ended
   conditions:
   - condition: state
     entity_id: input_boolean.party_mode

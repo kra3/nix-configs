@@ -39,6 +39,9 @@
       target:
         entity_id: "{{ targets }}"
     - event: automations_resumed
+    - if: "{{ trigger.platform == 'state' }}"
+      then:
+      - event: modes_ended
   mode: queued
 
 - id: modes_end_in_morning
@@ -58,11 +61,12 @@
 
 - id: modes_party_end_hand_back
   alias: "Modes: hand back to automations when party mode ends"
-  description: Fires automations_resumed so skipped bedtime steps and room lighting catch up.
+  description: Fires automations_resumed (room lighting re-derives) and modes_ended (skipped bedtime steps catch up).
   triggers:
   - entity_id: input_boolean.party_mode
     to: "off"
     trigger: state
   actions:
   - event: automations_resumed
+  - event: modes_ended
   mode: single

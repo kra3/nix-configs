@@ -34,7 +34,7 @@ script:
         description: Lights to turn on; omit for a random set.
         example: "['light.bedroom_wardrobe_lights']"
       minutes:
-        description: Minutes until the next step; 0 cancels it.
+        description: Minutes until the next step; 0 turns the simulated lights off and cancels it.
         example: 15
     variables:
       sim_lights:
@@ -62,7 +62,7 @@ script:
               ['light.living_room_lights', 'light.dining_lights'],
               ['light.kitchen_lights', 'light.hallway_hall_lights'], []] }}
         {%- endif -%}
-      lights: "{{ pick if pick is defined else sets | random }}"
+      lights: "{{ [] if minutes is defined and minutes | int == 0 else pick if pick is defined else sets | random }}"
       mins: >-
         {{ minutes | int if minutes is defined
            else (range(10, 41) | random if lights | count > 0 else range(5, 16) | random) }}
@@ -131,6 +131,9 @@ automation:
         trigger: state
         id: rederive
       - entity_id: binary_sensor.vacation_simulation_active
+        not_from:
+          - unknown
+          - unavailable
         to:
           - "on"
           - "off"
@@ -172,7 +175,6 @@ automation:
                 else:
                   - action: script.vacation_sim_step
                     data:
-                      pick: []
                       minutes: 0
           - conditions: "{{ trigger.id == 'gloomy' and phase == 'idle' and evening }}"
             sequence:
@@ -195,7 +197,6 @@ automation:
                   option: idle
               - action: script.vacation_sim_step
                 data:
-                  pick: []
                   minutes: 0
           - conditions: "{{ trigger.id == 'bedtime' and phase == 'evening' }}"
             sequence:
@@ -233,6 +234,5 @@ automation:
                   option: idle
               - action: script.vacation_sim_step
                 data:
-                  pick: []
                   minutes: 0
     mode: queued

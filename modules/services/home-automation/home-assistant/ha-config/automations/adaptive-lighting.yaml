@@ -6,11 +6,11 @@
   - entity_id: schedule.sleep
     trigger: state
   - trigger: event
-    event_type: automations_resumed
+    event_type: modes_ended
   - trigger: homeassistant
     event: start
   conditions:
-  - "{{ is_state('schedule.sleep', 'off') or is_state('input_boolean.party_mode', 'off') }}"
+  - "{{ is_state('schedule.sleep', 'off') or (is_state('schedule.sleep', 'on') and is_state('input_boolean.party_mode', 'off')) }}"
   actions:
   - action: "switch.turn_{{ states('schedule.sleep') }}"
     target:

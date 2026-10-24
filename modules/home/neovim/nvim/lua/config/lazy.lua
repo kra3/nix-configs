@@ -12,13 +12,18 @@ vim.opt.rtp:prepend(lazypath)
 
 vim.g.lazyvim_python_lsp = "basedpyright"
 
+local spec = {
+  { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+  { import = "lazyvim.plugins.extras.dap.core" },
+  { import = "lazyvim.plugins.extras.test.core" },
+}
+for _, extra in ipairs(require("config.langs").extras) do
+  spec[#spec + 1] = { import = "lazyvim.plugins.extras." .. extra }
+end
+spec[#spec + 1] = { import = "plugins" }
+
 require("lazy").setup({
-  spec = {
-    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-    { import = "lazyvim.plugins.extras.lang.nix" },
-    { import = "lazyvim.plugins.extras.lang.python" },
-    { import = "plugins" },
-  },
+  spec = spec,
   defaults = { lazy = false, version = false },
   lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
   rocks = { enabled = false },

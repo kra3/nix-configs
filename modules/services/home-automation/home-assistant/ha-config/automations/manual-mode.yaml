@@ -35,7 +35,6 @@
     - "Wake-up — Gradual lighting"
     - "Exterior — Front street light (dusk to sleep)"
     - "Exterior — Front street light on door vibration (sleep)"
-    - "Everyone left home"
     - "Adaptive Lighting: sync sleep mode with schedule.sleep"
     targets: >-
       {{ states.automation

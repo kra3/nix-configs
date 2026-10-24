@@ -1,14 +1,11 @@
-# High-impact globs for the review-gate hook, added to its defaults; !glob drops a default match.
+# High-impact globs for the review-gate hook (read from the default branch), added to its defaults; !glob drops a default match.
 */ha-config/automations/security.yaml
 */ha-config/automations/presence.yaml
 */ha-config/automations/sleep.yaml
 */ha-config/automations/alarm-restore.yaml
 */ha-config/packages/alarm_restore.yaml
 */ha-config/scripts.yaml
-secrets/*
-.sops.yaml
 modules/services/proxy/*
-*authelia*
 hosts/*
 *disko.nix
 flake.nix

@@ -3,15 +3,87 @@ timer:
     duration: "00:20:00"
     restore: true
 
+input_select:
+  vacation_sim_phase:
+    name: Vacation simulation phase
+    icon: mdi:home-clock-outline
+    options:
+      - idle
+      - dusk_wait
+      - evening
+      - bedtime_wait
+      - bedroom
+      - night
+
+script:
+  vacation_sim_step:
+    alias: "Vacation: switch to the next simulated light set"
+    description: >-
+      Picks a light set weighted by time of day (an empty set is a dark
+      gap), switches the other simulated lights off, logs the step and
+      schedules the next one.
+    variables:
+      sim_lights:
+        - light.living_room_lights
+        - light.dining_lights
+        - light.kitchen_lights
+        - light.office_room_light
+        - light.bedroom_wardrobe_lights
+        - light.hallway_hall_lights
+      sets: >-
+        {%- set h = now().hour -%}
+        {%- if h < 12 -%}
+          {{ [['light.kitchen_lights'], ['light.kitchen_lights', 'light.hallway_hall_lights'],
+              ['light.kitchen_lights', 'light.dining_lights'], ['light.office_room_light'], []] }}
+        {%- elif h < 17 -%}
+          {{ [['light.office_room_light'], ['light.office_room_light'], ['light.living_room_lights'],
+              ['light.kitchen_lights'], []] }}
+        {%- elif h < 20 -%}
+          {{ [['light.kitchen_lights', 'light.dining_lights'], ['light.kitchen_lights', 'light.dining_lights'],
+              ['light.living_room_lights', 'light.kitchen_lights', 'light.hallway_hall_lights'],
+              ['light.living_room_lights', 'light.dining_lights'], []] }}
+        {%- else -%}
+          {{ [['light.living_room_lights'], ['light.living_room_lights'],
+              ['light.living_room_lights', 'light.hallway_hall_lights'],
+              ['light.living_room_lights', 'light.dining_lights'],
+              ['light.kitchen_lights', 'light.hallway_hall_lights'], []] }}
+        {%- endif -%}
+      pick: "{{ sets | random }}"
+      minutes: "{{ range(10, 41) | random if pick | count > 0 else range(5, 16) | random }}"
+    sequence:
+      - action: light.turn_off
+        target:
+          entity_id: "{{ sim_lights | reject('in', pick) | list }}"
+        data:
+          transition: 2
+      - if: "{{ pick | count > 0 }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ pick }}"
+      - action: timer.start
+        target:
+          entity_id: timer.vacation_sim_step
+        data:
+          duration: "{{ minutes * 60 }}"
+      - action: logbook.log
+        data:
+          name: Vacation simulation
+          message: >-
+            {{ pick | map('state_attr', 'friendly_name') | join(', ') if pick else 'all dark' }}
+            for {{ minutes }} min
+
 automation:
   - id: vacation_presence_simulation
     alias: "Vacation: simulate presence with the lights"
     description: >-
-      While the alarm is armed vacation and the house is empty, switches
-      a random living, dining, kitchen, office or hall light set every 10-40 min
-      whenever it is gloomy outside and outside sleep hours. At bedtime only
-      the bedroom light comes on for 10-25 min. Lights go off when it gets
-      bright; nothing is touched once someone is home or it is disarmed.
+      While the alarm is armed vacation and the house is empty: 0-40 min
+      after it turns gloomy, lights a living, dining, kitchen, office or
+      hall set weighted by time of day, changing every 10-40 min with
+      occasional 5-15 min dark gaps. 0-40 min after bedtime only the
+      bedroom light comes on for 10-25 min, then the house stays dark
+      until wake-up. Lights go off when it gets bright; nothing is
+      touched once someone is home or it is disarmed. Steps are logged.
     triggers:
       - trigger: event
         event_type: timer.finished
@@ -19,8 +91,13 @@ automation:
           entity_id: timer.vacation_sim_step
         id: step
       - entity_id: binary_sensor.gloomy_outside
+        to: "on"
         trigger: state
-        id: light_change
+        id: gloomy
+      - entity_id: binary_sensor.gloomy_outside
+        to: "off"
+        trigger: state
+        id: bright
       - entity_id: schedule.sleep
         to: "on"
         trigger: state
@@ -28,11 +105,11 @@ automation:
       - entity_id: schedule.sleep
         to: "off"
         trigger: state
-        id: step
+        id: rederive
       - entity_id: alarm_control_panel.vasudha_secure
         for: "00:00:30"
         trigger: state
-        id: step
+        id: rederive
       - trigger: homeassistant
         event: start
         id: startup
@@ -44,19 +121,13 @@ automation:
         - light.office_room_light
         - light.bedroom_wardrobe_lights
         - light.hallway_hall_lights
-      scenes:
-        - [light.living_room_lights]
-        - [light.living_room_lights, light.hallway_hall_lights]
-        - [light.living_room_lights, light.dining_lights]
-        - [light.kitchen_lights, light.dining_lights]
-        - [light.living_room_lights, light.kitchen_lights, light.hallway_hall_lights]
-        - [light.kitchen_lights]
-        - [light.office_room_light]
       active: >-
         {{ is_state('alarm_control_panel.vasudha_secure', 'armed_vacation')
            and states('zone.home') | int(1) == 0 }}
-      evening: >-
-        {{ is_state('binary_sensor.gloomy_outside', 'on') and is_state('schedule.sleep', 'off') }}
+      gloomy: "{{ is_state('binary_sensor.gloomy_outside', 'on') }}"
+      sleeping: "{{ is_state('schedule.sleep', 'on') }}"
+      phase: "{{ states('input_select.vacation_sim_phase') }}"
+      jitter: "{{ (range(1, 41) | random) * 60 }}"
     actions:
       - choose:
           - conditions: "{{ not active }}"
@@ -64,41 +135,36 @@ automation:
               - action: timer.cancel
                 target:
                   entity_id: timer.vacation_sim_step
-          - conditions:
-              - condition: trigger
-                id: bedtime
-            sequence:
-              - action: light.turn_off
+              - action: input_select.select_option
                 target:
-                  entity_id: "{{ sim_lights | reject('eq', 'light.bedroom_wardrobe_lights') | list }}"
+                  entity_id: input_select.vacation_sim_phase
                 data:
-                  transition: 2
-              - action: light.turn_on
+                  option: idle
+          - conditions: "{{ trigger.id in ['rederive', 'startup'] }}"
+            sequence:
+              - condition: template
+                value_template: "{{ trigger.id != 'startup' or is_state('timer.vacation_sim_step', 'idle') }}"
+              - action: input_select.select_option
                 target:
-                  entity_id: light.bedroom_wardrobe_lights
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: "{{ 'night' if sleeping else 'evening' if gloomy else 'idle' }}"
+              - if: "{{ gloomy and not sleeping }}"
+                then:
+                  - action: script.vacation_sim_step
+          - conditions: "{{ trigger.id == 'gloomy' and phase == 'idle' and not sleeping }}"
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: dusk_wait
               - action: timer.start
                 target:
                   entity_id: timer.vacation_sim_step
                 data:
-                  duration: "{{ (range(10, 26) | random) * 60 }}"
-          - conditions: "{{ evening and (trigger.id != 'startup' or is_state('timer.vacation_sim_step', 'idle')) }}"
-            sequence:
-              - variables:
-                  pick: "{{ scenes | random }}"
-              - action: light.turn_off
-                target:
-                  entity_id: "{{ sim_lights | reject('in', pick) | list }}"
-                data:
-                  transition: 2
-              - action: light.turn_on
-                target:
-                  entity_id: "{{ pick }}"
-              - action: timer.start
-                target:
-                  entity_id: timer.vacation_sim_step
-                data:
-                  duration: "{{ (range(10, 41) | random) * 60 }}"
-          - conditions: "{{ not evening and trigger.id in ['step', 'light_change'] }}"
+                  duration: "{{ jitter }}"
+          - conditions: "{{ trigger.id == 'bright' and phase in ['dusk_wait', 'evening'] }}"
             sequence:
               - action: timer.cancel
                 target:
@@ -108,4 +174,75 @@ automation:
                   entity_id: "{{ sim_lights }}"
                 data:
                   transition: 2
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: idle
+          - conditions: "{{ trigger.id == 'bedtime' }}"
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: "{{ 'bedtime_wait' if phase == 'evening' else 'night' }}"
+              - if: "{{ phase == 'evening' }}"
+                then:
+                  - action: timer.start
+                    target:
+                      entity_id: timer.vacation_sim_step
+                    data:
+                      duration: "{{ jitter }}"
+                else:
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.vacation_sim_step
+          - conditions: "{{ trigger.id == 'step' and phase in ['dusk_wait', 'evening'] }}"
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: evening
+              - action: script.vacation_sim_step
+          - conditions: "{{ trigger.id == 'step' and phase == 'bedtime_wait' }}"
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ sim_lights | reject('eq', 'light.bedroom_wardrobe_lights') | list }}"
+                data:
+                  transition: 2
+              - action: light.turn_on
+                target:
+                  entity_id: light.bedroom_wardrobe_lights
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: bedroom
+              - action: timer.start
+                target:
+                  entity_id: timer.vacation_sim_step
+                data:
+                  duration: "{{ (range(10, 26) | random) * 60 }}"
+              - action: logbook.log
+                data:
+                  name: Vacation simulation
+                  message: Bedroom light only, before lights out
+          - conditions: "{{ trigger.id == 'step' and phase == 'bedroom' }}"
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ sim_lights }}"
+                data:
+                  transition: 2
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.vacation_sim_phase
+                data:
+                  option: night
+              - action: logbook.log
+                data:
+                  name: Vacation simulation
+                  message: Lights out until wake-up
     mode: queued

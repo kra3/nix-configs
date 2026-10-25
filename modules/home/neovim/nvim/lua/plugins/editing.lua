@@ -1,4 +1,5 @@
 return {
+  { "tpope/vim-abolish" },
   {
     "christoomey/vim-tmux-navigator",
     cmd = { "TmuxNavigateLeft", "TmuxNavigateDown", "TmuxNavigateUp", "TmuxNavigateRight" },

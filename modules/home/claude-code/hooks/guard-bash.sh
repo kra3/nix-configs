@@ -113,11 +113,11 @@ if [[ "$cmd" =~ (^|[[:space:];\&|])git[[:space:]]+push([[:space:]]|$) ]] && [ -n
   git -C "$cwd" rev-parse -q --verify '@{u}' >/dev/null 2>&1 || range='origin/main..HEAD'
   unsigned="$(git -C "$cwd" log --format='%h %G?' "$range" 2>/dev/null | awk '$2 != "G" && $2 != "U" {print $1}' | tr '\n' ' ')"
   if [ -n "$unsigned" ]; then
-    jq -n --arg reason "unsigned commits: $unsigned" '{
+    jq -n --arg reason "unsigned or unverifiable commits: $unsigned" '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: ("Blocked by guard-bash.sh: " + $reason + "— re-sign them with the user present before pushing.")
+        permissionDecisionReason: ("Blocked by guard-bash.sh: " + $reason + " — re-sign them (key must be available) before pushing.")
       }
     }'
   fi

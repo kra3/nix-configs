@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Never commit directly to `main`.** Always work in a git worktree + branch, open a PR, wait for green CI, then merge — see "Commits & PRs" below for why.
 - **Fixes belong in the declarative config, not on the live host.** Every change ships as a Nix (or repo config file) edit — never a manual command run against a host's live state. If a manual step genuinely seems necessary, stop and ask instead of doing it.
-- **Verify empirically before asserting.** Re-query Loki/Prometheus/systemd or the live host and cite the actual output. Never say something is "verified," "fixed," or "deployed" without pasting the evidence. A fix PR states the Loki/Prometheus/HA-history query that shows it worked (and one that would show a regression), and you run it after deploy.
+- **Verify empirically before asserting.** Re-query Loki/Prometheus/systemd or the live host and cite the actual output. Never say something is "verified," "fixed," or "deployed" without pasting the evidence. A fix PR states the Loki/Prometheus/HA-history query that shows it worked (and one that would show a regression), and you run it once the change is deployed (nightly upgrade) and report the result.
 
 ## Common Commands
 

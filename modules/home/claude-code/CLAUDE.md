@@ -12,7 +12,7 @@ Before asserting file or config state, re-read it and reference the verification
 ## Git & commits
 - Short, imperative commit messages scoped to one logical change.
 - Create new commits rather than amending; never force-push or skip hooks unless explicitly asked.
-- Commits are GPG-signed (`commit.gpgsign`). If GPG is unavailable (user away from the keyboard), commit unsigned, but re-sign before pushing; never push an unsigned commit.
+- Commits are GPG-signed (`commit.gpgsign`). If GPG is unavailable (user away from the keyboard), commit unsigned, but re-sign (amending unpushed commits is fine for this) before pushing; never push an unsigned commit.
 - Check `git status`/`diff` before staging broad changes, and check file contents (not just filenames) for secrets before committing.
 
 ## Working style

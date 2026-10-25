@@ -126,10 +126,15 @@
           withRuby = false;
           # Binaries land on nvim's wrapper PATH only; mason is disabled in the Lua config.
           extraPackages = [
+            pkgs.ghostscript
+            pkgs.imagemagick
             pkgs.shfmt
             pkgs.tree-sitter
           ]
-          ++ lib.optional pkgs.stdenv.isLinux pkgs.gcc
+          ++ lib.optionals pkgs.stdenv.isLinux [
+            pkgs.gcc
+            pkgs.trash-cli
+          ]
           ++ lib.unique (perLang "packages");
         };
 

@@ -17,6 +17,8 @@ local specs = {
   },
   { "mfussenegger/nvim-lint", opts = { linters_by_ft = { fish = {} } } },
   { "neovim/nvim-lspconfig", opts = { servers = { lua_ls = { enabled = langs.lua } } } },
+  { "folke/snacks.nvim", opts = { image = { enabled = true } } },
+  { "nvim-treesitter/nvim-treesitter", opts = { ensure_installed = { "css", "scss" } } },
 }
 
 if langs.scala then

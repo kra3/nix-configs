@@ -9,7 +9,12 @@
       services.navidrome = {
         enable = true;
         openFirewall = false;
-        package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.navidrome;
+        # 26.05 module points Plugins.Folder at ${finalPackage}/share/plugins, which the unstable wrapper only creates when a plugin is bundled.
+        package =
+          inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.navidrome.override
+            {
+              wasmPlugins = [ (pkgs.runCommand "navidrome-plugins-dir" { } "mkdir -p $out/share/plugins") ];
+            };
         settings = {
           Address = "0.0.0.0";
           Port = 4533;
@@ -17,7 +22,6 @@
           PlaylistsPath = "playlists";
           DataFolder = "/var/lib/navidrome/data";
           "Prometheus.Enabled" = true;
-          Plugins.Enabled = false;
         };
       };
 

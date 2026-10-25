@@ -5,8 +5,7 @@
     Pauses/resumes every automation via input_boolean.automations_paused
     except those whose config id matches keep_running: security, Frigate,
     bookkeeping, notifications and this one. New automations are paused
-    by default. Adaptive Lighting is switched off with them, and stays off on
-    resume while party mode is on.
+    by default. Adaptive Lighting is switched off with them.
   triggers:
   - entity_id: input_boolean.automations_paused
     trigger: state
@@ -33,14 +32,9 @@
       target:
         entity_id: switch.home_adaptive_lighting_home
     else:
-    - if:
-      - condition: state
-        entity_id: input_boolean.party_mode
-        state: "off"
-      then:
-      - action: switch.turn_on
-        target:
-          entity_id: switch.home_adaptive_lighting_home
+    - action: switch.turn_on
+      target:
+        entity_id: switch.home_adaptive_lighting_home
     - action: automation.turn_on
       target:
         entity_id: "{{ targets }}"
@@ -80,20 +74,15 @@
 
 - id: modes_party_end_hand_back
   alias: "Modes: hand back to automations when party mode ends"
-  description: Switches Adaptive Lighting back on (unless manual mode is on), then fires automations_resumed (room lighting re-derives) and modes_ended (skipped bedtime steps catch up).
+  description: Switches Adaptive Lighting back on, then fires automations_resumed (room lighting re-derives) and modes_ended (skipped bedtime steps catch up).
   triggers:
   - entity_id: input_boolean.party_mode
     to: "off"
     trigger: state
   actions:
-  - if:
-    - condition: state
-      entity_id: input_boolean.automations_paused
-      state: "off"
-    then:
-    - action: switch.turn_on
-      target:
-        entity_id: switch.home_adaptive_lighting_home
+  - action: switch.turn_on
+    target:
+      entity_id: switch.home_adaptive_lighting_home
   - event: automations_resumed
   - event: modes_ended
   mode: single

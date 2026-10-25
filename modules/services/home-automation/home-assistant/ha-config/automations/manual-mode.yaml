@@ -76,6 +76,10 @@
   - entity_id: input_boolean.party_mode
     to: "off"
     trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_paused
+    state: "off"
   actions:
   - event: automations_resumed
   - event: modes_ended

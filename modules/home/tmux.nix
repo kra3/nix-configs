@@ -1,6 +1,7 @@
 {
   flake.homeManagerModules.home-tmux =
     {
+      inputs,
       pkgs,
       lib,
       config,
@@ -8,6 +9,8 @@
       ...
     }:
     let
+      tsk = lib.getExe inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.tsk;
+
       tmux-pomodoro-plus = pkgs.tmuxPlugins.mkTmuxPlugin {
         pluginName = "tmux-pomodoro-plus";
         rtpFilePath = "pomodoro.tmux";
@@ -288,6 +291,10 @@
           # Git status popup
           bind G display-popup -E -w 70% -h 70% -d "#{pane_current_path}" \
             "git status; echo; echo 'Press enter to close'; read"
+
+          # tsk board and quick capture popups (absolute path — tmux server PATH lacks the nix profile)
+          bind t display-popup -E -w 80% -h 80% "${tsk}"
+          bind a display-popup -E -w 80 -h 15 "TSK_MODE=capture ${tsk}"
 
           # gh dash popup (absolute path — tmux server PATH lacks the nix profile)
           bind D display-popup -E -w 95% -h 95% -d "#{pane_current_path}" "${lib.getExe pkgs.gh} dash"

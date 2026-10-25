@@ -71,7 +71,7 @@ HA config is declarative in this repo; every change is verified before and after
 - Scene Presets (HACS): `scene_presets.apply_preset` takes `preset_id` (UUID), `targets: {entity_id: [...]}`, `transition`; target individual bulbs, not a Hue group, so colours spread; preset images load without login from `/assets/scene_presets/<id>.jpeg`.
 
 ## Validation before a PR
-- `nix fmt`, then CLAUDE.md's `check_config` recipe, adding read-only mounts for `custom_templates`, `scripts.yaml`, `lovelace.yaml` and `dashboards`. Known harmless output: two TV automations with an unknown device id, and `battery_notes` not found. Anything else is a real bug.
+- `nix fmt`, then CLAUDE.md's `check_config` recipe, adding read-only mounts for `custom_templates`, `scripts.yaml`, `lovelace.yaml` and `dashboards`, plus the recipe's `nix eval` line for the pinned `custom_components` (without it powercalc, battery_notes and other HACS integrations report "not found"). Known harmless output: two TV automations with an unknown device id. Anything else is a real bug.
 - `check_config` does not validate dashboards or service names. For a dashboard change, load old (`git show origin/main:...`) and new `dashboard.yaml` with `yaml.safe_load` in the HA container's Python (replace the `!include_dir_named` line first) and compare views to prove untouched ones are unchanged.
 - Test Jinja macros against live states by posting a template with the macros inline to `POST /api/template`, and cross-check the maths by hand.
 - Render custom cards in headless Chromium (`--allow-file-access-from-files`, injected `hass.states` and `callService`, `--screenshot`).

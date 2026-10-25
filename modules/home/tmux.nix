@@ -146,6 +146,7 @@
 
         plugins = with pkgs.tmuxPlugins; [
           pain-control
+          vim-tmux-navigator
           resurrect
           yank
           open
@@ -231,6 +232,8 @@
 
           # Last window (l is pain-control's pane-right) and mark pane (m is merge-pane)
           bind Tab last-window
+          # vim-tmux-navigator takes C-l without the prefix; this keeps clear-screen reachable
+          bind C-l send-keys 'C-l'
           bind M select-pane -m
 
           # Quick session tree

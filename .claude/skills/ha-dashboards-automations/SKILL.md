@@ -42,6 +42,7 @@ HA config is declarative in this repo; every change is verified before and after
 - Reversible and honest: one tap back to normal, automation never silently fights a manual choice (decide and state when a manual state ends), unknown/unavailable is shown as such, "not reporting" is listed, rough sensors are marked "approx.".
 - Consistent grammar across tabs, and improvements on one tab are applied to its siblings: terse labels, units on every value, icons as horizontal chips, used value with the percent inline (`423 GB 16 %`), growth (`+12 / 7d`) for counters, min-max only where a range means something, movies and TV kept split.
 - Use the theme, not literals: colour carries meaning through HA tokens (`--primary-color`, `--success-color`, `--warning-color`, `--error-color`, `--info-color`, `--state-inactive-color`; `--state-active-color` for on), never a fixed hex, except text over images. The same state gets the same colour on every tab, and an off item is grey. Test a card under a light theme too.
+- Check a week of real sensor readings before proposing a threshold value.
 - Defaults are a starting point: expose thresholds as editable helpers and say what the defaults assume.
 - Decide visuals by showing them (render icon or layout options) before committing.
 
@@ -54,6 +55,7 @@ HA config is declarative in this repo; every change is verified before and after
 
 ## Reuse and custom building
 - Reuse first: blueprints (`room-presence-lighting`, `darkness-detection`), streamline templates, Jinja macros in `custom_templates/`, YAML anchors for lists used twice, existing cards. Parameterise instead of copying (template variable, blueprint input, macro argument). Extract a shared piece the second time something is copied.
+- Restate the layout as an ASCII grid (rows × columns, card per cell) and wait for confirmation before building. Never merge or drop cards or links unless asked.
 - Prefer installed HACS cards and built-in tiles (mushroom, apexcharts-card, auto-entities, mini-media-player, advanced-camera-card, streamline-card, alarmo-card). Build a small custom card in `www/` only when no built-in gives the UX (active-tile highlight, read-only row, optimistic control): dependency-free, themed with HA CSS variables, tested in a headless harness.
 - A new card is four edits: the file, a mount in `container.nix`, a resource in `lovelace.yaml` with `?v=N`, and the dashboard use. Put new mount/resource lines away from other open PRs' hunks.
 - Extend an existing card with backward-compatible options rather than forking it. Custom cards in `www/`: `health-metric-card` (item `mode`, `range`, `chips`, `growth`, `deltaTone`, `secondary`, hero `unit`, `delta`, `popup.graphs`; flat histories collapse to one point, so growth reads `0 / 7d`), `status-row-card`, `download-control-card`, `security-plan-card` (`layer`), `security-status-card`, `home-hero-card`, `room-tile-card`, `popup-tile-card`, plus `scene-strip-card` once the Lights PR is merged. Read a card's source for its full options.

@@ -172,25 +172,6 @@ function! PluginAvailable(name)
   return has_key(l:plugs, a:name) && isdirectory(l:plugs[a:name].dir)
 endfunction
 
-" External tool check
-" Usage: if HasExecutable('tool-name') | ... | endif
-" Useful for conditionally configuring features that depend on external tools
-function! HasExecutable(name)
-  return executable(a:name)
-endfunction
-
-" Function to safely load a plugin configuration
-" Ensures plugin settings only apply when the plugin is actually available
-function! ConfigurePlugin(name, ...)
-  if PluginAvailable(a:name)
-    if a:0 > 0 && type(a:1) == type(function('tr'))
-      call a:1()
-    endif
-    return 1
-  endif
-  return 0
-endfunction
-
 " }}}
 
 " ===> General Configurations {{{
@@ -651,18 +632,6 @@ nnoremap <Leader><Tab>[ :tabprevious<CR>
 " }}}
 
 
-" netrw - built-in file browser {{{
-    " NOTE: Using NERDTree instead - only enable one file explorer at a time
-    " To switch to netrw from NERDTree:
-    " 1. Comment out the NERDTree section
-    " 2. Uncomment this section:
-    " let g:netrw_liststyle=3        " Use tree layout
-    " let g:netrw_banner=0           " Hide banner
-    " let g:netrw_browse_split=0     " Open files in same window
-    " let g:netrw_winsize=25         " Width of netrw window
-    " nnoremap <leader>e :Explore<CR> " Open explorer at current path
-" }}}
-
 " NERDTree {{{
     nnoremap <Leader>e :NERDTreeToggle<CR>
     nnoremap <Leader>fe :NERDTreeToggle<CR>
@@ -750,21 +719,6 @@ if PluginAvailable('vimwiki')
     " <Enter> - Follow/create wiki link
     " <Backspace> - Go back to previous wiki page
 endif
-" }}}
-
-" vim-eunuch {{{
-" Unix shell commands - provides commands like :Delete, :Move, :Rename, :Chmod
-" No configuration needed - just use the commands:
-" :Delete      Delete current file and buffer
-" :Move        Move/rename current file
-" :Rename      Rename current file (alias for :Move)
-" :Chmod       Change file permissions
-" :Mkdir       Create directory
-" :Find        Run find and load results into quickfix
-" :Locate      Run locate and load results into quickfix
-" :SudoWrite   Write file using sudo
-" :SudoEdit    Edit file using sudo
-" :Wall        Write all buffers
 " }}}
 
 
@@ -926,42 +880,6 @@ endfunction
     set foldtext=NeatFoldText()
 " }}}
 
-
-" Simple session management
-function! s:MakeSession(name)
-  let l:session_dir = expand('~/.vim/sessions')
-  if !isdirectory(l:session_dir)
-    call mkdir(l:session_dir, 'p')
-  endif
-  let l:filename = l:session_dir . '/' . a:name . '.vim'
-  execute 'mksession! ' . l:filename
-  echo 'Session saved to ' . l:filename
-endfunction
-
-function! s:LoadSession(name)
-  let l:session_dir = expand('~/.vim/sessions')
-  let l:filename = l:session_dir . '/' . a:name . '.vim'
-  if filereadable(l:filename)
-    execute 'source ' . l:filename
-    echo 'Session loaded from ' . l:filename
-  else
-    echo 'Session file not found: ' . l:filename
-  endif
-endfunction
-
-command! -nargs=1 SaveSession call s:MakeSession(<f-args>)
-command! -nargs=1 LoadSession call s:LoadSession(<f-args>)
-command! -complete=customlist,s:SessionComplete -nargs=1 LoadSession call s:LoadSession(<f-args>)
-
-function! s:SessionComplete(ArgLead, CmdLine, CursorPos)
-  let l:session_dir = expand('~/.vim/sessions')
-  let l:sessions = split(glob(l:session_dir . '/*.vim'), '\n')
-  let l:names = []
-  for session in l:sessions
-    let l:names += [fnamemodify(session, ':t:r')]
-  endfor
-  return filter(l:names, 'v:val =~ "^' . a:ArgLead . '"')
-endfunction
 
 " Vim configuration health check
 function! HealthCheck()

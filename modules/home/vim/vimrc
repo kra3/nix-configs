@@ -80,7 +80,7 @@ Plug 'tpope/vim-eunuch'                              " Unix shell commands (:Del
 call plug#end()
 
 packadd! comment
-packadd! hlyank
+silent! packadd! hlyank
 
 " }}}
 
@@ -406,8 +406,10 @@ nnoremap <expr> j v:count == 0 ? 'gj' : 'j'
 nnoremap <expr> k v:count == 0 ? 'gk' : 'k'
 xnoremap <expr> j v:count == 0 ? 'gj' : 'j'
 xnoremap <expr> k v:count == 0 ? 'gk' : 'k'
-nmap <expr> <Down> v:count == 0 ? 'gj' : 'j'
-nmap <expr> <Up> v:count == 0 ? 'gk' : 'k'
+nnoremap <expr> <Down> v:count == 0 ? 'gj' : 'j'
+nnoremap <expr> <Up> v:count == 0 ? 'gk' : 'k'
+xnoremap <expr> <Down> v:count == 0 ? 'gj' : 'j'
+xnoremap <expr> <Up> v:count == 0 ? 'gk' : 'k'
 
 " Move lines
 nnoremap <A-j> :m .+1<CR>==
@@ -468,13 +470,13 @@ nnoremap <silent> <Leader>xq :execute getqflist({'winid': 0}).winid ? 'cclose' :
 nnoremap <silent> <Leader>xl :execute getloclist(0, {'winid': 0}).winid ? 'lclose' : 'lopen'<CR>
 
 " Buffers ([b ]b come from unimpaired)
-nnoremap <S-h> :bprevious<CR>
-nnoremap <S-l> :bnext<CR>
+nnoremap <silent> <S-h> :bprevious<CR>
+nnoremap <silent> <S-l> :bnext<CR>
 nnoremap <Leader>bb :e #<CR>
 nnoremap <Leader>` :e #<CR>
 nnoremap <Leader>bd :Bdelete<CR>
 nnoremap <Leader>bD :bdelete<CR>
-command! BufOnly %bdelete | silent! edit # | silent! bdelete #
+command! BufOnly execute join(map(filter(getbufinfo({'buflisted': 1}), {_, b -> b.bufnr != bufnr('%')}), {_, b -> 'silent! bdelete ' . b.bufnr}), '<Bar>')
 nnoremap <Leader>bo :BufOnly<CR>
 nnoremap <Leader>bi :execute join(map(filter(getbufinfo({'buflisted': 1}), {_, b -> empty(b.windows)}), {_, b -> 'silent! bdelete ' . b.bufnr}), '<Bar>')<CR>
 nnoremap <Leader>fn :enew<CR>

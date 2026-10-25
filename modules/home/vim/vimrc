@@ -55,7 +55,6 @@ Plug 'michaeljsmith/vim-indent-object'              " Text objects for indented 
 "==============================================================================
 " WINDOW & BUFFER MANAGEMENT
 "==============================================================================
-Plug 'schickling/vim-bufonly', { 'on': 'BufOnly' }  " Delete all buffers except current
 Plug 'moll/vim-bbye', { 'on': ['Bdelete', 'Bwipeout'] } " Better buffer closing
 Plug 'christoomey/vim-tmux-navigator'               " Seamless vim/tmux navigation
 
@@ -70,7 +69,6 @@ Plug 'catppuccin/vim', { 'as': 'catppuccin' }       " Catppuccin theme (matches 
 
 " Modern enhancements
 Plug 'tpope/vim-sleuth'                          " Auto-detect indentation
-Plug 'machakann/vim-highlightedyank'             " Highlight yanked text
 
 "==============================================================================
 " PRODUCTIVITY & UTILITIES
@@ -82,6 +80,7 @@ Plug 'tpope/vim-eunuch'                              " Unix shell commands (:Del
 call plug#end()
 
 packadd! comment
+packadd! hlyank
 
 " }}}
 
@@ -471,6 +470,7 @@ nnoremap <Leader>bb :e #<CR>
 nnoremap <Leader>` :e #<CR>
 nnoremap <Leader>bd :Bdelete<CR>
 nnoremap <Leader>bD :bdelete<CR>
+command! BufOnly %bdelete | silent! edit # | silent! bdelete #
 nnoremap <Leader>bo :BufOnly<CR>
 
 " Windows (C-h/j/k/l come from vim-tmux-navigator)

@@ -92,10 +92,12 @@ Neovim is LazyVim, so only local additions and local deviations are listed. Old 
 | (none) | `<leader>wt` | Toggle window layout | Same as Vim |
 | (none) | `gsa` `gsd` `gsr` | Add / delete / replace surrounding | mini-surround extra |
 | (none) | `<leader>fm` `fM` | File manager: edit the filesystem as text (rename, move, delete, create) | mini-files extra; replaces eunuch's file commands |
+| (none) | `<C-a>` `<C-x>` | Increment / decrement numbers, booleans, dates, `let`/`const`, `[ ]`/`[x]`, `and`/`or`, semver, hex colors | dial extra |
+| (none) | `<leader>cr` | Rename with live preview | inc-rename extra |
 | (none) | `<C-h/j/k/l>` | Window navigation, crossing tmux panes | vim-tmux-navigator |
 | (none) | `<leader>a{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
 
-Plugins added beyond LazyVim: the mini-surround and mini-files extras, vim-abolish, vim-tmux-navigator, codecompanion.nvim (plus the language and Java wiring). The Vim-only plugins (fugitive, undotree, vimwiki, sleuth, eunuch) are not in Neovim. Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
+Plugins added beyond LazyVim: the mini-surround, mini-files, dial and inc-rename extras, vim-abolish, vim-tmux-navigator, codecompanion.nvim (plus the language and Java wiring). The Vim-only plugins (fugitive, undotree, vimwiki, sleuth, eunuch) are not in Neovim. Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
 
 ## IdeaVim
 

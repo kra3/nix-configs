@@ -21,6 +21,7 @@
         package = unstable.navidrome.override {
           wasmPlugins = with unstable.pkgsCross.wasi32.navidromePlugins; [
             apple-music
+            listenbrainz-daily-playlist
             lyrics-plugin
             (prebuiltPlugin "genre-mixes"
               "https://github.com/Aut0iq/navidrome-genre-mixes/releases/download/v0.3.0/genre-mixes.ndp"

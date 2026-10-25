@@ -432,6 +432,13 @@ vnoremap > >gv
 nnoremap <expr> n (v:searchforward ? 'n' : 'N') . 'zv'
 nnoremap <expr> N (v:searchforward ? 'N' : 'n') . 'zv'
 
+" Surround keys as in Neovim's mini.surround (vim-surround's own ys/ds/cs are off)
+let g:surround_no_mappings = 1
+nmap gsa <Plug>Ysurround
+xmap gsa <Plug>VSurround
+nmap gsd <Plug>Dsurround
+nmap gsr <Plug>Csurround
+
 " Comment line below/above
 nnoremap gco o<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>
 nnoremap gcO O<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>
@@ -1083,151 +1090,23 @@ endfunction
 
 " ===> File Type Specific Settings {{{
 
-" Common programming language settings
-" Function to set up common development settings
-function! SetupDevEnvironment()
-  " Enable syntax folding for supported filetypes
-  if &filetype =~ 'python\|scala\|java\|javascript\|typescript\|json\|sql'
-    setlocal foldmethod=syntax
-    setlocal foldlevel=99  " Start unfolded
-  endif
-  
-  " Setup common code navigation commands
-  nnoremap <buffer> <Leader>] :tag <C-R><C-W><CR>
-  nnoremap <buffer> <Leader>[ :pop<CR>
-  
-  " Common coding settings
-  setlocal number
-  setlocal autoindent
-endfunction
-
-" Python settings
-augroup python_settings
+" Per-filetype: <Leader>r runs the file, folds, python format, markdown preview, chmod +x for shell scripts
+let s:runners = {
+  \ 'python': 'python3 %:S',
+  \ 'javascript': 'node %:S',
+  \ 'typescript': 'ts-node %:S',
+  \ 'sh': 'bash %:S',
+  \ 'scala': 'scala %:S',
+  \ 'java': 'javac %:S && java -cp %:p:h:S %:t:r',
+  \ }
+let s:open = has('macunix') ? 'open' : 'xdg-open'
+augroup filetype_settings
   autocmd!
-  autocmd FileType python nnoremap <buffer> <Leader>r :update<CR>:exec '!python3' shellescape(@%, 1)<CR>
-  autocmd FileType python nnoremap <buffer> <Leader>i :update<CR>:exec '!python3 -i' shellescape(@%, 1)<CR>
-  " Formatting shortcut - prefer ruff, fall back to black
-  if executable('ruff')
-    autocmd FileType python nnoremap <buffer> <Leader>cf :update<CR>:silent !ruff format % && ruff check --fix %<CR>:e<CR>
-  elseif executable('black')
-    autocmd FileType python nnoremap <buffer> <Leader>cf :update<CR>:silent !black %<CR>:e<CR>
-  endif
-  autocmd FileType python call SetupDevEnvironment()
-augroup END
-
-" Java settings
-augroup java_settings
-  autocmd!
-  autocmd FileType java nnoremap <buffer> <F9> :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
-  autocmd FileType java nnoremap <buffer> <Leader>r :update<CR>:exec '!javac "%"'<CR>:exec '!java -cp "%:p:h" "%:t:r"'<CR>
-  autocmd FileType java call SetupDevEnvironment()
-  
-  " Java package/class generator
-  command! -buffer JavaCreateClass call JavaCreateClass()
-  nnoremap <buffer> <Leader>jc :JavaCreateClass<CR>
-  
-  function! JavaCreateClass()
-    let l:package = substitute(expand("%:p:h"), ".*src/\\(.*\\)", "\\1", "")
-    let l:package = substitute(l:package, "/", ".", "g")
-    let l:class = expand("%:t:r")
-    let l:template = ["package " . l:package . ";", "", "public class " . l:class . " {", "    public static void main(String[] args) {", "        System.out.println(\"Hello, World!\");", "    }", "}"]
-    call append(0, l:template)
-  endfunction
-augroup END
-
-" Scala settings - Gradle support
-augroup scala_settings
-  autocmd!
-
-  " SBT support (fallback - Space + s prefix)
-  if executable('sbt')
-    autocmd FileType scala nnoremap <buffer> <Leader>st :update<CR>:!sbt test<CR>
-  endif
-
-  " Run with scala (basic - for script files)
-  if executable('scala')
-    autocmd FileType scala nnoremap <buffer> <Leader>r :update<CR>:exec '!scala "%"'<CR>
-  endif
-
-  autocmd FileType scala call SetupDevEnvironment()
-augroup END
-
-" TypeScript/JavaScript settings
-augroup js_ts_settings
-  autocmd!
-
-  " JavaScript execution
-  autocmd FileType javascript nnoremap <buffer> <Leader>r :update<CR>:exec '!node "%"'<CR>
-  
-  " TypeScript support - only if ts-node is available
-  if executable('ts-node')
-    autocmd FileType typescript nnoremap <buffer> <Leader>r :update<CR>:exec '!ts-node "%"'<CR>
-  endif
-  
-  " NPM integration if package.json exists
-  autocmd FileType javascript,typescript,javascriptreact,typescriptreact
-    \ if filereadable('package.json') | 
-    \   nnoremap <buffer> <Leader>nt :!npm test<CR> |
-    \   nnoremap <buffer> <Leader>ns :!npm start<CR> |
-    \   nnoremap <buffer> <Leader>nb :!npm run build<CR> |
-    \ endif
-  
-  autocmd FileType javascript,typescript,javascriptreact,typescriptreact call SetupDevEnvironment()
-augroup END
-
-" SQL settings
-augroup sql_settings
-  autocmd!
-  autocmd FileType sql setlocal commentstring=--\ %s
-  
-  " SQL formatting if sqlformat is available
-  if executable('sqlformat')
-    autocmd FileType sql nnoremap <buffer> <Leader>sf :update<CR>:%!sqlformat --reindent --keywords upper --identifiers lower -<CR>
-  endif
-  
-  " If database tools are available, add shortcuts
-  if executable('psql')
-    command! -buffer -nargs=? -complete=file RunPostgres call RunSQL('psql', <f-args>)
-    autocmd FileType sql nnoremap <buffer> <Leader>rp :RunPostgres<CR>
-  endif
-  
-  if executable('sqlite3')
-    command! -buffer -nargs=? -complete=file RunSQLite call RunSQL('sqlite3', <f-args>)
-    autocmd FileType sql nnoremap <buffer> <Leader>rs :RunSQLite<CR>
-  endif
-  
-  " Function to run SQL with different engines
-  function! RunSQL(engine, ...)
-    let l:dbfile = a:0 >= 1 ? a:1 : input('Database: ')
-    if empty(l:dbfile) | return | endif
-    exec '!'.a:engine.' '.l:dbfile.' < %'
-  endfunction
-  
-  autocmd FileType sql call SetupDevEnvironment()
-augroup END
-
-" Shell script settings
-augroup sh_settings
-  autocmd!
-  autocmd FileType sh setlocal commentstring=#\ %s
-  autocmd FileType sh nnoremap <buffer> <Leader>r :update<CR>:exec '!bash "%"'<CR>
-  
-  " Make shell scripts executable automatically
-  autocmd BufWritePost *.sh silent !chmod +x "%"
-  
-  autocmd FileType sh call SetupDevEnvironment()
-augroup END
-
-" Markdown settings
-augroup markdown_settings
-  autocmd!
-  
-  " Preview markdown in browser
-  if has('mac')
-    autocmd FileType markdown nnoremap <buffer> <Leader>mp :silent !open -a "Safari" "%"<CR>:redraw!<CR>
-  elseif has('unix')
-    autocmd FileType markdown nnoremap <buffer> <Leader>mp :silent !xdg-open "%"<CR>:redraw!<CR>
-  endif
+  autocmd FileType * if has_key(s:runners, &filetype) | execute 'nnoremap <buffer> <Leader>r :update<CR>:!' . s:runners[&filetype] . '<CR>' | endif
+  autocmd FileType python,scala,java,javascript,typescript,json,sql setlocal foldmethod=syntax foldlevel=99
+  autocmd FileType python nnoremap <buffer> <Leader>cf :update<CR>:silent !ruff format %:S && ruff check --fix %:S<CR>:edit<CR>
+  autocmd FileType markdown execute 'nnoremap <buffer> <Leader>mp :silent !' . s:open . ' %:S<CR>:redraw!<CR>'
+  autocmd BufWritePost *.sh silent !chmod +x %:S
 augroup END
 
 " }}}

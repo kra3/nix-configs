@@ -35,17 +35,17 @@ See also: [Vim](vim.md), [Neovim](neovim.md).
 | `<leader>sd` `su` | `<leader>ghp` `<leader>ghr` | Hunk diff / undo | |
 | `<leader>sh` | (removed) | Toggle signify highlight | `sh` is now help tags |
 | `<leader>st` | `<leader>uG` | Toggle signify | |
-| `<leader>u` | `<leader>U` | Undotree | Same as Neovim |
+| `<leader>u` | `<leader>U` | Undotree | Vim only |
 | `<leader>n` `nf` | `<leader>e` `E` (also `fe` `fE`) | NERDTree toggle / find file | |
 | `<leader>gb` `gd` `gl` | unchanged | Blame / diff split / log | |
 | `<leader>gs` | `<leader>gs`, `<leader>gg` | Git status | |
 | `<leader>gc` | `<leader>gvc` | Git commit | `gc` is now commit browser (`:Commits`) |
-| `<leader>gp` `gw` `gr` | `<leader>gvp` `gvw` `gvr` | Push / write / remove | `gv` is the fugitive group, same as Neovim |
+| `<leader>gp` `gw` `gr` | `<leader>gvp` `gvw` `gvr` | Push / write / remove | `gv` is the fugitive group (Vim only) |
 | `<leader>fw` | `<leader>cw` | Trim trailing whitespace | Same as Neovim |
 | `<leader>rf` | `<leader>cR` | Rename file | |
 | `<leader>cd` | (removed) | cd to file dir | Use `:cd %:p:h` or vim-rooter |
 | `<leader>fb` (python) | `<leader>cf` (python) | Format with ruff/black | |
-| `<leader>w{w,t,d,r,s}` (vimwiki) | `<leader>W{w,t,d,r,s}` | Vimwiki maps | `g:vimwiki_map_prefix`, same as Neovim |
+| `<leader>w{w,t,d,r,s}` (vimwiki) | `<leader>W{w,t,d,r,s}` | Vimwiki maps | `g:vimwiki_map_prefix` (Vim only) |
 | `<leader><leader>` `<leader>S` | `s` / `S` | Sneak forward / backward | Like flash.nvim; `s` no longer substitutes |
 | vim-commentary `gc` | built-in `gc` / `gcc` | Comment | Same keys |
 
@@ -76,7 +76,10 @@ LSP maps (`gd` `gD` `gr` `gi` `gt` `K` hover, `<leader>rn` `ca` `cl` `ds` `ws` `
 
 - Removed: vim-lsp, vim-lsp-settings, asyncomplete, asyncomplete-lsp, vim-vsnip, vim-vsnip-integ, friendly-snippets, ALE, vim-scala, python-syntax, vim-javascript, yats.vim, emmet-vim, vim-ai
 - Swapped: vim-commentary -> built-in `comment` package (`packadd! comment`)
-- Kept: fzf, fzf.vim, nerdtree (+ git plugin), vim-rooter, vim-sneak, fugitive, signify, rhubarb, surround, repeat, abolish, unimpaired, auto-pairs, peekaboo, undotree, indent-object, bufonly, bbye, tmux-navigator, airline (+ themes), catppuccin, sleuth, highlightedyank, which-key, vimwiki, eunuch, obsession
+- Kept: fzf, fzf.vim, nerdtree (+ git plugin), vim-rooter, vim-sneak, fugitive, signify, rhubarb, surround, repeat, abolish, unimpaired, auto-pairs, peekaboo, undotree, indent-object, bbye, tmux-navigator, airline (+ themes), catppuccin, sleuth, which-key, vimwiki, eunuch, obsession
+- Swapped: highlightedyank -> bundled `hlyank`; bufonly -> a `:BufOnly` command
+- Surround: vim-surround's `ys`/`ds`/`cs` are off; `gsa` `gsd` `gsr` add/delete/replace, like Neovim's mini.surround
+- Per-filetype: one `<Leader>r` runner table (python, js, ts, sh, scala, java); python `<Leader>cf` via ruff; Java/SQL/npm/sbt maps removed
 - Nix: `basedpyright` dropped from `home-vim-default` packages; `ruff` stays for the `<leader>cf` python map
 
 ## Neovim
@@ -87,12 +90,16 @@ Neovim is LazyVim, so only local additions and local deviations are listed. Old 
 |---------|---------|--------|------|
 | (none) | `<leader>cw` | Trim trailing whitespace | Also `:FixWhitespace` |
 | (none) | `<leader>wt` | Toggle window layout | Same as Vim |
-| (none) | `<leader>gv{s,c,p,d,w,r}` | Fugitive status / commit / push / diff / write / remove | vim-fugitive, lazy-loaded |
-| (none) | `<leader>U` | Undotree | |
-| (none) | `<leader>W*` | Vimwiki maps | `vimwiki_map_prefix`, so `<leader>w` stays windows |
-| (none) | `<leader>a{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
+| (none) | `gsa` `gsd` `gsr` | Add / delete / replace surrounding | mini-surround extra |
+| (none) | `<leader>fm` `fM` | File manager: edit the filesystem as text (rename, move, delete, create) | mini-files extra; replaces eunuch's file commands |
+| (none) | `<C-a>` `<C-x>` | Increment / decrement numbers, booleans, dates, `let`/`const`, `[ ]`/`[x]`, `and`/`or`, semver, hex colors | dial extra |
+| (none) | `<leader>cr` | Rename with live preview | inc-rename extra |
+| (none) | `<C-h/j/k/l>` | Window navigation, crossing tmux panes | vim-tmux-navigator |
+| (none) | `<leader>ao{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
+| (none) | `<leader>ac` `af` `ar` `aC` | Claude Code: toggle / focus / resume / continue | claudecode extra, sutala only |
+| (none) | `<leader>ab` `as` `aa` `ad` | Claude Code: add buffer / send selection (visual; add file in a file tree) / accept diff / deny diff | claudecode extra, sutala only |
 
-Plugins added: vim-sleuth, vim-abolish, vim-eunuch, undotree, vimwiki, vim-fugitive, vim-rhubarb, codecompanion.nvim. LazyVim keys are not overridden (`<C-h/j/k/l>` stay plain window moves; tmux pane crossing is Vim-only). Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
+Plugins added beyond LazyVim: the mini-surround, mini-files, dial and inc-rename extras (plus claudecode on sutala only), vim-abolish, vim-tmux-navigator, codecompanion.nvim (plus the language and Java wiring). The Vim-only plugins (fugitive, undotree, vimwiki, sleuth, eunuch) are not in Neovim. Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
 
 ## IdeaVim
 

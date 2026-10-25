@@ -17,6 +17,7 @@
           PlaylistsPath = "playlists";
           DataFolder = "/var/lib/navidrome/data";
           "Prometheus.Enabled" = true;
+          Plugins.Enabled = false;
         };
       };
 

@@ -12,12 +12,18 @@ Before asserting file or config state, re-read it and reference the verification
 ## Git & commits
 - Short, imperative commit messages scoped to one logical change.
 - Create new commits rather than amending; never force-push or skip hooks unless explicitly asked.
+- Commits are GPG-signed (`commit.gpgsign`). If GPG is unavailable (user away from the keyboard), commit unsigned, but re-sign (amending unpushed commits is fine for this) before pushing; never push an unsigned commit.
 - Check `git status`/`diff` before staging broad changes, and check file contents (not just filenames) for secrets before committing.
 
 ## Working style
 - Ask before destructive or hard-to-reverse actions, even when technically permitted by tool permissions — this applies especially on `sutala` since sessions often run directly on it, not just against a checkout.
 - Prefer editing existing files over creating new ones; no unrequested abstractions, refactors, or cleanup alongside a focused task.
 - Turn a task into a verifiable goal (a test or command that proves it), and loop until that check passes.
+
+## Conventions
+- Don't override upstream defaults (e.g. LazyVim keymaps) unasked.
+- Check `gh pr view` / `gh pr checks` live before reporting PR or CI state.
+- Pasteable shell must be zsh-safe: quote `#`, `*`, `?`.
 
 ## Skills at each step
 Invoke the matching skill at each step, on top of any domain skill:

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Never commit directly to `main`.** Always work in a git worktree + branch, open a PR, wait for green CI, then merge — see "Commits & PRs" below for why.
 - **Fixes belong in the declarative config, not on the live host.** Every change ships as a Nix (or repo config file) edit — never a manual command run against a host's live state. If a manual step genuinely seems necessary, stop and ask instead of doing it.
-- **Verify empirically before asserting.** Re-query Loki/Prometheus/systemd or the live host and cite the actual output. Never say something is "verified," "fixed," or "deployed" without pasting the evidence.
+- **Verify empirically before asserting.** Re-query Loki/Prometheus/systemd or the live host and cite the actual output. Never say something is "verified," "fixed," or "deployed" without pasting the evidence. A fix PR states the Loki/Prometheus/HA-history query that shows it worked (and one that would show a regression), and you run it once the change is deployed (nightly upgrade) and report the result.
 
 ## Common Commands
 
@@ -49,6 +49,7 @@ A "could not be validated and has been disabled" or "Failed config" line means a
 - **`hosts/sutala/`** — NixOS x86_64-linux home server (192.168.1.10, LAN if `enp2s0`). Media, home-automation, DNS, monitoring, surveillance. Disk layout via `disko.nix`; deployed via `just switch sutala` (or `switch-remote` from elsewhere).
 - **`hosts/mac-work/`** — nix-darwin aarch64-darwin laptop, single `default.nix` (no separate `darwin-configuration.nix`). Home Manager user `akarunagath`, imports `modules/home/work.nix`.
 - **`hosts/surasa/`** — NixOS aarch64-linux Raspberry Pi 3B+, wifi-only, secondary DNS resolver (AdGuard Home + Unbound) + Sendspin player. Cross-built from sutala via `boot.binfmt.emulatedSystems`, not natively; deployed via `just switch-remote surasa <target>` (its weak CPU can't reliably build its own closure — always build on sutala).
+  Journald is volatile on purpose (SD-card wear) — never make it persistent. Host-wide changes (DNS allowlists etc.) usually apply to both sutala and surasa.
 
 ### Module Layout
 This repo follows the **dendritic pattern**: every `.nix` file under `modules/` is itself a flake-parts module that self-registers into a flat registry — `flake.nixosModules.<name>` / `flake.darwinModules.<name>` / `flake.homeManagerModules.<name>` / `flake.lib.<name>` / `flake.overlays.<name>` — rather than being pulled in via a hand-maintained `imports` list. `flake.nix` walks the whole tree with a single `(inputs.import-tree ./modules).imports` call; nothing under `modules/` is referenced from `flake.nix` by literal path. **Exception:** `modules/flake-lib.nix`, `modules/flake-darwin-modules.nix`, and `modules/flake-home-manager-modules.nix` declare the `flake.lib` / `flake.darwinModules` / `flake.homeManagerModules` registries themselves (the latter two also carry the `apply` wrapper that stamps `_class`/`_file`) — they don't register as entries in one. (`flake.nixosModules` is flake-parts' own built-in registry, not something this repo declares.)

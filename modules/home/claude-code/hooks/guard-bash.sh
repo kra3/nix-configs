@@ -8,7 +8,8 @@
 # --hard, nix builds, etc. — is left alone. This is a last-resort net,
 # not a full security boundary: it matches on the literal command
 # string, so it can be defeated by indirection (variables, eval, a
-# script file). Exit 0 with no output means "allow".
+# script file). Also refuses `git push` while unpushed commits are
+# unsigned. Exit 0 with no output means "allow".
 
 input="$(cat)"
 cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
@@ -103,6 +104,23 @@ if [[ "$verdict" == BLOCK:* ]]; then
       permissionDecisionReason: ("Blocked by guard-bash.sh: " + $reason + ". Re-run manually outside Claude Code if this is really intended.")
     }
   }'
+  exit 0
+fi
+
+# git push: refuse while any commit about to be pushed is unsigned.
+if [[ "$cmd" =~ (^|[[:space:];\&|])git[[:space:]]+push([[:space:]]|$) ]] && [ -n "$cwd" ]; then
+  range='@{u}..HEAD'
+  git -C "$cwd" rev-parse -q --verify '@{u}' >/dev/null 2>&1 || range='origin/main..HEAD'
+  unsigned="$(git -C "$cwd" log --format='%h %G?' "$range" 2>/dev/null | awk '$2 != "G" && $2 != "U" {print $1}' | tr '\n' ' ')"
+  if [ -n "$unsigned" ]; then
+    jq -n --arg reason "unsigned or unverifiable commits: $unsigned" '{
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: ("Blocked by guard-bash.sh: " + $reason + " — re-sign them (key must be available) before pushing.")
+      }
+    }'
+  fi
 fi
 
 exit 0

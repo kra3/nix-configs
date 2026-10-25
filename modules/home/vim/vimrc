@@ -142,8 +142,8 @@ endif
 if has('terminal')
   " Vim 8+ terminal support
   nnoremap <Leader>ft :terminal<CR>
-  " Exit terminal insert mode with Escape
-  tnoremap <Esc> <C-\><C-n>
+  " Exit terminal insert mode with Escape Escape (plain Esc stays with the app, e.g. lazygit)
+  tnoremap <Esc><Esc> <C-\><C-n>
   " Easy navigation from terminal windows
   tnoremap <C-h> <C-\><C-n><C-w>h
   tnoremap <C-j> <C-\><C-n><C-w>j
@@ -419,9 +419,6 @@ inoremap <A-k> <Esc>:m .-2<CR>==gi
 xnoremap <A-j> :m '>+1<CR>gv=gv
 xnoremap <A-k> :m '<-2<CR>gv=gv
 
-" Insert mode C-w for word deletion
-inoremap <C-w> <C-o><C-w>
-
 " Add undo breakpoints
 inoremap , ,<C-g>u
 inoremap . .<C-g>u
@@ -430,9 +427,6 @@ inoremap ; ;<C-g>u
 " Better visual mode indentation handling
 vnoremap < <gv
 vnoremap > >gv
-
-" Keep cursor in place when joining lines
-nnoremap J mzJ`z
 
 " Next search result keeps its direction
 nnoremap <expr> n (v:searchforward ? 'n' : 'N') . 'zv'
@@ -494,6 +488,11 @@ nnoremap <C-Left>  :vertical resize -2<CR>
 nnoremap <C-Right> :vertical resize +2<CR>
 command! ToggleWindowLayout call ToggleWindowLayout()
 nnoremap <silent> <Leader>wt :ToggleWindowLayout<CR>
+
+" Lazygit, as in Neovim
+if executable('lazygit')
+  nnoremap <Leader>gg :terminal ++curwin ++close lazygit<CR>
+endif
 
 " Tabs
 nnoremap <Leader><Tab><Tab> :tabnew<CR>
@@ -588,10 +587,10 @@ nnoremap <Leader><Tab>[ :tabprevious<CR>
     " Delete :Gedit buffers when moving to another object
     autocmd BufReadPost fugitive://* set bufhidden=delete
 
-    nnoremap <Leader>gg :Git<CR>
     nnoremap <Leader>gs :Git<CR>
     nnoremap <Leader>gb :Git blame<CR>
     nnoremap <Leader>gB :GBrowse<CR>
+    nnoremap <Leader>gY :GBrowse!<CR>
     nnoremap <Leader>gd :Gdiffsplit<CR>
     nnoremap <Leader>gf :0Gclog<CR>
     nnoremap <Leader>gl :Git log<CR>

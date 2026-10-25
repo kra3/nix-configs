@@ -432,6 +432,13 @@ vnoremap > >gv
 nnoremap <expr> n (v:searchforward ? 'n' : 'N') . 'zv'
 nnoremap <expr> N (v:searchforward ? 'N' : 'n') . 'zv'
 
+" Surround keys as in Neovim's mini.surround (vim-surround's own ys/ds/cs are off)
+let g:surround_no_mappings = 1
+nmap gsa <Plug>Ysurround
+xmap gsa <Plug>VSurround
+nmap gsd <Plug>Dsurround
+nmap gsr <Plug>Csurround
+
 " Comment line below/above
 nnoremap gco o<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>
 nnoremap gcO O<Esc>Vcx<Esc>:normal gcc<CR>fxa<BS>

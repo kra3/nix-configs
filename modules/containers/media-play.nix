@@ -251,7 +251,7 @@
               };
             };
             systemd.services.navidrome.serviceConfig = {
-              MemoryMax = "384M";
+              MemoryMax = "768M";
               CPUQuota = "100%";
             };
             systemd.services.alloy.serviceConfig = {

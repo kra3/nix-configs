@@ -55,7 +55,6 @@ Plug 'michaeljsmith/vim-indent-object'              " Text objects for indented 
 "==============================================================================
 " WINDOW & BUFFER MANAGEMENT
 "==============================================================================
-Plug 'schickling/vim-bufonly', { 'on': 'BufOnly' }  " Delete all buffers except current
 Plug 'moll/vim-bbye', { 'on': ['Bdelete', 'Bwipeout'] } " Better buffer closing
 Plug 'christoomey/vim-tmux-navigator'               " Seamless vim/tmux navigation
 
@@ -70,7 +69,6 @@ Plug 'catppuccin/vim', { 'as': 'catppuccin' }       " Catppuccin theme (matches 
 
 " Modern enhancements
 Plug 'tpope/vim-sleuth'                          " Auto-detect indentation
-Plug 'machakann/vim-highlightedyank'             " Highlight yanked text
 
 "==============================================================================
 " PRODUCTIVITY & UTILITIES
@@ -82,6 +80,7 @@ Plug 'tpope/vim-eunuch'                              " Unix shell commands (:Del
 call plug#end()
 
 packadd! comment
+silent! packadd! hlyank
 
 " }}}
 
@@ -143,8 +142,8 @@ endif
 if has('terminal')
   " Vim 8+ terminal support
   nnoremap <Leader>ft :terminal<CR>
-  " Exit terminal insert mode with Escape
-  tnoremap <Esc> <C-\><C-n>
+  " Exit terminal insert mode with Escape Escape (plain Esc stays with the app, e.g. lazygit)
+  tnoremap <Esc><Esc> <C-\><C-n>
   " Easy navigation from terminal windows
   tnoremap <C-h> <C-\><C-n><C-w>h
   tnoremap <C-j> <C-\><C-n><C-w>j
@@ -170,25 +169,6 @@ augroup END
 function! PluginAvailable(name)
   let l:plugs = get(g:, 'plugs', {})
   return has_key(l:plugs, a:name) && isdirectory(l:plugs[a:name].dir)
-endfunction
-
-" External tool check
-" Usage: if HasExecutable('tool-name') | ... | endif
-" Useful for conditionally configuring features that depend on external tools
-function! HasExecutable(name)
-  return executable(a:name)
-endfunction
-
-" Function to safely load a plugin configuration
-" Ensures plugin settings only apply when the plugin is actually available
-function! ConfigurePlugin(name, ...)
-  if PluginAvailable(a:name)
-    if a:0 > 0 && type(a:1) == type(function('tr'))
-      call a:1()
-    endif
-    return 1
-  endif
-  return 0
 endfunction
 
 " }}}
@@ -426,6 +406,10 @@ nnoremap <expr> j v:count == 0 ? 'gj' : 'j'
 nnoremap <expr> k v:count == 0 ? 'gk' : 'k'
 xnoremap <expr> j v:count == 0 ? 'gj' : 'j'
 xnoremap <expr> k v:count == 0 ? 'gk' : 'k'
+nnoremap <expr> <Down> v:count == 0 ? 'gj' : 'j'
+nnoremap <expr> <Up> v:count == 0 ? 'gk' : 'k'
+xnoremap <expr> <Down> v:count == 0 ? 'gj' : 'j'
+xnoremap <expr> <Up> v:count == 0 ? 'gk' : 'k'
 
 " Move lines
 nnoremap <A-j> :m .+1<CR>==
@@ -435,9 +419,6 @@ inoremap <A-k> <Esc>:m .-2<CR>==gi
 xnoremap <A-j> :m '>+1<CR>gv=gv
 xnoremap <A-k> :m '<-2<CR>gv=gv
 
-" Insert mode C-w for word deletion
-inoremap <C-w> <C-o><C-w>
-
 " Add undo breakpoints
 inoremap , ,<C-g>u
 inoremap . .<C-g>u
@@ -446,9 +427,6 @@ inoremap ; ;<C-g>u
 " Better visual mode indentation handling
 vnoremap < <gv
 vnoremap > >gv
-
-" Keep cursor in place when joining lines
-nnoremap J mzJ`z
 
 " Next search result keeps its direction
 nnoremap <expr> n (v:searchforward ? 'n' : 'N') . 'zv'
@@ -482,15 +460,20 @@ nnoremap <Leader>ul :setlocal number!<CR>
 nnoremap <Leader>uL :setlocal relativenumber!<CR>
 
 " Quickfix / location list
-nnoremap <Leader>xq :copen<CR>
-nnoremap <Leader>xl :lopen<CR>
+nnoremap <silent> <Leader>xq :execute getqflist({'winid': 0}).winid ? 'cclose' : 'copen'<CR>
+nnoremap <silent> <Leader>xl :execute getloclist(0, {'winid': 0}).winid ? 'lclose' : 'lopen'<CR>
 
 " Buffers ([b ]b come from unimpaired)
+nnoremap <silent> <S-h> :bprevious<CR>
+nnoremap <silent> <S-l> :bnext<CR>
 nnoremap <Leader>bb :e #<CR>
 nnoremap <Leader>` :e #<CR>
 nnoremap <Leader>bd :Bdelete<CR>
 nnoremap <Leader>bD :bdelete<CR>
+command! BufOnly execute join(map(filter(getbufinfo({'buflisted': 1}), {_, b -> b.bufnr != bufnr('%')}), {_, b -> 'silent! bdelete ' . b.bufnr}), '<Bar>')
 nnoremap <Leader>bo :BufOnly<CR>
+nnoremap <Leader>bi :execute join(map(filter(getbufinfo({'buflisted': 1}), {_, b -> empty(b.windows)}), {_, b -> 'silent! bdelete ' . b.bufnr}), '<Bar>')<CR>
+nnoremap <Leader>fn :enew<CR>
 
 " Windows (C-h/j/k/l come from vim-tmux-navigator)
 nnoremap <Leader>ww <C-w>p
@@ -505,6 +488,11 @@ nnoremap <C-Left>  :vertical resize -2<CR>
 nnoremap <C-Right> :vertical resize +2<CR>
 command! ToggleWindowLayout call ToggleWindowLayout()
 nnoremap <silent> <Leader>wt :ToggleWindowLayout<CR>
+
+" Lazygit, as in Neovim
+if executable('lazygit')
+  nnoremap <Leader>gg :terminal ++curwin ++close lazygit<CR>
+endif
 
 " Tabs
 nnoremap <Leader><Tab><Tab> :tabnew<CR>
@@ -599,10 +587,10 @@ nnoremap <Leader><Tab>[ :tabprevious<CR>
     " Delete :Gedit buffers when moving to another object
     autocmd BufReadPost fugitive://* set bufhidden=delete
 
-    nnoremap <Leader>gg :Git<CR>
     nnoremap <Leader>gs :Git<CR>
     nnoremap <Leader>gb :Git blame<CR>
     nnoremap <Leader>gB :GBrowse<CR>
+    nnoremap <Leader>gY :GBrowse!<CR>
     nnoremap <Leader>gd :Gdiffsplit<CR>
     nnoremap <Leader>gf :0Gclog<CR>
     nnoremap <Leader>gl :Git log<CR>
@@ -650,18 +638,6 @@ nnoremap <Leader><Tab>[ :tabprevious<CR>
     let g:airline_theme = 'catppuccin_mocha'
 " }}}
 
-
-" netrw - built-in file browser {{{
-    " NOTE: Using NERDTree instead - only enable one file explorer at a time
-    " To switch to netrw from NERDTree:
-    " 1. Comment out the NERDTree section
-    " 2. Uncomment this section:
-    " let g:netrw_liststyle=3        " Use tree layout
-    " let g:netrw_banner=0           " Hide banner
-    " let g:netrw_browse_split=0     " Open files in same window
-    " let g:netrw_winsize=25         " Width of netrw window
-    " nnoremap <leader>e :Explore<CR> " Open explorer at current path
-" }}}
 
 " NERDTree {{{
     nnoremap <Leader>e :NERDTreeToggle<CR>
@@ -750,21 +726,6 @@ if PluginAvailable('vimwiki')
     " <Enter> - Follow/create wiki link
     " <Backspace> - Go back to previous wiki page
 endif
-" }}}
-
-" vim-eunuch {{{
-" Unix shell commands - provides commands like :Delete, :Move, :Rename, :Chmod
-" No configuration needed - just use the commands:
-" :Delete      Delete current file and buffer
-" :Move        Move/rename current file
-" :Rename      Rename current file (alias for :Move)
-" :Chmod       Change file permissions
-" :Mkdir       Create directory
-" :Find        Run find and load results into quickfix
-" :Locate      Run locate and load results into quickfix
-" :SudoWrite   Write file using sudo
-" :SudoEdit    Edit file using sudo
-" :Wall        Write all buffers
 " }}}
 
 
@@ -926,42 +887,6 @@ endfunction
     set foldtext=NeatFoldText()
 " }}}
 
-
-" Simple session management
-function! s:MakeSession(name)
-  let l:session_dir = expand('~/.vim/sessions')
-  if !isdirectory(l:session_dir)
-    call mkdir(l:session_dir, 'p')
-  endif
-  let l:filename = l:session_dir . '/' . a:name . '.vim'
-  execute 'mksession! ' . l:filename
-  echo 'Session saved to ' . l:filename
-endfunction
-
-function! s:LoadSession(name)
-  let l:session_dir = expand('~/.vim/sessions')
-  let l:filename = l:session_dir . '/' . a:name . '.vim'
-  if filereadable(l:filename)
-    execute 'source ' . l:filename
-    echo 'Session loaded from ' . l:filename
-  else
-    echo 'Session file not found: ' . l:filename
-  endif
-endfunction
-
-command! -nargs=1 SaveSession call s:MakeSession(<f-args>)
-command! -nargs=1 LoadSession call s:LoadSession(<f-args>)
-command! -complete=customlist,s:SessionComplete -nargs=1 LoadSession call s:LoadSession(<f-args>)
-
-function! s:SessionComplete(ArgLead, CmdLine, CursorPos)
-  let l:session_dir = expand('~/.vim/sessions')
-  let l:sessions = split(glob(l:session_dir . '/*.vim'), '\n')
-  let l:names = []
-  for session in l:sessions
-    let l:names += [fnamemodify(session, ':t:r')]
-  endfor
-  return filter(l:names, 'v:val =~ "^' . a:ArgLead . '"')
-endfunction
 
 " Vim configuration health check
 function! HealthCheck()

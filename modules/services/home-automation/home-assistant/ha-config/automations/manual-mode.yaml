@@ -28,13 +28,7 @@
     - action: automation.turn_off
       target:
         entity_id: "{{ targets }}"
-    - action: switch.turn_off
-      target:
-        entity_id: switch.home_adaptive_lighting_home
     else:
-    - action: switch.turn_on
-      target:
-        entity_id: switch.home_adaptive_lighting_home
     - action: automation.turn_on
       target:
         entity_id: "{{ targets }}"
@@ -59,6 +53,22 @@
       - input_boolean.party_mode
   mode: single
 
+- id: modes_adaptive_lighting
+  alias: "Modes: Adaptive Lighting off during party or manual mode"
+  description: Lights stay as they are while party or manual mode is on; Adaptive Lighting resumes when neither is.
+  triggers:
+  - entity_id:
+    - input_boolean.party_mode
+    - input_boolean.automations_paused
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  actions:
+  - action: "switch.turn_{{ 'off' if is_state('input_boolean.party_mode', 'on') or is_state('input_boolean.automations_paused', 'on') else 'on' }}"
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+  mode: queued
+
 - id: modes_party_end_hand_back
   alias: "Modes: hand back to automations when party mode ends"
   description: Fires automations_resumed (room lighting re-derives) and modes_ended (skipped bedtime steps catch up).
@@ -66,7 +76,38 @@
   - entity_id: input_boolean.party_mode
     to: "off"
     trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_paused
+    state: "off"
   actions:
   - event: automations_resumed
   - event: modes_ended
   mode: single
+
+- id: modes_one_at_a_time
+  alias: "Modes: one at a time, manual mode for admin only"
+  description: >-
+    Turning on party, manual or bedroom nap turns the other two off. Manual mode
+    switched on by anyone other than Arun is switched straight back off.
+  triggers:
+  - entity_id:
+    - input_boolean.party_mode
+    - input_boolean.automations_paused
+    - input_boolean.bedroom_nap
+    to: "on"
+    trigger: state
+  actions:
+  - if:
+    - "{{ trigger.entity_id == 'input_boolean.automations_paused' and trigger.to_state.context.user_id != 'a1d4401b8b714ebb83f07c5316ab399c' }}"
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.automations_paused
+    else:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: >-
+          {{ ['input_boolean.party_mode', 'input_boolean.automations_paused', 'input_boolean.bedroom_nap']
+             | reject('eq', trigger.entity_id) | list }}
+  mode: queued

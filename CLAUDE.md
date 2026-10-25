@@ -38,10 +38,12 @@ podman run --rm \
   -v <repo>/.../ha-config/automations:/config/automations:ro \
   # ...same read-only mounts as container.nix for lovelace/dashboards/packages/blueprints/scripts/scenes...
   -v /run/secrets/rendered/home-assistant/secrets.yaml:/config/secrets.yaml:ro \
+  $(nix eval --json <repo>#nixosConfigurations.sutala.config.virtualisation.quadlet.containers.home-assistant.containerConfig.volumes \
+    | jq -r '.[] | select(test("^/nix/store/.*:/config/custom_components/")) | "-v \(.)"') \
   --entrypoint python3 ghcr.io/home-assistant/home-assistant:<tag matching container.nix> \
   -m homeassistant --script check_config --config /config
 ```
-A "could not be validated and has been disabled" or "Failed config" line means a real bug; clean output means it's safe to deploy.
+The `nix eval` line mounts the Nix-pinned HACS integrations (`custom_components`), which the data dir doesn't hold; without it every package using one fails with "Integration '<name>' not found". A "could not be validated and has been disabled", "Failed config" or "Incorrect config" line means a real bug; clean output means it's safe to deploy.
 
 ## Architecture
 

@@ -769,16 +769,16 @@
     "tsk": {
       "flake": false,
       "locked": {
-        "lastModified": 1792156685,
-        "narHash": "sha256-6EHPIfipl43FnHOxODVQklujQcI9ck9jwxPQyZ1GP+s=",
+        "lastModified": 1792652065,
+        "narHash": "sha256-mfhISX0Ai9dOk9GZPSRFNqvzwAniU8pkGEE4eb5S5i0=",
         "owner": "smarzban",
         "repo": "tsk",
-        "rev": "82e934e9dc77192fedb184f986b1e1a26c3a8a7d",
+        "rev": "8e7c577dfcfa6f80b9bb9de0365947d7e40d438f",
         "type": "github"
       },
       "original": {
         "owner": "smarzban",
-        "ref": "v0.12.0",
+        "ref": "v0.13.0",
         "repo": "tsk",
         "type": "github"
       }

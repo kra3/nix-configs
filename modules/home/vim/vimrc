@@ -1099,7 +1099,7 @@ let s:runners = {
   \ 'scala': 'scala %:S',
   \ 'java': 'javac %:S && java -cp %:p:h:S %:t:r',
   \ }
-let s:open = has('mac') ? 'open' : 'xdg-open'
+let s:open = has('macunix') ? 'open' : 'xdg-open'
 augroup filetype_settings
   autocmd!
   autocmd FileType * if has_key(s:runners, &filetype) | execute 'nnoremap <buffer> <Leader>r :update<CR>:!' . s:runners[&filetype] . '<CR>' | endif

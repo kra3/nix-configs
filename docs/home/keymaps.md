@@ -95,7 +95,8 @@ Neovim is LazyVim, so only local additions and local deviations are listed. Old 
 | (none) | `<C-a>` `<C-x>` | Increment / decrement numbers, booleans, dates, `let`/`const`, `[ ]`/`[x]`, `and`/`or`, semver, hex colors | dial extra |
 | (none) | `<leader>cr` | Rename with live preview | inc-rename extra |
 | (none) | `<C-h/j/k/l>` | Window navigation, crossing tmux panes | vim-tmux-navigator |
-| (none) | `<leader>a{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
+| (none) | `<leader>ao{a,c,i}` | CodeCompanion actions / chat / inline | Ollama `qwen2.5-coder:14b` |
+| (none) | `<leader>a{c,f,r,C,b,s,a,d}` | Claude Code: toggle / focus / resume / continue / add buffer / send selection / accept diff / deny diff | claudecode extra, sutala only |
 
 Plugins added beyond LazyVim: the mini-surround, mini-files, dial and inc-rename extras, vim-abolish, vim-tmux-navigator, codecompanion.nvim (plus the language and Java wiring). The Vim-only plugins (fugitive, undotree, vimwiki, sleuth, eunuch) are not in Neovim. Settings: `colorcolumn=120` everywhere (no python/markdown width overrides).
 

@@ -112,6 +112,8 @@
       perLang = field: lib.concatMap (l: l.${field} or [ ]) (lib.attrValues enabled);
     in
     {
+      options.programs.neovim-claudecode.enable = lib.mkEnableOption "Claude Code integration in Neovim";
+
       options.programs.neovim-langs = lib.mapAttrs (name: l: {
         enable = lib.mkEnableOption "${name} support in Neovim" // {
           default = l.default;
@@ -153,7 +155,9 @@
               langs =
                 lib.mapAttrs (_: _: true) enabled
                 // lib.mapAttrs (_: _: false) (lib.removeAttrs languages (lib.attrNames enabled));
-              extras = lib.unique (perLang "extras");
+              extras = lib.unique (
+                perLang "extras" ++ lib.optional config.programs.neovim-claudecode.enable "ai.claudecode"
+              );
               tools = lib.unique (perLang "tools");
               bundles = perLang "bundles";
             }

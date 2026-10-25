@@ -14,6 +14,8 @@
     flakeModules.homeManager.home-music-lidarr-beets-retag
   ];
 
+  programs.neovim-claudecode.enable = true;
+
   catppuccin.enable = true;
   catppuccin.flavor = "mocha";
   catppuccin.accent = "blue";

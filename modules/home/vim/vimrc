@@ -478,7 +478,6 @@ command! BufOnly %bdelete | silent! edit # | silent! bdelete #
 nnoremap <Leader>bo :BufOnly<CR>
 nnoremap <Leader>bi :execute join(map(filter(getbufinfo({'buflisted': 1}), {_, b -> empty(b.windows)}), {_, b -> 'silent! bdelete ' . b.bufnr}), '<Bar>')<CR>
 nnoremap <Leader>fn :enew<CR>
-nnoremap <Leader>K :normal! K<CR>
 
 " Windows (C-h/j/k/l come from vim-tmux-navigator)
 nnoremap <Leader>ww <C-w>p

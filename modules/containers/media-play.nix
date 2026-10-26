@@ -250,8 +250,9 @@
                 );
               };
             };
+            systemd.services.navidrome.environment.GOMEMLIMIT = "384MiB";
             systemd.services.navidrome.serviceConfig = {
-              MemoryMax = "768M";
+              MemoryMax = "512M";
               CPUQuota = "100%";
             };
             systemd.services.alloy.serviceConfig = {

@@ -37,6 +37,25 @@ G_TASK="󰝖"    # nf-md-format-list-checks
 # stay identifiable even when some are absent (icalBuddy omits empty properties,
 # which would otherwise shift positional parsing). -nnr keeps notes on one line.
 IC=(icalBuddy -nc -nrd -nnr " " -b "" -ps "|\t|" -tf "%H:%M" -df "")
+EV_PROPS="datetime,title,location,url"
+
+# icalBuddy output is cached for TTL seconds (and dropped at midnight); the label,
+# meeting/task badge and popup are all derived from these two files.
+CACHE="${TMPDIR:-/tmp}/sketchybar-clock"
+EV_CACHE="$CACHE/events"
+TK_CACHE="$CACHE/tasks"
+TTL=300
+refresh_cache() {
+    command -v icalBuddy >/dev/null 2>&1 || return
+    local mt md
+    read -r mt md <<<"$(/usr/bin/stat -f '%m %Sm' -t '%F' "$TK_CACHE" 2>/dev/null)"
+    [ -n "$mt" ] && [ "$md" = "$(date +%F)" ] && [ $(($(date +%s) - mt)) -lt "$TTL" ] && return
+    mkdir -p "$CACHE"
+    "${IC[@]}" -po "$EV_PROPS" -iep "$EV_PROPS" eventsToday >"$EV_CACHE.$$" 2>/dev/null
+    mv -f "$EV_CACHE.$$" "$EV_CACHE"
+    icalBuddy -nc -nrd -npn -stda -itp "title" "tasksDueBefore:$(date -v+3m '+%Y-%m-%d')" >"$TK_CACHE.$$" 2>/dev/null
+    mv -f "$TK_CACHE.$$" "$TK_CACHE"
+}
 
 # Popup rows are locked to the bar height (36px), so background.height can't
 # tighten them; y_offset pulls each wrapped line + the detail up within its slot
@@ -120,12 +139,12 @@ populate() {
         z=$((z + 1))
     done
 
-    command -v icalBuddy >/dev/null 2>&1 || { sketchybar "${CLK_ARGS[@]}"; return; }
+    refresh_cache
+    [ -f "$EV_CACHE" ] || { sketchybar "${CLK_ARGS[@]}"; return; }
 
     # Tasks due within 3 months (overdue included). icalBuddy marks overdue with a
     # "!" bullet, others with "•"; -itp title drops the due-date line.
-    local tj=0 tline col txt tcut
-    tcut="$(date -v+3m '+%Y-%m-%d')"
+    local tj=0 tline col txt
     while IFS= read -r tline; do
         [ "$tj" -ge "$MAX_TASKS" ] && break
         case "$tline" in
@@ -140,13 +159,12 @@ populate() {
                 label.padding_left=6 width="$PW"
                 background.drawing=on background.color=0x00000000 background.height="$H_ROW")
         tj=$((tj + 1))
-    done < <(icalBuddy -nc -nrd -npn -stda -itp "title" "tasksDueBefore:$tcut" 2>/dev/null)
+    done <"$TK_CACHE"
 
     # Agenda: today's events → in-progress/all-day = Now, first upcoming = Next,
     # rest = Later; finished (end <= now) dropped. The click target is the event's
     # own url property (opened directly) — no link extraction from notes.
     local NEXT_REC="" ; local NOW_RECS=() ; local LATER_RECS=()
-    local props="datetime,title,location,url"
     local now_min=$((10#$(date +%H) * 60 + 10#$(date +%M)))
     local range title loc link start end sm em rec f F k s e t l w seen=""
     while IFS= read -r line; do
@@ -172,7 +190,7 @@ populate() {
         else
             NOW_RECS+=("$rec") # in-progress or all-day
         fi
-    done < <("${IC[@]}" -po "$props" -iep "$props" eventsToday 2>/dev/null)
+    done <"$EV_CACHE"
 
     if [ "${#NOW_RECS[@]}" -gt 0 ]; then
         add_header nowhdr "Now"
@@ -232,8 +250,18 @@ fi
 
 # Routine: refresh the label; show a running-meeting glyph and a bold task badge
 # (glyph + count) in the icon slot, divided from the date by a separator.
-running="$(icalBuddy -nc -b "" eventsNow 2>/dev/null | grep -c .)"
-tcount="$(icalBuddy -nc -b "" "tasksDueBefore:$(date -v+3m '+%Y-%m-%d')" 2>/dev/null | grep -c '^[^[:space:]]')"
+refresh_cache
+running=0
+now_min=$((10#$(date +%H) * 60 + 10#$(date +%M)))
+while IFS=$'\t' read -r range title _; do
+    [ -n "$title" ] || continue
+    start="${range%% - *}"; end="${range##* - }"
+    [ "$start" = "..." ] && start="00:00"; [ "$end" = "..." ] && end="24:00" # spans midnight
+    case "$start$end" in [0-9][0-9]:[0-9][0-9][0-9][0-9]:[0-9][0-9]) ;; *) continue ;; esac # all-day
+    sm=$((10#${start%%:*} * 60 + 10#${start##*:})); em=$((10#${end%%:*} * 60 + 10#${end##*:}))
+    [ "$sm" -le "$now_min" ] && [ "$em" -gt "$now_min" ] && running=$((running + 1))
+done 2>/dev/null <"$EV_CACHE"
+tcount="$(grep -c '^[!•] ' "$TK_CACHE" 2>/dev/null)"
 date_s="$(date '+%a %b %-d %H:%M')"
 icon=""; icol="$C_GREEN"
 [ "${running:-0}" -gt 0 ] 2>/dev/null && icon="$G_MEET"

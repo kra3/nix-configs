@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.rreading-glasses = {
         containerConfig = {
-          image = "docker.io/blampe/rreading-glasses:hardcover";
+          image = "docker.io/blampe/rreading-glasses:hardcover@sha256:3f017a51d9007b715303a20f481c822e4df66485fc9e5f57f6fdf1de840dc02f";
           # No publishPorts: bookshelf reaches it over the bridge at a pinned IP.
           logDriver = "journald";
           entrypoint = "/main";

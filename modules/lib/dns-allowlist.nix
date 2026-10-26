@@ -14,6 +14,8 @@
       "air.pc.cdn.bitgravity.com"
       "airhlspush.pc.cdn.bitgravity.com"
       "cdncache.bitg.net"
+      # Binimum lyrics API (Tubifarry in Lidarr) redirects here.
+      "lrc.red"
     ];
 
     # Also blocked by Cloudflare's family upstream, which an AdGuard allow rule can't override.

@@ -16,7 +16,8 @@
   alias: Kitchen — Lighting
   description: >-
     Presence + darkness; brightness left to Adaptive Lighting. Off after 2 min
-    without motion, or 5 min once presence has lasted 7 min or more.
+    without motion, or 5 min from 17:00 to 21:00 or once presence has lasted
+    7 min or more.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -24,106 +25,16 @@
       occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
       motion_sensor: binary_sensor.hue_pir_kitchen_occupancy
       dark_boolean: input_boolean.kitchen_is_dark
-      prolonged_presence_sensor: binary_sensor.room_presence_kitchen
+      long_clear_sensor: binary_sensor.kitchen_long_clear
 
 - id: kitchen_cooking_boost
   alias: Kitchen — Full brightness while cooking
   description: >-
-    After 2.5 min of continuous presence the kitchen lights go to 100 % and the
-    kitchen-dining lights come on with them when it is dark; when the room empties or
-    the lights go off, Adaptive Lighting takes over again and kitchen-dining goes off.
-    If the lights come back on while presence is still held, the boost is applied again.
-    Kitchen-dining stays on during party mode and is released when automations resume.
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.room_presence_kitchen
-    to: "on"
-    for: "00:02:30"
-    id: boost
-  - trigger: state
-    entity_id: light.kitchen_lights
-    to: "on"
-    id: boost
-  - trigger: state
-    entity_id: binary_sensor.room_presence_kitchen
-    to: "off"
-    id: release
-  - trigger: state
-    entity_id: light.kitchen_lights
-    to: "off"
-    id: release
-  - trigger: event
-    event_type: automations_resumed
-    id: release
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: boost
-      - condition: state
-        entity_id: binary_sensor.room_presence_kitchen
-        state: "on"
-        for: "00:02:30"
-      - condition: state
-        entity_id: light.kitchen_lights
-        state: "on"
-      - condition: state
-        entity_id: schedule.sleep
-        state: "off"
-      sequence:
-      - action: adaptive_lighting.set_manual_control
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights: light.kitchen_lights
-          manual_control: true
-      - action: light.turn_on
-        target:
-          entity_id: light.kitchen_lights
-        data:
-          brightness_pct: 100
-          transition: 5
-      - if:
-        - condition: state
-          entity_id: input_boolean.kitchen_is_dark
-          state: "on"
-        then:
-        - action: adaptive_lighting.set_manual_control
-          target:
-            entity_id: switch.home_adaptive_lighting_home
-          data:
-            lights: light.kitchen_dining_lights
-            manual_control: true
-        - action: light.turn_on
-          target:
-            entity_id: light.kitchen_dining_lights
-          data:
-            brightness_pct: 100
-            transition: 5
-    - conditions:
-      - condition: trigger
-        id: release
-      - condition: state
-        entity_id: input_boolean.party_mode
-        state: "off"
-      - or:
-        - condition: state
-          entity_id: binary_sensor.room_presence_kitchen
-          state: "off"
-        - condition: state
-          entity_id: light.kitchen_lights
-          state: "off"
-      sequence:
-      - action: adaptive_lighting.set_manual_control
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights:
-          - light.kitchen_lights
-          - light.kitchen_dining_lights
-          manual_control: false
-      - action: light.turn_off
-        target:
-          entity_id: light.kitchen_dining_lights
-        data:
-          transition: 5
+    Kitchen and kitchen-dining lights to 100 % while cooking in the evening.
+  use_blueprint:
+    path: local/presence-brightness-boost.yaml
+    input:
+      light_entity: light.kitchen_lights
+      presence_sensor: binary_sensor.room_presence_kitchen
+      dark_boolean: input_boolean.kitchen_is_dark
+      companion_light: light.kitchen_dining_lights

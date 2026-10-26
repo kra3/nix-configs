@@ -30,76 +30,11 @@
 - id: dining_meal_boost
   alias: Dining room — Full brightness while seated
   description: >-
-    After 2.5 min of continuous presence in the evening the lights go to 100 %;
-    when the room empties or the lights go off, Adaptive Lighting takes over again.
-    If the lights come back on while presence is still held, the boost is applied again.
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.room_presence_dining
-    to: "on"
-    for: "00:02:30"
-    id: boost
-  - trigger: state
-    entity_id: light.dining_lights
-    to: "on"
-    id: boost
-  - trigger: state
-    entity_id: binary_sensor.room_presence_dining
-    to: "off"
-    id: release
-  - trigger: state
-    entity_id: light.dining_lights
-    to: "off"
-    id: release
-  actions:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: boost
-      - condition: state
-        entity_id: binary_sensor.room_presence_dining
-        state: "on"
-        for: "00:02:30"
-      - condition: state
-        entity_id: light.dining_lights
-        state: "on"
-      - condition: state
-        entity_id: schedule.sleep
-        state: "off"
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: media_player.lg_webos_tv_oled77c35la
-          state: playing
-      - condition: time
-        after: "17:00:00"
-        before: "22:00:00"
-      sequence:
-      - action: adaptive_lighting.set_manual_control
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights: light.dining_lights
-          manual_control: true
-      - action: light.turn_on
-        target:
-          entity_id: light.dining_lights
-        data:
-          brightness_pct: 100
-          transition: 5
-    - conditions:
-      - condition: trigger
-        id: release
-      sequence:
-      - action: adaptive_lighting.set_manual_control
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights: light.dining_lights
-          manual_control: false
-      - action: adaptive_lighting.apply
-        target:
-          entity_id: switch.home_adaptive_lighting_home
-        data:
-          lights: light.dining_lights
-          turn_on_lights: false
+    Dining lights to 100 % while seated in the evening, unless the TV is playing.
+  use_blueprint:
+    path: local/presence-brightness-boost.yaml
+    input:
+      light_entity: light.dining_lights
+      presence_sensor: binary_sensor.room_presence_dining
+      dark_boolean: input_boolean.dining_is_dark
+      media_player_entity: media_player.lg_webos_tv_oled77c35la

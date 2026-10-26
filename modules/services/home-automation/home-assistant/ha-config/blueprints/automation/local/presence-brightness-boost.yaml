@@ -1,0 +1,140 @@
+blueprint:
+  name: Presence brightness boost
+  description: >-
+    When it is dark between 18:00 and 23:00 and the room has been occupied for
+    2.5 min, the light (and an optional companion light) goes to 100 %. If the
+    light comes back on while presence is still held, the boost is applied
+    again. When the room empties or the light goes off, Adaptive Lighting takes
+    the light back and the companion goes off. Party mode holds the boost; it
+    is released when automations resume.
+  domain: automation
+  input:
+    light_entity:
+      name: Light
+      selector:
+        entity:
+          domain: light
+    presence_sensor:
+      name: Presence sensor
+      selector:
+        entity:
+          domain: binary_sensor
+    dark_boolean:
+      name: '"Is dark" helper'
+      selector:
+        entity:
+          domain: input_boolean
+    companion_light:
+      name: Companion light (optional)
+      description: Turned on with the boost and off on release.
+      default: ""
+      selector:
+        entity:
+          domain: light
+    media_player_entity:
+      name: Block while playing (optional)
+      description: No boost while this player is playing.
+      default: ""
+      selector:
+        entity:
+          domain: media_player
+
+triggers:
+  - trigger: state
+    entity_id: !input presence_sensor
+    to: "on"
+    for: "00:02:30"
+    id: boost
+  - trigger: state
+    entity_id: !input light_entity
+    to: "on"
+    id: boost
+  - trigger: state
+    entity_id: !input presence_sensor
+    to: "off"
+    id: release
+  - trigger: state
+    entity_id: !input light_entity
+    to: "off"
+    id: release
+  - trigger: event
+    event_type: automations_resumed
+    id: release
+
+variables:
+  light_entity: !input light_entity
+  companion: !input companion_light
+  media_player_entity: !input media_player_entity
+  lights: "{{ [light_entity] + ([companion] if companion else []) }}"
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: boost
+          - condition: state
+            entity_id: !input presence_sensor
+            state: "on"
+            for: "00:02:30"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+          - condition: state
+            entity_id: !input dark_boolean
+            state: "on"
+          - condition: state
+            entity_id: schedule.sleep
+            state: "off"
+          - condition: time
+            after: "18:00:00"
+            before: "23:00:00"
+          - condition: template
+            value_template: "{{ not is_state(media_player_entity, 'playing') }}"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            target:
+              entity_id: switch.home_adaptive_lighting_home
+            data:
+              lights: "{{ lights }}"
+              manual_control: true
+          - action: light.turn_on
+            target:
+              entity_id: "{{ lights }}"
+            data:
+              brightness_pct: 100
+              transition: 5
+      - conditions:
+          - condition: trigger
+            id: release
+          - condition: state
+            entity_id: input_boolean.party_mode
+            state: "off"
+          - or:
+              - condition: state
+                entity_id: !input presence_sensor
+                state: "off"
+              - condition: state
+                entity_id: !input light_entity
+                state: "off"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            target:
+              entity_id: switch.home_adaptive_lighting_home
+            data:
+              lights: "{{ lights }}"
+              manual_control: false
+          - action: adaptive_lighting.apply
+            target:
+              entity_id: switch.home_adaptive_lighting_home
+            data:
+              lights: "{{ light_entity }}"
+              turn_on_lights: false
+          - if:
+              - condition: template
+                value_template: "{{ companion != '' }}"
+            then:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ companion }}"
+                data:
+                  transition: 5

@@ -7,19 +7,19 @@ rest:
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'album') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
       - name: Navidrome artists
         unique_id: navidrome_artists
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'artist') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
       - name: Navidrome tracks
         unique_id: navidrome_tracks
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.model', 'eq', 'media') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
   - resource: "http://10.3.255.2:9090/api/v1/query?query=media_scan_last"
     scan_interval: 600
     sensor:
@@ -28,7 +28,7 @@ rest:
         device_class: timestamp
         value_template: >-
           {% set r = value_json.data.result %}
-          {{ as_datetime(r[0].value[1] | float).isoformat() if r else none }}
+          {{ as_datetime(r[0].value[1] | float).isoformat() if r else 'unknown' }}
   - resource: "http://10.3.255.2:9090/api/v1/query?query=%7Bjob%3D%22slskd%22%2C__name__%3D~%22slskd_transfers_downloads_.%2A%22%7D"
     scan_interval: 60
     sensor:
@@ -38,25 +38,25 @@ rest:
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_speed_total_current') | list %}
-          {{ (r[0].value[1] | float / 1000000) | round(2) if r else none }}
+          {{ (r[0].value[1] | float / 1000000) | round(2) if r else 'unknown' }}
       - name: Slskd active downloads
         unique_id: slskd_active_downloads
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_in_progress_files_current') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
       - name: Slskd queued downloads
         unique_id: slskd_queued_downloads
         state_class: measurement
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_queued_files_current') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
       - name: Slskd completed downloads
         unique_id: slskd_completed_downloads
         state_class: total_increasing
         value_template: >-
           {% set r = value_json.data.result | selectattr('metric.__name__', 'eq', 'slskd_transfers_downloads_completed_succeeded') | list %}
-          {{ r[0].value[1] | int if r else none }}
+          {{ r[0].value[1] | int if r else 'unknown' }}
   - resource: https://jellyfin.karunagath.in/Items/Counts
     scan_interval: 1800
     headers:

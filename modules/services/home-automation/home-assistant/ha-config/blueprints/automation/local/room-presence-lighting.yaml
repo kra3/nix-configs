@@ -180,7 +180,7 @@ triggers:
     id: became_dark
   - entity_id: !input occupancy_sensor
     to: "off"
-    for: &clear_delay "{{ '00:%02d:00' % long_clear if long_sensor != '' and is_state(long_sensor, 'on') else '00:02:00' }}"
+    for: &clear_delay "{{ '00:%02d:00' % long_clear if is_state(long_sensor, 'on') else '00:02:00' }}"
     trigger: state
     id: clear
   - entity_id: !input motion_sensor

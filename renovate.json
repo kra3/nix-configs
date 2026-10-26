@@ -6,7 +6,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/^modules/.*\\.nix$/"],
       "matchStrings": [
-        "image\\s*=\\s*\"(?<depName>[^:\"]+):(?<currentValue>[^\"]+)\"\\s*;"
+        "image\\s*=\\s*\"(?<depName>[^:\"]+):(?<currentValue>[^\"@]+)(@(?<currentDigest>sha256:[a-f0-9]+))?\"\\s*;"
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"

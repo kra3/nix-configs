@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.unpackerr = {
         containerConfig = {
-          image = "ghcr.io/unpackerr/unpackerr:v0.16.1";
+          image = "ghcr.io/unpackerr/unpackerr:v1.0.0";
           publishPorts = [ "127.0.0.1:5656:5656" ];
           logDriver = "journald";
           user = "1000:2000";

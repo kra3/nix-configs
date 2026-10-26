@@ -456,7 +456,7 @@ actions:
           - condition: template
             value_template: >-
               {%- from 'elapsed.jinja' import elapsed_ge -%}
-              {{ elapsed_ge(occupancy_sensor, 120) and elapsed_ge(motion_sensor, 120) }}
+              {{ (elapsed_ge(occupancy_sensor, 120) | bool) and (elapsed_ge(motion_sensor, 120) | bool) }}
           - condition: not
             conditions:
               - condition: state

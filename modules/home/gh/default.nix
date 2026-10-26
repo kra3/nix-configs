@@ -2,7 +2,13 @@
   flake.homeManagerModules.home-gh-default = { pkgs, ... }: {
     programs.gh = {
       enable = true;
-      extensions = [ pkgs.gh-dash ];
+      extensions = [
+        pkgs.gh-dash
+        pkgs.gh-eco
+        pkgs.gh-f
+        pkgs.gh-s
+        pkgs.gh-stack
+      ];
       settings = {
         git_protocol = "ssh";
         editor = "vim";

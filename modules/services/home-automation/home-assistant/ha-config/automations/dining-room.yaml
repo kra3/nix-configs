@@ -30,13 +30,18 @@
 - id: dining_meal_boost
   alias: Dining room — Full brightness while seated
   description: >-
-    After 5 min of continuous presence in the evening the lights go to 100 %;
+    After 2.5 min of continuous presence in the evening the lights go to 100 %;
     when the room empties or the lights go off, Adaptive Lighting takes over again.
+    If the lights come back on while presence is still held, the boost is applied again.
   triggers:
   - trigger: state
     entity_id: binary_sensor.room_presence_dining
     to: "on"
-    for: "00:05:00"
+    for: "00:02:30"
+    id: boost
+  - trigger: state
+    entity_id: light.dining_lights
+    to: "on"
     id: boost
   - trigger: state
     entity_id: binary_sensor.room_presence_dining
@@ -51,6 +56,10 @@
     - conditions:
       - condition: trigger
         id: boost
+      - condition: state
+        entity_id: binary_sensor.room_presence_dining
+        state: "on"
+        for: "00:02:30"
       - condition: state
         entity_id: light.dining_lights
         state: "on"

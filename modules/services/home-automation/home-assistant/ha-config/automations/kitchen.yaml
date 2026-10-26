@@ -30,9 +30,10 @@
 - id: kitchen_cooking_boost
   alias: Kitchen — Full brightness while cooking
   description: >-
-    After 2.5 min of continuous presence the kitchen lights go to 100 % and the
-    kitchen-dining lights come on with them when it is dark; when the room empties or
-    the lights go off, Adaptive Lighting takes over again and kitchen-dining goes off.
+    From 17:00 to 21:00, after 2.5 min of continuous presence the kitchen lights go
+    to 100 % and the kitchen-dining lights come on with them when it is dark; when the
+    room empties or the lights go off, Adaptive Lighting takes over again and
+    kitchen-dining goes off.
     If the lights come back on while presence is still held, the boost is applied again.
     Kitchen-dining stays on during party mode and is released when automations resume.
   triggers:
@@ -71,6 +72,9 @@
       - condition: state
         entity_id: schedule.sleep
         state: "off"
+      - condition: time
+        after: "17:00:00"
+        before: "21:00:00"
       sequence:
       - action: adaptive_lighting.set_manual_control
         target:
@@ -123,6 +127,12 @@
           - light.kitchen_lights
           - light.kitchen_dining_lights
           manual_control: false
+      - action: adaptive_lighting.apply
+        target:
+          entity_id: switch.home_adaptive_lighting_home
+        data:
+          lights: light.kitchen_lights
+          turn_on_lights: false
       - action: light.turn_off
         target:
           entity_id: light.kitchen_dining_lights

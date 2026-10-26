@@ -18,8 +18,8 @@ blueprint:
     after dim_after_minutes without presence, and goes off when nobody is
     home. Optional: sustained_brightness after 2 min of occupancy,
     clear_brightness instead of off when clear outside sleep hours,
-    off_when_away (off and no reaction while nobody is home),
-    pause_during_alarm (no reaction while the alarm is pending/triggered).
+    off_when_away (off and no reaction while nobody is home). No reaction
+    while the alarm is pending or triggered.
   domain: automation
   input:
     light_entity:
@@ -196,14 +196,6 @@ blueprint:
       default: false
       selector:
         boolean:
-    pause_during_alarm:
-      name: Pause during alarm
-      description: >-
-        No reaction while alarm_control_panel.vasudha_secure is pending or
-        triggered.
-      default: false
-      selector:
-        boolean:
 
 trigger_variables:
   long_sensor: !input long_clear_sensor
@@ -265,17 +257,13 @@ conditions:
   - condition: state
     entity_id: !input dark_boolean
     state: "on"
-  - condition: or
+  - condition: not
     conditions:
-      - condition: template
-        value_template: "{{ not pause_during_alarm }}"
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: alarm_control_panel.vasudha_secure
-            state:
-              - pending
-              - triggered
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state:
+          - pending
+          - triggered
 
 variables:
   on_brightness: !input on_brightness
@@ -300,7 +288,6 @@ variables:
   sustained_brightness: !input sustained_brightness
   clear_brightness: !input clear_brightness
   off_when_away: !input off_when_away
-  pause_during_alarm: !input pause_during_alarm
   startup_like: "{{ trigger.id == 'startup' or (off_when_away and trigger.id == 'arrive') }}"
   away: >-
     {{ not home and not is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') and (evening_hold or off_when_away) }}

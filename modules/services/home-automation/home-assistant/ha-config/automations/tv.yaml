@@ -21,11 +21,9 @@
     trigger: state
   actions:
   - if:
-    - condition: device
-      device_id: 346b2b9e49e306b3d7e24530babb842c
-      domain: media_player
-      entity_id: d82eff522a62e356a89979d2dd74f5df
-      type: is_off
+    - condition: state
+      entity_id: media_player.lg_webos_tv_oled77c35la
+      state: "off"
     then:
     - repeat:
         count: 5
@@ -75,10 +73,9 @@
         value_template: >-
           {{ states('sensor.openweathermap_cloud_coverage') | float(0) > 70 }}
     then:
-    - type: turn_on
-      device_id: 5c2c4c65f834231378af61d835ec513a
-      entity_id: light.tv_backlight
-      domain: light
+    - action: light.turn_on
+      target:
+        entity_id: light.tv_backlight
   - action: media_player.turn_on
     target:
       entity_id: media_player.home_theater_2
@@ -143,20 +140,14 @@
     Turns off backlight when TV powers off; also turns off the home
     theater, but only if its source was TV Audio or PS5 passthrough.
   triggers:
-  - device_id: 346b2b9e49e306b3d7e24530babb842c
-    domain: media_player
-    entity_id: d82eff522a62e356a89979d2dd74f5df
-    type: turned_off
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 30
-    trigger: device
+  - trigger: state
+    entity_id: media_player.lg_webos_tv_oled77c35la
+    to: "off"
+    for: "00:00:30"
   actions:
-  - type: turn_off
-    device_id: 5c2c4c65f834231378af61d835ec513a
-    entity_id: light.tv_backlight
-    domain: light
+  - action: light.turn_off
+    target:
+      entity_id: light.tv_backlight
   - if:
     - condition: template
       value_template: >-

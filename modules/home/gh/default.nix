@@ -4,6 +4,9 @@
       enable = true;
       extensions = [
         pkgs.gh-dash
+        pkgs.gh-eco
+        pkgs.gh-f
+        pkgs.gh-s
         pkgs.gh-stack
       ];
       settings = {

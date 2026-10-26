@@ -16,7 +16,8 @@
   alias: Kitchen — Lighting
   description: >-
     Presence + darkness; brightness left to Adaptive Lighting. Off after 2 min
-    without motion, or 5 min once presence has lasted 7 min or more.
+    without motion, or 5 min from 17:00 to 21:00 or once presence has lasted
+    7 min or more.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -24,7 +25,7 @@
       occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
       motion_sensor: binary_sensor.hue_pir_kitchen_occupancy
       dark_boolean: input_boolean.kitchen_is_dark
-      prolonged_presence_sensor: binary_sensor.room_presence_kitchen
+      long_clear_sensor: binary_sensor.kitchen_long_clear
 
 - id: kitchen_cooking_boost
   alias: Kitchen — Full brightness while cooking

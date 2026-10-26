@@ -146,26 +146,18 @@ blueprint:
       selector:
         entity:
           domain: switch
-    prolonged_presence_sensor:
-      name: Prolonged-presence sensor (optional)
+    long_clear_sensor:
+      name: Long-clear sensor (optional)
       description: >-
-        If this sensor has been on for "Prolonged after (min)" when the room
-        goes clear, the off debounce is "Prolonged clear delay (min)" instead
-        of 2 min. Leave empty to always use 2 min.
+        If this sensor is on when the room goes clear, the off debounce is
+        "Long clear delay (min)" instead of 2 min. Leave empty to always use
+        2 min.
       default: ""
       selector:
         entity:
           domain: binary_sensor
-    prolonged_after_minutes:
-      name: Prolonged after (min)
-      default: 7
-      selector:
-        number:
-          min: 1
-          max: 240
-          unit_of_measurement: min
-    prolonged_clear_minutes:
-      name: Prolonged clear delay (min)
+    long_clear_minutes:
+      name: Long clear delay (min)
       default: 5
       selector:
         number:
@@ -174,9 +166,8 @@ blueprint:
           unit_of_measurement: min
 
 trigger_variables:
-  prolonged_sensor: !input prolonged_presence_sensor
-  prolonged_after: !input prolonged_after_minutes
-  prolonged_clear: !input prolonged_clear_minutes
+  long_sensor: !input long_clear_sensor
+  long_clear: !input long_clear_minutes
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -189,16 +180,12 @@ triggers:
     id: became_dark
   - entity_id: !input occupancy_sensor
     to: "off"
-    for: >-
-      {%- set long = prolonged_sensor != '' and is_state(prolonged_sensor, 'on') and (now() - states[prolonged_sensor].last_changed).total_seconds() >= prolonged_after * 60 -%}
-      {{ '00:%02d:00' % prolonged_clear if long else '00:02:00' }}
+    for: &clear_delay "{{ '00:%02d:00' % long_clear if long_sensor != '' and is_state(long_sensor, 'on') else '00:02:00' }}"
     trigger: state
     id: clear
   - entity_id: !input motion_sensor
     to: "off"
-    for: >-
-      {%- set long = prolonged_sensor != '' and is_state(prolonged_sensor, 'on') and (now() - states[prolonged_sensor].last_changed).total_seconds() >= prolonged_after * 60 -%}
-      {{ '00:%02d:00' % prolonged_clear if long else '00:02:00' }}
+    for: *clear_delay
     trigger: state
     id: motion_clear
   - entity_id: schedule.sleep

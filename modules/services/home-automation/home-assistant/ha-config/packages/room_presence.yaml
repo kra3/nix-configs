@@ -7,6 +7,13 @@ template:
         state: "{{ is_state('binary_sensor.hue_pir_kitchen_occupancy', 'on') }}"
         delay_off: "00:05:00"
 
+      - name: "Kitchen Long Clear"
+        unique_id: kitchen_long_clear
+        state: >-
+          {{ 17 <= now().hour < 21
+             or (is_state('binary_sensor.room_presence_kitchen', 'on')
+                 and now() - states.binary_sensor.room_presence_kitchen.last_changed >= timedelta(minutes=7)) }}
+
       - name: "Room Presence Dining"
         unique_id: room_presence_dining
         device_class: occupancy

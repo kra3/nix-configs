@@ -25,19 +25,19 @@ notify_all_phones:
   - if: "{{ critical | default(false) }}"
     then:
     - parallel:
-      - &critical_push
-        action: notify.mobile_app_meghanadha
-        continue_on_error: true
-        data:
-          title: "{{ title | default(omit) }}"
-          message: "{{ message }}"
+      - action: notify.mobile_app_meghanadha
+        <<: &critical_push
+          continue_on_error: true
           data:
-            push:
-              interruption-level: critical
-              sound:
-                name: default
-                critical: 1
-                volume: 1.0
+            title: "{{ title | default(omit) }}"
+            message: "{{ message }}"
+            data:
+              push:
+                interruption-level: critical
+                sound:
+                  name: default
+                  critical: 1
+                  volume: 1.0
       - <<: *critical_push
         action: notify.mobile_app_hiranyagarbha
     - if: "{{ escalated | default(false) }}"

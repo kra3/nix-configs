@@ -18,8 +18,8 @@
         enable = true;
         openFirewall = false;
         # Keep at least one plugin: the 26.05 module's Plugins.Folder only exists when the unstable wrapper bundles one.
-        package = unstable.navidrome.override {
-          wasmPlugins = with unstable.pkgsCross.wasi32.navidromePlugins; [
+        package = unstable.navidrome.withPlugins (
+          p: with p; [
             apple-music
             listenbrainz-daily-playlist
             lyrics-plugin
@@ -35,8 +35,8 @@
               "https://github.com/bcorporaal/navidrome-play-it-again/releases/download/v2.0.0/play-it-again.ndp"
               "sha256-IIZ1f1ex1Tu3syu7zDKzBq8KVR14N/lKvxghgXTvM/s="
             )
-          ];
-        };
+          ]
+        );
         settings = {
           Address = "0.0.0.0";
           Port = 4533;

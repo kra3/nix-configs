@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.bookshelf = {
         containerConfig = {
-          image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.20.129";
+          image = "ghcr.io/pennydreadful/bookshelf:hardcover-v0.4.21.182";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

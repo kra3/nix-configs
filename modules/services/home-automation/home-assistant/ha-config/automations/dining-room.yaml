@@ -23,18 +23,18 @@
       occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
       motion_sensor: binary_sensor.ranger_duo_ptz_motion
       dark_boolean: input_boolean.dining_is_dark
-      media_player_entity: media_player.lg_webos_tv_oled77c35la
+      block_entity: binary_sensor.tv_watching
       evening_hold: true
       adaptive_lighting_switch: switch.home_adaptive_lighting_home
 
 - id: dining_meal_boost
   alias: Dining room — Full brightness while seated
   description: >-
-    Dining lights to 100 % while seated in the evening, unless the TV is playing.
+    Dining lights to 100 % while seated in the evening, unless a film is playing on the TV.
   use_blueprint:
     path: local/presence-brightness-boost.yaml
     input:
       light_entity: light.dining_lights
       presence_sensor: binary_sensor.room_presence_dining
       dark_boolean: input_boolean.dining_is_dark
-      media_player_entity: media_player.lg_webos_tv_oled77c35la
+      block_entity: binary_sensor.tv_watching

@@ -14,6 +14,12 @@ template:
              or (is_state('binary_sensor.room_presence_kitchen', 'on')
                  and now() - states.binary_sensor.room_presence_kitchen.last_changed >= timedelta(minutes=7)) }}
 
+      - name: "TV Watching"
+        unique_id: tv_watching
+        state: >-
+          {{ is_state('media_player.lg_webos_tv_oled77c35la', ['playing', 'buffering'])
+             and state_attr('media_player.lg_webos_tv_oled77c35la', 'source') in ['Litefin', 'Moonfin', 'Jellyfin', 'Apple TV'] }}
+
       - name: "Room Presence Dining"
         unique_id: room_presence_dining
         device_class: occupancy

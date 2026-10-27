@@ -317,6 +317,7 @@ variables:
   away: >-
     {{ not home and not is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') and (evening_hold or off_when_away) }}
   handback: "{{ evening_hold and al_switch != '' }}"
+  pin: "{{ al_switch != '' and not evening_hold }}"
 
 actions:
   - choose:
@@ -409,6 +410,15 @@ actions:
           - condition: template
             value_template: "{{ not media_blocks }}"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ pin and (sleep_brightness if is_state('schedule.sleep', 'on') else sustained_brightness) is not none }}"
+            then: &pin_on
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: "{{ al_switch }}"
+                  lights: "{{ light_entity }}"
+                  manual_control: true
           - target:
               entity_id: !input light_entity
             data: >-
@@ -461,6 +471,10 @@ actions:
                   entity_id: "{{ al_switch }}"
                   lights: "{{ light_entity }}"
                   manual_control: false
+          - if:
+              - condition: template
+                value_template: "{{ pin and (sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness) is not none }}"
+            then: *pin_on
           - target:
               entity_id: !input light_entity
             data: >-
@@ -494,6 +508,10 @@ actions:
                   transition: 3
                 action: light.turn_off
             else:
+              - if:
+                  - condition: template
+                    value_template: "{{ pin }}"
+                then: *pin_on
               - target:
                   entity_id: !input light_entity
                 data:
@@ -599,6 +617,10 @@ actions:
           - condition: template
             value_template: "{{ not media_blocks }}"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ pin }}"
+            then: *pin_on
           - target:
               entity_id: !input light_entity
             data:
@@ -624,6 +646,10 @@ actions:
           - condition: template
             value_template: "{{ not media_blocks }}"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ pin and (sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness) is not none }}"
+            then: *pin_on
           - target:
               entity_id: !input light_entity
             data: >-
@@ -649,6 +675,10 @@ actions:
                 entity_id: input_boolean.party_mode
                 state: "on"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ pin }}"
+            then: *pin_on
           - target:
               entity_id: !input light_entity
             data:

@@ -5,7 +5,9 @@ blueprint:
     2.5 min, the light (and an optional companion light) goes to 100 %. If the
     light comes back on while presence is still held, the boost is applied
     again. The boost also applies when the window opens or it turns dark while
-    the room is occupied. When the room empties or the light goes off,
+    the room is occupied, and is re-checked after a restart or when
+    automations resume, once presence has been held 2.5 min. When the room
+    empties or the light goes off,
     Adaptive Lighting takes the light back and the companion goes off. Party
     mode holds the boost; it
     is released when automations resume. No reaction while the alarm is
@@ -70,6 +72,12 @@ triggers:
   - trigger: event
     event_type: automations_resumed
     id: release
+  - trigger: homeassistant
+    event: start
+    id: reconcile
+  - trigger: event
+    event_type: automations_resumed
+    id: reconcile
 
 conditions:
   - condition: not
@@ -82,15 +90,26 @@ conditions:
 
 variables:
   light_entity: !input light_entity
+  presence: !input presence_sensor
   companion: !input companion_light
   block_entity: !input block_entity
   lights: "{{ [light_entity] + ([companion] if companion else []) }}"
 
 actions:
+  - if:
+      - condition: trigger
+        id: reconcile
+    then:
+      - delay:
+          seconds: >-
+            {{ [0, 155 - (now() - states[presence].last_changed).total_seconds()]
+               | max | int if is_state(presence, 'on') else 0 }}
   - choose:
       - conditions:
           - condition: trigger
-            id: boost
+            id:
+              - boost
+              - reconcile
           - condition: state
             entity_id: !input presence_sensor
             state: "on"
@@ -157,3 +176,5 @@ actions:
                   entity_id: "{{ companion }}"
                 data:
                   transition: 5
+
+mode: parallel

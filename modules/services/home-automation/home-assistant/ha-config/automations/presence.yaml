@@ -55,7 +55,7 @@
   description: >-
     When the last tracked person leaves, waits out a 5min confirm timer
     (timer.everyone_left_home_confirm, restart-safe) then ends party and
-    manual mode, turns off all lights and arms Alarmo away, notifying
+    manual mode and arms Alarmo away (arming turns the lights off), notifying
     either way. When armed vacation it only ends the modes and notifies:
     arming already turned the lights off and the simulation owns them.
   triggers:
@@ -116,9 +116,6 @@
             title: Home
             message: Everyone left — the alarm stays armed vacation
         - stop: Armed vacation
-      - action: light.turn_off
-        target:
-          entity_id: all
       - action: alarmo.arm
         data:
           entity_id: alarm_control_panel.vasudha_secure

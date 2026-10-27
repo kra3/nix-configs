@@ -62,9 +62,10 @@ def lint(path, id, item, owner_alarm=False, owner_notify=False, owner_tv=False):
             fail("tv-owner", act)
 
     triggers = item.get("triggers") or item.get("trigger") or []
-    if item.get("mode") == "restart" and isinstance(triggers, list) and len(triggers) > 1:
+    ids = {t.get("id") for t in triggers if isinstance(t, dict) and t.get("id")} if isinstance(triggers, list) else set()
+    if item.get("mode") == "restart" and len(ids) > 1:
         if any(isinstance(n, dict) and long_wait(n) for n in walk(item.get("actions") or item.get("action"))):
-            fail("restart-wait", "mode: restart with several triggers and a wait/delay of 60 s or more")
+            fail("restart-wait", "mode: restart with several trigger ids and a wait/delay of 60 s or more")
 
     tv = item.get("trigger_variables")
     if tv:

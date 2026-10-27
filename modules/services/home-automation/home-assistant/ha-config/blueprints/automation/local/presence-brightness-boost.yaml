@@ -6,7 +6,8 @@ blueprint:
     light comes back on while presence is still held, the boost is applied
     again. When the room empties or the light goes off, Adaptive Lighting takes
     the light back and the companion goes off. Party mode holds the boost; it
-    is released when automations resume.
+    is released when automations resume. No reaction while the alarm is
+    pending or triggered.
   domain: automation
   input:
     light_entity:
@@ -60,6 +61,15 @@ triggers:
   - trigger: event
     event_type: automations_resumed
     id: release
+
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state:
+          - pending
+          - triggered
 
 variables:
   light_entity: !input light_entity

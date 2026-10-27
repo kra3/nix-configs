@@ -73,7 +73,7 @@
         entity_id: alarm_control_panel.vasudha_secure
         state: armed_night
     then:
-    - action: script.notify_all_phones
+    - action: script.notify
       data:
         title: Alarm not armed
         critical: true

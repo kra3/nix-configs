@@ -9,7 +9,7 @@
     to: "on"
     trigger: state
   actions:
-  - action: script.notify_all_phones
+  - action: script.notify
     data:
       title: "VMA active"
       message: >-

@@ -1,7 +1,7 @@
-notify_all_phones:
-  alias: "Notify: all phones"
+notify:
+  alias: "Notify: phones"
   description: >-
-    Notifies the phones; critical (iOS critical alert, via mobile_app actions) goes to Arun only unless escalated.
+    Notifies phones. to: all (default), home (only residents at home) or a list of person entity ids; critical (iOS critical alert, via mobile_app actions) goes to Arun only unless escalated.
   fields:
     title:
       required: false
@@ -11,6 +11,11 @@ notify_all_phones:
       required: true
       selector:
         text:
+    to:
+      required: false
+      default: all
+      selector:
+        object:
     critical:
       required: false
       default: false
@@ -21,6 +26,22 @@ notify_all_phones:
       default: false
       selector:
         boolean:
+  variables:
+    phones:
+      person.arun_karunagath:
+      - meghanadha
+      - hiranyagarbha
+      person.anjalipc:
+      - anjalis_iphone
+    people: >-
+      {%- set t = to | default('all') -%}
+      {%- if t == 'all' -%}{{ phones.keys() | list }}
+      {%- elif t == 'home' -%}{{ phones.keys() | select('is_state', 'home') | list }}
+      {%- else -%}{{ [t] if t is string else t }}{%- endif -%}
+    devices: >-
+      {%- set ns = namespace(d=[]) -%}
+      {%- for p in people %}{% set ns.d = ns.d + phones[p] %}{% endfor -%}
+      {{ ns.d }}
   sequence:
   - if: "{{ critical | default(false) }}"
     then:
@@ -45,15 +66,46 @@ notify_all_phones:
       - <<: *critical_push
         action: notify.mobile_app_anjalis_iphone
     else:
-    - action: notify.send_message
-      target:
-        entity_id:
-        - notify.meghanadha
-        - notify.anjalis_iphone
-        - notify.hiranyagarbha
-      data:
-        title: "{{ title | default(omit) }}"
-        message: "{{ message }}"
+    - if: "{{ devices | count > 0 }}"
+      then:
+      - action: notify.send_message
+        target:
+          entity_id: "{{ devices | map('regex_replace', '^', 'notify.') | list }}"
+        data:
+          title: "{{ title | default(omit) }}"
+          message: "{{ message }}"
+  mode: parallel
+
+notify_all_phones:
+  alias: "Notify: all phones"
+  description: Alias for script.notify addressed to everyone, kept for existing callers.
+  fields:
+    title:
+      required: false
+      selector:
+        text:
+    message:
+      required: true
+      selector:
+        text:
+    critical:
+      required: false
+      default: false
+      selector:
+        boolean:
+    escalated:
+      required: false
+      default: false
+      selector:
+        boolean:
+  sequence:
+  - action: script.notify
+    data:
+      title: "{{ title | default(omit) }}"
+      message: "{{ message }}"
+      to: all
+      critical: "{{ critical | default(false) }}"
+      escalated: "{{ escalated | default(false) }}"
   mode: parallel
 
 frigate_sync_detect_to_alarm_state:
@@ -347,8 +399,6 @@ laundry_notify:
     entity_id: schedule.sleep
     state: "off"
   - variables:
-      anjali_home: "{{ is_state('person.anjalipc', 'home') }}"
-      arun_home: "{{ is_state('person.arun_karunagath', 'home') }}"
       title: "{{ 'Washer' if machine == 'washer' else 'Dryer' }}"
       message: >-
         {% if text is defined and text %}{{ text }}
@@ -356,26 +406,11 @@ laundry_notify:
         {% elif machine == 'washer' and is_state('binary_sensor.dryer_running', 'off') %}Washer is done and the dryer is free.
         {% elif machine == 'dryer' %}Dryer is done. Clean the lint filter.
         {% else %}{{ title }} is done.{% endif %}
-  - if:
-    - condition: template
-      value_template: "{{ anjali_home }}"
-    then:
-    - action: notify.send_message
-      target:
-        entity_id: notify.anjalis_iphone
-      data:
-        title: "{{ title }}"
-        message: "{{ message }}"
-  - if:
-    - condition: template
-      value_template: "{{ arun_home }}"
-    then:
-    - action: notify.send_message
-      target:
-        entity_id: notify.meghanadha
-      data:
-        title: "{{ title }}"
-        message: "{{ message }}"
+  - action: script.notify
+    data:
+      to: home
+      title: "{{ title }}"
+      message: "{{ message }}"
   - action: script.announce_home
     continue_on_error: true
     data:

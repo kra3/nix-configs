@@ -107,7 +107,7 @@
         entity_id: alarm_control_panel.vasudha_secure
         state: triggered
       sequence:
-      - action: script.notify_all_phones
+      - action: script.notify
         data:
           title: "Alarm triggered{{ '' if repeat.index == 1 else ' (' ~ repeat.index ~ ')' }}"
           message: "{{ message }}"
@@ -275,7 +275,7 @@
     entity_id: alarm_control_panel.vasudha_secure
     state: disarmed
   actions:
-  - action: script.notify_all_phones
+  - action: script.notify
     data:
       title: Alarm still not armed
       message: >-
@@ -335,7 +335,7 @@
           entity_id: alarm_control_panel.vasudha_secure
           state: disarmed
         sequence:
-        - action: script.notify_all_phones
+        - action: script.notify
           data:
             title: "Alarm auto-disarmed"
             message: "Front door opened right after a resident arrived home - disarmed automatically."
@@ -348,7 +348,7 @@
             target:
               entity_id: timer.alarm_night_rearm
       default:
-      - action: script.notify_all_phones
+      - action: script.notify
         data:
           title: "Alarm auto-disarm failed"
           message: "Alarm is still {{ states('alarm_control_panel.vasudha_secure') }} after a resident entry."

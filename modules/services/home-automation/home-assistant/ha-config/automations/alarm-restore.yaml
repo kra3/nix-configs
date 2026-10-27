@@ -61,7 +61,7 @@
       skip_delay: true
       code: !secret alarm_code
   - delay: "00:00:05"
-  - action: script.notify_all_phones
+  - action: script.notify
     data:
       title: "Alarm re-armed after restart"
       message: "Home Assistant restarted and disarmed the alarm; it is armed {{ mode }} again ({{ states('alarm_control_panel.vasudha_secure') }})."

@@ -28,4 +28,3 @@
       sustained_brightness: 80
       clear_brightness: 15
       off_when_away: true
-      pause_during_alarm: true

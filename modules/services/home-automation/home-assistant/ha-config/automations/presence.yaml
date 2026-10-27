@@ -3,33 +3,23 @@
 # phone by device_id and resolves the notify call through the same
 # legacy mobile_app service-name path that broke everything else in
 # this file — entity targeting sidesteps both problems.
-- id: neelu_left_home
-  alias: Neelu left home
-  description: Notify Arun when Anjali leaves home.
+- id: person_left_home
+  alias: "Presence: tell the other resident someone left"
+  description: Notify the other resident when Arun or Anjali leaves home.
   triggers:
-  - entity_id: person.anjalipc
+  - entity_id: [person.arun_karunagath, person.anjalipc]
     from: home
     trigger: state
+  variables:
+    other_notify: >-
+      {{ 'notify.anjalis_iphone' if trigger.entity_id == 'person.arun_karunagath' else 'notify.meghanadha' }}
   actions:
   - action: notify.send_message
-    target: { entity_id: notify.meghanadha }
+    target:
+      entity_id: "{{ other_notify }}"
     data:
-      message: "{{ state_attr('person.anjalipc', 'friendly_name') }} has left Home"
-  mode: single
-
-- id: kunsu_left_home
-  alias: Kunsu left home
-  description: Notify Anjali when Arun leaves home.
-  triggers:
-  - entity_id: person.arun_karunagath
-    from: home
-    trigger: state
-  actions:
-  - action: notify.send_message
-    target: { entity_id: notify.anjalis_iphone }
-    data:
-      message: "{{ state_attr('person.arun_karunagath', 'friendly_name') }} has left Home"
-  mode: single
+      message: "{{ state_attr(trigger.entity_id, 'friendly_name') }} has left Home"
+  mode: queued
 
 # ── Battery ────────────────────────────────────────────────────
 - id: '1733595301092'

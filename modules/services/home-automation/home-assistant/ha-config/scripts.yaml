@@ -59,9 +59,9 @@ notify_all_phones:
 frigate_sync_detect_to_alarm_state:
   alias: "Frigate: sync detect/audio/snapshot switches to alarm state"
   description: >-
-    Shared by frigate_detect_gate_by_alarm (on alarm state change) and
-    frigate_detect_resync_on_restart (on Frigate MQTT reconnect) so the
-    armed_away/disarmed-or-armed_night switch lists only live in one place.
+    Called by frigate_detect_baseline (on alarm state change and Frigate
+    MQTT reconnect) so the armed_away/disarmed-or-armed_night switch
+    lists only live in one place.
   sequence:
   - choose:
     - conditions:

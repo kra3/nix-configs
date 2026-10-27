@@ -13,7 +13,7 @@
     event: start
   variables:
     keep_running: >-
-      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|neelu_|kunsu_|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|light_scene_|vacation_|everyone_left_home$|1733595301092$)
+      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|person_left_home$|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|light_scene_|vacation_|everyone_left_home$|1733595301092$)
     targets: >-
       {{ states.automation
          | selectattr('attributes.id', 'defined')

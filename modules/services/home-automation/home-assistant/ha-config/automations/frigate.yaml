@@ -6,14 +6,19 @@
 # CPU/GPU optimization (frigate.detector:openvino + per-camera
 # frigate.process were the top consumers per PR #48) built on top of
 # the existing motion-mask/fps tuning in nvr.nix.
-- id: frigate_detect_gate_by_alarm
+- id: frigate_detect_baseline
   alias: "Frigate: baseline detect/audio by alarm state"
   description: >-
     Force full detect+audio on when armed away; force it off when
-    armed night or disarmed. Runs on every alarm state change.
+    armed night or disarmed. Runs on every alarm state change, and
+    re-applies when Frigate reconnects to MQTT since its switches
+    aren't persisted across restarts.
   triggers:
   - trigger: state
     entity_id: alarm_control_panel.vasudha_secure
+  - trigger: mqtt
+    topic: frigate/available
+    payload: online
   actions:
   - action: script.frigate_sync_detect_to_alarm_state
   mode: single
@@ -105,60 +110,47 @@
             - "switch.{{ repeat.item }}_audio_detection"
   mode: parallel
 
-- id: frigate_audio_off_while_tv_plays
-  alias: "Frigate: living and dining audio off while the TV plays"
+- id: frigate_audio_tv
+  alias: "Frigate: living and dining audio follows the TV"
   description: >-
     The TV's glass, scream and shatter sounds trip audio detection on the
     Duo cameras covering the living and dining rooms, so it is switched off
-    while the TV is playing.
+    while the TV is playing. Re-enables the Duo cameras' audio detection
+    when the TV pauses, stops or turns off, but only when the alarm state
+    wants it (armed away).
   triggers:
-  - trigger: state
-    entity_id: media_player.lg_webos_tv_oled77c35la
+  - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
-  actions:
-  - action: switch.turn_off
-    target:
-      entity_id:
-      - switch.ranger_duo_fxd_audio_detection
-      - switch.ranger_duo_ptz_audio_detection
-  mode: single
-
-- id: frigate_audio_restore_after_tv
-  alias: "Frigate: living and dining audio back after the TV stops"
-  description: >-
-    Re-enables the Duo cameras' audio detection when the TV pauses, stops or
-    turns off, but only when the alarm state wants it (armed away).
-  triggers:
-  - trigger: state
-    entity_id: media_player.lg_webos_tv_oled77c35la
+    trigger: state
+    id: playing
+  - entity_id: media_player.lg_webos_tv_oled77c35la
     from: playing
-    for:
-      seconds: 10
-  conditions:
-  - condition: state
-    entity_id: alarm_control_panel.vasudha_secure
-    state:
-    - armed_away
-    - armed_vacation
+    for: "00:00:10"
+    trigger: state
+    id: stopped
   actions:
-  - action: switch.turn_on
-    target:
-      entity_id:
-      - switch.ranger_duo_fxd_audio_detection
-      - switch.ranger_duo_ptz_audio_detection
-  mode: single
-
-- id: frigate_detect_resync_on_restart
-  alias: "Frigate: resync detect/audio baseline after restart"
-  description: >-
-    Re-applies the alarm-state detect/audio baseline when Frigate
-    reconnects to MQTT — its switches aren't persisted across restarts.
-  triggers:
-  - trigger: mqtt
-    topic: frigate/available
-    payload: online
-  actions:
-  - action: script.frigate_sync_detect_to_alarm_state
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: playing
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_audio_detection
+    - conditions:
+      - condition: trigger
+        id: stopped
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: [armed_away, armed_vacation]
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.ranger_duo_fxd_audio_detection
+          - switch.ranger_duo_ptz_audio_detection
   mode: single
 
 - id: frigate_motion_staleness_watchdog

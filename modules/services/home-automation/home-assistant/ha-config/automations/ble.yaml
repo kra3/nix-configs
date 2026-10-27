@@ -34,7 +34,7 @@
       - "{{ has_value('light.hallway_hall_lights') or repeat.index >= 3 }}"
   - if: "{{ not has_value('light.hallway_hall_lights') }}"
     then:
-    - action: script.notify_all_phones
+    - action: script.notify
       data:
         title: Hall lights offline
         message: Plejd is still unreachable after 3 reloads; the hall lights can't be controlled.

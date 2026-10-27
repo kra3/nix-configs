@@ -40,10 +40,8 @@ automation:
     variables:
       people:
       - person: person.arun_karunagath
-        notify: notify.meghanadha
         since: input_datetime.withings_arun_last_weigh_in
       - person: person.anjalipc
-        notify: notify.anjalis_iphone
         since: input_datetime.withings_anjali_last_weigh_in
     actions:
     - repeat:
@@ -58,10 +56,10 @@ automation:
             value_template: >-
               {{ is_state(repeat.item.person, 'home') and (days is none or days >= 2) }}
           then:
-          - action: notify.send_message
-            target:
-              entity_id: "{{ repeat.item.notify }}"
+          - action: script.notify
             data:
+              to:
+              - "{{ repeat.item.person }}"
               title: Weigh-in
               message: >-
                 {{ 'No weigh-in recorded yet.' if days is none else 'No weigh-in for ' ~ days ~ ' days.' }}

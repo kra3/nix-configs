@@ -25,7 +25,7 @@
          and (trigger.platform == 'calendar'
               or ((as_datetime(due).date() - now().date()).days == 1 and now().hour >= 12)) }}
   actions:
-  - action: script.notify_all_phones
+  - action: script.notify
     data:
       title: Waste collection tomorrow
       message: >-

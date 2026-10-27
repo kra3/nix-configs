@@ -59,9 +59,6 @@
     - conditions:
       - condition: trigger
         id: pulse_done
-      - condition: state
-        entity_id: schedule.sleep
-        state: "on"
       sequence:
       - target:
           entity_id: switch.front_entrance_double_switch_right

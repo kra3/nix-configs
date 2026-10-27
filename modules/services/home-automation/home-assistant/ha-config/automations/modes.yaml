@@ -1,4 +1,4 @@
-# ── Manual mode ────────────────────────────────────────────────
+# ── Modes ──────────────────────────────────────────────────────
 - id: automations_paused_sync
   alias: "Manual mode: pause/resume automations"
   description: >-
@@ -67,6 +67,35 @@
   actions:
   - event: automations_resumed
   - event: modes_ended
+  mode: single
+
+- id: modes_adaptive_lighting
+  alias: "Modes: Adaptive Lighting off during party or manual mode"
+  description: Lights stay as they are while party or manual mode is on; Adaptive Lighting resumes when neither is.
+  triggers:
+  - entity_id:
+    - input_boolean.party_mode
+    - input_boolean.automations_paused
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  actions:
+  - action: "switch.turn_{{ 'off' if is_state('input_boolean.party_mode', 'on') or is_state('input_boolean.automations_paused', 'on') else 'on' }}"
+    target:
+      entity_id: switch.home_adaptive_lighting_home
+  mode: queued
+
+- id: modes_end_when_everyone_left
+  alias: "Modes: end party and manual mode when everyone has left"
+  triggers:
+  - trigger: event
+    event_type: everyone_left
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.party_mode
+      - input_boolean.automations_paused
   mode: single
 
 - id: modes_one_at_a_time

@@ -42,8 +42,8 @@
   description: >-
     When the last tracked person leaves, starts a 5min confirm timer
     (timer.everyone_left_home_confirm, restart-safe); when it finishes with
-    nobody home it ends party and manual mode and fires the everyone_left
-    event, which alarm_arm_away_when_everyone_left acts on.
+    nobody home it fires the everyone_left event, which
+    alarm_arm_away_when_everyone_left and modes_end_when_everyone_left act on.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home
@@ -71,10 +71,5 @@
       - condition: trigger
         id: timer_finished
       sequence:
-      - action: input_boolean.turn_off
-        target:
-          entity_id:
-          - input_boolean.party_mode
-          - input_boolean.automations_paused
       - event: everyone_left
   mode: restart

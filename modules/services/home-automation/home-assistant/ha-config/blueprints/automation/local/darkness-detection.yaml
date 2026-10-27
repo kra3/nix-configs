@@ -40,6 +40,13 @@ blueprint:
       selector:
         entity:
           domain: input_boolean
+    hold_entity:
+      name: Hold entity (optional)
+      description: While this timer, helper or sensor is active or on, the light is not switched off.
+      default: ""
+      selector:
+        entity:
+          domain: [timer, input_boolean, binary_sensor]
 
 trigger_variables:
   illuminance_sensor: !input illuminance_sensor
@@ -79,6 +86,7 @@ triggers:
 variables:
   illuminance_sensor: !input illuminance_sensor
   dark_below: !input dark_below
+  hold_entity: !input hold_entity
 
 actions:
   - choose:
@@ -119,7 +127,7 @@ actions:
                 entity_id: !input light_entity
                 state: "on"
               - condition: template
-                value_template: "{{ state_attr('automation.wake_up_gradual_lighting', 'current') | int(0) == 0 }}"
+                value_template: "{{ hold_entity == '' or not is_state(hold_entity, ['active', 'on']) }}"
             then:
               - target:
                   entity_id: !input light_entity
@@ -137,7 +145,7 @@ actions:
             entity_id: !input light_entity
             state: "on"
           - condition: template
-            value_template: "{{ state_attr('automation.wake_up_gradual_lighting', 'current') | int(0) == 0 }}"
+            value_template: "{{ hold_entity == '' or not is_state(hold_entity, ['active', 'on']) }}"
         sequence:
           - target:
               entity_id: !input light_entity

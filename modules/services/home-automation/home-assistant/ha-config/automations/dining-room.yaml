@@ -6,7 +6,7 @@
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
-      occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
+      occupancy_sensor: binary_sensor.dining_room_person_occupancy
       light_entity: light.dining_lights
       dark_boolean: input_boolean.dining_is_dark
 
@@ -20,8 +20,8 @@
     path: local/room-presence-lighting.yaml
     input:
       light_entity: light.dining_lights
-      occupancy_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
-      motion_sensor: binary_sensor.ranger_duo_ptz_motion
+      occupancy_sensor: binary_sensor.dining_room_person_occupancy
+      motion_sensor: binary_sensor.room_presence_dining
       dark_boolean: input_boolean.dining_is_dark
       block_entity: binary_sensor.tv_watching
       evening_hold: true

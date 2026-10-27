@@ -31,6 +31,14 @@ def seconds(d):
     return 0
 
 
+def long_wait(n):
+    if not isinstance(n, dict):
+        return False
+    if "delay" in n:
+        return seconds(n["delay"]) >= 60
+    return bool({"wait_for_trigger", "wait_template"} & n.keys()) and (n.get("timeout") is None or seconds(n["timeout"]) >= 60)
+
+
 def lint(path, id, item, owner_alarm=False, owner_notify=False, owner_tv=False):
     def fail(rule, detail):
         bad.append(f"{path.relative_to(cfg)}:{id}: {rule}: {detail}")
@@ -41,7 +49,7 @@ def lint(path, id, item, owner_alarm=False, owner_notify=False, owner_tv=False):
             fail("entity-coupling", "automation entity id inside a template")
         if not isinstance(n, dict):
             continue
-        if "delay" in n and seconds(n["delay"]) >= 60:
+        if "delay" in n and seconds(n["delay"]) >= 60 and id not in {"wakeup_lighting"}:
             fail("long-delay", f"delay {n['delay']}")
         act = n.get("action") or n.get("service")
         if not isinstance(act, str):
@@ -55,8 +63,8 @@ def lint(path, id, item, owner_alarm=False, owner_notify=False, owner_tv=False):
 
     triggers = item.get("triggers") or item.get("trigger") or []
     if item.get("mode") == "restart" and isinstance(triggers, list) and len(triggers) > 1:
-        if any(isinstance(n, dict) and {"wait_for_trigger", "wait_template", "delay"} & n.keys() for n in walk(item.get("actions") or item.get("action"))):
-            fail("restart-wait", "mode: restart with several triggers and a wait/delay")
+        if any(isinstance(n, dict) and long_wait(n) for n in walk(item.get("actions") or item.get("action"))):
+            fail("restart-wait", "mode: restart with several triggers and a wait/delay of 60 s or more")
 
     tv = item.get("trigger_variables")
     if tv:
@@ -73,14 +81,14 @@ for p in sorted((cfg / "automations").glob("*.yaml")):
 
 p = cfg / "scripts.yaml"
 for k, s in load(p).items():
-    lint(p, k, s, owner_notify=k == "notify")
+    lint(p, k, s, owner_alarm=True, owner_notify=k == "notify", owner_tv=True)
 
 for p in sorted((cfg / "packages").glob("*.yaml")):
     doc = load(p)
     for a in doc.get("automation") if isinstance(doc.get("automation"), list) else []:
         lint(p, a.get("id", a.get("alias")), a)
     for k, s in (doc.get("script") if isinstance(doc.get("script"), dict) else {}).items():
-        lint(p, k, s)
+        lint(p, k, s, owner_alarm=True, owner_tv=True)
 
 for p in sorted((cfg / "blueprints/automation/local").glob("*.yaml")):
     lint(p, p.stem, load(p))

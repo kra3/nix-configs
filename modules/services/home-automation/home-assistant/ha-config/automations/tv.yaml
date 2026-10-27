@@ -195,13 +195,34 @@
 
 - id: tv_media_off_when_armed_away
   alias: TV — Media and home theater off when armed away
-  description: Stops all media and turns off the receiver and the TV once armed away, however it was armed.
+  description: >-
+    Stops all media and turns off the receiver and the TV once armed away or
+    vacation, however it was armed, and when the house empties while already
+    armed (everyone_left for armed away, the vacation simulation activating
+    for armed vacation).
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
     - armed_away
     - armed_vacation
     trigger: state
+  - trigger: event
+    event_type: everyone_left
+    id: everyone_left
+  - entity_id: binary_sensor.vacation_simulation_active
+    from: "off"
+    to: "on"
+    trigger: state
+  conditions:
+  - condition: or
+    conditions:
+    - condition: not
+      conditions:
+      - condition: trigger
+        id: everyone_left
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state: armed_away
   actions:
   - action: media_player.media_stop
     target:

@@ -238,26 +238,33 @@
   mode: restart
 
 - id: alarm_armed_away_lights_media_off
-  alias: "Security: lights and media off when armed away"
-  description: Turns off every light and stops music, the receiver and the TV once armed away, however it was armed.
+  alias: "Security: lights off when armed away"
+  description: >-
+    Turns off every light once armed away or vacation, however it was armed,
+    or when the house empties while already armed. In vacation the
+    simulation takes the lights over 30 s later.
   triggers:
   - entity_id: alarm_control_panel.vasudha_secure
     to:
     - armed_away
     - armed_vacation
     trigger: state
+  - trigger: numeric_state
+    entity_id: zone.home
+    below: 1
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state:
+    - armed_away
+    - armed_vacation
+  - condition: template
+    value_template: >-
+      {{ trigger.entity_id != 'zone.home'
+         or (trigger.from_state is not none
+             and trigger.from_state.state not in ['unknown', 'unavailable']) }}
   actions:
   - action: light.turn_off
     target:
       entity_id: all
-  - action: media_player.media_stop
-    target:
-      entity_id: all
-    continue_on_error: true
-  - action: media_player.turn_off
-    target:
-      entity_id:
-      - media_player.home_theater_2
-      - media_player.lg_webos_tv_oled77c35la
-    continue_on_error: true
   mode: single

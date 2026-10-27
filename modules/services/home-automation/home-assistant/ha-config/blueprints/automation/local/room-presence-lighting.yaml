@@ -464,7 +464,9 @@ actions:
         sequence:
           - if:
               - condition: template
-                value_template: "{{ handback }}"
+                value_template: >-
+                  {{ handback and (is_state(light_entity, 'off')
+                     or (state_attr(light_entity, 'brightness') | int(0)) <= dim_brightness | int * 2.55 + 8) }}
             then:
               - action: adaptive_lighting.set_manual_control
                 data:

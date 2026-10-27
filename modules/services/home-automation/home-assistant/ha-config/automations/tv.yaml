@@ -158,3 +158,59 @@
       target:
         entity_id: media_player.home_theater_2
   mode: single
+
+- id: tv_off_at_bedtime
+  alias: TV — Off at bedtime if idle
+  description: >-
+    Turn off TV when sleep schedule starts, but only if it hasn't been
+    playing anything for the last 15 minutes (a momentary non-playing
+    state, e.g. between episodes, shouldn't trigger a shutdown).
+    Skipped during party mode; catches up when it ends.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+    id: sleep_start
+  - trigger: event
+    event_type: modes_ended
+    id: resumed
+  conditions:
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  - condition: template
+    value_template: >-
+      {{ states('media_player.lg_webos_tv_oled77c35la') not in ['playing', 'off']
+         and (trigger.id == 'resumed'
+              or now() - states.media_player.lg_webos_tv_oled77c35la.last_changed
+                 >= timedelta(minutes=15)) }}
+  actions:
+  - action: media_player.turn_off
+    target:
+      entity_id: media_player.lg_webos_tv_oled77c35la
+  mode: single
+
+- id: tv_media_off_when_armed_away
+  alias: TV — Media and home theater off when armed away
+  description: Stops all media and turns off the receiver and the TV once armed away, however it was armed.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - armed_away
+    - armed_vacation
+    trigger: state
+  actions:
+  - action: media_player.media_stop
+    target:
+      entity_id: all
+    continue_on_error: true
+  - action: media_player.turn_off
+    target:
+      entity_id:
+      - media_player.home_theater_2
+      - media_player.lg_webos_tv_oled77c35la
+    continue_on_error: true
+  mode: single

@@ -23,7 +23,7 @@
       occupancy_sensor: binary_sensor.living_room_occupancy_presence
       motion_sensor: binary_sensor.living_room_occupancy_presence
       dark_boolean: input_boolean.living_room_is_dark
-      media_player_entity: media_player.lg_webos_tv_oled77c35la
+      block_entity: binary_sensor.tv_watching
       evening_hold: true
       adaptive_lighting_switch: switch.home_adaptive_lighting_home
 
@@ -31,26 +31,20 @@
   alias: Living room — Media-aware lighting
   description: >-
     Turns off living+dining lights when Litefin/Moonfin/Jellyfin/Apple TV plays;
-    restores full brightness on stop (skips a room only if its presence
-    sensor reads a definite off). On pause, dims living room to 20% at
+    restores full brightness when the film stops or the TV leaves those apps
+    (skips a room only if its presence sensor reads a definite off). On pause, dims living room to 20% at
     15s, then hands it back to Adaptive Lighting at 38s. Off during party mode.
   triggers:
-  - entity_id: media_player.lg_webos_tv_oled77c35la
-    to: playing
+  - entity_id: binary_sensor.tv_watching
+    to: "on"
+    not_from: [unavailable, unknown]
     trigger: state
     id: playing
-  # Genuine-stop states only — `from: playing` also caught pause/buffering blips.
-  - entity_id: media_player.lg_webos_tv_oled77c35la
-    to:
-    - "off"
-    - idle
-    - standby
+  - entity_id: binary_sensor.tv_watching
+    from: "on"
+    to: "off"
     trigger: state
-    id: not_playing
-  - entity_id: media_player.lg_webos_tv_oled77c35la
-    to: paused
-    trigger: state
-    id: paused
+    id: ended
   conditions:
   - condition: state
     entity_id: input_boolean.party_mode
@@ -68,10 +62,6 @@
     - conditions:
       - condition: trigger
         id: playing
-      - condition: template
-        value_template: >-
-          {{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source')
-             in ['Litefin', 'Moonfin', 'Jellyfin', 'Apple TV'] }}
       sequence:
       - target:
           entity_id:
@@ -82,7 +72,12 @@
         action: light.turn_off
     - conditions:
       - condition: trigger
-        id: not_playing
+        id: ended
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.lg_webos_tv_oled77c35la
+          state: paused
       - condition: state
         entity_id: schedule.sleep
         state: "off"
@@ -107,7 +102,10 @@
         action: light.turn_on
     - conditions:
       - condition: trigger
-        id: paused
+        id: ended
+      - condition: state
+        entity_id: media_player.lg_webos_tv_oled77c35la
+        state: paused
       - condition: state
         entity_id: schedule.sleep
         state: "off"

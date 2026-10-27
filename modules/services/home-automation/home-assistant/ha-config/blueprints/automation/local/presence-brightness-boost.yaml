@@ -31,13 +31,13 @@ blueprint:
       selector:
         entity:
           domain: light
-    media_player_entity:
-      name: Block while playing (optional)
-      description: No boost while this player is playing.
+    block_entity:
+      name: Block while on (optional)
+      description: No boost while this entity is on.
       default: ""
       selector:
         entity:
-          domain: media_player
+          domain: [binary_sensor, input_boolean]
 
 triggers:
   - trigger: state
@@ -64,7 +64,7 @@ triggers:
 variables:
   light_entity: !input light_entity
   companion: !input companion_light
-  media_player_entity: !input media_player_entity
+  block_entity: !input block_entity
   lights: "{{ [light_entity] + ([companion] if companion else []) }}"
 
 actions:
@@ -89,7 +89,7 @@ actions:
             after: "18:00:00"
             before: "23:00:00"
           - condition: template
-            value_template: "{{ not is_state(media_player_entity, 'playing') }}"
+            value_template: "{{ block_entity == '' or not is_state(block_entity, 'on') }}"
         sequence:
           - action: adaptive_lighting.set_manual_control
             target:

@@ -40,11 +40,10 @@
 - id: everyone_left_home
   alias: Everyone left home
   description: >-
-    When the last tracked person leaves, waits out a 5min confirm timer
-    (timer.everyone_left_home_confirm, restart-safe) then ends party and
-    manual mode and arms Alarmo away (arming turns the lights off), notifying
-    either way. When armed vacation it only ends the modes and notifies:
-    arming already turned the lights off and the simulation owns them.
+    When the last tracked person leaves, starts a 5min confirm timer
+    (timer.everyone_left_home_confirm, restart-safe); when it finishes with
+    nobody home it ends party and manual mode and fires the everyone_left
+    event, which alarm_arm_away_when_everyone_left acts on.
   triggers:
   - trigger: numeric_state
     entity_id: zone.home
@@ -68,22 +67,6 @@
       - action: timer.start
         target:
           entity_id: timer.everyone_left_home_confirm
-      - if:
-        - condition: state
-          entity_id: binary_sensor.house_exits_open_status
-          state: "on"
-        then:
-        - action: script.notify
-          data:
-            title: Home
-            critical: true
-            message: >-
-              Everyone left — {{ 'alarm stays armed vacation' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else "won't auto-arm" }}, still open:
-              {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}.
-              {{ '' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else 'Force-arm from the dashboard if needed.' }}
-        - action: timer.start
-          target:
-            entity_id: timer.alarm_arm_escalation
     - conditions:
       - condition: trigger
         id: timer_finished
@@ -93,48 +76,5 @@
           entity_id:
           - input_boolean.party_mode
           - input_boolean.automations_paused
-      - if:
-        - condition: state
-          entity_id: alarm_control_panel.vasudha_secure
-          state: armed_vacation
-        then:
-        - action: script.notify
-          data:
-            title: Home
-            message: Everyone left — the alarm stays armed vacation
-        - stop: Armed vacation
-      - action: alarmo.arm
-        data:
-          entity_id: alarm_control_panel.vasudha_secure
-          mode: away
-          skip_delay: true
-          code: !secret alarm_code
-        continue_on_error: true
-      - delay: "00:00:02"
-      - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'arming') }}"
-        timeout: "00:01:30"
-      - choose:
-        - conditions:
-          - condition: state
-            entity_id: alarm_control_panel.vasudha_secure
-            state: armed_away
-          sequence:
-          - action: script.notify
-            data:
-              title: Home
-              message: Everyone left — lights off, alarm armed
-        default:
-        - action: light.turn_off
-          target:
-            entity_id: all
-        - action: script.notify
-          data:
-            title: Home
-            critical: true
-            message: >-
-              Everyone left, lights off — but the alarm didn't arm, still
-              open: {{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}
-        - action: timer.start
-          target:
-            entity_id: timer.alarm_arm_escalation
+      - event: everyone_left
   mode: restart

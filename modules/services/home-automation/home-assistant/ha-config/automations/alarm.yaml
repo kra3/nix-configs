@@ -1,0 +1,381 @@
+- id: alarm_remember_armed_mode
+  alias: "Alarm: remember the armed mode for restart recovery"
+  description: >-
+    Records the last armed mode, or none after a disarm. Transitions out of
+    unavailable/unknown (startup) are ignored so a restart cannot overwrite it.
+  triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - armed_away
+    - armed_vacation
+    - armed_night
+    - disarmed
+  conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none
+         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+  actions:
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.alarm_restore_mode
+    data:
+      option: "{{ 'none' if trigger.to_state.state == 'disarmed' else trigger.to_state.state }}"
+  - action: homeassistant.save_persistent_states
+  mode: queued
+
+- id: alarm_restore_after_restart
+  alias: "Alarm: re-arm after a restart disarmed it"
+  description: >-
+    After Home Assistant starts, re-arms the remembered mode if Alarmo came
+    back disarmed, skipping the exit delay, and notifies the phones. Skipped
+    when a person disarmed it after the restart.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  actions:
+  - wait_template: >-
+      {{ states('alarm_control_panel.vasudha_secure') not in ['unavailable', 'unknown'] }}
+    timeout: "00:03:00"
+    continue_on_timeout: false
+  - delay: "00:00:30"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
+  - condition: template
+    value_template: "{{ states.alarm_control_panel.vasudha_secure.context.user_id is none }}"
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: input_select.alarm_restore_mode
+      state: none
+  - variables:
+      mode: "{{ {'armed_away': 'away', 'armed_vacation': 'vacation'}.get(states('input_select.alarm_restore_mode'), 'night') }}"
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: "{{ mode }}"
+      force: true
+      skip_delay: true
+      code: !secret alarm_code
+  - delay: "00:00:05"
+  - action: script.notify
+    data:
+      title: "Alarm re-armed after restart"
+      message: "Home Assistant restarted and disarmed the alarm; it is armed {{ mode }} again ({{ states('alarm_control_panel.vasudha_secure') }})."
+  mode: single
+
+- id: alarm_arm_night
+  alias: "Alarm: arm night at bedtime"
+  description: Arms night at bedtime if disarmed, or 10 min after a resident arrives home during the sleep schedule (alarm_night_rearm_on_arrival, or the entry auto-disarm); on refusal a critical alert to Arun and speech in the occupied rooms, escalated after 10 min. Skipped during party mode; catches up when it ends.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "on"
+    trigger: state
+  - trigger: event
+    event_type: modes_ended
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_night_rearm
+  variables:
+    force_hint: &force_hint "Force-arm from the dashboard if needed."
+    open_names: "{{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}"
+  conditions:
+  - condition: numeric_state
+    entity_id: zone.home
+    above: 0
+  - condition: state
+    entity_id: input_boolean.party_mode
+    state: "off"
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
+  actions:
+  - action: alarm_control_panel.alarm_arm_night
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
+  - delay: "00:00:05"
+  - if:
+    - condition: not
+      conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_night
+    then:
+    - action: script.notify
+      data:
+        title: Alarm not armed
+        critical: true
+        message: >-
+          Couldn't arm for the night — still open:
+          {{ open_names }}.
+          {{ force_hint }}
+    - variables:
+        spoken: >-
+          Alarm not armed. These are still open.
+          {{ (open_names | replace(' (L)', ' left') | replace(' (R)', ' right') | replace(', ', '. ')) ~ '.' }}
+    - action: script.announce_home
+      continue_on_error: true
+      data:
+        message: "{{ spoken }}"
+    - action: timer.start
+      target:
+        entity_id: timer.alarm_arm_escalation
+  mode: single
+  max_exceeded: silent
+
+- id: alarm_night_rearm_on_arrival
+  alias: "Alarm: start the night re-arm timer when a resident arrives"
+  description: >-
+    During the sleep schedule each arrival (re)starts timer.alarm_night_rearm;
+    alarm_arm_night re-arms night when it finishes if still disarmed.
+  triggers:
+  - entity_id:
+    - person.arun_karunagath
+    - person.anjalipc
+    not_from:
+    - unknown
+    - unavailable
+    to: home
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: schedule.sleep
+    state: "on"
+  actions:
+  - action: timer.start
+    target:
+      entity_id: timer.alarm_night_rearm
+  mode: single
+
+# ── Wake-up ────────────────────────────────────────────────────
+
+- id: alarm_disarm_morning
+  alias: "Alarm: disarm in the morning"
+  description: >-
+    Disarms armed_night when the sleep schedule ends (or on startup or
+    when party or manual mode ends, if it ended meanwhile), only if someone's
+    home.
+  triggers:
+  - entity_id: schedule.sleep
+    to: "off"
+    trigger: state
+  - trigger: homeassistant
+    event: start
+  - trigger: event
+    event_type: modes_ended
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: person.arun_karunagath
+      state: home
+    - condition: state
+      entity_id: person.anjalipc
+      state: home
+  - condition: state
+    entity_id: schedule.sleep
+    state: "off"
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: armed_night
+  actions:
+  - action: alarm_control_panel.alarm_disarm
+    target:
+      entity_id: alarm_control_panel.vasudha_secure
+    data:
+      code: !secret alarm_code
+  mode: single
+  max_exceeded: silent
+
+- id: alarm_arm_away_when_everyone_left
+  alias: "Alarm: arm away once everyone has left"
+  description: >-
+    When everyone_left_home confirms nobody is home, arms Alarmo away (arming
+    turns the lights off) and notifies either way. When armed vacation it only
+    notifies: arming already turned the lights off and the simulation owns
+    them. If arming fails it turns every light off, sends a critical alert and
+    starts the escalation timer.
+  triggers:
+  - trigger: event
+    event_type: everyone_left
+  variables:
+    open_names: "{{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}"
+  actions:
+  - if:
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state: armed_vacation
+    then:
+    - action: script.notify
+      data:
+        title: Home
+        message: Everyone left — the alarm stays armed vacation
+    - stop: Armed vacation
+  - action: alarmo.arm
+    data:
+      entity_id: alarm_control_panel.vasudha_secure
+      mode: away
+      skip_delay: true
+      code: !secret alarm_code
+    continue_on_error: true
+  - delay: "00:00:02"
+  - wait_template: "{{ not is_state('alarm_control_panel.vasudha_secure', 'arming') }}"
+    timeout: "00:01:30"
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: alarm_control_panel.vasudha_secure
+        state: armed_away
+      sequence:
+      - action: script.notify
+        data:
+          title: Home
+          message: Everyone left — lights off, alarm armed
+    default:
+    - action: light.turn_off
+      target:
+        entity_id: all
+    - action: script.notify
+      data:
+        title: Home
+        critical: true
+        message: >-
+          Everyone left, lights off — but the alarm didn't arm, still
+          open: {{ open_names }}
+    - action: timer.start
+      target:
+        entity_id: timer.alarm_arm_escalation
+  mode: restart
+
+- id: alarm_exits_open_warning
+  alias: "Alarm: warn when everyone left with exits open"
+  description: >-
+    Critical alert as soon as the last person leaves while an exit is open,
+    since the alarm won't auto-arm; starts the escalation timer.
+  triggers:
+  - trigger: numeric_state
+    entity_id: zone.home
+    below: 1
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.house_exits_open_status
+    state: "on"
+  variables:
+    force_hint: *force_hint
+    open_names: "{{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}"
+  actions:
+  - action: script.notify
+    data:
+      title: Home
+      critical: true
+      message: >-
+        Everyone left — {{ 'alarm stays armed vacation' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else "won't auto-arm" }}, still open:
+        {{ open_names }}.
+        {{ '' if is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') else force_hint }}
+  - action: timer.start
+    target:
+      entity_id: timer.alarm_arm_escalation
+  mode: restart
+
+- id: alarm_not_armed_escalate
+  alias: "Security: escalate a failed arm after 10 min"
+  description: Critical alert to Arun and Anjali if the alarm is still disarmed 10 min after a failed arm.
+  triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.alarm_arm_escalation
+  variables:
+    force_hint: *force_hint
+    open_names: "{{ state_attr('binary_sensor.house_exits_open_status', 'open_names') }}"
+  conditions:
+  - condition: state
+    entity_id: alarm_control_panel.vasudha_secure
+    state: disarmed
+  actions:
+  - action: script.notify
+    data:
+      title: Alarm still not armed
+      message: >-
+        Still disarmed 10 min after a failed arm — open:
+        {{ open_names or 'nothing' }}.
+        {{ force_hint }}
+      critical: true
+      escalated: true
+  mode: single
+
+- id: alarm_triggered_auto_disarm_on_arrival
+  alias: "Security: auto-disarm if a resident just arrived or used the keypad"
+  description: >-
+    Disarms on entry (pending, retried at triggered) if a resident's
+    device arrived home in the last 5min, or the front door was
+    unlocked via keypad. Waits up to 15s for the lock's operator
+    report, which lags the door opening. Notifies only if it disarmed.
+  triggers:
+  - entity_id: alarm_control_panel.vasudha_secure
+    to:
+    - pending
+    - triggered
+    trigger: state
+  actions:
+  - wait_template: &resident_or_keypad >-
+      {%- set window = 300 -%}
+      {%- set trackers = (state_attr('person.arun_karunagath', 'device_trackers') or [])
+                        + (state_attr('person.anjalipc', 'device_trackers') or []) -%}
+      {%- set ns = namespace(ok=false) -%}
+      {%- for t in trackers -%}
+        {%- if is_state(t, 'home') and (as_timestamp(now()) - as_timestamp(states[t].last_changed)) < window -%}
+          {%- set ns.ok = true -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.ok or (state_attr('sensor.front_front_door_nw_operator', 'keypad') == true
+         and (as_timestamp(now()) - as_timestamp(states.sensor.front_front_door_nw_operator.last_changed)) < window) }}
+    timeout: "00:00:15"
+    continue_on_timeout: true
+  - if:
+    - condition: state
+      entity_id: alarm_control_panel.vasudha_secure
+      state:
+      - pending
+      - triggered
+    - condition: template
+      value_template: *resident_or_keypad
+    then:
+    - action: alarm_control_panel.alarm_disarm
+      target:
+        entity_id: alarm_control_panel.vasudha_secure
+      data:
+        code: !secret alarm_code
+    - delay: "00:00:02"
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: alarm_control_panel.vasudha_secure
+          state: disarmed
+        sequence:
+        - action: script.notify
+          data:
+            title: "Alarm auto-disarmed"
+            message: "Front door opened right after a resident arrived home - disarmed automatically."
+        - if:
+          - condition: state
+            entity_id: schedule.sleep
+            state: "on"
+          then:
+          - action: timer.start
+            target:
+              entity_id: timer.alarm_night_rearm
+      default:
+      - action: script.notify
+        data:
+          title: "Alarm auto-disarm failed"
+          message: "Alarm is still {{ states('alarm_control_panel.vasudha_secure') }} after a resident entry."
+  mode: single

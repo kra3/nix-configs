@@ -11,6 +11,7 @@
       light_entity: light.bedroom_wardrobe_lights
       dark_boolean: input_boolean.bedroom_is_dark
       dark_below: 50
+      hold_entity: timer.wakeup_lighting
 
 - id: bedroom_lighting
   alias: Bedroom — Lighting
@@ -108,6 +109,9 @@
       - armed_away
       - armed_vacation
   actions:
+  - action: timer.start
+    target:
+      entity_id: timer.wakeup_lighting
   # Adaptive Lighting would otherwise reset the ramp to its own brightness.
   - action: adaptive_lighting.set_manual_control
     data:
@@ -173,4 +177,7 @@
     - action: light.turn_off
       target:
         entity_id: light.bedroom_wardrobe_lights
+  - action: timer.cancel
+    target:
+      entity_id: timer.wakeup_lighting
   mode: restart

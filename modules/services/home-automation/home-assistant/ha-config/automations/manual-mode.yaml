@@ -53,22 +53,6 @@
       - input_boolean.party_mode
   mode: single
 
-- id: modes_adaptive_lighting
-  alias: "Modes: Adaptive Lighting off during party or manual mode"
-  description: Lights stay as they are while party or manual mode is on; Adaptive Lighting resumes when neither is.
-  triggers:
-  - entity_id:
-    - input_boolean.party_mode
-    - input_boolean.automations_paused
-    trigger: state
-  - trigger: homeassistant
-    event: start
-  actions:
-  - action: "switch.turn_{{ 'off' if is_state('input_boolean.party_mode', 'on') or is_state('input_boolean.automations_paused', 'on') else 'on' }}"
-    target:
-      entity_id: switch.home_adaptive_lighting_home
-  mode: queued
-
 - id: modes_party_end_hand_back
   alias: "Modes: hand back to automations when party mode ends"
   description: Fires automations_resumed (room lighting re-derives) and modes_ended (skipped bedtime steps catch up).

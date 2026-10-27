@@ -25,6 +25,11 @@
       dark_boolean: input_boolean.living_room_is_dark
       block_entity: binary_sensor.tv_watching
       evening_hold: true
+      bedtime_off_after_minutes: 15
+      bedtime_block_players:
+        - media_player.lg_webos_tv_oled77c35la
+        - media_player.home_theater_2
+      bedtime_extra_clear_sensor: binary_sensor.ranger_duo_ptz_person_occupancy
       adaptive_lighting_switch: switch.home_adaptive_lighting_home
 
 - id: living_room_media_aware
@@ -77,7 +82,7 @@
         conditions:
         - condition: state
           entity_id: media_player.lg_webos_tv_oled77c35la
-          state: paused
+          state: [paused, unavailable, unknown]
       - condition: state
         entity_id: schedule.sleep
         state: "off"
@@ -142,52 +147,3 @@
           manual_control: false
         action: adaptive_lighting.set_manual_control
   mode: restart
-
-- id: living_room_bedtime_lights_off
-  alias: Living room — Lights off (bedtime, no presence)
-  description: >-
-    Turns off living+dining lights once past bedtime with no presence
-    for 15 minutes and nothing playing on the TV or home theater.
-    Skipped during party mode; catches up when it ends.
-  triggers:
-  - id: presence_clear
-    trigger: template
-    value_template: >-
-      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
-         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off') }}
-    for: "00:15:00"
-  - id: sleep_start
-    trigger: state
-    entity_id: schedule.sleep
-    to: "on"
-  - id: resumed
-    trigger: event
-    event_type: modes_ended
-  conditions:
-  - condition: state
-    entity_id: input_boolean.party_mode
-    state: "off"
-  - condition: state
-    entity_id: schedule.sleep
-    state: "on"
-  - condition: template
-    value_template: >-
-      {{ is_state('binary_sensor.living_room_occupancy_presence', 'off')
-         and is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'off')
-         and now() - states.binary_sensor.living_room_occupancy_presence.last_changed
-             >= timedelta(minutes=15)
-         and now() - states.binary_sensor.ranger_duo_ptz_person_occupancy.last_changed
-             >= timedelta(minutes=15) }}
-  - condition: template
-    value_template: >-
-      {{ states('media_player.lg_webos_tv_oled77c35la') != 'playing'
-         and states('media_player.home_theater_2') != 'playing' }}
-  actions:
-  - target:
-      entity_id:
-      - light.living_room_lights
-      - light.dining_lights
-    data:
-      transition: 5
-    action: light.turn_off
-  mode: single

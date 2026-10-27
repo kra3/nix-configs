@@ -19,7 +19,10 @@ blueprint:
     home. Optional: sustained_brightness after 2 min of occupancy,
     clear_brightness instead of off when clear outside sleep hours,
     off_when_away (off and no reaction while nobody is home). No reaction
-    while the alarm is pending or triggered.
+    while the alarm is pending or triggered. With evening_hold and
+    bedtime_off_after_minutes, a light on after bedtime goes off once
+    occupancy and the extra sensor have been clear that long and no
+    bedtime block player is playing.
   domain: automation
   input:
     light_entity:
@@ -175,6 +178,32 @@ blueprint:
           min: 1
           max: 100
           unit_of_measurement: "%"
+    bedtime_off_after_minutes:
+      name: Bedtime off after (min)
+      description: >-
+        With evening_hold: once schedule.sleep is on and occupancy and the
+        extra sensor have both been clear this long, turn the light off
+        unless a "Bedtime block players" entity is playing. Unset disables it.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    bedtime_extra_clear_sensor:
+      name: Bedtime extra clear sensor (optional)
+      default: ""
+      selector:
+        entity:
+          domain: binary_sensor
+    bedtime_block_players:
+      name: Bedtime block players
+      description: Bedtime off is skipped while any of these is playing.
+      default: []
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
     off_when_away:
       name: Off when nobody is home
       description: >-
@@ -186,6 +215,10 @@ blueprint:
 trigger_variables:
   long_sensor: !input long_clear_sensor
   long_clear: !input long_clear_minutes
+  bt_minutes: !input bedtime_off_after_minutes
+  bt_extra: !input bedtime_extra_clear_sensor
+  bt_players: !input bedtime_block_players
+  bt_occupancy: !input occupancy_sensor
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -215,6 +248,13 @@ triggers:
     to: "on"
     trigger: state
     id: sleep_started
+  - trigger: template
+    value_template: >-
+      {{ bt_minutes is not none and is_state(bt_occupancy, 'off')
+         and (bt_extra == '' or is_state(bt_extra, 'off')) }}
+    for:
+      minutes: "{{ bt_minutes | int(15) }}"
+    id: bedtime_clear
   - entity_id: binary_sensor.anyone_home
     to: "off"
     trigger: state
@@ -270,6 +310,9 @@ variables:
   sustained_brightness: !input sustained_brightness
   clear_brightness: !input clear_brightness
   off_when_away: !input off_when_away
+  bt_minutes: !input bedtime_off_after_minutes
+  bt_extra: !input bedtime_extra_clear_sensor
+  bt_players: !input bedtime_block_players
   startup_like: "{{ trigger.id == 'startup' or (off_when_away and trigger.id == 'arrive') }}"
   away: >-
     {{ not home and not is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') and (evening_hold or off_when_away) }}
@@ -300,6 +343,42 @@ actions:
           - condition: template
             value_template: "{{ off_when_away and not home }}"
         sequence: []
+      - conditions:
+          - condition: trigger
+            id: [bedtime_clear, tick]
+          - condition: template
+            value_template: "{{ evening_hold and bt_minutes is not none }}"
+          - condition: state
+            entity_id: schedule.sleep
+            state: "on"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: template
+            value_template: >-
+              {%- from 'elapsed.jinja' import elapsed_ge -%}
+              {%- set secs = bt_minutes | int * 60 -%}
+              {{ (elapsed_ge(occupancy_sensor, secs) | bool)
+                 and (bt_extra == ''
+                      or (is_state(bt_extra, 'off')
+                          and (elapsed_ge(bt_extra, secs) | bool))) }}
+          - condition: template
+            value_template: >-
+              {{ bt_players | select('is_state', 'playing') | list | length == 0 }}
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 5
+            action: light.turn_off
       - conditions:
           - condition: trigger
             id: sleep_started

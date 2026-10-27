@@ -25,6 +25,11 @@
       dark_boolean: input_boolean.dining_is_dark
       block_entity: binary_sensor.tv_watching
       evening_hold: true
+      bedtime_off_after_minutes: 15
+      bedtime_block_players:
+        - media_player.lg_webos_tv_oled77c35la
+        - media_player.home_theater_2
+      bedtime_extra_clear_sensor: binary_sensor.living_room_occupancy_presence
       adaptive_lighting_switch: switch.home_adaptive_lighting_home
 
 - id: dining_meal_boost

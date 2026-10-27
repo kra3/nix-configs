@@ -5,7 +5,9 @@ blueprint:
     2.5 min, the light (and an optional companion light) goes to 100 %. If the
     light comes back on while presence is still held, the boost is applied
     again. The boost also applies when the window opens or it turns dark while
-    the room is occupied. When the room empties or the light goes off,
+    the room is occupied, and a once-a-minute check boosts a light that should
+    be boosted but isn't (after a restart) unless Adaptive Lighting already
+    holds it in manual control. When the room empties or the light goes off,
     Adaptive Lighting takes the light back and the companion goes off. Party
     mode holds the boost; it
     is released when automations resume. No reaction while the alarm is
@@ -59,6 +61,9 @@ triggers:
     entity_id: !input dark_boolean
     to: "on"
     id: boost
+  - trigger: time_pattern
+    minutes: "/1"
+    id: tick
   - trigger: state
     entity_id: !input presence_sensor
     to: "off"
@@ -90,7 +95,13 @@ actions:
   - choose:
       - conditions:
           - condition: trigger
-            id: boost
+            id:
+              - boost
+              - tick
+          - condition: template
+            value_template: >-
+              {{ trigger.id != 'tick' or light_entity not in
+                 (state_attr('switch.home_adaptive_lighting_home', 'manual_control') or []) }}
           - condition: state
             entity_id: !input presence_sensor
             state: "on"

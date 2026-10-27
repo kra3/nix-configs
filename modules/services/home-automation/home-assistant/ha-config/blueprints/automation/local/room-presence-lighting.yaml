@@ -16,7 +16,10 @@ blueprint:
     input_boolean.party_mode is on. With evening_hold, the light stays on
     from dark until bedtime while binary_sensor.anyone_home is on, dims
     after dim_after_minutes without presence, and goes off when nobody is
-    home.
+    home. Optional: sustained_brightness after 2 min of occupancy,
+    clear_brightness instead of off when clear outside sleep hours,
+    off_when_away (off and no reaction while nobody is home),
+    pause_during_alarm (no reaction while the alarm is pending/triggered).
   domain: automation
   input:
     light_entity:
@@ -164,6 +167,43 @@ blueprint:
           min: 2
           max: 60
           unit_of_measurement: min
+    sustained_brightness:
+      name: Sustained brightness (%)
+      description: >-
+        Brightness once occupancy has been continuous for 2 min; unset
+        keeps the on brightness.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+    clear_brightness:
+      name: Clear brightness (%)
+      description: >-
+        Outside sleep hours, dim to this instead of turning off when
+        clear; unset turns off.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+    off_when_away:
+      name: Off when nobody is home
+      description: >-
+        Off and not reacting while binary_sensor.anyone_home is off.
+      default: false
+      selector:
+        boolean:
+    pause_during_alarm:
+      name: Pause during alarm
+      description: >-
+        No reaction while alarm_control_panel.vasudha_secure is pending or
+        triggered.
+      default: false
+      selector:
+        boolean:
 
 trigger_variables:
   long_sensor: !input long_clear_sensor
@@ -174,6 +214,11 @@ triggers:
     to: "on"
     trigger: state
     id: motion
+  - entity_id: !input occupancy_sensor
+    to: "on"
+    for: "00:02:00"
+    trigger: state
+    id: persistent
   - entity_id: !input dark_boolean
     to: "on"
     trigger: state
@@ -220,6 +265,17 @@ conditions:
   - condition: state
     entity_id: !input dark_boolean
     state: "on"
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ not pause_during_alarm }}"
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: alarm_control_panel.vasudha_secure
+            state:
+              - pending
+              - triggered
 
 variables:
   on_brightness: !input on_brightness
@@ -241,11 +297,40 @@ variables:
   al_switch: !input adaptive_lighting_switch
   light_entity: !input light_entity
   home: "{{ is_state('binary_sensor.anyone_home', 'on') }}"
-  away: "{{ evening_hold and not home and not is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') }}"
+  sustained_brightness: !input sustained_brightness
+  clear_brightness: !input clear_brightness
+  off_when_away: !input off_when_away
+  pause_during_alarm: !input pause_during_alarm
+  startup_like: "{{ trigger.id == 'startup' or (off_when_away and trigger.id == 'arrive') }}"
+  away: >-
+    {{ not home and not is_state('alarm_control_panel.vasudha_secure', 'armed_vacation') and (evening_hold or off_when_away) }}
   handback: "{{ evening_hold and al_switch != '' }}"
 
 actions:
   - choose:
+      - conditions:
+          - condition: trigger
+            id: [away, startup, tick]
+          - condition: template
+            value_template: "{{ away and (trigger.id != 'tick' or not off_when_away) }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              transition: 2
+            action: light.turn_off
+      - conditions:
+          - condition: template
+            value_template: "{{ off_when_away and not home }}"
+        sequence: []
       - conditions:
           - condition: trigger
             id: sleep_started
@@ -262,23 +347,26 @@ actions:
             action: light.turn_off
       - conditions:
           - condition: trigger
-            id: [away, startup, tick]
+            id: persistent
           - condition: template
-            value_template: "{{ away }}"
-          - condition: state
-            entity_id: !input light_entity
-            state: "on"
-          - condition: not
+            value_template: "{{ sustained_brightness is not none and not away }}"
+          - condition: or
             conditions:
-              - condition: state
-                entity_id: input_boolean.party_mode
-                state: "on"
+              - condition: not
+                conditions:
+                  - condition: template
+                    value_template: "{{ asleep }}"
+              - condition: template
+                value_template: "{{ react_during_sleep }}"
+          - condition: template
+            value_template: "{{ not media_blocks }}"
         sequence:
           - target:
               entity_id: !input light_entity
-            data:
-              transition: 2
-            action: light.turn_off
+            data: >-
+              {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else sustained_brightness -%}
+              {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
+            action: light.turn_on
       - conditions:
           - condition: or
             conditions:
@@ -331,6 +419,39 @@ actions:
               {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
               {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
             action: light.turn_on
+      - conditions:
+          - condition: trigger
+            id: [clear, motion_clear, became_dark]
+          - condition: template
+            value_template: "{{ clear_brightness is not none }}"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ asleep }}"
+            then:
+              - target:
+                  entity_id: !input light_entity
+                data:
+                  transition: 3
+                action: light.turn_off
+            else:
+              - target:
+                  entity_id: !input light_entity
+                data:
+                  brightness_pct: "{{ clear_brightness | int }}"
+                  transition: 3
+                action: light.turn_on
       - conditions:
           - condition: trigger
             id: [clear, motion_clear]
@@ -395,8 +516,8 @@ actions:
               transition: 5
             action: light.turn_on
       - conditions:
-          - condition: trigger
-            id: startup
+          - condition: template
+            value_template: "{{ startup_like }}"
           - condition: template
             value_template: "{{ asleep }}"
           - condition: or
@@ -418,8 +539,27 @@ actions:
               transition: 2
             action: light.turn_off
       - conditions:
-          - condition: trigger
-            id: startup
+          - condition: template
+            value_template: "{{ startup_like and sustained_brightness is not none and not asleep and not away }}"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "on"
+          - condition: template
+            value_template: >-
+              {%- from 'elapsed.jinja' import elapsed_ge -%}
+              {{ elapsed_ge(occupancy_sensor, 120) }}
+          - condition: template
+            value_template: "{{ not media_blocks }}"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ sustained_brightness | int }}"
+              transition: 1
+            action: light.turn_on
+      - conditions:
+          - condition: template
+            value_template: "{{ startup_like }}"
           - condition: template
             value_template: "{{ not away }}"
           - condition: state
@@ -441,6 +581,31 @@ actions:
             data: >-
               {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
               {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
+            action: light.turn_on
+      - conditions:
+          - condition: template
+            value_template: "{{ startup_like and clear_brightness is not none and not asleep and not away }}"
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
+          - condition: template
+            value_template: >-
+              {%- from 'elapsed.jinja' import elapsed_ge -%}
+              {{ (elapsed_ge(occupancy_sensor, 120) | bool) and (elapsed_ge(motion_sensor, 120) | bool) }}
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: input_boolean.party_mode
+                state: "on"
+        sequence:
+          - target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ clear_brightness | int }}"
+              transition: 3
             action: light.turn_on
       - conditions:
           - condition: trigger

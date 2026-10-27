@@ -4,8 +4,10 @@ blueprint:
     When it is dark between 18:00 and 23:00 and the room has been occupied for
     2.5 min, the light (and an optional companion light) goes to 100 %. If the
     light comes back on while presence is still held, the boost is applied
-    again. When the room empties or the light goes off, Adaptive Lighting takes
-    the light back and the companion goes off. Party mode holds the boost; it
+    again. The boost also applies when the window opens or it turns dark while
+    the room is occupied. When the room empties or the light goes off,
+    Adaptive Lighting takes the light back and the companion goes off. Party
+    mode holds the boost; it
     is released when automations resume. No reaction while the alarm is
     pending or triggered.
   domain: automation
@@ -48,6 +50,13 @@ triggers:
     id: boost
   - trigger: state
     entity_id: !input light_entity
+    to: "on"
+    id: boost
+  - trigger: time
+    at: "18:00:00"
+    id: boost
+  - trigger: state
+    entity_id: !input dark_boolean
     to: "on"
     id: boost
   - trigger: state

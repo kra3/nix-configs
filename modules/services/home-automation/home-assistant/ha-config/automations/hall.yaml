@@ -28,3 +28,4 @@
       sustained_brightness: 80
       clear_brightness: 15
       off_when_away: true
+      adaptive_lighting_switch: switch.home_adaptive_lighting_home

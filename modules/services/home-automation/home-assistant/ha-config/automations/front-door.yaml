@@ -92,70 +92,18 @@
   mode: single
   max_exceeded: silent
 
-- id: front_door_knock_lights
-  alias: "Front Door: Knock Lights"
-  description: Entrance light on a double knock in the dark once hall motion follows; 5min timer, door open cancels.
-  trigger:
-    - platform: event
-      event_type: front_door_knock
-      id: knock
-    - platform: state
-      entity_id: binary_sensor.front_door_open
-      to: "on"
-      id: door_open
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.front_door_knock_auto_off
-      id: timer_finished
-  action:
-    - choose:
-        - conditions:
-            - condition: trigger
-              id: knock
-          sequence:
-            - wait_for_trigger:
-                - platform: state
-                  entity_id: binary_sensor.hue_pir_hallway_occupancy
-                  to: "on"
-              timeout: "00:02:00"
-            - if:
-                - condition: template
-                  value_template: "{{ wait.trigger is not none }}"
-                - condition: state
-                  entity_id: binary_sensor.front_door_area_dark
-                  state: "on"
-              then:
-                - action: switch.turn_on
-                  target:
-                    entity_id: switch.front_entrance_double_switch_left
-                - action: timer.start
-                  target:
-                    entity_id: timer.front_door_knock_auto_off
-        - conditions:
-            - condition: trigger
-              id: door_open
-          sequence:
-            - action: timer.cancel
-              target:
-                entity_id: timer.front_door_knock_auto_off
-        - conditions:
-            - condition: trigger
-              id: timer_finished
-          sequence:
-            - action: switch.turn_off
-              target:
-                entity_id: switch.front_entrance_double_switch_left
-  mode: restart
-
-- id: front_door_open_entrance_light
-  alias: "Front Door: Entrance light on open (dark)"
+- id: front_door_entrance_light
+  alias: "Front Door: Entrance light"
   description: >-
-    Turns on entrance light when the front door opens in the dark; off
-    via timer.front_door_entrance_light_off (5min after close,
-    restart-safe). Falls back to unlock-as-open-proxy when BLE degraded.
-    Any switch-on left 10min with the door closed is turned off.
+    One owner for the entrance light. Turns it on in the dark when the door
+    opens, after a double knock once hall motion follows, or on unlock when
+    BLE is degraded. Off via timer.front_door_entrance_light_off (5min after
+    close or knock, restart-safe). Any switch-on left 10min with the door
+    closed and no timer running is turned off.
   triggers:
+  - trigger: event
+    event_type: front_door_knock
+    id: knock
   - entity_id: binary_sensor.front_door_open
     to: "on"
     trigger: state
@@ -182,10 +130,38 @@
   - choose:
       - conditions:
           - condition: trigger
+            id: knock
+        sequence:
+          - wait_for_trigger:
+              - platform: state
+                entity_id: binary_sensor.hue_pir_hallway_occupancy
+                to: "on"
+            timeout: "00:02:00"
+          - if:
+              - condition: template
+                value_template: "{{ wait.trigger is not none }}"
+              - condition: state
+                entity_id: binary_sensor.front_door_area_dark
+                state: "on"
+              - condition: state
+                entity_id: binary_sensor.front_door_open
+                state: "off"
+            then:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.front_entrance_double_switch_left
+              - action: timer.start
+                target:
+                  entity_id: timer.front_door_entrance_light_off
+      - conditions:
+          - condition: trigger
             id: stale_on
           - condition: state
             entity_id: binary_sensor.front_door_open
             state: "off"
+          - condition: state
+            entity_id: timer.front_door_entrance_light_off
+            state: "idle"
         sequence:
           - action: switch.turn_off
             target:
@@ -236,4 +212,4 @@
           - action: switch.turn_off
             target:
               entity_id: switch.front_entrance_double_switch_left
-  mode: restart
+  mode: parallel

@@ -8,7 +8,7 @@ timer:
   front_door_entrance_light_off:
     duration: "00:05:00"
     restore: true
-  front_door_knock_auto_off:
+  exterior_front_light_pulse:
     duration: "00:05:00"
     restore: true
 

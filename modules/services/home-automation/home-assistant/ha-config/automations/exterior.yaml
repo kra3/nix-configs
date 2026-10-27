@@ -2,8 +2,10 @@
 - id: exterior_front_light
   alias: Exterior — Front street light (dusk to sleep)
   description: >-
-    Turn on front street light at sunset, off at sleep schedule. Startup
-    re-derives state in case an HA restart missed the sleep_started edge.
+    Turn on front street light at sunset, off at sleep schedule. During
+    sleep, door vibration turns it on for 5min via
+    timer.exterior_front_light_pulse. Startup re-derives state in case an HA
+    restart missed the sleep_started edge, keeping a running pulse.
   triggers:
   - entity_id: sun.sun
     to: below_horizon
@@ -16,6 +18,15 @@
   - trigger: homeassistant
     event: start
     id: startup
+  - entity_id: binary_sensor.front_door_knock_vibration
+    to: "on"
+    trigger: state
+    id: vibration
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.exterior_front_light_pulse
+    id: pulse_done
   actions:
   - choose:
     - conditions:
@@ -34,10 +45,35 @@
         action: switch.turn_off
     - conditions:
       - condition: trigger
+        id: vibration
+      - condition: state
+        entity_id: schedule.sleep
+        state: "on"
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_on
+      - target:
+          entity_id: timer.exterior_front_light_pulse
+        action: timer.start
+    - conditions:
+      - condition: trigger
+        id: pulse_done
+      sequence:
+      - target:
+          entity_id: switch.front_entrance_double_switch_right
+        action: switch.turn_off
+    - conditions:
+      - condition: trigger
         id: startup
       - condition: state
         entity_id: schedule.sleep
         state: "on"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: timer.exterior_front_light_pulse
+          state: active
       sequence:
       - target:
           entity_id: switch.front_entrance_double_switch_right
@@ -55,25 +91,4 @@
       - target:
           entity_id: switch.front_entrance_double_switch_right
         action: switch.turn_on
-  mode: single
-
-- id: exterior_front_light_vibration
-  alias: Exterior — Front street light on door vibration (sleep)
-  description: Street light on door vibration during sleep hours for 5min, restarted by further vibration.
-  triggers:
-  - entity_id: binary_sensor.front_door_knock_vibration
-    to: "on"
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: schedule.sleep
-    state: "on"
-  actions:
-  - action: switch.turn_on
-    target:
-      entity_id: switch.front_entrance_double_switch_right
-  - delay: "00:05:00"
-  - action: switch.turn_off
-    target:
-      entity_id: switch.front_entrance_double_switch_right
   mode: restart

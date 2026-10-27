@@ -137,6 +137,9 @@
               title: Home
               message: Everyone left — lights off, alarm armed
         default:
+        - action: light.turn_off
+          target:
+            entity_id: all
         - action: script.notify_all_phones
           data:
             title: Home

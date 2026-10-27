@@ -82,7 +82,7 @@
         conditions:
         - condition: state
           entity_id: media_player.lg_webos_tv_oled77c35la
-          state: paused
+          state: [paused, unavailable, unknown]
       - condition: state
         entity_id: schedule.sleep
         state: "off"

@@ -212,4 +212,4 @@
           - action: switch.turn_off
             target:
               entity_id: switch.front_entrance_double_switch_left
-  mode: restart
+  mode: parallel

@@ -229,8 +229,10 @@ announce_home:
         {{ ns.l }}
       living: >-
         {{ is_state('binary_sensor.room_presence_living', 'on')
-           and not is_state('media_player.home_theater_2', 'off')
-           and state_attr('media_player.home_theater_2', 'source') not in ['PlayStation 5', 'Game'] }}
+           and states('media_player.home_theater_2') not in ['off', 'unavailable', 'unknown']
+           and states('media_player.ma_home_theater') not in ['unavailable', 'unknown']
+           and state_attr('media_player.home_theater_2', 'source') not in [none, '', 'PlayStation 5', 'Game']
+           and state_attr('media_player.home_theater_2', 'volume_level') is number }}
   - choose:
     - conditions:
       - condition: template
@@ -290,7 +292,7 @@ announce_home_theater:
       target:
         entity_id: media_player.home_theater_2
       data:
-        volume_level: 0.5
+        volume_level: "{{ [volume | float(0), 0.5] | max }}"
   - action: music_assistant.play_announcement
     continue_on_error: true
     target:
@@ -299,16 +301,12 @@ announce_home_theater:
       url: "http://10.3.2.1:8098/say.wav?text={{ message | urlencode }}"
       use_pre_announce: false
   - parallel:
-    - if:
-      - condition: template
-        value_template: "{{ source not in [none, ''] }}"
-      then:
-      - action: media_player.select_source
-        continue_on_error: true
-        target:
-          entity_id: media_player.home_theater_2
-        data:
-          source: "{{ source }}"
+    - action: media_player.select_source
+      continue_on_error: true
+      target:
+        entity_id: media_player.home_theater_2
+      data:
+        source: "{{ source }}"
     - if:
       - condition: template
         value_template: "{{ tv_playing }}"
@@ -321,20 +319,12 @@ announce_home_theater:
     timeout: "00:00:05"
     continue_on_timeout: true
   - delay: "00:00:02"
-  - repeat:
-      sequence:
-      - action: media_player.volume_set
-        continue_on_error: true
-        target:
-          entity_id: media_player.home_theater_2
-        data:
-          volume_level: "{{ volume }}"
-      - delay: "00:00:01"
-      until:
-      - condition: template
-        value_template: >-
-          {{ volume is none or repeat.index >= 2
-             or (state_attr('media_player.home_theater_2', 'volume_level') | float(0) - volume | float(0)) | abs < 0.02 }}
+  - action: media_player.volume_set
+    continue_on_error: true
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      volume_level: "{{ volume }}"
   mode: queued
 
 alarm_speakers_prepare:

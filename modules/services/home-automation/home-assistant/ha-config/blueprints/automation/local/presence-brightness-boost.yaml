@@ -1,7 +1,7 @@
 blueprint:
   name: Presence brightness boost
   description: >-
-    When it is dark between 18:00 and 23:00 and the room has been occupied for
+    When it is dark between sunset and 23:00 and the room has been occupied for
     2.5 min, the light (and an optional companion light) goes to 100 %. If the
     light comes back on while presence is still held, the boost is applied
     again. The boost also applies when the window opens or it turns dark while
@@ -54,8 +54,8 @@ triggers:
     entity_id: !input light_entity
     to: "on"
     id: boost
-  - trigger: time
-    at: "18:00:00"
+  - trigger: sun
+    event: sunset
     id: boost
   - trigger: state
     entity_id: !input dark_boolean
@@ -115,8 +115,9 @@ actions:
           - condition: state
             entity_id: schedule.sleep
             state: "off"
+          - condition: sun
+            after: sunset
           - condition: time
-            after: "18:00:00"
             before: "23:00:00"
           - condition: template
             value_template: "{{ block_entity == '' or not is_state(block_entity, 'on') }}"

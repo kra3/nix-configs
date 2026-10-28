@@ -207,7 +207,7 @@ announce_hallway:
 
 announce_home:
   alias: "Announce: speak in the occupied rooms"
-  description: Speaks on the speakers of occupied rooms, kitchen if none; skipped when nobody is home.
+  description: Speaks on the speakers of occupied rooms, kitchen if none; skipped when nobody is home. The living room hears it on the home theater while the receiver is on, unless the PS5 is in use.
   fields:
     message:
       required: true
@@ -226,28 +226,105 @@ announce_home:
         {%- if is_state('binary_sensor.room_presence_office', 'on') or is_state('binary_sensor.bedroom_occupancy_presence', 'on') -%}
           {%- set ns.l = ns.l + ['media_player.office_speaker'] -%}
         {%- endif -%}
-        {%- if is_state('binary_sensor.room_presence_living', 'on') and not is_state('media_player.home_theater_2', 'off') -%}
-          {%- set ns.l = ns.l + ['media_player.ma_home_theater'] -%}
-        {%- endif -%}
         {{ ns.l }}
+      living: >-
+        {{ is_state('binary_sensor.room_presence_living', 'on')
+           and states('media_player.home_theater_2') not in ['off', 'unavailable', 'unknown']
+           and states('media_player.ma_home_theater') not in ['unavailable', 'unknown']
+           and state_attr('media_player.home_theater_2', 'source') not in [none, '', 'PlayStation 5', 'Game']
+           and state_attr('media_player.home_theater_2', 'volume_level') is number }}
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ speakers | length == 0 and is_state('binary_sensor.room_presence_hall', 'on') }}"
+        value_template: "{{ speakers | length == 0 and not living and is_state('binary_sensor.room_presence_hall', 'on') }}"
       sequence:
       - action: script.announce_hallway
         data:
           message: "{{ message }}"
     default:
-    - action: tts.speak
+    - parallel:
+      - if:
+        - condition: template
+          value_template: "{{ living }}"
+        then:
+        - action: script.announce_home_theater
+          data:
+            message: "{{ message }}"
+      - if:
+        - condition: template
+          value_template: "{{ speakers | length > 0 or not living }}"
+        then:
+        - action: tts.speak
+          target:
+            entity_id: tts.piper
+          data:
+            media_player_entity_id: "{{ speakers if speakers | length > 0 else ['media_player.kitchen_speaker'] }}"
+            message: "{{ message }}"
+            language: en_US
+            options:
+              voice: en_US-lessac-medium
+  mode: queued
+
+announce_home_theater:
+  alias: "Announce: home theater"
+  description: Pauses the TV, speaks on the home theater at half volume through Music Assistant, then switches the receiver back to its input and volume and resumes the TV.
+  fields:
+    message:
+      required: true
+      selector:
+        text:
+  sequence:
+  - variables:
+      source: "{{ state_attr('media_player.home_theater_2', 'source') }}"
+      volume: "{{ state_attr('media_player.home_theater_2', 'volume_level') }}"
+      tv_playing: "{{ is_state('media_player.lg_webos_tv_oled77c35la', 'playing') }}"
+  - parallel:
+    - if:
+      - condition: template
+        value_template: "{{ tv_playing }}"
+      then:
+      - action: media_player.media_pause
+        continue_on_error: true
+        target:
+          entity_id: media_player.lg_webos_tv_oled77c35la
+    - action: media_player.volume_set
+      continue_on_error: true
       target:
-        entity_id: tts.piper
+        entity_id: media_player.home_theater_2
       data:
-        media_player_entity_id: "{{ speakers if speakers | length > 0 else ['media_player.kitchen_speaker'] }}"
-        message: "{{ message }}"
-        language: en_US
-        options:
-          voice: en_US-lessac-medium
+        volume_level: "{{ [volume | float(0), 0.5] | max }}"
+  - action: music_assistant.play_announcement
+    continue_on_error: true
+    target:
+      entity_id: media_player.ma_home_theater
+    data:
+      url: "http://10.3.2.1:8098/say.wav?text={{ message | urlencode }}"
+      use_pre_announce: false
+  - parallel:
+    - action: media_player.select_source
+      continue_on_error: true
+      target:
+        entity_id: media_player.home_theater_2
+      data:
+        source: "{{ source }}"
+    - if:
+      - condition: template
+        value_template: "{{ tv_playing }}"
+      then:
+      - action: media_player.media_play
+        continue_on_error: true
+        target:
+          entity_id: media_player.lg_webos_tv_oled77c35la
+  - wait_template: "{{ is_state_attr('media_player.home_theater_2', 'source', source) }}"
+    timeout: "00:00:05"
+    continue_on_timeout: true
+  - delay: "00:00:02"
+  - action: media_player.volume_set
+    continue_on_error: true
+    target:
+      entity_id: media_player.home_theater_2
+    data:
+      volume_level: "{{ volume }}"
   mode: queued
 
 alarm_speakers_prepare:

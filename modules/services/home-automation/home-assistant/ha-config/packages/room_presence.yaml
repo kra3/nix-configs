@@ -23,7 +23,7 @@ template:
       - name: "Room Presence Dining"
         unique_id: room_presence_dining
         device_class: occupancy
-        state: "{{ is_state('binary_sensor.ranger_duo_ptz_person_occupancy', 'on') or is_state('binary_sensor.ranger_duo_ptz_motion', 'on') }}"
+        state: "{{ is_state('binary_sensor.dining_room_person_occupancy', 'on') }}"
         delay_off: "00:05:00"
 
       - name: "Room Presence Living"

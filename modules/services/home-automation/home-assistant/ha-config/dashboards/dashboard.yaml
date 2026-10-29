@@ -88,6 +88,7 @@ views:
         status: sensor.washer_status
         power: sensor.washer_power_monitor_power
         running: binary_sensor.washer_running
+        phase: sensor.washer_phase
         last_cycle: sensor.washer_last_cycle
         flag: input_boolean.washer_unemptied
       - name: Dryer
@@ -95,6 +96,7 @@ views:
         status: sensor.dryer_status
         power: sensor.dryer_power_monitor_power
         running: binary_sensor.dryer_running
+        phase: sensor.dryer_phase
         last_cycle: sensor.dryer_last_cycle
         flag: input_boolean.dryer_unemptied
     - type: heading
@@ -2832,42 +2834,28 @@ views:
       heading: Care and checks
       icon: mdi:wrench-clock
       heading_style: title
-    - type: tile
-      entity: counter.washer_care
-      name: Washes since drum clean (due at 40)
-      icon: mdi:washing-machine-alert
+    - type: custom:laundry-care-card
       grid_options:
         columns: full
-      tap_action:
-        action: perform-action
-        perform_action: counter.reset
-        target:
-          entity_id: counter.washer_care
-        confirmation:
-          text: Drum cleaned? This resets the count.
-    - type: tile
-      entity: counter.dryer_care
-      name: Dryer cycles since filter care (due at 30)
-      icon: mdi:tumble-dryer
-      grid_options:
-        columns: full
-      tap_action:
-        action: perform-action
-        perform_action: counter.reset
-        target:
-          entity_id: counter.dryer_care
-        confirmation:
-          text: Filters cleaned? This resets the count.
-    - type: tile
-      entity: input_number.laundry_gap_minutes
-      name: Last wait between wash and dry
-      icon: mdi:timer-sand
-      grid_options:
-        columns: full
-      visibility:
-      - condition: numeric_state
-        entity: input_number.laundry_gap_minutes
-        above: 0
+      items:
+      - entity: counter.washer_care
+        name: Washer drum clean
+        icon: mdi:washing-machine-alert
+        every: 10
+        unit: washes
+        confirm: Ran the DrumClean programme? This resets the count.
+      - entity: counter.dryer_care
+        name: Dryer filters
+        icon: mdi:air-filter
+        every: 5
+        unit: dryer runs
+        confirm: Rinsed the fluff and foam filters? This resets the count.
+      - entity: counter.dryer_water
+        name: Dryer water container
+        icon: mdi:cup-water
+        every: 5
+        unit: dryer runs
+        confirm: Emptied the water container? This resets the count.
   - type: grid
     column_span: 1
     cards:
@@ -2875,19 +2863,11 @@ views:
       heading: Recent runs
       icon: mdi:history
       heading_style: title
-    - type: markdown
+    - type: custom:laundry-runs-card
       grid_options:
         columns: full
-      content: |-
-        {% for name, e in [('Washer', 'sensor.washer_last_cycle'), ('Dryer', 'sensor.dryer_last_cycle')] %}
-        **{{ name }}**
-        {% set c = state_attr(e, 'cycles') or [] %}
-        {% if c %}| Started | Min | kWh | kr |
-        |---|--:|--:|--:|
-        {% for r in c %}| {{ r.start }} | {{ r.minutes }} | {{ '%.2f' | format(r.kwh | float(0)) }} | {{ '%.2f' | format(r.cost | float(0)) }} |
-        {% endfor %}{% else %}No runs recorded yet.
-        {% endif %}
-        {% endfor %}
+      washer: sensor.washer_last_cycle
+      dryer: sensor.dryer_last_cycle
 - type: sections
   title: System Health
   path: system-health

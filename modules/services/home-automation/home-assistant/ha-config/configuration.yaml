@@ -49,6 +49,8 @@ recorder:
       - switch.ranger_*_detect
       - switch.ranger_*_audio_detection
       - sensor.*_light_[0-9]_power
+      - sensor.washer_phase
+      - sensor.dryer_phase
       - sensor.*_light_[0-9]_energy
       - sensor.office_room_light_power
       - sensor.office_room_light_energy

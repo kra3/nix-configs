@@ -102,7 +102,7 @@
     },
     "waste_collection_schedule": {
       "repo": "mampfes/hacs_waste_collection_schedule",
-      "version": "v2.35.0",
+      "version": "v2.36.0",
       "kind": "tree",
       "subpath": "custom_components/waste_collection_schedule",
       "hash": "sha256-e3w0RdA7Av1wULMdaxmvaivJfuW/WRTca4/YRqTIh9w="

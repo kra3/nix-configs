@@ -42,5 +42,20 @@ in
     }
   ];
 
+  systemd.user.services.sutala-active = {
+    Unit = {
+      Description = "Report the desktop session to Home Assistant";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = publishActive "ON";
+      ExecStop = publishActive "OFF";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   home.stateVersion = lib.mkDefault "25.11";
 }

@@ -276,6 +276,8 @@
               mode = "month";
               mode-mon-col = 3;
               weeks-pos = "left";
+              # Without it waybar never resets a scrolled calendar back to today.
+              on-scroll = 1;
               # Pango <span> needs literal hex colors, not style.css's @-vars.
               format = {
                 today = "<span color='#f38ba8'><b><u>{}</u></b></span>";

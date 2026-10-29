@@ -22,7 +22,8 @@ blueprint:
     while the alarm is pending or triggered. With evening_hold and
     bedtime_off_after_minutes, a light on after bedtime goes off once
     occupancy and the extra sensor have been clear that long and no
-    bedtime block player is playing.
+    bedtime block player is playing; night_off_after_minutes shortens
+    that wait once sleep has been on for half an hour.
   domain: automation
   input:
     light_entity:
@@ -190,6 +191,18 @@ blueprint:
           min: 1
           max: 60
           unit_of_measurement: min
+    night_off_after_minutes:
+      name: Night off after (min, optional)
+      description: >-
+        Replaces "Bedtime off after" once schedule.sleep has been on for half
+        an hour, so a night-time walk-through does not leave the light on as
+        long as going to bed does. Unset keeps the bedtime value all night.
+      default: null
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
     bedtime_extra_clear_sensor:
       name: Bedtime extra clear sensor (optional)
       default: ""
@@ -311,6 +324,7 @@ variables:
   clear_brightness: !input clear_brightness
   off_when_away: !input off_when_away
   bt_minutes: !input bedtime_off_after_minutes
+  bt_night: !input night_off_after_minutes
   bt_extra: !input bedtime_extra_clear_sensor
   bt_players: !input bedtime_block_players
   startup_like: "{{ trigger.id == 'startup' or (off_when_away and trigger.id == 'arrive') }}"
@@ -361,7 +375,8 @@ actions:
           - condition: template
             value_template: >-
               {%- from 'elapsed.jinja' import elapsed_ge -%}
-              {%- set secs = bt_minutes | int * 60 -%}
+              {%- set late = bt_night is not none and (now() - states.schedule.sleep.last_changed).total_seconds() >= 1800 -%}
+              {%- set secs = (bt_night if late else bt_minutes) | int * 60 -%}
               {{ (elapsed_ge(occupancy_sensor, secs) | bool)
                  and (bt_extra == ''
                       or (is_state(bt_extra, 'off')

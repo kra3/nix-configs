@@ -26,6 +26,7 @@
       block_entity: binary_sensor.tv_watching
       evening_hold: true
       bedtime_off_after_minutes: 15
+      night_off_after_minutes: 3
       bedtime_block_players:
         - media_player.lg_webos_tv_oled77c35la
         - media_player.home_theater_2

@@ -255,6 +255,16 @@
 
   users.users.kra3.linger = true;
 
+  sops.templates."mosquitto_pub" = {
+    owner = "kra3";
+    mode = "0400";
+    content = ''
+      -h ${config.vars.network.containers.homeAuto.localAddress}
+      -u ${config.sops.placeholder."mqtt.user"}
+      -P ${config.sops.placeholder."mqtt.password"}
+    '';
+  };
+
   systemd.services.office-amp-connect = {
     description = "Keep the office amp connected over Bluetooth";
     wantedBy = [ "multi-user.target" ];

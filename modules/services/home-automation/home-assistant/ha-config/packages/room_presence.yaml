@@ -35,7 +35,7 @@ template:
       - name: "Room Presence Office"
         unique_id: room_presence_office
         device_class: occupancy
-        state: "{{ is_state('binary_sensor.ranger_uno_person_occupancy', 'on') or is_state('binary_sensor.ranger_uno_motion', 'on') }}"
+        state: "{{ is_state('binary_sensor.sutala_active', 'on') }}"
         delay_off: "00:05:00"
 
       - name: "Room Presence Hall"
@@ -48,3 +48,10 @@ template:
         unique_id: anyone_home
         device_class: presence
         state: "{{ is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home') }}"
+
+mqtt:
+  binary_sensor:
+    - name: "Sutala Active"
+      unique_id: sutala_active
+      state_topic: sutala/active
+      device_class: occupancy

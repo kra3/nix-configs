@@ -1,4 +1,14 @@
-{ lib, flakeModules, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  osConfig,
+  flakeModules,
+  ...
+}:
+let
+  publishActive = state: "${pkgs.mosquitto}/bin/mosquitto_pub -r -t sutala/active -m ${state}";
+in
 {
   imports = [
     flakeModules.homeManager.home-profiles-core
@@ -19,6 +29,33 @@
   catppuccin.enable = true;
   catppuccin.flavor = "mocha";
   catppuccin.accent = "blue";
+
+  xdg.configFile."mosquitto_pub".source =
+    config.lib.file.mkOutOfStoreSymlink
+      osConfig.sops.templates."mosquitto_pub".path;
+
+  services.swayidle.timeouts = [
+    {
+      timeout = 60;
+      command = publishActive "OFF";
+      resumeCommand = publishActive "ON";
+    }
+  ];
+
+  systemd.user.services.sutala-active = {
+    Unit = {
+      Description = "Report the desktop session to Home Assistant";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = publishActive "ON";
+      ExecStop = publishActive "OFF";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 
   home.stateVersion = lib.mkDefault "25.11";
 }

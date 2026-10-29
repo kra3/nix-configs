@@ -1,0 +1,23 @@
+# ── Office ─────────────────────────────────────────────────────
+- id: office_darkness
+  alias: Office — Darkness detection
+  description: Dark while it is gloomy outside.
+  use_blueprint:
+    path: local/darkness-detection.yaml
+    input:
+      occupancy_sensor: binary_sensor.room_presence_office
+      light_entity: light.office_room_light
+      dark_boolean: input_boolean.office_is_dark
+
+- id: office_lighting
+  alias: Office — Lighting
+  description: >-
+    On while sutala is in use and it is dark; brightness left to Adaptive
+    Lighting. Off about 7 min after the last keypress.
+  use_blueprint:
+    path: local/room-presence-lighting.yaml
+    input:
+      light_entity: light.office_room_light
+      occupancy_sensor: binary_sensor.room_presence_office
+      motion_sensor: binary_sensor.room_presence_office
+      dark_boolean: input_boolean.office_is_dark

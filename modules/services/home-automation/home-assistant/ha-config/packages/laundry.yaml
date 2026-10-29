@@ -30,13 +30,6 @@ input_number:
     max: 1000000
     step: 0.001
     mode: box
-  laundry_gap_minutes:
-    name: Washer to dryer wait
-    min: 0
-    max: 1440
-    step: 1
-    unit_of_measurement: min
-    mode: box
 
 counter:
   washer_care:
@@ -45,22 +38,23 @@ counter:
   dryer_care:
     name: Dryer cycles since filter care
     icon: mdi:tumble-dryer
+  dryer_water:
+    name: Dryer cycles since water emptied
+    icon: mdi:cup-water
 
 template:
   - binary_sensor:
       - name: "Washer Running"
         unique_id: washer_running
         device_class: running
-        state: "{{ states('sensor.washer_power_monitor_power') | float > 10 }}"
-        availability: "{{ is_number(states('sensor.washer_power_monitor_power')) }}"
+        state: "{% set p = states('sensor.washer_power_monitor_power') %}{{ p | float > 10 if is_number(p) else this.state == 'on' }}"
         delay_on: "00:00:30"
         delay_off: "00:03:00"
 
       - name: "Dryer Running"
         unique_id: dryer_running
         device_class: running
-        state: "{{ states('sensor.dryer_power_monitor_power') | float > 10 }}"
-        availability: "{{ is_number(states('sensor.dryer_power_monitor_power')) }}"
+        state: "{% set p = states('sensor.dryer_power_monitor_power') %}{{ p | float > 10 if is_number(p) else this.state == 'on' }}"
         delay_on: "00:00:30"
         delay_off: "00:03:00"
 
@@ -94,12 +88,7 @@ template:
         device_class: timestamp
         state: "{{ (now() - timedelta(minutes=3)).isoformat() }}"
         attributes:
-          cycles: >-
-            {% set start = state_attr('input_datetime.washer_cycle_start', 'timestamp') | float(0) %}
-            {% set end = as_timestamp(now()) - 180 %}
-            {% set kwh = [states('sensor.washer_power_monitor_energy') | float(0) - states('input_number.washer_cycle_start_kwh') | float(0), 0] | max %}
-            {% set e = {'start': start | timestamp_custom('%a %d %b %H:%M'), 'minutes': (((end - start) / 60) | round(0) | int) if start > 0 else 0, 'kwh': kwh | round(2), 'cost': (kwh * states('sensor.electricity_price_per_kwh') | float(0)) | round(2)} %}
-            {{ ([e] + (state_attr('sensor.washer_last_cycle', 'cycles') or []))[:10] }}
+          cycles: "{% from 'laundry.jinja' import cycles %}{{ cycles('washer') }}"
 
   - trigger:
       - platform: state
@@ -112,9 +101,30 @@ template:
         device_class: timestamp
         state: "{{ (now() - timedelta(minutes=3)).isoformat() }}"
         attributes:
-          cycles: >-
-            {% set start = state_attr('input_datetime.dryer_cycle_start', 'timestamp') | float(0) %}
-            {% set end = as_timestamp(now()) - 180 %}
-            {% set kwh = [states('sensor.dryer_power_monitor_energy') | float(0) - states('input_number.dryer_cycle_start_kwh') | float(0), 0] | max %}
-            {% set e = {'start': start | timestamp_custom('%a %d %b %H:%M'), 'minutes': (((end - start) / 60) | round(0) | int) if start > 0 else 0, 'kwh': kwh | round(2), 'cost': (kwh * states('sensor.electricity_price_per_kwh') | float(0)) | round(2)} %}
-            {{ ([e] + (state_attr('sensor.dryer_last_cycle', 'cycles') or []))[:10] }}
+          cycles: "{% from 'laundry.jinja' import cycles %}{{ cycles('dryer') }}"
+
+  - trigger:
+      - trigger: state
+        entity_id:
+          - sensor.washer_power_monitor_power
+          - binary_sensor.washer_running
+    sensor:
+      - name: "Washer Phase"
+        unique_id: washer_phase
+        icon: mdi:washing-machine
+        state: "{% from 'laundry.jinja' import phase_step %}{{ (phase_step('washer', this) | from_json).phase }}"
+        attributes:
+          memory: "{% from 'laundry.jinja' import phase_step %}{{ phase_step('washer', this) | from_json }}"
+
+  - trigger:
+      - trigger: state
+        entity_id:
+          - sensor.dryer_power_monitor_power
+          - binary_sensor.dryer_running
+    sensor:
+      - name: "Dryer Phase"
+        unique_id: dryer_phase
+        icon: mdi:tumble-dryer
+        state: "{% from 'laundry.jinja' import phase_step %}{{ (phase_step('dryer', this) | from_json).phase }}"
+        attributes:
+          memory: "{% from 'laundry.jinja' import phase_step %}{{ phase_step('dryer', this) | from_json }}"

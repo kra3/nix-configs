@@ -19,7 +19,7 @@
         entity_id: "input_boolean.{{ trigger.id }}_unemptied"
     - action: counter.increment
       target:
-        entity_id: "counter.{{ trigger.id }}_care"
+        entity_id: "{{ ['counter.dryer_care', 'counter.dryer_water'] if trigger.id == 'dryer' else 'counter.washer_care' }}"
     - action: script.laundry_notify
       data:
         machine: "{{ trigger.id }}"
@@ -31,10 +31,12 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.washer_running
+      from: "off"
       to: "on"
       id: washer
     - platform: state
       entity_id: binary_sensor.dryer_running
+      from: "off"
       to: "on"
       id: dryer
   action:
@@ -64,11 +66,6 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.washer_unemptied
-        - action: input_number.set_value
-          target:
-            entity_id: input_number.laundry_gap_minutes
-          data:
-            value: "{{ ((started - washer_end) / 60) | round(0) }}"
   mode: queued
 
 - id: laundry_door_emptied
@@ -197,19 +194,24 @@
   trigger:
     - platform: numeric_state
       entity_id: counter.washer_care
-      above: 39
+      above: 9
       id: washer
     - platform: numeric_state
       entity_id: counter.dryer_care
-      above: 29
-      id: dryer
+      above: 4
+      id: filter
+    - platform: numeric_state
+      entity_id: counter.dryer_water
+      above: 4
+      id: water
   action:
     - action: script.laundry_notify
       data:
-        machine: "{{ trigger.id }}"
+        machine: "{{ 'washer' if trigger.id == 'washer' else 'dryer' }}"
         text: >-
-          {% if trigger.id == 'washer' %}40 washes since the drum was last cleaned. Run a drum clean programme.
-          {% else %}30 dryer cycles since the filters were last cared for. Rinse the filters and check the heat exchanger.{% endif %}
+          {% if trigger.id == 'washer' %}10 washes since the drum was last cleaned. Run the DrumClean programme.
+          {% elif trigger.id == 'filter' %}5 dryer cycles since the filters were last rinsed. Rinse the fluff filter and the condenser foam filter.
+          {% else %}5 dryer cycles since the water container was emptied. Empty it before the next load.{% endif %}
   mode: queued
 
 - id: laundry_standby_check

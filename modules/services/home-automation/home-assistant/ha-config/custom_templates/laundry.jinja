@@ -19,3 +19,57 @@
 {% macro today(dev) -%}
 {{ (states('sensor.' ~ dev ~ '_energy_day') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
 {%- endmacro %}
+
+{% macro cycles(m) -%}
+{% set start = state_attr('input_datetime.' ~ m ~ '_cycle_start', 'timestamp') | float(0) -%}
+{% set end = as_timestamp(now()) - 180 -%}
+{% set kwh = [states('sensor.' ~ m ~ '_power_monitor_energy') | float(0) - states('input_number.' ~ m ~ '_cycle_start_kwh') | float(0), 0] | max -%}
+{% set segs = (state_attr('sensor.' ~ m ~ '_phase', 'memory') or {}).get('segments') or [] -%}
+{% set ns = namespace(p=[]) -%}
+{% for s in segs -%}
+{% set a = start if loop.first else [s[1] | float(0), start] | max -%}
+{% set b = [segs[loop.index][1] | float(0) if not loop.last else end, end] | min -%}
+{% if s[0] != 'Off' and b > a %}{% set ns.p = ns.p + [[s[0], ((b - a) / 60) | round(1)]] %}{% endif -%}
+{% endfor -%}
+{% set e = {'start': start | timestamp_custom('%a %d %b %H:%M'), 'ts': start | int, 'minutes': (((end - start) / 60) | round(0) | int) if start > 0 else 0, 'kwh': kwh | round(2), 'cost': (kwh * states('sensor.electricity_price_per_kwh') | float(0)) | round(2), 'phases': ns.p} -%}
+{{ ([e] + (state_attr('sensor.' ~ m ~ '_last_cycle', 'cycles') or []))[:10] }}
+{%- endmacro %}
+
+{% macro phase_step(m, prev) -%}
+{% set pw = states('sensor.' ~ m ~ '_power_monitor_power') -%}
+{% set p = pw | float(0) -%}
+{% set run = is_state('binary_sensor.' ~ m ~ '_running', 'on') -%}
+{% set t = now().timestamp() | round(0) -%}
+{% set a = prev.attributes.get('memory') or {} -%}
+{% set fresh = prev.state in ['Off', 'unknown', 'unavailable'] -%}
+{% set ns = namespace(ph='Off') -%}
+{% if m == 'washer' -%}
+{% set mem = {'heat_t': t if p > 1000 else (0 if fresh else a.get('heat_t', 0)), 'spin_t': t if 130 < p <= 1000 else (0 if fresh else a.get('spin_t', 0)), 'moved': p > 40 or (not fresh and a.get('moved', false))} -%}
+{% if not run %}{% set ns.ph = 'Off' %}
+{% elif not is_number(pw) %}{% set ns.ph = prev.state %}
+{% elif t - mem.heat_t < 180 %}{% set ns.ph = 'Heating' %}
+{% elif t - mem.spin_t < 45 %}{% set ns.ph = 'Spinning' %}
+{% elif mem.spin_t > 0 %}{% set ns.ph = 'Rinsing' %}
+{% elif mem.moved or mem.heat_t > 0 %}{% set ns.ph = 'Washing' %}
+{% else %}{% set ns.ph = 'Filling' %}{% endif -%}
+{% else -%}
+{% set comp_t = t if p > 350 else (0 if fresh else a.get('comp_t', 0)) -%}
+{% set hi = (0 if fresh else a.get('hi', 0)) + 1 if p > 350 else 0 -%}
+{% set ended = (not fresh and a.get('ended', false) and hi < 2) or (comp_t > 0 and p <= 10) -%}
+{% set tumbles = ((0 if fresh else a.get('tumbles', 0)) + (1 if p > 10 else 0)) if ended else 0 -%}
+{% set mem = {'comp_t': comp_t, 'hi': hi, 'ended': ended, 'tumbles': tumbles, 'paused': (not fresh and a.get('paused', false)) or (comp_t > 0 and p <= 350)} -%}
+{% if not run %}{% set ns.ph = 'Off' %}
+{% elif not is_number(pw) %}{% set ns.ph = prev.state %}
+{% elif ended %}{% set ns.ph = 'Anti-crease' if tumbles > 0 else 'Stopped' %}
+{% elif p <= 10 %}{% set ns.ph = 'Stopped' %}
+{% elif p > 350 %}{% set ns.ph = 'Finishing' if mem.paused else 'Drying' %}
+{% elif comp_t > 0 %}{% set ns.ph = 'Cooling' %}
+{% else %}{% set ns.ph = 'Starting' %}{% endif -%}
+{% endif -%}
+{% set s = a.get('segments') or [] -%}
+{% if not run %}{% set segs = s %}
+{% elif fresh %}{% set segs = [[ns.ph, t]] %}
+{% elif s and s[-1][0] == ns.ph %}{% set segs = s %}
+{% else %}{% set segs = s + [[ns.ph, t]] %}{% endif -%}
+{{ dict(mem, segments=segs, phase=ns.ph) | to_json }}
+{%- endmacro %}

@@ -284,6 +284,19 @@
           locations."/dns-query" = {
             proxyPass = "https://127.0.0.1:3001";
           };
+          locations."= /home-dns.mobileconfig" = {
+            alias = config.sops.templates."home-dns.mobileconfig".path;
+            extraConfig = "default_type application/x-apple-aspen-config;";
+          };
+        };
+
+        # Home SSID is kept out of the public repo, so the iOS profile is rendered from sops.
+        sops.secrets."surasa.wifi.ssid" = { };
+        sops.templates."home-dns.mobileconfig" = {
+          owner = "nginx";
+          content =
+            builtins.replaceStrings [ "__HOME_SSID__" ] [ config.sops.placeholder."surasa.wifi.ssid" ]
+              (builtins.readFile ./home-dns.mobileconfig);
         };
 
         networking.firewall.interfaces.${lanIf} = {

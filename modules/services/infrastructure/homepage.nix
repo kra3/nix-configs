@@ -474,6 +474,13 @@
                 };
               }
               {
+                "iOS DNS Profile" = {
+                  description = "Encrypted DNS on home Wi-Fi (open in Safari)";
+                  icon = "mdi-apple";
+                  href = "https://dns.${domain}/home-dns.mobileconfig";
+                };
+              }
+              {
                 Prometheus = {
                   description = "Metrics collection";
                   icon = "prometheus.png";

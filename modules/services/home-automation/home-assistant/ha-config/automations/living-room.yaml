@@ -15,7 +15,7 @@
 - id: living_room_lighting
   alias: Living room — Lighting
   description: >-
-    Presence + darkness via the living room mmWave sensor; on from dark until bedtime while someone is home, dimmed to 20% after 30 min without presence, off when nobody is home. Brightness otherwise left to Adaptive Lighting.
+    Presence + darkness via the living room mmWave sensor; on from dark until bedtime while someone is home, at 15% without presence (dimmed after 2 min), off when nobody is home. Brightness otherwise left to Adaptive Lighting.
   use_blueprint:
     path: local/room-presence-lighting.yaml
     input:
@@ -25,6 +25,8 @@
       dark_boolean: input_boolean.living_room_is_dark
       block_entity: binary_sensor.tv_watching
       evening_hold: true
+      dim_after_minutes: 2
+      dim_brightness: 15
       bedtime_off_after_minutes: 15
       night_off_after_minutes: 3
       bedtime_block_players:

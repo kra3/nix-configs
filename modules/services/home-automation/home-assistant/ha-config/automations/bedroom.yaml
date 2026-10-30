@@ -26,11 +26,13 @@
       motion_sensor: binary_sensor.bedroom_occupancy_presence
       dark_boolean: input_boolean.bedroom_is_dark
       react_during_sleep: false
+      long_clear_sensor: input_boolean.bedroom_is_dark
+      long_clear_minutes: 10
       nap_boolean: input_boolean.bedroom_nap
 
 - id: bedroom_nap
   alias: Bedroom — Nap
-  description: Nap on turns the light off; it ends after the bedroom is empty for 10 min or when sleep hours start.
+  description: Nap on turns the light off; it ends after the bedroom is empty for 45 min or when sleep hours start.
   triggers:
   - entity_id: input_boolean.bedroom_nap
     to: "on"
@@ -38,7 +40,7 @@
     id: start
   - entity_id: binary_sensor.bedroom_occupancy_presence
     to: "off"
-    for: "00:10:00"
+    for: "00:45:00"
     trigger: state
     id: end
   - entity_id: schedule.sleep
@@ -47,7 +49,7 @@
     id: end
   - entity_id: input_boolean.bedroom_nap
     to: "on"
-    for: "00:10:00"
+    for: "00:45:00"
     trigger: state
     id: recheck
   - trigger: homeassistant
@@ -78,7 +80,7 @@
         - condition: state
           entity_id: binary_sensor.bedroom_occupancy_presence
           state: "off"
-          for: "00:10:00"
+          for: "00:45:00"
       sequence:
       - action: input_boolean.turn_off
         target:

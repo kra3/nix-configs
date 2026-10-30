@@ -241,6 +241,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDpvhVfQVKDNfVyl4GJux/lfzjkm683EW4MAESX/JKQA sutala kra3"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOFHJcFS3rx+AoqmqhHSjMbWpe8KqcLTmX/xgcf7/lTn nixos-deploy"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKmRf86XKYHd45ZmhhjyXFSgl88nH91dcSvRVNhVwn91 kra3@sutala github"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINBOrLuCD+t2P056nXHWP9JPFJt6+3ugnoWOvXLMcnHx kra3@ipad"
     ];
   };
 

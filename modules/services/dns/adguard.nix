@@ -137,7 +137,7 @@
                 enabled = false;
                 use_custom = false;
               };
-              handle_ddr = true;
+              handle_ddr = false;
               bootstrap_prefer_ipv6 = false;
               upstream_timeout = "10s";
               use_private_ptr_resolvers = true;

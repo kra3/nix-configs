@@ -1,5 +1,5 @@
 {
-  # Standalone secondary DNS resolver for hosts/surasa -- plain port-53 AdGuard Home + Unbound, no TLS/nginx/ACME (see services-dns-adguard for sutala's version). Filter lists shared via flakeLib.adguard-filters.
+  # Standalone secondary DNS resolver for hosts/surasa -- AdGuard Home + Unbound, DoH served by AdGuard itself on 443 (no nginx; host must import services-infrastructure-acme). Filter lists shared via flakeLib.adguard-filters.
   flake.nixosModules.services-dns-rpi-secondary =
     {
       config,
@@ -75,6 +75,7 @@
         DynamicUser = lib.mkForce false;
         User = "adguardhome";
         Group = "adguardhome";
+        SupplementaryGroups = [ "acme" ];
         LoadCredential = [
           "password:${config.sops.secrets."dns.adguard.password".path}"
           "username:${config.sops.secrets."dns.adguard.username".path}"
@@ -148,6 +149,21 @@
             ];
             cache_size = 4194304;
             enable_dnssec = true;
+            handle_ddr = false;
+          };
+
+          tls = {
+            enabled = true;
+            allow_unencrypted_doh = false;
+            server_name = "dns.${domain}";
+            force_https = false;
+            port_https = 443;
+            port_dns_over_tls = 0;
+            port_dns_over_quic = 0;
+            port_dnscrypt = 0;
+            certificate_path = "${config.security.acme.certs.${domain}.directory}/fullchain.pem";
+            private_key_path = "${config.security.acme.certs.${domain}.directory}/key.pem";
+            strict_sni_check = false;
           };
 
           filtering = {
@@ -189,7 +205,10 @@
       };
 
       networking.firewall.interfaces.${net.lanIf} = {
-        allowedTCPPorts = [ 53 ];
+        allowedTCPPorts = [
+          53
+          443
+        ];
         allowedUDPPorts = [ 53 ];
       };
     };

@@ -11,6 +11,7 @@
     flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-openssh
     flakeModules.nixos.services-infrastructure-sops
+    flakeModules.nixos.services-infrastructure-acme
     flakeModules.nixos.services-dns-rpi-secondary
     flakeModules.nixos.services-media-pi-audio
     flakeModules.nixos.services-media-sendspin
@@ -20,6 +21,9 @@
   ];
 
   networking.hostName = "surasa";
+
+  # The shared acme module also reloads nginx, which surasa doesn't run.
+  security.acme.certs.${config.vars.acme.domain}.reloadServices = lib.mkForce [ "adguardhome" ];
 
   services.sendspin-player.name = "Kitchen Speaker";
 

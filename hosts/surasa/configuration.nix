@@ -217,6 +217,13 @@
     extraSetFlags = [ "--advertise-routes=192.168.1.39/32" ];
   };
 
+  # A switch that restarts tailscaled alongside wifi can take >90s to reach Running, failing the deploy.
+  systemd.services.tailscaled-autoconnect.serviceConfig = {
+    TimeoutStartSec = "5min";
+    Restart = "on-failure";
+    RestartSec = "30s";
+  };
+
   # openFirewall above only opens the wireguard transport port, not general tailscale0 traffic -- DNS needs its own allow.
   networking.firewall.interfaces.tailscale0 = {
     allowedTCPPorts = [ 53 ];

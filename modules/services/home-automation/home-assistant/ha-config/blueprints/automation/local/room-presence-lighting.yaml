@@ -108,7 +108,8 @@ blueprint:
       name: Hold on in the evening
       description: >-
         For living areas: skip the 2 min off, keep the light on from dark
-        until bedtime while someone is home, dim it after
+        until bedtime while someone is home (at "Dim brightness" while nobody
+        is in the room), dim it after
         "Dim after (min)" without presence, and turn it off when nobody is
         home.
       default: false
@@ -148,7 +149,7 @@ blueprint:
       default: ""
       selector:
         entity:
-          domain: binary_sensor
+          domain: [binary_sensor, input_boolean]
     long_clear_minutes:
       name: Long clear delay (min)
       default: 5
@@ -232,6 +233,7 @@ trigger_variables:
   bt_extra: !input bedtime_extra_clear_sensor
   bt_players: !input bedtime_block_players
   bt_occupancy: !input occupancy_sensor
+  nap_entity: !input nap_boolean
 
 triggers:
   - entity_id: !input occupancy_sensor
@@ -247,6 +249,9 @@ triggers:
     to: "on"
     trigger: state
     id: became_dark
+  - trigger: template
+    value_template: "{{ nap_entity != '' and is_state(nap_entity, 'off') }}"
+    id: nap_end
   - entity_id: !input occupancy_sensor
     to: "off"
     for: &clear_delay "{{ '00:%02d:00' % long_clear if is_state(long_sensor, 'on') else '00:02:00' }}"
@@ -448,6 +453,8 @@ actions:
               - condition: trigger
                 id: became_dark
               - condition: trigger
+                id: nap_end
+              - condition: trigger
                 id: arrive
           - condition: template
             value_template: "{{ not away }}"
@@ -477,17 +484,20 @@ actions:
               - condition: template
                 value_template: "{{ evening_hold and not asleep }}"
         sequence:
+          - variables:
+              unoccupied: >-
+                {{ evening_hold and is_state(occupancy_sensor, 'off') and is_state(motion_sensor, 'off') }}
           - if:
               - condition: template
                 value_template: >-
-                  {{ handback and (is_state(light_entity, 'off')
+                  {{ handback and (unoccupied or is_state(light_entity, 'off')
                      or (state_attr(light_entity, 'brightness') | int(0)) <= dim_brightness | int * 2.55 + 8) }}
             then:
               - action: adaptive_lighting.set_manual_control
                 data:
                   entity_id: "{{ al_switch }}"
                   lights: "{{ light_entity }}"
-                  manual_control: false
+                  manual_control: "{{ unoccupied }}"
           - if:
               - condition: template
                 value_template: "{{ pin and (sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness) is not none }}"
@@ -495,8 +505,8 @@ actions:
           - target:
               entity_id: !input light_entity
             data: >-
-              {%- set b = sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
-              {{ {'transition': 1} if b is none else {'brightness_pct': b, 'transition': 1} }}
+              {%- set b = dim_brightness if unoccupied else sleep_brightness if is_state('schedule.sleep', 'on') else on_brightness -%}
+              {{ {'transition': 1} if b is none else {'brightness_pct': b | int, 'transition': 1} }}
             action: light.turn_on
       - conditions:
           - condition: trigger

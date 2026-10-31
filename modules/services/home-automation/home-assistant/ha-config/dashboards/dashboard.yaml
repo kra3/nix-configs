@@ -55,6 +55,85 @@ views:
       entity: input_boolean.bedroom_nap
       name: Bedroom nap
       icon: mdi:power-sleep
+    - type: markdown
+      title: Trips
+      content: >-
+        {% set who = {'Arun Karunagath': ['person.arun_karunagath', 'sensor.arun_trips'],
+                      'Anjali PC': ['person.anjalipc', 'sensor.anjali_trips']}.get(user) %}
+        {% if who %}{% set p, s = who %}{% set fetched = states(s) %}
+        {% if fetched in ['unknown', 'unavailable'] %}
+        Tap **Check trips** for public transport {{ 'to work' if is_state(p, 'home') else 'home' }}.
+        {% else %}
+        {% set age = ((now() - as_datetime(fetched)).total_seconds() // 60) | int %}
+        **{{ state_attr(s, 'origin') }} → {{ state_attr(s, 'destination') }}** · fetched {{ (as_datetime(fetched) | as_local).strftime('%H:%M') }}{{ ' · ' ~ age ~ ' min old, tap Check trips' if age > 15 else '' }}
+
+        {% if state_attr(s, 'ok') %}
+        | Leave | Arrive | Time | Walk | Route |
+        |---|---|---|---|---|
+        {% for t in state_attr(s, 'trips') if t.best or is_state('input_boolean.transit_show_all', 'on') %}| {{ t.dep }} | {{ t.arr }} | {{ t.min }} min | {{ (t.walk / 1000) | round(1) ~ ' km' if t.walk >= 1000 else t.walk ~ ' m' }} · {{ t.walk_min }} min | {{ t.route }} |
+        {% endfor %}
+        {% else %}
+        No trips found. Location must be on in the Home Assistant app.
+        {% endif %}{% endif %}{% endif %}
+      grid_options:
+        columns: full
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        - 6edcc5a09c3144d684077ee362e7394a
+    - type: button
+      name: Check trips
+      icon: mdi:train-bus
+      show_state: false
+      tap_action:
+        action: perform-action
+        perform_action: script.transit_check
+        data:
+          person: person.arun_karunagath
+      grid_options:
+        columns: full
+        rows: 1
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+    - type: button
+      name: Check trips
+      icon: mdi:train-bus
+      show_state: false
+      tap_action:
+        action: perform-action
+        perform_action: script.transit_check
+        data:
+          person: person.anjalipc
+      grid_options:
+        columns: full
+        rows: 1
+      visibility:
+      - condition: user
+        users:
+        - 6edcc5a09c3144d684077ee362e7394a
+    - type: tile
+      entity: input_boolean.transit_show_all
+      name: Show all trips
+      visibility: &trip_users
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        - 6edcc5a09c3144d684077ee362e7394a
+    - type: custom:popup-tile-card
+      entity: input_select.transit_modes
+      name: Trip settings
+      icon: mdi:tune-variant
+      popup:
+        type: entities
+        title: Trip settings
+        entities:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+      visibility: *trip_users
   - type: grid
     cards:
     - type: heading

@@ -51,6 +51,7 @@
             origin_lon: "{{ state_attr('zone.home', 'longitude') }}"
             dest_lat: "{{ geo.content[0].lat }}"
             dest_lon: "{{ geo.content[0].lon }}"
+            for_arrival: 1
             date: "{{ arrive_by[:10] }}"
             time: "{{ arrive_by[11:16] }}"
           response_variable: trip

@@ -1,0 +1,57 @@
+input_boolean:
+  transit_show_all:
+    name: Show all trips
+    icon: mdi:filter-off-outline
+
+input_select:
+  transit_max_changes:
+    name: Changes
+    icon: mdi:swap-horizontal
+    options:
+    - Any
+    - None
+    - At most 1
+  transit_modes:
+    name: Modes
+    icon: mdi:train-bus
+    options:
+    - All
+    - Trains
+    - Buses and trams
+  transit_walking:
+    name: Walking
+    icon: mdi:walk
+    options:
+    - Up to 2 km
+    - Up to 1 km
+    - Up to 500 m
+
+template:
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
+      person: person.arun_karunagath
+  sensor:
+  - name: Arun trips
+    unique_id: transit_trips_arun
+    icon: mdi:train-bus
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: &trip_attributes
+      ok: "{{ trigger.event.data.ok }}"
+      origin: "{{ trigger.event.data.origin }}"
+      destination: "{{ trigger.event.data.destination }}"
+      trips: "{{ trigger.event.data.trips }}"
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
+      person: person.anjalipc
+  sensor:
+  - name: Anjali trips
+    unique_id: transit_trips_anjali
+    icon: mdi:train-bus
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: *trip_attributes

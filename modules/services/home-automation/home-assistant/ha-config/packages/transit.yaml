@@ -22,8 +22,8 @@ input_select:
     name: Walking
     icon: mdi:walk
     options:
-    - Up to 2 km
     - Up to 1 km
+    - Up to 2 km
     - Up to 500 m
 
 template:

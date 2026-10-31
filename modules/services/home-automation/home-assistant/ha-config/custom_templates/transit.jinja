@@ -27,8 +27,8 @@
 <ha-icon icon="mdi:walk"></ha-icon> {{ l.walk }} min walk
 {%- else -%}
 <ha-icon icon="{{ l.i }}"></ha-icon> <b>{{ l.n }}</b> {{ l.dep[11:16] }} {{ l.from }}
-{%- if l.pos %} · {{ 'spår' if l.i == 'mdi:train' else 'läge' }} {{ l.pos }}{% endif %}
-{%- if l.cancel %} · cancelled{% elif l.rt %} · {{ '+' ~ l.delay ~ ' min' if l.delay > 0 else 'on time' }}{% elif l.found is defined %} · timetable{% endif %}
+{%- if l.get('pos') %} · {{ 'spår' if l.i == 'mdi:train' else 'läge' }} {{ l.pos }}{% endif %}
+{%- if l.get('cancel') %} · cancelled{% elif l.get('rt') %} · {{ '+' ~ l.delay ~ ' min' if l.delay > 0 else 'on time' }}{% elif 'found' in l %} · timetable{% endif %}
 <br>&nbsp;&nbsp;&nbsp;→ {{ l.arr }} {{ l.to }}
 {%- endif %}
 {%- endmacro %}

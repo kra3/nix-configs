@@ -527,7 +527,7 @@ transit_check:
         {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1'}.get(states('input_select.transit_max_changes'), '')
            ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
       max_walk: >-
-        {{ {'Up to 1 km': 1000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 2000) }}
+        {{ {'Up to 2 km': 2000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 1000) }}
       leg_walk: "{{ [max_walk | int // 2, 500] | max }}"
       first: {}
       second: {}

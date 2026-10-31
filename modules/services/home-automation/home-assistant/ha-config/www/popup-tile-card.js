@@ -19,7 +19,7 @@ const POPUP_STYLE = `
 
 class PopupTileCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !config.popup || !(config.entity || config.inline)) throw new Error("popup-tile-card: popup and entity (or inline) are required");
+    if (!config || !config.popup || !(config.entity || config.inline || config.trigger)) throw new Error("popup-tile-card: popup and entity (or inline, or trigger) are required");
     this._config = config;
     this._html = "";
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -57,6 +57,16 @@ class PopupTileCard extends HTMLElement {
 
   _render() {
     const c = this._config;
+    if (c.trigger) {
+      if (!this._listening) {
+        this._listening = true;
+        this.style.display = "none";
+        document.addEventListener("ll-custom", (e) => {
+          if (e.detail && e.detail.popup === c.trigger) this._open();
+        });
+      }
+      return;
+    }
     if (c.inline) {
       this._renderInline();
       return;

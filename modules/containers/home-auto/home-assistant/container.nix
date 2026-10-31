@@ -153,6 +153,9 @@
           resrobot_trip_url: "https://api.resrobot.se/v2.1/trip?format=json&searchForArrival={{ for_arrival | default(0) }}&accessId=${
             config.sops.placeholder."trafiklab.resrobot_key"
           }&originCoordLat={{ origin_lat }}&originCoordLong={{ origin_lon }}&destCoordLat={{ dest_lat }}&destCoordLong={{ dest_lon }}&date={{ date }}&time={{ time }}{{ extra | default }}"
+          trafiklab_departures_url: "https://realtime-api.trafiklab.se/v1/departures/{{ stop }}/{{ when }}?key=${
+            config.sops.placeholder."trafiklab.realtime_key"
+          }"
         ''
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
@@ -212,6 +215,7 @@
       };
 
       sops.secrets."trafiklab.resrobot_key" = { };
+      sops.secrets."trafiklab.realtime_key" = { };
 
       # No bind-mount: pasted by hand into the hass-oidc-auth integration's UI.
       sops.secrets."homeassistant.oidc_client_secret" = { };

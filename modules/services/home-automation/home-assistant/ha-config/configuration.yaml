@@ -85,6 +85,10 @@ rest_command:
     url: !secret resrobot_trip_url
     method: get
     timeout: 20
+  transit_departures:
+    url: !secret trafiklab_departures_url
+    method: get
+    timeout: 20
 
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml

@@ -1724,8 +1724,10 @@ views:
         use_light_color: true
         show_brightness_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.living_room_lights
         name: Living Room
@@ -1735,8 +1737,10 @@ views:
         show_color_temp_control: true
         show_color_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.bedroom_wardrobe_lights
         name: Wardrobe
@@ -1744,8 +1748,10 @@ views:
         use_light_color: true
         show_brightness_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.kitchen_dining_lights
         name: Kitchen Dining
@@ -1753,8 +1759,10 @@ views:
         use_light_color: true
         show_brightness_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.kitchen_lights
         name: Kitchen
@@ -1763,8 +1771,10 @@ views:
         show_brightness_control: true
         show_color_temp_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.office_room_light
         name: Office
@@ -1775,8 +1785,10 @@ views:
         show_color_temp_control: true
         show_color_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
       - type: custom:mushroom-light-card
         entity: light.hallway_hall_lights
         name: Hall
@@ -1784,8 +1796,10 @@ views:
         use_light_color: true
         show_brightness_control: true
         collapsible_controls: true
-        hold_action:
+        tap_action:
           action: more-info
+        hold_action:
+          action: toggle
     - type: heading
       heading: Accessories
       heading_style: subtitle

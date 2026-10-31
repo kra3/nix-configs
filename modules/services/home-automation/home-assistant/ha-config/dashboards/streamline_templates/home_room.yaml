@@ -2,15 +2,48 @@ default:
 - temperature: ""
 - humidity: ""
 - illuminance: ""
-- light: ""
 - comfort: ""
 card:
-  type: custom:room-tile-card
-  name: "[[name]]"
-  icon: "[[icon]]"
-  presence: "[[presence]]"
-  temperature: "[[temperature]]"
-  humidity: "[[humidity]]"
-  illuminance: "[[illuminance]]"
-  light: "[[light]]"
-  comfort: "[[comfort]]"
+  type: vertical-stack
+  card_mod:
+    style: |
+      :host { --vertical-stack-card-gap: 0px; --stack-card-gap: 0px; height: 100%; }
+      #root { height: 100%; min-height: 92px; position: relative; }
+      #root > hui-card:nth-of-type(2) { flex: 1 1 auto; }
+      #root > hui-card:nth-of-type(3) { position: absolute; top: 12px; right: 12px; z-index: 1; }
+  cards:
+  - type: custom:mushroom-light-card
+    entity: "[[light]]"
+    name: "[[name]]"
+    icon: "[[icon]]"
+    use_light_color: true
+    card_mod:
+      style: |
+        {% set rgb = state_attr('[[light]]', 'rgb_color') %}
+        {% set c = ('rgb(%d,%d,%d)' % (rgb[0], rgb[1], rgb[2])) if rgb else 'var(--state-light-active-color)' %}
+        {% set badge = (1 if is_state('[[presence]]', 'on') else 0) + (3 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0) %}
+        ha-card {
+          background: {{ ('color-mix(in srgb, ' ~ c ~ ' 12%, var(--card-background-color))') if is_state('[[light]]', 'on') else 'var(--card-background-color)' }};
+          border-bottom: none;
+          border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
+          box-shadow: none;
+        }
+        :host {
+          --mush-spacing: 12px;
+          --mush-card-primary-font-size: 14.5px;
+          --mush-card-secondary-font-size: 12px;
+        }
+        mushroom-state-item { padding-right: {{ badge * 18 }}px; }
+  - type: custom:streamline-card
+    template: home_room_stats
+    variables:
+      temperature: "[[temperature]]"
+      humidity: "[[humidity]]"
+      illuminance: "[[illuminance]]"
+      comfort: "[[comfort]]"
+      light: "[[light]]"
+  - type: custom:streamline-card
+    template: home_room_status
+    variables:
+      presence: "[[presence]]"
+      comfort: "[[comfort]]"

@@ -30,8 +30,6 @@ resources:
     type: module
   - url: /local/popup-tile-card.js?v=4
     type: module
-  - url: /local/room-tile-card.js?v=17
-    type: module
   - url: /local/security-status-card.js?v=9
     type: module
   - url: /local/security-plan-card.js?v=16

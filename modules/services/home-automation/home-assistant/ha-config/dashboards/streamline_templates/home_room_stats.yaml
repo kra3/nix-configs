@@ -1,0 +1,54 @@
+default:
+- temperature: ""
+- humidity: ""
+- illuminance: ""
+- comfort: ""
+- light: ""
+card:
+  type: custom:mushroom-chips-card
+  chips:
+  - type: template
+    icon: "{{ 'mdi:thermometer' if '[[temperature]]' else '' }}"
+    content: "{{ (states('[[temperature]]') | float(0) | round(1) ~ '°') if '[[temperature]]' else '' }}"
+    icon_color: >-
+      {{ {'Cool':'blue','Cold':'blue','Warm':'orange','Hot':'red'}.get(states('[[comfort]]'), 'disabled') }}
+  - type: template
+    icon: "{{ 'mdi:water-percent' if '[[humidity]]' else '' }}"
+    content: "{{ (states('[[humidity]]') | float(0) | round(0) | int ~ '%') if '[[humidity]]' else '' }}"
+    icon_color: >-
+      {{ 'orange' if states('[[comfort]]') in ['Humid', 'Dry'] else 'disabled' }}
+  - type: template
+    icon: "{{ 'mdi:brightness-5' if '[[illuminance]]' else '' }}"
+    content: "{{ (states('[[illuminance]]') | float(0) | round(0) | int ~ ' lx') if '[[illuminance]]' else '' }}"
+    icon_color: >-
+      {% set v = states('[[illuminance]]') | float(0) %}
+      {{ 'blue' if v < 20 else 'disabled' if v < 150 else 'orange' }}
+  card_mod:
+    style: |
+      {% set rgb = state_attr('[[light]]', 'rgb_color') if '[[light]]' else none %}
+      {% set c = ('rgb(%d,%d,%d)' % (rgb[0], rgb[1], rgb[2])) if rgb else 'var(--state-light-active-color)' %}
+      :host {
+        display: flex;
+        align-items: flex-end;
+        height: 100%;
+        box-sizing: border-box;
+        background: {{ ('color-mix(in srgb, ' ~ c ~ ' 12%, var(--card-background-color))') if is_state('[[light]]', 'on') else 'var(--card-background-color)' }};
+        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
+        border-top: none;
+        border-radius: 0 0 var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px);
+        padding: 0 10px 12px 12px;
+        --mush-chip-background: transparent;
+        --mush-chip-border-width: 0;
+        --mush-chip-box-shadow: none;
+        --mush-chip-height: 20px;
+        --mush-chip-padding: 0;
+        --mush-chip-spacing: 8px;
+        --mush-chip-font-size: 12px;
+        --mush-chip-font-weight: 400;
+        --mush-chip-icon-size: 15px;
+      }
+      ha-card { background: none; border: none; box-shadow: none; width: 100%; }
+      .chip-container { flex-wrap: nowrap !important; min-height: 20px; overflow: hidden; }
+      {% for n, e in [(1, '[[temperature]]'), (2, '[[humidity]]'), (3, '[[illuminance]]')] if not e or states(e) in ['unknown', 'unavailable'] %}
+      .chip-container > mushroom-template-chip:nth-of-type({{ n }}) { display: none; }
+      {% endfor %}

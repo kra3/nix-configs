@@ -1,0 +1,48 @@
+default:
+- temperature: ""
+- humidity: ""
+- illuminance: ""
+- comfort: ""
+card:
+  type: vertical-stack
+  card_mod:
+    style: |
+      :host { --vertical-stack-card-gap: 0px; --stack-card-gap: 0px; height: 100%; }
+      #root { height: 100%; min-height: 92px; position: relative; }
+      #root > hui-card:nth-of-type(2) { flex: 1 1 auto; }
+      #root > hui-card:nth-of-type(3) { position: absolute; top: 12px; right: 12px; z-index: 1; }
+  cards:
+  - type: custom:mushroom-template-card
+    entity: "[[presence]]"
+    primary: "[[name]]"
+    secondary: >-
+      {{ ('Occupied' if is_state('[[presence]]', 'on') else 'Clear') ~ ' · ' ~ relative_time(states['[[presence]]'].last_changed) }}
+    icon: "[[icon]]"
+    icon_color: primary
+    color: primary
+    card_mod:
+      style: |
+        {% set badge = (1 if is_state('[[presence]]', 'on') else 0) + (3 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0) %}
+        ha-card {
+          border-bottom: none;
+          border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
+          box-shadow: none;
+        }
+        :host {
+          --mush-spacing: 12px;
+          --mush-card-primary-font-size: 14.5px;
+          --mush-card-secondary-font-size: 12px;
+        }
+        mushroom-state-item { padding-right: {{ badge * 18 }}px; }
+  - type: custom:streamline-card
+    template: home_room_stats
+    variables:
+      temperature: "[[temperature]]"
+      humidity: "[[humidity]]"
+      illuminance: "[[illuminance]]"
+      comfort: "[[comfort]]"
+  - type: custom:streamline-card
+    template: home_room_status
+    variables:
+      presence: "[[presence]]"
+      comfort: "[[comfort]]"

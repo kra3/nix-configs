@@ -357,6 +357,7 @@ views:
       show_add_event: true
       entities:
       - calendar.kuttunbn
+      - calendar.akarunagath_icloud_com_family
       - calendar.house
       - calendar.va_syd_sophamntning
       - calendar.holidays_in_sweden

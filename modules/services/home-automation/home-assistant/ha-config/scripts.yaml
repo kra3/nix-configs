@@ -507,30 +507,30 @@ transit_check:
       selector:
         entity:
           domain: person
-  variables:
-    who: >-
-      {{ person | default(states.person | selectattr('attributes.user_id', 'eq', context.user_id)
-                                        | map(attribute='entity_id') | first | default('')) }}
-    work_zone: "{% from 'transit.jinja' import work_zone %}{{ work_zone(who) }}"
-    at_home: "{{ is_state(who, 'home') }}"
-    origin_name: "{% from 'transit.jinja' import origin_name %}{{ origin_name(who) }}"
-    destination_name: "{% from 'transit.jinja' import destination_name %}{{ destination_name(who) }}"
-    from_entity: "{{ 'zone.home' if at_home else who }}"
-    to_entity: "{{ work_zone if at_home else 'zone.home' }}"
-    coords_ok: >-
-      {{ to_entity != ''
-         and state_attr(from_entity, 'latitude') is not none
-         and state_attr(to_entity, 'latitude') is not none }}
-    depart: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
-    extra: >-
-      {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1'}.get(states('input_select.transit_max_changes'), '')
-         ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
-    max_walk: >-
-      {{ {'Up to 1 km': 1000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 2000) }}
-    leg_walk: "{{ [max_walk | int // 2, 500] | max }}"
-    first: {}
-    second: {}
   sequence:
+  - variables:
+      who: >-
+        {{ person | default(states.person | selectattr('attributes.user_id', 'eq', context.user_id)
+                                          | map(attribute='entity_id') | first | default('')) }}
+      work_zone: "{% from 'transit.jinja' import work_zone %}{{ work_zone(who) }}"
+      at_home: "{{ is_state(who, 'home') }}"
+      origin_name: "{% from 'transit.jinja' import origin_name %}{{ origin_name(who) }}"
+      destination_name: "{% from 'transit.jinja' import destination_name %}{{ destination_name(who) }}"
+      from_entity: "{{ 'zone.home' if at_home else who }}"
+      to_entity: "{{ work_zone if at_home else 'zone.home' }}"
+      coords_ok: >-
+        {{ to_entity != ''
+           and state_attr(from_entity, 'latitude') is not none
+           and state_attr(to_entity, 'latitude') is not none }}
+      depart: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
+      extra: >-
+        {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1'}.get(states('input_select.transit_max_changes'), '')
+           ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
+      max_walk: >-
+        {{ {'Up to 1 km': 1000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 2000) }}
+      leg_walk: "{{ [max_walk | int // 2, 500] | max }}"
+      first: {}
+      second: {}
   - if:
     - condition: template
       value_template: "{{ coords_ok }}"

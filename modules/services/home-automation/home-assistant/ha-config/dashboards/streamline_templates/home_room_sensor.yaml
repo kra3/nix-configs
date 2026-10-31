@@ -8,10 +8,12 @@ card:
   card_mod:
     style: |
       :host { --vertical-stack-card-gap: 0px; --stack-card-gap: 0px; height: 100%; }
-      #root { height: 100%; min-height: 92px; position: relative; }
-      #root > hui-card:nth-of-type(2) { flex: 1 1 auto; }
-      #root > hui-card:nth-of-type(3) { position: absolute; top: 12px; right: 12px; z-index: 1; }
   cards:
+  - type: custom:streamline-card
+    template: home_room_status
+    variables:
+      presence: "[[presence]]"
+      comfort: "[[comfort]]"
   - type: custom:mushroom-template-card
     entity: "[[presence]]"
     primary: "[[name]]"
@@ -27,6 +29,7 @@ card:
           border-bottom: none;
           border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
           box-shadow: none;
+          min-height: 59px;
         }
         :host {
           --mush-spacing: 12px;
@@ -40,9 +43,4 @@ card:
       temperature: "[[temperature]]"
       humidity: "[[humidity]]"
       illuminance: "[[illuminance]]"
-      comfort: "[[comfort]]"
-  - type: custom:streamline-card
-    template: home_room_status
-    variables:
-      presence: "[[presence]]"
       comfort: "[[comfort]]"

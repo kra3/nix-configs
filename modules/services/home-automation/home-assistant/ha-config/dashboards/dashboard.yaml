@@ -104,6 +104,8 @@ views:
       heading_style: title
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Kitchen
         icon: mdi:fridge
@@ -126,6 +128,8 @@ views:
           - 6edcc5a09c3144d684077ee362e7394a
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Dining Room
         icon: mdi:silverware
@@ -142,6 +146,8 @@ views:
           state: "on"
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Living Room
         icon: mdi:sofa
@@ -168,6 +174,8 @@ views:
           - 6edcc5a09c3144d684077ee362e7394a
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Office
         icon: mdi:laptop
@@ -187,6 +195,8 @@ views:
           - a1d4401b8b714ebb83f07c5316ab399c
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Hall
         icon: mdi:road
@@ -206,6 +216,8 @@ views:
           state: "on"
     - type: custom:streamline-card
       template: home_room
+      grid_options:
+        columns: 6
       variables:
         name: Bedroom
         icon: mdi:bed
@@ -226,6 +238,8 @@ views:
           state: "on"
     - type: custom:streamline-card
       template: home_room_sensor
+      grid_options:
+        columns: 6
       variables:
         name: Bathroom
         icon: mdi:bathtub
@@ -240,6 +254,8 @@ views:
         state: "on"
     - type: custom:streamline-card
       template: home_room_sensor
+      grid_options:
+        columns: 6
       variables:
         name: Laundry
         icon: mdi:tumble-dryer
@@ -254,6 +270,8 @@ views:
         state: "on"
     - type: custom:streamline-card
       template: home_room_sensor
+      grid_options:
+        columns: 6
       variables:
         name: Toilet
         icon: mdi:toilet

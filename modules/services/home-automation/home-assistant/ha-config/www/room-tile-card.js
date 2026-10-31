@@ -27,7 +27,8 @@ function roomModel(states, cfg) {
   ]
     .filter(([, r]) => r)
     .map(([kind, r, tone]) => ({ icon: ICONS[kind], num: r.num, unit: r.unit, tone }));
-  return { stats, comfort, lit: on(cfg.light), occupied: on(cfg.presence) };
+  const rgb = on(cfg.light) && states[cfg.light].attributes.rgb_color;
+  return { stats, comfort, lit: on(cfg.light), rgb: rgb ? `rgb(${rgb.join(",")})` : null, occupied: on(cfg.presence) };
 }
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -86,7 +87,7 @@ class RoomTileCard extends HTMLElement {
           .join("")}</div>`
       : "";
     const html =
-      `<ha-card class="${m.lit ? "lit" : ""}"><div class="tile"><div class="head"><div class="ic"><ha-icon icon="${esc(c.icon || "mdi:door")}"></ha-icon>` +
+      `<ha-card class="${m.lit ? "lit" : ""}"${m.rgb ? ` style="--c:${m.rgb}"` : ""}><div class="tile"><div class="head"><div class="ic"><ha-icon icon="${esc(c.icon || "mdi:door")}"></ha-icon>` +
       `${m.occupied ? `<div class="bd"><ha-icon icon="mdi:account"></ha-icon></div>` : ""}</div>` +
       `<div class="txt"><div class="name">${esc(c.name || "")}</div>${comfort}</div></div>${stats}</div></ha-card>`;
     if (html !== this._html) {

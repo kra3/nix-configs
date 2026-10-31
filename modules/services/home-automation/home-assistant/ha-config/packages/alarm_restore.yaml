@@ -1,3 +1,9 @@
+input_datetime:
+  alarm_night_sleep_start:
+    name: Sleep start for the current night arm
+    has_date: true
+    has_time: true
+
 input_select:
   alarm_restore_mode:
     name: Alarm mode to restore after a restart

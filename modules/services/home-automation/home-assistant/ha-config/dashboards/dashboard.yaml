@@ -351,6 +351,23 @@ views:
               box-shadow: none;
               border-top: none;
             }
+    - type: calendar
+      title: Family calendar
+      initial_view: listWeek
+      show_add_event: true
+      entities:
+      - calendar.kuttunbn
+      - calendar.house
+      - calendar.va_syd_sophamntning
+      - calendar.holidays_in_sweden
+      - calendar.holidays_in_india
+      grid_options:
+        columns: full
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        - 6edcc5a09c3144d684077ee362e7394a
   - type: grid
     cards:
     - type: heading

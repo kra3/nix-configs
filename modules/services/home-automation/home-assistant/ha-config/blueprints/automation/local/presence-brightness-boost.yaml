@@ -76,6 +76,8 @@ triggers:
     event_type: automations_resumed
     id: release
 
+mode: queued
+
 conditions:
   - condition: not
     conditions:
@@ -154,6 +156,7 @@ actions:
             data:
               lights: "{{ lights }}"
               manual_control: false
+          - delay: 2
           - if:
               - condition: state
                 entity_id: !input light_entity

@@ -10,27 +10,12 @@
 {{ (state_attr(work_zone(person), 'friendly_name') or 'Work') if is_state(person, 'home') else 'Home' }}
 {%- endmacro %}
 
-{% macro trips_sensor(person) -%}
-{{ {'person.arun_karunagath': 'sensor.arun_trips', 'person.anjalipc': 'sensor.anjali_trips'}.get(person, '') }}
-{%- endmacro %}
-
 {% macro iso_minutes(d) -%}
 {% set h = d | regex_findall_index('(\d+)H') | int if 'H' in d else 0 %}{% set m = d | regex_findall_index('(\d+)M') | int if 'M' in d else 0 %}{{ h * 60 + m }}
 {%- endmacro %}
 
 {% macro stop_name(n) -%}
 {{ n | regex_replace(' \(.*\)$', '') | replace('Malmö ', '') }}
-{%- endmacro %}
-
-{% macro leg_line(l) -%}
-{% if l.walk is defined -%}
-<ha-icon icon="mdi:walk"></ha-icon> {{ l.walk }} min walk
-{%- else -%}
-<ha-icon icon="{{ l.i }}"></ha-icon> <b>{{ l.n }}</b> {{ l.dep[11:16] }} {{ l.from }}
-{%- if l.get('pos') %} · {{ 'spår' if l.i == 'mdi:train' else 'läge' }} {{ l.pos }}{% endif %}
-{%- if l.get('cancel') %} · cancelled{% elif l.get('rt') %} · {{ '+' ~ l.delay ~ ' min' if l.delay > 0 else 'on time' }}{% elif 'found' in l %} · timetable{% endif -%}
-<br>&nbsp;&nbsp;&nbsp;→ {{ l.arr }} {{ l.to }}
-{%- endif %}
 {%- endmacro %}
 
 {% macro mode_icon(cls) -%}

@@ -19,7 +19,7 @@ const POPUP_STYLE = `
 
 class PopupTileCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !config.popup || !(config.entity || config.inline || config.trigger)) throw new Error("popup-tile-card: popup and entity (or inline, or trigger) are required");
+    if (!config || !config.popup || !(config.entity || config.inline)) throw new Error("popup-tile-card: popup and entity (or inline) are required");
     this._config = config;
     this._html = "";
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -27,14 +27,6 @@ class PopupTileCard extends HTMLElement {
 
   getCardSize() {
     return 1;
-  }
-
-  connectedCallback() {
-    if (this._onTrigger) document.addEventListener("ll-custom", this._onTrigger);
-  }
-
-  disconnectedCallback() {
-    if (this._onTrigger) document.removeEventListener("ll-custom", this._onTrigger);
   }
 
   getGridOptions() {
@@ -65,16 +57,6 @@ class PopupTileCard extends HTMLElement {
 
   _render() {
     const c = this._config;
-    if (c.trigger) {
-      this.style.display = "none";
-      if (!this._onTrigger) {
-        this._onTrigger = (e) => {
-          if (e.detail && e.detail.popup === this._config.trigger) this._open();
-        };
-        document.addEventListener("ll-custom", this._onTrigger);
-      }
-      return;
-    }
     if (c.inline) {
       this._renderInline();
       return;
@@ -93,7 +75,6 @@ class PopupTileCard extends HTMLElement {
 
   async _open() {
     if (this._overlay) return;
-    this._overlay = true;
     if (!document.getElementById("ptc-style")) {
       const st = document.createElement("style");
       st.id = "ptc-style";

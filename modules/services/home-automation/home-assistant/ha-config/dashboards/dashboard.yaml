@@ -55,92 +55,25 @@ views:
       entity: input_boolean.bedroom_nap
       name: Bedroom nap
       icon: mdi:power-sleep
-    - type: vertical-stack
-      grid_options:
-        columns: full
+    - type: custom:trip-card
+      entity: sensor.arun_trips
+      person: person.arun_karunagath
+      settings: &trip_settings
+      - input_select.transit_max_changes
+      - input_select.transit_modes
+      - input_select.transit_walking
       visibility:
       - condition: user
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
+    - type: custom:trip-card
+      entity: sensor.anjali_trips
+      person: person.anjalipc
+      settings: *trip_settings
+      visibility:
+      - condition: user
+        users:
         - 6edcc5a09c3144d684077ee362e7394a
-      cards:
-      - type: markdown
-        content: |-
-          {% from 'transit.jinja' import origin_name, destination_name, leg_line, trips_sensor %}
-          {% set p = states.person | selectattr('name', 'eq', user) | map(attribute='entity_id') | first | default('') %}
-          {% set s = trips_sensor(p) %}
-          {% set here = origin_name(p) %}{% set there = destination_name(p) %}
-          ### <ha-icon icon="mdi:train-bus"></ha-icon> {{ here }} → {{ there }}
-
-          {% if not s or states(s) in ['unknown', 'unavailable'] %}
-          <ha-alert alert-type="info">Tap Check for trips {{ 'to work' if here == 'Home' else 'home' }}.</ha-alert>
-          {% else %}
-          {% set fetched = as_datetime(states(s)) | as_local %}
-          {% set age = ((now() - fetched).total_seconds() // 60) | int %}
-          {% set show_all = is_state('input_boolean.transit_show_all', 'on') %}
-          {% set upcoming = state_attr(s, 'trips') | default([], true) | selectattr('dep', '>', now().strftime('%Y-%m-%d %H:%M')) | list %}
-          {% set shown = upcoming if show_all else upcoming | selectattr('best') | list %}
-          {% if state_attr(s, 'origin') != here %}
-          <ha-alert alert-type="warning">You're now at {{ here }}. Tap Check for new trips.</ha-alert>
-          {% elif age > 15 %}
-          <ha-alert alert-type="warning">Updated {{ fetched.strftime('%H:%M') }}, {{ age }} min ago. Tap Check to refresh.</ha-alert>
-          {% endif %}
-          {% if not state_attr(s, 'ok') %}
-          <ha-alert alert-type="error">No trips found. Check that location is on in the Home Assistant app, or allow more walking in Settings.</ha-alert>
-          {% elif not shown %}
-          <ha-alert alert-type="info">No more departures in this list. Tap Check.</ha-alert>
-          {% else %}
-          {% for t in shown %}
-          {% set mins = ((strptime(t.dep ~ now().strftime('%z'), '%Y-%m-%d %H:%M%z') - now()).total_seconds() // 60) | int %}
-          {% set route %}{% for l in t.legs | selectattr('n', 'defined') %}{{ ' › ' if not loop.first else '' }}<ha-icon icon="{{ l.i }}"></ha-icon> {{ l.n }}{% endfor %}{% endset %}
-          {% set detail %}{% for l in t.legs %}{{ leg_line(l) }}<br>{% endfor %}{% endset %}
-          {% if loop.first %}
-          ## Leave {{ t.dep[11:16] }} · {{ 'now' if mins <= 0 else 'in ' ~ mins ~ ' min' }}
-          Arrive {{ t.arr }} · {{ t.min }} min
-
-          {{ detail }}
-
-          ---
-          {% else %}
-          <details><summary><b>{{ t.dep[11:16] }} → {{ t.arr }}</b> · {{ t.min }} min · {{ route }}</summary>{{ detail }}</details>
-
-          {% endif %}
-          {% endfor %}
-          {% endif %}
-          {% set hidden = (upcoming | count) - (upcoming | selectattr('best') | list | count) %}
-          <sub>Updated {{ fetched.strftime('%H:%M') }}{{ ' · ' ~ hidden ~ ' more hidden' if hidden and not show_all else '' }}</sub>
-          {% endif %}
-      - type: custom:mushroom-chips-card
-        alignment: end
-        chips:
-        - type: template
-          icon: mdi:refresh
-          content: Check
-          tap_action:
-            action: perform-action
-            perform_action: script.transit_check
-        - type: template
-          entity: input_boolean.transit_show_all
-          icon: "{{ 'mdi:filter-off' if is_state('input_boolean.transit_show_all', 'on') else 'mdi:filter' }}"
-          icon_color: "{{ 'primary' if is_state('input_boolean.transit_show_all', 'on') else '' }}"
-          content: "{{ 'Showing all' if is_state('input_boolean.transit_show_all', 'on') else 'Show all' }}"
-          tap_action:
-            action: toggle
-        - type: template
-          icon: mdi:tune-variant
-          content: Settings
-          tap_action:
-            action: fire-dom-event
-            popup: trip_settings
-      - type: custom:popup-tile-card
-        trigger: trip_settings
-        title: Trip settings
-        popup:
-          type: entities
-          entities:
-          - input_select.transit_max_changes
-          - input_select.transit_modes
-          - input_select.transit_walking
   - type: grid
     cards:
     - type: heading

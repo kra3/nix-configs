@@ -22,6 +22,17 @@
       entity_id: input_select.alarm_restore_mode
     data:
       option: "{{ 'none' if trigger.to_state.state == 'disarmed' else trigger.to_state.state }}"
+  - variables:
+      sleep_start: "{{ (now() if is_state('schedule.sleep', 'on') else state_attr('schedule.sleep', 'next_event')) | as_timestamp(none) }}"
+  - if:
+    - condition: template
+      value_template: "{{ trigger.to_state.state == 'armed_night' and sleep_start is not none }}"
+    then:
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.alarm_night_sleep_start
+      data:
+        timestamp: "{{ sleep_start }}"
   - action: homeassistant.save_persistent_states
   mode: queued
 
@@ -30,7 +41,8 @@
   description: >-
     After Home Assistant starts, re-arms the remembered mode if Alarmo came
     back disarmed, skipping the exit delay, and notifies the phones. Skipped
-    when a person disarmed it after the restart.
+    when a person disarmed it after the restart, or for night once
+    alarm_disarm_morning would have disarmed it.
   triggers:
   - trigger: homeassistant
     event: start
@@ -52,6 +64,12 @@
       state: none
   - variables:
       mode: "{{ {'armed_away': 'away', 'armed_vacation': 'vacation'}.get(states('input_select.alarm_restore_mode'), 'night') }}"
+  - condition: template
+    value_template: >-
+      {{ mode != 'night'
+         or is_state('schedule.sleep', 'on')
+         or state_attr('input_datetime.alarm_night_sleep_start', 'timestamp') | float(0) > now().timestamp()
+         or not (is_state('person.arun_karunagath', 'home') or is_state('person.anjalipc', 'home')) }}
   - action: alarmo.arm
     data:
       entity_id: alarm_control_panel.vasudha_secure
@@ -162,7 +180,7 @@
   description: >-
     Disarms armed_night when the sleep schedule ends (or on startup or
     when party or manual mode ends, if it ended meanwhile), only if someone's
-    home.
+    home and the sleep that night arm was for has started.
   triggers:
   - entity_id: schedule.sleep
     to: "off"
@@ -186,6 +204,8 @@
   - condition: state
     entity_id: alarm_control_panel.vasudha_secure
     state: armed_night
+  - condition: template
+    value_template: "{{ state_attr('input_datetime.alarm_night_sleep_start', 'timestamp') | float(0) <= now().timestamp() }}"
   actions:
   - action: alarm_control_panel.alarm_disarm
     target:

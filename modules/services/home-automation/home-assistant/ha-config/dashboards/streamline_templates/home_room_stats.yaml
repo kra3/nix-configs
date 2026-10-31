@@ -27,8 +27,10 @@ card:
     style: |
       {% set rgb = state_attr('[[light]]', 'rgb_color') if '[[light]]' else none %}
       {% set c = ('rgb(%d,%d,%d)' % (rgb[0], rgb[1], rgb[2])) if rgb else 'var(--state-light-active-color)' %}
-      :host {
+      :host(streamline-card) {
         display: flex;
+        width: 100%;
+        flex: 1 1 auto;
         align-items: flex-end;
         height: 100%;
         box-sizing: border-box;
@@ -36,19 +38,20 @@ card:
         border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
         border-top: none;
         border-radius: 0 0 var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px);
-        padding: 0 10px 12px 12px;
+        padding: 0 10px 12px;
         --mush-chip-background: transparent;
         --mush-chip-border-width: 0;
         --mush-chip-box-shadow: none;
         --mush-chip-height: 20px;
         --mush-chip-padding: 0;
-        --mush-chip-spacing: 8px;
+        --mush-chip-spacing: 6px;
         --mush-chip-font-size: 12px;
         --mush-chip-font-weight: 400;
-        --mush-chip-icon-size: 15px;
+        --mush-chip-icon-size: 14px;
       }
       ha-card { background: none; border: none; box-shadow: none; width: 100%; }
-      .chip-container { flex-wrap: nowrap !important; min-height: 20px; overflow: hidden; }
+      .chip-container { flex-wrap: nowrap !important; min-height: 20px; overflow: hidden; white-space: nowrap; }
+      .chip-container > * { flex-shrink: 0; }
       {% for n, e in [(1, '[[temperature]]'), (2, '[[humidity]]'), (3, '[[illuminance]]')] if not e or states(e) in ['unknown', 'unavailable'] %}
       .chip-container > mushroom-template-chip:nth-of-type({{ n }}) { display: none; }
       {% endfor %}

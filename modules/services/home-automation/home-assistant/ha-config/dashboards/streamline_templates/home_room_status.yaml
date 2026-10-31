@@ -16,7 +16,16 @@ card:
     icon_color: primary
   card_mod:
     style: |
-      :host {
+      :host(streamline-card) {
+        display: flex;
+        justify-content: flex-end;
+        height: 0;
+        overflow: visible;
+        padding: 0 12px;
+        box-sizing: border-box;
+        width: 100%;
+        position: relative;
+        z-index: 1;
         --mush-chip-background: transparent;
         --mush-chip-border-width: 0;
         --mush-chip-box-shadow: none;
@@ -27,7 +36,7 @@ card:
         --mush-chip-font-weight: 500;
         --mush-chip-icon-size: 16px;
       }
-      ha-card { background: none; border: none; box-shadow: none; }
+      ha-card { background: none; border: none; box-shadow: none; top: 12px; }
       {% if states('[[comfort]]') not in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] %}
       .chip-container > mushroom-template-chip:nth-of-type(1) { display: none; }
       {% endif %}

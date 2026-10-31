@@ -85,11 +85,6 @@
             {% else %}
               {{ title }} at {{ starts[11:16] }}, {{ place }}: starts in 1 h (no public transport route found).
             {% endif %}
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.calendar_leave_message
-        data:
-          value: "{{ message[:255] }}"
       - if:
         - condition: template
           value_template: "{{ leave_at <= now().strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -100,6 +95,11 @@
             message: "{{ message }}"
             to: home
         else:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.calendar_leave_message
+          data:
+            value: "{{ message[:255] }}"
         - action: input_datetime.set_datetime
           target:
             entity_id: input_datetime.calendar_leave_at
@@ -120,7 +120,8 @@
   alias: "Calendar: morning agenda"
   description: >-
     Once a day, on the first kitchen presence after the sleep schedule ends
-    (05:00-12:00), or at 12:00 if nobody came by, sends both phones today's
+    (05:00-12:00), or at 12:00 / an HA start before 20:00 if it has not run
+    yet, sends both phones today's
     family events and holidays, and tomorrow's waste collection. Nothing to
     report, no notification.
   triggers:
@@ -129,13 +130,16 @@
     to: "on"
   - trigger: time
     at: "12:00:00"
+  - trigger: homeassistant
+    event: start
   conditions:
-  - condition: time
-    after: "05:00:00"
-    before: "12:01:00"
   - condition: template
     value_template: >-
-      {{ trigger.platform == 'time' or is_state('schedule.sleep', 'off') }}
+      {% if trigger.platform == 'state' %}
+        {{ 5 <= now().hour < 12 and is_state('schedule.sleep', 'off') }}
+      {% else %}
+        {{ 5 <= now().hour < 20 }}
+      {% endif %}
   - condition: template
     value_template: >-
       {{ this.attributes.last_triggered is none
@@ -152,6 +156,7 @@
       start_date_time: "{{ today_at() }}"
       end_date_time: "{{ today_at() + timedelta(days=1) }}"
     response_variable: today
+    continue_on_error: true
   - action: calendar.get_events
     target:
       entity_id: calendar.va_syd_sophamntning
@@ -159,10 +164,11 @@
       start_date_time: "{{ today_at() + timedelta(days=1) }}"
       end_date_time: "{{ today_at() + timedelta(days=2) }}"
     response_variable: waste
+    continue_on_error: true
   - variables:
       lines: >-
         {% set ns = namespace(rows=[]) %}
-        {% for cal in today.values() %}
+        {% for cal in (today | default({})).values() %}
           {% for e in cal.events %}
             {% set when = 'All day' if 'T' not in e.start
                           else (as_datetime(e.start) | as_local).strftime('%H:%M') %}
@@ -170,7 +176,8 @@
           {% endfor %}
         {% endfor %}
         {% set rows = ns.rows | unique | sort(attribute=0) | map(attribute=1) | list %}
-        {% set bins = waste['calendar.va_syd_sophamntning'].events | map(attribute='summary') | unique | list %}
+        {% set bins = (waste | default({})).get('calendar.va_syd_sophamntning', {}).get('events', [])
+                      | map(attribute='summary') | unique | list %}
         {{ rows + (['Tomorrow: waste pickup (' ~ bins | join(', ') ~ '), bins out tonight'] if bins else []) }}
   - condition: template
     value_template: "{{ lines | count > 0 }}"

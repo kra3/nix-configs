@@ -39,7 +39,6 @@ template:
     device_class: timestamp
     state: "{{ now().isoformat() }}"
     attributes: &trip_attributes
-      person: "{{ trigger.event.data.person }}"
       ok: "{{ trigger.event.data.ok }}"
       origin: "{{ trigger.event.data.origin }}"
       destination: "{{ trigger.event.data.destination }}"

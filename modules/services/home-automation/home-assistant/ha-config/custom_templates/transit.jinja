@@ -7,7 +7,11 @@
 {%- endmacro %}
 
 {% macro destination_name(person) -%}
-{{ state_attr(work_zone(person), 'friendly_name') if is_state(person, 'home') else 'Home' }}
+{{ (state_attr(work_zone(person), 'friendly_name') or 'Work') if is_state(person, 'home') else 'Home' }}
+{%- endmacro %}
+
+{% macro trips_sensor(person) -%}
+{{ {'person.arun_karunagath': 'sensor.arun_trips', 'person.anjalipc': 'sensor.anjali_trips'}.get(person, '') }}
 {%- endmacro %}
 
 {% macro iso_minutes(d) -%}

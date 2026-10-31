@@ -66,10 +66,9 @@ views:
       cards:
       - type: markdown
         content: |-
-          {% from 'transit.jinja' import origin_name, destination_name, leg_line %}
+          {% from 'transit.jinja' import origin_name, destination_name, leg_line, trips_sensor %}
           {% set p = states.person | selectattr('name', 'eq', user) | map(attribute='entity_id') | first | default('') %}
-          {% set s = states.sensor | selectattr('attributes.person', 'defined')
-                     | selectattr('attributes.person', 'eq', p) | map(attribute='entity_id') | first | default('') %}
+          {% set s = trips_sensor(p) %}
           {% set here = origin_name(p) %}{% set there = destination_name(p) %}
           ### <ha-icon icon="mdi:train-bus"></ha-icon> {{ here }} → {{ there }}
 
@@ -135,9 +134,9 @@ views:
             popup: trip_settings
       - type: custom:popup-tile-card
         trigger: trip_settings
+        title: Trip settings
         popup:
           type: entities
-          title: Trip settings
           entities:
           - input_select.transit_max_changes
           - input_select.transit_modes

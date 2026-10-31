@@ -29,6 +29,14 @@ class PopupTileCard extends HTMLElement {
     return 1;
   }
 
+  connectedCallback() {
+    if (this._onTrigger) document.addEventListener("ll-custom", this._onTrigger);
+  }
+
+  disconnectedCallback() {
+    if (this._onTrigger) document.removeEventListener("ll-custom", this._onTrigger);
+  }
+
   getGridOptions() {
     return this._config && this._config.inline ? { columns: "full" } : { columns: 6, min_columns: 3 };
   }
@@ -58,12 +66,12 @@ class PopupTileCard extends HTMLElement {
   _render() {
     const c = this._config;
     if (c.trigger) {
-      if (!this._listening) {
-        this._listening = true;
-        this.style.display = "none";
-        document.addEventListener("ll-custom", (e) => {
-          if (e.detail && e.detail.popup === c.trigger) this._open();
-        });
+      this.style.display = "none";
+      if (!this._onTrigger) {
+        this._onTrigger = (e) => {
+          if (e.detail && e.detail.popup === this._config.trigger) this._open();
+        };
+        document.addEventListener("ll-custom", this._onTrigger);
       }
       return;
     }
@@ -85,6 +93,7 @@ class PopupTileCard extends HTMLElement {
 
   async _open() {
     if (this._overlay) return;
+    this._overlay = true;
     if (!document.getElementById("ptc-style")) {
       const st = document.createElement("style");
       st.id = "ptc-style";

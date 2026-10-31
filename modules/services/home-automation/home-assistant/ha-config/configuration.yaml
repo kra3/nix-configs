@@ -56,6 +56,9 @@ recorder:
       - sensor.office_room_light_energy
       - sensor.hall_dimmer_power
       - sensor.hall_dimmer_energy
+      - sensor.*_trips
+    event_types:
+      - transit_trips
 
 rest_command:
   announce_hallway:

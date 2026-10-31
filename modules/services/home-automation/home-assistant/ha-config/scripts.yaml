@@ -583,12 +583,11 @@ transit_check:
               {% endif %}
             {% endfor %}
             {% set walk = t.LegList.Leg | selectattr('type', 'eq', 'WALK') | map(attribute='dist') | map('int', 0) | sum %}
-            {% set wm = namespace(m=legs.l | selectattr('walk', 'defined') | map(attribute='walk') | sum) %}
             {% set key = dep ~ (legs.l | selectattr('n', 'defined') | map(attribute='n') | join('-')) %}
             {% if dep <= until and walk <= max_walk | int and key not in ns.seen %}
               {% set ns.seen = ns.seen + [key] %}
               {% set mins = ((strptime(arr, '%Y-%m-%d %H:%M:%S') - strptime(dep, '%Y-%m-%d %H:%M:%S')).total_seconds() // 60) | int %}
-              {% set ns.rows = ns.rows + [{'d': dep, 'a': arr, 'w': walk, 'wm': wm.m, 'min': mins, 'legs': legs.l}] %}
+              {% set ns.rows = ns.rows + [{'d': dep, 'a': arr, 'w': walk, 'min': mins, 'legs': legs.l}] %}
             {% endif %}
           {% endfor %}
         {% endfor %}
@@ -598,7 +597,7 @@ transit_check:
           {% for o in ns.rows if o.d >= r.d and o.a <= r.a and o.w <= r.w and (o.d > r.d or o.a < r.a or o.w < r.w) %}
             {% set beaten.any = true %}
           {% endfor %}
-          {% set out.rows = out.rows + [{'dep': r.d[:16], 'arr': r.a[11:16], 'min': r.min, 'walk': r.w, 'walk_min': r.wm,
+          {% set out.rows = out.rows + [{'dep': r.d[:16], 'arr': r.a[11:16], 'min': r.min,
                                          'legs': r.legs, 'best': not beaten.any}] %}
         {% endfor %}
         {{ out.rows | sort(attribute='dep') }}

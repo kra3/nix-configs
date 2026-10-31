@@ -150,6 +150,9 @@
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
           lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
           recorder_db_url: postgresql://hass:${config.sops.placeholder."db.hass_password"}@10.3.2.1/hass
+          resrobot_trip_url: "https://api.resrobot.se/v2.1/trip?format=json&searchForArrival=1&accessId=${
+            config.sops.placeholder."trafiklab.resrobot_key"
+          }&originCoordLat={{ origin_lat }}&originCoordLong={{ origin_lon }}&destCoordLat={{ dest_lat }}&destCoordLong={{ dest_lon }}&date={{ date }}&time={{ time }}"
         ''
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
@@ -207,6 +210,8 @@
         group = "root";
         mode = "0400";
       };
+
+      sops.secrets."trafiklab.resrobot_key" = { };
 
       # No bind-mount: pasted by hand into the hass-oidc-auth integration's UI.
       sops.secrets."homeassistant.oidc_client_secret" = { };

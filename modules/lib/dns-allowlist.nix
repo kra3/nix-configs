@@ -10,6 +10,8 @@
       "torrentgalaxy.one"
       "comet.feels.legal"
       "knaben.org"
+      "remuxdb.1632022.xyz"
+      "releases.moe"
       # Akashvani (All India Radio) streams via BitGravity CDN.
       "air.pc.cdn.bitgravity.com"
       "airhlspush.pc.cdn.bitgravity.com"
@@ -22,6 +24,7 @@
     familyBypass = [
       "yastream.tamthai.de"
       "knaben.org"
+      "remuxdb.1632022.xyz"
     ];
   };
 }

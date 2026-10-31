@@ -138,6 +138,20 @@
             autoload -Uz bracketed-paste-magic
             zle -N bracketed-paste bracketed-paste-magic
           ''
+
+          # A tmux shell that outlives a compositor restart keeps a dead WAYLAND_DISPLAY; re-read it only when the socket is gone.
+          (lib.optionalString (!isDarwin) ''
+            _refresh_wayland_env() {
+              [[ -n $TMUX && ! -S $XDG_RUNTIME_DIR/''${WAYLAND_DISPLAY:-none} ]] || return
+              [[ -n $XDG_RUNTIME_DIR/wayland-*(#qN[1]) ]] || return
+              local line
+              for line in ''${(f)"$(tmux show-environment -s 2>/dev/null)"}; do
+                [[ $line == (WAYLAND_DISPLAY|NIRI_SOCKET)=* || $line == unset\ (WAYLAND_DISPLAY|NIRI_SOCKET)\;* ]] && eval "$line"
+              done
+            }
+            autoload -Uz add-zsh-hook
+            add-zsh-hook precmd _refresh_wayland_env
+          '')
         ];
       };
     };

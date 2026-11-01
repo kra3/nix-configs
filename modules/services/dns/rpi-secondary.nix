@@ -176,6 +176,16 @@
                 answer = sutalaIp;
                 enabled = true;
               }
+              {
+                domain = "sutala";
+                answer = sutalaIp;
+                enabled = true;
+              }
+              {
+                domain = "surasa";
+                answer = "192.168.1.39";
+                enabled = true;
+              }
             ];
           };
 

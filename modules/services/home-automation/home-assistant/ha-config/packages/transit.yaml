@@ -33,6 +33,7 @@ template:
     event_type: transit_trips
     event_data:
       person: person.arun_karunagath
+      kind: zone
   sensor:
   - name: Arun trips
     unique_id: transit_trips_arun
@@ -44,15 +45,45 @@ template:
       origin: "{{ trigger.event.data.origin }}"
       destination: "{{ trigger.event.data.destination }}"
       trips: "{{ trigger.event.data.trips }}"
+      from_state: "{{ trigger.event.data.from_state }}"
+      event: "{{ trigger.event.data.event }}"
+      by: "{{ trigger.event.data.by }}"
 - trigger:
   - trigger: event
     event_type: transit_trips
     event_data:
       person: person.anjalipc
+      kind: zone
   sensor:
   - name: Anjali trips
     unique_id: transit_trips_anjali
     icon: mdi:train-bus
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: *trip_attributes
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
+      person: person.arun_karunagath
+      kind: event
+  sensor:
+  - name: Arun event trips
+    unique_id: transit_event_trips_arun
+    icon: mdi:calendar-arrow-right
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: *trip_attributes
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
+      person: person.anjalipc
+      kind: event
+  sensor:
+  - name: Anjali event trips
+    unique_id: transit_event_trips_anjali
+    icon: mdi:calendar-arrow-right
     device_class: timestamp
     state: "{{ now().isoformat() }}"
     attributes: *trip_attributes

@@ -499,30 +499,71 @@ transit_check:
   description: >-
     Public transport options for the next 90 min for one person (the caller
     unless given): home to their work when at home, otherwise from their
-    phone's location to home. Publishes the result as a transit_trips event
-    for the trips sensors.
+    phone's location to home. With an event place: to the event, arriving
+    5 min before it starts, or home when already within 500 m of it.
+    Publishes the result as a transit_trips event for the trips sensors.
   fields:
     person:
       required: false
       selector:
         entity:
           domain: person
+    place:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      selector:
+        text:
+    starts:
+      description: Event start, YYYY-MM-DD HH:MM:SS local time.
+      required: false
+      selector:
+        text:
   sequence:
   - variables:
       who: >-
         {{ person | default(states.person | selectattr('attributes.user_id', 'eq', context.user_id)
                                           | map(attribute='entity_id') | first | default('')) }}
+      kind: "{{ 'event' if place | default('') | trim else 'zone' }}"
+      geo: {}
+  - if:
+    - condition: template
+      value_template: "{{ kind == 'event' }}"
+    then:
+    - action: rest_command.geocode_place
+      data:
+        query: "{{ place | trim }}"
+      response_variable: geo
+      continue_on_error: true
+  - variables:
+      spot: >-
+        {{ geo.content[0] if geo.status | default(0) == 200 and geo.content | default([]) | count > 0 else {} }}
       work_zone: "{% from 'transit.jinja' import work_zone %}{{ work_zone(who) }}"
       at_home: "{{ is_state(who, 'home') }}"
-      origin_name: "{% from 'transit.jinja' import origin_name %}{{ origin_name(who) }}"
-      destination_name: "{% from 'transit.jinja' import destination_name %}{{ destination_name(who) }}"
-      from_entity: "{{ 'zone.home' if at_home else who }}"
-      to_entity: "{{ work_zone if at_home else 'zone.home' }}"
+      at_event: >-
+        {{ spot.lat is defined and state_attr(who, 'latitude') is not none
+           and distance(state_attr(who, 'latitude'), state_attr(who, 'longitude'), spot.lat | float, spot.lon | float) < 0.5 }}
+      origin_name: >-
+        {% from 'transit.jinja' import origin_name %}{{ (title | default('') or place) if at_event else origin_name(who) }}
+      destination_name: >-
+        {% from 'transit.jinja' import destination_name %}
+        {{ ('Home' if at_event else (title | default('') or place)) if kind == 'event' else destination_name(who) }}
+      from_ll: >-
+        {% set e = 'zone.home' if at_home else who %}
+        {{ [spot.lat | float, spot.lon | float] if at_event else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
+      to_ll: >-
+        {% set e = 'zone.home' if at_event or (kind == 'zone' and not at_home) else work_zone %}
+        {{ [spot.get('lat') | float(0), spot.get('lon') | float(0)] if kind == 'event' and not at_event
+           else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
       coords_ok: >-
-        {{ to_entity != ''
-           and state_attr(from_entity, 'latitude') is not none
-           and state_attr(to_entity, 'latitude') is not none }}
-      depart: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
+        {{ from_ll[0] is not none and to_ll[0] is not none and (kind == 'zone' or spot.lat is defined) }}
+      by: >-
+        {% set b = (strptime(starts, '%Y-%m-%d %H:%M:%S') - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M')
+                   if kind == 'event' and not at_event and starts is defined else '' %}
+        {{ b if b > now().strftime('%Y-%m-%d %H:%M') else '' }}
+      depart: "{{ by or now().strftime('%Y-%m-%d %H:%M') }}"
       extra: >-
         {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1', 'At most 2': '&maxChange=2'}.get(states('input_select.transit_max_changes'), '')
            ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
@@ -537,10 +578,11 @@ transit_check:
     then:
     - action: rest_command.transit_trip
       data: &trip_query
-        origin_lat: "{{ state_attr(from_entity, 'latitude') }}"
-        origin_lon: "{{ state_attr(from_entity, 'longitude') }}"
-        dest_lat: "{{ state_attr(to_entity, 'latitude') }}"
-        dest_lon: "{{ state_attr(to_entity, 'longitude') }}"
+        origin_lat: "{{ from_ll[0] }}"
+        origin_lon: "{{ from_ll[1] }}"
+        dest_lat: "{{ to_ll[0] }}"
+        dest_lon: "{{ to_ll[1] }}"
+        for_arrival: "{{ 1 if by else 0 }}"
         date: "{{ depart[:10] }}"
         time: "{{ depart[11:16] }}"
         extra: "{{ extra }}&originWalk=1,0,{{ leg_walk }}&destWalk=1,0,{{ leg_walk }}"
@@ -556,7 +598,7 @@ transit_check:
           {% endif %}
     - if:
       - condition: template
-        value_template: "{{ first.status | default(0) == 200 and depart < (now() + timedelta(minutes=90)).strftime('%Y-%m-%d %H:%M') }}"
+        value_template: "{{ not by and first.status | default(0) == 200 and depart < (now() + timedelta(minutes=90)).strftime('%Y-%m-%d %H:%M') }}"
       then:
       - action: rest_command.transit_trip
         data: *trip_query
@@ -584,7 +626,7 @@ transit_check:
             {% endfor %}
             {% set walk = t.LegList.Leg | selectattr('type', 'eq', 'WALK') | map(attribute='dist') | map('int', 0) | sum %}
             {% set key = dep ~ (legs.l | selectattr('n', 'defined') | map(attribute='n') | join('-')) %}
-            {% if dep <= until and walk <= max_walk | int and key not in ns.seen %}
+            {% if (arr[:16] <= by if by else dep <= until) and walk <= max_walk | int and key not in ns.seen %}
               {% set ns.seen = ns.seen + [key] %}
               {% set mins = ((strptime(arr, '%Y-%m-%d %H:%M:%S') - strptime(dep, '%Y-%m-%d %H:%M:%S')).total_seconds() // 60) | int %}
               {% set ns.rows = ns.rows + [{'d': dep, 'a': arr, 'w': walk, 'min': mins, 'legs': legs.l}] %}
@@ -645,6 +687,10 @@ transit_check:
   - event: transit_trips
     event_data:
       person: "{{ who }}"
+      kind: "{{ kind }}"
+      from_state: "{{ states(who) }}"
+      event: "{{ (title | default('') or place) ~ '|' ~ starts | default('') if kind == 'event' else '' }}"
+      by: "{{ by }}"
       ok: "{{ trips | count > 0 }}"
       origin: "{{ origin_name }}"
       destination: "{{ destination_name }}"

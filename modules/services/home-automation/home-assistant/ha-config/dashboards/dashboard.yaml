@@ -67,8 +67,28 @@ views:
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
     - type: custom:trip-card
+      entity: sensor.arun_event_trips
+      person: person.arun_karunagath
+      calendars: &event_calendars
+      - calendar.kuttunbn
+      - calendar.akarunagath_icloud_com_family
+      settings: *trip_settings
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+    - type: custom:trip-card
       entity: sensor.anjali_trips
       person: person.anjalipc
+      settings: *trip_settings
+      visibility:
+      - condition: user
+        users:
+        - 6edcc5a09c3144d684077ee362e7394a
+    - type: custom:trip-card
+      entity: sensor.anjali_event_trips
+      person: person.anjalipc
+      calendars: *event_calendars
       settings: *trip_settings
       visibility:
       - condition: user

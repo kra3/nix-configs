@@ -130,16 +130,30 @@ class TripCard extends HTMLElement {
     return s === "home" ? "Home" : s && !["not_home", "unknown", "unavailable"].includes(s) ? s : "Here";
   }
 
+  _event() {
+    const now = wallNow();
+    const today = new Date(now).toISOString().slice(0, 10);
+    return (this._config.calendars || [])
+      .map((e) => this._hass.states[e]?.attributes || {})
+      .filter((a) => a.location && !a.all_day && a.start_time?.startsWith(today) && Date.parse(`${a.end_time.replace(" ", "T")}Z`) > now)
+      .map((a) => ({ title: a.message, place: a.location, starts: a.start_time, key: `${a.message}|${a.start_time}` }))
+      .sort((x, y) => x.starts.localeCompare(y.starts))[0];
+  }
+
   _data() {
     const c = this._config;
+    const ev = c.calendars && this._event();
+    if (c.calendars && !ev) return { none: true };
     const s = this._hass.states[c.entity];
-    if (!s || ["unknown", "unavailable"].includes(s.state)) return { need: "No trips checked yet" };
+    if (!s || ["unknown", "unavailable"].includes(s.state)) return { ev, need: "Not checked yet" };
     const a = s.attributes;
     const all = (a.trips || []).filter((t) => minsTo(t.dep) >= 0);
     const best = all.filter((t) => t.best);
     const showAll = this._hass.states[c.hide_slower]?.state !== "on";
-    const d = { a, shown: showAll ? all : best, hidden: showAll ? 0 : all.length - best.length, updated: new Date(s.state) };
-    if (a.origin !== this._here()) d.need = `You're now at ${this._here()}`;
+    const d = { a, ev, shown: showAll ? all : best, hidden: showAll ? 0 : all.length - best.length, updated: new Date(s.state) };
+    d.hero = d.shown.find((t) => t.best) || d.shown[0];
+    if (ev && a.event !== ev.key) d.need = "Not checked yet";
+    else if (a.from_state !== this._hass.states[c.person]?.state) d.need = a.from_state ? `You're now at ${this._here()}` : "Not checked yet";
     else if (!a.ok) d.need = "No trips found";
     else if (!d.shown.length) d.need = "Those trips have left";
     return d;
@@ -148,7 +162,12 @@ class TripCard extends HTMLElement {
   _render() {
     if (!this._hass || !this._config) return;
     const d = this._data();
-    const h = !d.need && d.shown[0];
+    if (!!d.none !== this.hidden) {
+      this.hidden = !!d.none;
+      this.dispatchEvent(new Event("card-visibility-changed", { bubbles: true, composed: true }));
+    }
+    if (d.none) return this._close();
+    const h = !d.need && d.hero;
     let html;
     if (h) {
       const first = transit(h)[0] || {};
@@ -157,8 +176,8 @@ class TripCard extends HTMLElement {
         <div class="txt"><div class="title">${esc(d.a.destination)} · Leave ${esc(h.dep.slice(11, 16))}</div>
         <div class="sub">${extra.filter(Boolean).map((x) => `<span class="route">${x}</span>`).join(" · ")}</div></div>${countdown(h)}`;
     } else {
-      html = `<ha-icon class="icon" icon="mdi:train-bus"></ha-icon>
-        <div class="txt"><div class="title">Trips</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
+      html = `<ha-icon class="icon" icon="${d.ev ? "mdi:calendar-clock" : "mdi:train-bus"}"></ha-icon>
+        <div class="txt"><div class="title">${d.ev ? `${esc(d.ev.title)} · ${esc(d.ev.starts.slice(11, 16))}` : "Trips"}</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
     }
     if (html !== this._html) {
       this._html = html;
@@ -176,10 +195,11 @@ class TripCard extends HTMLElement {
 
   async _check() {
     if (this._busy) return;
+    const ev = this._config.calendars && this._event();
     this._busy = true;
     this._render();
     try {
-      await this._hass.callService("script", "transit_check", { person: this._config.person });
+      await this._hass.callService("script", "transit_check", { person: this._config.person, ...(ev && { place: ev.place, title: ev.title, starts: ev.starts }) });
     } finally {
       this._busy = false;
       this._render();
@@ -203,9 +223,9 @@ class TripCard extends HTMLElement {
     const root = this._ov.shadowRoot;
     const a = d.a || {};
     const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : "Trips";
-    const sub = d.updated ? `Updated ${hhmm(d.updated)}${d.hidden ? ` · ${d.hidden} slower hidden` : ""}` : "";
+    const sub = d.updated ? `${a.by ? `Arrive by ${esc(a.by.slice(11, 16))} · ` : ""}Updated ${hhmm(d.updated)}${d.hidden ? ` · ${d.hidden} slower hidden` : ""}` : "";
     const alert = d.need ? `<ha-alert alert-type="${a.ok === false ? "warning" : "info"}">${esc(d.need)}${a.ok === false ? ". Allow more walking or changes below." : ". Tap Check."}</ha-alert>` : "";
-    const rows = (d.need ? [] : d.shown).map((t, i) => {
+    const rows = (d.need ? [] : d.shown).map((t) => {
       const k = tripKey(t);
       const legs = t.legs
         .map((l) =>
@@ -216,7 +236,7 @@ class TripCard extends HTMLElement {
                <div class="to">→ ${esc(l.arr)} ${esc(l.to)}</div></div></div>`,
         )
         .join("");
-      return `<div class="trip ${i === 0 ? "next" : ""}"><button class="sum" data-k="${esc(k)}" aria-expanded="${this._openKeys.has(k)}">
+      return `<div class="trip ${t === d.hero ? "next" : ""}"><button class="sum" data-k="${esc(k)}" aria-expanded="${this._openKeys.has(k)}">
         <span class="t">${esc(t.dep.slice(11, 16))} → ${esc(t.arr)}<span class="dur">${esc(t.min)} min</span></span><span class="cd">${countdown(t)}</span>
         <span class="rt">${lines(t)}</span></button>
         ${this._openKeys.has(k) ? `<div class="legs">${legs}</div>` : ""}</div>`;
@@ -240,7 +260,7 @@ class TripCard extends HTMLElement {
   _open() {
     if (this._ov) return;
     const d = this._data();
-    this._openKeys = new Set(!d.need && d.shown[0] ? [tripKey(d.shown[0])] : []);
+    this._openKeys = new Set(!d.need && d.hero ? [tripKey(d.hero)] : []);
     const ov = document.createElement("div");
     ov.attachShadow({ mode: "open" }).innerHTML = `<style>${POPUP_STYLE}</style>
       <div class="ov"><div class="sheet" role="dialog" aria-modal="true"><div class="body"></div></div></div>`;

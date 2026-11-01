@@ -183,6 +183,16 @@
                   answer = lanIp;
                   enabled = true;
                 }
+                {
+                  domain = "sutala";
+                  answer = lanIp;
+                  enabled = true;
+                }
+                {
+                  domain = "surasa";
+                  answer = "192.168.1.39";
+                  enabled = true;
+                }
                 # Container name resolution
                 {
                   domain = "monitoring";

@@ -4,11 +4,13 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 const minsTo = (dep) => Math.floor((new Date(dep.replace(" ", "T")) - Date.now()) / 60000);
 const transit = (t) => t.legs.filter((l) => l.n !== undefined);
+const num = (l) => (/\d/.test(l.n) ? esc(l.n) : "");
 const chip = (text, tone) => `<span class="chip ${tone || ""}">${text}</span>`;
 const lines = (t) =>
   transit(t)
-    .map((l) => `<span class="ln"><ha-icon icon="${esc(l.i)}"></ha-icon>${esc(l.n)}</span>`)
+    .map((l) => `<span class="ln"><ha-icon icon="${esc(l.i)}"></ha-icon>${num(l)}</span>`)
     .join('<span class="sep">›</span>');
+const route = (t) => `<span class="route">${lines(t)}</span>`;
 const pos = (l) => (l.pos ? `${l.i === "mdi:train" ? "spår" : "läge"} ${esc(l.pos)}` : "");
 const live = (l, quiet) =>
   l.cancel ? chip("cancelled", "bad") : l.delay > 0 ? chip(`+${l.delay} min`, "warn") : l.rt && !quiet ? chip("on time", "good") : "";
@@ -24,7 +26,7 @@ const CHIP_CSS = `
   .chip.warn { --tone: var(--warning-color, #ffa600); }
   .chip.bad { --tone: var(--error-color, #db4437); }
   .chip.good { --tone: var(--success-color, #43a047); }
-  .ln { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+  .ln { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; }
   .ln ha-icon { --mdc-icon-size: 16px; color: var(--secondary-text-color); }
   .sep { color: var(--secondary-text-color); padding: 0 4px; }
 `;
@@ -36,7 +38,9 @@ const STYLE = `
   .icon { --mdc-icon-size: 24px; color: var(--primary-color); flex: none; }
   .txt { flex: 1; min-width: 0; }
   .title { font-size: 15px; font-weight: 600; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-top: 2px; font-size: 13px; color: var(--secondary-text-color); }
+  .sub { margin-top: 2px; font-size: 13px; line-height: 22px; color: var(--secondary-text-color); }
+  .route { white-space: nowrap; }
+  .sub .chip { padding: 0 8px; font-size: 12px; }
   ${CHIP_CSS}
 `;
 
@@ -56,10 +60,9 @@ const POPUP_STYLE = `
   ha-alert { display: block; margin-top: 10px; }
   .list { margin-top: 10px; }
   .trip { border-top: 1px solid var(--divider-color); }
-  .sum { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 10px 4px; min-height: 44px; text-align: left; }
+  .sum { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 10px 4px; min-height: 44px; text-align: left; }
   .sum .t { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .sum .dur { color: var(--secondary-text-color); font-size: 13px; }
-  .sum .cd { margin-left: auto; }
+  .sum .dur { grid-column: 1 / -1; color: var(--secondary-text-color); font-size: 13px; }
   .legs { padding: 0 4px 12px; display: grid; gap: 8px; font-size: 14px; }
   .leg { display: flex; gap: 10px; align-items: flex-start; }
   .leg > ha-icon { --mdc-icon-size: 20px; color: var(--secondary-text-color); flex: none; }
@@ -130,10 +133,10 @@ class TripCard extends HTMLElement {
     let html;
     if (h) {
       const first = transit(h)[0] || {};
-      const extra = [lines(h), pos(first), `arrive ${esc(h.arr)}`, live(first, true), d.age > 15 ? `updated ${hhmm(d.updated)}` : ""];
+      const extra = [lines(h), pos(first), `→ ${esc(h.arr)}`, live(first, true)];
       html = `<ha-icon class="icon" icon="${esc(first.i || "mdi:train-bus")}"></ha-icon>
         <div class="txt"><div class="title">${esc(d.a.destination)} · Leave ${esc(h.dep.slice(11, 16))}</div>
-        <div class="sub">${extra.filter(Boolean).join(" · ")}</div></div>${countdown(h)}`;
+        <div class="sub">${extra.filter(Boolean).map((x) => `<span class="route">${x}</span>`).join(" · ")}</div></div>${countdown(h)}`;
     } else {
       html = `<ha-icon class="icon" icon="mdi:train-bus"></ha-icon>
         <div class="txt"><div class="title">Trips</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
@@ -177,13 +180,13 @@ class TripCard extends HTMLElement {
         .map((l) =>
           l.walk !== undefined
             ? `<div class="leg"><ha-icon icon="mdi:walk"></ha-icon><div>${esc(l.walk)} min walk</div></div>`
-            : `<div class="leg"><ha-icon icon="${esc(l.i)}"></ha-icon><div><b>${esc(l.n)}</b> ${esc(l.dep.slice(11, 16))} ${esc(l.from)}
+            : `<div class="leg"><ha-icon icon="${esc(l.i)}"></ha-icon><div><b>${num(l)}</b> ${esc(l.dep.slice(11, 16))} ${esc(l.from)}
                <span class="meta">${pos(l) ? `· ${pos(l)}` : ""}</span> ${live(l)}<div class="to">→ ${esc(l.arr)} ${esc(l.to)}</div></div></div>`,
         )
         .join("");
       return `<div class="trip"><button class="sum" data-k="${esc(k)}" aria-expanded="${this._openKeys.has(k)}">
-        <span class="t">${esc(t.dep.slice(11, 16))} → ${esc(t.arr)}</span><span class="dur">${esc(t.min)} min</span>
-        <span>${lines(t)}</span><span class="cd">${countdown(t)}</span></button>
+        <span class="t">${esc(t.dep.slice(11, 16))} → ${esc(t.arr)}</span><span class="cd">${countdown(t)}</span>
+        <span class="dur">${esc(t.min)} min · ${route(t)}</span></button>
         ${this._openKeys.has(k) ? `<div class="legs">${legs}</div>` : ""}</div>`;
     });
     const html = `<div class="head"><div class="txt"><div class="title">${title}</div><div class="sub">${sub}</div></div>

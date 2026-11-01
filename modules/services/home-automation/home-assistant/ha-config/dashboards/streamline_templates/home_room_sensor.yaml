@@ -18,13 +18,12 @@ card:
     entity: "[[presence]]"
     primary: "[[name]]"
     secondary: >-
-      {{ ('Occupied' if is_state('[[presence]]', 'on') else 'Clear') ~ ' · ' ~ relative_time(states['[[presence]]'].last_changed) }}
+      {{ ('Occupied' if is_state('[[presence]]', 'on') else 'Clear') ~ ('' if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else ' · ' ~ relative_time(states['[[presence]]'].last_changed)) }}
     icon: "[[icon]]"
     icon_color: primary
     color: primary
     card_mod:
       style: |
-        {% set badge = (1 if is_state('[[presence]]', 'on') else 0) + (3 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0) %}
         ha-card {
           border-bottom: none;
           border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
@@ -36,7 +35,8 @@ card:
           --mush-card-primary-font-size: 14.5px;
           --mush-card-secondary-font-size: 12px;
         }
-        mushroom-state-item { padding-right: {{ badge * 18 }}px; }
+        ha-tile-info > span:nth-of-type(1) { padding-right: {{ 26 if is_state('[[presence]]', 'on') else 0 }}px; }
+        ha-tile-info > span:nth-of-type(2) { padding-right: {{ 64 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0 }}px; }
   - type: custom:streamline-card
     template: home_room_stats
     variables:

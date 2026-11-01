@@ -20,22 +20,24 @@ card:
     icon: "[[icon]]"
     use_light_color: true
     card_mod:
-      style: |
-        {% set rgb = state_attr('[[light]]', 'rgb_color') %}
-        {% set c = ('rgb(%d,%d,%d)' % (rgb[0], rgb[1], rgb[2])) if rgb else 'var(--state-light-active-color)' %}
-        {% set badge = (1 if is_state('[[presence]]', 'on') else 0) + (3 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0) %}
-        ha-card {
-          background: {{ ('color-mix(in srgb, ' ~ c ~ ' 12%, var(--card-background-color))') if is_state('[[light]]', 'on') else 'var(--card-background-color)' }};
-          border-bottom: none;
-          border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
-          box-shadow: none;
-        }
-        :host {
-          --mush-spacing: 12px;
-          --mush-card-primary-font-size: 14.5px;
-          --mush-card-secondary-font-size: 12px;
-        }
-        mushroom-state-item { padding-right: {{ badge * 18 }}px; }
+      style:
+        .: |
+          {% set rgb = state_attr('[[light]]', 'rgb_color') %}
+          {% set c = ('rgb(%d,%d,%d)' % (rgb[0], rgb[1], rgb[2])) if rgb else 'var(--state-light-active-color)' %}
+          ha-card {
+            background: {{ ('color-mix(in srgb, ' ~ c ~ ' 12%, var(--card-background-color))') if is_state('[[light]]', 'on') else 'var(--card-background-color)' }};
+            border-bottom: none;
+            border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
+            box-shadow: none;
+          }
+          :host {
+            --mush-spacing: 12px;
+            --mush-card-primary-font-size: 14.5px;
+            --mush-card-secondary-font-size: 12px;
+          }
+        mushroom-state-item mushroom-state-info$: |
+          .primary { padding-right: {{ 26 if is_state('[[presence]]', 'on') else 0 }}px; }
+          .secondary { padding-right: {{ 64 if states('[[comfort]]') in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] else 0 }}px; }
   - type: custom:streamline-card
     template: home_room_stats
     variables:

@@ -131,24 +131,6 @@ views:
       grid_options:
         columns: 6
       variables:
-        name: Dining Room
-        icon: mdi:silverware
-        presence: binary_sensor.room_presence_dining
-        light: light.dining_lights
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.room_presence_dining
-          state: "on"
-        - condition: state
-          entity: light.dining_lights
-          state: "on"
-    - type: custom:streamline-card
-      template: home_room
-      grid_options:
-        columns: 6
-      variables:
         name: Living Room
         icon: mdi:sofa
         presence: binary_sensor.room_presence_living
@@ -172,27 +154,6 @@ views:
         - condition: user
           users:
           - 6edcc5a09c3144d684077ee362e7394a
-    - type: custom:streamline-card
-      template: home_room
-      grid_options:
-        columns: 6
-      variables:
-        name: Office
-        icon: mdi:laptop
-        presence: binary_sensor.room_presence_office
-        light: light.office_room_light
-      visibility:
-      - condition: or
-        conditions:
-        - condition: state
-          entity: binary_sensor.room_presence_office
-          state: "on"
-        - condition: state
-          entity: light.office_room_light
-          state: "on"
-        - condition: user
-          users:
-          - a1d4401b8b714ebb83f07c5316ab399c
     - type: custom:streamline-card
       template: home_room
       grid_options:
@@ -284,6 +245,45 @@ views:
       - condition: state
         entity: binary_sensor.toilet_occupancy_presence
         state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Dining Room
+        icon: mdi:silverware
+        presence: binary_sensor.room_presence_dining
+        light: light.dining_lights
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_dining
+          state: "on"
+        - condition: state
+          entity: light.dining_lights
+          state: "on"
+    - type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Office
+        icon: mdi:laptop
+        presence: binary_sensor.room_presence_office
+        light: light.office_room_light
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_office
+          state: "on"
+        - condition: state
+          entity: light.office_room_light
+          state: "on"
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
     - type: tile
       entity: light.kitchen_dining_lights
       name: Kitchen Dining

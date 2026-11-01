@@ -37,9 +37,12 @@ card:
         --mush-chip-icon-size: 16px;
       }
       ha-card { background: none; border: none; box-shadow: none; top: 12px; }
+      .chip-container { flex-direction: column !important; align-items: flex-end !important; gap: 0 !important; }
+      .chip-container > mushroom-template-chip:nth-of-type(1) { order: 2; transform: translateY(var(--room-comfort-shift, -3px)); }
+      .chip-container > mushroom-template-chip:nth-of-type(2) { order: 1; }
       {% if states('[[comfort]]') not in ['Cool', 'Cold', 'Warm', 'Hot', 'Humid', 'Dry'] %}
       .chip-container > mushroom-template-chip:nth-of-type(1) { display: none; }
       {% endif %}
       {% if not is_state('[[presence]]', 'on') %}
-      .chip-container > mushroom-template-chip:nth-of-type(2) { display: none; }
+      .chip-container > mushroom-template-chip:nth-of-type(2) { visibility: hidden; }
       {% endif %}

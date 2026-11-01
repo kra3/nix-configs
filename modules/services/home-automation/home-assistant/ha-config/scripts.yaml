@@ -524,7 +524,7 @@ transit_check:
            and state_attr(to_entity, 'latitude') is not none }}
       depart: "{{ now().strftime('%Y-%m-%d %H:%M') }}"
       extra: >-
-        {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1'}.get(states('input_select.transit_max_changes'), '')
+        {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1', 'At most 2': '&maxChange=2'}.get(states('input_select.transit_max_changes'), '')
            ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
       max_walk: >-
         {{ {'Up to 2 km': 2000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 1000) }}

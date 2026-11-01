@@ -1,41 +1,52 @@
 // Next public-transport trip as a tile; tap for all trips, legs, Check and settings.
 
+let TZ;
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const hhmm = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-const minsTo = (dep) => Math.floor((new Date(dep.replace(" ", "T")) - Date.now()) / 60000);
+const hhmm = (d) => new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
+const wallNow = () => {
+  const f = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const p = Object.fromEntries(f.formatToParts(new Date()).map((x) => [x.type, +x.value]));
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+};
+const minsTo = (dep) => Math.floor((Date.parse(`${dep.replace(" ", "T")}:00Z`) - wallNow()) / 60000);
 const transit = (t) => t.legs.filter((l) => l.n !== undefined);
 const num = (l) => (/\d/.test(l.n) ? esc(l.n) : "");
-const chip = (text, tone) => `<span class="chip ${tone || ""}">${text}</span>`;
+const TONE = { "mdi:bus": "--teal-color", "mdi:train": "--purple-color", "mdi:tram": "--orange-color", "mdi:subway-variant": "--blue-color", "mdi:ferry": "--light-blue-color" };
+const tone = (l) => `--tone: var(${TONE[l.i] || "--primary-color"})`;
+const chip = (text, cls) => `<span class="chip ${cls || ""}">${text}</span>`;
 const lines = (t) =>
   transit(t)
-    .map((l) => `<span class="ln"><ha-icon icon="${esc(l.i)}"></ha-icon>${num(l)}</span>`)
+    .map((l) => `<span class="ln" style="${tone(l)}"><ha-icon icon="${esc(l.i)}"></ha-icon>${num(l)}</span>`)
     .join('<span class="sep">›</span>');
-const route = (t) => `<span class="route">${lines(t)}</span>`;
 const pos = (l) => (l.pos ? `${l.i === "mdi:train" ? "spår" : "läge"} ${esc(l.pos)}` : "");
 const live = (l, quiet) =>
   l.cancel ? chip("cancelled", "bad") : l.delay > 0 ? chip(`+${l.delay} min`, "warn") : l.rt && !quiet ? chip("on time", "good") : "";
 const countdown = (t) => {
   if (transit(t).some((l) => l.cancel)) return chip("cancelled", "bad");
   const m = minsTo(t.dep);
-  return chip(m <= 0 ? "now" : `in ${m} min`, m < 5 ? "warn" : "");
+  return chip(m <= 0 ? "now" : `in ${m} min`, m < 5 ? "warn" : m <= 15 ? "soon" : "");
 };
 const tripKey = (t) => t.dep + transit(t).map((l) => l.n).join("-");
+const short = (o) => o.replace(/^Up to /, "").replace(/^At most /, "≤ ").replace(/ and trams$/, "");
+const metres = (o) => parseFloat(o.match(/[\d.]+/)[0]) * (/km/.test(o) ? 1000 : 1);
+const ordered = (opts) => (opts.every((o) => /\d/.test(o)) ? [...opts].sort((a, b) => metres(a) - metres(b)) : opts);
 
 const CHIP_CSS = `
   .chip { --tone: var(--secondary-text-color); display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, transparent); }
+  .chip.soon { --tone: var(--primary-color); }
   .chip.warn { --tone: var(--warning-color, #ffa600); }
   .chip.bad { --tone: var(--error-color, #db4437); }
   .chip.good { --tone: var(--success-color, #43a047); }
-  .ln { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; }
-  .ln ha-icon { --mdc-icon-size: 16px; color: var(--secondary-text-color); }
-  .sep { color: var(--secondary-text-color); padding: 0 4px; }
+  .ln { --tone: var(--primary-color); display: inline-flex; align-items: center; gap: 2px; padding: 0 6px; border-radius: 6px; font-size: 13px; font-weight: 700; line-height: 20px; color: var(--tone); background: color-mix(in srgb, var(--tone) 18%, transparent); }
+  .ln ha-icon { --mdc-icon-size: 15px; }
+  .sep { color: var(--secondary-text-color); padding: 0 3px; }
 `;
 
 const STYLE = `
   :host { display: block; }
   ha-card { cursor: pointer; }
   .tile { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 44px; }
-  .icon { --mdc-icon-size: 24px; color: var(--primary-color); flex: none; }
+  .icon { --mdc-icon-size: 24px; color: var(--tone, var(--primary-color)); flex: none; }
   .txt { flex: 1; min-width: 0; }
   .title { font-size: 15px; font-weight: 600; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { margin-top: 2px; font-size: 13px; line-height: 22px; color: var(--secondary-text-color); }
@@ -60,24 +71,33 @@ const POPUP_STYLE = `
   ha-alert { display: block; margin-top: 10px; }
   .list { margin-top: 10px; }
   .trip { border-top: 1px solid var(--divider-color); }
-  .sum { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 10px 4px; min-height: 44px; text-align: left; }
-  .sum .t { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .sum .dur { grid-column: 1 / -1; color: var(--secondary-text-color); font-size: 13px; }
-  .legs { padding: 0 4px 12px; display: grid; gap: 8px; font-size: 14px; }
+  .trip.next { box-shadow: inset 3px 0 var(--primary-color); }
+  .sum { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; padding: 10px 4px 10px 10px; min-height: 44px; text-align: left; }
+  .sum .t { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sum .dur { margin-left: 6px; font-size: 13px; font-weight: 500; color: var(--secondary-text-color); }
+  .sum .rt { grid-column: 1 / -1; }
+  .legs { padding: 0 4px 12px 10px; display: grid; gap: 10px; font-size: 14px; }
   .leg { display: flex; gap: 10px; align-items: flex-start; }
-  .leg > ha-icon { --mdc-icon-size: 20px; color: var(--secondary-text-color); flex: none; }
+  .leg > ha-icon { --mdc-icon-size: 20px; color: var(--tone, var(--secondary-text-color)); flex: none; }
+  .leg.walk { color: var(--secondary-text-color); }
+  .leg .lt { font-weight: 700; font-variant-numeric: tabular-nums; }
   .leg .meta { color: var(--secondary-text-color); }
-  .leg .to { color: var(--secondary-text-color); font-size: 13px; }
-  .set { margin-top: 8px; border-top: 1px solid var(--divider-color); padding-top: 8px; }
-  .set-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--secondary-text-color); padding: 4px 4px 0; }
-  .set ha-card { box-shadow: none; border: 0; background: none; }
+  .leg .to { color: var(--secondary-text-color); font-size: 13px; margin-top: 2px; }
+  .set { margin-top: 8px; border-top: 1px solid var(--divider-color); padding: 8px 4px 0; display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 8px; }
+  .set-h { font-size: 13px; font-weight: 700; }
+  .set-h span { display: block; font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
+  .lbl { font-size: 13px; color: var(--secondary-text-color); }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { min-height: 34px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--secondary-text-color); background: color-mix(in srgb, var(--secondary-text-color) 12%, transparent); }
+  .opt.on { color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 18%, transparent); }
   ${CHIP_CSS}
 `;
 
 class TripCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.entity || !config.person) throw new Error("trip-card: entity and person are required");
-    this._config = { show_all: "input_boolean.transit_show_all", settings: [], ...config };
+    this._config = { hide_slower: "input_boolean.transit_hide_slower", settings: [], ...config };
     this._html = "";
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
   }
@@ -101,7 +121,7 @@ class TripCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (this._settingsCard) this._settingsCard.hass = hass;
+    TZ = hass.config?.time_zone;
     this._render();
   }
 
@@ -117,9 +137,8 @@ class TripCard extends HTMLElement {
     const a = s.attributes;
     const all = (a.trips || []).filter((t) => minsTo(t.dep) >= 0);
     const best = all.filter((t) => t.best);
-    const showAll = this._hass.states[c.show_all]?.state === "on";
+    const showAll = this._hass.states[c.hide_slower]?.state !== "on";
     const d = { a, shown: showAll ? all : best, hidden: showAll ? 0 : all.length - best.length, updated: new Date(s.state) };
-    d.age = (Date.now() - d.updated) / 60000;
     if (a.origin !== this._here()) d.need = `You're now at ${this._here()}`;
     else if (!a.ok) d.need = "No trips found";
     else if (!d.shown.length) d.need = "Those trips have left";
@@ -134,7 +153,7 @@ class TripCard extends HTMLElement {
     if (h) {
       const first = transit(h)[0] || {};
       const extra = [lines(h), pos(first), `→ ${esc(h.arr)}`, live(first, true)];
-      html = `<ha-icon class="icon" icon="${esc(first.i || "mdi:train-bus")}"></ha-icon>
+      html = `<ha-icon class="icon" style="${tone(first)}" icon="${esc(first.i || "mdi:train-bus")}"></ha-icon>
         <div class="txt"><div class="title">${esc(d.a.destination)} · Leave ${esc(h.dep.slice(11, 16))}</div>
         <div class="sub">${extra.filter(Boolean).map((x) => `<span class="route">${x}</span>`).join(" · ")}</div></div>${countdown(h)}`;
     } else {
@@ -167,6 +186,18 @@ class TripCard extends HTMLElement {
     }
   }
 
+  _settings() {
+    const row = (label, pills) => `<div class="row"><span class="lbl">${esc(label)}</span><div class="opts">${pills.join("")}</div></div>`;
+    const pill = (e, o, label, on) => `<button class="opt ${on ? "on" : ""}" data-e="${esc(e)}" data-o="${esc(o)}">${esc(label)}</button>`;
+    const sa = this._hass.states[this._config.hide_slower];
+    const rows = sa ? [row("Slower trips", [pill(sa.entity_id, "off", "Show", sa.state !== "on"), pill(sa.entity_id, "on", "Hide", sa.state === "on")])] : [];
+    for (const e of this._config.settings) {
+      const s = this._hass.states[e];
+      if (s) rows.push(row(s.attributes.friendly_name || e, ordered(s.attributes.options || []).map((o) => pill(e, o, short(o), s.state === o))));
+    }
+    return `<div class="set"><div class="set-h">Search options<span>Changing one re-runs Check</span></div>${rows.join("")}</div>`;
+  }
+
   _renderPopup(d) {
     if (!this._ov) return;
     const root = this._ov.shadowRoot;
@@ -174,45 +205,52 @@ class TripCard extends HTMLElement {
     const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : "Trips";
     const sub = d.updated ? `Updated ${hhmm(d.updated)}${d.hidden ? ` · ${d.hidden} slower hidden` : ""}` : "";
     const alert = d.need ? `<ha-alert alert-type="${a.ok === false ? "warning" : "info"}">${esc(d.need)}${a.ok === false ? ". Allow more walking or changes below." : ". Tap Check."}</ha-alert>` : "";
-    const rows = (d.need ? [] : d.shown).map((t) => {
+    const rows = (d.need ? [] : d.shown).map((t, i) => {
       const k = tripKey(t);
       const legs = t.legs
         .map((l) =>
           l.walk !== undefined
-            ? `<div class="leg"><ha-icon icon="mdi:walk"></ha-icon><div>${esc(l.walk)} min walk</div></div>`
-            : `<div class="leg"><ha-icon icon="${esc(l.i)}"></ha-icon><div><b>${num(l)}</b> ${esc(l.dep.slice(11, 16))} ${esc(l.from)}
-               <span class="meta">${pos(l) ? `· ${pos(l)}` : ""}</span> ${live(l)}<div class="to">→ ${esc(l.arr)} ${esc(l.to)}</div></div></div>`,
+            ? `<div class="leg walk"><ha-icon icon="mdi:walk"></ha-icon><div>${esc(l.walk)} min walk</div></div>`
+            : `<div class="leg" style="${tone(l)}"><ha-icon icon="${esc(l.i)}"></ha-icon><div><span class="lt">${esc(l.dep.slice(11, 16))}</span>
+               <span class="ln" style="${tone(l)}">${esc(l.n)}</span> ${esc(l.from)} <span class="meta">${pos(l) ? `· ${pos(l)}` : ""}</span> ${live(l)}
+               <div class="to">→ ${esc(l.arr)} ${esc(l.to)}</div></div></div>`,
         )
         .join("");
-      return `<div class="trip"><button class="sum" data-k="${esc(k)}" aria-expanded="${this._openKeys.has(k)}">
-        <span class="t">${esc(t.dep.slice(11, 16))} → ${esc(t.arr)}</span><span class="cd">${countdown(t)}</span>
-        <span class="dur">${esc(t.min)} min · ${route(t)}</span></button>
+      return `<div class="trip ${i === 0 ? "next" : ""}"><button class="sum" data-k="${esc(k)}" aria-expanded="${this._openKeys.has(k)}">
+        <span class="t">${esc(t.dep.slice(11, 16))} → ${esc(t.arr)}<span class="dur">${esc(t.min)} min</span></span><span class="cd">${countdown(t)}</span>
+        <span class="rt">${lines(t)}</span></button>
         ${this._openKeys.has(k) ? `<div class="legs">${legs}</div>` : ""}</div>`;
     });
     const html = `<div class="head"><div class="txt"><div class="title">${title}</div><div class="sub">${sub}</div></div>
       <button class="check ${this._busy ? "busy" : ""}"><ha-icon icon="mdi:refresh"></ha-icon>${this._busy ? "Checking" : "Check"}</button>
-      <button class="x" aria-label="Close">×</button></div>${alert}<div class="list">${rows.join("")}</div>`;
+      <button class="x" aria-label="Close">×</button></div>${alert}<div class="list">${rows.join("")}</div>${this._settings()}`;
     if (html !== this._popHtml) {
       this._popHtml = html;
       root.querySelector(".body").innerHTML = html;
     }
   }
 
-  async _open() {
+  _pick(e, o) {
+    const [domain] = e.split(".");
+    if (domain === "input_boolean") return this._hass.callService(domain, o === "on" ? "turn_on" : "turn_off", { entity_id: e });
+    if (this._hass.states[e]?.state === o) return;
+    this._hass.callService(domain, "select_option", { entity_id: e, option: o }).then(() => this._check());
+  }
+
+  _open() {
     if (this._ov) return;
     const d = this._data();
     this._openKeys = new Set(!d.need && d.shown[0] ? [tripKey(d.shown[0])] : []);
     const ov = document.createElement("div");
     ov.attachShadow({ mode: "open" }).innerHTML = `<style>${POPUP_STYLE}</style>
-      <div class="ov"><div class="sheet" role="dialog" aria-modal="true"><div class="body"></div>
-      <div class="set"><div class="set-h">Settings</div><div class="slot"></div></div></div></div>`;
-    const root = ov.shadowRoot;
-    root.querySelector(".ov").addEventListener("click", (e) => {
+      <div class="ov"><div class="sheet" role="dialog" aria-modal="true"><div class="body"></div></div></div>`;
+    ov.shadowRoot.querySelector(".ov").addEventListener("click", (e) => {
       if (e.target.classList.contains("ov")) return this._close();
       const btn = e.composedPath().find((n) => n.tagName === "BUTTON");
       if (!btn) return;
       if (btn.classList.contains("x")) return this._close();
       if (btn.classList.contains("check")) return this._check();
+      if (btn.dataset.e) return this._pick(btn.dataset.e, btn.dataset.o);
       const k = btn.dataset.k;
       if (k) {
         this._openKeys.has(k) ? this._openKeys.delete(k) : this._openKeys.add(k);
@@ -225,13 +263,6 @@ class TripCard extends HTMLElement {
     this._ov = ov;
     this._popHtml = "";
     this._renderPopup(d);
-    const entities = [this._config.show_all, ...this._config.settings];
-    const helpers = await window.loadCardHelpers();
-    const card = await helpers.createCardElement({ type: "entities", entities });
-    card.hass = this._hass;
-    if (this._ov !== ov) return;
-    this._settingsCard = card;
-    root.querySelector(".slot").appendChild(card);
   }
 
   _close() {
@@ -239,7 +270,6 @@ class TripCard extends HTMLElement {
     document.removeEventListener("keydown", this._onKey);
     this._ov.remove();
     this._ov = null;
-    this._settingsCard = null;
   }
 }
 

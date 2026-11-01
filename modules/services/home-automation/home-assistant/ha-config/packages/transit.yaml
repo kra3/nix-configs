@@ -1,25 +1,26 @@
 input_boolean:
-  transit_show_all:
-    name: Show all trips
-    icon: mdi:filter-off-outline
+  transit_hide_slower:
+    name: Hide slower trips
+    icon: mdi:filter-outline
 
 input_select:
   transit_max_changes:
-    name: Changes
+    name: Max changes
     icon: mdi:swap-horizontal
     options:
     - Any
-    - None
+    - At most 2
     - At most 1
+    - None
   transit_modes:
-    name: Modes
+    name: Travel by
     icon: mdi:train-bus
     options:
     - All
     - Trains
     - Buses and trams
   transit_walking:
-    name: Walking
+    name: Max walking
     icon: mdi:walk
     options:
     - Up to 1 km

@@ -1,0 +1,189 @@
+# ── Calendar ────────────────────────────────────────────────────
+- id: calendar_leave_reminder
+  alias: "Calendar: leave-by reminder"
+  description: >-
+    Three hours before a family event with a location, looks the address up
+    (OpenStreetMap) and plans public transport from home to arrive 5 min
+    early (ResRobot). Notifies residents at home 10 min before the planned
+    departure, or 1 h before the event when no route is found. Tracks one
+    upcoming event at a time.
+  triggers:
+  - trigger: calendar
+    entity_id: calendar.kuttunbn
+    event: start
+    offset: "-03:00:00"
+    id: plan
+  - trigger: calendar
+    entity_id: calendar.akarunagath_icloud_com_family
+    event: start
+    offset: "-03:00:00"
+    id: plan
+  - trigger: time
+    at: input_datetime.calendar_leave_at
+    id: leave
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: plan
+      - condition: template
+        value_template: >-
+          {{ not trigger.calendar_event.all_day
+             and (trigger.calendar_event.location or '') | trim != '' }}
+      sequence:
+      - variables:
+          title: "{{ trigger.calendar_event.summary }}"
+          place: "{{ trigger.calendar_event.location | trim }}"
+          starts: "{{ (as_datetime(trigger.calendar_event.start) | as_local).strftime('%Y-%m-%d %H:%M:%S') }}"
+          arrive_by: "{{ (as_datetime(trigger.calendar_event.start) | as_local - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S') }}"
+      - action: rest_command.geocode_place
+        data:
+          query: "{{ place }}"
+        response_variable: geo
+        continue_on_error: true
+      - if:
+        - condition: template
+          value_template: "{{ geo is defined and geo.status == 200 and geo.content | count > 0 }}"
+        then:
+        - action: rest_command.transit_trip
+          data:
+            origin_lat: "{{ state_attr('zone.home', 'latitude') }}"
+            origin_lon: "{{ state_attr('zone.home', 'longitude') }}"
+            dest_lat: "{{ geo.content[0].lat }}"
+            dest_lon: "{{ geo.content[0].lon }}"
+            for_arrival: 1
+            date: "{{ arrive_by[:10] }}"
+            time: "{{ arrive_by[11:16] }}"
+          response_variable: trip
+          continue_on_error: true
+      - variables:
+          best: >-
+            {% set ns = namespace(dep='', arr='', route='') %}
+            {% if trip is defined and trip.status == 200 %}
+              {% for t in trip.content.Trip | default([]) %}
+                {% set dep = t.Origin.date ~ ' ' ~ t.Origin.time %}
+                {% set arr = t.Destination.date ~ ' ' ~ t.Destination.time %}
+                {% if arr <= arrive_by and dep > ns.dep %}
+                  {% set ns.dep = dep %}
+                  {% set ns.arr = arr %}
+                  {% set ns.route = t.LegList.Leg | selectattr('type', 'ne', 'WALK')
+                       | map(attribute='Product') | map('first') | map(attribute='name')
+                       | map('replace', 'Länstrafik ', '') | join(' → ') %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+            {{ {'dep': ns.dep, 'arr': ns.arr, 'route': ns.route} }}
+          leave_at: >-
+            {% if best.dep %}
+              {{ (strptime(best.dep, '%Y-%m-%d %H:%M:%S') - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S') }}
+            {% else %}
+              {{ (strptime(starts, '%Y-%m-%d %H:%M:%S') - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S') }}
+            {% endif %}
+          message: >-
+            {% if best.dep %}
+              Leave by {{ best.dep[11:16] }} for {{ title }} ({{ starts[11:16] }}): {{ best.route }}, arrive {{ best.arr[11:16] }}.
+            {% else %}
+              {{ title }} at {{ starts[11:16] }}, {{ place }}: starts in 1 h (no public transport route found).
+            {% endif %}
+      - if:
+        - condition: template
+          value_template: "{{ leave_at <= now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        then:
+        - action: script.notify
+          data:
+            title: Time to leave
+            message: "{{ message }}"
+            to: home
+        else:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.calendar_leave_message
+          data:
+            value: "{{ message[:255] }}"
+        - action: input_datetime.set_datetime
+          target:
+            entity_id: input_datetime.calendar_leave_at
+          data:
+            datetime: "{{ leave_at }}"
+    - conditions:
+      - condition: trigger
+        id: leave
+      sequence:
+      - action: script.notify
+        data:
+          title: Time to leave
+          message: "{{ states('input_text.calendar_leave_message') }}"
+          to: home
+  mode: queued
+
+- id: calendar_morning_agenda
+  alias: "Calendar: morning agenda"
+  description: >-
+    Once a day, on the first kitchen presence after the sleep schedule ends
+    (05:00-12:00), or at 12:00 / an HA start before 20:00 if it has not run
+    yet, sends both phones today's
+    family events and holidays, and tomorrow's waste collection. Nothing to
+    report, no notification.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.room_presence_kitchen
+    to: "on"
+  - trigger: time
+    at: "12:00:00"
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: template
+    value_template: >-
+      {% if trigger.platform == 'state' %}
+        {{ 5 <= now().hour < 12 and is_state('schedule.sleep', 'off') }}
+      {% else %}
+        {{ 5 <= now().hour < 20 }}
+      {% endif %}
+  - condition: template
+    value_template: >-
+      {{ this.attributes.last_triggered is none
+         or as_local(as_datetime(this.attributes.last_triggered)).date() != now().date() }}
+  actions:
+  - action: calendar.get_events
+    target:
+      entity_id:
+      - calendar.kuttunbn
+      - calendar.akarunagath_icloud_com_family
+      - calendar.house
+      - calendar.holidays_in_sweden
+    data:
+      start_date_time: "{{ today_at() }}"
+      end_date_time: "{{ today_at() + timedelta(days=1) }}"
+    response_variable: today
+    continue_on_error: true
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.va_syd_sophamntning
+    data:
+      start_date_time: "{{ today_at() + timedelta(days=1) }}"
+      end_date_time: "{{ today_at() + timedelta(days=2) }}"
+    response_variable: waste
+    continue_on_error: true
+  - variables:
+      lines: >-
+        {% set ns = namespace(rows=[]) %}
+        {% for cal in (today | default({})).values() %}
+          {% for e in cal.events %}
+            {% set when = 'All day' if 'T' not in e.start
+                          else (as_datetime(e.start) | as_local).strftime('%H:%M') %}
+            {% set ns.rows = ns.rows + [(('00:00' if when == 'All day' else when), when ~ (': ' if when == 'All day' else ' ') ~ e.summary)] %}
+          {% endfor %}
+        {% endfor %}
+        {% set rows = ns.rows | unique | sort(attribute=0) | map(attribute=1) | list %}
+        {% set bins = (waste | default({})).get('calendar.va_syd_sophamntning', {}).get('events', [])
+                      | map(attribute='summary') | unique | list %}
+        {{ rows + (['Tomorrow: waste pickup (' ~ bins | join(', ') ~ '), bins out tonight'] if bins else []) }}
+  - condition: template
+    value_template: "{{ lines | count > 0 }}"
+  - action: script.notify
+    data:
+      title: Today
+      message: "{{ lines | join('\n') }}"
+      to: all
+  mode: single

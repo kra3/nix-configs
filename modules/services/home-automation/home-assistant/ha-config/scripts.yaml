@@ -493,3 +493,206 @@ laundry_notify:
     data:
       message: "{{ message }}"
   mode: queued
+
+transit_check:
+  alias: "Transit: check trips"
+  description: >-
+    Public transport options for the next 90 min for one person (the caller
+    unless given): home to their work when at home, otherwise from their
+    phone's location to home. With an event place: to the event, arriving
+    5 min before it starts, or home when already within 500 m of it.
+    Publishes the result as a transit_trips event for the trips sensors.
+  fields:
+    person:
+      required: false
+      selector:
+        entity:
+          domain: person
+    place:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      selector:
+        text:
+    starts:
+      description: Event start, YYYY-MM-DD HH:MM:SS local time.
+      required: false
+      selector:
+        text:
+  sequence:
+  - variables:
+      who: >-
+        {{ person | default(states.person | selectattr('attributes.user_id', 'eq', context.user_id)
+                                          | map(attribute='entity_id') | first | default('')) }}
+      kind: "{{ 'event' if place | default('') | trim else 'zone' }}"
+      geo: {}
+  - if:
+    - condition: template
+      value_template: "{{ kind == 'event' }}"
+    then:
+    - action: rest_command.geocode_place
+      data:
+        query: "{{ place | trim }}"
+      response_variable: geo
+      continue_on_error: true
+  - variables:
+      spot: >-
+        {{ geo.content[0] if geo.status | default(0) == 200 and geo.content | default([]) | count > 0 else {} }}
+      work_zone: "{% from 'transit.jinja' import work_zone %}{{ work_zone(who) }}"
+      at_home: "{{ is_state(who, 'home') }}"
+      at_event: >-
+        {{ spot.lat is defined and state_attr(who, 'latitude') is not none
+           and distance(state_attr(who, 'latitude'), state_attr(who, 'longitude'), spot.lat | float, spot.lon | float) < 0.5 }}
+      origin_name: >-
+        {% from 'transit.jinja' import origin_name %}{{ (title | default('') or place) if at_event else origin_name(who) }}
+      destination_name: >-
+        {% from 'transit.jinja' import destination_name %}
+        {{ ('Home' if at_event else (title | default('') or place)) if kind == 'event' else destination_name(who) }}
+      from_ll: >-
+        {% set e = 'zone.home' if at_home else who %}
+        {{ [spot.lat | float, spot.lon | float] if at_event else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
+      to_ll: >-
+        {% set e = 'zone.home' if at_event or (kind == 'zone' and not at_home) else work_zone %}
+        {{ [spot.get('lat') | float(0), spot.get('lon') | float(0)] if kind == 'event' and not at_event
+           else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
+      coords_ok: >-
+        {{ from_ll[0] is not none and to_ll[0] is not none and (kind == 'zone' or spot.lat is defined) }}
+      by: >-
+        {% set b = (strptime(starts, '%Y-%m-%d %H:%M:%S') - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M')
+                   if kind == 'event' and not at_event and starts is defined else '' %}
+        {{ b if b > now().strftime('%Y-%m-%d %H:%M') else '' }}
+      depart: "{{ by or now().strftime('%Y-%m-%d %H:%M') }}"
+      extra: >-
+        {{ {'None': '&maxChange=0', 'At most 1': '&maxChange=1', 'At most 2': '&maxChange=2'}.get(states('input_select.transit_max_changes'), '')
+           ~ {'Trains': '&products=22', 'Buses and trams': '&products=200'}.get(states('input_select.transit_modes'), '') }}
+      max_walk: >-
+        {{ {'Up to 2 km': 2000, 'Up to 500 m': 500}.get(states('input_select.transit_walking'), 1000) }}
+      leg_walk: "{{ [max_walk | int // 2, 500] | max }}"
+      first: {}
+      second: {}
+  - if:
+    - condition: template
+      value_template: "{{ coords_ok }}"
+    then:
+    - action: rest_command.transit_trip
+      data: &trip_query
+        origin_lat: "{{ from_ll[0] }}"
+        origin_lon: "{{ from_ll[1] }}"
+        dest_lat: "{{ to_ll[0] }}"
+        dest_lon: "{{ to_ll[1] }}"
+        for_arrival: "{{ 1 if by else 0 }}"
+        date: "{{ depart[:10] }}"
+        time: "{{ depart[11:16] }}"
+        extra: "{{ extra }}&originWalk=1,0,{{ leg_walk }}&destWalk=1,0,{{ leg_walk }}"
+      response_variable: first
+      continue_on_error: true
+    - variables:
+        depart: >-
+          {% set t = first.content.Trip | default([]) if first.status | default(0) == 200 else [] %}
+          {% if t %}
+            {{ (strptime(t[-1].Origin.date ~ ' ' ~ t[-1].Origin.time, '%Y-%m-%d %H:%M:%S') + timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M') }}
+          {% else %}
+            {{ depart }}
+          {% endif %}
+    - if:
+      - condition: template
+        value_template: "{{ not by and first.status | default(0) == 200 and depart < (now() + timedelta(minutes=90)).strftime('%Y-%m-%d %H:%M') }}"
+      then:
+      - action: rest_command.transit_trip
+        data: *trip_query
+        response_variable: second
+        continue_on_error: true
+  - variables:
+      until: "{{ (now() + timedelta(minutes=90)).strftime('%Y-%m-%d %H:%M:%S') }}"
+      trips: >-
+        {% from 'transit.jinja' import mode_icon, iso_minutes, stop_name %}
+        {% set ns = namespace(rows=[], seen=[]) %}
+        {% for r in [first, second] if r.status | default(0) == 200 %}
+          {% for t in r.content.Trip | default([]) %}
+            {% set dep = t.Origin.date ~ ' ' ~ t.Origin.time %}
+            {% set arr = t.Destination.date ~ ' ' ~ t.Destination.time %}
+            {% set legs = namespace(l=[]) %}
+            {% for g in t.LegList.Leg %}
+              {% if g.type == 'WALK' %}
+                {% set legs.l = legs.l + [{'walk': iso_minutes(g.duration | default('')) | int}] %}
+              {% else %}
+                {% set p = g.Product | first %}
+                {% set legs.l = legs.l + [{'i': mode_icon(p.cls), 'n': p.displayNumber | default(p.num | default('')),
+                     'from': stop_name(g.Origin.name), 'fid': g.Origin.extId, 'dep': g.Origin.date ~ 'T' ~ g.Origin.time[:5],
+                     'to': stop_name(g.Destination.name), 'arr': g.Destination.time[:5]}] %}
+              {% endif %}
+            {% endfor %}
+            {% set walk = t.LegList.Leg | selectattr('type', 'eq', 'WALK') | map(attribute='dist') | map('int', 0) | sum %}
+            {% set key = dep ~ (legs.l | selectattr('n', 'defined') | map(attribute='n') | join('-')) %}
+            {% if (arr[:16] <= by if by else dep <= until) and walk <= max_walk | int and key not in ns.seen %}
+              {% set ns.seen = ns.seen + [key] %}
+              {% set mins = ((strptime(arr, '%Y-%m-%d %H:%M:%S') - strptime(dep, '%Y-%m-%d %H:%M:%S')).total_seconds() // 60) | int %}
+              {% set ns.rows = ns.rows + [{'d': dep, 'a': arr, 'w': walk, 'min': mins, 'legs': legs.l}] %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% set out = namespace(rows=[]) %}
+        {% for r in ns.rows %}
+          {% set beaten = namespace(any=false) %}
+          {% for o in ns.rows if o.d >= r.d and o.a <= r.a and o.w <= r.w and (o.d > r.d or o.a < r.a or o.w < r.w) %}
+            {% set beaten.any = true %}
+          {% endfor %}
+          {% set out.rows = out.rows + [{'dep': r.d[:16], 'arr': r.a[11:16], 'min': r.min,
+                                         'legs': r.legs, 'best': not beaten.any}] %}
+        {% endfor %}
+        {{ out.rows | sort(attribute='dep') }}
+      hero: "{{ (trips | selectattr('best') | list + [none])[0] }}"
+      rt: {}
+      live: []
+  - repeat:
+      for_each: "{{ (hero.legs | selectattr('n', 'defined') | list)[:3] if hero else [] }}"
+      sequence:
+      - variables:
+          rt: {}
+      - action: rest_command.transit_departures
+        data:
+          stop: "{{ repeat.item.fid }}"
+          when: "{{ repeat.item.dep }}"
+        response_variable: rt
+        continue_on_error: true
+      - variables:
+          live: >-
+            {% set d = ((rt.content.departures | default([])) if rt.status | default(0) == 200 else [])
+                 | selectattr('route.designation', 'eq', repeat.item.n | string)
+                 | selectattr('scheduled', 'search', '^' ~ repeat.item.dep) | first | default(none) %}
+            {% set plat = (d.realtime_platform or d.scheduled_platform) if d else none %}
+            {{ live + [{'fid': repeat.item.fid, 'dep': repeat.item.dep, 'found': d is not none,
+                        'pos': plat.designation | default('') if plat else '',
+                        'delay': ((d.delay | int(0)) / 60) | round(0, 'ceil') | int if d else 0,
+                        'rt': d.is_realtime | default(false) if d else false,
+                        'cancel': d.canceled | default(false) if d else false}] }}
+  - variables:
+      trips: >-
+        {% set ns = namespace(out=[]) %}
+        {% for t in trips %}
+          {% if hero and t.dep == hero.dep and t.legs == hero.legs %}
+            {% set legs = namespace(l=[]) %}
+            {% for l in t.legs %}
+              {% set x = live | selectattr('fid', 'eq', l.fid | default('')) | selectattr('dep', 'eq', l.dep | default('')) | first | default(none) %}
+              {% set legs.l = legs.l + [dict(l, found=x.found, pos=x.pos, delay=x.delay, rt=x.rt, cancel=x.cancel) if x else l] %}
+            {% endfor %}
+            {% set ns.out = ns.out + [dict(t, legs=legs.l, live=true)] %}
+          {% else %}
+            {% set ns.out = ns.out + [t] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.out }}
+  - event: transit_trips
+    event_data:
+      person: "{{ who }}"
+      kind: "{{ kind }}"
+      from_state: "{{ states(who) }}"
+      event: "{{ (title | default('') or place) ~ '|' ~ starts | default('') if kind == 'event' else '' }}"
+      by: "{{ by }}"
+      ok: "{{ trips | count > 0 }}"
+      origin: "{{ origin_name }}"
+      destination: "{{ destination_name }}"
+      trips: "{{ trips }}"
+  mode: queued

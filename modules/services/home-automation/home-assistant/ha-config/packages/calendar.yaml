@@ -1,0 +1,12 @@
+input_datetime:
+  calendar_leave_at:
+    name: Leave for next event at
+    icon: mdi:walk
+    has_date: true
+    has_time: true
+
+input_text:
+  calendar_leave_message:
+    name: Leave reminder text
+    icon: mdi:bus-clock
+    max: 255

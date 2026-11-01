@@ -56,6 +56,9 @@ recorder:
       - sensor.office_room_light_energy
       - sensor.hall_dimmer_power
       - sensor.hall_dimmer_energy
+      - sensor.*_trips
+    event_types:
+      - transit_trips
 
 rest_command:
   announce_hallway:
@@ -74,6 +77,21 @@ rest_command:
     content_type: application/json
     payload: '{"seconds": 10}'
     timeout: 60
+
+  geocode_place:
+    url: "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q={{ query | urlencode }}"
+    method: get
+    headers:
+      User-Agent: vasudha-home-assistant/1.0
+    timeout: 20
+  transit_trip:
+    url: !secret resrobot_trip_url
+    method: get
+    timeout: 20
+  transit_departures:
+    url: !secret trafiklab_departures_url
+    method: get
+    timeout: 20
 
 automation: !include_dir_merge_list automations/
 script: !include scripts.yaml

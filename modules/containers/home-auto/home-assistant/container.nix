@@ -60,6 +60,7 @@
                   "${../../../services/home-automation/home-assistant/ha-config/www/download-control-card.js}:/config/www/download-control-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/home-hero-card.js}:/config/www/home-hero-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/popup-tile-card.js}:/config/www/popup-tile-card.js:ro"
+                  "${../../../services/home-automation/home-assistant/ha-config/www/trip-card.js}:/config/www/trip-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/status-row-card.js}:/config/www/status-row-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/laundry-machine-card.js}:/config/www/laundry-machine-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/scene-picker-card.js}:/config/www/scene-picker-card.js:ro"
@@ -150,6 +151,12 @@
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
           lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
           recorder_db_url: postgresql://hass:${config.sops.placeholder."db.hass_password"}@10.3.2.1/hass
+          resrobot_trip_url: "https://api.resrobot.se/v2.1/trip?format=json&searchForArrival={{ for_arrival | default(0) }}&accessId=${
+            config.sops.placeholder."trafiklab.resrobot_key"
+          }&originCoordLat={{ origin_lat }}&originCoordLong={{ origin_lon }}&destCoordLat={{ dest_lat }}&destCoordLong={{ dest_lon }}&date={{ date }}&time={{ time }}{{ extra | default }}"
+          trafiklab_departures_url: "https://realtime-api.trafiklab.se/v1/departures/{{ stop }}/{{ when }}?key=${
+            config.sops.placeholder."trafiklab.realtime_key"
+          }"
         ''
         + lib.optionalString config.vars.localMedia.enable ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
@@ -207,6 +214,9 @@
         group = "root";
         mode = "0400";
       };
+
+      sops.secrets."trafiklab.resrobot_key" = { };
+      sops.secrets."trafiklab.realtime_key" = { };
 
       # No bind-mount: pasted by hand into the hass-oidc-auth integration's UI.
       sops.secrets."homeassistant.oidc_client_secret" = { };

@@ -1,0 +1,24 @@
+{% macro work_zone(person) -%}
+{{ {'person.arun_karunagath': 'zone.work', 'person.anjalipc': 'zone.work_smil'}.get(person, '') }}
+{%- endmacro %}
+
+{% macro origin_name(person) -%}
+{% set s = states(person) %}{{ 'Home' if s == 'home' else (s if s not in ['not_home', 'unknown', 'unavailable'] else 'Here') }}
+{%- endmacro %}
+
+{% macro destination_name(person) -%}
+{{ (state_attr(work_zone(person), 'friendly_name') or 'Work') if is_state(person, 'home') else 'Home' }}
+{%- endmacro %}
+
+{% macro iso_minutes(d) -%}
+{% set h = d | regex_findall_index('(\d+)H') | int if 'H' in d else 0 %}{% set m = d | regex_findall_index('(\d+)M') | int if 'M' in d else 0 %}{{ h * 60 + m }}
+{%- endmacro %}
+
+{% macro stop_name(n) -%}
+{{ n | regex_replace(' \(.*\)$', '') | replace('Malmö ', '') }}
+{%- endmacro %}
+
+{% macro mode_icon(cls) -%}
+{{ {'2': 'mdi:train', '4': 'mdi:train', '16': 'mdi:train', '32': 'mdi:subway-variant', '64': 'mdi:tram',
+    '8': 'mdi:bus', '128': 'mdi:bus', '256': 'mdi:ferry'}.get(cls | string, 'mdi:transit-connection-variant') }}
+{%- endmacro %}

@@ -55,3 +55,6 @@ card:
       {% for n, e in [(1, '[[temperature]]'), (2, '[[humidity]]'), (3, '[[illuminance]]')] if not e or states(e) in ['unknown', 'unavailable'] %}
       .chip-container > mushroom-template-chip:nth-of-type({{ n }}) { display: none; }
       {% endfor %}
+      {% if not '[[temperature]][[humidity]][[illuminance]]' %}
+      :host(streamline-card) { display: none !important; }
+      {% endif %}

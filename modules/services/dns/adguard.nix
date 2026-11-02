@@ -43,6 +43,7 @@
             ];
             BindPaths = [ "/srv/appdata/dns/adguard:/var/lib/AdGuardHome" ];
             LogsDirectory = "AdGuardHome";
+            LogsDirectoryMode = "0700";
           }
           (flakeLib.deployment-hardening.mkServiceSandbox {
             readWritePaths = [ "/var/lib/AdGuardHome" ];

@@ -219,7 +219,6 @@
               ];
             };
             systemd.tmpfiles.rules = [
-              "z /var/log/jellyfin 0750 jellyfin jellyfin - -"
               "Z /var/log/jellyfin/*.log 0640 jellyfin jellyfin - -"
               "Z /var/log/jellyfin/*.txt 0640 jellyfin jellyfin - -"
             ];

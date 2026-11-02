@@ -7,7 +7,7 @@
       ...
     }:
     let
-      stateDir = "/var/lib/iptv";
+      stateDir = "/srv/appdata/iptv";
       bind = config.vars.network.containers.mediaPlay.hostAddress;
       port = 8099;
       python = "${pkgs.python3}/bin/python3";
@@ -20,7 +20,7 @@
         PrivateTmp = true;
         ProtectSystem = "strict";
         ProtectHome = true;
-        BindPaths = [ "/srv/appdata/iptv:${stateDir}" ];
+        ReadWritePaths = [ stateDir ];
       };
     in
     {
@@ -30,7 +30,7 @@
       };
       users.groups.iptv = { };
 
-      systemd.tmpfiles.rules = [ "d /srv/appdata/iptv 0750 iptv iptv - -" ];
+      systemd.tmpfiles.rules = [ "d ${stateDir} 0755 iptv iptv - -" ];
 
       systemd.services.iptv-yt-resolver = {
         description = "Serve the iptv M3U/EPG, resolve YouTube entries and remux split-audio streams";
@@ -64,8 +64,6 @@
         serviceConfig = sandbox // {
           Type = "oneshot";
           ExecStart = "${python} ${./iptv/prune_iptv.py} --allow ${channels} --out ${stateDir}/news.m3u --state ${stateDir}/state.json --yt-base http://${bind}:${toString port}";
-          StateDirectory = "iptv";
-          StateDirectoryMode = "0755";
           TimeoutStartSec = "10min";
           MemoryMax = "256M";
         };
@@ -78,8 +76,6 @@
         serviceConfig = sandbox // {
           Type = "oneshot";
           ExecStart = "${python} ${./iptv/epg.py} --allow ${channels} --out ${stateDir}/epg.xml";
-          StateDirectory = "iptv";
-          StateDirectoryMode = "0755";
           TimeoutStartSec = "5min";
           MemoryMax = "256M";
         };

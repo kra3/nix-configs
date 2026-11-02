@@ -70,15 +70,11 @@
             mountpoint = "/";
             options = {
               acltype = "posix";
-              "com.sun:auto-snapshot" = "false";
             };
           };
           nix = {
             type = "zfs_fs";
             mountpoint = "/nix";
-            options = {
-              "com.sun:auto-snapshot" = "false";
-            };
           };
           appdata = {
             type = "zfs_fs";
@@ -87,7 +83,6 @@
               compression = "zstd";
               atime = "off";
               xattr = "sa";
-              "com.sun:auto-snapshot" = "true";
             };
           };
           databases = {
@@ -100,7 +95,6 @@
               xattr = "sa";
               primarycache = "all";
               logbias = "throughput";
-              "com.sun:auto-snapshot" = "true";
             };
           };
         };
@@ -130,7 +124,51 @@
             options = {
               mountpoint = "/srv/media";
               logbias = "throughput";
-              "com.sun:auto-snapshot" = "false";
+            };
+          };
+          "data/music" = {
+            type = "zfs_fs";
+            options = {
+              mountpoint = "/srv/media/library/music";
+              compression = "zstd";
+              atime = "off";
+              xattr = "sa";
+            };
+          };
+          "data/books" = {
+            type = "zfs_fs";
+            options = {
+              mountpoint = "/srv/media/library/books";
+              compression = "zstd";
+              atime = "off";
+              xattr = "sa";
+            };
+          };
+          "data/audiobooks" = {
+            type = "zfs_fs";
+            options = {
+              mountpoint = "/srv/media/library/audiobooks";
+              compression = "zstd";
+              atime = "off";
+              xattr = "sa";
+            };
+          };
+          "data/reference" = {
+            type = "zfs_fs";
+            options = {
+              mountpoint = "/srv/media/library/reference";
+              compression = "zstd";
+              atime = "off";
+              xattr = "sa";
+            };
+          };
+          personal = {
+            type = "zfs_fs";
+            options = {
+              mountpoint = "/srv/personal";
+              compression = "zstd";
+              atime = "off";
+              xattr = "sa";
             };
           };
           surveillance = {
@@ -138,11 +176,6 @@
             options = {
               mountpoint = "/srv/surveillance";
               logbias = "throughput";
-              "com.sun:auto-snapshot:frequent" = "false";
-              "com.sun:auto-snapshot:hourly" = "false";
-              "com.sun:auto-snapshot:daily" = "true";
-              "com.sun:auto-snapshot:weekly" = "true";
-              "com.sun:auto-snapshot:monthly" = "false";
             };
           };
         };

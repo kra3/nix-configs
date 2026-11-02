@@ -35,6 +35,7 @@
     flakeModules.nixos.services-dns-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
+    flakeModules.nixos.services-backup-usb
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
@@ -297,15 +298,6 @@
         "rpool"
         "tank"
       ];
-    };
-
-    autoSnapshot = {
-      enable = true;
-      frequent = 2;
-      hourly = 6;
-      daily = 3;
-      weekly = 2;
-      monthly = 3;
     };
 
     trim.enable = true;

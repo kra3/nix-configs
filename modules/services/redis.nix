@@ -14,16 +14,8 @@
         port = 6379;
         save = [
           [
-            900
+            3600
             1
-          ]
-          [
-            300
-            10
-          ]
-          [
-            60
-            10000
           ]
         ];
         requirePassFile = config.sops.secrets."db.redis_password".path;

@@ -42,7 +42,7 @@ Goal: files on disk, beets databases and Lidarr agree, with no manual steps for 
   - Classical root folder: skipped, notify.
   - Album already in beets (by `mb_albumid`, else album + artist) with >=90% of the download's tracks: clear the entry, leave the download, notify. Under 90%: left for a manual replace import.
   - Else `beet import -q --quiet-fallback skip -S <expected MB release>` with `strong_rec_thresh 0.25`; if no audio is left, update the artist path (only if the old folder has no audio), clear the entry, `RefreshArtist`, remove empty dirs.
-  - Unresolved entries are retried after 24 h; Telegram notifies once per entry. State: `/var/lib/lidarr-failed-import-recovery/tried.json`.
+  - Unresolved entries are retried after 24 h; Telegram notifies once per entry. State: `/srv/appdata/lidarr-failed-import-recovery/tried.json`.
 - Failure signs: Lidarr queue `importFailed`/`warning`; SABnzbd `_FAILED_*` folders; retag bursts in the webhook journal with high HDD I/O; Telegram messages from the recovery job.
 
 ## Lidarr settings (3.1.6, live dump 2026-10-08; re-dump before trusting)

@@ -71,7 +71,6 @@ views:
       person: person.arun_karunagath
       calendars: &event_calendars
       - calendar.kuttunbn
-      - calendar.akarunagath_icloud_com_family
       settings: *trip_settings
       visibility:
       - condition: user
@@ -414,7 +413,6 @@ views:
       show_add_event: true
       entities:
       - calendar.kuttunbn
-      - calendar.akarunagath_icloud_com_family
       - calendar.house
       - calendar.va_syd_sophamntning
       - calendar.holidays_in_sweden

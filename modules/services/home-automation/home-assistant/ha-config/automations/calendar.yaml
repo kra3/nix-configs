@@ -13,11 +13,6 @@
     event: start
     offset: "-03:00:00"
     id: plan
-  - trigger: calendar
-    entity_id: calendar.akarunagath_icloud_com_family
-    event: start
-    offset: "-03:00:00"
-    id: plan
   - trigger: time
     at: input_datetime.calendar_leave_at
     id: leave
@@ -149,7 +144,6 @@
     target:
       entity_id:
       - calendar.kuttunbn
-      - calendar.akarunagath_icloud_com_family
       - calendar.house
       - calendar.holidays_in_sweden
     data:

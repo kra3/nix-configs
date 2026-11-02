@@ -68,7 +68,7 @@
       }
       // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
-      systemd.tmpfiles.rules = [ "d /var/cache/aiostreams 0750 root root - -" ];
+      systemd.tmpfiles.rules = [ "d /var/cache/aiostreams 2770 root media - -" ];
 
       # No forward-auth: AIOStreams' native OIDC (authelia.nix) covers the
       # dashboard without gating the Stremio paths the TV app hits directly.

@@ -96,6 +96,8 @@
         };
       };
 
+      systemd.tmpfiles.rules = [ "d /srv/appdata/media-mgmt/beets 2770 kra3 media - -" ];
+
       networking.firewall.interfaces.br-media-mgmt.allowedTCPPorts = [ port ];
     };
 }

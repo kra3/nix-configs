@@ -20,10 +20,9 @@
         gid = 2000;
       };
 
-      services.jellyfin.logDir = lib.mkForce "/var/log/jellyfin";
-
       services.declarative-jellyfin = {
         enable = true;
+        logDir = "/var/log/jellyfin";
         openFirewall = true;
 
         system = {
@@ -204,7 +203,6 @@
       };
 
       systemd.tmpfiles.rules = lib.mkIf config.services.declarative-jellyfin.enable [
-        "d /var/log/jellyfin 0750 jellyfin jellyfin - -"
         "f /var/log/jellyfin/jellyfin.log 0640 jellyfin jellyfin - -"
         "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"
       ];

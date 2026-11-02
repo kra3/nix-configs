@@ -45,10 +45,7 @@
             LogsDirectory = "AdGuardHome";
           }
           (flakeLib.deployment-hardening.mkServiceSandbox {
-            readWritePaths = [
-              "/var/lib/AdGuardHome"
-              "/var/log/AdGuardHome"
-            ];
+            readWritePaths = [ "/var/lib/AdGuardHome" ];
             capabilities = [ "CAP_NET_BIND_SERVICE" ];
           })
         ];

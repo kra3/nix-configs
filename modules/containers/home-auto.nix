@@ -56,6 +56,7 @@
       systemd.tmpfiles.rules = [
         "d /srv/appdata/home-auto/mosquitto 0750 root root - -"
         "d /srv/appdata/home-auto/frigate 2770 root frigate - -"
+        "d /srv/appdata/home-auto/frigate/model_cache 2770 root frigate - -"
         "d /srv/appdata/home-auto/zigbee2mqtt 2770 root zigbee2mqtt - -"
         "d /srv/surveillance/recordings 2770 root frigate - -"
         "d /srv/surveillance/clips 2770 root frigate - -"
@@ -65,7 +66,11 @@
         {
           autoStart = true;
           additionalCapabilities = [ "CAP_PERFMON" ];
-          extraFlags = [ "--system-call-filter=perf_event_open" ];
+          extraFlags = [
+            "--system-call-filter=perf_event_open"
+            # frigate rewrites recording segments here constantly; model_cache is bind-mounted back to disk
+            "--tmpfs=/var/cache/frigate:mode=0755,size=1G"
+          ];
           specialArgs = {
             inherit inputs flakeModules;
             monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
@@ -175,6 +180,10 @@
             };
             "/var/lib/frigate/clips" = {
               hostPath = "/srv/surveillance/clips";
+              isReadOnly = false;
+            };
+            "/var/cache/frigate/model_cache" = {
+              hostPath = "/srv/appdata/home-auto/frigate/model_cache";
               isReadOnly = false;
             };
             "/var/lib/mosquitto" = {

@@ -440,6 +440,13 @@
                   siteMonitor = "https://z2m.${domain}";
                 };
               }
+              {
+                "RF Bridge" = {
+                  description = "Sonoff 433 MHz bridge (Tasmota)";
+                  icon = "tasmota.png";
+                  href = "http://192.168.1.32";
+                };
+              }
             ];
           }
           {

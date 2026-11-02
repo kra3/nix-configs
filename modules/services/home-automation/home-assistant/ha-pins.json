@@ -30,10 +30,10 @@
     },
     "battery_notes": {
       "repo": "andrew-codechimp/HA-Battery-Notes",
-      "version": "3.7.2",
+      "version": "3.8.1",
       "kind": "zip",
       "asset": "battery_notes.zip",
-      "hash": "sha256-PL+ZRRWRyrcF8L0PzLrzVhBVdH9DjO2KPAiGkpHHGRs="
+      "hash": "sha256-C1Ldpid6RNxSh9w7YI84rPNKg/fLH4qyQp+kK1A+uMo="
     },
     "fresh_intellivent_sky": {
       "repo": "Spit68/Fresh-Intellivent-Sky",

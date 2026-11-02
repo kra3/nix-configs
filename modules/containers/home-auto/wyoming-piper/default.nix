@@ -17,7 +17,7 @@
           dns = [ "10.3.2.1" ];
           networks = [ "${network.ref}:ip=10.3.2.15" ];
           volumes = [
-            "/srv/appdata/home-auto/wyoming-piper:/data"
+            "/var/cache/wyoming-piper:/data"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "896m";
@@ -29,7 +29,7 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d /srv/appdata/home-auto/wyoming-piper 0750 root root - -"
+        "d /var/cache/wyoming-piper 0750 root root - -"
       ];
     };
 }

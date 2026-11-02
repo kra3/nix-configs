@@ -20,6 +20,7 @@
         PrivateTmp = true;
         ProtectSystem = "strict";
         ProtectHome = true;
+        BindPaths = [ "/srv/appdata/iptv:${stateDir}" ];
       };
     in
     {
@@ -28,6 +29,8 @@
         group = "iptv";
       };
       users.groups.iptv = { };
+
+      systemd.tmpfiles.rules = [ "d /srv/appdata/iptv 0750 iptv iptv - -" ];
 
       systemd.services.iptv-yt-resolver = {
         description = "Serve the iptv M3U/EPG, resolve YouTube entries and remux split-audio streams";

@@ -57,13 +57,18 @@
           environments.MAX_ADDONS = "25";
           # OIDC discovery calls auth.${config.vars.acme.domain} directly; route via the bridge gateway.
           addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
-          volumes = [ "/srv/appdata/media-mgmt/aiostreams:/app/data" ];
+          volumes = [
+            "/srv/appdata/media-mgmt/aiostreams:/app/data"
+            "/var/cache/aiostreams:/app/data/cache"
+          ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "2048m";
           podmanArgs = [ "--cpus=1" ];
         };
       }
       // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
+
+      systemd.tmpfiles.rules = [ "d /var/cache/aiostreams 0750 root root - -" ];
 
       # No forward-auth: AIOStreams' native OIDC (authelia.nix) covers the
       # dashboard without gating the Stremio paths the TV app hits directly.

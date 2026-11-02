@@ -311,9 +311,8 @@
         upstream = "http://127.0.0.1:9091";
       };
 
-      # Sibling of /srv/appdata, whose ZFS dataset has no acltype=posixacl, so ACLs for a non-root app there silently no-op.
       systemd.tmpfiles.rules = [
-        "d /srv/authelia 0750 authelia authelia - -"
+        "d /srv/appdata/authelia 0750 authelia authelia - -"
       ];
 
       sops.secrets."authelia.session_secret" = {
@@ -431,7 +430,7 @@
                 "${
                   config.sops.secrets."authelia.oidc_issuer_private_key".path
                 }:/config/secrets/oidc_issuer_private_key.pem:ro"
-                "/srv/authelia:/data"
+                "/srv/appdata/authelia:/data"
               ];
               environments = {
                 X_AUTHELIA_CONFIG_FILTERS = "template";

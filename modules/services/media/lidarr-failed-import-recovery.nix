@@ -242,6 +242,7 @@
           Type = "oneshot";
           User = "kra3";
           StateDirectory = "lidarr-failed-import-recovery";
+          BindPaths = [ "/srv/appdata/lidarr-failed-import-recovery:/var/lib/lidarr-failed-import-recovery" ];
           Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
           LoadCredential = [
             "lidarr-key:${config.sops.secrets."media.lidarr.api_key".path}"
@@ -251,6 +252,8 @@
           ExecStart = "${pkgs.python3}/bin/python3 ${script}";
         };
       };
+
+      systemd.tmpfiles.rules = [ "d /srv/appdata/lidarr-failed-import-recovery 0750 kra3 users - -" ];
 
       systemd.timers.lidarr-failed-import-recovery = {
         wantedBy = [ "timers.target" ];

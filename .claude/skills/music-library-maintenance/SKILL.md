@@ -24,7 +24,7 @@ Goal: files on disk, beets databases and Lidarr agree, with no manual steps for 
 ## Layout
 - Library `/srv/media/library/music/{Western,Indian,Classical/{Western,Carnatic,Hindustani},Devotional,playlists}`; containers see `/data/library/music`. Devotional is not in Lidarr. Lidarr writes files as uid 0 gid 2000, mode 775.
 - Downloads: `/srv/media/downloads/slskd/complete`, `/srv/media/downloads/usenet/complete/music`.
-- Beets profiles (nix: `modules/home/music/beets.nix`; all dbs in `~/.config/beets/`):
+- Beets profiles (nix: `modules/home/music/beets.nix`; all dbs in `/srv/appdata/media-mgmt/beets/`):
   - Western: `beet` (no BEETSDIR), dir `.../music/Western`, `western.db`.
   - Indian: `beet-indian-film` (`BEETSDIR=~/.config/beets-indian-film`), dir `.../music/Indian`, `indian-film.db`, `strong_rec_thresh 0.15`.
   - Classical: `beet-classical` (`BEETSDIR=~/.config/beets-classical`), dir `.../music/Classical/Western`, `classical.db`.

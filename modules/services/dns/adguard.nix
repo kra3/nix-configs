@@ -42,6 +42,8 @@
               "username:${config.sops.secrets."dns.adguard.username".path}"
             ];
             BindPaths = [ "/srv/appdata/dns/adguard:/var/lib/AdGuardHome" ];
+            LogsDirectory = "AdGuardHome";
+            LogsDirectoryMode = "0700";
           }
           (flakeLib.deployment-hardening.mkServiceSandbox {
             readWritePaths = [ "/var/lib/AdGuardHome" ];
@@ -245,6 +247,7 @@
               size_memory = 1000;
               enabled = true;
               file_enabled = true;
+              dir_path = "/var/log/AdGuardHome";
             };
 
             statistics = {
@@ -317,7 +320,7 @@
         services.logrotate.settings.adguardhome = {
           files = [
             "/srv/appdata/dns/adguard/data/*.log"
-            "/srv/appdata/dns/adguard/data/querylog.json"
+            "/var/log/AdGuardHome/querylog.json"
             "/srv/appdata/dns/adguard/data/stats.json"
           ];
           rotate = 1;

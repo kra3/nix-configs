@@ -22,6 +22,7 @@
 
       services.declarative-jellyfin = {
         enable = true;
+        logDir = "/var/log/jellyfin";
         openFirewall = true;
 
         system = {
@@ -202,14 +203,13 @@
       };
 
       systemd.tmpfiles.rules = lib.mkIf config.services.declarative-jellyfin.enable [
-        "d /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
-        "f /var/lib/jellyfin/log/jellyfin.log 0640 jellyfin jellyfin - -"
+        "f /var/log/jellyfin/jellyfin.log 0640 jellyfin jellyfin - -"
         "f /var/log/jellyfin.txt 0640 jellyfin jellyfin - -"
       ];
 
       services.logrotate.settings.jellyfin = {
         files = [
-          "/var/lib/jellyfin/log/*.log"
+          "/var/log/jellyfin/*.log"
           "/var/log/jellyfin*.txt"
         ];
         rotate = 1;
@@ -225,7 +225,7 @@
         loki.source.file "jellyfin" {
           targets = [
             {
-              __path__ = "/var/lib/jellyfin/log/jellyfin.log",
+              __path__ = "/var/log/jellyfin/jellyfin.log",
               job = "jellyfin",
               host = "${config.networking.hostName}",
               role = "${if config.boot.isContainer then "container" else "host"}",

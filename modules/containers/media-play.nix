@@ -219,12 +219,8 @@
               ];
             };
             systemd.tmpfiles.rules = [
-              "z /var/lib/jellyfin/log 0750 jellyfin jellyfin - -"
-              "z /var/lib/jellyfin/logs 0750 jellyfin jellyfin - -"
-              "Z /var/lib/jellyfin/log/*.log 0640 jellyfin jellyfin - -"
-              "Z /var/lib/jellyfin/log/*.txt 0640 jellyfin jellyfin - -"
-              "Z /var/lib/jellyfin/logs/*.log 0640 jellyfin jellyfin - -"
-              "Z /var/lib/jellyfin/logs/*.txt 0640 jellyfin jellyfin - -"
+              "Z /var/log/jellyfin/*.log 0640 jellyfin jellyfin - -"
+              "Z /var/log/jellyfin/*.txt 0640 jellyfin jellyfin - -"
             ];
 
             # Jellyfin only reads SSO-Auth.xml at startup; nothing else here

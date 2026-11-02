@@ -37,7 +37,7 @@
         BEETS_INDIAN_DIR = "${beetsIndianDir}"
         INDIAN_LIBRARY = "${indianLibrary}"
         AUDIO = (".flac", ".mp3", ".ogg", ".m4a", ".aac", ".opus", ".wav", ".wma", ".ape", ".wv")
-        STATE = os.path.join(os.environ["STATE_DIRECTORY"], "tried.json")
+        STATE = "/srv/appdata/lidarr-failed-import-recovery/tried.json"
         RETRY_AFTER = 24 * 3600
 
 
@@ -241,7 +241,6 @@
         serviceConfig = {
           Type = "oneshot";
           User = "kra3";
-          StateDirectory = "lidarr-failed-import-recovery";
           Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
           LoadCredential = [
             "lidarr-key:${config.sops.secrets."media.lidarr.api_key".path}"
@@ -251,6 +250,8 @@
           ExecStart = "${pkgs.python3}/bin/python3 ${script}";
         };
       };
+
+      systemd.tmpfiles.rules = [ "d /srv/appdata/lidarr-failed-import-recovery 0750 kra3 users - -" ];
 
       systemd.timers.lidarr-failed-import-recovery = {
         wantedBy = [ "timers.target" ];

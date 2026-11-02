@@ -17,7 +17,7 @@
           dns = [ "10.3.2.1" ];
           networks = [ "${network.ref}:ip=10.3.2.14" ];
           volumes = [
-            "/srv/appdata/home-auto/wyoming-whisper:/data"
+            "/var/cache/wyoming-whisper:/data"
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "512m";
@@ -29,7 +29,7 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d /srv/appdata/home-auto/wyoming-whisper 0750 root root - -"
+        "d /var/cache/wyoming-whisper 0750 root root - -"
       ];
     };
 }

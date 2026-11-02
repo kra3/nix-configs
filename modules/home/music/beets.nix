@@ -114,7 +114,7 @@
         );
         settings = {
           directory = "/srv/media/library/music/Western";
-          library = "${config.home.homeDirectory}/.config/beets/western.db";
+          library = "/srv/appdata/media-mgmt/beets/western.db";
           plugins = [
             "musicbrainz"
             "chroma"
@@ -195,7 +195,7 @@
 
       home.file.".config/beets-indian-film/config.yaml".text = ''
         directory: /srv/media/library/music/Indian
-        library: ${config.home.homeDirectory}/.config/beets/indian-film.db
+        library: /srv/appdata/media-mgmt/beets/indian-film.db
         # aisauce is opt-in (see beet-indian-film-cleanup), not run on every regular import.
         plugins: musicbrainz chroma spotify jiosaavn fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names strip_junk_tags permissions
         permissions:
@@ -237,7 +237,7 @@
 
       home.file.".config/beets-classical/config.yaml".text = ''
         directory: /srv/media/library/music/Classical/Western
-        library: ${config.home.homeDirectory}/.config/beets/classical.db
+        library: /srv/appdata/media-mgmt/beets/classical.db
         plugins: musicbrainz chroma spotify fetchart embedart lastgenre zero duplicates fromfilename edit normalize_names strip_junk_tags permissions
         permissions:
           file: "664"

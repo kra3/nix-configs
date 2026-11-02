@@ -147,5 +147,30 @@
         '';
       };
       systemd.timers.backup-usb.timerConfig.Persistent = true;
+
+      environment.systemPackages = [
+        (pkgs.writeShellApplication {
+          name = "backup-disk";
+          runtimeInputs = [ config.boot.zfs.package ];
+          text = ''
+            case "''${1:-}" in
+              mount)
+                mode=on
+                [ "''${2:-}" = rw ] && mode=off
+                sudo zpool import -l -o readonly="$mode" -d /dev/disk/by-id backup
+                sudo zfs mount -a
+                zfs list -r -o name,used,mountpoint backup
+                ;;
+              umount | unmount)
+                sudo zpool export backup
+                ;;
+              *)
+                echo "usage: backup-disk mount [rw] | umount" >&2
+                exit 2
+                ;;
+            esac
+          '';
+        })
+      ];
     };
 }

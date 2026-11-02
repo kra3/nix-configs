@@ -1,9 +1,14 @@
 {
   flake.nixosModules.services-backup-usb =
-    { lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
-      disk = "/dev/disk/by-id/usb-WD_My_Passport_0827_575836314137354531543237-0:0";
-      diskUnit = "dev-disk-by\\x2did-usb\\x2dWD_My_Passport_0827_575836314137354531543237\\x2d0:0.device";
+      disk = "/dev/disk/by-id/usb-WD_My_Passport_0827_575836314137354531543237-0:0-part1";
+      diskUnit = "dev-disk-by\\x2did-usb\\x2dWD_My_Passport_0827_575836314137354531543237\\x2d0:0\\x2dpart1.device";
 
       # source dataset -> template; the target is backup/<last path component>
       sources = {
@@ -28,22 +33,19 @@
       targetConf = pkgs.writeTextDir "sanoid.conf" (
         lib.generators.toINI { } (
           {
-            template_app = keep // {
-              daily = 30;
-              monthly = 12;
-            };
-            template_library = keep // {
+            template_default = keep // {
               daily = 30;
               monthly = 12;
             };
             template_personal = keep // {
+              daily = 30;
               monthly = 24;
             };
           }
           // lib.mapAttrs' (
             src: tpl:
             lib.nameValuePair "backup/${baseNameOf src}" {
-              use_template = tpl;
+              use_template = if tpl == "personal" then "personal" else "default";
               autosnap = "no";
               autoprune = "yes";
             }
@@ -88,7 +90,7 @@
         startAt = "*-*-* 03:30";
         path = [
           pkgs.sanoid
-          pkgs.zfs
+          config.boot.zfs.package
           pkgs.coreutils
           pkgs.gnugrep
           pkgs.findutils
@@ -96,6 +98,9 @@
         serviceConfig = {
           Type = "oneshot";
           StateDirectory = "backup-usb";
+          CacheDirectory = "backup-usb";
+          RuntimeDirectory = "backup-usb";
+          TimeoutStartSec = "12h";
         };
         script = ''
           set -euo pipefail
@@ -109,13 +114,21 @@
             exit 0
           fi
 
-          zpool list backup >/dev/null 2>&1 || zpool import -l -d /dev/disk/by-id backup
-          trap 'zpool export backup' EXIT
+          imported=0
+          trap 'if [ "$imported" = 1 ]; then zpool export backup || true; fi' EXIT
+          if ! zpool list backup >/dev/null 2>&1; then
+            zpool import -N -d /dev/disk/by-id backup
+            imported=1
+          fi
+          [ "$(zfs get -H -o value keystatus backup)" = available ] || zfs load-key backup
 
-          ${lib.concatMapStrings (src: ''
-            syncoid --no-sync-snap --include-snaps=^autosnap_ ${src} backup/${baseNameOf src}
-          '') (lib.attrNames sources)}
-          sanoid --configdir=${targetConf} --prune-snapshots
+          failed=0
+          for src in ${lib.escapeShellArgs (lib.attrNames sources)}; do
+            syncoid --no-sync-snap --include-snaps='^autosnap_.*_(daily|monthly)$' \
+              "$src" "backup/''${src##*/}" || { echo "backup-usb: $src failed"; failed=1; }
+          done
+          sanoid --configdir=${targetConf} --cache-dir=/var/cache/backup-usb \
+            --run-dir=/run/backup-usb --force-update --prune-snapshots
 
           scrubbed=/var/lib/backup-usb/last-scrub
           if [ ! -e "$scrubbed" ] || [ -n "$(find "$scrubbed" -mtime +30)" ]; then
@@ -124,6 +137,11 @@
           fi
           zpool status -x backup | grep -q 'is healthy' || { zpool status backup; exit 1; }
 
+          if [ "$imported" = 1 ]; then
+            zpool export backup
+            imported=0
+          fi
+          [ "$failed" = 0 ] || exit 1
           touch "$last"
           echo "backup-usb: OK"
         '';

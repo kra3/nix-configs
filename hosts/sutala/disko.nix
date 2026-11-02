@@ -75,8 +75,6 @@
           nix = {
             type = "zfs_fs";
             mountpoint = "/nix";
-            options = {
-            };
           };
           appdata = {
             type = "zfs_fs";

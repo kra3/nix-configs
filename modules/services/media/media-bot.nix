@@ -2,10 +2,12 @@
   perSystem =
     { pkgs, ... }:
     {
-      checks.media-bot-tests = pkgs.runCommand "media-bot-tests" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-        python3 ${./media-bot-test.py} ${./media-bot.py}
-        touch $out
-      '';
+      checks.media-bot-tests =
+        pkgs.runCommand "media-bot-tests" { nativeBuildInputs = [ pkgs.python3 ]; }
+          ''
+            python3 ${./media-bot-test.py} ${./media-bot.py}
+            touch $out
+          '';
     };
 
   flake.nixosModules.services-media-media-bot =
@@ -21,7 +23,9 @@
       addr = config.vars.network.podmanAddresses;
       secrets = config.sops.secrets;
       python = pkgs.python3.withPackages (
-        p: [ p.python-telegram-bot ] ++ (p.python-telegram-bot.optional-dependencies.job-queue or [ p.apscheduler ])
+        p:
+        [ p.python-telegram-bot ]
+        ++ (p.python-telegram-bot.optional-dependencies.job-queue or [ p.apscheduler ])
       );
       args = [
         "--radarr"

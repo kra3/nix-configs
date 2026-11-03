@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Fitness</title>
+<meta name="theme-color" content="#0B7285">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>:root{color-scheme:light}</style>
 <style>
@@ -109,8 +114,25 @@ input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-vi
 .set{display:flex;align-items:center;gap:6px;min-width:0}
 .set .no{font-size:12px;color:var(--muted);width:14px;flex:none}
 .set .x{color:var(--muted);flex:none}
+.set input{padding:8px 6px}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 details summary{cursor:pointer;font:700 22px/1.1 var(--font-display);letter-spacing:.05em;text-transform:uppercase}
 details .note{font-size:13px;color:var(--muted);margin:10px 0 0}
+a.btn,label.btn{display:inline-flex;align-items:center;text-decoration:none}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--line)}
+.btn.danger.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.net{font-size:13px;color:var(--muted);margin:0}
+.net.warn{color:var(--warn)}
+.net a{color:var(--accent)}
+.rest{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:10;
+  display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;
+  padding:8px 10px 8px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);width:min(420px,calc(100% - 32px))}
+.rest .rl{flex:1;font-size:13px;color:var(--muted)}
+.rest .rt{font:700 30px/1 var(--font-display);letter-spacing:.02em;min-width:64px;text-align:right}
+.rest .btn{min-height:38px;padding:6px 12px}
+.rest.done{border-color:var(--ok);background:var(--accent-soft)}
+.rest.done .rt{color:var(--ok)}
+body.resting{padding-bottom:96px}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){.fill{transition:none}}
 </style>
@@ -123,6 +145,7 @@ details .note{font-size:13px;color:var(--muted);margin:10px 0 0}
       <div class="lbl">Strength and fat loss</div>
       <h1>Fitness</h1>
       <div class="sub" id="sub">Start with today's weigh-in.</div>
+      <p class="net" id="net" role="status" aria-live="polite" hidden></p>
     </div>
     <div class="datebox">
       <label class="lbl" for="f-date">Day</label>
@@ -152,6 +175,7 @@ details .note{font-size:13px;color:var(--muted);margin:10px 0 0}
         </div>
         <div class="actions">
           <button type="submit" class="btn" id="save-day">Save day</button>
+          <button type="button" class="btn danger" id="del-day" hidden>Delete day</button>
           <span class="status" id="st-day" role="status" aria-live="polite"></span>
         </div>
       </form>
@@ -197,22 +221,42 @@ details .note{font-size:13px;color:var(--muted);margin:10px 0 0}
           <label class="field"><span>Steps</span><input type="number" inputmode="numeric" min="0" id="t-steps"></label>
           <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" min="0" step="0.25" id="t-sleep"></label>
           <label class="field"><span>Workouts per week</span><input type="number" inputmode="numeric" min="0" max="7" id="t-workouts"></label>
+          <label class="field"><span>Rest between sets (sec)</span><input type="number" inputmode="numeric" min="15" max="900" step="15" id="t-rest"></label>
+          <label class="field"><span>Height (cm), for BMI</span><input type="number" inputmode="decimal" min="0" step="0.5" id="t-height"></label>
+          <label class="field"><span>Start weight (kg)</span><input type="number" inputmode="decimal" min="0" step="0.1" id="t-start" placeholder="first weigh-in"></label>
         </div>
-        <p class="note">1,850 kcal is an estimate for a man of 169 cm and 66 kg, about a 300 kcal deficit. If you are a woman, use about 1,600. Protein of 105 to 130 g suits your weight. Adjust calories by 100 to 150 after two or three weeks of data.</p>
+        <p class="note">For a slow cut, set calories about 300 below maintenance and protein at 1.6 to 2 g per kg of body weight. Adjust calories by 100 to 150 after two or three weeks of data. Leave start weight blank to use your first weigh-in.</p>
         <div class="actions">
           <button type="button" class="btn" id="save-targets">Save targets</button>
           <span class="status" id="st-targets" role="status" aria-live="polite"></span>
         </div>
       </details>
     </section>
+
+    <section class="card span2" aria-labelledby="h-data">
+      <h2 id="h-data">Your data</h2>
+      <p class="sub">Download everything as a JSON file, or load one exported from here or from the earlier tracker. Days you already have are kept, never overwritten.</p>
+      <div class="actions">
+        <a class="btn ghost" href="api/export" download="fitness-export.json">Export JSON</a>
+        <label class="btn ghost" for="imp">Import JSON</label>
+        <input type="file" id="imp" accept="application/json,.json" hidden>
+        <span class="status" id="st-data" role="status" aria-live="polite"></span>
+      </div>
+    </section>
   </div>
+</div>
+
+<div class="rest" id="rest" role="timer" aria-live="off" hidden>
+  <span class="rl" id="rest-l">Rest</span>
+  <span class="rt" id="rest-t">1:30</span>
+  <button type="button" class="btn ghost" id="rest-add">+15 s</button>
+  <button type="button" class="btn ghost" id="rest-skip">Done</button>
 </div>
 
 <script>
 (function(){
 'use strict';
-var START_W = 66, HEIGHT_CM = 169;
-var DEF = {kcal:1850, protein:110, steps:8000, sleep:7, workouts:3};
+var DEF = {kcal:1850, protein:110, steps:8000, sleep:7, workouts:3, rest:90};
 var ARMS = [
   {k:'curl', n:'Biceps curl machine', sets:2, lo:10, hi:12, u:'kg'},
   {k:'pushdown', n:'Triceps press machine', sets:2, lo:10, hi:12, u:'kg'}
@@ -235,10 +279,9 @@ var PLAN = {
   ].concat(ARMS)
 };
 
-var col = null;
 var docs = {}, settings = Object.assign({}, DEF);
 var sel = todayStr(), wsel = 'A';
-var firstSnap = true, writing = Promise.resolve(), loadTimer = null;
+var firstSnap = true;
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return n < 10 ? '0' + n : '' + n; }
@@ -254,12 +297,13 @@ function val(d, k){ return docs[d] ? num(docs[d][k]) : null; }
 function setStatus(id, msg, err){ var el = $(id); el.textContent = msg || ''; el.className = 'status' + (err ? ' err' : ''); }
 
 /* ---------- saving ---------- */
-function saveDoc(id, next){
-  var p = writing.then(function(){ return col.doc(id).set(next); });
-  writing = p.catch(function(){});
-  return p;
+// Every save lands in the outbox first, so it survives going offline or closing
+// the page; flush() then sends it. The status line says which of the two happened.
+function savedText(id, okMsg){ return outbox[id] ? 'Saved on this device, will sync when online' : okMsg; }
+function saveDoc(id, next, stId, okMsg){
+  setStatus(stId, 'Saving…');
+  return queue(id, 'put', next).then(function(){ setStatus(stId, savedText(id, okMsg)); renderDerived(); });
 }
-function errText(e){ return (e && e.message) ? e.message : 'Could not save. Try again.'; }
 
 function saveDay(){
   var d = sel;
@@ -273,9 +317,29 @@ function saveDay(){
   var note = $('f-note').value.trim();
   if (note) next.note = note; else delete next.note;
   docs[d] = next;
-  setStatus('st-day', 'Saving…');
-  saveDoc(d, next).then(function(){ setStatus('st-day', 'Saved'); renderDerived(); }, function(e){ setStatus('st-day', errText(e), true); });
+  saveDoc(d, next, 'st-day', 'Saved').then(updateDelete);
 }
+
+var delArmed = 0;
+function deleteDay(){
+  var b = $('del-day');
+  if (!delArmed){
+    b.textContent = 'Tap again to delete ' + fmtDay(sel); b.classList.add('armed');
+    delArmed = setTimeout(disarmDelete, 4000);
+    return;
+  }
+  disarmDelete();
+  var d = sel;
+  delete docs[d];
+  fillForm(); renderWorkout(); renderDerived(); updateDelete();
+  setStatus('st-day', 'Deleting…');
+  queue(d, 'delete', null).then(function(){ setStatus('st-day', outbox[d] ? 'Deleted on this device, will sync when online' : 'Day deleted'); });
+}
+function disarmDelete(){
+  clearTimeout(delArmed); delArmed = 0;
+  var b = $('del-day'); b.textContent = 'Delete day'; b.classList.remove('armed');
+}
+function updateDelete(){ $('del-day').hidden = !docs[sel]; }
 
 function nSets(ex, saved){ return Math.max(ex.sets, saved && saved[ex.k] ? saved[ex.k].length : 0); }
 function saveWorkout(){
@@ -295,8 +359,7 @@ function saveWorkout(){
   next.workout = wsel;
   next.sets = Object.assign({}, next.sets || {}, collected);
   docs[d] = next;
-  setStatus('st-workout', 'Saving…');
-  saveDoc(d, next).then(function(){ setStatus('st-workout', 'Workout saved'); renderDerived(); }, function(e){ setStatus('st-workout', errText(e), true); });
+  saveDoc(d, next, 'st-workout', 'Workout saved').then(updateDelete);
 }
 
 function saveTargets(){
@@ -305,11 +368,14 @@ function saveTargets(){
     protein: num($('t-protein').value) || DEF.protein,
     steps: num($('t-steps').value) || DEF.steps,
     sleep: num($('t-sleep').value) || DEF.sleep,
-    workouts: num($('t-workouts').value) || DEF.workouts
+    workouts: num($('t-workouts').value) || DEF.workouts,
+    rest: Math.min(900, Math.max(15, num($('t-rest').value) || DEF.rest))
   };
-  settings = s;
-  setStatus('st-targets', 'Saving…');
-  saveDoc('settings', s).then(function(){ setStatus('st-targets', 'Saved'); renderDerived(); }, function(e){ setStatus('st-targets', errText(e), true); });
+  var h = num($('t-height').value), sw = num($('t-start').value);
+  if (h) s.height = h;
+  if (sw) s.start_weight = sw;
+  settings = Object.assign({}, DEF, s);
+  saveDoc('settings', s, 'st-targets', 'Saved');
 }
 
 /* ---------- forms ---------- */
@@ -318,9 +384,12 @@ function fillForm(){
   ['weight','waist','kcal','protein','steps','sleep'].forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
   $('f-note').value = d.note || '';
   setStatus('st-day', '');
+  disarmDelete(); updateDelete();
 }
 function fillTargets(){
-  ['kcal','protein','steps','sleep','workouts'].forEach(function(k){ $('t-' + k).value = settings[k]; });
+  ['kcal','protein','steps','sleep','workouts','rest'].forEach(function(k){ $('t-' + k).value = settings[k]; });
+  $('t-height').value = settings.height != null ? settings.height : '';
+  $('t-start').value = settings.start_weight != null ? settings.start_weight : '';
 }
 
 /* ---------- today bars ---------- */
@@ -433,20 +502,22 @@ function stat(host, n, label, sub){
   if (sub){ var c = document.createElement('div'); c.className = 's'; c.textContent = sub; el.appendChild(c); }
   host.appendChild(el);
 }
+function bmi(kg){ var h = num(settings.height); return h ? 'BMI ' + fmt(kg / Math.pow(h / 100, 2), 1) : null; }
 function renderStats(){
   var w = $('wstats'); w.textContent = '';
   var pts = series('weight'), pace = $('pace');
+  var start = num(settings.start_weight) || (pts.length ? pts[0].v : null);
   pace.className = 'pace';
   if (!pts.length){
-    stat(w, fmt(START_W, 1) + ' kg', 'Start', HEIGHT_CM + ' cm · BMI ' + fmt(START_W / Math.pow(HEIGHT_CM / 100, 2), 1));
+    stat(w, start != null ? fmt(start, 1) + ' kg' : '—', 'Start', start != null ? bmi(start) : null);
     stat(w, '—', '7-day avg');
     stat(w, '—', 'Change');
     pace.textContent = 'Target pace: lose 0.25 to 0.5 kg per week.';
   } else {
     var av = avgSeries(pts), cur = av[av.length - 1].v;
-    stat(w, fmt(START_W, 1) + ' kg', 'Start');
-    stat(w, fmt(cur, 1) + ' kg', '7-day avg', 'BMI ' + fmt(cur / Math.pow(HEIGHT_CM / 100, 2), 1));
-    stat(w, sgn(cur - START_W, 1, 'kg'), 'Change');
+    stat(w, fmt(start, 1) + ' kg', 'Start');
+    stat(w, fmt(cur, 1) + ' kg', '7-day avg', bmi(cur));
+    stat(w, sgn(cur - start, 1, 'kg'), 'Change');
     var lastD = pts[pts.length - 1].d;
     var win = pts.filter(function(p){ return p.d >= lastD - 27; });
     if (win.length >= 3 && win[win.length - 1].d - win[0].d >= 6){
@@ -566,10 +637,12 @@ function renderWorkout(){
         var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
         var r = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : 'reps', ex.n + ' set ' + (i + 1) + ' reps');
         if (sv) r.value = sv[1];
+        r.addEventListener('change', onRepsEntered);
         row.appendChild(w); row.appendChild(x); row.appendChild(r);
       } else {
         var r2 = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : (ex.u === 'sec' ? 'sec' : 'reps'), ex.n + ' set ' + (i + 1) + (ex.u === 'sec' ? ' seconds' : ' reps'));
         if (sv) r2.value = sv[1];
+        r2.addEventListener('change', onRepsEntered);
         row.appendChild(r2);
       }
       sets.appendChild(row);
@@ -584,7 +657,7 @@ function renderHeader(){
   if (!ds.length){
     sub.textContent = 'Start with today\'s weigh-in.';
     b.hidden = false;
-    b.textContent = 'Nothing logged yet. Enter your weight and waist below, then add a line each day. Your starting point is ' + START_W + ' kg at ' + HEIGHT_CM + ' cm.';
+    b.textContent = 'Nothing logged yet. Enter your weight and waist below, then add a line each day. Set your height under Daily targets to see BMI.';
   } else {
     var wk = Math.floor((dayNum(todayStr()) - dayNum(ds[0])) / 7) + 1;
     sub.textContent = 'Week ' + Math.max(1, wk) + ' · since ' + fmtDay(ds[0]);
@@ -595,38 +668,207 @@ function renderDerived(){
   renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits();
 }
 
-/* ---------- connection ---------- */
-function offline(msg){
-  var b = $('banner'); b.hidden = false; b.textContent = msg;
-  ['save-day','save-workout','save-targets'].forEach(function(id){ $(id).disabled = true; });
-  renderDerived(); renderWorkout(); fillTargets();
-}
-var inflight = 0;
-function apply(list){
-  var nd = {};
-  list.forEach(function(x){
-    if (x.id === 'settings') settings = Object.assign({}, DEF, x.data);
-    else nd[x.id] = x.data;
-  });
-  docs = nd;
+/* ---------- storage: server copy, offline cache, outbox ----------
+   server/vers: the last copy and version the server confirmed for each id.
+   outbox: unsent changes, id -> {op, data, orig, base, seq}. `orig` is the server
+   copy the change was made against, used for a field-level merge on conflict.
+   What the page shows is the server copy with the outbox laid over it. */
+var server = {}, vers = {};
+var outbox = loadJSON('fitness.outbox', {});
+var chain = Promise.resolve(), netState = 'ok', serverSeen = false, typed = false;
+document.addEventListener('input', function(){ typed = true; }, {once: true});
+
+function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
+function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
+function persist(){ saveJSON('fitness.outbox', outbox); saveJSON('fitness.cache', {server: server, vers: vers}); }
+function idLabel(id){ return id === 'settings' ? 'Targets' : fmtDay(id); }
+
+function rebuild(){
+  var view = Object.assign({}, server);
+  Object.keys(outbox).forEach(function(id){ if (outbox[id].op === 'delete') delete view[id]; else view[id] = outbox[id].data; });
+  settings = Object.assign({}, DEF, view.settings || {});
+  delete view.settings;
+  docs = view;
   if (firstSnap){ firstSnap = false; wsel = suggestWorkout(sel); fillForm(); fillTargets(); renderWorkout(); }
-  renderDerived();
+  renderDerived(); updateDelete();
 }
+
+function queue(id, op, data){
+  var e = outbox[id];
+  if (!e) e = outbox[id] = {base: vers[id] || 0, orig: server[id] || null, seq: 0};
+  e.op = op; e.data = data; e.seq++;
+  persist();
+  return flush();
+}
+
+function flush(){ chain = chain.then(drain); return chain; }
+function drain(){
+  return Object.keys(outbox).reduce(function(p, id){ return p.then(function(){ return sendOne(id, 0); }); }, Promise.resolve())
+    .then(function(){ setNet('ok'); }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
+}
+
+function sendOne(id, tries){
+  var e = outbox[id];
+  if (!e) return Promise.resolve();
+  var op = e.op, sent = e.data, seq = e.seq, base = e.base;
+  var opts = {method: op === 'delete' ? 'DELETE' : 'PUT', redirect: 'manual', cache: 'no-store', headers: {'If-Match': String(base)}};
+  if (op !== 'delete'){ opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(sent); }
+  return fetch('api/log/' + id, opts).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    if (r.status === 409) return r.json().then(function(j){ return resolveConflict(id, j.current, tries); });
+    if (r.status >= 500) throw {net: true};
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if (!r.ok){ return rejected(id, j.error || ('HTTP ' + r.status)); }
+      if (op === 'delete'){ delete server[id]; delete vers[id]; } else { server[id] = sent; vers[id] = j.version; }
+      var cur = outbox[id];
+      if (cur && cur.seq === seq) delete outbox[id];
+      else if (cur){ cur.base = vers[id] || 0; cur.orig = server[id] || null; }
+      persist();
+    });
+  });
+}
+
+// The server has a newer copy. Keep the fields this device changed, take the
+// rest from the server, and retry against the new version.
+function resolveConflict(id, cur, tries){
+  var e = outbox[id];
+  var theirs = cur ? cur.data : null;
+  if (theirs){ server[id] = theirs; vers[id] = cur.version; } else { delete server[id]; delete vers[id]; }
+  if (e.op === 'delete'){
+    delete outbox[id]; persist(); rebuild();
+    if (theirs) notice(idLabel(id) + ' was changed on another device, so it was not deleted.');
+    return;
+  }
+  e.data = merge(e.orig, e.data, theirs); e.orig = theirs; e.base = cur ? cur.version : 0;
+  persist(); rebuild();
+  if (id === sel || id === 'settings'){ fillForm(); fillTargets(); renderWorkout(); }
+  if (tries >= 3) throw {net: true};
+  return sendOne(id, tries + 1);
+}
+function merge(orig, mine, theirs){
+  if (!theirs) return mine;
+  orig = orig || {}; mine = mine || {};
+  var out = Object.assign({}, theirs);
+  Object.keys(Object.assign({}, orig, mine)).forEach(function(k){
+    if (k === 'sets' || same(orig[k], mine[k])) return;
+    if (mine[k] == null) delete out[k]; else out[k] = mine[k];
+  });
+  var os = orig.sets || {}, ms = mine.sets || {}, sets = Object.assign({}, theirs.sets || {});
+  Object.keys(Object.assign({}, os, ms)).forEach(function(x){
+    if (same(os[x], ms[x])) return;
+    if (ms[x] == null) delete sets[x]; else sets[x] = ms[x];
+  });
+  if (Object.keys(sets).length) out.sets = sets; else delete out.sets;
+  return out;
+}
+// The server refused the data itself (400); drop the change and show its copy.
+function rejected(id, msg){
+  delete outbox[id]; persist(); rebuild();
+  if (id === sel){ fillForm(); renderWorkout(); }
+  notice('Could not save ' + idLabel(id) + ': ' + msg);
+}
+
+function notice(msg){ var b = $('banner'); b.hidden = false; b.textContent = msg; }
+function setNet(state){
+  netState = state;
+  var el = $('net'), n = Object.keys(outbox).length;
+  var waiting = n ? n + (n === 1 ? ' change' : ' changes') + ' saved on this device' : '';
+  el.className = 'net'; el.textContent = '';
+  if (state === 'ok' && !n){ el.hidden = true; return; }
+  el.hidden = false;
+  if (state === 'auth'){
+    el.classList.add('warn');
+    el.appendChild(document.createTextNode('Signed out' + (waiting ? ', ' + waiting : '') + '. '));
+    var a = document.createElement('a'); a.href = './'; a.textContent = 'Sign in again'; el.appendChild(a);
+    return;
+  }
+  if (state === 'offline'){ el.classList.add('warn'); el.textContent = 'Offline' + (waiting ? ', ' + waiting + ', will sync' : ', showing your last saved copy'); return; }
+  el.textContent = waiting + ', syncing…';
+}
+
 function load(){
-  return fetch('api/log', {cache:'no-store'}).then(function(r){
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+  return fetch('api/log', {cache: 'no-store', redirect: 'manual'}).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    if (!r.ok) throw {net: true};
     return r.json();
-  }).then(function(j){ if (inflight === 0) apply(j.docs); setStatus('st-day', ''); });
+  }).then(function(j){
+    server = {}; vers = {};
+    j.docs.forEach(function(x){ server[x.id] = x.data; vers[x.id] = x.version; });
+    persist(); rebuild();
+    // The forms were filled from the offline copy (or nothing); refresh them from
+    // the first server answer unless the user has already started typing.
+    if (!serverSeen){ serverSeen = true; if (!typed){ fillForm(); fillTargets(); renderWorkout(); } }
+    if (Object.keys(outbox).length) return flush();
+    setNet('ok');
+  }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
 }
+function sync(){ return Object.keys(outbox).length ? flush().then(load) : load(); }
+
 function connect(){
-  col = { doc: function(id){ return { set: function(data){
-    inflight++;
-    return fetch('api/log/' + id, {method:'PUT', headers:{'content-type':'application/json'}, body: JSON.stringify(data)}).then(function(r){
-      if (!r.ok) throw new Error('Could not save (HTTP ' + r.status + ').');
-    }).then(function(){ inflight--; }, function(e){ inflight--; throw e; });
-  } }; } };
-  load().catch(function(){ offline('Cannot reach the log server. Check that it is running, then reload.'); });
-  setInterval(function(){ if (!document.hidden) load().catch(function(){}); }, 30000);
+  var c = loadJSON('fitness.cache', null);
+  if (c && c.server){ server = c.server; vers = c.vers || {}; }
+  rebuild();
+  sync();
+  setInterval(function(){ if (!document.hidden) sync(); }, 30000);
+  window.addEventListener('online', sync);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) sync(); });
+}
+
+/* ---------- import ---------- */
+function importFile(file){
+  setStatus('st-data', 'Importing…');
+  file.text().then(function(text){
+    try { JSON.parse(text); } catch(e){ throw new Error('That file is not valid JSON.'); }
+    return fetch('api/import', {method: 'POST', redirect: 'manual', headers: {'Content-Type': 'application/json'}, body: text});
+  }).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw new Error('Signed out. Reload to sign in, then import again.');
+    return r.json().then(function(j){
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      var parts = [j.imported + ' imported'];
+      if (j.skipped) parts.push(j.skipped + ' already here, kept');
+      if (j.invalid) parts.push(j.invalid + ' not readable');
+      setStatus('st-data', parts.join(', ') + '.');
+      return load();
+    });
+  }).catch(function(e){ setStatus('st-data', e && e.message ? e.message : 'Import failed. Check your connection.', true); });
+}
+
+/* ---------- rest timer ---------- */
+var restEnd = 0, restTick = 0, restHide = 0, audio = null;
+function onRepsEntered(ev){ if (ev.target.value !== '') restStart(); }
+function restStart(){
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch(e){ audio = null; }
+  clearTimeout(restHide);
+  restEnd = Date.now() + (num(settings.rest) || DEF.rest) * 1000;
+  var el = $('rest'); el.hidden = false; el.classList.remove('done');
+  document.body.classList.add('resting');
+  $('rest-l').textContent = 'Rest';
+  tickRest();
+  if (!restTick) restTick = setInterval(tickRest, 250);
+}
+function tickRest(){
+  var left = Math.ceil((restEnd - Date.now()) / 1000);
+  if (left > 0){ $('rest-t').textContent = Math.floor(left / 60) + ':' + pad(left % 60); return; }
+  clearInterval(restTick); restTick = 0;
+  $('rest').classList.add('done'); $('rest-l').textContent = 'Next set'; $('rest-t').textContent = 'Go';
+  buzz();
+  restHide = setTimeout(restStop, 6000);
+}
+function restStop(){
+  clearInterval(restTick); restTick = 0; clearTimeout(restHide);
+  $('rest').hidden = true; document.body.classList.remove('resting');
+}
+function buzz(){
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  if (!audio) return;
+  try {
+    [0, 0.25].forEach(function(t){
+      var o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + t;
+      o.frequency.value = 880; g.gain.setValueAtTime(0.2, at); g.gain.exponentialRampToValueAtTime(0.001, at + 0.18);
+      o.connect(g); g.connect(audio.destination); o.start(at); o.stop(at + 0.2);
+    });
+  } catch(e){}
 }
 
 /* ---------- wiring ---------- */
@@ -637,9 +879,17 @@ dateEl.addEventListener('change', function(){
   sel = dateEl.value; wsel = suggestWorkout(sel);
   fillForm(); setStatus('st-workout', ''); renderWorkout(); renderDerived();
 });
-$('day-form').addEventListener('submit', function(ev){ ev.preventDefault(); if (col) saveDay(); });
-$('save-workout').addEventListener('click', function(){ if (col) saveWorkout(); });
-$('save-targets').addEventListener('click', function(){ if (col) saveTargets(); });
+$('day-form').addEventListener('submit', function(ev){ ev.preventDefault(); saveDay(); });
+$('del-day').addEventListener('click', deleteDay);
+$('save-workout').addEventListener('click', saveWorkout);
+$('save-targets').addEventListener('click', saveTargets);
+$('imp').addEventListener('change', function(){ var f = this.files && this.files[0]; if (f) importFile(f); this.value = ''; });
+$('rest-add').addEventListener('click', function(){
+  if (!restTick){ restStart(); restEnd = Date.now() + 15000; tickRest(); return; }
+  restEnd += 15000; tickRest();
+});
+$('rest-skip').addEventListener('click', restStop);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 
 var rafId = 0;
 function redraw(){ if (rafId) return; rafId = requestAnimationFrame(function(){ rafId = 0; drawCharts(); }); }

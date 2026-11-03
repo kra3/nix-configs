@@ -370,6 +370,18 @@
             ];
           }
           {
+            Health = lib.optionals (config.systemd.services ? fitness) [
+              {
+                Fitness = {
+                  description = "Training and body log";
+                  icon = "mdi-dumbbell";
+                  href = "https://fitness.${domain}";
+                  siteMonitor = "https://fitness.${domain}";
+                };
+              }
+            ];
+          }
+          {
             Finance = [
               {
                 "Actual Budget" = {

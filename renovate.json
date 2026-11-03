@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "enabledManagers": ["custom.regex"],
+  "enabledManagers": ["custom.regex", "cargo"],
   "customManagers": [
     {
       "customType": "regex",
@@ -31,6 +31,12 @@
     }
   ],
   "packageRules": [
+    {
+      "matchManagers": ["cargo"],
+      "groupName": "fitness cargo dependencies",
+      "minimumReleaseAge": "3 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    },
     {
       "matchDatasources": ["docker"],
       "allowedVersions": "!/(?i)(nightly|dev\\d*|edge|canary|alpha|beta|rc\\d*|next|\\d+b\\d+)/",

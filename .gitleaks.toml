@@ -9,3 +9,7 @@ paths = [
   '''^secrets/''',
   '''^flake\.lock$''',
 ]
+regexes = [
+  # placeholder signing key in docs/home/git.md
+  '''ABCDEF1234567890''',
+]

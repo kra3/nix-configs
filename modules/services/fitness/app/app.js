@@ -101,12 +101,20 @@ function saveWorkout(){
     if (arr.length){ collected[ex.k] = arr; any = true; }
   });
   if (!any){ setStatus('st-workout', 'Enter at least one set first.', true); return; }
+  // New bests against everything logged before this day.
+  var prs = [];
+  Object.keys(collected).forEach(function(k){
+    var u = exUnit(k), prev = exSeries(k).filter(function(p){ return p.date < d; }), nb = bestSet(collected[k], u);
+    if (!prev.length || !nb) return;
+    var pb = Math.max.apply(null, prev.map(function(p){ return p.v; }));
+    if (nb.score > pb + 1e-9){ var e = planEx(k); prs.push((e ? e.n : k) + ' ' + setText(nb, u)); }
+  });
   var next = Object.assign({}, docs[d] || {});
   next.date = d;
   next.workout = wsel;
   next.sets = Object.assign({}, next.sets || {}, collected);
   docs[d] = next;
-  saveDoc(d, next, 'st-workout', 'Workout saved').then(updateDelete);
+  saveDoc(d, next, 'st-workout', prs.length ? 'Workout saved. New best: ' + prs.join(', ') + '.' : 'Workout saved').then(updateDelete);
 }
 
 function saveTargets(){
@@ -188,8 +196,15 @@ function avgSeries(pts){
   });
 }
 function drawChart(hostId, roId, key, unit, emptyMsg){
-  var host = $(hostId), ro = $(roId);
   var pts = series(key);
+  drawLine(hostId, roId, pts, {id: key, unit: unit, empty: emptyMsg, avg: avgSeries(pts), since: 13,
+    label: unit + ' over time with 7-day average',
+    text: function(i, a){ return fmtDay(pts[i].date) + ' · ' + fmt(pts[i].v, 1) + ' ' + unit + ' · 7-day avg ' + fmt(a[i].v, 1); }});
+}
+// pts: [{d, date, v}]. o.avg: a smoothed line drawn instead of joining the dots
+// (omit to join them); o.text(i, line): the readout for point i.
+function drawLine(hostId, roId, pts, o){
+  var host = $(hostId), ro = $(roId), emptyMsg = o.empty, key = o.id;
   host.textContent = '';
   if (!pts.length){
     var e = document.createElement('div'); e.className = 'empty'; e.textContent = emptyMsg; host.appendChild(e);
@@ -197,8 +212,8 @@ function drawChart(hostId, roId, key, unit, emptyMsg){
   }
   var W = Math.max(host.clientWidth || 340, 240), H = 200;
   var t = dayNum(todayStr());
-  var d0 = Math.min(pts[0].d, t - 13), d1 = Math.max(pts[pts.length - 1].d, t);
-  var avg = avgSeries(pts);
+  var d0 = Math.min(pts[0].d, t - (o.since || 0)), d1 = Math.max(pts[pts.length - 1].d, t);
+  var avg = o.avg || pts;
   var all = pts.map(function(p){ return p.v; }).concat(avg.map(function(a){ return a.v; }));
   var mn = Math.min.apply(null, all), mx = Math.max.apply(null, all);
   var rg = Math.max(mx - mn, 1), lo = mn - rg * 0.3, hi = mx + rg * 0.3;
@@ -219,8 +234,8 @@ function drawChart(hostId, roId, key, unit, emptyMsg){
   var la = avg[avg.length - 1];
   s += '<circle class="end" cx="' + X(la.d).toFixed(1) + '" cy="' + Y(la.v).toFixed(1) + '" r="5"/>';
   s += '<circle class="mk" id="mk-' + key + '" cx="-20" cy="-20" r="7"/>';
-  host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + unit + ' over time with 7-day average">' + s + '</svg>';
-  function text(i){ return fmtDay(pts[i].date) + ' · ' + fmt(pts[i].v, 1) + ' ' + unit + ' · 7-day avg ' + fmt(avg[i].v, 1); }
+  host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + o.label + '">' + s + '</svg>';
+  function text(i){ return o.text(i, avg); }
   var last = pts.length - 1;
   ro.textContent = text(last);
   var svg = host.querySelector('svg'), mk = svg.querySelector('.mk');
@@ -340,9 +355,20 @@ function lastFor(k){
 function lastText(ex, last){
   var parts = last.sets.map(function(s){ return ex.u === 'kg' ? fmt(s[0], 2) + '×' + fmt(s[1], 0) : fmt(s[1], 0); });
   var suffix = ex.u === 'kg' ? ' (kg × reps)' : ex.u === 'sec' ? ' sec' : ' reps';
-  var all = last.sets.length >= ex.sets && last.sets.every(function(s){ return s[1] >= ex.hi; });
-  var tip = all ? (ex.u === 'kg' ? ' All sets at the top of the range, so add a little weight.' : ' Top of the range on every set, so make it harder.') : (ex.u === 'kg' ? ' Keep the weight and aim for more reps.' : '');
-  return 'Last, ' + fmtDay(last.date) + ': ' + parts.join(' · ') + suffix + '.' + tip;
+  return 'Last, ' + fmtDay(last.date) + ': ' + parts.join(' · ') + suffix + '.';
+}
+function suggestText(ex, sg){
+  var first = sg.sets[0], what = ex.u === 'kg' ? fmt(first[0], 2) + ' kg × ' + first[1] : first[1] + (ex.u === 'sec' ? ' sec' : ' reps');
+  if (sg.up) return 'Today: ' + what + (ex.u === 'kg' ? '. Every set hit ' + ex.hi + ', so one step heavier.' : '. Top of the range last time; make it harder (slower, or a harder variation).');
+  return 'Today: ' + (ex.u === 'kg' ? 'same weight, one more rep per set (' + what + ' first).' : 'one more per set (' + what + ' first).');
+}
+// Tap the set number to log the set as suggested (or as last time), then rest.
+function logAsSuggested(ex, i, sg){
+  var s0 = sg ? sg.sets[i] : null, r = $('in-' + ex.k + '-' + i + '-r'), w = $('in-' + ex.k + '-' + i + '-w');
+  if (!s0){ r.focus(); return; }
+  if (w && w.value === '' && s0[0] != null) w.value = s0[0];
+  if (r.value === '') r.value = s0[1];
+  restStart();
 }
 function mkInput(id, ph, label){
   var el = document.createElement('input');
@@ -371,18 +397,24 @@ function renderWorkout(){
   PLAN[wsel].forEach(function(ex){
     var box = document.createElement('div'); box.className = 'ex';
     var head = document.createElement('div'); head.className = 'ex-head';
-    var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = ex.n;
+    var nm = document.createElement('button'); nm.type = 'button'; nm.className = 'nm linkish'; nm.textContent = ex.n;
+    nm.setAttribute('aria-label', ex.n + ': show progress');
+    nm.addEventListener('click', function(){ showProgress(ex.k); });
     var tg = document.createElement('span'); tg.className = 'tg';
     tg.textContent = ex.sets + ' sets · ' + (ex.u === 'sec' ? ex.lo + '–' + ex.hi + ' sec' : ex.lo + '–' + ex.hi + ' reps');
     head.appendChild(nm); head.appendChild(tg); box.appendChild(head);
     var last = lastFor(ex.k);
+    var sg = suggestSets(ex, last);
     if (last){ var h = document.createElement('p'); h.className = 'hint'; h.textContent = lastText(ex, last); box.appendChild(h); }
+    if (sg){ var h2 = document.createElement('p'); h2.className = 'hint sg'; h2.textContent = suggestText(ex, sg); box.appendChild(h2); }
     var sets = document.createElement('div'); sets.className = 'sets';
     for (var i = 0; i < nSets(ex, saved); i++){
       var row = document.createElement('div'); row.className = 'set';
-      var no = document.createElement('span'); no.className = 'no'; no.textContent = (i + 1);
+      var ls = sg ? sg.sets[i] : null, sv = saved[ex.k] && saved[ex.k][i] ? saved[ex.k][i] : null;
+      var no = document.createElement('button'); no.type = 'button'; no.className = 'no'; no.textContent = (i + 1);
+      no.setAttribute('aria-label', 'Set ' + (i + 1) + (ls ? ': log as ' + (ex.u === 'kg' ? fmt(ls[0], 2) + ' kg × ' + ls[1] : ls[1]) + ' and start rest' : ': enter it'));
+      no.addEventListener('click', (function(i_){ return function(){ logAsSuggested(ex, i_, sg); }; })(i));
       row.appendChild(no);
-      var ls = last && last.sets[i] ? last.sets[i] : null, sv = saved[ex.k] && saved[ex.k][i] ? saved[ex.k][i] : null;
       if (ex.u === 'kg'){
         var w = mkInput('in-' + ex.k + '-' + i + '-w', ls ? fmt(ls[0], 2) : 'kg', ex.n + ' set ' + (i + 1) + ' weight in kg');
         if (sv && sv[0] != null) w.value = sv[0];
@@ -430,6 +462,8 @@ function readEditor(){
     e.lo = Math.round(num(g('lo').value) || 0);
     e.hi = Math.round(num(g('hi').value) || 0);
     e.u = g('u').value;
+    var inc = num(g('inc').value);
+    if (inc == null) delete e.inc; else e.inc = inc;
   });
 }
 function planProblem(){
@@ -441,6 +475,7 @@ function planProblem(){
       if (!e.n.trim()) bad = at + 'give it a name.';
       else if (!(e.sets >= 1 && e.sets <= 10)) bad = at + 'sets must be 1 to 10.';
       else if (!(e.lo >= 1 && e.hi >= e.lo && e.hi <= 600)) bad = at + 'the range must run from low to high, up to 600.';
+      else if (e.inc != null && !(e.inc > 0 && e.inc <= 50)) bad = at + 'the weight step must be above 0 and at most 50 kg.';
     });
   });
   return bad;
@@ -460,7 +495,7 @@ function renderEditor(){
   var host = $('planed'); host.textContent = '';
   var list = draft[wsel];
   var hint = document.createElement('p'); hint.className = 'hint';
-  hint.textContent = 'Workout ' + wsel + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged.';
+  hint.textContent = 'Workout ' + wsel + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last box is the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg).';
   host.appendChild(hint);
   list.forEach(function(e, i){
     var row = document.createElement('div'); row.className = 'pe';
@@ -483,6 +518,8 @@ function renderEditor(){
       var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if (e.u === o[0]) op.selected = true; u.appendChild(op);
     });
     nums.appendChild(u);
+    var inc = field('inc', 'Weight step in kg', e.inc != null ? e.inc : '', {type: 'number', inputmode: 'decimal', min: '0', step: 'any', placeholder: '+' + DEF_INC + ' kg', title: 'How much to add when every set reaches the top of the range'});
+    nums.appendChild(inc);
     row.appendChild(nums);
     var btns = document.createElement('div'); btns.className = 'pe-btns';
     [['↑', 'Move up', -1], ['↓', 'Move down', 1], ['✕', 'Remove', 0]].forEach(function(b){
@@ -516,6 +553,228 @@ function renderEditor(){
   host.appendChild(acts);
 }
 
+/* ---------- strength: per-exercise scores, records, suggestions ---------- */
+var DEF_INC = 2.5, KCAL_PER_KG = 7700;
+// Estimated one-rep max (Epley). Comparable across rep counts, so a heavier set
+// of 8 and a lighter set of 12 can be ranked.
+function e1rm(w, r){ return w > 0 && r > 0 ? w * (1 + r / 30) : null; }
+function planEx(k){
+  var all = PLAN.A.concat(PLAN.B, DEFAULT_PLAN.A, DEFAULT_PLAN.B);
+  for (var i = 0; i < all.length; i++) if (all[i].k === k) return all[i];
+  return null;
+}
+function exUnit(k){ var e = planEx(k); return e ? e.u : 'kg'; }
+// The best set of a session: by e1RM for weighted work, by reps or seconds otherwise.
+function bestSet(sets, u){
+  var best = null;
+  (sets || []).forEach(function(st){
+    var w = num(st[0]), r = num(st[1]), score = u === 'kg' ? e1rm(w, r) : r;
+    if (score != null && (!best || score > best.score)) best = {score: score, w: w, r: r};
+  });
+  return best;
+}
+// [{d, date, v, best}] for every logged session of exercise k, on or before `upto`.
+function exSeries(k, upto){
+  var u = exUnit(k);
+  return dates().filter(function(x){ return (!upto || x <= upto) && docs[x].sets && docs[x].sets[k]; }).map(function(x){
+    var b = bestSet(docs[x].sets[k], u);
+    return b ? {d: dayNum(x), date: x, v: b.score, best: b} : null;
+  }).filter(Boolean);
+}
+function setText(b, u){ return u === 'kg' ? fmt(b.w, 2) + ' kg × ' + fmt(b.r, 0) : fmt(b.r, 0) + (u === 'sec' ? ' sec' : ' reps'); }
+// Best score per exercise over (from, to], as {key: score}.
+function bestIn(from, to){
+  var out = {};
+  dates().forEach(function(x){
+    var n = dayNum(x);
+    if (n <= from || n > to || !docs[x].sets) return;
+    Object.keys(docs[x].sets).forEach(function(k){
+      var b = bestSet(docs[x].sets[k], exUnit(k));
+      if (b && (out[k] == null || b.score > out[k])) out[k] = b.score;
+    });
+  });
+  return out;
+}
+// Mean % change of each exercise's best over the last 14 days against the 14 before.
+function strengthChange(end){
+  var now = bestIn(end - 14, end), before = bestIn(end - 28, end - 14), ch = [];
+  Object.keys(now).forEach(function(k){ if (before[k]) ch.push((now[k] - before[k]) / before[k] * 100); });
+  if (!ch.length) return null;
+  return {pct: ch.reduce(function(a, b){ return a + b; }, 0) / ch.length, n: ch.length};
+}
+// Suggested [kg, reps] per set for today, from the last session: once every set
+// reached the top of the range, add one weight step and start again at the bottom;
+// otherwise keep each set's weight and go for one more rep.
+function suggestSets(ex, last){
+  if (!last || !last.sets.length) return null;
+  var n = nSets(ex, null), top = last.sets.length >= ex.sets && last.sets.every(function(st){ return num(st[1]) >= ex.hi; });
+  var heaviest = Math.max.apply(null, last.sets.map(function(st){ return num(st[0]) || 0; })) || null;
+  var out = [];
+  for (var i = 0; i < n; i++){
+    var ls = last.sets[Math.min(i, last.sets.length - 1)], w = num(ls[0]), r = num(ls[1]) || ex.lo;
+    if (ex.u === 'kg'){
+      if (top && heaviest) out.push([Math.round((heaviest + (num(ex.inc) || DEF_INC)) * 100) / 100, ex.lo]);
+      else out.push([w, Math.min(ex.hi, Math.max(ex.lo, r + 1))]);
+    } else {
+      out.push([null, top ? ex.hi : Math.min(ex.hi, r + 1)]);
+    }
+  }
+  return {sets: out, up: top};
+}
+
+/* ---------- exercise progress card ---------- */
+var pxSel = null;
+function exerciseKeys(){
+  var seen = {}, out = [];
+  PLAN.A.concat(PLAN.B).forEach(function(e){ if (!seen[e.k]){ seen[e.k] = 1; out.push({k: e.k, n: e.n}); } });
+  dates().forEach(function(x){
+    Object.keys(docs[x].sets || {}).forEach(function(k){ if (!seen[k]){ seen[k] = 1; var e = planEx(k); out.push({k: k, n: e ? e.n : k}); } });
+  });
+  return out;
+}
+function renderProgress(){
+  var sel_ = $('px-sel'), keys = exerciseKeys();
+  if (!keys.length){ $('px-card').hidden = true; return; }
+  $('px-card').hidden = false;
+  if (!pxSel || !keys.some(function(e){ return e.k === pxSel; })){
+    // Default to the exercise logged most recently.
+    var ds = dates().filter(function(x){ return docs[x].sets; });
+    var lastK = ds.length ? Object.keys(docs[ds[ds.length - 1]].sets)[0] : null;
+    pxSel = lastK && keys.some(function(e){ return e.k === lastK; }) ? lastK : keys[0].k;
+  }
+  sel_.textContent = '';
+  keys.forEach(function(e){ var o = document.createElement('option'); o.value = e.k; o.textContent = e.n; if (e.k === pxSel) o.selected = true; sel_.appendChild(o); });
+  var u = exUnit(pxSel), pts = exSeries(pxSel), st = $('px-stats');
+  st.textContent = '';
+  var scoreName = u === 'kg' ? 'est. 1-rep max' : (u === 'sec' ? 'seconds' : 'reps');
+  if (!pts.length){
+    stat(st, '—', 'Best set'); stat(st, '—', 'Heaviest'); stat(st, '—', '4 weeks');
+  } else {
+    var best = pts.reduce(function(a, b){ return b.v > a.v ? b : a; });
+    stat(st, setText(best.best, u), 'Best set', fmtDay(best.date) + (u === 'kg' ? ' · ' + fmt(best.v, 1) + ' kg 1RM' : ''));
+    if (u === 'kg'){
+      var heavy = null;
+      dates().forEach(function(x){
+        ((docs[x].sets || {})[pxSel] || []).forEach(function(s2){ var w = num(s2[0]); if (w != null && (!heavy || w > heavy.w || (w === heavy.w && num(s2[1]) > heavy.r))) heavy = {w: w, r: num(s2[1]), date: x}; });
+      });
+      stat(st, heavy ? setText(heavy, u) : '—', 'Heaviest', heavy ? fmtDay(heavy.date) : null);
+    } else {
+      stat(st, String(pts.length), 'Sessions');
+    }
+    var lastP = pts[pts.length - 1], ago = pts.filter(function(p){ return p.d <= lastP.d - 28; });
+    var ref = ago.length ? ago[ago.length - 1] : null;
+    stat(st, ref ? sgn((lastP.v - ref.v) / ref.v * 100, 0) + '%' : '—', '4 weeks', ref ? 'since ' + fmtDay(ref.date) : 'needs a month of sessions');
+  }
+  drawLine('ch-px', 'ro-px', pts, {id: 'px', empty: 'Log this exercise in a workout to see its trend.',
+    label: 'Best set per session, as ' + scoreName,
+    text: function(i){ return fmtDay(pts[i].date) + ' · ' + setText(pts[i].best, u) + (u === 'kg' ? ' · ' + fmt(pts[i].v, 1) + ' kg 1RM' : ''); }});
+}
+function showProgress(k){
+  pxSel = k; renderProgress();
+  var c = $('px-card'); if (c.scrollIntoView) c.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+/* ---------- weekly check-in and calorie estimate ---------- */
+// Least-squares weight slope (kg/day) over weigh-ins in (end - days, end].
+function weightSlope(end, days, minPts, minSpan){
+  var win = series('weight').filter(function(p){ return p.d > end - days && p.d <= end; });
+  if (win.length < minPts || win[win.length - 1].d - win[0].d < minSpan) return null;
+  var n = win.length, sx = 0, sy = 0, sxy = 0, sxx = 0, x0 = win[0].d;
+  win.forEach(function(p){ var x = p.d - x0; sx += x; sy += p.v; sxy += x * p.v; sxx += x * x; });
+  return (n * sxy - sx * sy) / (n * sxx - sx * sx);
+}
+function windowStats(from, to){
+  var o = {w: [], kcal: [], steps: [], sleep: [], workouts: 0, protein: 0, waist: null};
+  dates().forEach(function(x){
+    var n = dayNum(x), d = docs[x];
+    if (n <= from || n > to) return;
+    ['kcal', 'steps', 'sleep'].forEach(function(k){ var v = num(d[k]); if (v != null) o[k].push(v); });
+    var w = num(d.weight); if (w != null) o.w.push(w);
+    if (num(d.waist) != null) o.waist = num(d.waist);
+    if (d.workout) o.workouts++;
+    if (num(d.protein) != null && num(d.protein) >= settings.protein) o.protein++;
+  });
+  function mean(a){ return a.length ? a.reduce(function(x, y){ return x + y; }, 0) / a.length : null; }
+  return {weight: mean(o.w), kcal: mean(o.kcal), steps: mean(o.steps), sleep: mean(o.sleep), workouts: o.workouts, protein: o.protein, waist: o.waist};
+}
+// Maintenance estimate: average logged intake minus the energy in the weight
+// change over the last 28 days. Needs 14 days of calories and 8 weigh-ins.
+function calorieEstimate(end){
+  var kc = [];
+  dates().forEach(function(x){ var n = dayNum(x), v = num(docs[x].kcal); if (n > end - 28 && n <= end && v != null) kc.push(v); });
+  var slope = weightSlope(end, 28, 8, 14);
+  if (kc.length < 14 || slope == null) return {need: true, days: kc.length};
+  var avg = kc.reduce(function(a, b){ return a + b; }, 0) / kc.length;
+  var tdee = avg - slope * KCAL_PER_KG;
+  // Aim at the middle of the -0.25 to -0.5 kg/week band, never below 1200.
+  var target = Math.max(1200, Math.round((tdee - 0.375 * KCAL_PER_KG / 7) / 50) * 50);
+  return {tdee: Math.round(tdee / 10) * 10, target: target, days: kc.length, wk: slope * 7, avg: avg};
+}
+function renderWeek(){
+  var end = dayNum(sel), a = windowStats(end - 7, end), b = windowStats(end - 14, end - 7);
+  var host = $('wk-table'); host.textContent = '';
+  var rows = [
+    ['Weight, avg', a.weight, b.weight, 'kg', 1],
+    ['Waist, latest', a.waist, b.waist, 'cm', 1],
+    ['Workouts', a.workouts, b.workouts, '', 0],
+    ['Protein target days', a.protein, b.protein, '', 0],
+    ['Calories, avg', a.kcal, b.kcal, 'kcal', 0],
+    ['Steps, avg', a.steps, b.steps, '', 0],
+    ['Sleep, avg', a.sleep, b.sleep, 'h', 1]
+  ];
+  var hd = document.createElement('div'); hd.className = 'wk-row wk-h';
+  ['', 'This week', 'Week before', 'Change'].forEach(function(t){ var c = document.createElement('span'); c.textContent = t; hd.appendChild(c); });
+  host.appendChild(hd);
+  rows.forEach(function(r){
+    var row = document.createElement('div'); row.className = 'wk-row';
+    var cells = [r[0], r[1] != null ? fmt(r[1], r[4]) + (r[3] ? ' ' + r[3] : '') : '—', r[2] != null ? fmt(r[2], r[4]) : '—',
+                 r[1] != null && r[2] != null ? sgn(r[1] - r[2], r[4]) : ''];
+    cells.forEach(function(t){ var c = document.createElement('span'); c.textContent = t; row.appendChild(c); });
+    host.appendChild(row);
+  });
+  // Verdict from the 4-week trends: weight pace, waist, lifts.
+  var slope = weightSlope(end, 28, 3, 6), wk = slope == null ? null : slope * 7;
+  var ws = series('waist').filter(function(p){ return p.d > end - 28 && p.d <= end; });
+  var waist = ws.length >= 2 && ws[ws.length - 1].d - ws[0].d >= 7 ? ws[ws.length - 1].v - ws[0].v : null;
+  var str = strengthChange(end);
+  var W = wk == null ? null : wk < -0.15 ? 'down' : wk > 0.2 ? 'up' : 'flat';
+  var C = waist == null ? null : waist <= -0.5 ? 'down' : waist >= 0.5 ? 'up' : 'flat';
+  var S = str == null ? null : str.pct >= 2 ? 'up' : str.pct <= -3 ? 'down' : 'flat';
+  var facts = [];
+  if (wk != null) facts.push('weight ' + sgn(wk, 2, 'kg/week'));
+  if (waist != null) facts.push('waist ' + sgn(waist, 1, 'cm') + ' in 4 weeks');
+  if (str) facts.push('lifts ' + sgn(str.pct, 1) + '%' +' (' + str.n + (str.n === 1 ? ' exercise' : ' exercises') + ', last 2 weeks vs the 2 before)');
+  var v, cls = '';
+  if (W == null && S == null) v = 'Not enough data yet. A week of weigh-ins and a month of workouts give the first read.';
+  else if (S === 'down' && wk != null && wk < -0.6){ v = 'Weight is dropping fast and lifts are slipping. Eat a little more and keep protein high.'; cls = 'warn'; }
+  else if (S === 'down'){ v = 'Lifts are slipping. Check sleep, protein, and that you are not eating too little.'; cls = 'warn'; }
+  else if (W === 'up' && C === 'up'){ v = 'Weight and waist are both rising. Trim calories by about 150 a day.'; cls = 'warn'; }
+  else if (W !== 'up' && S !== 'down' && C === 'down'){ v = 'Recomp is working: waist is down and strength is holding or rising.'; cls = 'ok'; }
+  else if (W === 'down' && (S === 'up' || S === 'flat')){ v = 'Losing weight while keeping your strength. That is the goal.'; cls = 'ok'; }
+  else if (W === 'flat' && S === 'up'){ v = 'Weight is flat while lifts go up, which is normal early in a recomp. Watch the waist.'; cls = 'ok'; }
+  else v = 'Steady. Keep logging; the trend gets clearer every week.';
+  var vp = $('wk-verdict'); vp.className = 'pace' + (cls ? ' ' + cls : '');
+  vp.textContent = v + (facts.length ? ' (' + facts.join(', ') + '.)' : '');
+  // Calorie target suggestion.
+  var ce = calorieEstimate(end), kp = $('wk-kcal'), kb = $('wk-kcal-use');
+  kb.hidden = true;
+  if (ce.need){
+    kp.textContent = 'Calorie estimate: log calories on 14 of 28 days and weigh in at least 8 times (calories logged on ' + ce.days + ' days so far).';
+  } else {
+    var cur = num(settings.kcal), diff = ce.target - cur;
+    kp.textContent = 'You ate ' + fmt(ce.avg, 0) + ' kcal a day on average (' + ce.days + ' logged days) and weight moved ' + sgn(ce.wk, 2, 'kg/week') + ', so maintenance is about ' +
+      fmt(ce.tdee, 0) + ' kcal. ' + (Math.abs(diff) < 100 ? 'Your target of ' + fmt(cur, 0) + ' fits the 0.25 to 0.5 kg/week pace.' :
+      'For 0.25 to 0.5 kg a week, aim for about ' + fmt(ce.target, 0) + ' kcal (now ' + fmt(cur, 0) + ').');
+    if (Math.abs(diff) >= 100){ kb.hidden = false; kb.textContent = 'Use ' + fmt(ce.target, 0) + ' kcal'; kb.dataset.v = ce.target; }
+  }
+}
+function useKcal(){
+  var t = $('t-kcal'); t.value = $('wk-kcal-use').dataset.v;
+  var det = t.closest('details'); if (det) det.open = true;
+  setStatus('st-targets', 'Calories set to ' + t.value + '. Press Save targets to keep it.');
+  t.scrollIntoView({behavior: 'smooth', block: 'center'}); t.focus({preventScroll: true});
+}
+
 /* ---------- header, banner, derived ---------- */
 function renderHeader(){
   var ds = dates(), sub = $('sub'), b = $('banner');
@@ -530,7 +789,7 @@ function renderHeader(){
   }
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits();
+  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------
@@ -711,6 +970,8 @@ function restStart(){
   var el = $('rest'); el.hidden = false; el.classList.remove('done');
   document.body.classList.add('resting');
   $('rest-l').textContent = 'Rest';
+  $('rest-notify').hidden = !('Notification' in window) || Notification.permission !== 'default';
+  keepAwake(true);
   tickRest();
   if (!restTick) restTick = setInterval(tickRest, 250);
 }
@@ -719,12 +980,37 @@ function tickRest(){
   if (left > 0){ $('rest-t').textContent = Math.floor(left / 60) + ':' + pad(left % 60); return; }
   clearInterval(restTick); restTick = 0;
   $('rest').classList.add('done'); $('rest-l').textContent = 'Next set'; $('rest-t').textContent = 'Go';
-  buzz();
+  buzz(); notifyRest();
   restHide = setTimeout(restStop, 6000);
 }
 function restStop(){
   clearInterval(restTick); restTick = 0; clearTimeout(restHide);
   $('rest').hidden = true; document.body.classList.remove('resting');
+  keepAwake(false);
+}
+// Keep the screen on while resting, so the phone does not lock between sets
+// (the page cannot run, beep or vibrate once it is locked).
+var wake = null, wantAwake = false;
+function keepAwake(on){
+  wantAwake = on;
+  if (!on){ if (wake){ wake.release().catch(function(){}); wake = null; } return; }
+  if (wake || !navigator.wakeLock || document.hidden) return;
+  navigator.wakeLock.request('screen').then(function(l){
+    wake = l; l.addEventListener('release', function(){ if (wake === l) wake = null; });
+    if (!wantAwake) keepAwake(false);
+  }).catch(function(){});
+}
+// If the page is in the background when the rest ends, say so with a notification
+// (only after the user allowed it from the rest bar).
+function notifyRest(){
+  if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted' || !navigator.serviceWorker) return;
+  navigator.serviceWorker.ready.then(function(reg){
+    return reg.showNotification('Rest over', {body: 'Next set', tag: 'rest', renotify: true, icon: 'icon-192.png', vibrate: [200, 100, 200]});
+  }).catch(function(){});
+}
+function askNotify(){
+  if (!('Notification' in window)) return;
+  Notification.requestPermission().then(function(){ $('rest-notify').hidden = true; }).catch(function(){});
 }
 function buzz(){
   if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
@@ -757,13 +1043,17 @@ $('rest-add').addEventListener('click', function(){
   restEnd += 15000; tickRest();
 });
 $('rest-skip').addEventListener('click', restStop);
+$('rest-notify').addEventListener('click', askNotify);
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); });
+$('px-sel').addEventListener('change', function(){ pxSel = this.value; renderProgress(); });
+$('wk-kcal-use').addEventListener('click', useKcal);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 
 var rafId = 0;
-function redraw(){ if (rafId) return; rafId = requestAnimationFrame(function(){ rafId = 0; drawCharts(); }); }
+function redraw(){ if (rafId) return; rafId = requestAnimationFrame(function(){ rafId = 0; drawCharts(); renderProgress(); }); }
 if (window.ResizeObserver){
   var ro = new ResizeObserver(redraw);
-  ro.observe($('ch-weight')); ro.observe($('ch-waist'));
+  ro.observe($('ch-weight')); ro.observe($('ch-waist')); ro.observe($('ch-px'));
 } else { window.addEventListener('resize', redraw); }
 
 fillTargets(); renderDerived(); renderWorkout();

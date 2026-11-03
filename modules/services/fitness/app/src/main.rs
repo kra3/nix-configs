@@ -89,8 +89,13 @@ CREATE TABLE plan_exercises(
   FOREIGN KEY (user) REFERENCES plans(user) ON DELETE CASCADE) WITHOUT ROWID;
 PRAGMA user_version = 2;";
 
+// Schema version 3: per-exercise weight step (kg) for progression suggestions.
+const SCHEMA_3: &str = "
+ALTER TABLE plan_exercises ADD COLUMN inc REAL;
+PRAGMA user_version = 3;";
+
 // Migrations run in order, each in its own transaction, from the stored user_version.
-const MIGRATIONS: [&str; 2] = [SCHEMA_1, SCHEMA_2];
+const MIGRATIONS: [&str; 3] = [SCHEMA_1, SCHEMA_2, SCHEMA_3];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -234,13 +239,14 @@ struct PlanEx {
     lo: i64,
     hi: i64,
     unit: String,
+    inc: Option<f64>,
 }
 
 fn int_field(o: &Map<String, Value>, k: &str, lo: i64, hi: i64) -> Result<i64, String> {
     o.get(k).and_then(Value::as_i64).filter(|x| (lo..=hi).contains(x)).ok_or_else(|| format!("{k} must be a whole number from {lo} to {hi}"))
 }
 
-// {"A": [{"k", "n", "sets", "lo", "hi", "u"}, ...], "B": [...]}
+// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?}, ...], "B": [...]}
 fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
     let o = v.as_object().ok_or("object expected")?;
     if let Some(k) = o.keys().find(|k| !WORKOUTS.contains(&k.as_str())) {
@@ -257,7 +263,7 @@ fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
         for (i, e) in list.iter().enumerate() {
             let at = format!("workout {w}, exercise {}", i + 1);
             let e = e.as_object().ok_or_else(|| format!("{at} must be an object"))?;
-            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u"].contains(&k.as_str())) {
+            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u", "inc"].contains(&k.as_str())) {
                 return Err(format!("{at}: unknown field {k}"));
             }
             let key = e.get("k").and_then(Value::as_str).filter(|k| valid_key(k)).ok_or_else(|| format!("{at}: bad key"))?;
@@ -274,7 +280,11 @@ fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
             if lo > hi {
                 return Err(format!("{at}: range low is above high"));
             }
-            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into() });
+            let inc = num_field(e.get("inc"), "inc", 50.0).map_err(|m| format!("{at}: {m}"))?;
+            if inc == Some(0.0) {
+                return Err(format!("{at}: inc must be above 0"));
+            }
+            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into(), inc });
         }
     }
     Ok(out)
@@ -358,13 +368,14 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
     let Some(version) = c.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get::<_, i64>(0)).optional()? else {
         return Ok(None);
     };
-    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
+    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit, inc FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
     let rows = st.query_map(params![user], |r| {
-        Ok((
-            r.get::<_, String>(0)?,
-            json!({ "k": r.get::<_, String>(1)?, "n": r.get::<_, String>(2)?, "sets": r.get::<_, i64>(3)?,
-                    "lo": r.get::<_, i64>(4)?, "hi": r.get::<_, i64>(5)?, "u": r.get::<_, String>(6)? }),
-        ))
+        let mut e = json!({ "k": r.get::<_, String>(1)?, "n": r.get::<_, String>(2)?, "sets": r.get::<_, i64>(3)?,
+                            "lo": r.get::<_, i64>(4)?, "hi": r.get::<_, i64>(5)?, "u": r.get::<_, String>(6)? });
+        if let (Some(inc), Value::Object(m)) = (r.get::<_, Option<f64>>(7)?, &mut e) {
+            m.insert("inc".into(), num_value(inc));
+        }
+        Ok((r.get::<_, String>(0)?, e))
     })?;
     let mut m = Map::new();
     for w in WORKOUTS {
@@ -460,12 +471,12 @@ fn write_plan(c: &Connection, user: &str, p: &[PlanEx], base: i64) -> rusqlite::
     tx.execute("DELETE FROM plan_exercises WHERE user = ?1", params![user])?;
     {
         let mut st = tx.prepare_cached(
-            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         )?;
         let mut pos = [0i64; 2];
         for e in p {
             let i = WORKOUTS.iter().position(|w| *w == e.workout).unwrap_or(0);
-            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit])?;
+            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc])?;
             pos[i] += 1;
         }
     }
@@ -769,6 +780,62 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     respond(rq, r)
 }
 
+// Fills numeric day fields that are still empty (e.g. steps and sleep from a
+// phone via Home Assistant). A value already logged, by hand or by an earlier
+// run, is never changed. Returns the fields it set.
+fn fill_day(c: &Connection, user: &str, date: &str, vals: &[(String, f64)]) -> Result<Vec<String>, String> {
+    if !valid_date(date) {
+        return Err(format!("bad date {date}"));
+    }
+    for (k, _) in vals {
+        if !DAY_NUM.iter().any(|(n, _)| n == k) {
+            return Err(format!("unknown field {k}"));
+        }
+    }
+    // A concurrent write from the page bumps the version; read again and retry.
+    for _ in 0..3 {
+        let (base, cur) = get_day(c, user, date).map_err(|e| e.to_string())?.unwrap_or((0, json!({ "date": date })));
+        let mut m = cur.as_object().cloned().unwrap_or_default();
+        let mut set = Vec::new();
+        for (k, v) in vals {
+            if !m.contains_key(k) {
+                m.insert(k.clone(), num_value(*v));
+                set.push(k.clone());
+            }
+        }
+        if set.is_empty() {
+            return Ok(set);
+        }
+        let day = parse_day(&Value::Object(m))?;
+        if write_day(c, user, date, &day, base).map_err(|e| e.to_string())?.is_some() {
+            return Ok(set);
+        }
+    }
+    Err("the day kept changing; try again".into())
+}
+
+fn fill_cli(db_path: &str, user: &str, date: &str, pairs: &[String]) {
+    let mut vals = Vec::new();
+    for p in pairs {
+        let parsed = p.split_once('=').and_then(|(k, v)| v.trim().parse::<f64>().ok().map(|v| (k.trim().to_string(), v)));
+        match parsed {
+            Some(kv) => vals.push(kv),
+            None => {
+                eprintln!("expected field=number, got {p}");
+                process::exit(2);
+            }
+        }
+    }
+    match fill_day(&open(db_path), user, date, &vals) {
+        Ok(set) if set.is_empty() => println!("{user} {date}: nothing to fill"),
+        Ok(set) => println!("{user} {date}: filled {}", set.join(", ")),
+        Err(e) => {
+            eprintln!("fill failed: {e}");
+            process::exit(1);
+        }
+    }
+}
+
 fn import_cli(db_path: &str, file: &str, user: &str) {
     let c = open(db_path);
     let text = fs::read_to_string(file).unwrap_or_else(|e| {
@@ -819,6 +886,13 @@ fn main() {
             process::exit(2);
         }
         return import_cli(&db_path, &args[2], &args[3]);
+    }
+    if args.get(1).map(String::as_str) == Some("fill") {
+        if args.len() < 5 {
+            eprintln!("usage: fitness fill <user> <YYYY-MM-DD> <field=number>...");
+            process::exit(2);
+        }
+        return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
     }
     if args.get(1).map(String::as_str) == Some("backup") {
         if args.len() != 3 {
@@ -1113,6 +1187,39 @@ mod tests {
         let big = vec![b' '; MAX_BODY as usize + 10];
         let head = "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nIf-Match: 0";
         assert_eq!(status(a, head, &big), 413);
+    }
+
+    #[test]
+    fn plan_weight_step_round_trips() {
+        let c = db();
+        let plan = json!({ "A": [{ "k": "legpress", "n": "Leg press", "sets": 3, "lo": 10, "hi": 12, "u": "kg", "inc": 2.5 },
+                                 { "k": "crunch", "n": "Crunch", "sets": 2, "lo": 12, "hi": 15, "u": "reps" }], "B": [] });
+        let (code, _) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), plan.clone());
+        assert_eq!(code, 200);
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, plan);
+        for bad in [json!(0), json!(-1), json!(51), json!("2")] {
+            let p = json!({ "A": [{ "k": "x", "n": "X", "sets": 1, "lo": 1, "hi": 2, "u": "kg", "inc": bad }] });
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/plan", Some("1"), p).0, 400);
+        }
+    }
+
+    #[test]
+    fn fill_only_sets_empty_fields() {
+        let c = db();
+        let v = |k: &str, x: f64| (k.to_string(), x);
+        assert_eq!(fill_day(&c, "kra3", "2026-11-02", &[v("steps", 9100.0)]).unwrap(), vec!["steps"]);
+        let (ver, day) = get_day(&c, "kra3", "2026-11-02").unwrap().unwrap();
+        assert_eq!((ver, day), (1, json!({ "date": "2026-11-02", "steps": 9100 })));
+        // A hand-logged or earlier value is kept; other fields are still filled.
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), workout());
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("1"), json!({ "date": "2026-11-03", "steps": 4000 }));
+        assert_eq!(fill_day(&c, "kra3", "2026-11-03", &[v("steps", 12000.0), v("sleep", 7.5)]).unwrap(), vec!["sleep"]);
+        let day = get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1;
+        assert_eq!((day["steps"].clone(), day["sleep"].clone()), (json!(4000), json!(7.5)));
+        assert!(fill_day(&c, "kra3", "2026-11-03", &[v("steps", 1.0)]).unwrap().is_empty());
+        assert!(fill_day(&c, "kra3", "2026-11-3", &[v("steps", 1.0)]).is_err());
+        assert!(fill_day(&c, "kra3", "2026-11-04", &[v("mood", 1.0)]).is_err());
+        assert!(fill_day(&c, "kra3", "2026-11-04", &[v("steps", -5.0)]).is_err());
     }
 
     #[test]

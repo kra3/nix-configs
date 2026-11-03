@@ -121,6 +121,67 @@
         };
       };
 
+      # Copies yesterday's step count from the phone (Home Assistant companion
+      # app sensor) into the log, only where no steps were logged by hand. It runs
+      # for the two previous days, so one missed run is caught up.
+      sops.secrets."homeassistant.token" = { };
+      systemd.services.fitness-steps-sync = {
+        description = "Fill Fitness step counts from Home Assistant";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        environment = {
+          DB_FILE = "${stateDir}/fitness.db";
+          HA_URL = "http://127.0.0.1:8123";
+          STEPS_ENTITY = "sensor.meghanadha_health_steps";
+          FITNESS_USER = "kra3";
+        };
+        serviceConfig = sandbox // {
+          Type = "oneshot";
+          # Needs loopback to reach Home Assistant, nothing else.
+          PrivateNetwork = false;
+          IPAddressAllow = "localhost";
+          IPAddressDeny = "any";
+          LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "fitness-steps-sync";
+              runtimeInputs = [
+                pkgs.curl
+                pkgs.jq
+                pkgs.coreutils
+                fitness
+              ];
+              text = ''
+                token=$(<"$CREDENTIALS_DIRECTORY/token")
+                for ago in 2 1; do
+                  day=$(date -d "today - $ago days" +%F)
+                  # Local midnight to midnight; "+" in the offset must be escaped.
+                  start=$(date -d "$day" +%FT%T%:z | sed 's/+/%2B/')
+                  end=$(date -d "$day + 1 day" +%FT%T%:z | sed 's/+/%2B/')
+                  # The sensor counts up through the day, so the day's total is its highest reading.
+                  steps=$(curl -fsS --max-time 30 -H "Authorization: Bearer $token" \
+                    "$HA_URL/api/history/period/$start?end_time=$end&filter_entity_id=$STEPS_ENTITY&minimal_response&no_attributes" |
+                    jq -r '[.[0][]?.state | tonumber? | select(. > 0)] | max // empty')
+                  if [ -z "$steps" ]; then
+                    echo "$day: no step readings from $STEPS_ENTITY"
+                    continue
+                  fi
+                  fitness fill "$FITNESS_USER" "$day" "steps=$(printf '%.0f' "$steps")"
+                done
+              '';
+            }
+          );
+        };
+      };
+      systemd.timers.fitness-steps-sync = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* 06:20:00";
+          RandomizedDelaySec = "10m";
+          Persistent = true;
+        };
+      };
+
       # Lets nginx open the 0660 socket in the 0750 runtime dir. Changing the
       # nginx unit means the switch restarts nginx once, so the group applies.
       systemd.services.nginx.serviceConfig.SupplementaryGroups = [ "fitness" ];

@@ -60,7 +60,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Unbound (recursive resolver) | `modules/services/dns/unbound.nix` | `127.0.0.1:5335`, DoT upstreams (Cloudflare family + Quad9), redirect zone for `${domain}.` |
 | PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |
 | Redis | `modules/services/redis.nix` | Ghostfolio's cache; password-protected, `FLUSHALL` renamed off |
-| Fitness | `modules/services/fitness/default.nix` (crate in `modules/services/fitness/app/`) | Training and body-composition log (Rust + SQLite); `fitness.service`, user `fitness`; unix socket `/run/fitness/fitness.sock` (no TCP port, PrivateNetwork); state `/srv/appdata/fitness/fitness.db`; `fitness.${domain}` via nginx + Authelia forward-auth, per-user data keyed on the `Remote-User` header |
+| Fitness | `modules/services/fitness/default.nix` (crate in `modules/services/fitness/app/`) | Training and body-composition log (Rust + SQLite); `fitness.service`, user `fitness`; unix socket `/run/fitness/fitness.sock` (no TCP port, PrivateNetwork); state `/srv/appdata/fitness/fitness.db`; `fitness.${domain}` via nginx + Authelia forward-auth, per-user data keyed on the `Remote-User` header; `fitness-steps-sync` timer (06:20) fills empty step counts for `kra3` from Home Assistant `sensor.meghanadha_health_steps` over `127.0.0.1:8123` (token `homeassistant.token`) |
 | Podman | `modules/services/virtualisation/podman.nix` | Rootful backend for the quadlet app fleet |
 | fail2ban | `modules/fail2ban.nix` | sshd + nginx jails, nftables-multiport ban action |
 | Avahi (mDNS reflector) | `modules/services/discovery/avahi.nix` | Relays mDNS between LAN and `ve-media-play` |

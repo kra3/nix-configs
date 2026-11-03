@@ -70,6 +70,14 @@
       <div class="chart waist" id="ch-waist"></div>
     </section>
 
+    <section class="card span2" aria-labelledby="h-week">
+      <h2 id="h-week">Week in review</h2>
+      <p class="pace" id="wk-verdict"></p>
+      <div class="wk" id="wk-table"></div>
+      <p class="sub" id="wk-kcal"></p>
+      <div class="actions"><button type="button" class="btn ghost" id="wk-kcal-use" hidden></button></div>
+    </section>
+
     <section class="card span2" aria-labelledby="h-habits">
       <h2 id="h-habits">Last 14 days</h2>
       <div class="habits" id="habits"></div>
@@ -86,6 +94,14 @@
         <button type="button" class="btn ghost" id="edit-plan">Edit plan</button>
         <span class="status" id="st-workout" role="status" aria-live="polite"></span>
       </div>
+    </section>
+
+    <section class="card span2" id="px-card" aria-labelledby="h-px" hidden>
+      <h2 id="h-px">Exercise progress</h2>
+      <label class="field"><span>Exercise</span><select id="px-sel"></select></label>
+      <div class="stats" id="px-stats"></div>
+      <div class="readout" id="ro-px" aria-live="polite"></div>
+      <div class="chart" id="ch-px"></div>
     </section>
 
     <section class="card span2">
@@ -127,6 +143,7 @@
   <span class="rt" id="rest-t">1:30</span>
   <button type="button" class="btn ghost" id="rest-add">+15 s</button>
   <button type="button" class="btn ghost" id="rest-skip">Done</button>
+  <button type="button" class="btn ghost" id="rest-notify" hidden title="Get a notification when the rest ends while the app is in the background">Alert me</button>
 </div>
 
 <script src="app.js"></script>

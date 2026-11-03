@@ -124,7 +124,7 @@
 
           failed=0
           for src in ${lib.escapeShellArgs (lib.attrNames sources)}; do
-            syncoid --no-sync-snap --include-snaps='^autosnap_.*_(daily|monthly)$' \
+            syncoid --no-sync-snap --recvoptions=u --include-snaps='^autosnap_.*_(daily|monthly)$' \
               "$src" "backup/''${src##*/}" || { echo "backup-usb: $src failed"; failed=1; }
           done
           sanoid --configdir=${targetConf} --cache-dir=/var/cache/backup-usb \

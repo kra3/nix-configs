@@ -347,8 +347,8 @@
         lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)
           {
             owner = "root";
-            group = "root";
-            mode = "0444";
+            group = "jellyfin";
+            mode = "0440";
             content = jellyfinSsoAuthXmlContent;
           };
     };

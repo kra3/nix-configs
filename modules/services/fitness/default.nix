@@ -59,6 +59,15 @@
       # group membership below) can reach it, so nothing else on the host can
       # send a forged Remote-User header.
       socket = "/run/fitness/fitness.sock";
+      vhost = flakeLib.nginx.mkProxyVhost {
+        domain = config.vars.acme.domain;
+        cidrs = config.vars.network.nginxAllowCidrs;
+        upstream = "http://unix:${socket}";
+        websockets = false;
+        forwardAuth = true;
+        # JSON import of a full history.
+        vhostExtraConfig = "client_max_body_size 4m;";
+      };
     in
     {
       users.users.fitness = {
@@ -113,15 +122,7 @@
       # nginx unit means the switch restarts nginx once, so the group applies.
       systemd.services.nginx.serviceConfig.SupplementaryGroups = [ "fitness" ];
 
-      services.nginx.virtualHosts."fitness.${config.vars.acme.domain}" = lib.recursiveUpdate (flakeLib.nginx.mkProxyVhost {
-        domain = config.vars.acme.domain;
-        cidrs = config.vars.network.nginxAllowCidrs;
-        upstream = "http://unix:${socket}";
-        websockets = false;
-        forwardAuth = true;
-        # JSON import of a full history.
-        vhostExtraConfig = "client_max_body_size 4m;";
-      }) {
+      services.nginx.virtualHosts."fitness.${config.vars.acme.domain}" = lib.recursiveUpdate vhost {
         # Liveness for the homepage tile, the one path without login (still
         # behind the CIDR allowlist). It returns no user data.
         locations."= /healthz".proxyPass = "http://unix:${socket}";

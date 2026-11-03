@@ -101,7 +101,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-vi
 .ex-head .tg{font-size:13px;color:var(--muted)}
 .hint{font-size:13px;color:var(--muted);margin:2px 0 0}
 .hint.sg{color:var(--accent)}
-.sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px}
 .set{display:flex;align-items:center;gap:6px;min-width:0}
 .set .no{font:600 13px var(--font-body);color:var(--accent);background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;min-width:36px;min-height:40px;flex:none;cursor:pointer}
 .set .x{color:var(--muted);flex:none}
@@ -142,3 +142,8 @@ select{font:16px var(--font-body);color:var(--fg);background:var(--bg);border:1p
 @media (min-width:700px){.pe{grid-template-columns:minmax(0,1fr) auto auto;align-items:center}}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){.fill{transition:none}}
+
+.datebox #gym-btn{margin-top:8px;width:100%}
+body.gym .grid > .card:not(#wo-card){display:none}
+body.gym #wo-card{order:-1}
+#wk-stall:empty{display:none}

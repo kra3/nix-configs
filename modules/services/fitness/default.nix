@@ -121,18 +121,17 @@
         };
       };
 
-      # Copies yesterday's step count from the phone (Home Assistant companion
-      # app sensor) into the log, only where no steps were logged by hand. It runs
-      # for the two previous days, so one missed run is caught up.
+      # Copies health readings Home Assistant already has (phone and scale) into
+      # the log for the two previous days (so one missed run is caught up), only
+      # into fields that are still empty: anything logged by hand is kept.
       sops.secrets."homeassistant.token" = { };
-      systemd.services.fitness-steps-sync = {
-        description = "Fill Fitness step counts from Home Assistant";
+      systemd.services.fitness-health-sync = {
+        description = "Fill Fitness steps, sleep and weight from Home Assistant";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         environment = {
           DB_FILE = "${stateDir}/fitness.db";
           HA_URL = "http://127.0.0.1:8123";
-          STEPS_ENTITY = "sensor.meghanadha_health_steps";
           FITNESS_USER = "kra3";
         };
         serviceConfig = sandbox // {
@@ -144,36 +143,61 @@
           LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
           ExecStart = lib.getExe (
             pkgs.writeShellApplication {
-              name = "fitness-steps-sync";
+              name = "fitness-health-sync";
               runtimeInputs = [
                 pkgs.curl
                 pkgs.jq
                 pkgs.coreutils
+                pkgs.gnused
                 fitness
               ];
               text = ''
                 token=$(<"$CREDENTIALS_DIRECTORY/token")
+
+                # reading <entity> <day> <max|first>: one number from the readings
+                # recorded during that local day, or nothing. HA's history also
+                # returns the state carried in from before midnight; it is skipped.
+                reading() {
+                  local start end from
+                  start=$(date -d "$2" +%FT%T%:z)
+                  end=$(date -d "$2 + 1 day" +%FT%T%:z)
+                  from=$(date -d "$2" +%s)
+                  curl -fsS --max-time 30 -H "Authorization: Bearer $token" \
+                    "$HA_URL/api/history/period/''${start//+/%2B}?end_time=''${end//+/%2B}&filter_entity_id=$1&minimal_response&no_attributes" |
+                    jq -r --argjson from "$from" --arg pick "$3" '
+                      [.[0][]?
+                       | select((.last_changed // "" | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | try fromdateiso8601 catch 0) > $from)
+                       | .state | tonumber? | select(. > 0)]
+                      | if length == 0 then empty elif $pick == "max" then max else .[0] end'
+                }
+
                 for ago in 2 1; do
                   day=$(date -d "today - $ago days" +%F)
-                  # Local midnight to midnight; "+" in the offset must be escaped.
-                  start=$(date -d "$day" +%FT%T%:z | sed 's/+/%2B/')
-                  end=$(date -d "$day + 1 day" +%FT%T%:z | sed 's/+/%2B/')
-                  # The sensor counts up through the day, so the day's total is its highest reading.
-                  steps=$(curl -fsS --max-time 30 -H "Authorization: Bearer $token" \
-                    "$HA_URL/api/history/period/$start?end_time=$end&filter_entity_id=$STEPS_ENTITY&minimal_response&no_attributes" |
-                    jq -r '[.[0][]?.state | tonumber? | select(. > 0)] | max // empty')
-                  if [ -z "$steps" ]; then
-                    echo "$day: no step readings from $STEPS_ENTITY"
+                  fields=()
+                  # Phone (Health app via the HA companion app): steps count up
+                  # through the day; sleep is minutes, written the morning after.
+                  if v=$(reading sensor.meghanadha_health_steps "$day" max) && [ -n "$v" ]; then
+                    fields+=("steps=$(printf '%.0f' "$v")")
+                  fi
+                  if v=$(reading sensor.meghanadha_sleep_duration "$day" max) && [ -n "$v" ]; then
+                    fields+=("sleep=$(jq -n --argjson m "$v" '($m / 15 | round) / 4')")
+                  fi
+                  # Withings scale: the first weigh-in of the day.
+                  if v=$(reading sensor.office_room_withings_kra_weight "$day" first) && [ -n "$v" ]; then
+                    fields+=("weight=$(printf '%.1f' "$v")")
+                  fi
+                  if [ ''${#fields[@]} -eq 0 ]; then
+                    echo "$day: no readings from Home Assistant"
                     continue
                   fi
-                  fitness fill "$FITNESS_USER" "$day" "steps=$(printf '%.0f' "$steps")"
+                  fitness fill "$FITNESS_USER" "$day" "''${fields[@]}"
                 done
               '';
             }
           );
         };
       };
-      systemd.timers.fitness-steps-sync = {
+      systemd.timers.fitness-health-sync = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnCalendar = "*-*-* 06:20:00";

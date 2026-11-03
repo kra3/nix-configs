@@ -94,8 +94,14 @@ const SCHEMA_3: &str = "
 ALTER TABLE plan_exercises ADD COLUMN inc REAL;
 PRAGMA user_version = 3;";
 
+// Schema version 4: sex for the waist-to-height body-fat estimate (RFM), which
+// uses a different constant for men and women.
+const SCHEMA_4: &str = "
+ALTER TABLE settings ADD COLUMN sex TEXT CHECK (sex IN ('m', 'f'));
+PRAGMA user_version = 4;";
+
 // Migrations run in order, each in its own transaction, from the stored user_version.
-const MIGRATIONS: [&str; 3] = [SCHEMA_1, SCHEMA_2, SCHEMA_3];
+const MIGRATIONS: [&str; 4] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -218,16 +224,26 @@ fn parse_day(v: &Value) -> Result<Day, String> {
     Ok(Day { nums, note, workout, sets })
 }
 
-fn parse_settings(v: &Value) -> Result<[Option<f64>; 8], String> {
+struct Settings {
+    nums: [Option<f64>; 8],
+    sex: Option<String>,
+}
+
+fn parse_settings(v: &Value) -> Result<Settings, String> {
     let o = v.as_object().ok_or("object expected")?;
-    if let Some(k) = o.keys().find(|k| !SETTING_NUM.iter().any(|(n, _)| n == k)) {
+    if let Some(k) = o.keys().find(|k| *k != "sex" && !SETTING_NUM.iter().any(|(n, _)| n == k)) {
         return Err(format!("unknown field {k}"));
     }
-    let mut out = [None; 8];
+    let mut nums = [None; 8];
     for (i, (name, max)) in SETTING_NUM.iter().enumerate() {
-        out[i] = num_field(o.get(*name), name, *max)?;
+        nums[i] = num_field(o.get(*name), name, *max)?;
     }
-    Ok(out)
+    let sex = match o.get("sex") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(x)) if x == "m" || x == "f" => Some(x.clone()),
+        Some(_) => return Err("sex must be m or f".into()),
+    };
+    Ok(Settings { nums, sex })
 }
 
 #[derive(Debug, PartialEq)]
@@ -351,12 +367,15 @@ fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i
 
 fn get_settings(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>> {
     c.query_row(
-        "SELECT kcal, protein, steps, sleep, workouts, height, start_weight, rest, version FROM settings WHERE user = ?1",
+        "SELECT kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, sex FROM settings WHERE user = ?1",
         params![user],
         |r| {
             let mut m = Map::new();
             for (i, (name, _)) in SETTING_NUM.iter().enumerate() {
                 put_num(&mut m, name, r.get::<_, Option<f64>>(i)?);
+            }
+            if let Some(x) = r.get::<_, Option<String>>(9)? {
+                m.insert("sex".into(), json!(x));
             }
             Ok((r.get::<_, i64>(8)?, Value::Object(m)))
         },
@@ -437,7 +456,8 @@ fn write_day(c: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusq
     Ok(Some(version))
 }
 
-fn write_settings(c: &Connection, user: &str, s: &[Option<f64>; 8], base: i64) -> rusqlite::Result<Option<i64>> {
+fn write_settings(c: &Connection, user: &str, st: &Settings, base: i64) -> rusqlite::Result<Option<i64>> {
+    let s = &st.nums;
     let tx = c.unchecked_transaction()?;
     let cur: Option<i64> = tx.query_row("SELECT version FROM settings WHERE user = ?1", params![user], |r| r.get(0)).optional()?;
     if cur.unwrap_or(0) != base {
@@ -445,12 +465,13 @@ fn write_settings(c: &Connection, user: &str, s: &[Option<f64>; 8], base: i64) -
     }
     let version = base + 1;
     tx.execute(
-        "INSERT INTO settings(user, kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, updated)
-         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+        "INSERT INTO settings(user, kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, updated, sex)
+         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
          ON CONFLICT(user) DO UPDATE SET kcal = excluded.kcal, protein = excluded.protein, steps = excluded.steps,
            sleep = excluded.sleep, workouts = excluded.workouts, height = excluded.height,
-           start_weight = excluded.start_weight, rest = excluded.rest, version = excluded.version, updated = excluded.updated",
-        params![user, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], version, now()],
+           start_weight = excluded.start_weight, rest = excluded.rest, version = excluded.version, updated = excluded.updated,
+           sex = excluded.sex",
+        params![user, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], version, now(), st.sex],
     )?;
     tx.commit()?;
     Ok(Some(version))
@@ -1220,6 +1241,17 @@ mod tests {
         assert!(fill_day(&c, "kra3", "2026-11-3", &[v("steps", 1.0)]).is_err());
         assert!(fill_day(&c, "kra3", "2026-11-04", &[v("mood", 1.0)]).is_err());
         assert!(fill_day(&c, "kra3", "2026-11-04", &[v("steps", -5.0)]).is_err());
+    }
+
+    #[test]
+    fn settings_sex_round_trips() {
+        let c = db();
+        let st = json!({ "kcal": 1850, "height": 175, "sex": "m" });
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("0"), st.clone()).0, 200);
+        assert_eq!(get_settings(&c, "kra3").unwrap().unwrap().1, st);
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("1"), json!({ "sex": "x" })).0, 400);
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("1"), json!({ "kcal": 1800 })).0, 200);
+        assert_eq!(get_settings(&c, "kra3").unwrap().unwrap().1, json!({ "kcal": 1800 }));
     }
 
     #[test]

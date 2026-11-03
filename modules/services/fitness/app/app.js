@@ -126,8 +126,9 @@ function saveTargets(){
     workouts: num($('t-workouts').value) || DEF.workouts,
     rest: Math.min(900, Math.max(15, num($('t-rest').value) || DEF.rest))
   };
-  var h = num($('t-height').value), sw = num($('t-start').value);
+  var h = num($('t-height').value), sw = num($('t-start').value), sx = $('t-sex').value;
   if (h) s.height = h;
+  if (sx) s.sex = sx;
   if (sw) s.start_weight = sw;
   settings = Object.assign({}, DEF, s);
   saveDoc('settings', s, 'st-targets', 'Saved');
@@ -145,6 +146,7 @@ function fillTargets(){
   ['kcal','protein','steps','sleep','workouts','rest'].forEach(function(k){ $('t-' + k).value = settings[k]; });
   $('t-height').value = settings.height != null ? settings.height : '';
   $('t-start').value = settings.start_weight != null ? settings.start_weight : '';
+  $('t-sex').value = settings.sex || '';
 }
 
 /* ---------- today bars ---------- */
@@ -264,6 +266,12 @@ function stat(host, n, label, sub){
   if (sub){ var c = document.createElement('div'); c.className = 's'; c.textContent = sub; el.appendChild(c); }
   host.appendChild(el);
 }
+// Relative fat mass: body fat % from height and waist alone (Woolcott & Bergman 2018).
+function rfm(waist){
+  var h = num(settings.height), sx = settings.sex;
+  if (!h || !waist || (sx !== 'm' && sx !== 'f')) return null;
+  return (sx === 'f' ? 76 : 64) - 20 * h / waist;
+}
 function bmi(kg){ var h = num(settings.height); return h ? 'BMI ' + fmt(kg / Math.pow(h / 100, 2), 1) : null; }
 function renderStats(){
   var w = $('wstats'); w.textContent = '';
@@ -304,6 +312,13 @@ function renderStats(){
     stat(c, fmt(f, 1) + ' cm', 'First', fmtDay(ws[0].date));
     stat(c, fmt(l, 1) + ' cm', 'Latest', fmtDay(ws[ws.length - 1].date));
     stat(c, sgn(l - f, 1, 'cm'), 'Change');
+  }
+  var bf = ws.length ? rfm(ws[ws.length - 1].v) : null;
+  if (bf != null){
+    var bf0 = rfm(ws[0].v);
+    stat(c, fmt(bf, 1) + '%', 'Body fat, est.', ws.length > 1 ? sgn(bf - bf0, 1) + ' points since ' + fmtDay(ws[0].date) : 'from waist and height');
+  } else {
+    stat(c, '—', 'Body fat, est.', ws.length ? 'set height and sex in Daily targets' : null);
   }
 }
 
@@ -359,6 +374,8 @@ function lastText(ex, last){
 }
 function suggestText(ex, sg){
   var first = sg.sets[0], what = ex.u === 'kg' ? fmt(first[0], 2) + ' kg × ' + first[1] : first[1] + (ex.u === 'sec' ? ' sec' : ' reps');
+  if (sg.deload) return 'No new best in 3 sessions. Today: a lighter session, ' + what + ', then build back up from there.';
+  if (ex.u !== 'kg' && stalled(ex.k, sel)) return 'No new best in 3 sessions. Try a harder variation or a slower tempo, or rest a day longer before it.';
   if (sg.up) return 'Today: ' + what + (ex.u === 'kg' ? '. Every set hit ' + ex.hi + ', so one step heavier.' : '. Top of the range last time; make it harder (slower, or a harder variation).');
   return 'Today: ' + (ex.u === 'kg' ? 'same weight, one more rep per set (' + what + ' first).' : 'one more per set (' + what + ' first).');
 }
@@ -602,6 +619,15 @@ function strengthChange(end){
   if (!ch.length) return null;
   return {pct: ch.reduce(function(a, b){ return a + b; }, 0) / ch.length, n: ch.length};
 }
+// Stalled: at least 4 sessions, and the last 3 all came within 5% of the earlier
+// best without beating it. A lighter (deload) session below 95% resets the count.
+function stalled(k, upto){
+  var pts = exSeries(k).filter(function(p){ return !upto || p.date < upto; });
+  if (pts.length < 4) return false;
+  var prev = Math.max.apply(null, pts.slice(0, -3).map(function(p){ return p.v; }));
+  return pts.slice(-3).every(function(p){ return p.v <= prev + 1e-9 && p.v >= prev * 0.95; });
+}
+function roundTo(x, step){ return Math.round(x / step) * step; }
 // Suggested [kg, reps] per set for today, from the last session: once every set
 // reached the top of the range, add one weight step and start again at the bottom;
 // otherwise keep each set's weight and go for one more rep.
@@ -610,6 +636,13 @@ function suggestSets(ex, last){
   var n = nSets(ex, null), top = last.sets.length >= ex.sets && last.sets.every(function(st){ return num(st[1]) >= ex.hi; });
   var heaviest = Math.max.apply(null, last.sets.map(function(st){ return num(st[0]) || 0; })) || null;
   var out = [];
+  // Stuck for three sessions: one lighter session (about 10% off, top of the range),
+  // after which the usual progression builds back up.
+  if (ex.u === 'kg' && heaviest && stalled(ex.k, sel)){
+    var dl = Math.max(0, roundTo(heaviest * 0.9, num(ex.inc) || DEF_INC));
+    for (var j = 0; j < n; j++) out.push([dl, ex.hi]);
+    return {sets: out, deload: true};
+  }
   for (var i = 0; i < n; i++){
     var ls = last.sets[Math.min(i, last.sets.length - 1)], w = num(ls[0]), r = num(ls[1]) || ex.lo;
     if (ex.u === 'kg'){
@@ -753,6 +786,8 @@ function renderWeek(){
   else if (W === 'down' && (S === 'up' || S === 'flat')){ v = 'Losing weight while keeping your strength. That is the goal.'; cls = 'ok'; }
   else if (W === 'flat' && S === 'up'){ v = 'Weight is flat while lifts go up, which is normal early in a recomp. Watch the waist.'; cls = 'ok'; }
   else v = 'Steady. Keep logging; the trend gets clearer every week.';
+  var stuck = exerciseKeys().filter(function(e){ return PLAN.A.concat(PLAN.B).some(function(p){ return p.k === e.k; }) && stalled(e.k); });
+  $('wk-stall').textContent = stuck.length ? 'No new best in the last 3 sessions: ' + stuck.map(function(e){ return e.n; }).join(', ') + '. The workout suggests a lighter session for each.' : '';
   var vp = $('wk-verdict'); vp.className = 'pace' + (cls ? ' ' + cls : '');
   vp.textContent = v + (facts.length ? ' (' + facts.join(', ') + '.)' : '');
   // Calorie target suggestion.
@@ -1044,6 +1079,19 @@ $('rest-add').addEventListener('click', function(){
 });
 $('rest-skip').addEventListener('click', restStop);
 $('rest-notify').addEventListener('click', askNotify);
+// Gym view: only the workout card. #gym in the URL (and the app shortcut) opens it.
+function setGym(on){
+  document.body.classList.toggle('gym', on);
+  $('gym-btn').textContent = on ? 'Show everything' : 'Gym view';
+  $('gym-btn').setAttribute('aria-pressed', on ? 'true' : 'false');
+  if (on && location.hash !== '#gym') history.replaceState(null, '', '#gym');
+  if (!on && location.hash === '#gym') history.replaceState(null, '', location.pathname + location.search);
+  window.scrollTo(0, 0);
+  if (!on) redraw();
+}
+$('gym-btn').addEventListener('click', function(){ setGym(!document.body.classList.contains('gym')); });
+window.addEventListener('hashchange', function(){ setGym(location.hash === '#gym'); });
+if (location.hash === '#gym') setGym(true);
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); });
 $('px-sel').addEventListener('change', function(){ pxSel = this.value; renderProgress(); });
 $('wk-kcal-use').addEventListener('click', useKcal);

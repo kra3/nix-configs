@@ -24,6 +24,7 @@
     <div class="datebox">
       <label class="lbl" for="f-date">Day</label>
       <input type="date" id="f-date">
+      <button type="button" class="btn ghost" id="gym-btn" aria-pressed="false">Gym view</button>
     </div>
   </header>
 
@@ -73,6 +74,7 @@
     <section class="card span2" aria-labelledby="h-week">
       <h2 id="h-week">Week in review</h2>
       <p class="pace" id="wk-verdict"></p>
+      <p class="pace warn" id="wk-stall"></p>
       <div class="wk" id="wk-table"></div>
       <p class="sub" id="wk-kcal"></p>
       <div class="actions"><button type="button" class="btn ghost" id="wk-kcal-use" hidden></button></div>
@@ -84,7 +86,7 @@
       <p class="hsum" id="hsum"></p>
     </section>
 
-    <section class="card span2" aria-labelledby="h-workout">
+    <section class="card span2" id="wo-card" aria-labelledby="h-workout">
       <h2 id="h-workout">Workout</h2>
       <div class="tabs" role="tablist" id="tabs"></div>
       <div id="exlist"></div>
@@ -115,6 +117,7 @@
           <label class="field"><span>Workouts per week</span><input type="number" inputmode="numeric" min="0" max="7" id="t-workouts"></label>
           <label class="field"><span>Rest between sets (sec)</span><input type="number" inputmode="numeric" min="15" max="900" step="15" id="t-rest"></label>
           <label class="field"><span>Height (cm), for BMI</span><input type="number" inputmode="decimal" min="0" step="0.5" id="t-height"></label>
+          <label class="field"><span>Sex, for the body-fat estimate</span><select id="t-sex"><option value="">Not set</option><option value="m">Male</option><option value="f">Female</option></select></label>
           <label class="field"><span>Start weight (kg)</span><input type="number" inputmode="decimal" min="0" step="0.1" id="t-start" placeholder="first weigh-in"></label>
         </div>
         <p class="note">For a slow cut, set calories about 300 below maintenance and protein at 1.6 to 2 g per kg of body weight. Adjust calories by 100 to 150 after two or three weeks of data. Leave start weight blank to use your first weigh-in.</p>

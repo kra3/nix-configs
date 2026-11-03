@@ -25,9 +25,6 @@
         forwardAuth = true;
         # Home Assistant (10.3.2.10) is bypassed in Authelia and has no session, so
         # Authelia returns no Remote-User; give it a fixed identity for Frigate's proxy-auth.
-        locationExtraConfig = ''
-          if ($user = "") { set $user "homeassistant"; }
-        '';
       };
     };
 }

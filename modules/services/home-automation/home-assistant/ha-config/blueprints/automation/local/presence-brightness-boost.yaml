@@ -175,5 +175,3 @@ actions:
               - action: light.turn_off
                 target:
                   entity_id: "{{ companion }}"
-                data:
-                  transition: 5

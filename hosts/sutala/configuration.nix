@@ -36,6 +36,7 @@
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
+    flakeModules.nixos.services-second-brain-default
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
@@ -83,6 +84,24 @@
   };
 
   vars.acme.email = "the1.arun@gmail.com";
+
+  # Second brain (Obsidian vault): live copy via headless Obsidian Sync, hourly git
+  # snapshots, and a remote MCP server for Claude on Tailscale Funnel.
+  # Each part stays off until its sops secrets exist -- setup steps in docs/second-brain.md.
+  services.secondBrain = {
+    sync = {
+      enable = false;
+      vaultName = "Second Brain";
+    };
+    snapshot = {
+      enable = false;
+      remote = null; # e.g. "git@github.com:kra3/second-brain.git" once the private repo exists
+    };
+    mcp = {
+      enable = false;
+      publicHost = "sutala.TAILNET.ts.net"; # this node's MagicDNS name
+    };
+  };
 
   hardware.enableRedistributableFirmware = true;
 

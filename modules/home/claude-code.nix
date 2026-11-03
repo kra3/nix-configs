@@ -1,12 +1,19 @@
 {
   flake.homeManagerModules.home-claude-code =
     {
+      config,
       inputs,
       lib,
       pkgs,
       ...
     }:
     {
+      imports = [
+        {
+          options.programs.claude-code-selfheal.enable = lib.mkEnableOption "the selfheal-* Claude Code skills for sutala's self-heal service";
+        }
+      ];
+
       programs.git.settings.hook.review-gate = {
         event = "pre-push";
         command = "$HOME/.claude/hooks/review-gate.sh";
@@ -70,6 +77,19 @@
           force = true;
         };
         ".claude/.i-have-adhd-always".text = "";
-      };
+      }
+      // lib.optionalAttrs config.programs.claude-code-selfheal.enable (
+        lib.genAttrs
+          (map (n: ".claude/skills/${n}/SKILL.md") [
+            "selfheal-status"
+            "selfheal-progress"
+            "selfheal-logs"
+            "selfheal-abort"
+          ])
+          (path: {
+            source = ./claude-code/skills + "/${lib.removePrefix ".claude/skills/" path}";
+            force = true;
+          })
+      );
     };
 }

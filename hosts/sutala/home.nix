@@ -25,6 +25,7 @@ in
   ];
 
   programs.neovim-claudecode.enable = true;
+  programs.claude-code-selfheal.enable = true;
 
   catppuccin.enable = true;
   catppuccin.flavor = "mocha";

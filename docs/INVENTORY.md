@@ -64,6 +64,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | fail2ban | `modules/fail2ban.nix` | sshd + nginx jails, nftables-multiport ban action |
 | Avahi (mDNS reflector) | `modules/services/discovery/avahi.nix` | Relays mDNS between LAN and `ve-media-play` |
 | niri (desktop) | `modules/services/niri/default.nix` | Wayland compositor for interactive desktop use; Claude Desktop, gnome-keyring, fcitx5 |
+| Self-heal agent | `modules/services/selfheal.nix`, `modules/users/selfheal.nix` | Daily headless `claude -p` as user `selfheal` (timer `selfheal.timer`); diagnoses via Loki/Prometheus/systemd, digests to Telegram Selfheal topic; dry-run by default. Progress: `/var/lib/selfheal/status.json`; skills `selfheal-*` via `modules/home/claude-code.nix` |
 | System tuning | `modules/services/system/{power-tuning,sysadmin,vim,nix-defaults-nixos,nix-allow-unfree,nix-autoupgrade}.nix` | PCI/USB runtime PM, smartd, CLI tooling, nix GC/auto-upgrade policy |
 
 #### NixOS (nspawn) containers

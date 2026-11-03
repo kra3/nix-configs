@@ -38,13 +38,9 @@
             };
           };
 
-          nginx-http-auth = {
-            enabled = true;
-          };
-
-          nginx-botsearch = {
-            enabled = true;
-          };
+          # Hosts without nginx (surasa) only get the sshd jail.
+          nginx-http-auth.enabled = config.services.nginx.enable;
+          nginx-botsearch.enabled = config.services.nginx.enable;
         };
       };
 
@@ -52,8 +48,8 @@
         (flakeLib.deployment-hardening.mkServiceSandbox {
           readWritePaths = [
             "/var/lib/fail2ban"
-            "/var/log/nginx"
-          ];
+          ]
+          ++ lib.optional config.services.nginx.enable "/var/log/nginx";
           capabilities = [ "CAP_NET_ADMIN" ];
           extraAddressFamilies = [ "AF_NETLINK" ];
         })

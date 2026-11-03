@@ -10,6 +10,7 @@
     # Board profile, sd-image module, cache trust, and overlays are all imported in flake/hosts.nix.
     flakeModules.nixos.vars
     flakeModules.nixos.services-infrastructure-openssh
+    flakeModules.nixos.fail2ban
     flakeModules.nixos.services-infrastructure-sops
     flakeModules.nixos.services-infrastructure-acme
     flakeModules.nixos.services-dns-rpi-secondary
@@ -81,6 +82,18 @@
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.arp_ignore" = 1;
     "net.ipv4.conf.all.arp_announce" = 2;
+
+    # Network hardening, same values as sutala (hosts/sutala/configuration.nix). rp_filter is
+    # deliberately omitted: strict reverse-path filtering can drop asymmetric traffic with ethernet
+    # and wlan0 on the same subnet, and tailscale subnet routing.
+    "net.ipv4.tcp_syncookies" = 1;
+    "net.ipv4.icmp_echo_ignore_broadcasts" = 1;
+    "net.ipv4.conf.all.accept_redirects" = 0;
+    "net.ipv4.conf.default.accept_redirects" = 0;
+    "net.ipv4.conf.all.secure_redirects" = 0;
+    "net.ipv4.conf.default.secure_redirects" = 0;
+    "net.ipv4.conf.all.send_redirects" = 0;
+    "net.ipv4.conf.default.send_redirects" = 0;
   };
 
   # Unlike Raspberry Pi OS's raspi-config, NixOS never sets a regdomain, leaving 5GHz DFS channels rejected until an AP's beacon happens to override it.

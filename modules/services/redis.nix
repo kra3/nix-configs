@@ -1,6 +1,12 @@
 {
   flake.nixosModules.services-redis =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      # Podman bridge gateway = first host address of each subnet (10.3.x.0/24 -> 10.3.x.1).
+      gw = subnet: lib.replaceStrings [ ".0/24" ] [ ".1" ] subnet;
+      lifeGw = gw config.vars.network.podmanSubnets.life;
+      mediaMgmtGw = gw config.vars.network.podmanSubnets.mediaMgmt;
+    in
     {
       sops.secrets."db.redis_password" = {
         owner = "redis-default";
@@ -10,7 +16,9 @@
 
       services.redis.servers.default = {
         enable = true;
-        bind = "0.0.0.0";
+        # Loopback + the bridges whose containers use redis (ghostfolio on life, aiometadata on media-mgmt).
+        # "-" prefix: don't fail startup if a bridge address is not up yet; ordering below normally ensures it is.
+        bind = "127.0.0.1 -${lifeGw} -${mediaMgmtGw}";
         port = 6379;
         save = [
           [
@@ -23,6 +31,18 @@
         settings = {
           rename-command = "FLUSHALL \"\"";
         };
+      };
+
+      # bridges are created by the quadlet network units; bind after them
+      systemd.services.redis-default = {
+        after = [
+          "life-network.service"
+          "media-mgmt-network.service"
+        ];
+        wants = [
+          "life-network.service"
+          "media-mgmt-network.service"
+        ];
       };
 
       # systemd sandboxing

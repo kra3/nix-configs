@@ -1,0 +1,11 @@
+title = "nix-configs gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "sops-encrypted secrets and generated lock files"
+paths = [
+  '''^secrets/''',
+  '''^flake\.lock$''',
+]

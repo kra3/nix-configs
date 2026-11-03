@@ -139,19 +139,47 @@
         '';
       };
 
-      config.systemd.services.lidarr-beets-webhook = {
-        description = "Bridges Lidarr's On Track Retag hook to the host's beet install";
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          ExecStart = "${pkgs.python3}/bin/python3 ${script}";
-          User = "kra3";
-          Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
-          Restart = "on-failure";
+      config = {
+        systemd.services.lidarr-beets-webhook = {
+          description = "Bridges Lidarr's On Track Retag hook to the host's beet install";
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = lib.mkMerge [
+            (flakeLib.deployment-hardening.mkServiceSandbox {
+              # Music tree + beets DBs, and the per-profile BEETSDIRs where beets keeps state.pickle.
+              # "-" = skip if missing.
+              readWritePaths = [
+                hostMusicRoot
+                "/srv/appdata/media-mgmt/beets"
+                "-/home/kra3/.config/beets"
+                "-/home/kra3/.config/beets-indian-film"
+                "-/home/kra3/.config/beets-classical"
+                "-/home/kra3/.config/beets-lidarr-hook"
+                "-/home/kra3/.cache/beets"
+              ];
+            })
+            {
+              ExecStart = "${pkgs.python3}/bin/python3 ${script}";
+              User = "kra3";
+              Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
+              Restart = "on-failure";
+              # beets config lives in /home/kra3, so home stays visible (read-only) ...
+              ProtectHome = lib.mkForce "read-only";
+              # ... but this service handles input from a container, so hide the user's keys from it.
+              InaccessiblePaths = [
+                "-/home/kra3/.ssh"
+                "-/home/kra3/.config/sops"
+                "-/home/kra3/.gnupg"
+              ];
+            }
+            (lib.mkIf (cfg.credentialsFile != null) {
+              LoadCredential = [ "webhook-auth:${cfg.credentialsFile}" ];
+            })
+          ];
         };
+
+        systemd.tmpfiles.rules = [ "d /srv/appdata/media-mgmt/beets 2770 kra3 media - -" ];
+
+        networking.firewall.interfaces.br-media-mgmt.allowedTCPPorts = [ port ];
       };
-
-      systemd.tmpfiles.rules = [ "d /srv/appdata/media-mgmt/beets 2770 kra3 media - -" ];
-
-      networking.firewall.interfaces.br-media-mgmt.allowedTCPPorts = [ port ];
     };
 }

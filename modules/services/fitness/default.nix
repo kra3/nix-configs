@@ -99,7 +99,7 @@
       };
 
       # A clean single-file copy (VACUUM INTO) beside the live WAL database,
-      # written before backup-usb's 03:30 run so that night's snapshot holds it.
+      # timed so the next daily ZFS snapshot (and so backup-usb) holds it.
       systemd.services.fitness-backup = {
         description = "Consistent copy of the Fitness database";
         environment.DB_FILE = "${stateDir}/fitness.db";
@@ -111,8 +111,11 @@
       };
       systemd.timers.fitness-backup = {
         wantedBy = [ "timers.target" ];
+        # backup-usb sends only sanoid's daily/monthly snapshots, and the daily
+        # one is taken by sanoid's run on the hour after 23:59. Writing the copy
+        # before then puts it in that snapshot, which goes to USB at 03:30.
         timerConfig = {
-          OnCalendar = "*-*-* 03:00:00";
+          OnCalendar = "*-*-* 23:30:00";
           RandomizedDelaySec = "10m";
           Persistent = true;
         };
@@ -124,8 +127,14 @@
 
       services.nginx.virtualHosts."fitness.${config.vars.acme.domain}" = lib.recursiveUpdate vhost {
         # Liveness for the homepage tile, the one path without login (still
-        # behind the CIDR allowlist). It returns no user data.
-        locations."= /healthz".proxyPass = "http://unix:${socket}";
+        # behind the CIDR allowlist). It returns no user data. The URI on
+        # proxy_pass makes nginx send exactly /healthz, never the client's raw
+        # URI (e.g. /api/x/../../healthz, which also matches this location),
+        # and any client-sent Remote-User is dropped.
+        locations."= /healthz" = {
+          proxyPass = "http://unix:${socket}:/healthz";
+          extraConfig = ''proxy_set_header Remote-User "";'';
+        };
       };
     };
 }

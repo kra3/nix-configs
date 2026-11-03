@@ -5,7 +5,7 @@
 // user. The page still exchanges whole day documents; every write carries the
 // version it was based on (If-Match) and a stale write gets 409 with the current
 // copy, so two devices never silently overwrite each other.
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::{json, Map, Value};
 use std::io::Read;
 use std::sync::Mutex;
@@ -115,6 +115,15 @@ fn open(path: &str) -> Connection {
         process::exit(1);
     });
     c
+}
+
+// Read-only, no migrations: for the backup job, which must not change the
+// live database's schema under a running service.
+fn open_ro(path: &str) -> Connection {
+    Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX).unwrap_or_else(|e| {
+        eprintln!("cannot open database {path}: {e}");
+        process::exit(1);
+    })
 }
 
 fn now() -> i64 {
@@ -720,6 +729,11 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     let url = rq.url().to_string();
     let path = url.split('?').next().unwrap_or("/").to_string();
     let method = rq.method().clone();
+    // Paths are matched as raw bytes, so refuse anything a proxy could have
+    // normalised differently: dot segments, empty segments, percent-encoding.
+    if path.contains("/.") || path.contains("//") || path.contains('%') {
+        return respond(rq, err(400, "bad path"));
+    }
 
     if method == Method::Get {
         if let Some((ctype, body)) = static_file(&path) {
@@ -811,7 +825,7 @@ fn main() {
             eprintln!("usage: fitness backup <file>");
             process::exit(2);
         }
-        match backup(&open(&db_path), &args[2]) {
+        match backup(&open_ro(&db_path), &args[2]) {
             Ok(()) => return println!("backed up {db_path} to {}", args[2]),
             Err(e) => {
                 eprintln!("backup failed: {e}");
@@ -1029,11 +1043,76 @@ mod tests {
         let dest = dir.join("copy.db");
         let c = open(src.to_str().unwrap());
         call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), workout());
-        backup(&c, dest.to_str().unwrap()).unwrap();
-        backup(&c, dest.to_str().unwrap()).unwrap();
+        // As the backup job does: a second, read-only connection beside the live one.
+        let ro = open_ro(src.to_str().unwrap());
+        backup(&ro, dest.to_str().unwrap()).unwrap();
+        backup(&ro, dest.to_str().unwrap()).unwrap();
         let copy = open(dest.to_str().unwrap());
         assert_eq!(get_day(&copy, "kra3", "2026-11-03").unwrap().unwrap().1, workout());
+        drop(c);
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn backup_does_not_migrate_the_source() {
+        let dir = env::temp_dir().join(format!("fitness-test-ro-{}", process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("old.db");
+        Connection::open(&src).unwrap().execute_batch("CREATE TABLE t (x); PRAGMA user_version = 1;").unwrap();
+        backup(&open_ro(src.to_str().unwrap()), dir.join("copy.db").to_str().unwrap()).unwrap();
+        let v: i64 = Connection::open(&src).unwrap().query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(v, 1);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /* ---------- HTTP layer, through a real socket ---------- */
+
+    fn server() -> std::net::SocketAddr {
+        let s = Server::http("127.0.0.1:0").unwrap();
+        let addr = s.server_addr().to_ip().unwrap();
+        std::thread::spawn(move || {
+            let db = Mutex::new(db());
+            for rq in s.incoming_requests() {
+                handle(rq, &db, "Remote-User", None);
+            }
+        });
+        addr
+    }
+
+    fn status(addr: std::net::SocketAddr, head: &str, body: &[u8]) -> u16 {
+        use std::io::Write;
+        let mut t = std::net::TcpStream::connect(addr).unwrap();
+        let req = format!("{head}\r\nHost: x\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
+        t.write_all(req.as_bytes()).unwrap();
+        let _ = t.write_all(body); // the server may answer before reading it all
+        let mut out = String::new();
+        let _ = t.read_to_string(&mut out);
+        out.split(' ').nth(1).and_then(|c| c.parse().ok()).unwrap_or(0)
+    }
+
+    #[test]
+    fn http_user_and_health() {
+        let a = server();
+        assert_eq!(status(a, "GET /healthz HTTP/1.1", b""), 200);
+        assert_eq!(status(a, "GET /api/log HTTP/1.1", b""), 401);
+        assert_eq!(status(a, "GET /api/log HTTP/1.1\r\nRemote-User: kra3", b""), 200);
+        assert_eq!(status(a, "GET /nope HTTP/1.1\r\nRemote-User: kra3", b""), 404);
+    }
+
+    #[test]
+    fn http_refuses_paths_a_proxy_could_normalise() {
+        let a = server();
+        for p in ["/api/export/../../healthz", "/api/./export", "/api//export", "/api/export%3F/../../healthz", "/healthz/.."] {
+            assert_eq!(status(a, &format!("GET {p} HTTP/1.1\r\nRemote-User: kra3"), b""), 400, "{p}");
+        }
+    }
+
+    #[test]
+    fn http_body_limit() {
+        let a = server();
+        let big = vec![b' '; MAX_BODY as usize + 10];
+        let head = "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nIf-Match: 0";
+        assert_eq!(status(a, head, &big), 413);
     }
 
     #[test]

@@ -15,9 +15,12 @@
       services.fail2ban = {
         enable = true;
 
+        # Loopback plus the two trusted hosts only (not the whole LAN, so a compromised LAN
+        # device brute-forcing SSH/nginx still gets banned). Tailnet was never ignored; unchanged.
         ignoreIP = [
           "127.0.0.1/8"
-          config.vars.network.lanCidr
+          "192.168.1.10" # sutala
+          "192.168.1.39" # surasa
         ];
 
         jails = {

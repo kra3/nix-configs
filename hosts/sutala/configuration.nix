@@ -283,9 +283,9 @@
   };
 
   services.journald.extraConfig = ''
-    SystemMaxUse=200M
-    SystemMaxFileSize=50M
-    MaxRetentionSec=12h
+    SystemMaxUse=2G
+    SystemMaxFileSize=128M
+    MaxRetentionSec=30day
   '';
 
   services.logrotate.enable = true;

@@ -65,6 +65,21 @@
               resources:
                 - '^/[0-9]+/download([/?].*)?$'
               policy: 'bypass'
+            # Home Assistant's Frigate integration calls nvr.${domain} (host nginx) with no browser session.
+            - domain: 'nvr.${domain}'
+              networks:
+                - '10.3.2.10/32'
+              policy: 'bypass'
+            # Frigate and zigbee2mqtt UIs are admin-only.
+            - domain:
+                - 'nvr.${domain}'
+                - 'z2m.${domain}'
+              subject: 'group:admin'
+              policy: 'one_factor'
+            - domain:
+                - 'nvr.${domain}'
+                - 'z2m.${domain}'
+              policy: 'deny'
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'

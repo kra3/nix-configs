@@ -347,8 +347,10 @@
         lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)
           {
             owner = "root";
-            group = "jellyfin";
-            mode = "0440";
+            group = "root";
+            # Still world-readable: the container's jellyfin gid is allocated dynamically, so a host
+            # group can't be matched to it yet. Pin users.groups.jellyfin.gid in media-play first.
+            mode = "0444";
             content = jellyfinSsoAuthXmlContent;
           };
     };

@@ -1,4 +1,4 @@
-// Recomp Log server: one small process, SQLite storage, per-user data keyed by the
+// Fitness server: one small process, SQLite storage, per-user data keyed by the
 // username an authenticating reverse proxy (Authelia via nginx) passes in a header.
 use rusqlite::{params, Connection};
 use serde_json::{json, Value};
@@ -137,7 +137,7 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     respond(rq, 404, JSON, json!({"error": "not found"}).to_string())
 }
 
-// recomp-log import <data.json> <user>: load a {"YYYY-MM-DD": {...}} file once; skipped if the user already has data.
+// fitness import <data.json> <user>: load a {"YYYY-MM-DD": {...}} file once; skipped if the user already has data.
 fn import(db_path: &str, file: &str, user: &str) {
     let c = open(db_path);
     let n: i64 = c.query_row("SELECT COUNT(*) FROM docs WHERE user = ?1", params![user], |r| r.get(0)).unwrap_or(0);
@@ -166,10 +166,10 @@ fn import(db_path: &str, file: &str, user: &str) {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let db_path = env::var("DB_FILE").unwrap_or_else(|_| "recomp-log.db".into());
+    let db_path = env::var("DB_FILE").unwrap_or_else(|_| "fitness.db".into());
     if args.get(1).map(String::as_str) == Some("import") {
         if args.len() != 4 {
-            eprintln!("usage: recomp-log import <data.json> <user>");
+            eprintln!("usage: fitness import <data.json> <user>");
             process::exit(2);
         }
         return import(&db_path, &args[2], &args[3]);
@@ -184,7 +184,7 @@ fn main() {
         eprintln!("cannot listen on {host}:{port}: {e}");
         process::exit(1);
     });
-    println!("Recomp Log on http://{host}:{port}, database {db_path}, user header {header}");
+    println!("Fitness on http://{host}:{port}, database {db_path}, user header {header}");
     for rq in server.incoming_requests() {
         handle(rq, &db, &header, fallback.as_deref());
     }

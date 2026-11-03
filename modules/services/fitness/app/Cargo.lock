@@ -150,7 +150,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "recomp-log"
+name = "fitness"
 version = "0.1.0"
 dependencies = [
  "rusqlite",

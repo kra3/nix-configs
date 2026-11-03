@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.services-health-recomp-log =
+  flake.nixosModules.services-fitness-default =
     {
       config,
       lib,
@@ -8,59 +8,59 @@
       ...
     }:
     let
-      stateDir = "/srv/appdata/recomp-log";
+      stateDir = "/srv/appdata/fitness";
       port = 8787;
       # Authelia username whose existing browser-held log is seeded from
-      # recomp-log/data.json on first start (skipped once that user has rows).
+      # app/data.json on first start (skipped once that user has rows).
       importUser = "kra3";
 
-      recomp-log = pkgs.rustPlatform.buildRustPackage {
-        pname = "recomp-log";
+      fitness = pkgs.rustPlatform.buildRustPackage {
+        pname = "fitness";
         version = "0.1.0";
         src = lib.fileset.toSource {
-          root = ./recomp-log;
+          root = ./app;
           fileset = lib.fileset.unions [
-            ./recomp-log/Cargo.toml
-            ./recomp-log/Cargo.lock
-            ./recomp-log/index.html
-            ./recomp-log/src
+            ./app/Cargo.toml
+            ./app/Cargo.lock
+            ./app/index.html
+            ./app/src
           ];
         };
-        cargoLock.lockFile = ./recomp-log/Cargo.lock;
-        meta.mainProgram = "recomp-log";
+        cargoLock.lockFile = ./app/Cargo.lock;
+        meta.mainProgram = "fitness";
       };
     in
     {
-      users.users.recomp-log = {
+      users.users.fitness = {
         isSystemUser = true;
-        group = "recomp-log";
+        group = "fitness";
       };
-      users.groups.recomp-log = { };
+      users.groups.fitness = { };
 
-      systemd.tmpfiles.rules = [ "d ${stateDir} 0750 recomp-log recomp-log - -" ];
+      systemd.tmpfiles.rules = [ "d ${stateDir} 0750 fitness fitness - -" ];
 
-      systemd.services.recomp-log = {
-        description = "Recomp Log training tracker (Rust + SQLite)";
+      systemd.services.fitness = {
+        description = "Fitness training tracker (Rust + SQLite)";
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         environment = {
           HOST = "127.0.0.1";
           PORT = toString port;
-          DB_FILE = "${stateDir}/recomp-log.db";
+          DB_FILE = "${stateDir}/fitness.db";
           # Set by nginx after Authelia forward-auth (see flakeLib.nginx).
           USER_HEADER = "Remote-User";
         };
         preStart = ''
-          ${recomp-log}/bin/recomp-log import ${./recomp-log/data.json} ${lib.escapeShellArg importUser}
+          ${fitness}/bin/fitness import ${./app/data.json} ${lib.escapeShellArg importUser}
         '';
         serviceConfig =
           flakeLib.deployment-hardening.mkServiceSandbox {
             readWritePaths = [ stateDir ];
           }
           // {
-            User = "recomp-log";
-            Group = "recomp-log";
-            ExecStart = "${recomp-log}/bin/recomp-log";
+            User = "fitness";
+            Group = "fitness";
+            ExecStart = "${fitness}/bin/fitness";
             Restart = "on-failure";
             RestartSec = 5;
             MemoryMax = "64M";
@@ -68,7 +68,7 @@
           };
       };
 
-      services.nginx.virtualHosts."recomp.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
+      services.nginx.virtualHosts."fitness.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:${toString port}";

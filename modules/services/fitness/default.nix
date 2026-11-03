@@ -10,9 +10,6 @@
     let
       stateDir = "/srv/appdata/fitness";
       port = 8787;
-      # Authelia username whose existing browser-held log is seeded from
-      # app/data.json on first start (skipped once that user has rows).
-      importUser = "kra3";
 
       fitness = pkgs.rustPlatform.buildRustPackage {
         pname = "fitness";
@@ -50,9 +47,6 @@
           # Set by nginx after Authelia forward-auth (see flakeLib.nginx).
           USER_HEADER = "Remote-User";
         };
-        preStart = ''
-          ${fitness}/bin/fitness import ${./app/data.json} ${lib.escapeShellArg importUser}
-        '';
         serviceConfig =
           flakeLib.deployment-hardening.mkServiceSandbox {
             readWritePaths = [ stateDir ];

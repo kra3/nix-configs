@@ -38,6 +38,7 @@
     flakeModules.nixos.services-backup-usb
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
+    flakeModules.nixos.services-media-media-bot
     flakeModules.nixos.services-media-streaming-iptv
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-surveillance-camera-announce

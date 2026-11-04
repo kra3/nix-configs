@@ -671,7 +671,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         let hit = |i: usize, t: f64| count(&|d| d.nums[i].is_some_and(|v| v >= t));
         week_rows.push(json!({
             "start": day_str(from + 1), "end": day_str(to),
-            "workouts": count(&|d| d.workout), "planned": target_of(&targets, "workouts"),
+            "workouts": count(&|d| d.workout), "planned": num_value(target_of(&targets, "workouts")),
             "protein_days": hit(PROT, target_of(&targets, "protein")),
             "kcal_ok_days": count(&|d| d.nums[KCAL].is_some_and(|v| v <= target_of(&targets, "kcal") * 1.05)),
             "kcal_logged": count(&|d| d.nums[KCAL].is_some()),

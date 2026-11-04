@@ -31,6 +31,8 @@
   <p class="banner" id="banner" hidden></p>
 
   <div class="grid">
+    <section class="card span2 coach-prop" id="props" aria-label="Coach suggestions" hidden></section>
+
     <section class="card" aria-labelledby="h-today">
       <h2 id="h-today">Today</h2>
       <div id="bars"></div>
@@ -88,6 +90,21 @@
       <div class="actions"><button type="button" class="btn ghost" id="wk-kcal-use" hidden></button></div>
     </section>
 
+    <section class="card span2" aria-labelledby="h-coach">
+      <h2 id="h-coach">Coach</h2>
+      <ul class="co-alerts" id="co-alerts"></ul>
+      <h3 id="co-goals-h" hidden>Goals</h3>
+      <ul class="co-goals" id="co-goals"></ul>
+      <h3>Coach log</h3>
+      <ul class="co-log" id="co-log"></ul>
+      <div class="actions">
+        <label class="field full grow"><span>Note for your coach</span><input type="text" id="co-note" maxlength="1000" placeholder="Travelling next week, knee sore after leg press…"></label>
+        <button type="button" class="btn ghost" id="co-note-add">Add note</button>
+        <span class="status" id="st-note" role="status" aria-live="polite"></span>
+      </div>
+      <details class="mt"><summary>What your coach sees</summary><pre class="co-text" id="co-text"></pre></details>
+    </section>
+
     <section class="card span2" aria-labelledby="h-habits">
       <h2 id="h-habits">Last 14 days</h2>
       <div class="habits" id="habits"></div>
@@ -112,6 +129,34 @@
       <div class="stats" id="px-stats"></div>
       <div class="readout" id="ro-px" aria-live="polite"></div>
       <div class="chart" id="ch-px"></div>
+    </section>
+
+    <section class="card span2">
+      <details>
+        <summary>Profile and goals</summary>
+        <div class="fields mt">
+          <label class="field"><span>Birth year</span><input type="number" inputmode="numeric" min="1900" max="2030" id="p-birth"></label>
+          <label class="field"><span>Goal</span><select id="p-goal"></select></label>
+          <label class="field full"><span>About your goal</span><textarea id="p-goal-notes" maxlength="500" placeholder="Lose belly fat, build arms, legs and chest; then tone"></textarea></label>
+          <label class="field full"><span>Training background</span><input type="text" id="p-exp" maxlength="300" placeholder="Back after many years, starting from zero"></label>
+          <label class="field"><span>Days per week</span><input type="number" inputmode="numeric" min="1" max="7" id="p-dpw"></label>
+          <label class="field"><span>Session length (min)</span><input type="number" inputmode="numeric" min="10" max="240" id="p-min"></label>
+          <div class="field full"><span>Usual days (leave empty if they vary)</span><div class="days" id="p-days"></div></div>
+          <label class="field full"><span>Gym and equipment</span><textarea id="p-equip" maxlength="1500"></textarea></label>
+          <label class="field full"><span>Injuries and limits</span><textarea id="p-inj" maxlength="500"></textarea></label>
+          <label class="field full"><span>Conditions and medications</span><textarea id="p-cond" maxlength="500"></textarea></label>
+          <label class="field full"><span>Diet and allergies</span><textarea id="p-diet" maxlength="500"></textarea></label>
+          <label class="field full"><span>Anything else</span><textarea id="p-notes" maxlength="1000"></textarea></label>
+        </div>
+        <h3>Goals</h3>
+        <p class="note">Up to five, each with an optional date and checkpoints on the way. Exercise goals are a working weight for that machine.</p>
+        <div id="p-goals"></div>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="p-add-goal">+ Goal</button>
+          <button type="button" class="btn" id="p-save">Save profile</button>
+          <span class="status" id="st-profile" role="status" aria-live="polite"></span>
+        </div>
+      </details>
     </section>
 
     <section class="card span2">

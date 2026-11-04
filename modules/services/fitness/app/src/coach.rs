@@ -455,6 +455,8 @@ struct DayRow {
     nums: [Option<f64>; 7],
     workout: bool,
     sets: BTreeMap<String, Vec<(Option<f64>, f64)>>,
+    // Per set, parallel to `sets`: (reps in reserve, pain flag).
+    effort: BTreeMap<String, Vec<(Option<i64>, bool)>>,
 }
 
 fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayRow>> {
@@ -471,13 +473,16 @@ fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayRow>> {
     for row in rows {
         let (date, nums, workout) = row?;
         idx.insert(date.clone(), days.len());
-        days.push(DayRow { dn: day_num(&date), nums, workout, sets: BTreeMap::new() });
+        days.push(DayRow { dn: day_num(&date), nums, workout, sets: BTreeMap::new(), effort: BTreeMap::new() });
     }
-    let mut st = c.prepare_cached("SELECT date, exercise, kg, reps FROM sets WHERE user = ?1 ORDER BY date, exercise, idx")?;
-    let rows = st.query_map(params![user], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, Option<f64>>(2)?, r.get::<_, f64>(3)?)))?;
+    let mut st = c.prepare_cached("SELECT date, exercise, kg, reps, rir, pain FROM sets WHERE user = ?1 ORDER BY date, exercise, idx")?;
+    let rows = st.query_map(params![user], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, Option<f64>>(2)?, r.get::<_, f64>(3)?, r.get::<_, Option<i64>>(4)?, r.get::<_, Option<i64>>(5)? == Some(1)))
+    })?;
     for row in rows {
-        let (date, ex, kg, reps) = row?;
+        let (date, ex, kg, reps, rir, pain) = row?;
         if let Some(i) = idx.get(&date) {
+            days[*i].effort.entry(ex.clone()).or_default().push((rir, pain));
             days[*i].sets.entry(ex).or_default().push((kg, reps));
         }
     }
@@ -710,7 +715,12 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         let week_best = s.iter().filter(|x| x.0 > end - 7).max_by(|a, b| a.1.total_cmp(&b.1));
         let best = s.iter().max_by(|a, b| a.1.total_cmp(&b.1));
         let change = s.last().and_then(|l| s.iter().rev().find(|x| x.0 <= l.0 - 28).map(|r| (l.1 - r.1) / r.1 * 100.0));
+        let no_effort = Vec::new();
+        let effort = |d: &DayRow| d.effort.get(k).unwrap_or(&no_effort).clone();
+        let pain_sessions = days.iter().filter(|d| d.dn > end - 14 && d.dn <= end).filter(|d| effort(d).iter().any(|e| e.1)).count();
+        let last_day = days.iter().rfind(|d| d.dn <= end && d.sets.contains_key(k));
         training.push(json!({
+            "pain_sessions_14d": pain_sessions, "avg_rir_last": last_day.and_then(|d| training::avg_rir(&effort(d))).map(r1),
             "key": k, "name": inf.name, "unit": inf.unit, "sessions": s.len(),
             "last": s.last().map(set_v), "best_this_week": week_best.map(set_v), "best_ever": best.map(set_v),
             "change_4w_pct": change.map(r1), "stalled": stalled(&s),
@@ -748,6 +758,10 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
     // Alerts, most urgent first.
     let mut alerts = Vec::new();
     let mut alert = |kind: &str, text: String| alerts.push(json!({ "kind": kind, "text": text }));
+    let sore: Vec<String> = training.iter().filter(|t| t["pain_sessions_14d"].as_i64().unwrap_or(0) > 0).map(|t| f(&t["name"])).collect();
+    if !sore.is_empty() {
+        alert("pain", format!("Pain flagged in the last 14 days: {}. Progression is paused on these; consider a swap from the library if it keeps happening.", sore.join(", ")));
+    }
     if let (Some(p), Some(w)) = (pace, w_avg7) {
         if p < -0.01 * w {
             alert("weight", format!("Weight is falling {:.2} kg a week, faster than 1% of body weight. Eat more before muscle goes with it.", -p));
@@ -784,6 +798,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
             "two_weeks_exercises": lifts_2w.map(|x| x.1),
         },
         "nutrition": nutrition, "targets": Value::Object(targets),
+        "block": training::block_summary(&plan_v, end), "library_count": training::library_count(),
         "plan": plan.map(|(v, p)| json!({ "version": v, "data": p })),
         "open_proposals": open_props, "log": log,
     }))
@@ -979,6 +994,15 @@ pub fn summary_text(s: &Value) -> String {
             f(&t["change_4w_pct"]),
             if t["stalled"] == true { "; STALLED (no new best in 3 sessions)" } else { "" }
         );
+        let pain = t["pain_sessions_14d"].as_i64().unwrap_or(0);
+        if pain > 0 || !t["avg_rir_last"].is_null() {
+            let _ = writeln!(
+                o,
+                "      {}{}",
+                if pain > 0 { format!("PAIN in {pain} session{} in the last 14 days. ", if pain == 1 { "" } else { "s" }) } else { String::new() },
+                if t["avg_rir_last"].is_null() { String::new() } else { format!("Last session avg RIR {} (reps in reserve).", f(&t["avg_rir_last"])) }
+            );
+        }
     }
     let n = &s["nutrition"];
     let _ = writeln!(o, "\nNUTRITION (28 days)");
@@ -1026,6 +1050,12 @@ pub fn summary_text(s: &Value) -> String {
                     .collect();
                 let _ = writeln!(o, "  {w}: {}", list.join("; "));
             }
+            if let Some(w) = s["block"]["week"].as_i64() {
+                let _ = writeln!(o, "  Block: week {w} of {}{}", s["block"]["weeks"], if s["block"]["lighter_week"] == true { " (lighter week)" } else { "" });
+            } else if !s["block"].is_null() {
+                let _ = writeln!(o, "  Block: {} weeks from {}, not running on this date", s["block"]["weeks"], f(&s["block"]["start"]));
+            }
+            let _ = writeln!(o, "  Exercise library: {} exercises (GET /api/library)", s["library_count"]);
             let _ = writeln!(o, "  as JSON: {}", s["plan"]["data"]);
         }
     }

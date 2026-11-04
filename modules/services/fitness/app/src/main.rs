@@ -452,7 +452,7 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
                     Err(e) => return db_err(e),
                 }
             }
-            reply(200, json!({ "docs": docs }))
+            reply(200, json!({ "user": user, "docs": docs }))
         }
         (Method::Get, "/api/export") => match export_map(c, user) {
             Ok(v) => Reply {
@@ -548,6 +548,14 @@ fn header_of<'a>(rq: &'a Request, name: &str) -> Option<&'a str> {
     rq.headers().iter().find(|h| h.field.as_str().as_str().eq_ignore_ascii_case(name)).map(|h| h.value.as_str())
 }
 
+// An absent or empty claim is allowed (CLI tools, tests); a different name is not.
+fn same_user(claimed: Option<&str>, user: &str) -> bool {
+    match claimed.map(str::trim) {
+        None | Some("") => true,
+        Some(c) => c == user,
+    }
+}
+
 fn user_of(rq: &Request, header: &str, fallback: Option<&str>) -> Option<String> {
     match header_of(rq, header).map(str::trim) {
         Some(v) if !v.is_empty() && v.len() <= 128 => Some(v.to_string()),
@@ -571,6 +579,11 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     let Some(user) = user_of(&rq, header, fallback) else {
         return respond(rq, err(401, "no user"));
     };
+    // The page names the user it believes is signed in on every write. A
+    // mismatch means that tab's queued changes belong to someone else.
+    if method != Method::Get && !same_user(header_of(&rq, "X-Fitness-User"), &user) {
+        return respond(rq, err(403, "signed in as a different user"));
+    }
     let if_match = header_of(&rq, "If-Match").map(str::to_string);
     let limit = if path == "/api/import" { MAX_IMPORT } else { MAX_BODY };
     let mut body = Vec::new();
@@ -744,6 +757,9 @@ mod tests {
         call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), workout());
         let (_, list) = call(&c, "someone", Method::Get, "/api/log", None, Value::Null);
         assert_eq!(list["docs"], json!([]));
+        assert_eq!(list["user"], "someone");
+        assert!(same_user(None, "kra3") && same_user(Some(""), "kra3") && same_user(Some("kra3"), "kra3"));
+        assert!(!same_user(Some("someone"), "kra3"));
         let (code, _) = call(&c, "someone", Method::Put, "/api/log/2026-11-03", Some("0"), json!({ "weight": 80 }));
         assert_eq!(code, 200, "same date for another user is a separate row");
     }

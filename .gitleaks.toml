@@ -6,7 +6,12 @@ useDefault = true
 [allowlist]
 description = "sops-encrypted secrets and generated lock files"
 paths = [
-  '''^secrets/''',
+  # Only the sops-encrypted files (flake check secrets-encrypted enforces that they are);
+  # anything else under secrets/ is still scanned.
+  '''^secrets/secrets\.yaml$''',
+  '''^secrets/dns-static-leases\.yaml$''',
+  '''^secrets/leases\.json$''',
+  '''^secrets/floorplan\.png$''',
   '''^flake\.lock$''',
 ]
 regexes = [

@@ -56,16 +56,25 @@ views:
       name: Bedroom nap
       icon: mdi:power-sleep
     - type: custom:trip-card
-      entity: sensor.arun_trips
+      entity: sensor.arun_work_trips
       person: person.arun_karunagath
+      direction: work
+      hide_at: zone.work
       settings: &trip_settings
       - input_select.transit_max_changes
       - input_select.transit_modes
       - input_select.transit_walking
-      visibility:
+      visibility: &arun_only
       - condition: user
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
+    - type: custom:trip-card
+      entity: sensor.arun_home_trips
+      person: person.arun_karunagath
+      direction: home
+      hide_at: zone.home
+      settings: *trip_settings
+      visibility: *arun_only
     - type: custom:trip-card
       entity: sensor.arun_event_trips
       person: person.arun_karunagath
@@ -77,13 +86,22 @@ views:
         users:
         - a1d4401b8b714ebb83f07c5316ab399c
     - type: custom:trip-card
-      entity: sensor.anjali_trips
+      entity: sensor.anjali_work_trips
       person: person.anjalipc
+      direction: work
+      hide_at: zone.work_smil
       settings: *trip_settings
-      visibility:
+      visibility: &anjali_only
       - condition: user
         users:
         - 6edcc5a09c3144d684077ee362e7394a
+    - type: custom:trip-card
+      entity: sensor.anjali_home_trips
+      person: person.anjalipc
+      direction: home
+      hide_at: zone.home
+      settings: *trip_settings
+      visibility: *anjali_only
     - type: custom:trip-card
       entity: sensor.anjali_event_trips
       person: person.anjalipc

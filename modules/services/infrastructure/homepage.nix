@@ -376,7 +376,7 @@
                   description = "Training and body log";
                   icon = "mdi-dumbbell";
                   href = "https://fitness.${domain}";
-                  siteMonitor = "https://fitness.${domain}";
+                  siteMonitor = "https://fitness.${domain}/healthz";
                 };
               }
             ];

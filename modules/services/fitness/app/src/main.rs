@@ -5,7 +5,7 @@
 // user. The page still exchanges whole day documents; every write carries the
 // version it was based on (If-Match) and a stale write gets 409 with the current
 // copy, so two devices never silently overwrite each other.
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::{json, Map, Value};
 use std::io::Read;
 use std::sync::Mutex;
@@ -14,6 +14,8 @@ use std::{env, fs, process};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 const INDEX: &str = include_str!("../index.html");
+const APP_JS: &str = include_str!("../app.js");
+const APP_CSS: &str = include_str!("../app.css");
 const SW: &str = include_str!("../sw.js");
 const MANIFEST: &str = include_str!("../manifest.webmanifest");
 const ICON_192: &[u8] = include_bytes!("../icon-192.png");
@@ -21,9 +23,9 @@ const ICON_512: &[u8] = include_bytes!("../icon-512.png");
 const MAX_BODY: u64 = 262_144;
 const MAX_IMPORT: u64 = 4 * 1024 * 1024;
 const JSON: &str = "application/json";
-const CSP: &str = "default-src 'self'; script-src 'self' 'unsafe-inline'; \
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; \
-    img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; \
+// Script and styles are separate same-origin files, so nothing inline is allowed.
+const CSP: &str = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; \
+    connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; \
     base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 // Numeric day fields and their upper bounds (all must be >= 0).
@@ -48,8 +50,13 @@ const SETTING_NUM: [(&str, f64); 8] = [
 const MAX_EXERCISES: usize = 30;
 const MAX_SETS: usize = 20;
 const MAX_NOTE: usize = 500;
+const WORKOUTS: [&str; 2] = ["A", "B"];
+const UNITS: [&str; 3] = ["kg", "reps", "sec"];
+const MAX_PLAN_EXERCISES: usize = 15;
+const MAX_NAME: usize = 60;
 
-const SCHEMA: &str = "
+// Schema version 1: days, sets, settings.
+const SCHEMA_1: &str = "
 CREATE TABLE days(
   user TEXT NOT NULL, date TEXT NOT NULL,
   weight REAL, waist REAL, kcal REAL, protein REAL, steps REAL, sleep REAL,
@@ -68,17 +75,34 @@ CREATE TABLE settings(
   version INTEGER NOT NULL, updated INTEGER NOT NULL) WITHOUT ROWID;
 PRAGMA user_version = 1;";
 
+// Schema version 2: each user's workout plan (A/B exercise lists), editable in the page.
+const SCHEMA_2: &str = "
+CREATE TABLE plans(
+  user TEXT NOT NULL PRIMARY KEY,
+  version INTEGER NOT NULL, updated INTEGER NOT NULL) WITHOUT ROWID;
+CREATE TABLE plan_exercises(
+  user TEXT NOT NULL, workout TEXT NOT NULL CHECK (workout IN ('A', 'B')), pos INTEGER NOT NULL,
+  key TEXT NOT NULL, name TEXT NOT NULL, sets INTEGER NOT NULL, lo INTEGER NOT NULL, hi INTEGER NOT NULL,
+  unit TEXT NOT NULL CHECK (unit IN ('kg', 'reps', 'sec')),
+  PRIMARY KEY (user, workout, pos),
+  UNIQUE (user, workout, key),
+  FOREIGN KEY (user) REFERENCES plans(user) ON DELETE CASCADE) WITHOUT ROWID;
+PRAGMA user_version = 2;";
+
+// Migrations run in order, each in its own transaction, from the stored user_version.
+const MIGRATIONS: [&str; 2] = [SCHEMA_1, SCHEMA_2];
+
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
     let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-    match v {
-        0 => c.execute_batch(SCHEMA),
-        1 => Ok(()),
-        _ => {
-            eprintln!("database schema version {v} is newer than this build understands");
-            process::exit(1);
-        }
+    if v as usize > MIGRATIONS.len() {
+        eprintln!("database schema version {v} is newer than this build understands");
+        process::exit(1);
     }
+    for m in &MIGRATIONS[v as usize..] {
+        c.execute_batch(&format!("BEGIN; {m} COMMIT;"))?;
+    }
+    Ok(())
 }
 
 fn open(path: &str) -> Connection {
@@ -91,6 +115,15 @@ fn open(path: &str) -> Connection {
         process::exit(1);
     });
     c
+}
+
+// Read-only, no migrations: for the backup job, which must not change the
+// live database's schema under a running service.
+fn open_ro(path: &str) -> Connection {
+    Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX).unwrap_or_else(|e| {
+        eprintln!("cannot open database {path}: {e}");
+        process::exit(1);
+    })
 }
 
 fn now() -> i64 {
@@ -192,6 +225,61 @@ fn parse_settings(v: &Value) -> Result<[Option<f64>; 8], String> {
     Ok(out)
 }
 
+#[derive(Debug, PartialEq)]
+struct PlanEx {
+    workout: &'static str,
+    key: String,
+    name: String,
+    sets: i64,
+    lo: i64,
+    hi: i64,
+    unit: String,
+}
+
+fn int_field(o: &Map<String, Value>, k: &str, lo: i64, hi: i64) -> Result<i64, String> {
+    o.get(k).and_then(Value::as_i64).filter(|x| (lo..=hi).contains(x)).ok_or_else(|| format!("{k} must be a whole number from {lo} to {hi}"))
+}
+
+// {"A": [{"k", "n", "sets", "lo", "hi", "u"}, ...], "B": [...]}
+fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
+    let o = v.as_object().ok_or("object expected")?;
+    if let Some(k) = o.keys().find(|k| !WORKOUTS.contains(&k.as_str())) {
+        return Err(format!("unknown workout {k}"));
+    }
+    let mut out = Vec::new();
+    for w in WORKOUTS {
+        let Some(list) = o.get(w) else { continue };
+        let list = list.as_array().ok_or_else(|| format!("workout {w} must be a list"))?;
+        if list.len() > MAX_PLAN_EXERCISES {
+            return Err(format!("too many exercises in workout {w}"));
+        }
+        let mut seen = Vec::new();
+        for (i, e) in list.iter().enumerate() {
+            let at = format!("workout {w}, exercise {}", i + 1);
+            let e = e.as_object().ok_or_else(|| format!("{at} must be an object"))?;
+            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u"].contains(&k.as_str())) {
+                return Err(format!("{at}: unknown field {k}"));
+            }
+            let key = e.get("k").and_then(Value::as_str).filter(|k| valid_key(k)).ok_or_else(|| format!("{at}: bad key"))?;
+            if seen.contains(&key) {
+                return Err(format!("{at}: {key} appears twice"));
+            }
+            seen.push(key);
+            let name = e.get("n").and_then(Value::as_str).map(str::trim).filter(|n| !n.is_empty() && n.chars().count() <= MAX_NAME);
+            let name = name.ok_or_else(|| format!("{at}: name must be 1 to {MAX_NAME} characters"))?;
+            let unit = e.get("u").and_then(Value::as_str).filter(|u| UNITS.contains(u)).ok_or_else(|| format!("{at}: unit must be kg, reps or sec"))?;
+            let sets = int_field(e, "sets", 1, 10).map_err(|m| format!("{at}: {m}"))?;
+            let lo = int_field(e, "lo", 1, 600).map_err(|m| format!("{at}: {m}"))?;
+            let hi = int_field(e, "hi", 1, 600).map_err(|m| format!("{at}: {m}"))?;
+            if lo > hi {
+                return Err(format!("{at}: range low is above high"));
+            }
+            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into() });
+        }
+    }
+    Ok(out)
+}
+
 /* ---------- rows -> JSON document ---------- */
 
 // Whole numbers go back out as integers so 12 reps stays 12, not 12.0.
@@ -266,6 +354,31 @@ fn get_settings(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Val
     .optional()
 }
 
+fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>> {
+    let Some(version) = c.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get::<_, i64>(0)).optional()? else {
+        return Ok(None);
+    };
+    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
+    let rows = st.query_map(params![user], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            json!({ "k": r.get::<_, String>(1)?, "n": r.get::<_, String>(2)?, "sets": r.get::<_, i64>(3)?,
+                    "lo": r.get::<_, i64>(4)?, "hi": r.get::<_, i64>(5)?, "u": r.get::<_, String>(6)? }),
+        ))
+    })?;
+    let mut m = Map::new();
+    for w in WORKOUTS {
+        m.insert(w.into(), json!([]));
+    }
+    for row in rows {
+        let (w, e) = row?;
+        if let Some(Value::Array(list)) = m.get_mut(&w) {
+            list.push(e);
+        }
+    }
+    Ok(Some((version, Value::Object(m))))
+}
+
 fn list_dates(c: &Connection, user: &str) -> rusqlite::Result<Vec<String>> {
     let mut st = c.prepare_cached("SELECT date FROM days WHERE user = ?1 ORDER BY date")?;
     let rows = st.query_map(params![user], |r| r.get::<_, String>(0))?;
@@ -273,12 +386,15 @@ fn list_dates(c: &Connection, user: &str) -> rusqlite::Result<Vec<String>> {
 }
 
 fn get_doc(c: &Connection, user: &str, id: &str) -> rusqlite::Result<Option<(i64, Value)>> {
-    if id == "settings" {
-        get_settings(c, user)
-    } else {
-        get_day(c, user, id)
+    match id {
+        "settings" => get_settings(c, user),
+        "plan" => get_plan(c, user),
+        _ => get_day(c, user, id),
     }
 }
+
+// Ids that are not days.
+const SINGLETONS: [&str; 2] = ["settings", "plan"];
 
 /* ---------- writes (version-checked) ---------- */
 
@@ -329,6 +445,34 @@ fn write_settings(c: &Connection, user: &str, s: &[Option<f64>; 8], base: i64) -
     Ok(Some(version))
 }
 
+fn write_plan(c: &Connection, user: &str, p: &[PlanEx], base: i64) -> rusqlite::Result<Option<i64>> {
+    let tx = c.unchecked_transaction()?;
+    let cur: Option<i64> = tx.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get(0)).optional()?;
+    if cur.unwrap_or(0) != base {
+        return Ok(None);
+    }
+    let version = base + 1;
+    tx.execute(
+        "INSERT INTO plans(user, version, updated) VALUES(?1, ?2, ?3)
+         ON CONFLICT(user) DO UPDATE SET version = excluded.version, updated = excluded.updated",
+        params![user, version, now()],
+    )?;
+    tx.execute("DELETE FROM plan_exercises WHERE user = ?1", params![user])?;
+    {
+        let mut st = tx.prepare_cached(
+            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        )?;
+        let mut pos = [0i64; 2];
+        for e in p {
+            let i = WORKOUTS.iter().position(|w| *w == e.workout).unwrap_or(0);
+            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit])?;
+            pos[i] += 1;
+        }
+    }
+    tx.commit()?;
+    Ok(Some(version))
+}
+
 // Ok(true) when the day is gone afterwards (deleted now or already absent),
 // Ok(false) when it exists at a different version than `base`.
 fn delete_day(c: &Connection, user: &str, date: &str, base: i64) -> rusqlite::Result<bool> {
@@ -368,6 +512,14 @@ fn import_map(c: &Connection, user: &str, v: &Value) -> Result<ImportReport, Str
                     continue;
                 }
             }
+        } else if id == "plan" {
+            match parse_plan(d) {
+                Ok(p) => write_plan(c, user, &p, 0).map_err(|e| e.to_string())?,
+                Err(_) => {
+                    rep.invalid += 1;
+                    continue;
+                }
+            }
         } else if valid_date(id) {
             match parse_day(d) {
                 Ok(day) => write_day(c, user, id, &day, 0).map_err(|e| e.to_string())?,
@@ -396,10 +548,21 @@ fn export_map(c: &Connection, user: &str) -> rusqlite::Result<Value> {
             m.insert(d, doc);
         }
     }
-    if let Some((_, s)) = get_settings(c, user)? {
-        m.insert("settings".into(), s);
+    for id in SINGLETONS {
+        if let Some((_, d)) = get_doc(c, user, id)? {
+            m.insert(id.into(), d);
+        }
     }
     Ok(Value::Object(m))
+}
+
+// fitness backup <file>: a consistent copy of the live database (VACUUM INTO),
+// written beside the target and renamed into place.
+fn backup(c: &Connection, dest: &str) -> Result<(), String> {
+    let tmp = format!("{dest}.tmp");
+    let _ = fs::remove_file(&tmp);
+    c.execute("VACUUM INTO ?1", params![tmp]).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, dest).map_err(|e| e.to_string())
 }
 
 /* ---------- HTTP ---------- */
@@ -445,7 +608,7 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
                 Ok(d) => d,
                 Err(e) => return db_err(e),
             };
-            for id in dates.iter().map(String::as_str).chain(std::iter::once("settings")) {
+            for id in dates.iter().map(String::as_str).chain(SINGLETONS) {
                 match get_doc(c, user, id) {
                     Ok(Some((v, d))) => docs.push(json!({ "id": id, "version": v, "data": d })),
                     Ok(None) => {}
@@ -475,15 +638,15 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
         }
         (Method::Put, p) | (Method::Delete, p) if p.starts_with("/api/log/") => {
             let id = &p["/api/log/".len()..];
-            if id != "settings" && !valid_date(id) {
+            if !SINGLETONS.contains(&id) && !valid_date(id) {
                 return err(400, "bad id");
             }
             let Some(base) = parse_version(if_match) else {
                 return err(428, "If-Match with the base version is required");
             };
             if *method == Method::Delete {
-                if id == "settings" {
-                    return err(400, "settings cannot be deleted");
+                if SINGLETONS.contains(&id) {
+                    return err(400, "only days can be deleted");
                 }
                 return match delete_day(c, user, id, base) {
                     Ok(true) => reply(200, json!({ "deleted": true })),
@@ -498,6 +661,11 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
             let res = if id == "settings" {
                 match parse_settings(&v) {
                     Ok(s) => write_settings(c, user, &s, base),
+                    Err(e) => return err(400, &e),
+                }
+            } else if id == "plan" {
+                match parse_plan(&v) {
+                    Ok(p) => write_plan(c, user, &p, base),
                     Err(e) => return err(400, &e),
                 }
             } else {
@@ -519,6 +687,8 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
 fn static_file(path: &str) -> Option<(&'static str, &'static [u8])> {
     Some(match path {
         "/" | "/index.html" => ("text/html; charset=utf-8", INDEX.as_bytes()),
+        "/app.js" => ("text/javascript; charset=utf-8", APP_JS.as_bytes()),
+        "/app.css" => ("text/css; charset=utf-8", APP_CSS.as_bytes()),
         "/sw.js" => ("text/javascript; charset=utf-8", SW.as_bytes()),
         "/manifest.webmanifest" => ("application/manifest+json", MANIFEST.as_bytes()),
         "/icon-192.png" => ("image/png", ICON_192),
@@ -567,10 +737,22 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     let url = rq.url().to_string();
     let path = url.split('?').next().unwrap_or("/").to_string();
     let method = rq.method().clone();
+    // Paths are matched as raw bytes, so refuse anything a proxy could have
+    // normalised differently: dot segments, empty segments, percent-encoding.
+    if path.contains("/.") || path.contains("//") || path.contains('%') {
+        return respond(rq, err(400, "bad path"));
+    }
 
     if method == Method::Get {
         if let Some((ctype, body)) = static_file(&path) {
             return respond(rq, Reply { code: 200, ctype, body: body.to_vec(), extra: vec![] });
+        }
+        // Unauthenticated liveness check (nginx exposes only this path without
+        // login): the process answers and the database is readable.
+        if path == "/healthz" {
+            let ok = db.lock().unwrap_or_else(|p| p.into_inner()).query_row("SELECT 1", [], |r| r.get::<_, i64>(0)).is_ok();
+            let r = if ok { reply(200, json!({ "ok": true })) } else { err(503, "database unavailable") };
+            return respond(rq, r);
         }
     }
     if !path.starts_with("/api/") {
@@ -650,6 +832,19 @@ fn main() {
             process::exit(2);
         }
         return import_cli(&db_path, &args[2], &args[3]);
+    }
+    if args.get(1).map(String::as_str) == Some("backup") {
+        if args.len() != 3 {
+            eprintln!("usage: fitness backup <file>");
+            process::exit(2);
+        }
+        match backup(&open_ro(&db_path), &args[2]) {
+            Ok(()) => return println!("backed up {db_path} to {}", args[2]),
+            Err(e) => {
+                eprintln!("backup failed: {e}");
+                process::exit(1);
+            }
+        }
     }
     // LISTEN is host:port or unix:/path/to.sock.
     let listen = env::var("LISTEN").unwrap_or_else(|_| "127.0.0.1:8787".into());
@@ -792,6 +987,156 @@ mod tests {
         let fresh = db();
         assert_eq!(import_map(&fresh, "kra3", &exported).unwrap().imported, 3);
         assert_eq!(export_map(&fresh, "kra3").unwrap(), exported);
+    }
+
+    fn plan() -> Value {
+        json!({
+            "A": [ { "k": "legpress", "n": "Leg press", "sets": 3, "lo": 10, "hi": 12, "u": "kg" },
+                   { "k": "plank", "n": "Plank", "sets": 2, "lo": 30, "hi": 60, "u": "sec" } ],
+            "B": [ { "k": "legpress", "n": "Leg press", "sets": 3, "lo": 8, "hi": 10, "u": "kg" } ]
+        })
+    }
+
+    #[test]
+    fn plan_round_trip_keeps_order_and_versions() {
+        let c = db();
+        let (code, v) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), plan());
+        assert_eq!((code, v["version"].as_i64()), (200, Some(1)));
+        let (_, list) = call(&c, "kra3", Method::Get, "/api/log", None, Value::Null);
+        let doc = list["docs"].as_array().unwrap().iter().find(|d| d["id"] == "plan").unwrap();
+        assert_eq!(doc["data"], plan());
+        let mut swapped = plan();
+        swapped["A"].as_array_mut().unwrap().reverse();
+        call(&c, "kra3", Method::Put, "/api/log/plan", Some("1"), swapped.clone());
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap(), (2, swapped));
+        let (code, _) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("1"), plan());
+        assert_eq!(code, 409);
+        let (code, _) = call(&c, "kra3", Method::Delete, "/api/log/plan", Some("2"), Value::Null);
+        assert_eq!(code, 400);
+    }
+
+    #[test]
+    fn plan_validation() {
+        let c = db();
+        let ex = |f: &dyn Fn(&mut Value)| {
+            let mut p = plan();
+            f(&mut p["A"][0]);
+            p
+        };
+        for bad in [
+            json!({ "C": [] }),
+            ex(&|e| e["u"] = json!("lb")),
+            ex(&|e| e["lo"] = json!(13)),
+            ex(&|e| e["sets"] = json!(0)),
+            ex(&|e| e["n"] = json!("  ")),
+            ex(&|e| e["k"] = json!("Leg Press")),
+            ex(&|e| e["k"] = json!("plank")),
+            ex(&|e| e["extra"] = json!(1)),
+        ] {
+            let (code, _) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), bad.clone());
+            assert_eq!(code, 400, "{bad}");
+        }
+    }
+
+    #[test]
+    fn migrates_a_version_1_database() {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(&format!("BEGIN; {SCHEMA_1} COMMIT;")).unwrap();
+        c.execute("INSERT INTO days(user, date, weight, version, updated) VALUES('kra3', '2026-11-03', 66, 1, 0)", []).unwrap();
+        init(&c).unwrap();
+        let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(v, MIGRATIONS.len() as i64);
+        assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["weight"], 66);
+        assert_eq!(write_plan(&c, "kra3", &parse_plan(&plan()).unwrap(), 0).unwrap(), Some(1));
+        init(&c).unwrap();
+    }
+
+    #[test]
+    fn backup_is_a_readable_copy() {
+        let dir = env::temp_dir().join(format!("fitness-test-{}", process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("live.db");
+        let dest = dir.join("copy.db");
+        let c = open(src.to_str().unwrap());
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), workout());
+        // As the backup job does: a second, read-only connection beside the live one.
+        let ro = open_ro(src.to_str().unwrap());
+        backup(&ro, dest.to_str().unwrap()).unwrap();
+        backup(&ro, dest.to_str().unwrap()).unwrap();
+        let copy = open(dest.to_str().unwrap());
+        assert_eq!(get_day(&copy, "kra3", "2026-11-03").unwrap().unwrap().1, workout());
+        drop(c);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn backup_does_not_migrate_the_source() {
+        let dir = env::temp_dir().join(format!("fitness-test-ro-{}", process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("old.db");
+        Connection::open(&src).unwrap().execute_batch("CREATE TABLE t (x); PRAGMA user_version = 1;").unwrap();
+        backup(&open_ro(src.to_str().unwrap()), dir.join("copy.db").to_str().unwrap()).unwrap();
+        let v: i64 = Connection::open(&src).unwrap().query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(v, 1);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /* ---------- HTTP layer, through a real socket ---------- */
+
+    fn server() -> std::net::SocketAddr {
+        let s = Server::http("127.0.0.1:0").unwrap();
+        let addr = s.server_addr().to_ip().unwrap();
+        std::thread::spawn(move || {
+            let db = Mutex::new(db());
+            for rq in s.incoming_requests() {
+                handle(rq, &db, "Remote-User", None);
+            }
+        });
+        addr
+    }
+
+    fn status(addr: std::net::SocketAddr, head: &str, body: &[u8]) -> u16 {
+        use std::io::Write;
+        let mut t = std::net::TcpStream::connect(addr).unwrap();
+        let req = format!("{head}\r\nHost: x\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
+        t.write_all(req.as_bytes()).unwrap();
+        let _ = t.write_all(body); // the server may answer before reading it all
+        let mut out = String::new();
+        let _ = t.read_to_string(&mut out);
+        out.split(' ').nth(1).and_then(|c| c.parse().ok()).unwrap_or(0)
+    }
+
+    #[test]
+    fn http_user_and_health() {
+        let a = server();
+        assert_eq!(status(a, "GET /healthz HTTP/1.1", b""), 200);
+        assert_eq!(status(a, "GET /api/log HTTP/1.1", b""), 401);
+        assert_eq!(status(a, "GET /api/log HTTP/1.1\r\nRemote-User: kra3", b""), 200);
+        assert_eq!(status(a, "GET /nope HTTP/1.1\r\nRemote-User: kra3", b""), 404);
+    }
+
+    #[test]
+    fn http_refuses_paths_a_proxy_could_normalise() {
+        let a = server();
+        for p in ["/api/export/../../healthz", "/api/./export", "/api//export", "/api/export%3F/../../healthz", "/healthz/.."] {
+            assert_eq!(status(a, &format!("GET {p} HTTP/1.1\r\nRemote-User: kra3"), b""), 400, "{p}");
+        }
+    }
+
+    #[test]
+    fn http_write_for_another_user_is_refused() {
+        let a = server();
+        let head = |claim: &str| format!("PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nIf-Match: 0{claim}");
+        assert_eq!(status(a, &head("\r\nX-Fitness-User: someone"), b"{}"), 403);
+        assert_eq!(status(a, &head("\r\nX-Fitness-User: kra3"), b"{}"), 200);
+    }
+
+    #[test]
+    fn http_body_limit() {
+        let a = server();
+        let big = vec![b' '; MAX_BODY as usize + 10];
+        let head = "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nIf-Match: 0";
+        assert_eq!(status(a, head, &big), 413);
     }
 
     #[test]

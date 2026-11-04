@@ -5,7 +5,7 @@
 
 use super::*;
 
-pub const SCHEMA_7: &str = "
+pub const SCHEMA_8: &str = "
 ALTER TABLE days ADD COLUMN energy REAL;
 ALTER TABLE days ADD COLUMN stress REAL;
 ALTER TABLE days ADD COLUMN soreness REAL;
@@ -21,7 +21,7 @@ CREATE TABLE user_docs(
   user TEXT NOT NULL, id TEXT NOT NULL CHECK (id IN ('meals', 'supplements')), data TEXT NOT NULL,
   version INTEGER NOT NULL, updated INTEGER NOT NULL,
   PRIMARY KEY (user, id)) WITHOUT ROWID;
-PRAGMA user_version = 7;";
+PRAGMA user_version = 8;";
 
 const MAX_MEALS: usize = 40;
 const MAX_SUPPS: usize = 15;

@@ -125,7 +125,7 @@ PRAGMA user_version = 5;";
 // Migrations run in order, each in its own transaction, from the stored user_version.
 // Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
 // Schema version 7 (daily check-in, measurements, saved meals, supplements) lives in daily.rs.
-const MIGRATIONS: [&str; 7] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, daily::SCHEMA_7];
+const MIGRATIONS: [&str; 7] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, daily::SCHEMA_8];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -1219,7 +1219,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_version_6_to_7_keeping_data() {
+    fn migrates_version_6_to_latest_keeping_data() {
         let c = Connection::open_in_memory().unwrap();
         for m in &MIGRATIONS[..6] {
             c.execute_batch(&format!("BEGIN; {m} COMMIT;")).unwrap();

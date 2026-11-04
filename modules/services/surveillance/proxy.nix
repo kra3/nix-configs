@@ -23,8 +23,8 @@
         upstream = "http://${homeAutoIp}:80";
         # Remote-* headers come only from the Authelia auth_request result (never the client's).
         forwardAuth = true;
-        # Home Assistant (10.3.2.10) is bypassed in Authelia and has no session, so
-        # Authelia returns no Remote-User; give it a fixed identity for Frigate's proxy-auth.
+        # Home Assistant (10.3.2.10) is bypassed in Authelia, so it reaches Frigate with no
+        # Remote-User and authenticates with Frigate's own login, as before.
       };
     };
 }

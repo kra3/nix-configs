@@ -126,7 +126,7 @@
       # into fields that are still empty: anything logged by hand is kept.
       sops.secrets."homeassistant.token" = { };
       systemd.services.fitness-health-sync = {
-        description = "Fill Fitness steps, sleep and weight from Home Assistant";
+        description = "Fill Fitness steps, sleep, weight and body fat from Home Assistant";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         environment = {
@@ -182,9 +182,12 @@
                   if v=$(reading sensor.meghanadha_sleep_duration "$day" max) && [ -n "$v" ]; then
                     fields+=("sleep=$(jq -n --argjson m "$v" '($m / 15 | round) / 4')")
                   fi
-                  # Withings scale: the first weigh-in of the day.
+                  # Withings scale: the first weigh-in of the day (weight and body fat %).
                   if v=$(reading sensor.office_room_withings_kra_weight "$day" first) && [ -n "$v" ]; then
                     fields+=("weight=$(printf '%.1f' "$v")")
+                  fi
+                  if v=$(reading sensor.office_room_withings_kra_fat_ratio "$day" first) && [ -n "$v" ]; then
+                    fields+=("bodyfat=$(printf '%.1f' "$v")")
                   fi
                   if [ ''${#fields[@]} -eq 0 ]; then
                     echo "$day: no readings from Home Assistant"

@@ -29,13 +29,14 @@ const CSP: &str = "default-src 'self'; script-src 'self'; style-src 'self'; img-
     base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 // Numeric day fields and their upper bounds (all must be >= 0).
-const DAY_NUM: [(&str, f64); 6] = [
+const DAY_NUM: [(&str, f64); 7] = [
     ("weight", 500.0),
     ("waist", 300.0),
     ("kcal", 20_000.0),
     ("protein", 1_000.0),
     ("steps", 200_000.0),
     ("sleep", 24.0),
+    ("bodyfat", 75.0),
 ];
 const SETTING_NUM: [(&str, f64); 8] = [
     ("kcal", 20_000.0),
@@ -100,8 +101,13 @@ const SCHEMA_4: &str = "
 ALTER TABLE settings ADD COLUMN sex TEXT CHECK (sex IN ('m', 'f'));
 PRAGMA user_version = 4;";
 
+// Schema version 5: body fat % per day, as measured (e.g. by the Withings scale).
+const SCHEMA_5: &str = "
+ALTER TABLE days ADD COLUMN bodyfat REAL;
+PRAGMA user_version = 5;";
+
 // Migrations run in order, each in its own transaction, from the stored user_version.
-const MIGRATIONS: [&str; 4] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4];
+const MIGRATIONS: [&str; 5] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -157,7 +163,7 @@ fn valid_key(s: &str) -> bool {
 
 #[derive(Debug, PartialEq)]
 struct Day {
-    nums: [Option<f64>; 6],
+    nums: [Option<f64>; 7],
     note: Option<String>,
     workout: Option<String>,
     sets: Vec<(String, i64, Option<f64>, f64)>,
@@ -182,7 +188,7 @@ fn parse_day(v: &Value) -> Result<Day, String> {
             return Err(format!("unknown field {k}"));
         }
     }
-    let mut nums = [None; 6];
+    let mut nums = [None; 7];
     for (i, (name, max)) in DAY_NUM.iter().enumerate() {
         nums[i] = num_field(o.get(*name), name, *max)?;
     }
@@ -326,14 +332,14 @@ fn put_num(m: &mut Map<String, Value>, k: &str, v: Option<f64>) {
 fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i64, Value)>> {
     let row = c
         .query_row(
-            "SELECT weight, waist, kcal, protein, steps, sleep, note, workout, version FROM days WHERE user = ?1 AND date = ?2",
+            "SELECT weight, waist, kcal, protein, steps, sleep, bodyfat, note, workout, version FROM days WHERE user = ?1 AND date = ?2",
             params![user, date],
             |r| {
-                let mut nums = [None; 6];
+                let mut nums = [None; 7];
                 for (i, n) in nums.iter_mut().enumerate() {
                     *n = r.get::<_, Option<f64>>(i)?;
                 }
-                Ok((nums, r.get::<_, Option<String>>(6)?, r.get::<_, Option<String>>(7)?, r.get::<_, i64>(8)?))
+                Ok((nums, r.get::<_, Option<String>>(7)?, r.get::<_, Option<String>>(8)?, r.get::<_, i64>(9)?))
             },
         )
         .optional()?;
@@ -438,12 +444,12 @@ fn write_day(c: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusq
     let version = base + 1;
     let n = &d.nums;
     tx.execute(
-        "INSERT INTO days(user, date, weight, waist, kcal, protein, steps, sleep, note, workout, version, updated)
-         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+        "INSERT INTO days(user, date, weight, waist, kcal, protein, steps, sleep, bodyfat, note, workout, version, updated)
+         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
          ON CONFLICT(user, date) DO UPDATE SET weight = excluded.weight, waist = excluded.waist, kcal = excluded.kcal,
-           protein = excluded.protein, steps = excluded.steps, sleep = excluded.sleep, note = excluded.note,
-           workout = excluded.workout, version = excluded.version, updated = excluded.updated",
-        params![user, date, n[0], n[1], n[2], n[3], n[4], n[5], d.note, d.workout, version, now()],
+           protein = excluded.protein, steps = excluded.steps, sleep = excluded.sleep, bodyfat = excluded.bodyfat,
+           note = excluded.note, workout = excluded.workout, version = excluded.version, updated = excluded.updated",
+        params![user, date, n[0], n[1], n[2], n[3], n[4], n[5], n[6], d.note, d.workout, version, now()],
     )?;
     tx.execute("DELETE FROM sets WHERE user = ?1 AND date = ?2", params![user, date])?;
     {
@@ -1241,6 +1247,9 @@ mod tests {
         assert!(fill_day(&c, "kra3", "2026-11-3", &[v("steps", 1.0)]).is_err());
         assert!(fill_day(&c, "kra3", "2026-11-04", &[v("mood", 1.0)]).is_err());
         assert!(fill_day(&c, "kra3", "2026-11-04", &[v("steps", -5.0)]).is_err());
+        assert_eq!(fill_day(&c, "kra3", "2026-11-04", &[v("bodyfat", 25.3)]).unwrap(), vec!["bodyfat"]);
+        assert_eq!(get_day(&c, "kra3", "2026-11-04").unwrap().unwrap().1["bodyfat"], json!(25.3));
+        assert!(fill_day(&c, "kra3", "2026-11-05", &[v("bodyfat", 80.0)]).is_err());
     }
 
     #[test]

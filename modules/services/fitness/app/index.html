@@ -46,6 +46,7 @@
           <label class="field"><span>Protein (g)</span><input type="number" inputmode="numeric" step="1" min="0" id="f-protein"></label>
           <label class="field"><span>Steps</span><input type="number" inputmode="numeric" step="1" min="0" id="f-steps"></label>
           <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" step="0.25" min="0" id="f-sleep"></label>
+          <label class="field"><span>Body fat (%)</span><input type="number" inputmode="decimal" step="0.1" min="0" max="75" id="f-bodyfat"></label>
           <label class="field full"><span>Note</span><textarea id="f-note" maxlength="500"></textarea></label>
         </div>
         <div class="actions">
@@ -69,6 +70,13 @@
       <div class="stats" id="cstats"></div>
       <div class="readout" id="ro-waist" aria-live="polite"></div>
       <div class="chart waist" id="ch-waist"></div>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-bf">
+      <h2 id="h-bf">Body fat</h2>
+      <div class="stats" id="bstats"></div>
+      <div class="readout" id="ro-bf" aria-live="polite"></div>
+      <div class="chart" id="ch-bf"></div>
     </section>
 
     <section class="card span2" aria-labelledby="h-week">

@@ -56,7 +56,7 @@ function saveDay(){
   var d = sel;
   var next = Object.assign({}, docs[d] || {});
   next.date = d;
-  var map = {weight:'f-weight', waist:'f-waist', kcal:'f-kcal', protein:'f-protein', steps:'f-steps', sleep:'f-sleep'};
+  var map = {weight:'f-weight', waist:'f-waist', kcal:'f-kcal', protein:'f-protein', steps:'f-steps', sleep:'f-sleep', bodyfat:'f-bodyfat'};
   Object.keys(map).forEach(function(k){
     var v = num($(map[k]).value);
     if (v == null) delete next[k]; else next[k] = v;
@@ -137,7 +137,7 @@ function saveTargets(){
 /* ---------- forms ---------- */
 function fillForm(){
   var d = docs[sel] || {};
-  ['weight','waist','kcal','protein','steps','sleep'].forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  ['weight','waist','kcal','protein','steps','sleep','bodyfat'].forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
   $('f-note').value = d.note || '';
   setStatus('st-day', '');
   disarmDelete(); updateDelete();
@@ -255,6 +255,7 @@ function drawLine(hostId, roId, pts, o){
 function drawCharts(){
   drawChart('ch-weight', 'ro-weight', 'weight', 'kg', 'Log your weight to start the trend. Weigh at the same time each morning.');
   drawChart('ch-waist', 'ro-waist', 'waist', 'cm', 'Measure at navel level every two weeks and log it here.');
+  drawChart('ch-bf', 'ro-bf', 'bodyfat', '%', 'Body fat from the scale fills in each morning, or log it with your weight.');
 }
 
 /* ---------- stats ---------- */
@@ -313,12 +314,27 @@ function renderStats(){
     stat(c, fmt(l, 1) + ' cm', 'Latest', fmtDay(ws[ws.length - 1].date));
     stat(c, sgn(l - f, 1, 'cm'), 'Change');
   }
-  var bf = ws.length ? rfm(ws[ws.length - 1].v) : null;
-  if (bf != null){
-    var bf0 = rfm(ws[0].v);
-    stat(c, fmt(bf, 1) + '%', 'Body fat, est.', ws.length > 1 ? sgn(bf - bf0, 1) + ' points since ' + fmtDay(ws[0].date) : 'from waist and height');
+  // Body fat: the scale's reading (7-day average) and the waist-based estimate side by side.
+  var b = $('bstats'); b.textContent = '';
+  var bs = series('bodyfat');
+  if (bs.length){
+    var bav = avgSeries(bs), bcur = bav[bav.length - 1].v;
+    stat(b, fmt(bcur, 1) + '%', 'Scale, 7-day avg', fmtDay(bs[bs.length - 1].date));
+    stat(b, sgn(bcur - bs[0].v, 1, 'points'), 'Change', 'since ' + fmtDay(bs[0].date));
+    var wNow = pts.length ? avgSeries(pts).at(-1).v : null;
+    if (wNow != null){
+      var lean = wNow * (1 - bcur / 100);
+      stat(b, fmt(lean, 1) + ' kg', 'Lean mass', 'fat ' + fmt(wNow - lean, 1) + ' kg');
+    }
   } else {
-    stat(c, '—', 'Body fat, est.', ws.length ? 'set height and sex in Daily targets' : null);
+    stat(b, '—', 'Scale, 7-day avg'); stat(b, '—', 'Change');
+  }
+  var est = ws.length ? rfm(ws[ws.length - 1].v) : null;
+  if (est != null){
+    var est0 = rfm(ws[0].v);
+    stat(b, fmt(est, 1) + '%', 'From waist, est.', ws.length > 1 ? sgn(est - est0, 1) + ' points since ' + fmtDay(ws[0].date) : 'waist and height');
+  } else {
+    stat(b, '—', 'From waist, est.', ws.length ? 'set height and sex in Daily targets' : 'log your waist');
   }
 }
 
@@ -717,18 +733,19 @@ function weightSlope(end, days, minPts, minSpan){
   return (n * sxy - sx * sy) / (n * sxx - sx * sx);
 }
 function windowStats(from, to){
-  var o = {w: [], kcal: [], steps: [], sleep: [], workouts: 0, protein: 0, waist: null};
+  var o = {w: [], kcal: [], steps: [], sleep: [], bf: [], workouts: 0, protein: 0, waist: null};
   dates().forEach(function(x){
     var n = dayNum(x), d = docs[x];
     if (n <= from || n > to) return;
     ['kcal', 'steps', 'sleep'].forEach(function(k){ var v = num(d[k]); if (v != null) o[k].push(v); });
     var w = num(d.weight); if (w != null) o.w.push(w);
+    var f = num(d.bodyfat); if (f != null) o.bf.push(f);
     if (num(d.waist) != null) o.waist = num(d.waist);
     if (d.workout) o.workouts++;
     if (num(d.protein) != null && num(d.protein) >= settings.protein) o.protein++;
   });
   function mean(a){ return a.length ? a.reduce(function(x, y){ return x + y; }, 0) / a.length : null; }
-  return {weight: mean(o.w), kcal: mean(o.kcal), steps: mean(o.steps), sleep: mean(o.sleep), workouts: o.workouts, protein: o.protein, waist: o.waist};
+  return {weight: mean(o.w), bodyfat: mean(o.bf), kcal: mean(o.kcal), steps: mean(o.steps), sleep: mean(o.sleep), workouts: o.workouts, protein: o.protein, waist: o.waist};
 }
 // Maintenance estimate: average logged intake minus the energy in the weight
 // change over the last 28 days. Needs 14 days of calories and 8 weigh-ins.
@@ -749,6 +766,7 @@ function renderWeek(){
   var rows = [
     ['Weight, avg', a.weight, b.weight, 'kg', 1],
     ['Waist, latest', a.waist, b.waist, 'cm', 1],
+    ['Body fat, avg', a.bodyfat, b.bodyfat, '%', 1],
     ['Workouts', a.workouts, b.workouts, '', 0],
     ['Protein target days', a.protein, b.protein, '', 0],
     ['Calories, avg', a.kcal, b.kcal, 'kcal', 0],
@@ -1101,7 +1119,7 @@ var rafId = 0;
 function redraw(){ if (rafId) return; rafId = requestAnimationFrame(function(){ rafId = 0; drawCharts(); renderProgress(); }); }
 if (window.ResizeObserver){
   var ro = new ResizeObserver(redraw);
-  ro.observe($('ch-weight')); ro.observe($('ch-waist')); ro.observe($('ch-px'));
+  ro.observe($('ch-weight')); ro.observe($('ch-waist')); ro.observe($('ch-px')); ro.observe($('ch-bf'));
 } else { window.addEventListener('resize', redraw); }
 
 fillTargets(); renderDerived(); renderWorkout();

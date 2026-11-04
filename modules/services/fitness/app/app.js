@@ -27,6 +27,12 @@ var DEFAULT_PLAN = {
 var PLAN = DEFAULT_PLAN;
 
 var docs = {}, settings = Object.assign({}, DEF);
+var MEAS = ['neck', 'chest', 'arm', 'thigh', 'hip'];
+var CHECKIN = [['energy', 'Energy'], ['stress', 'Stress'], ['soreness', 'Soreness'], ['hunger', 'Hunger']];
+var TIMINGS = ['morning', 'pre-workout', 'post-workout', 'evening', 'any'];
+// Saved meals and the supplement list (documents "meals" and "supplements"); the
+// check-in answers and ticks of the open day are held here until "Save day".
+var meals = [], supps = [], mealsDraft = [], suppsDraft = [], checkin = {}, taken = [];
 var sel = todayStr(), wsel = 'A';
 var firstSnap = true;
 
@@ -57,10 +63,13 @@ function saveDay(){
   var next = Object.assign({}, docs[d] || {});
   next.date = d;
   var map = {weight:'f-weight', waist:'f-waist', kcal:'f-kcal', protein:'f-protein', steps:'f-steps', sleep:'f-sleep', bodyfat:'f-bodyfat'};
+  MEAS.forEach(function(k){ map[k] = 'f-' + k; });
   Object.keys(map).forEach(function(k){
     var v = num($(map[k]).value);
     if (v == null) delete next[k]; else next[k] = v;
   });
+  CHECKIN.forEach(function(c){ if (checkin[c[0]] != null) next[c[0]] = checkin[c[0]]; else delete next[c[0]]; });
+  if (taken.length) next.supps = taken.slice(); else delete next.supps;
   var note = $('f-note').value.trim();
   if (note) next.note = note; else delete next.note;
   docs[d] = next;
@@ -130,6 +139,8 @@ function saveTargets(){
   if (h) s.height = h;
   if (sx) s.sex = sx;
   if (sw) s.start_weight = sw;
+  var kr = num($('t-kcal-rest').value);
+  if (kr) s.kcal_rest = kr;
   settings = Object.assign({}, DEF, s);
   saveDoc('settings', s, 'st-targets', 'Saved');
 }
@@ -137,7 +148,11 @@ function saveTargets(){
 /* ---------- forms ---------- */
 function fillForm(){
   var d = docs[sel] || {};
-  ['weight','waist','kcal','protein','steps','sleep','bodyfat'].forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  ['weight','waist','kcal','protein','steps','sleep','bodyfat'].concat(MEAS).forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  checkin = {};
+  CHECKIN.forEach(function(c){ if (num(d[c[0]]) != null) checkin[c[0]] = num(d[c[0]]); });
+  taken = Array.isArray(d.supps) ? d.supps.slice() : [];
+  renderCheckin(); renderMealTaps(); renderSuppChecks();
   $('f-note').value = d.note || '';
   setStatus('st-day', '');
   disarmDelete(); updateDelete();
@@ -147,7 +162,151 @@ function fillTargets(){
   $('t-height').value = settings.height != null ? settings.height : '';
   $('t-start').value = settings.start_weight != null ? settings.start_weight : '';
   $('t-sex').value = settings.sex || '';
+  $('t-kcal-rest').value = settings.kcal_rest != null ? settings.kcal_rest : '';
+  mealsDraft = JSON.parse(JSON.stringify(meals)); suppsDraft = JSON.parse(JSON.stringify(supps));
+  renderMealsEditor(); renderSuppsEditor(); renderMealTaps(); renderSuppChecks();
 }
+
+/* ---------- daily inputs: check-in, saved meals, supplements ---------- */
+function renderCheckin(){
+  var host = $('checkin'); host.textContent = '';
+  CHECKIN.forEach(function(c){
+    var row = el('div', 'ci-row');
+    row.appendChild(el('span', 'ci-l', c[1]));
+    [1, 2, 3, 4, 5].forEach(function(n){
+      var b = el('button', 'tab', String(n)); b.type = 'button';
+      b.setAttribute('aria-label', c[1] + ' ' + n); b.setAttribute('aria-pressed', checkin[c[0]] === n ? 'true' : 'false');
+      b.addEventListener('click', function(){ typed = true; if (checkin[c[0]] === n) delete checkin[c[0]]; else checkin[c[0]] = n; renderCheckin(); });
+      row.appendChild(b);
+    });
+    host.appendChild(row);
+  });
+}
+// Tapping a saved meal adds its calories and protein to the day's totals.
+function renderMealTaps(){
+  var host = $('meal-taps'); host.textContent = '';
+  $('meal-box').hidden = !meals.length;
+  meals.forEach(function(m, i){
+    var b = el('button', 'tab', m.name + ' · ' + fmt(m.kcal, 0) + ' kcal, ' + fmt(m.protein, 0) + ' g'); b.type = 'button'; b.id = 'meal-tap-' + i;
+    b.addEventListener('click', function(){
+      typed = true;
+      $('f-kcal').value = Math.round(((num($('f-kcal').value) || 0) + m.kcal) * 10) / 10;
+      $('f-protein').value = Math.round(((num($('f-protein').value) || 0) + m.protein) * 10) / 10;
+      setStatus('st-day', 'Added ' + m.name + '. Save the day to keep it.');
+    });
+    host.appendChild(b);
+  });
+}
+function renderSuppChecks(){
+  var host = $('supp-checks'); host.textContent = '';
+  $('supp-box').hidden = !supps.length;
+  supps.forEach(function(x, i){
+    var lb = el('label', 'day-chk'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'supp-' + i;
+    cb.checked = taken.indexOf(x.name) >= 0;
+    cb.addEventListener('change', function(){
+      typed = true;
+      var at = taken.indexOf(x.name);
+      if (cb.checked && at < 0) taken.push(x.name); else if (!cb.checked && at >= 0) taken.splice(at, 1);
+    });
+    lb.appendChild(cb); lb.appendChild(document.createTextNode(' ' + x.name + (x.dose ? ' (' + x.dose + ')' : '') + (x.timing && x.timing !== 'any' ? ', ' + x.timing : '')));
+    if (x.why) lb.title = x.why;
+    host.appendChild(lb);
+  });
+}
+function textIn(id, label, ph, max, v){
+  var i = document.createElement('input'); i.type = 'text'; i.id = id; i.maxLength = max; i.placeholder = ph; i.value = v || ''; i.setAttribute('aria-label', label); return i;
+}
+function readMeals(){
+  mealsDraft.forEach(function(m, i){
+    if (!$('ml-' + i + '-n')) return;
+    m.name = $('ml-' + i + '-n').value; m.kcal = num($('ml-' + i + '-k').value); m.protein = num($('ml-' + i + '-p').value);
+  });
+}
+function renderMealsEditor(){
+  var host = $('meals-ed'); host.textContent = '';
+  mealsDraft.forEach(function(m, i){
+    var row = el('div', 'goal-ed');
+    row.appendChild(textIn('ml-' + i + '-n', 'Meal ' + (i + 1) + ' name', 'Name (e.g. Egg bhurji, 2 roti)', 40, m.name));
+    var r = el('div', 'goal-row');
+    var k = mkInput('ml-' + i + '-k', 'kcal', 'Meal ' + (i + 1) + ' calories'); k.value = m.kcal != null ? m.kcal : '';
+    var p = mkInput('ml-' + i + '-p', 'protein g', 'Meal ' + (i + 1) + ' protein'); p.value = m.protein != null ? m.protein : '';
+    var rm = el('button', 'btn ghost', 'Delete'); rm.type = 'button';
+    rm.addEventListener('click', function(){ readMeals(); mealsDraft.splice(i, 1); renderMealsEditor(); });
+    r.appendChild(k); r.appendChild(p); r.appendChild(rm); row.appendChild(r); host.appendChild(row);
+  });
+  $('meal-add').hidden = mealsDraft.length >= 40;
+}
+function saveMeals(){
+  readMeals();
+  var bad = null, out = [];
+  mealsDraft.forEach(function(m, i){
+    var n = (m.name || '').trim(), at = 'Meal ' + (i + 1) + ': ';
+    if (bad) return;
+    if (!n) bad = at + 'give it a name.';
+    else if (!(m.kcal != null && m.kcal >= 0 && m.kcal <= 5000)) bad = at + 'calories must be 0 to 5000.';
+    else if (!(m.protein != null && m.protein >= 0 && m.protein <= 300)) bad = at + 'protein must be 0 to 300 g.';
+    else out.push({name: n, kcal: m.kcal, protein: m.protein});
+  });
+  if (bad){ setStatus('st-meals', bad, true); return; }
+  meals = out; mealsDraft = JSON.parse(JSON.stringify(out)); renderMealTaps();
+  saveDoc('meals', {meals: out}, 'st-meals', 'Meals saved');
+}
+function readSupps(){
+  suppsDraft.forEach(function(x, i){
+    if (!$('sp-' + i + '-n')) return;
+    x.name = $('sp-' + i + '-n').value; x.dose = $('sp-' + i + '-d').value; x.timing = $('sp-' + i + '-t').value; x.why = $('sp-' + i + '-w').value;
+  });
+}
+function renderSuppsEditor(){
+  var host = $('supps-ed'); host.textContent = '';
+  suppsDraft.forEach(function(x, i){
+    var row = el('div', 'goal-ed');
+    row.appendChild(textIn('sp-' + i + '-n', 'Supplement ' + (i + 1) + ' name', 'Name (e.g. Creatine)', 40, x.name));
+    var r = el('div', 'goal-row');
+    r.appendChild(textIn('sp-' + i + '-d', 'Supplement ' + (i + 1) + ' dose', 'Dose (5 g)', 40, x.dose));
+    var t = document.createElement('select'); t.id = 'sp-' + i + '-t'; t.setAttribute('aria-label', 'Supplement ' + (i + 1) + ' timing');
+    TIMINGS.forEach(function(v){ opt(t, v, v, (x.timing || 'any') === v); });
+    r.appendChild(t); row.appendChild(r);
+    row.appendChild(textIn('sp-' + i + '-w', 'Supplement ' + (i + 1) + ' reason', 'Why you take it (optional)', 200, x.why));
+    var rm = el('button', 'btn ghost', 'Delete'); rm.type = 'button';
+    rm.addEventListener('click', function(){ readSupps(); suppsDraft.splice(i, 1); renderSuppsEditor(); });
+    var a = el('div', 'actions'); a.appendChild(rm); row.appendChild(a); host.appendChild(row);
+  });
+  $('supp-add').hidden = suppsDraft.length >= 15;
+}
+function saveSupps(){
+  readSupps();
+  var bad = null, out = [];
+  suppsDraft.forEach(function(x, i){
+    var n = (x.name || '').trim(), e = {name: n, timing: x.timing || 'any'};
+    if (bad) return;
+    if (!n) bad = 'Supplement ' + (i + 1) + ': give it a name.';
+    else if (out.some(function(o){ return o.name === n; })) bad = n + ' is listed twice.';
+    else {
+      if ((x.dose || '').trim()) e.dose = x.dose.trim();
+      if ((x.why || '').trim()) e.why = x.why.trim();
+      out.push(e);
+    }
+  });
+  if (bad){ setStatus('st-supps', bad, true); return; }
+  supps = out; suppsDraft = JSON.parse(JSON.stringify(out)); renderSuppChecks();
+  saveDoc('supplements', {items: out}, 'st-supps', 'Supplements saved');
+}
+// First, latest and change for each body measurement.
+function renderMeasurements(){
+  var host = $('meas'); host.textContent = ''; var any = false;
+  MEAS.forEach(function(k){
+    var p = series(k);
+    if (!p.length) return;
+    any = true;
+    var box = el('div'), f = p[0].v, l = p[p.length - 1].v;
+    stat(box, fmt(l, 1) + ' cm', k.charAt(0).toUpperCase() + k.slice(1), 'latest ' + fmtDay(p[p.length - 1].date));
+    box.lastChild.appendChild(el('div', 's', 'first ' + fmt(f, 1) + ' cm · ' + sgn(l - f, 1, 'cm')));
+    host.appendChild(box.firstChild);
+  });
+  $('meas-empty').hidden = any;
+}
+function kcalCap(d){ var r = num(settings.kcal_rest); return r != null && !(d && d.workout) ? r : settings.kcal; }
 
 /* ---------- today bars ---------- */
 function weekWorkouts(){
@@ -160,7 +319,7 @@ function renderBars(){
   $('h-today').textContent = sel === todayStr() ? 'Today' : fmtDay(sel);
   var rows = [
     {l:'Protein', v:num(d.protein), t:settings.protein, u:'g', mode:'min'},
-    {l:'Calories', v:num(d.kcal), t:settings.kcal, u:'kcal', mode:'max'},
+    {l:'Calories', v:num(d.kcal), t:kcalCap(d), u:'kcal', mode:'max'},
     {l:'Steps', v:num(d.steps), t:settings.steps, u:'', mode:'min'},
     {l:'Sleep', v:num(d.sleep), t:settings.sleep, u:'h', mode:'min'},
     {l:'Workouts', v:weekWorkouts(), t:settings.workouts, u:'this week', mode:'min'}
@@ -351,7 +510,7 @@ function renderHabits(){
   var defs = [
     {l:'Workout', f:function(d){ return d && d.workout ? 'on' : null; }},
     {l:'Protein', f:function(d){ var v = d ? num(d.protein) : null; return v == null ? null : (v >= settings.protein ? 'on' : 'none'); }},
-    {l:'Calories', f:function(d){ var v = d ? num(d.kcal) : null; return v == null ? null : (v <= settings.kcal * 1.05 ? 'on' : 'miss'); }},
+    {l:'Calories', f:function(d){ var v = d ? num(d.kcal) : null; return v == null ? null : (v <= kcalCap(d) * 1.05 ? 'on' : 'miss'); }},
     {l:'Steps', f:function(d){ var v = d ? num(d.steps) : null; return v == null ? null : (v >= settings.steps ? 'on' : 'none'); }},
     {l:'Sleep', f:function(d){ var v = d ? num(d.sleep) : null; return v == null ? null : (v >= settings.sleep ? 'on' : 'none'); }}
   ];
@@ -930,7 +1089,7 @@ function saveProfile(){
 }
 
 // One line per change between two documents, for the proposal's diff.
-function fieldName(k){ return {kcal: 'Calories', protein: 'Protein', steps: 'Steps', sleep: 'Sleep', workouts: 'Workouts per week', rest: 'Rest (sec)', height: 'Height', start_weight: 'Start weight', sex: 'Sex',
+function fieldName(k){ return {kcal: 'Calories', kcal_rest: 'Rest-day calories', protein: 'Protein', steps: 'Steps', sleep: 'Sleep', workouts: 'Workouts per week', rest: 'Rest (sec)', height: 'Height', start_weight: 'Start weight', sex: 'Sex',
   birth_year: 'Birth year', goal: 'Goal', goal_notes: 'Goal notes', experience: 'Experience', days_per_week: 'Days per week', days: 'Usual days', session_minutes: 'Session (min)',
   equipment: 'Equipment', injuries: 'Injuries', conditions: 'Conditions and medications', diet: 'Diet', notes: 'Notes', goals: 'Goals'}[k] || k; }
 function show(v){ return v == null || v === '' ? '—' : Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : String(v); }
@@ -1062,7 +1221,7 @@ function renderHeader(){
   }
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress();
+  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------
@@ -1113,7 +1272,7 @@ function switchUser(u){
   document.addEventListener('input', function(){ typed = true; }, {once: true});
   rebuild();
 }
-function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : fmtDay(id); }
+function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : id === 'meals' ? 'Your meals' : id === 'supplements' ? 'Your supplements' : fmtDay(id); }
 
 function rebuild(){
   var view = Object.assign({}, server);
@@ -1122,7 +1281,9 @@ function rebuild(){
   var p = view.plan;
   PLAN = p && Array.isArray(p.A) && Array.isArray(p.B) && (p.A.length || p.B.length) ? p : DEFAULT_PLAN;
   profile = view.profile || {};
-  delete view.settings; delete view.plan; delete view.profile;
+  meals = view.meals && Array.isArray(view.meals.meals) ? view.meals.meals : [];
+  supps = view.supplements && Array.isArray(view.supplements.items) ? view.supplements.items : [];
+  delete view.settings; delete view.plan; delete view.profile; delete view.meals; delete view.supplements;
   docs = view;
   if (firstSnap){ firstSnap = false; wsel = suggestWorkout(sel); fillForm(); fillTargets(); fillProfile(); renderWorkout(); }
   renderDerived(); updateDelete();
@@ -1349,6 +1510,10 @@ $('del-day').addEventListener('click', deleteDay);
 $('save-workout').addEventListener('click', saveWorkout);
 $('edit-plan').addEventListener('click', startEdit);
 $('save-targets').addEventListener('click', saveTargets);
+$('meal-add').addEventListener('click', function(){ readMeals(); mealsDraft.push({name: '', kcal: null, protein: null}); renderMealsEditor(); });
+$('meals-save').addEventListener('click', saveMeals);
+$('supp-add').addEventListener('click', function(){ readSupps(); suppsDraft.push({name: '', timing: 'any'}); renderSuppsEditor(); });
+$('supps-save').addEventListener('click', saveSupps);
 $('imp').addEventListener('change', function(){ var f = this.files && this.files[0]; if (f) importFile(f); this.value = ''; });
 $('rest-add').addEventListener('click', function(){
   if (!restTick){ restStart(); restEnd = Date.now() + 15000; tickRest(); return; }

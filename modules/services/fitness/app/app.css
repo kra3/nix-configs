@@ -171,3 +171,12 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 .goal-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .goal-row input[type=number]{width:6em}
 .goal-row.ms .hint{margin:0}
+
+input[type=checkbox]{width:auto;min-height:0}
+summary.small{font:600 14px var(--font-body);letter-spacing:0;text-transform:none}
+.checkin{display:grid;gap:6px}
+.ci-row{display:grid;grid-template-columns:72px repeat(5,minmax(0,1fr));gap:6px;align-items:center}
+.ci-row .ci-l{font-size:14px}
+.ci-row .tab{padding:6px 0;min-width:0;text-align:center}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tab[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}

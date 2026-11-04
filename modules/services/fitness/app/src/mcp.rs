@@ -27,7 +27,7 @@ fn tools() -> Value {
         },
         {
             "name": "propose",
-            "description": "Store a proposed change for the user to accept or reject in the app. `data` is the whole new document: for plan {\"A\": [{k, n, sets, lo, hi, u, inc?}], \"B\": [...]}; for settings {kcal, protein, steps, sleep, workouts, rest, height, start_weight, sex}; for profile {birth_year, goal, goal_notes, experience, days_per_week, days, session_minutes, equipment, injuries, conditions, diet, notes, goals: [{measure, exercise?, target, by?, label?, milestones?: [{value, by}]}]}. Keep exercise keys (k) unchanged for exercises that stay, so their history carries over. A newer proposal for the same target replaces an open one.",
+            "description": "Store a proposed change for the user to accept or reject in the app. `data` is the whole new document: for plan {\"A\": [{k, n, sets, lo, hi, u, inc?}], \"B\": [...]}; for settings {kcal, kcal_rest (optional, non-workout days), protein, steps, sleep, workouts, rest, height, start_weight, sex}; for profile {birth_year, goal, goal_notes, experience, days_per_week, days, session_minutes, equipment, injuries, conditions, diet, notes, goals: [{measure, exercise?, target, by?, label?, milestones?: [{value, by}]}]}. Keep exercise keys (k) unchanged for exercises that stay, so their history carries over. A newer proposal for the same target replaces an open one.",
             "inputSchema": { "type": "object", "required": ["target", "data", "why"], "properties": {
                 "target": { "type": "string", "enum": TARGETS },
                 "data": { "type": "object" },

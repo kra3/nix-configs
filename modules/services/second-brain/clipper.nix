@@ -1,0 +1,135 @@
+{
+  flake.nixosModules.services-second-brain-clipper =
+    {
+      config,
+      lib,
+      pkgs,
+      inputs,
+      flakeLib,
+      ...
+    }:
+    let
+      sb = config.services.secondBrain;
+      cfg = sb.clipper;
+      user = "second-brain";
+      stateDir = "/srv/appdata/second-brain/clipper";
+      domain = config.vars.acme.domain;
+      unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+      python = pkgs.python3.withPackages (ps: [
+        ps.anthropic
+        ps.faster-whisper
+      ]);
+    in
+    {
+      options.services.secondBrain.clipper = {
+        enable = lib.mkEnableOption "the share-sheet clipper: video link to transcript to Obsidian inbox note";
+        hostName = lib.mkOption {
+          type = lib.types.str;
+          default = "clip.${domain}";
+          description = "nginx vhost the iOS Shortcut posts to (LAN and Tailscale only).";
+        };
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8766;
+        };
+        inboxFolder = lib.mkOption {
+          type = lib.types.str;
+          default = "0 Inbox";
+        };
+        whisperModel = lib.mkOption {
+          type = lib.types.str;
+          default = "small";
+          description = "faster-whisper model, used only when the platform has no subtitles.";
+        };
+        summaryModel = lib.mkOption {
+          type = lib.types.str;
+          default = "claude-haiku-5-5";
+        };
+        maxDurationMinutes = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 120;
+        };
+        instagramCookies = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Pass a Netscape cookies.txt (sops key second-brain.clipper.cookies) to yt-dlp.";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = sb.sync.enable;
+            message = "services.secondBrain.clipper needs services.secondBrain.sync: notes reach your devices through it.";
+          }
+        ];
+
+        sops.secrets = {
+          "second-brain.clipper.token" = { };
+          "second-brain.clipper.anthropic_api_key" = { };
+        }
+        // lib.optionalAttrs cfg.instagramCookies {
+          "second-brain.clipper.cookies" = { };
+        };
+
+        systemd.tmpfiles.rules = [ "d ${stateDir} 0700 ${user} ${user} - -" ];
+
+        systemd.services.second-brain-clipper = {
+          description = "Video link to transcript to Obsidian note";
+          wants = [ "network-online.target" ];
+          after = [
+            "network-online.target"
+            "second-brain-sync.service"
+          ];
+          wantedBy = [ "multi-user.target" ];
+          path = [
+            unstable.yt-dlp # extractors break often; unstable gets the fixes first
+            pkgs.ffmpeg-headless
+          ];
+          environment = {
+            VAULT_DIR = sb.vaultDir;
+            INBOX_FOLDER = cfg.inboxFolder;
+            STATE_DIR = stateDir;
+            PORT = toString cfg.port;
+            WHISPER_MODEL = cfg.whisperModel;
+            SUMMARY_MODEL = cfg.summaryModel;
+            MAX_DURATION_SECONDS = toString (cfg.maxDurationMinutes * 60);
+            HF_HOME = "${stateDir}/models";
+            HOME = stateDir;
+          };
+          serviceConfig =
+            flakeLib.deployment-hardening.mkServiceSandbox {
+              readWritePaths = [ "/srv/appdata/second-brain" ];
+            }
+            // {
+              User = user;
+              Group = user;
+              UMask = "0007";
+              ExecStart = "${python}/bin/python3 ${./clipper.py}";
+              LoadCredential = [
+                "token:${config.sops.secrets."second-brain.clipper.token".path}"
+                "anthropic-api-key:${config.sops.secrets."second-brain.clipper.anthropic_api_key".path}"
+              ]
+              ++ lib.optional cfg.instagramCookies "cookies:${
+                config.sops.secrets."second-brain.clipper.cookies".path
+              }";
+              Restart = "on-failure";
+              RestartSec = 10;
+              # Whisper on CPU must not starve Frigate or Home Assistant.
+              Nice = 10;
+              CPUWeight = 20;
+              MemoryMax = "4G";
+            };
+        };
+
+        services.nginx.virtualHosts.${cfg.hostName} = flakeLib.nginx.mkProxyVhost {
+          inherit domain;
+          cidrs = config.vars.network.nginxAllowCidrs;
+          upstream = "http://127.0.0.1:${toString cfg.port}";
+          websockets = false;
+          # Bearer token in the app instead of Authelia: an iOS Shortcut can't do the login flow.
+          locationExtraConfig = "client_max_body_size 64k;";
+        };
+      };
+    };
+}

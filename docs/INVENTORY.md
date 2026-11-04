@@ -56,7 +56,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Homepage dashboard | `modules/services/infrastructure/homepage.nix` | `home.${domain}`; widgets pull live status from most services below |
 | OpenSSH | `modules/services/infrastructure/openssh.nix` | LAN-only, key auth only, no root login |
 | Tailscale | `modules/services/tailscale.nix` | Exit node + `192.168.1.10/32` subnet route |
-| Second brain (Obsidian vault) | `modules/services/second-brain/{default.nix,mcp_server.py}` | Headless Obsidian Sync → `/srv/appdata/second-brain/vault`, hourly git snapshot, remote MCP server for Claude on Tailscale Funnel `:8443` (Authelia OAuth); setup in `docs/second-brain.md` |
+| Second brain (Obsidian vault) | `modules/services/second-brain/{default.nix,mcp_server.py,clipper.nix,clipper.py}` | Headless Obsidian Sync → `/srv/appdata/second-brain/vault`, hourly git snapshot, remote MCP server for Claude on Tailscale Funnel `:8443` (Authelia OAuth); share-sheet clipper (`clip.${domain}`: video link → transcript + Claude summary → `0 Inbox` note); setup in `docs/second-brain.md` |
 | AdGuard Home (DNS+DHCP) | `modules/services/dns/adguard.nix` | `dns.${domain}`; static leases + rewrites for the domain |
 | Unbound (recursive resolver) | `modules/services/dns/unbound.nix` | `127.0.0.1:5335`, DoT upstreams (Cloudflare family + Quad9), redirect zone for `${domain}.` |
 | PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |

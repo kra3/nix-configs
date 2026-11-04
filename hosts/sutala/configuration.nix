@@ -37,6 +37,7 @@
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
     flakeModules.nixos.services-second-brain-default
+    flakeModules.nixos.services-second-brain-clipper
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
@@ -102,6 +103,8 @@
       publicHost = "sutala.TAILNET.ts.net"; # this node's MagicDNS name
       allowNewClients = true; # set false once your Claude connectors are connected
     };
+    # Share-sheet clipper: reel/YouTube link -> transcript + summary -> note in "0 Inbox".
+    clipper.enable = false;
   };
 
   hardware.enableRedistributableFirmware = true;

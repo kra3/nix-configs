@@ -82,3 +82,59 @@ Logs reach Loki through the host Alloy agent's catch-all journal source:
 - MCP: `{host="sutala", systemd_unit="second-brain-mcp.service"} |= "401"` spikes are unauthenticated probes (normal on a public endpoint); `|= "Traceback"` is a real failure.
 - On the host: `systemctl status second-brain-sync second-brain-mcp second-brain-funnel`,
   `tailscale funnel status`, `git --git-dir=/srv/appdata/second-brain/vault.git log --oneline -3`.
+
+## Clipper: share a reel or video, get a note
+
+`modules/services/second-brain/clipper.nix` (`flake.nixosModules.services-second-brain-clipper`)
++ `clipper.py`. Share an Instagram reel, YouTube video or Short (anything yt-dlp supports) from
+the iPhone share sheet; a minute or so later a note appears in `0 Inbox`:
+
+```
+Share sheet → "Clip to Second Brain" Shortcut ──POST /clip──▶ https://clip.<domain> (LAN/Tailscale only)
+  second-brain-clipper.service (as second-brain, Nice 10, MemoryMax 4G)
+    1. yt-dlp metadata: title, author, caption/description, upload date
+    2. transcript: platform subtitles when present (most YouTube), else
+       audio → faster-whisper (`clipper.whisperModel`, default small, CPU int8)
+    3. Claude (`clipper.summaryModel`, default claude-haiku-5-5): title, summary, key points, tags
+    4. atomic write → <vault>/0 Inbox/YYYY-MM-DD <title>.md → Obsidian Sync → phone and Mac
+```
+
+The request returns `202 queued` straight away; jobs live in
+`/srv/appdata/second-brain/clipper/queue` and survive restarts. Each job is tried three times
+(1 and 2 minutes apart); after that a `Clip failed` note with the error lands in the inbox
+instead, tagged `clip-failed`, so a share never disappears silently. Sharing the same link again
+answers `exists` with the note's path; send `{"url": "...", "force": true}` to redo it.
+
+Notes carry frontmatter (`source`, `platform`, `author`, `published`, `duration`, `captured`,
+`transcript` = `subtitles` or `whisper-<model> (<lang>)`, `tags` incl. `clip`), then the summary,
+key points, the original caption and the full transcript.
+
+### Setup
+
+1. **Secrets:** `just second-brain-secrets` (same recipe as above) now also generates
+   `second-brain.clipper.token` and asks for an Anthropic API key →
+   `second-brain.clipper.anthropic_api_key`. Get the key from console.anthropic.com; Haiku costs
+   a fraction of a cent per clip.
+2. **Config:** `services.secondBrain.clipper.enable = true;` (needs `sync.enable`). Deploy.
+   The first clip that needs Whisper downloads the model (~500 MB for `small`) into
+   `/srv/appdata/second-brain/clipper/models`.
+3. **Instagram (only if anonymous fetching fails):** export cookies.txt (Netscape format) from a
+   logged-in browser session, `sops set` it as `second-brain.clipper.cookies`, set
+   `clipper.instagramCookies = true`. Use a throwaway account; Instagram may flag scraping.
+4. **iPhone Shortcut** (Shortcuts app → + → name it *Clip to Second Brain*):
+   - Shortcut details (ⓘ): turn on **Show in Share Sheet**; accepted types: **URLs** and **Text**
+     (Instagram shares text with a link in it; the server pulls the first link out).
+   - Action **Get Contents of URL**: URL `https://clip.<domain>/clip`, Method **POST**,
+     Headers `Authorization` = `Bearer <token>`, Request Body **JSON** with key `url` (Text) =
+     *Shortcut Input*.
+   - Action **Get Dictionary Value** `status` from *Contents of URL* → **Show Notification**
+     "Clip: *Dictionary Value*".
+   The phone must be on home Wi-Fi or Tailscale (the vhost allows LAN + `100.64.0.0/10`).
+
+### Checking it works
+
+- Shortcut answers `queued`; then `{host="sutala", systemd_unit="second-brain-clipper.service"} |= "clipped"`
+  shows `clipped <url> -> 0 Inbox/<note>.md (<transcript source>)`.
+- Failures: `{host="sutala", systemd_unit="second-brain-clipper.service"} |= "ERROR"`; inbox
+  notes tagged `clip-failed`.
+- On the host: `curl -s https://clip.<domain>/health` → `{"ok": true, "queued": N}`.

@@ -156,6 +156,18 @@ second-brain-secrets deploy_key="no" file="secrets/secrets.yaml":
       echo "    $(ssh-keygen -y -f "$tmp/key")"
     fi
 
+    echo "== Clipper (share-sheet transcripts)"
+    if have second-brain.clipper.token; then echo "  token already set"; else
+      od -An -tx1 -N32 /dev/urandom | tr -d ' \n' | put second-brain.clipper.token
+      echo "  paste into the iOS Shortcut's Authorization header as: Bearer <token>"
+      echo "  (read it back with: sops decrypt --extract '[\"second-brain.clipper.token\"]' $file)"
+    fi
+    if have second-brain.clipper.anthropic_api_key; then echo "  Anthropic API key already set"; else
+      read -rsp "  Anthropic API key (console.anthropic.com; empty to skip): " key; echo
+      if [ -n "$key" ]; then printf '%s' "$key" | put second-brain.clipper.anthropic_api_key; fi
+      unset key
+    fi
+
     echo "== sutala's MagicDNS name (services.secondBrain.mcp.publicHost):"
     echo "  $(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
 

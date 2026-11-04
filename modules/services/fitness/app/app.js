@@ -1048,6 +1048,184 @@ function addNote(){
   }, function(){ setStatus('st-note', 'Offline: try again when connected.', true); });
 }
 
+/* ---------- cardio, blood tests, progress photos ---------- */
+var extrasAt = 0, labMarkers = null, photoList = [];
+function mkBtn(text, cls, fn){ var b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; }
+// Two clicks to delete: the first arms the button.
+function delBtn(what, fn){
+  var b = mkBtn('Delete', 'btn danger', function(){
+    if (!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Sure?'; setTimeout(function(){ b.classList.remove('armed'); b.textContent = 'Delete'; }, 4000); return; }
+    fn();
+  });
+  b.setAttribute('aria-label', 'Delete ' + what);
+  return b;
+}
+function postDelete(path, stId, then){
+  api('POST', path + '/delete', {}).then(function(r){
+    if (!r.ok){ setStatus(stId, r.body.error || 'Could not delete.', true); return; }
+    setStatus(stId, 'Deleted.'); then();
+  }, function(){ setStatus(stId, 'Offline: try again when connected.', true); });
+}
+function loadExtras(force){
+  if (!force && Date.now() - extrasAt < 300000) return Promise.resolve();
+  extrasAt = Date.now();
+  return Promise.all([api('GET', 'api/cardio?days=14'), api('GET', 'api/labs'), api('GET', 'api/photos')]).then(function(r){
+    if (r[0].ok) renderCardio(r[0].body.cardio || []);
+    if (r[1].ok) renderLabs(r[1].body);
+    if (r[2].ok){ photoList = r[2].body.photos || []; renderPhotos(); }
+  }, function(){ extrasAt = 0; });
+}
+var KIND_LABEL = {'walk': 'Walk', 'incline-walk': 'Incline walk', 'cycle': 'Cycle', 'cross-trainer': 'Cross-trainer', 'row': 'Row', 'swim': 'Swim', 'sport': 'Sport', 'other': 'Other'};
+function renderCardio(list){
+  var host = $('c-list'); host.textContent = '';
+  if (!list.length) host.appendChild(el('li', 'hint', 'No sessions in the last 14 days.'));
+  list.forEach(function(s){
+    var li = el('li');
+    var t = fmtDay(s.date) + ' · ' + (KIND_LABEL[s.kind] || s.kind) + ' · ' + s.minutes + ' min';
+    if (s.distance_km != null) t += ' · ' + fmt(s.distance_km, 2) + ' km';
+    if (s.avg_hr != null) t += ' · ' + s.avg_hr + ' bpm';
+    if (s.rpe != null) t += ' · effort ' + s.rpe + '/10';
+    var g = el('span', 'grow', t);
+    if (s.note) g.appendChild(el('div', 'hint', s.note));
+    li.appendChild(g);
+    li.appendChild(delBtn('session on ' + fmtDay(s.date), function(){ postDelete('api/cardio/' + s.id, 'st-cardio', function(){ loadExtras(true); }); }));
+    host.appendChild(li);
+  });
+}
+function addCardio(ev){
+  ev.preventDefault();
+  var body = {date: $('c-date').value, kind: $('c-kind').value, minutes: num($('c-min').value)};
+  if (!body.date || body.minutes == null){ setStatus('st-cardio', 'Add a date and the minutes.', true); return; }
+  var km = num($('c-km').value), hr = num($('c-hr').value), rpe = num($('c-rpe').value), note = $('c-note').value.trim();
+  if (km != null) body.distance_km = km;
+  if (hr != null) body.avg_hr = hr;
+  if (rpe != null) body.rpe = rpe;
+  if (note) body.note = note;
+  setStatus('st-cardio', 'Saving…');
+  api('POST', 'api/cardio', body).then(function(r){
+    if (!r.ok){ setStatus('st-cardio', r.body.error || 'Could not save.', true); return; }
+    ['c-min', 'c-km', 'c-hr', 'c-rpe', 'c-note'].forEach(function(i){ $(i).value = ''; });
+    setStatus('st-cardio', 'Added.'); loadExtras(true);
+  }, function(){ setStatus('st-cardio', 'Offline: try again when connected.', true); });
+}
+
+function labMarker(k){ var m = null; (labMarkers || []).forEach(function(x){ if (x.key === k) m = x; }); return m; }
+function rangeText(l){
+  if (l.low != null && l.high != null) return fmt(l.low, 2) + '–' + fmt(l.high, 2);
+  if (l.high != null) return 'up to ' + fmt(l.high, 2);
+  if (l.low != null) return 'at least ' + fmt(l.low, 2);
+  return null;
+}
+function renderLabs(b){
+  if (!labMarkers){
+    labMarkers = b.markers || [];
+    var sel_ = $('l-marker');
+    labMarkers.forEach(function(m){ opt(sel_, m.key, m.label + (m.unit ? ' (' + m.unit + ')' : ''), false); });
+    labMarkerChanged();
+  }
+  var host = $('lab-latest'); host.textContent = '';
+  var today = todayStr();
+  if (!(b.latest || []).length) host.appendChild(el('li', 'hint', 'No results yet.'));
+  (b.latest || []).forEach(function(l){
+    var li = el('li'), g = el('span', 'grow', l.label + ': ' + fmt(l.value, 2) + ' ' + l.unit + ' (' + fmtDay(l.date) + ')');
+    var rt = rangeText(l);
+    if (rt) g.appendChild(el('div', 'hint', 'Typical range ' + rt + ' ' + l.unit));
+    li.appendChild(g);
+    if (l.outside) li.appendChild(el('span', 'flag', 'Outside typical range (' + l.direction + ')'));
+    if (l.next_due) li.appendChild(el('span', 'due' + (l.next_due < today ? ' late' : ''), (l.next_due < today ? 'Recheck overdue since ' : 'Recheck ') + fmtDay(l.next_due)));
+    host.appendChild(li);
+  });
+  var all = $('lab-all'); all.textContent = '';
+  (b.labs || []).forEach(function(l){
+    var li = el('li');
+    li.appendChild(el('span', 'grow', fmtDay(l.date) + ' · ' + (l.name || (labMarker(l.marker) || {}).label || l.marker) + ': ' + fmt(l.value, 2) + ' ' + l.unit + (l.note ? ' · ' + l.note : '')));
+    li.appendChild(delBtn('result', function(){ postDelete('api/labs/' + l.id, 'st-lab', function(){ loadExtras(true); }); }));
+    all.appendChild(li);
+  });
+}
+function labMarkerChanged(){
+  var m = labMarker($('l-marker').value), other = m && m.key === 'other';
+  $('l-name-f').hidden = !other; $('l-unit-f').hidden = !other;
+  $('l-unit-t').textContent = m && !other ? '(' + m.unit + ')' : '';
+}
+function addLab(ev){
+  ev.preventDefault();
+  var body = {date: $('l-date').value, marker: $('l-marker').value, value: num($('l-value').value)};
+  if (!body.date || body.value == null){ setStatus('st-lab', 'Add a date and the result.', true); return; }
+  if (body.marker === 'other'){ body.name = $('l-name').value.trim(); body.unit = $('l-unit').value.trim(); }
+  var note = $('l-note').value.trim();
+  if (note) body.note = note;
+  setStatus('st-lab', 'Saving…');
+  api('POST', 'api/labs', body).then(function(r){
+    if (!r.ok){ setStatus('st-lab', r.body.error || 'Could not save.', true); return; }
+    ['l-value', 'l-note', 'l-name', 'l-unit'].forEach(function(i){ $(i).value = ''; });
+    setStatus('st-lab', 'Added.'); loadExtras(true);
+  }, function(){ setStatus('st-lab', 'Offline: try again when connected.', true); });
+}
+
+function photoImg(p){
+  var f = el('figure'), im = document.createElement('img');
+  im.src = 'api/photos/' + p.id; im.alt = p.pose + ' photo from ' + fmtDay(p.date); im.loading = 'lazy';
+  f.appendChild(im); f.appendChild(el('figcaption', null, fmtDay(p.date) + ' · ' + p.pose));
+  return f;
+}
+function renderPhotos(){
+  var list = $('ph-list'); list.textContent = '';
+  if (!photoList.length) list.appendChild(el('li', 'hint', 'No photos yet.'));
+  photoList.forEach(function(p){
+    var li = el('li');
+    li.appendChild(el('span', 'grow', fmtDay(p.date) + ' · ' + p.pose));
+    li.appendChild(delBtn('photo from ' + fmtDay(p.date), function(){ postDelete('api/photos/' + p.id, 'st-photo', function(){ loadExtras(true); }); }));
+    list.appendChild(li);
+  });
+  var pose = $('ph-cpose').value, mine = photoList.filter(function(p){ return p.pose === pose; }).reverse();
+  var a = $('ph-a'), b = $('ph-b'), pa = a.value, pb = b.value;
+  [a, b].forEach(function(s){ s.textContent = ''; mine.forEach(function(p){ opt(s, String(p.id), fmtDay(p.date) + ' (' + p.date.slice(0, 4) + ')', false); }); });
+  if (mine.length){
+    a.value = pa && a.querySelector('option[value="' + pa + '"]') ? pa : String(mine[0].id);
+    b.value = pb && b.querySelector('option[value="' + pb + '"]') ? pb : String(mine[mine.length - 1].id);
+  }
+  renderPair();
+}
+function renderPair(){
+  var host = $('ph-pair'); host.textContent = '';
+  var byId = {}; photoList.forEach(function(p){ byId[p.id] = p; });
+  [$('ph-a').value, $('ph-b').value].forEach(function(id){ if (byId[id]) host.appendChild(photoImg(byId[id])); });
+  if (!host.firstChild) host.appendChild(el('p', 'hint', 'Add photos of this pose to compare two dates.'));
+}
+// Downsizes to at most 1600 px on the long side and re-encodes as JPEG.
+function shrink(file){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onerror = function(){ reject(new Error('Could not read that file.')); };
+    fr.onload = function(){
+      var im = new Image();
+      im.onerror = function(){ reject(new Error('That file is not an image this browser can open.')); };
+      im.onload = function(){
+        var k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)), cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(im.naturalWidth * k)); cv.height = Math.max(1, Math.round(im.naturalHeight * k));
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        cv.toBlob(function(b){ b ? resolve(b) : reject(new Error('Could not resize that photo.')); }, 'image/jpeg', 0.85);
+      };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function uploadPhoto(file){
+  var date = $('ph-date').value || todayStr(), pose = $('ph-pose').value;
+  setStatus('st-photo', 'Uploading…');
+  shrink(file).then(function(blob){
+    return fetch('api/photos?date=' + encodeURIComponent(date) + '&pose=' + encodeURIComponent(pose), {method: 'POST', cache: 'no-store', redirect: 'manual',
+      headers: {'Content-Type': 'image/jpeg', 'X-Fitness-User': user || ''}, body: blob});
+  }).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw new Error('Signed out. Reload to sign in.');
+    return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.error || 'Could not upload.'); });
+  }).then(function(){
+    $('ph-file').value = ''; setStatus('st-photo', 'Photo saved.'); $('ph-cpose').value = pose; return loadExtras(true);
+  }, function(e){ setStatus('st-photo', e && e.message ? e.message : 'Offline: try again when connected.', true); });
+}
+
 /* ---------- header, banner, derived ---------- */
 function renderHeader(){
   var ds = dates(), sub = $('sub'), b = $('banner');
@@ -1109,7 +1287,7 @@ function switchUser(u){
   var c = loadJSON(key('cache'), null);
   server = c && c.server ? c.server : {}; vers = c && c.vers ? c.vers : {};
   // Refill the forms from this account's data.
-  firstSnap = true; serverSeen = false; typed = false; coachAt = 0;
+  firstSnap = true; serverSeen = false; typed = false; coachAt = 0; extrasAt = 0;
   document.addEventListener('input', function(){ typed = true; }, {once: true});
   rebuild();
 }
@@ -1236,7 +1414,7 @@ function load(){
     // The forms were filled from the offline copy (or nothing); refresh them from
     // the first server answer unless the user has already started typing.
     if (!serverSeen){ serverSeen = true; if (!typed){ fillForm(); fillTargets(); fillProfile(); renderWorkout(); } }
-    loadCoach(false);
+    loadCoach(false); loadExtras(false);
     if (Object.keys(outbox).length) return flush();
     setNet('ok');
   }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
@@ -1375,6 +1553,14 @@ $('wk-kcal-use').addEventListener('click', useKcal);
 $('p-save').addEventListener('click', saveProfile);
 $('p-add-goal').addEventListener('click', function(){ readGoals(); goalsDraft.push({measure: 'waist', target: null}); renderGoalsEditor(); });
 $('co-note-add').addEventListener('click', addNote);
+$('cardio-form').addEventListener('submit', addCardio);
+$('lab-form').addEventListener('submit', addLab);
+$('l-marker').addEventListener('change', labMarkerChanged);
+$('c-date').value = todayStr(); $('l-date').value = todayStr(); $('ph-date').value = todayStr();
+$('ph-file').addEventListener('change', function(){ var f = $('ph-file').files[0]; if (f) uploadPhoto(f); });
+$('ph-cpose').addEventListener('change', renderPhotos);
+$('ph-a').addEventListener('change', renderPair);
+$('ph-b').addEventListener('change', renderPair);
 (function(){
   var g = $('p-goal'); opt(g, '', 'Not set', false);
   GOAL_KINDS.forEach(function(x){ opt(g, x[0], x[1], false); });

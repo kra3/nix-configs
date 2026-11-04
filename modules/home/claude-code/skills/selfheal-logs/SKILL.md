@@ -29,4 +29,6 @@ journalctl -u selfheal.service --invocation=<id> --no-pager
 
 Full machine-readable transcripts are kept 30 days under `/var/lib/selfheal/runs/<run_id>/stream.jsonl` (root or selfheal only; use `sudo`).
 
+The publish step (gating, draft PRs, Telegram) logs separately: `journalctl -u selfheal-publish.service --invocation=0 --no-pager`.
+
 Default to the most recent run unless the user names one. Summarise; quote error lines verbatim.

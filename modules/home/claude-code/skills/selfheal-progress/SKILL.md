@@ -19,11 +19,11 @@ Schema:
 |---|---|
 | `run_id` | UTC start stamp, also the directory under `/var/lib/selfheal/runs/` |
 | `mode` | `dry-run` or `live` |
-| `phase` | `starting`, `diagnose`, `cluster`, `rediagnose`, `classify`, `act`, `digest`, `done` |
+| `phase` | `starting`, `diagnose`, `cluster`, `rediagnose`, `classify`, `act`, `digest`, then `publish` and `done` (set by `selfheal-publish.service`) |
 | `cluster.index` / `cluster.total` | cluster N of M being worked (0 before clustering) |
 | `cluster.tool_calls` | tool calls spent on the current cluster |
 | `tool_calls.total` / `tool_calls.budget_per_cluster` | whole-run count and the escalation budget |
-| `clusters[]` | `index`, `title`, `outcome` (`in-progress`, `no-issue`, `would-fix`, `would-escalate`, `pr-opened`, `escalated`, `skipped`), `detail`, `pr` |
+| `clusters[]` | `index`, `title`, `outcome` (`in-progress`, `no-issue`, `would-fix`, `would-escalate`, `fix-committed`, `pr-opened`, `escalated`, `skipped`), `detail`, `pr` |
 | `started_at`, `updated_at`, `finished_at`, `result` | timestamps; `result` is the run's end state |
 
 Summarise as: `cluster N/M <title> - <phase>, <cluster.tool_calls>/<budget> tool calls`, then one line per finished cluster with its outcome. If `updated_at` is old and the service is inactive, the run is over; say so and show `result`.

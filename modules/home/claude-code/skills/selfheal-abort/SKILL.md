@@ -18,7 +18,7 @@ sudo systemctl stop selfheal.service
 systemctl list-timers selfheal.timer --no-pager
 ```
 
-The schedule stays enabled; confirm by showing the next fire time.
+The schedule stays enabled; confirm by showing the next fire time. `selfheal-publish.service` may still run afterwards to post what the stopped run produced; stop it too (`sudo systemctl stop selfheal-publish.service`) if nothing should go out.
 
 ## `schedule`: pause the whole schedule
 

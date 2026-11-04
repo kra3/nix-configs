@@ -960,7 +960,7 @@ function diffLines(target, cur, next){
 }
 
 function api(method, path, body){
-  var o = {method: method, cache: 'no-store', redirect: 'manual', headers: {}};
+  var o = {method: method, cache: 'no-store', redirect: 'manual', headers: {'X-Fitness-User': user || ''}};
   if (body){ o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
   return fetch(path, o).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
@@ -1071,14 +1071,48 @@ function renderDerived(){
    copy the change was made against, used for a field-level merge on conflict.
    What the page shows is the server copy with the outbox laid over it. */
 var server = {}, vers = {};
-var outbox = loadJSON('fitness.outbox', {});
+// Everything stored on the device is kept per signed-in user (Remote-User, from
+// api/me): on a shared device the next person neither sees the last person's
+// copy nor sends their unsent changes. `user` is the last account seen here.
+var user = loadRaw('fitness.user');
+var outbox = user ? loadJSON(key('outbox'), {}) : {};
 var chain = Promise.resolve(), netState = 'ok', serverSeen = false, typed = false;
 document.addEventListener('input', function(){ typed = true; }, {once: true});
 
 function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
-function persist(){ saveJSON('fitness.outbox', outbox); saveJSON('fitness.cache', {server: server, vers: vers}); }
+function loadRaw(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function key(name){ return 'fitness.' + name + '.' + user; }
+function persist(){ if (!user) return; saveJSON(key('outbox'), outbox); saveJSON(key('cache'), {server: server, vers: vers}); }
+// Who the server says is signed in; on a change, switch to that account's own copy.
+function whoami(){
+  return fetch('api/me', {cache: 'no-store', redirect: 'manual'}).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    if (!r.ok) throw {net: true};
+    return r.json();
+  }).then(function(j){ if (j.user && j.user !== user) switchUser(j.user); });
+}
+function switchUser(u){
+  var first = !user;
+  user = u;
+  try {
+    localStorage.setItem('fitness.user', u);
+    // Data stored before storage was per user goes to the first account seen on this device.
+    ['outbox', 'cache'].forEach(function(n){
+      var old = localStorage.getItem('fitness.' + n);
+      if (old !== null && first && localStorage.getItem(key(n)) === null) localStorage.setItem(key(n), old);
+      localStorage.removeItem('fitness.' + n);
+    });
+  } catch(e){}
+  outbox = loadJSON(key('outbox'), {});
+  var c = loadJSON(key('cache'), null);
+  server = c && c.server ? c.server : {}; vers = c && c.vers ? c.vers : {};
+  // Refill the forms from this account's data.
+  firstSnap = true; serverSeen = false; typed = false; coachAt = 0;
+  document.addEventListener('input', function(){ typed = true; }, {once: true});
+  rebuild();
+}
 function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : fmtDay(id); }
 
 function rebuild(){
@@ -1104,7 +1138,8 @@ function queue(id, op, data){
 
 function flush(){ chain = chain.then(drain); return chain; }
 function drain(){
-  return Object.keys(outbox).reduce(function(p, id){ return p.then(function(){ return sendOne(id, 0); }); }, Promise.resolve())
+  // Confirm the account first, so changes are only ever sent as the user who made them.
+  return whoami().then(function(){ return Object.keys(outbox).reduce(function(p, id){ return p.then(function(){ return sendOne(id, 0); }); }, Promise.resolve()); })
     .then(function(){ setNet('ok'); }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
 }
 
@@ -1112,10 +1147,12 @@ function sendOne(id, tries){
   var e = outbox[id];
   if (!e) return Promise.resolve();
   var op = e.op, sent = e.data, seq = e.seq, base = e.base;
-  var opts = {method: op === 'delete' ? 'DELETE' : 'PUT', redirect: 'manual', cache: 'no-store', headers: {'If-Match': String(base)}};
+  var opts = {method: op === 'delete' ? 'DELETE' : 'PUT', redirect: 'manual', cache: 'no-store', headers: {'If-Match': String(base), 'X-Fitness-User': user || ''}};
   if (op !== 'delete'){ opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(sent); }
   return fetch('api/log/' + id, opts).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    // Another account is signed in now: keep the change for its owner and switch.
+    if (r.status === 403) return whoami().then(function(){ throw {net: true}; });
     if (r.status === 409) return r.json().then(function(j){ return resolveConflict(id, j.current, tries); });
     if (r.status >= 500) throw {net: true};
     return r.json().catch(function(){ return {}; }).then(function(j){
@@ -1188,7 +1225,7 @@ function setNet(state){
 }
 
 function load(){
-  return fetch('api/log', {cache: 'no-store', redirect: 'manual'}).then(function(r){
+  return whoami().then(function(){ return fetch('api/log', {cache: 'no-store', redirect: 'manual'}); }).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
     if (!r.ok) throw {net: true};
     return r.json();
@@ -1207,7 +1244,7 @@ function load(){
 function sync(){ return Object.keys(outbox).length ? flush().then(load) : load(); }
 
 function connect(){
-  var c = loadJSON('fitness.cache', null);
+  var c = user ? loadJSON(key('cache'), null) : null;
   if (c && c.server){ server = c.server; vers = c.vers || {}; }
   rebuild();
   sync();
@@ -1221,7 +1258,7 @@ function importFile(file){
   setStatus('st-data', 'Importing…');
   file.text().then(function(text){
     try { JSON.parse(text); } catch(e){ throw new Error('That file is not valid JSON.'); }
-    return fetch('api/import', {method: 'POST', redirect: 'manual', headers: {'Content-Type': 'application/json'}, body: text});
+    return fetch('api/import', {method: 'POST', redirect: 'manual', headers: {'Content-Type': 'application/json', 'X-Fitness-User': user || ''}, body: text});
   }).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw new Error('Signed out. Reload to sign in, then import again.');
     return r.json().then(function(j){

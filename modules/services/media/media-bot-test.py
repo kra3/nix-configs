@@ -69,6 +69,33 @@ class CardState(unittest.TestCase):
         self.assertIsNone(mb.progress([{"size": 0, "sizeleft": 0}]))
 
 
+class Chunking(unittest.TestCase):
+    def test_lines_split_under_telegram_limit(self):
+        lines = [f"  Some fairly long kept title number {i} (2024)" for i in range(600)]
+        chunks = mb.chunk_lines(lines)
+        self.assertGreater(len(chunks), 1)
+        self.assertEqual(sum(chunks, []), lines)
+        self.assertTrue(all(len("\n".join(c)) <= mb.TG_TEXT_LIMIT for c in chunks))
+
+    def test_single_overlong_line_is_truncated(self):
+        chunks = mb.chunk_lines(["x" * 5000, "y"])
+        self.assertEqual(len(chunks[0][0]), mb.TG_TEXT_LIMIT)
+        self.assertEqual(chunks[-1][-1], "y")
+        self.assertEqual(mb.chunk_lines([]), [])
+
+    def test_digest_split_respects_text_and_button_caps(self):
+        header = "Leaving within 3 days (no reply means it goes):"
+        lines = [f"  2026-11-05  Title {i} " + "z" * (i % 120) for i in range(230)]
+        parts = mb.split_with_header(header, lines)
+        self.assertTrue(parts[0][0].startswith(header))
+        self.assertTrue(all(not p[0].startswith(header) for p in parts[1:]))
+        self.assertEqual([(a, b) for _, a, b in parts], [(p[1], p[2]) for p in parts])
+        self.assertEqual(parts[0][1], 0)
+        self.assertEqual(parts[-1][2], len(lines))
+        self.assertTrue(all(parts[i][2] == parts[i + 1][1] for i in range(len(parts) - 1)))
+        self.assertTrue(all(len(t) <= mb.TG_TEXT_LIMIT and b - a <= mb.TG_BUTTONS_PER_MESSAGE for t, a, b in parts))
+
+
 class Maintainerr(unittest.TestCase):
     collections = [
         {"id": 1, "title": "Old movies", "isActive": True, "deleteAfterDays": 30, "type": "movie"},

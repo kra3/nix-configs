@@ -18,6 +18,9 @@ STATE_KEPT = "kept"
 SEERR_PENDING = 2
 SEERR_PROCESSING = 3
 
+TG_TEXT_LIMIT = 4096
+TG_BUTTONS_PER_MESSAGE = 50
+
 
 class Unreachable(Exception):
     def __init__(self, app):
@@ -154,6 +157,29 @@ def decode_cb(data):
     if action not in ("keep", "unkeep", "request") or mtype not in ("movie", "tv") or kind not in ("tmdb", "tvdb"):
         return None
     return origin, action, mtype, kind, int(ident)
+
+
+def chunk_lines(lines, limit=TG_TEXT_LIMIT, max_lines=None):
+    chunks, cur, size = [], [], 0
+    for line in lines:
+        if len(line) > limit:
+            line = line[: limit - 1] + "…"
+        if cur and (size + 1 + len(line) > limit or (max_lines and len(cur) >= max_lines)):
+            chunks.append(cur)
+            cur, size = [], 0
+        size += len(line) + (1 if cur else 0)
+        cur.append(line)
+    if cur:
+        chunks.append(cur)
+    return chunks
+
+
+def split_with_header(header, lines, limit=TG_TEXT_LIMIT, max_lines=TG_BUTTONS_PER_MESSAGE):
+    out, start = [], 0
+    for i, chunk in enumerate(chunk_lines(lines, limit - len(header) - 1, max_lines)):
+        out.append(("\n".join(([header] if i == 0 else []) + chunk), start, start + len(chunk)))
+        start += len(chunk)
+    return out
 
 
 def human_bytes(n):
@@ -426,6 +452,10 @@ def ptb_app(bot, token):
     async def reply(update, text, markup_=None):
         await update.effective_message.reply_text(text, reply_markup=markup_, disable_web_page_preview=True)
 
+    async def reply_lines(update, lines):
+        for chunk in chunk_lines(lines):
+            await reply(update, "\n".join(chunk))
+
     async def cmd_search(update, context):
         query = " ".join(context.args or []).strip()
         if not query:
@@ -480,7 +510,7 @@ def ptb_app(bot, token):
                     name += f" S{ep.get('seasonNumber', 0):02d}E{ep.get('episodeNumber', 0):02d}"
                 pct = progress([r])
                 lines.append(f"  {name} {pct if pct is not None else '?'}% {r.get('timeleft') or ''}".rstrip())
-        await reply(update, "\n".join(lines))
+        await reply_lines(update, lines)
 
     async def cmd_disk(update, context):
         try:
@@ -508,19 +538,22 @@ def ptb_app(bot, token):
     async def leaving_message(days):
         items = due_within(await bot.leaving(), dt.date.today(), days)
         if not items:
-            return None, None
+            return []
         titles = await titled(items)
-        lines = [f"Leaving within {days} days (no reply means it goes):"]
-        lines += [f"  {it['due'].isoformat()}  {titles[id(it)]}" for it in items]
-        return "\n".join(lines), leaving_markup(items, titles)
+        header = f"Leaving within {days} days (no reply means it goes):"
+        lines = [f"  {it['due'].isoformat()}  {titles[id(it)]}" for it in items]
+        return [(text, leaving_markup(items[a:b], titles)) for text, a, b in split_with_header(header, lines)]
 
     async def cmd_leaving(update, context):
         try:
-            text, mk = await leaving_message(bot.args.digest_days)
+            messages = await leaving_message(bot.args.digest_days)
         except (Unreachable, urllib.error.HTTPError, ValueError):
             await reply(update, "Maintainerr unreachable")
             return
-        await reply(update, text or f"Nothing leaving within {bot.args.digest_days} days", mk)
+        if not messages:
+            await reply(update, f"Nothing leaving within {bot.args.digest_days} days")
+        for text, mk in messages:
+            await reply(update, text, mk)
 
     async def cmd_kept(update, context):
         lines = []
@@ -532,7 +565,7 @@ def ptb_app(bot, token):
                 continue
             lines.append(f"{arr.api.name}: {len(kept)} kept")
             lines += [f"  {i.get('title')}" for i in sorted(kept, key=lambda i: i.get("sortTitle") or i.get("title", ""))]
-        await reply(update, "\n".join(lines))
+        await reply_lines(update, lines)
 
     async def on_button(update, context):
         q = update.callback_query
@@ -570,12 +603,19 @@ def ptb_app(bot, token):
 
     async def digest(context):
         try:
-            text, mk = await leaving_message(bot.args.digest_days)
+            messages = await leaving_message(bot.args.digest_days)
         except (Unreachable, urllib.error.HTTPError, ValueError) as e:
-            log.warning("digest skipped: %s", getattr(e, "app", type(e).__name__))
+            log.error("reaper digest not sent, %s unreachable", getattr(e, "app", type(e).__name__))
             return
-        if text:
-            await context.bot.send_message(bot.group_id, text, reply_markup=mk)
+        failed = 0
+        for text, mk in messages:
+            try:
+                await context.bot.send_message(bot.group_id, text, reply_markup=mk)
+            except Exception as e:
+                failed += 1
+                log.warning("digest part failed: %s", type(e).__name__)
+        if failed:
+            log.error("reaper digest: %d of %d parts not sent", failed, len(messages))
 
     async def on_error(update, context):
         log.error("handler error: %s", type(context.error).__name__)

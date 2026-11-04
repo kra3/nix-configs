@@ -63,7 +63,7 @@ fn date_field(o: &Map<String, Value>, k: &str) -> Result<Option<String>, String>
     }
 }
 
-fn only_keys(o: &Map<String, Value>, keys: &[&str], at: &str) -> Result<(), String> {
+pub fn only_keys(o: &Map<String, Value>, keys: &[&str], at: &str) -> Result<(), String> {
     match o.keys().find(|k| !keys.contains(&k.as_str())) {
         Some(k) => Err(format!("{at}unknown field {k}")),
         None => Ok(()),
@@ -246,7 +246,7 @@ pub fn list_log(c: &Connection, user: &str, limit: i64) -> rusqlite::Result<Vec<
     rows.collect()
 }
 
-fn last_check_in(c: &Connection, user: &str) -> rusqlite::Result<Option<i64>> {
+pub fn last_check_in(c: &Connection, user: &str) -> rusqlite::Result<Option<i64>> {
     c.query_row("SELECT max(at) FROM coach_log WHERE user = ?1 AND kind = 'check-in'", params![user], |r| r.get(0))
 }
 
@@ -449,10 +449,16 @@ const PROT: usize = 3;
 const STEPS: usize = 4;
 const SLEEP: usize = 5;
 const BF: usize = 6;
+const ENERGY: usize = 7;
+const STRESS: usize = 8;
+const SORE: usize = 9;
+const HUNGER: usize = 10;
+const MEASURES_CM: [(&str, usize); 5] = [("neck", 11), ("chest", 12), ("arm", 13), ("thigh", 14), ("hip", 15)];
 
 struct DayRow {
     dn: i64,
-    nums: [Option<f64>; 7],
+    nums: [Option<f64>; NDAY],
+    supps: Vec<String>,
     workout: bool,
     sets: BTreeMap<String, Vec<(Option<f64>, f64)>>,
     // Per set, parallel to `sets`: (reps in reserve, pain flag).
@@ -460,20 +466,21 @@ struct DayRow {
 }
 
 fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayRow>> {
-    let mut st = c.prepare_cached("SELECT date, weight, waist, kcal, protein, steps, sleep, bodyfat, workout FROM days WHERE user = ?1 ORDER BY date")?;
+    let mut st = c.prepare_cached(&format!("SELECT date, {}, workout, supps FROM days WHERE user = ?1 ORDER BY date", daily::day_cols()))?;
     let rows = st.query_map(params![user], |r| {
-        let mut nums = [None; 7];
+        let mut nums = [None; NDAY];
         for (i, n) in nums.iter_mut().enumerate() {
             *n = r.get::<_, Option<f64>>(i + 1)?;
         }
-        Ok((r.get::<_, String>(0)?, nums, r.get::<_, Option<String>>(8)?.is_some()))
+        let supps = r.get::<_, Option<String>>(NDAY + 2)?.and_then(|t| serde_json::from_str::<Vec<String>>(&t).ok()).unwrap_or_default();
+        Ok((r.get::<_, String>(0)?, nums, r.get::<_, Option<String>>(NDAY + 1)?.is_some(), supps))
     })?;
     let mut days = Vec::new();
     let mut idx = BTreeMap::new();
     for row in rows {
-        let (date, nums, workout) = row?;
+        let (date, nums, workout, supps) = row?;
         idx.insert(date.clone(), days.len());
-        days.push(DayRow { dn: day_num(&date), nums, workout, sets: BTreeMap::new(), effort: BTreeMap::new() });
+        days.push(DayRow { dn: day_num(&date), nums, supps, workout, sets: BTreeMap::new(), effort: BTreeMap::new() });
     }
     let mut st = c.prepare_cached("SELECT date, exercise, kg, reps, rir, pain FROM sets WHERE user = ?1 ORDER BY date, exercise, idx")?;
     let rows = st.query_map(params![user], |r| {
@@ -656,7 +663,15 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         (Some(h), Some(w), Some(s)) if w > 0.0 => Some(if s == "f" { 76.0 } else { 64.0 } - 20.0 * h / w),
         _ => None,
     };
+    let mut measurements = Map::new();
+    for (name, i) in MEASURES_CM {
+        let p = points(&days, i, i64::MIN / 2, end);
+        if let (Some(first), Some(last)) = (p.first(), p.last()) {
+            measurements.insert(name.into(), json!({ "latest": r1(last.1), "date": day_str(last.0), "change": r1(last.1 - first.1), "since": day_str(first.0) }));
+        }
+    }
     let body = json!({
+        "measurements": measurements,
         "weight_avg7": w_avg7.map(r1), "pace_kg_week": pace.map(r2),
         "bmi": match (w_avg7, height) { (Some(w), Some(h)) if h > 0.0 => Some(r1(w / (h / 100.0).powi(2))), _ => None },
         "waist_latest": waist_now.map(r1), "waist_latest_date": waist.last().map(|p| day_str(p.0)),
@@ -674,15 +689,22 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         let wd: Vec<&DayRow> = days.iter().filter(|d| d.dn > from && d.dn <= to).collect();
         let count = |f: &dyn Fn(&DayRow) -> bool| wd.iter().filter(|d| f(d)).count();
         let hit = |i: usize, t: f64| count(&|d| d.nums[i].is_some_and(|v| v >= t));
+        let avg = |i: usize| mean(&wd.iter().filter_map(|d| d.nums[i]).collect::<Vec<_>>()).map(r1);
+        // Rest days (no workout) use the rest-day calorie target when one is set.
+        let kcal_cap = |d: &DayRow| match (d.workout, targets.get("kcal_rest").and_then(Value::as_f64)) {
+            (false, Some(r)) => r,
+            _ => target_of(&targets, "kcal"),
+        };
         week_rows.push(json!({
             "start": day_str(from + 1), "end": day_str(to),
             "workouts": count(&|d| d.workout), "planned": num_value(target_of(&targets, "workouts")),
             "protein_days": hit(PROT, target_of(&targets, "protein")),
-            "kcal_ok_days": count(&|d| d.nums[KCAL].is_some_and(|v| v <= target_of(&targets, "kcal") * 1.05)),
+            "kcal_ok_days": count(&|d| d.nums[KCAL].is_some_and(|v| v <= kcal_cap(d) * 1.05)),
             "kcal_logged": count(&|d| d.nums[KCAL].is_some()),
             "steps_days": hit(STEPS, target_of(&targets, "steps")),
             "sleep_days": hit(SLEEP, target_of(&targets, "sleep")),
             "empty_days": 7 - wd.len(),
+            "energy_avg": avg(ENERGY), "stress_avg": avg(STRESS), "soreness_avg": avg(SORE), "hunger_avg": avg(HUNGER),
             "weight_avg": mean(&wd.iter().filter_map(|d| d.nums[W]).collect::<Vec<_>>()).map(r1),
         }));
     }
@@ -747,6 +769,20 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         "maintenance": maint.map(num_value), "suggested_kcal": suggest.map(num_value), "current_kcal": targets.get("kcal").cloned(),
     });
 
+    // Supplements: share of the logged days in the window on which each was ticked.
+    let logged: Vec<&DayRow> = days.iter().filter(|d| d.dn > win && d.dn <= end).collect();
+    let supplements: Vec<Value> = daily::get_doc(c, user, "supplements")?
+        .map(|(_, d)| d["items"].as_array().cloned().unwrap_or_default())
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|i| i["name"].as_str())
+        .map(|n| {
+            let taken = logged.iter().filter(|d| d.supps.iter().any(|s| s == n)).count();
+            json!({ "name": n, "taken_days": taken, "logged_days": logged.len(),
+                    "pct": if logged.is_empty() { Value::Null } else { json!((taken as f64 * 100.0 / logged.len() as f64).round() as i64) } })
+        })
+        .collect();
+
     // Goals.
     let mut goals = Vec::new();
     if let Some((_, p)) = &profile {
@@ -797,7 +833,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
             "this_week_pct": lifts_week.map(|x| r1(x.0)), "two_weeks_pct": lifts_2w.map(|x| r1(x.0)),
             "two_weeks_exercises": lifts_2w.map(|x| x.1),
         },
-        "nutrition": nutrition, "targets": Value::Object(targets),
+        "nutrition": nutrition, "supplements": supplements, "targets": Value::Object(targets),
         "block": training::block_summary(&plan_v, end), "library_count": training::library_count(),
         "plan": plan.map(|(v, p)| json!({ "version": v, "data": p })),
         "open_proposals": open_props, "log": log,
@@ -944,11 +980,18 @@ pub fn summary_text(s: &Value) -> String {
         f(&b["bodyfat_from_waist"]),
         f(&b["lean_kg"])
     );
-    let _ = writeln!(o, "\nWEEKS (newest first): workouts/planned, protein days, kcal on target/logged, steps days, sleep days, empty days, weight avg");
+    let m = b["measurements"].as_object().cloned().unwrap_or_default();
+    if m.is_empty() {
+        let _ = writeln!(o, "  Measurements: none logged");
+    }
+    for (k, v) in &m {
+        let _ = writeln!(o, "  {k} {} cm on {}, change {} cm since {}", f(&v["latest"]), f(&v["date"]), f(&v["change"]), f(&v["since"]));
+    }
+    let _ = writeln!(o, "\nWEEKS (newest first): workouts/planned, protein days, kcal on target/logged, steps days, sleep days, empty days, weight avg, check-in averages 1-5 (energy/stress/soreness/hunger)");
     for w in s["weeks_detail"].as_array().into_iter().flatten() {
         let _ = writeln!(
             o,
-            "  {}..{}  {}/{}  protein {}  kcal {}/{}  steps {}  sleep {}  empty {}  weight {}",
+            "  {}..{}  {}/{}  protein {}  kcal {}/{}  steps {}  sleep {}  empty {}  weight {}  checkin {}/{}/{}/{}",
             f(&w["start"]),
             f(&w["end"]),
             w["workouts"],
@@ -959,7 +1002,11 @@ pub fn summary_text(s: &Value) -> String {
             w["steps_days"],
             w["sleep_days"],
             w["empty_days"],
-            f(&w["weight_avg"])
+            f(&w["weight_avg"]),
+            f(&w["energy_avg"]),
+            f(&w["stress_avg"]),
+            f(&w["soreness_avg"]),
+            f(&w["hunger_avg"])
         );
     }
     let l = &s["lifts"];
@@ -1021,6 +1068,14 @@ pub fn summary_text(s: &Value) -> String {
         f(&n["suggested_kcal"]),
         f(&n["current_kcal"])
     );
+    let _ = writeln!(o, "\nSUPPLEMENTS (days ticked, of logged days in the window)");
+    let sup = s["supplements"].as_array().cloned().unwrap_or_default();
+    if sup.is_empty() {
+        let _ = writeln!(o, "  none configured");
+    }
+    for x in sup {
+        let _ = writeln!(o, "  - {}: {}/{} days ({}%)", f(&x["name"]), x["taken_days"], x["logged_days"], f(&x["pct"]));
+    }
     let _ = writeln!(o, "\nTARGETS (settings): {}", s["targets"]);
     let _ = writeln!(o, "\nPLAN");
     match s["plan"]["data"].as_object() {

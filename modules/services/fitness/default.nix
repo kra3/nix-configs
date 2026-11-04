@@ -76,6 +76,52 @@
         "fitness"
         (lib.getExe coachTool)
       ];
+      # Phone nudges through Home Assistant: `fitness remind` prints a message when
+      # there is something to remind about (nothing logged yet today, supplements
+      # not ticked, no coach check-in for a week), and it is sent to the phone.
+      # Times are server local time; a missed run is not caught up.
+      reminderService = kind: {
+        description = "Fitness ${kind} reminder to the phone";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        environment = {
+          DB_FILE = "${stateDir}/fitness.db";
+          HA_URL = "http://127.0.0.1:8123";
+          FITNESS_USER = "kra3";
+        };
+        serviceConfig = sandbox // {
+          Type = "oneshot";
+          # Needs loopback to reach Home Assistant, nothing else.
+          PrivateNetwork = false;
+          IPAddressAllow = "localhost";
+          IPAddressDeny = "any";
+          LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "fitness-reminder-${kind}";
+              runtimeInputs = [
+                pkgs.curl
+                pkgs.jq
+                fitness
+              ];
+              text = ''
+                msg=$(fitness remind "$FITNESS_USER" ${kind})
+                if [ -z "$msg" ]; then
+                  exit 0
+                fi
+                token=$(<"$CREDENTIALS_DIRECTORY/token")
+                curl -fsS --max-time 30 -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+                  -d "$(jq -n --arg m "$msg" '{title: "Fitness", message: $m}')" \
+                  "$HA_URL/api/services/notify/mobile_app_meghanadha"
+              '';
+            }
+          );
+        };
+      };
+      reminderTimer = when: {
+        wantedBy = [ "timers.target" ];
+        timerConfig.OnCalendar = when;
+      };
       vhost = flakeLib.nginx.mkProxyVhost {
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
@@ -230,6 +276,15 @@
           Persistent = true;
         };
       };
+
+      systemd.services.fitness-reminders-weigh-in = reminderService "weigh-in";
+      systemd.services.fitness-reminders-food = reminderService "food";
+      systemd.services.fitness-reminders-supps = reminderService "supps";
+      systemd.services.fitness-reminders-checkin = reminderService "checkin";
+      systemd.timers.fitness-reminders-weigh-in = reminderTimer "*-*-* 10:00:00";
+      systemd.timers.fitness-reminders-food = reminderTimer "*-*-* 21:00:00";
+      systemd.timers.fitness-reminders-supps = reminderTimer "*-*-* 20:30:00";
+      systemd.timers.fitness-reminders-checkin = reminderTimer "Sun *-*-* 18:00:00";
 
       security.sudo.extraRules = [
         {

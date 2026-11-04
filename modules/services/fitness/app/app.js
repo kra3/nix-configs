@@ -828,6 +828,226 @@ function useKcal(){
   t.scrollIntoView({behavior: 'smooth', block: 'center'}); t.focus({preventScroll: true});
 }
 
+/* ---------- coaching: profile, proposals, coach card ---------- */
+var profile = {}, coachAt = 0;
+var GOAL_KINDS = [['recomp', 'Recomp: lose fat, build muscle'], ['fat-loss', 'Fat loss'], ['muscle', 'Build muscle'], ['strength', 'Strength'], ['health', 'Health']];
+var MEASURES = [['waist', 'Waist (cm)'], ['weight', 'Weight (kg)'], ['bodyfat', 'Body fat (%)'], ['exercise', 'Exercise working weight (kg)']];
+var WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+var PROFILE_TEXT = [['goal_notes', 'p-goal-notes'], ['experience', 'p-exp'], ['equipment', 'p-equip'], ['injuries', 'p-inj'], ['conditions', 'p-cond'], ['diet', 'p-diet'], ['notes', 'p-notes']];
+var goalsDraft = [];
+
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function opt(sel_, v, label, on){ var o = document.createElement('option'); o.value = v; o.textContent = label; if (on) o.selected = true; sel_.appendChild(o); }
+
+function fillProfile(){
+  var p = profile || {};
+  $('p-birth').value = p.birth_year || '';
+  $('p-goal').value = p.goal || '';
+  $('p-dpw').value = p.days_per_week || '';
+  $('p-min').value = p.session_minutes || '';
+  PROFILE_TEXT.forEach(function(f){ $(f[1]).value = p[f[0]] || ''; });
+  WEEKDAYS.forEach(function(d){ $('p-day-' + d).checked = (p.days || []).indexOf(d) >= 0; });
+  goalsDraft = JSON.parse(JSON.stringify(p.goals || []));
+  renderGoalsEditor();
+}
+function readGoals(){
+  goalsDraft.forEach(function(g, i){
+    var q = function(f){ return $('g-' + i + '-' + f); };
+    if (!q('m')) return;
+    g.measure = q('m').value;
+    if (g.measure === 'exercise') g.exercise = q('x').value; else delete g.exercise;
+    g.target = num(q('t').value);
+    var by = q('by').value; if (by) g.by = by; else delete g.by;
+    var lb = q('l').value.trim(); if (lb) g.label = lb; else delete g.label;
+    (g.milestones || []).forEach(function(m, j){ m.value = num($('g-' + i + '-mv-' + j).value); m.by = $('g-' + i + '-mb-' + j).value; });
+  });
+}
+function renderGoalsEditor(){
+  var host = $('p-goals'); host.textContent = '';
+  goalsDraft.forEach(function(g, i){
+    var box = el('div', 'goal-ed');
+    var row = el('div', 'goal-row');
+    var m = document.createElement('select'); m.id = 'g-' + i + '-m'; m.setAttribute('aria-label', 'Goal ' + (i + 1) + ' measure');
+    MEASURES.forEach(function(x){ opt(m, x[0], x[1], g.measure === x[0]); });
+    m.addEventListener('change', function(){ readGoals(); renderGoalsEditor(); });
+    row.appendChild(m);
+    if (g.measure === 'exercise'){
+      var x = document.createElement('select'); x.id = 'g-' + i + '-x'; x.setAttribute('aria-label', 'Goal ' + (i + 1) + ' exercise');
+      exerciseKeys().forEach(function(e){ opt(x, e.k, e.n, g.exercise === e.k); });
+      row.appendChild(x);
+    }
+    var t = mkInput('g-' + i + '-t', 'target', 'Goal ' + (i + 1) + ' target'); t.value = g.target != null ? g.target : ''; row.appendChild(t);
+    var by = document.createElement('input'); by.type = 'date'; by.id = 'g-' + i + '-by'; by.value = g.by || ''; by.setAttribute('aria-label', 'Goal ' + (i + 1) + ' by date'); row.appendChild(by);
+    box.appendChild(row);
+    var lb = document.createElement('input'); lb.type = 'text'; lb.maxLength = 60; lb.id = 'g-' + i + '-l'; lb.placeholder = 'Name (optional)'; lb.value = g.label || ''; lb.setAttribute('aria-label', 'Goal ' + (i + 1) + ' name');
+    box.appendChild(lb);
+    (g.milestones || []).forEach(function(ms, j){
+      var mr = el('div', 'goal-row ms');
+      mr.appendChild(el('span', 'hint', 'Checkpoint'));
+      var mv = mkInput('g-' + i + '-mv-' + j, 'value', 'Checkpoint ' + (j + 1) + ' value'); mv.value = ms.value != null ? ms.value : ''; mr.appendChild(mv);
+      var mb = document.createElement('input'); mb.type = 'date'; mb.id = 'g-' + i + '-mb-' + j; mb.value = ms.by || ''; mb.setAttribute('aria-label', 'Checkpoint ' + (j + 1) + ' date'); mr.appendChild(mb);
+      var rm = el('button', 'tab', '✕'); rm.type = 'button'; rm.setAttribute('aria-label', 'Remove checkpoint ' + (j + 1));
+      rm.addEventListener('click', function(){ readGoals(); g.milestones.splice(j, 1); renderGoalsEditor(); });
+      mr.appendChild(rm); box.appendChild(mr);
+    });
+    var acts = el('div', 'actions');
+    var addm = el('button', 'btn ghost', '+ Checkpoint'); addm.type = 'button';
+    addm.addEventListener('click', function(){ readGoals(); (g.milestones = g.milestones || []).push({value: null, by: ''}); renderGoalsEditor(); });
+    var rmg = el('button', 'btn ghost', 'Remove goal'); rmg.type = 'button';
+    rmg.addEventListener('click', function(){ readGoals(); goalsDraft.splice(i, 1); renderGoalsEditor(); });
+    if ((g.milestones || []).length < 6) acts.appendChild(addm);
+    acts.appendChild(rmg); box.appendChild(acts);
+    host.appendChild(box);
+  });
+  $('p-add-goal').hidden = goalsDraft.length >= 5;
+}
+function profileProblem(p){
+  if (p.birth_year != null && !(p.birth_year >= 1900 && p.birth_year <= 2030)) return 'Birth year looks wrong.';
+  if (p.session_minutes != null && !(p.session_minutes >= 10 && p.session_minutes <= 240)) return 'Session length is 10 to 240 minutes.';
+  for (var i = 0; i < (p.goals || []).length; i++){
+    var g = p.goals[i], at = 'Goal ' + (i + 1) + ': ';
+    if (!(g.target > 0)) return at + 'set a target above 0.';
+    if (g.measure === 'exercise' && !g.exercise) return at + 'pick the exercise.';
+    for (var j = 0; j < (g.milestones || []).length; j++) if (g.milestones[j].value == null || !g.milestones[j].by) return at + 'each checkpoint needs a value and a date.';
+  }
+  return null;
+}
+function saveProfile(){
+  readGoals();
+  var p = {}, n;
+  if ((n = num($('p-birth').value)) != null) p.birth_year = Math.round(n);
+  if ($('p-goal').value) p.goal = $('p-goal').value;
+  if ((n = num($('p-dpw').value)) != null) p.days_per_week = Math.round(n);
+  if ((n = num($('p-min').value)) != null) p.session_minutes = Math.round(n);
+  var days = WEEKDAYS.filter(function(d){ return $('p-day-' + d).checked; }); if (days.length) p.days = days;
+  PROFILE_TEXT.forEach(function(f){ var v = $(f[1]).value.trim(); if (v) p[f[0]] = v; });
+  var goals = goalsDraft.map(function(g){ var o = Object.assign({}, g); if (o.milestones && !o.milestones.length) delete o.milestones; return o; });
+  if (goals.length) p.goals = goals;
+  var bad = profileProblem(p);
+  if (bad){ setStatus('st-profile', bad, true); return; }
+  profile = p;
+  saveDoc('profile', p, 'st-profile', 'Profile saved').then(function(){ loadCoach(true); });
+}
+
+// One line per change between two documents, for the proposal's diff.
+function fieldName(k){ return {kcal: 'Calories', protein: 'Protein', steps: 'Steps', sleep: 'Sleep', workouts: 'Workouts per week', rest: 'Rest (sec)', height: 'Height', start_weight: 'Start weight', sex: 'Sex',
+  birth_year: 'Birth year', goal: 'Goal', goal_notes: 'Goal notes', experience: 'Experience', days_per_week: 'Days per week', days: 'Usual days', session_minutes: 'Session (min)',
+  equipment: 'Equipment', injuries: 'Injuries', conditions: 'Conditions and medications', diet: 'Diet', notes: 'Notes', goals: 'Goals'}[k] || k; }
+function show(v){ return v == null || v === '' ? '—' : Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : String(v); }
+function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : ''); }
+function diffLines(target, cur, next){
+  var out = [];
+  if (target === 'plan'){
+    cur = cur || DEFAULT_PLAN;
+    ['A', 'B'].forEach(function(w){
+      var a = cur[w] || [], b = next[w] || [];
+      b.forEach(function(e){
+        var o = a.filter(function(x){ return x.k === e.k; })[0];
+        if (!o) out.push(['add', 'Workout ' + w + ': add ' + exLine(e)]);
+        else if (exLine(o) !== exLine(e)) out.push(['chg', 'Workout ' + w + ': ' + exLine(o) + ' → ' + exLine(e)]);
+      });
+      a.forEach(function(o){ if (!b.some(function(e){ return e.k === o.k; })) out.push(['del', 'Workout ' + w + ': remove ' + o.n]); });
+      var ka = a.map(function(x){ return x.k; }).filter(function(k){ return b.some(function(e){ return e.k === k; }); });
+      var kb = b.map(function(x){ return x.k; }).filter(function(k){ return a.some(function(e){ return e.k === k; }); });
+      if (ka.join() !== kb.join()) out.push(['chg', 'Workout ' + w + ': new order ' + b.map(function(e){ return e.n; }).join(', ')]);
+    });
+  } else {
+    cur = cur || {};
+    var keys = Object.keys(Object.assign({}, cur, next));
+    keys.forEach(function(k){ if (!same(cur[k], next[k])) out.push(['chg', fieldName(k) + ': ' + show(cur[k]) + ' → ' + show(next[k])]); });
+  }
+  return out;
+}
+
+function api(method, path, body){
+  var o = {method: method, cache: 'no-store', redirect: 'manual', headers: {}};
+  if (body){ o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
+  return fetch(path, o).then(function(r){
+    if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    return r.json().catch(function(){ return {}; }).then(function(j){ return {status: r.status, ok: r.ok, body: j}; });
+  });
+}
+// Proposals, summary and log; at most every 5 minutes unless forced.
+function loadCoach(force){
+  if (!force && Date.now() - coachAt < 300000) return Promise.resolve();
+  coachAt = Date.now();
+  return Promise.all([api('GET', 'api/coach/proposals'), api('GET', 'api/coach/summary?end=' + todayStr() + '&weeks=6'), api('GET', 'api/coach/log?limit=20')])
+    .then(function(r){
+      if (r[0].ok) renderProposals(r[0].body.proposals || []);
+      if (r[1].ok) renderCoach(r[1].body);
+      if (r[2].ok) renderLog(r[2].body.entries || []);
+    }, function(){ coachAt = 0; });
+}
+function renderProposals(list){
+  var host = $('props'), open = list.filter(function(p){ return p.status === 'open'; });
+  host.textContent = ''; host.hidden = !open.length;
+  open.forEach(function(p){
+    var box = el('div', 'prop');
+    box.appendChild(el('h2', null, 'Your coach suggests a change to ' + (p.target === 'plan' ? 'your plan' : p.target === 'settings' ? 'your targets' : 'your profile')));
+    box.appendChild(el('p', 'why', p.why));
+    var ul = el('ul', 'diff');
+    var lines = diffLines(p.target, p.current ? p.current.data : null, p.data);
+    if (!lines.length) lines = [['chg', 'No visible change.']];
+    lines.forEach(function(l){ ul.appendChild(el('li', l[0], l[1])); });
+    box.appendChild(ul);
+    var note = document.createElement('input'); note.type = 'text'; note.maxLength = 500; note.placeholder = 'Note for your coach (optional)'; note.setAttribute('aria-label', 'Note for your coach');
+    box.appendChild(note);
+    var acts = el('div', 'actions'), st = el('span', 'status');
+    st.setAttribute('role', 'status'); st.setAttribute('aria-live', 'polite');
+    function decide(action){
+      st.textContent = action === 'accept' ? 'Applying…' : 'Sending…';
+      api('POST', 'api/coach/proposals/' + p.id + '/' + action, {note: note.value}).then(function(r){
+        if (r.ok){ st.textContent = action === 'accept' ? 'Applied.' : 'Rejected; your coach will see your note.'; return load().then(function(){ fillTargets(); fillProfile(); renderWorkout(); return loadCoach(true); }); }
+        st.className = 'status err';
+        st.textContent = r.body.status === 'outdated' ? 'Not applied: this changed after your coach wrote it. Your coach will write a fresh one.' : (r.body.error || 'Could not save.');
+        return loadCoach(true);
+      }, function(e){ st.className = 'status err'; st.textContent = e && e.auth ? 'Signed out. Reload to sign in.' : 'Offline: try again when connected.'; });
+    }
+    var a = el('button', 'btn', 'Accept'); a.type = 'button'; a.addEventListener('click', function(){ decide('accept'); });
+    var r = el('button', 'btn ghost', 'Reject'); r.type = 'button'; r.addEventListener('click', function(){ decide('reject'); });
+    acts.appendChild(a); acts.appendChild(r); acts.appendChild(st); box.appendChild(acts);
+    host.appendChild(box);
+  });
+}
+function renderCoach(s){
+  var al = $('co-alerts'); al.textContent = '';
+  (s.alerts || []).forEach(function(a){ al.appendChild(el('li', a.kind === 'check-in' || a.kind === 'proposal' ? '' : 'warn', a.text)); });
+  if (!(s.alerts || []).length) al.appendChild(el('li', 'ok', 'Nothing needs attention.'));
+  var gh = $('co-goals'); gh.textContent = '';
+  (s.goals || []).forEach(function(g){
+    var li = el('li');
+    var head = g.label + ': ' + (g.current != null ? fmt(g.current, 1) : '—') + ' → ' + fmt(g.target, 1) + ' ' + g.unit + (g.by ? ' by ' + fmtDay(g.by) : '');
+    li.appendChild(el('div', 'gh', head));
+    var eta = g.eta === 'reached' ? 'Reached.' : g.eta ? 'At the current pace: about ' + fmtDay(g.eta) + '.' : 'Not enough trend yet to estimate.';
+    if (g.eta && g.eta !== 'reached' && g.by && g.eta > g.by) eta += ' That is after your date.';
+    li.appendChild(el('div', 'hint', eta));
+    (g.milestones || []).forEach(function(m){ li.appendChild(el('div', 'hint ms-' + m.status.replace(/ /g, '-'), 'Checkpoint ' + fmt(m.value, 1) + ' ' + g.unit + ' by ' + fmtDay(m.by) + ': ' + m.status)); });
+    gh.appendChild(li);
+  });
+  $('co-goals-h').hidden = !(s.goals || []).length;
+  $('co-text').textContent = s.text || '';
+}
+function renderLog(entries){
+  var host = $('co-log'); host.textContent = '';
+  if (!entries.length) host.appendChild(el('li', 'hint', 'Nothing yet. Check-ins, decisions and your notes appear here.'));
+  entries.forEach(function(e){
+    var li = el('li');
+    var d = new Date(e.at * 1000), who = e.author === 'you' ? 'You' : e.author === 'coach' ? 'Coach' : 'App';
+    li.appendChild(el('span', 'lg-meta', d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}) + ' · ' + who + (e.kind === 'check-in' ? ' · check-in' : '')));
+    li.appendChild(el('span', null, e.text));
+    host.appendChild(li);
+  });
+}
+function addNote(){
+  var t = $('co-note').value.trim();
+  if (!t){ setStatus('st-note', 'Write a note first.', true); return; }
+  setStatus('st-note', 'Saving…');
+  api('POST', 'api/coach/log', {text: t}).then(function(r){
+    if (!r.ok){ setStatus('st-note', r.body.error || 'Could not save.', true); return; }
+    $('co-note').value = ''; setStatus('st-note', 'Noted for your coach.'); loadCoach(true);
+  }, function(){ setStatus('st-note', 'Offline: try again when connected.', true); });
+}
+
 /* ---------- header, banner, derived ---------- */
 function renderHeader(){
   var ds = dates(), sub = $('sub'), b = $('banner');
@@ -859,7 +1079,7 @@ function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
 function persist(){ saveJSON('fitness.outbox', outbox); saveJSON('fitness.cache', {server: server, vers: vers}); }
-function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : fmtDay(id); }
+function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : fmtDay(id); }
 
 function rebuild(){
   var view = Object.assign({}, server);
@@ -867,9 +1087,10 @@ function rebuild(){
   settings = Object.assign({}, DEF, view.settings || {});
   var p = view.plan;
   PLAN = p && Array.isArray(p.A) && Array.isArray(p.B) && (p.A.length || p.B.length) ? p : DEFAULT_PLAN;
-  delete view.settings; delete view.plan;
+  profile = view.profile || {};
+  delete view.settings; delete view.plan; delete view.profile;
   docs = view;
-  if (firstSnap){ firstSnap = false; wsel = suggestWorkout(sel); fillForm(); fillTargets(); renderWorkout(); }
+  if (firstSnap){ firstSnap = false; wsel = suggestWorkout(sel); fillForm(); fillTargets(); fillProfile(); renderWorkout(); }
   renderDerived(); updateDelete();
 }
 
@@ -977,7 +1198,8 @@ function load(){
     persist(); rebuild();
     // The forms were filled from the offline copy (or nothing); refresh them from
     // the first server answer unless the user has already started typing.
-    if (!serverSeen){ serverSeen = true; if (!typed){ fillForm(); fillTargets(); renderWorkout(); } }
+    if (!serverSeen){ serverSeen = true; if (!typed){ fillForm(); fillTargets(); fillProfile(); renderWorkout(); } }
+    loadCoach(false);
     if (Object.keys(outbox).length) return flush();
     setNet('ok');
   }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
@@ -1110,9 +1332,21 @@ function setGym(on){
 $('gym-btn').addEventListener('click', function(){ setGym(!document.body.classList.contains('gym')); });
 window.addEventListener('hashchange', function(){ setGym(location.hash === '#gym'); });
 if (location.hash === '#gym') setGym(true);
-document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); if (!document.hidden) loadCoach(false); });
 $('px-sel').addEventListener('change', function(){ pxSel = this.value; renderProgress(); });
 $('wk-kcal-use').addEventListener('click', useKcal);
+$('p-save').addEventListener('click', saveProfile);
+$('p-add-goal').addEventListener('click', function(){ readGoals(); goalsDraft.push({measure: 'waist', target: null}); renderGoalsEditor(); });
+$('co-note-add').addEventListener('click', addNote);
+(function(){
+  var g = $('p-goal'); opt(g, '', 'Not set', false);
+  GOAL_KINDS.forEach(function(x){ opt(g, x[0], x[1], false); });
+  var days = $('p-days');
+  WEEKDAYS.forEach(function(d){
+    var lb = el('label', 'day-chk'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'p-day-' + d;
+    lb.appendChild(cb); lb.appendChild(document.createTextNode(' ' + d.charAt(0).toUpperCase() + d.slice(1))); days.appendChild(lb);
+  });
+})();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 
 var rafId = 0;

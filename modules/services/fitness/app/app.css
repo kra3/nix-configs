@@ -147,3 +147,27 @@ select{font:16px var(--font-body);color:var(--fg);background:var(--bg);border:1p
 body.gym .grid > .card:not(#wo-card){display:none}
 body.gym #wo-card{order:-1}
 #wk-stall:empty{display:none}
+
+.coach-prop{border:2px solid var(--accent)}
+.prop + .prop{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+.prop .why{margin:4px 0 8px}
+.diff{margin:0 0 10px;padding-left:18px;font-size:14px}
+.diff li{margin:2px 0}
+.diff li.add{color:var(--ok)} .diff li.del{color:var(--warn)}
+.prop input[type=text]{width:100%;margin-bottom:8px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:14px 0 6px}
+.co-alerts,.co-goals,.co-log{list-style:none;margin:0;padding:0;font-size:14px}
+.co-alerts li{padding:4px 0}
+.co-alerts li.warn{color:var(--warn)} .co-alerts li.ok{color:var(--ok)}
+.co-goals li{padding:6px 0;border-bottom:1px solid var(--line)}
+.co-goals .gh{font-weight:600}
+.hint.ms-met,.hint.ms-on-track{color:var(--ok)} .hint.ms-missed,.hint.ms-behind{color:var(--warn)}
+.co-log li{display:grid;gap:2px;padding:6px 0;border-bottom:1px solid var(--line)}
+.lg-meta{font-size:12px;color:var(--muted)}
+.co-text{white-space:pre-wrap;font-size:12px;max-height:420px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+.grow{flex:1;min-width:200px}
+.days{display:flex;flex-wrap:wrap;gap:10px;font-size:14px}
+.goal-ed{border-top:1px solid var(--line);padding:10px 0;display:grid;gap:6px}
+.goal-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.goal-row input[type=number]{width:6em}
+.goal-row.ms .hint{margin:0}

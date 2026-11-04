@@ -100,6 +100,7 @@
     mcp = {
       enable = false;
       publicHost = "sutala.TAILNET.ts.net"; # this node's MagicDNS name
+      allowNewClients = true; # set false once your Claude connectors are connected
     };
   };
 

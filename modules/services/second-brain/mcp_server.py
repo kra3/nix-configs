@@ -21,6 +21,9 @@ INBOX = os.environ.get("INBOX_FOLDER", "0 Inbox")
 PUBLIC_URL = os.environ["PUBLIC_URL"].rstrip("/")
 PORT = int(os.environ["PORT"])
 MAX_READ_BYTES = 512 * 1024
+# Open only while connecting a new Claude client; closed, nobody can register (DCR) or use a
+# URL client id (CIMD), so a phished authorize link has no client of the attacker to land on.
+ALLOW_NEW_CLIENTS = os.environ.get("ALLOW_NEW_CLIENTS", "0") == "1"
 
 
 def _secret(name: str) -> str:
@@ -43,6 +46,10 @@ auth = OIDCProxy(
     # Authelia rejects RFC 8707 resource indicators it has no audience registered for.
     forward_resource=False,
     token_endpoint_auth_method="client_secret_basic",
+    # Dynamic registration is open (claude.ai needs it), so every new client must be approved on
+    # FastMCP's own consent page before the upstream Authelia hop; never rely on the default.
+    require_authorization_consent=True,
+    enable_cimd=ALLOW_NEW_CLIENTS,
     allowed_client_redirect_uris=[
         "https://claude.ai/api/mcp/auth_callback",
         "https://claude.com/api/mcp/auth_callback",
@@ -51,6 +58,8 @@ auth = OIDCProxy(
         "http://127.0.0.1:*",
     ],
 )
+# OAuthProxy always enables DCR; routes are built from this at startup.
+auth.client_registration_options.enabled = ALLOW_NEW_CLIENTS
 
 mcp = FastMCP(
     "second-brain",

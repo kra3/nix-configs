@@ -84,6 +84,15 @@
             ];
             default = 8443;
           };
+          allowNewClients = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Accept new OAuth clients (dynamic registration and CIMD). Leave on until your own
+              claude.ai connector (and Claude Code, if wanted) is connected, then turn it off: the
+              endpoint is public, and anyone can register a client that looks just like Claude.
+            '';
+          };
           port = lib.mkOption {
             type = lib.types.port;
             default = 8765;
@@ -233,6 +242,7 @@
               VAULT_DIR = cfg.vaultDir;
               PUBLIC_URL = publicUrl;
               PORT = toString cfg.mcp.port;
+              ALLOW_NEW_CLIENTS = if cfg.mcp.allowNewClients then "1" else "0";
               OIDC_DISCOVERY_URL = "https://auth.${config.vars.acme.domain}/.well-known/openid-configuration";
               OIDC_CLIENT_ID = "second-brain";
               # OAuth client registrations and FastMCP's token store; must survive restarts.

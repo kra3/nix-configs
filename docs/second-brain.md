@@ -61,6 +61,11 @@ stay writable by the sync client. Claude Code on sutala can work in that folder 
    (`auth.karunagath.in`) is not public; only the MCP endpoint is. Afterwards the connector
    works from anywhere, including the iPhone app.
 6. **Claude Code elsewhere (optional):** `claude mcp add --transport http second-brain https://<publicHost>:8443/mcp`.
+7. **Close registration:** once the connectors you want are connected, set
+   `mcp.allowNewClients = false` and deploy. The endpoint is public and anyone can register a
+   client named "Claude" with claude.ai's redirect, so while it's open, only click **Allow** on
+   the consent page right after you started a connection yourself. Closed, `/register` and URL
+   (CIMD) client ids are refused; already-connected clients keep working. Reopen it to add one.
 
 Tools: `list_notes`, `read_note`, `search_notes`, `capture` (timestamped note in `0 Inbox`),
 `write_note` (no overwrite unless asked), `append_to_note`, `move_note`. All paths stay inside

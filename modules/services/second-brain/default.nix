@@ -17,12 +17,7 @@
       obConfigHome = "${stateDir}/config";
       publicUrl = "https://${cfg.mcp.publicHost}:${toString cfg.mcp.funnelPort}";
 
-      # obsidian-headless (unfree EULA) only exists on unstable.
-      unstable = import inputs.nixpkgs-unstable {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        config.allowUnfreePredicate = drv: lib.getName drv == "obsidian-headless";
-      };
-      obsidianHeadless = unstable.obsidian-headless;
+      obsidianHeadless = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.obsidian-headless;
       # Stable: unstable's fastmcp is marked broken against mcp 2.x.
       python = pkgs.python3.withPackages (ps: [ ps.fastmcp ]);
 
@@ -111,6 +106,9 @@
           systemd.tmpfiles.rules = [
             "d ${baseDir} 0750 ${user} ${user} - -"
             "d ${cfg.vaultDir} 2770 ${user} ${user} - -"
+            # kra3 edits the same files from desktop Obsidian on this host, under a 022 umask;
+            # default ACLs keep everything group-writable so the sync client can still update it.
+            "A+ ${cfg.vaultDir} - - - - group:${user}:rwX,default:group:${user}:rwX,default:mask::rwX"
             "d ${stateDir} 0700 ${user} ${user} - -"
           ];
         })

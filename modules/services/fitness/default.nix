@@ -59,6 +59,23 @@
       # group membership below) can reach it, so nothing else on the host can
       # send a forged Remote-User header.
       socket = "/run/fitness/fitness.sock";
+      # The coach's tools (`fitness coach ...`, including the MCP server), fixed to
+      # this database and user. kra3 may run only this, and only as `fitness`
+      # (sudo rule below), so the login user never holds the database itself.
+      coachTool = pkgs.writeShellApplication {
+        name = "fitness-coach";
+        text = ''
+          export DB_FILE=${stateDir}/fitness.db FITNESS_USER=kra3
+          exec ${lib.getExe fitness} coach "$@"
+        '';
+      };
+      coachRun = [
+        "/run/wrappers/bin/sudo"
+        "-n"
+        "-u"
+        "fitness"
+        (lib.getExe coachTool)
+      ];
       vhost = flakeLib.nginx.mkProxyVhost {
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
@@ -212,6 +229,34 @@
           RandomizedDelaySec = "10m";
           Persistent = true;
         };
+      };
+
+      security.sudo.extraRules = [
+        {
+          users = [ "kra3" ];
+          runAs = "fitness";
+          commands = [
+            {
+              command = lib.getExe coachTool;
+              options = [ "NOPASSWD" ];
+            }
+          ];
+        }
+      ];
+      # ~/fitness-coach: start Claude Code there (directly or via Remote Control)
+      # for a check-in. Its .mcp.json brings in the fitness tools; CLAUDE.md the
+      # check-in routine. `fitness-coach-cli summary` etc. work from any shell.
+      environment.systemPackages = [
+        (pkgs.writeShellScriptBin "fitness-coach-cli" ''exec ${lib.escapeShellArgs coachRun} "$@"'')
+      ];
+      home-manager.users.kra3.home.file = {
+        "fitness-coach/.mcp.json".text = builtins.toJSON {
+          mcpServers.fitness = {
+            command = builtins.head coachRun;
+            args = builtins.tail coachRun ++ [ "mcp" ];
+          };
+        };
+        "fitness-coach/CLAUDE.md".source = ./coach/CLAUDE.md;
       };
 
       # Lets nginx open the 0660 socket in the 0750 runtime dir. Changing the

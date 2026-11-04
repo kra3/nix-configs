@@ -164,6 +164,9 @@
               Restart = "on-failure";
               # beets config lives in /home/kra3, so home stays visible (read-only) ...
               ProtectHome = lib.mkForce "read-only";
+              # Runs as the real login user: RemoveIPC would wipe kra3's SysV/POSIX IPC (tmux,
+              # browsers, /dev/shm) on every stop/restart of this unit.
+              RemoveIPC = lib.mkForce false;
               # ... but this service handles input from a container, so hide the user's keys from it.
               InaccessiblePaths = [
                 "-/home/kra3/.ssh"

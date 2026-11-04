@@ -6,8 +6,8 @@
 {% set s = states(person) %}{{ 'Home' if s == 'home' else (s if s not in ['not_home', 'unknown', 'unavailable'] else 'Here') }}
 {%- endmacro %}
 
-{% macro destination_name(person) -%}
-{{ (state_attr(work_zone(person), 'friendly_name') or 'Work') if is_state(person, 'home') else 'Home' }}
+{% macro destination_name(person, dir) -%}
+{{ (state_attr(work_zone(person), 'friendly_name') or 'Work') if dir == 'work' else 'Home' }}
 {%- endmacro %}
 
 {% macro iso_minutes(d) -%}

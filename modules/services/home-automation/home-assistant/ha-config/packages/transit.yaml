@@ -34,9 +34,10 @@ template:
     event_data:
       person: person.arun_karunagath
       kind: zone
+      direction: work
   sensor:
-  - name: Arun trips
-    unique_id: transit_trips_arun
+  - name: Arun work trips
+    unique_id: transit_work_trips_arun
     icon: mdi:train-bus
     device_class: timestamp
     state: "{{ now().isoformat() }}"
@@ -52,11 +53,40 @@ template:
   - trigger: event
     event_type: transit_trips
     event_data:
+      person: person.arun_karunagath
+      kind: zone
+      direction: home
+  sensor:
+  - name: Arun home trips
+    unique_id: transit_home_trips_arun
+    icon: mdi:train-bus
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: *trip_attributes
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
       person: person.anjalipc
       kind: zone
+      direction: work
   sensor:
-  - name: Anjali trips
-    unique_id: transit_trips_anjali
+  - name: Anjali work trips
+    unique_id: transit_work_trips_anjali
+    icon: mdi:train-bus
+    device_class: timestamp
+    state: "{{ now().isoformat() }}"
+    attributes: *trip_attributes
+- trigger:
+  - trigger: event
+    event_type: transit_trips
+    event_data:
+      person: person.anjalipc
+      kind: zone
+      direction: home
+  sensor:
+  - name: Anjali home trips
+    unique_id: transit_home_trips_anjali
     icon: mdi:train-bus
     device_class: timestamp
     state: "{{ now().isoformat() }}"

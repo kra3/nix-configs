@@ -380,6 +380,14 @@
                 };
               }
               {
+                Vaultwarden = {
+                  description = "Password manager";
+                  icon = "vaultwarden.png";
+                  href = "https://vault.${domain}";
+                  siteMonitor = "https://vault.${domain}/alive";
+                };
+              }
+              {
                 Ghostfolio = {
                   description = "Investment portfolio tracking";
                   icon = "ghostfolio.png";

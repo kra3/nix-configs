@@ -156,6 +156,7 @@ Unbound -> DoT upstreams (1.1.1.1:853 family, 9.9.9.11:853 quad9)
 | `auth.${domain}` | `127.0.0.1:9091` (authelia) |
 | `ghostfolio.${domain}` | `127.0.0.1:3333` |
 | `actualbudget.${domain}` | `127.0.0.1:5006` |
+| `vault.${domain}` | `10.3.0.5:8080` (vaultwarden, life zone) |
 | `radarr` / `sonarr` / `prowlarr` / `sabnzbd` / `bazarr` / `lidarr` / `seerr` / `bookshelf` / `audiobookshelf` / `maintainerr` `.${domain}` | `127.0.0.1:{7878,8989,9696,8080,6767,8686,5055,8787,13378,6246}` respectively |
 | mosquitto stream proxy (`1883`) | `10.3.255.10:1883` (home-auto nspawn, via `services.nginx.streamConfig`) |
 

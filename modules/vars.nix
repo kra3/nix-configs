@@ -205,6 +205,11 @@
               default = "10.3.0.4";
               description = "Pinned br-life IP for ghostfolio";
             };
+            vaultwarden = lib.mkOption {
+              type = lib.types.str;
+              default = "10.3.0.5";
+              description = "Pinned br-life IP for vaultwarden";
+            };
             musicAssistant = lib.mkOption {
               type = lib.types.str;
               default = "10.3.2.13";

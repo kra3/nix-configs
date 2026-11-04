@@ -106,6 +106,12 @@ input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-vi
 .set .no{font:600 13px var(--font-body);color:var(--accent);background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;min-width:36px;min-height:40px;flex:none;cursor:pointer}
 .set .x{color:var(--muted);flex:none}
 .set input{padding:8px 6px}
+.set select.rir{width:3.4em;flex:none;padding:8px 2px}
+.set .pn{font:600 12px var(--font-body);color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;min-height:40px;padding:0 6px;flex:none;cursor:pointer}
+.set .pn[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:var(--surface)}
+details.cues{margin-top:6px}
+details.cues summary{font:13px var(--font-body);letter-spacing:0;text-transform:none;color:var(--muted)}
+details.cues ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 details summary{cursor:pointer;font:700 22px/1.1 var(--font-display);letter-spacing:.05em;text-transform:uppercase}
 .mt{margin-top:12px}
@@ -127,6 +133,13 @@ a.btn,label.btn{display:inline-flex;align-items:center;text-decoration:none}
 body.resting{padding-bottom:96px}
 select{font:16px var(--font-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 6px;min-height:40px;min-width:0}
 .pe{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;border-top:1px solid var(--line);padding:10px 0}
+.pe-main{display:grid;gap:6px;min-width:0}
+.pe-pick{display:flex;gap:6px;min-width:0}
+.pe-pick input{flex:1;min-width:0}
+.pe-pick select{flex:2}
+.pe-block{border-top:1px solid var(--line);padding:10px 0}
+.pe-block .pe-nums input{width:auto;flex:1;min-width:0}
+.pe-block #pb-start{flex:2}
 .pe-nums{display:flex;align-items:center;gap:6px;min-width:0}
 .pe-nums input{width:4.2em;flex:none;padding:8px 6px}
 .pe-nums select{flex:1}

@@ -192,14 +192,11 @@
         printf 'password=%s\n' "$(cat "$CREDENTIALS_DIRECTORY/github_token")"
       '';
 
-      apiKeyHelper = pkgs.writeShellScript "selfheal-api-key" ''
-        exec ${pkgs.coreutils}/bin/cat /run/credentials/selfheal.service/anthropic_api_key
-      '';
-
       gitTool = pkgs.writeShellApplication {
         name = "selfheal-git";
         runtimeInputs = [ pkgs.git ];
         text = ''
+          unset CLAUDE_CODE_OAUTH_TOKEN
           sub="''${1:-}"
           case "$sub" in
             log|show|diff|status|rev-parse|ls-files|blame) shift ;;
@@ -224,6 +221,7 @@
         name = "selfheal-journal";
         runtimeInputs = [ config.systemd.package ];
         text = ''
+          unset CLAUDE_CODE_OAUTH_TOKEN
           for a in "$@"; do
             case "$a" in
               --file*|--directory*|--root*|--image*|--cursor-file*|--vacuum*|--rotate|--flush|--sync|--relinquish-var|--smart-relinquish-var|--setup-keys|--update-catalog|--follow|-f|--output=export)
@@ -285,6 +283,7 @@
           gateTool
         ];
         text = ''
+          unset CLAUDE_CODE_OAUTH_TOKEN
           repo=${cfg.repoDir}
           wts=${worktreeDir}
           usage() {
@@ -340,7 +339,7 @@
 
         cred_dir = os.environ["CREDENTIALS_DIRECTORY"]
         secrets = []
-        for name in ("anthropic_api_key", "github_token", "bottoken"):
+        for name in ("claude_oauth_token", "github_token", "bottoken"):
             path = os.path.join(cred_dir, name)
             if os.path.exists(path):
                 value = open(path, "rb").read().strip()
@@ -487,7 +486,6 @@
 
       claudeSettings = pkgs.writeText "selfheal-claude-settings.json" (
         builtins.toJSON {
-          apiKeyHelper = "${apiKeyHelper}";
           hooks.PreToolUse = [
             {
               matcher = "*";
@@ -586,8 +584,11 @@
           model_args=()
           ${lib.optionalString (cfg.model != null) "model_args=(--model ${lib.escapeShellArg cfg.model})"}
 
+          oauth_token=$(cat "$CREDENTIALS_DIRECTORY/claude_oauth_token")
+
           cd "$repo"
-          env -u CREDENTIALS_DIRECTORY -u ANTHROPIC_API_KEY -u GH_TOKEN -u GITHUB_TOKEN \
+          CLAUDE_CODE_OAUTH_TOKEN="$oauth_token" \
+            env -u CREDENTIALS_DIRECTORY -u ANTHROPIC_API_KEY -u GH_TOKEN -u GITHUB_TOKEN \
             claude -p "$(cat ${basePrompt} "$prompt_mode")" \
             "''${model_args[@]}" \
             "''${extra_args[@]}" \
@@ -789,7 +790,7 @@
       };
 
       config = lib.mkIf cfg.enable {
-        sops.secrets."selfheal.anthropic_api_key" = { };
+        sops.secrets."selfheal.claude_oauth_token" = { };
         sops.secrets."selfheal.github_token" = { };
         sops.secrets."monitoring.grafana.telegram_bot_token" = { };
         sops.secrets."monitoring.grafana.telegram_chat_id" = { };
@@ -828,7 +829,7 @@
               UMask = "0022";
               TimeoutStartSec = cfg.timeout;
               LoadCredential = [
-                "anthropic_api_key:${config.sops.secrets."selfheal.anthropic_api_key".path}"
+                "claude_oauth_token:${config.sops.secrets."selfheal.claude_oauth_token".path}"
               ];
               ExecStart = lib.getExe runScript;
             }
@@ -858,7 +859,7 @@
               UMask = "0022";
               TimeoutStartSec = "30m";
               LoadCredential = [
-                "anthropic_api_key:${config.sops.secrets."selfheal.anthropic_api_key".path}"
+                "claude_oauth_token:${config.sops.secrets."selfheal.claude_oauth_token".path}"
                 "github_token:${config.sops.secrets."selfheal.github_token".path}"
                 "bottoken:${config.sops.secrets."monitoring.grafana.telegram_bot_token".path}"
                 "chatid:${config.sops.secrets."monitoring.grafana.telegram_chat_id".path}"

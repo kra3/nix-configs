@@ -148,7 +148,7 @@
       - calendar.holidays_in_sweden
     data:
       start_date_time: "{{ today_at() }}"
-      end_date_time: "{{ today_at() + timedelta(days=1) }}"
+      end_date_time: "{{ today_at() + timedelta(days=1, seconds=-1) }}"
     response_variable: today
     continue_on_error: true
   - action: calendar.get_events
@@ -156,7 +156,7 @@
       entity_id: calendar.va_syd_sophamntning
     data:
       start_date_time: "{{ today_at() + timedelta(days=1) }}"
-      end_date_time: "{{ today_at() + timedelta(days=2) }}"
+      end_date_time: "{{ today_at() + timedelta(days=2, seconds=-1) }}"
     response_variable: waste
     continue_on_error: true
   - variables:

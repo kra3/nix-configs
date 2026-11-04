@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub const SCHEMA_7: &str = "
+pub const SCHEMA_9: &str = "
 CREATE TABLE labs(
   id INTEGER PRIMARY KEY, user TEXT NOT NULL, date TEXT NOT NULL, marker TEXT NOT NULL,
   name TEXT, value REAL NOT NULL, unit TEXT NOT NULL, note TEXT);
@@ -26,7 +26,7 @@ CREATE TABLE photos(
   pose TEXT NOT NULL CHECK (pose IN ('front', 'side', 'back')),
   file TEXT NOT NULL, created INTEGER NOT NULL);
 CREATE INDEX photos_user ON photos(user, date);
-PRAGMA user_version = 7;";
+PRAGMA user_version = 9;";
 
 pub const MAX_PHOTO: u64 = 4 * 1024 * 1024;
 const POSES: [&str; 3] = ["front", "side", "back"];
@@ -698,7 +698,7 @@ mod tests {
         c.execute("INSERT INTO days(user, date, weight, version, updated) VALUES('kra3', '2026-11-03', 66, 1, 0)", []).unwrap();
         init(&c).unwrap();
         let v: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
-        assert_eq!(v, 7);
+        assert_eq!(v, MIGRATIONS.len() as i64);
         assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["weight"], 66);
         assert_eq!(c.query_row("SELECT count(*) FROM labs", [], |r| r.get::<_, i64>(0)).unwrap(), 0);
     }

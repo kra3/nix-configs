@@ -14,6 +14,11 @@
     { lib, ... }:
     {
       options.vars = {
+        deployRef = lib.mkOption {
+          type = lib.types.str;
+          default = "deploy";
+          description = "Branch of kra3/nix-configs that sutala's nightly upgrade and surasa-autodeploy build as root; advanced only by .github/workflows/promote-deploy.yml";
+        };
         localMedia = {
           enable = lib.mkOption {
             type = lib.types.bool;

@@ -1,10 +1,10 @@
 {
-  # Surasa can't build its own closure, so sutala builds `main` and switches it over SSH after its own upgrade window.
+  # Surasa can't build its own closure, so sutala builds the deploy ref and switches it over SSH after its own upgrade window.
   flake.nixosModules.services-system-surasa-autodeploy =
     { config, pkgs, ... }:
     {
       systemd.services.surasa-autodeploy = {
-        description = "Deploy main to surasa";
+        description = "Deploy the deploy ref to surasa";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         path = [
@@ -17,7 +17,7 @@
           Type = "oneshot";
           User = "kra3";
           TimeoutStartSec = "2h";
-          ExecStart = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild switch --flake github:kra3/nix-configs/main#surasa --refresh --target-host kra3@192.168.1.39 --build-host localhost --sudo";
+          ExecStart = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild switch --flake github:kra3/nix-configs/${config.vars.deployRef}#surasa --refresh --target-host kra3@192.168.1.39 --build-host localhost --sudo";
         };
       };
 

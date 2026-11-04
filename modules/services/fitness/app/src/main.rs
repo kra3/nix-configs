@@ -739,10 +739,8 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_
                     Err(e) => return db_err(e),
                 }
             }
-            reply(200, json!({ "docs": docs }))
+            reply(200, json!({ "user": user, "docs": docs }))
         }
-        // The signed-in user, so the page can keep each account's offline copy apart.
-        (Method::Get, "/api/me") => reply(200, json!({ "user": user })),
         (Method::Get, "/api/library") => training::library(),
         (Method::Get, "/api/export") => match export_map(c, user) {
             Ok(v) => Reply {
@@ -860,6 +858,14 @@ fn header_of<'a>(rq: &'a Request, name: &str) -> Option<&'a str> {
     rq.headers().iter().find(|h| h.field.as_str().as_str().eq_ignore_ascii_case(name)).map(|h| h.value.as_str())
 }
 
+// An absent or empty claim is allowed (CLI tools, tests); a different name is not.
+fn same_user(claimed: Option<&str>, user: &str) -> bool {
+    match claimed.map(str::trim) {
+        None | Some("") => true,
+        Some(c) => c == user,
+    }
+}
+
 fn user_of(rq: &Request, header: &str, fallback: Option<&str>) -> Option<String> {
     match header_of(rq, header).map(str::trim) {
         Some(v) if !v.is_empty() && v.len() <= 128 => Some(v.to_string()),
@@ -907,10 +913,10 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     if method == Method::Post && !header_of(&rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with(want)) {
         return respond(rq, err(415, if photo_upload { "JPEG image expected" } else { "JSON body expected" }));
     }
-    // The page names the account a change was made for; if someone else is signed
-    // in now (a shared device), the change is refused rather than written to them.
-    if header_of(&rq, "X-Fitness-User").is_some_and(|u| !u.is_empty() && u != user) {
-        return respond(rq, reply(403, json!({ "error": "signed in as another user", "user": user })));
+    // The page names the user it believes is signed in on every write. A
+    // mismatch means that tab's queued changes belong to someone else.
+    if method != Method::Get && !same_user(header_of(&rq, "X-Fitness-User"), &user) {
+        return respond(rq, err(403, "signed in as a different user"));
     }
     let if_match = header_of(&rq, "If-Match").map(str::to_string);
     let limit = if photo_upload {
@@ -1174,6 +1180,9 @@ mod tests {
         call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), workout());
         let (_, list) = call(&c, "someone", Method::Get, "/api/log", None, Value::Null);
         assert_eq!(list["docs"], json!([]));
+        assert_eq!(list["user"], "someone");
+        assert!(same_user(None, "kra3") && same_user(Some(""), "kra3") && same_user(Some("kra3"), "kra3"));
+        assert!(!same_user(Some("someone"), "kra3"));
         let (code, _) = call(&c, "someone", Method::Put, "/api/log/2026-11-03", Some("0"), json!({ "weight": 80 }));
         assert_eq!(code, 200, "same date for another user is a separate row");
     }
@@ -1456,10 +1465,6 @@ mod tests {
         assert_eq!(status(a, "GET /api/log HTTP/1.1", b""), 401);
         assert_eq!(status(a, "GET /api/log HTTP/1.1\r\nRemote-User: kra3", b""), 200);
         assert_eq!(status(a, "GET /nope HTTP/1.1\r\nRemote-User: kra3", b""), 404);
-        // A change made for one account is refused when another is signed in.
-        let day = b"{\"date\":\"2026-11-03\",\"weight\":70}";
-        assert_eq!(status(a, "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: anj\r\nX-Fitness-User: kra3\r\nIf-Match: 0", day), 403);
-        assert_eq!(status(a, "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nX-Fitness-User: kra3\r\nIf-Match: 0", day), 200);
     }
 
     #[test]
@@ -1468,6 +1473,14 @@ mod tests {
         for p in ["/api/export/../../healthz", "/api/./export", "/api//export", "/api/export%3F/../../healthz", "/healthz/.."] {
             assert_eq!(status(a, &format!("GET {p} HTTP/1.1\r\nRemote-User: kra3"), b""), 400, "{p}");
         }
+    }
+
+    #[test]
+    fn http_write_for_another_user_is_refused() {
+        let a = server();
+        let head = |claim: &str| format!("PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nIf-Match: 0{claim}");
+        assert_eq!(status(a, &head("\r\nX-Fitness-User: someone"), b"{}"), 403);
+        assert_eq!(status(a, &head("\r\nX-Fitness-User: kra3"), b"{}"), 200);
     }
 
     #[test]
@@ -1720,12 +1733,6 @@ mod tests {
         assert_eq!(status(a, &format!("POST /api/coach/proposals/99/accept HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
         assert_eq!(status(a, &format!("POST /api/coach/proposals HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
         assert_eq!(status(a, "GET /api/coach/summary HTTP/1.1", b""), 401);
-    }
-
-    #[test]
-    fn me_names_the_signed_in_user() {
-        let c = db();
-        assert_eq!(call(&c, "anj", Method::Get, "/api/me", None, Value::Null), (200, json!({ "user": "anj" })));
     }
 
     #[test]

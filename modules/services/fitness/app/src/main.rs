@@ -15,6 +15,7 @@ use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 mod coach;
 mod daily;
+mod extras;
 mod mcp;
 mod training;
 
@@ -126,8 +127,9 @@ PRAGMA user_version = 5;";
 // Migrations run in order, each in its own transaction, from the stored user_version.
 // Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
 // Schema version 7 (RIR and pain per set, training block, progression rule) lives in training.rs,
-// version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs.
-const MIGRATIONS: [&str; 8] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8];
+// version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs,
+// version 9 (blood tests, cardio, photo names) in extras.rs.
+const MIGRATIONS: [&str; 9] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -622,6 +624,15 @@ fn import_map(c: &Connection, user: &str, v: &Value) -> Result<ImportReport, Str
                 rep.skipped += 1;
             }
             continue;
+        } else if id == "labs" || id == "cardio" {
+            let (ok, dup, bad) = extras::import_list(c, user, id, d)?;
+            rep.invalid += bad;
+            if ok > 0 {
+                rep.imported += 1;
+            } else if dup > 0 {
+                rep.skipped += 1;
+            }
+            continue;
         } else if valid_date(id) {
             match parse_day(d) {
                 Ok(day) => write_day(c, user, id, &day, 0).map_err(|e| e.to_string())?,
@@ -659,6 +670,7 @@ fn export_map(c: &Connection, user: &str) -> rusqlite::Result<Value> {
     if log.as_array().is_some_and(|l| !l.is_empty()) {
         m.insert("coach_log".into(), log);
     }
+    extras::export_lists(c, user, &mut m)?;
     Ok(Value::Object(m))
 }
 
@@ -709,6 +721,9 @@ fn parse_version(h: Option<&str>) -> Option<i64> {
 fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_match: Option<&str>, body: &[u8]) -> Reply {
     if path.starts_with("/api/coach/") {
         return coach::api(c, user, method, path, query, body);
+    }
+    if ["/api/labs", "/api/cardio", "/api/photos"].iter().any(|p| path == *p || path.starts_with(&format!("{p}/"))) {
+        return extras::api(c, user, method, path, query, body);
     }
     match (method, path) {
         (Method::Get, "/api/log") => {
@@ -819,10 +834,15 @@ fn static_file(path: &str) -> Option<(&'static str, &'static [u8])> {
 
 fn respond(rq: Request, r: Reply) {
     let h = |k: &str, v: &str| Header::from_bytes(k.as_bytes(), v.as_bytes()).unwrap();
+    // A reply may set its own Cache-Control (private photos); otherwise no-store.
+    let own_cache = r.extra.iter().any(|(k, _)| *k == "Cache-Control");
     let mut resp = Response::from_data(r.body)
         .with_status_code(StatusCode(r.code))
-        .with_header(h("Content-Type", r.ctype))
-        .with_header(h("Cache-Control", "no-store"))
+        .with_header(h("Content-Type", r.ctype));
+    if !own_cache {
+        resp = resp.with_header(h("Cache-Control", "no-store"));
+    }
+    let mut resp = resp
         .with_header(h("X-Content-Type-Options", "nosniff"))
         .with_header(h("Referrer-Policy", "no-referrer"));
     if r.ctype.starts_with("text/html") {
@@ -886,8 +906,12 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     };
     // A cross-site form can POST, but only as form or text data; every POST the
     // page makes is JSON, so anything else is refused.
-    if method == Method::Post && !header_of(&rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with("application/json")) {
-        return respond(rq, err(415, "JSON body expected"));
+    // The one exception is the photo upload, a raw JPEG body (not a form type, so a
+    // cross-site form cannot send it); its handler checks the JPEG magic bytes.
+    let photo_upload = method == Method::Post && path == "/api/photos";
+    let want = if photo_upload { "image/jpeg" } else { "application/json" };
+    if method == Method::Post && !header_of(&rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with(want)) {
+        return respond(rq, err(415, if photo_upload { "JPEG image expected" } else { "JSON body expected" }));
     }
     // The page names the user it believes is signed in on every write. A
     // mismatch means that tab's queued changes belong to someone else.
@@ -895,7 +919,13 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
         return respond(rq, err(403, "signed in as a different user"));
     }
     let if_match = header_of(&rq, "If-Match").map(str::to_string);
-    let limit = if path == "/api/import" { MAX_IMPORT } else { MAX_BODY };
+    let limit = if photo_upload {
+        extras::MAX_PHOTO
+    } else if path == "/api/import" {
+        MAX_IMPORT
+    } else {
+        MAX_BODY
+    };
     let mut body = Vec::new();
     if rq.as_reader().take(limit + 1).read_to_end(&mut body).is_err() {
         return respond(rq, err(400, "read failed"));

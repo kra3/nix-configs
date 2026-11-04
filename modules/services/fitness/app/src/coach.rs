@@ -682,6 +682,10 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         "lean_kg": match (w_avg7, bf7) { (Some(w), Some(b)) => Some(r1(w * (1.0 - b / 100.0))), _ => None },
     });
 
+    // Extras: blood tests, cardio, photo count.
+    let labs = extras::summary_labs(c, user, end_s)?;
+    let cardio = extras::cardio_window(c, user, win, end)?;
+
     // Weekly adherence, newest first.
     let mut week_rows = Vec::new();
     for i in 0..weeks {
@@ -705,6 +709,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
             "sleep_days": hit(SLEEP, target_of(&targets, "sleep")),
             "empty_days": 7 - wd.len(),
             "energy_avg": avg(ENERGY), "stress_avg": avg(STRESS), "soreness_avg": avg(SORE), "hunger_avg": avg(HUNGER),
+            "cardio_minutes": cardio.iter().filter(|x| x.0 > from && x.0 <= to).map(|x| x.2).sum::<i64>(),
             "weight_avg": mean(&wd.iter().filter_map(|d| d.nums[W]).collect::<Vec<_>>()).map(r1),
         }));
     }
@@ -793,6 +798,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
 
     // Alerts, most urgent first.
     let mut alerts = Vec::new();
+    let overdue: Vec<String> = labs["overdue"].as_array().into_iter().flatten().map(|l| format!("{} (last {}, due {})", f(&l["label"]), f(&l["date"]), f(&l["next_due"]))).collect();
     let mut alert = |kind: &str, text: String| alerts.push(json!({ "kind": kind, "text": text }));
     let sore: Vec<String> = training.iter().filter(|t| t["pain_sessions_14d"].as_i64().unwrap_or(0) > 0).map(|t| f(&t["name"])).collect();
     if !sore.is_empty() {
@@ -813,6 +819,9 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         Some(d) if end - d.dn >= 4 => alert("logging", format!("Nothing logged for {} days (last on {}).", end - d.dn, day_str(d.dn))),
         _ => {}
     }
+    if !overdue.is_empty() {
+        alert("labs", format!("Blood test recheck overdue: {}.", overdue.join("; ")));
+    }
     if open_props > 0 {
         alert("proposal", format!("{open_props} proposal{} waiting for you in the app.", if open_props == 1 { "" } else { "s" }));
     }
@@ -829,6 +838,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         "profile": profile.as_ref().map(|(v, d)| json!({ "version": v, "data": d })),
         "profile_changed_since_check_in": profile_changed,
         "goals": goals, "body": body, "weeks_detail": week_rows, "training": training,
+        "cardio": extras::cardio_by_kind(&cardio), "labs": labs, "photos": extras::summary_photos(c, user)?,
         "lifts": {
             "this_week_pct": lifts_week.map(|x| r1(x.0)), "two_weeks_pct": lifts_2w.map(|x| r1(x.0)),
             "two_weeks_exercises": lifts_2w.map(|x| x.1),
@@ -991,7 +1001,7 @@ pub fn summary_text(s: &Value) -> String {
     for w in s["weeks_detail"].as_array().into_iter().flatten() {
         let _ = writeln!(
             o,
-            "  {}..{}  {}/{}  protein {}  kcal {}/{}  steps {}  sleep {}  empty {}  weight {}  checkin {}/{}/{}/{}",
+            "  {}..{}  {}/{}  protein {}  kcal {}/{}  steps {}  sleep {}  empty {}  weight {}  checkin {}/{}/{}/{}  cardio {} min",
             f(&w["start"]),
             f(&w["end"]),
             w["workouts"],
@@ -1006,7 +1016,8 @@ pub fn summary_text(s: &Value) -> String {
             f(&w["energy_avg"]),
             f(&w["stress_avg"]),
             f(&w["soreness_avg"]),
-            f(&w["hunger_avg"])
+            f(&w["hunger_avg"]),
+            w["cardio_minutes"]
         );
     }
     let l = &s["lifts"];
@@ -1051,6 +1062,15 @@ pub fn summary_text(s: &Value) -> String {
             );
         }
     }
+    let _ = writeln!(o, "  Cardio and sport in the window (low impact preferred; ankle pain when running fast):");
+    let cardio = s["cardio"].as_array().cloned().unwrap_or_default();
+    if cardio.is_empty() {
+        let _ = writeln!(o, "    none logged");
+    }
+    for k in cardio {
+        let km = k["km"].as_f64().map(|x| format!(", {x} km")).unwrap_or_default();
+        let _ = writeln!(o, "    - {}: {} sessions, {} min{km}", f(&k["kind"]), k["sessions"], k["minutes"]);
+    }
     let n = &s["nutrition"];
     let _ = writeln!(o, "\nNUTRITION (28 days)");
     let _ = writeln!(
@@ -1076,6 +1096,25 @@ pub fn summary_text(s: &Value) -> String {
     for x in sup {
         let _ = writeln!(o, "  - {}: {}/{} days ({}%)", f(&x["name"]), x["taken_days"], x["logged_days"], f(&x["pct"]));
     }
+    let _ = writeln!(o, "\nBLOOD TESTS (typical ranges are general references, not a diagnosis)");
+    let labs = s["labs"]["latest"].as_array().cloned().unwrap_or_default();
+    if labs.is_empty() {
+        let _ = writeln!(o, "  none logged");
+    }
+    for l in labs {
+        let _ = writeln!(
+            o,
+            "  - {}: {} {} on {}{}; recheck {}{}",
+            f(&l["label"]),
+            f(&l["value"]),
+            f(&l["unit"]),
+            f(&l["date"]),
+            if l["outside"] == true { format!(" ({} - outside typical range)", f(&l["direction"])) } else { String::new() },
+            f(&l["next_due"]),
+            if l["overdue"] == true { " (OVERDUE)" } else { "" }
+        );
+    }
+    let _ = writeln!(o, "PROGRESS PHOTOS: {} stored, last on {} (not shown to the coach)", s["photos"]["count"], f(&s["photos"]["last_date"]));
     let _ = writeln!(o, "\nTARGETS (settings): {}", s["targets"]);
     let _ = writeln!(o, "\nPLAN");
     match s["plan"]["data"].as_object() {

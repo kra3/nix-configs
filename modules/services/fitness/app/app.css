@@ -185,6 +185,17 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 .goal-row input[type=number]{width:6em}
 .goal-row.ms .hint{margin:0}
 
+.rows{list-style:none;margin:8px 0 0;padding:0;font-size:14px}
+.rows li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rows .grow{flex:1 1 160px;min-width:0}
+.rows .flag{color:var(--warn);font-size:13px}
+.rows .due{color:var(--muted);font-size:13px}
+.rows .due.late{color:var(--warn)}
+.rows .btn{min-height:32px;padding:4px 10px;font-size:13px}
+.ph-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.ph-pair figure{margin:0}
+.ph-pair img{width:100%;height:auto;border-radius:8px;display:block}
+.ph-pair figcaption{font-size:12px;color:var(--muted);margin-top:2px}
 input[type=checkbox]{width:auto;min-height:0}
 summary.small{font:600 14px var(--font-body);letter-spacing:0;text-transform:none}
 .checkin{display:grid;gap:6px}

@@ -1,7 +1,7 @@
 // Offline shell for Fitness. API calls pass straight through: the page keeps its
 // own offline copy of the data and a queue of unsent changes.
 'use strict';
-var CACHE = 'fitness-shell-v8';
+var CACHE = 'fitness-shell-v9';
 var SHELL = ['./', 'app.js', 'app.css', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 var SLOW_MS = 3000;
 

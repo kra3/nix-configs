@@ -199,6 +199,74 @@
       </details>
     </section>
 
+    <section class="card span2" aria-labelledby="h-cardio">
+      <h2 id="h-cardio">Cardio</h2>
+      <p class="sub">Walks, bike, cross-trainer and sport. Low impact is easier on the ankle.</p>
+      <form id="cardio-form" autocomplete="off">
+        <div class="fields">
+          <label class="field"><span>Date</span><input type="date" id="c-date" required></label>
+          <label class="field"><span>Kind</span><select id="c-kind">
+            <option value="walk">Walk</option><option value="incline-walk">Incline walk</option><option value="cycle">Cycle</option>
+            <option value="cross-trainer">Cross-trainer</option><option value="row">Row</option><option value="swim">Swim</option>
+            <option value="sport">Sport</option><option value="other">Other</option></select></label>
+          <label class="field"><span>Minutes</span><input type="number" inputmode="numeric" min="1" max="600" step="1" id="c-min" required></label>
+          <label class="field"><span>Distance (km)</span><input type="number" inputmode="decimal" min="0" step="0.1" id="c-km"></label>
+          <label class="field"><span>Average heart rate</span><input type="number" inputmode="numeric" min="40" max="220" step="1" id="c-hr"></label>
+          <label class="field"><span>Effort (1 to 10)</span><input type="number" inputmode="numeric" min="1" max="10" step="1" id="c-rpe"></label>
+          <label class="field full"><span>Note</span><input type="text" id="c-note" maxlength="500"></label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn" id="c-add">Add session</button>
+          <span class="status" id="st-cardio" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+      <h3 class="mt">Last 14 days</h3>
+      <ul class="rows" id="c-list"></ul>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-labs">
+      <h2 id="h-labs">Blood tests</h2>
+      <p class="sub">Typical ranges are general references. They are not a diagnosis; talk to your doctor about any result.</p>
+      <ul class="rows" id="lab-latest"></ul>
+      <form id="lab-form" autocomplete="off">
+        <div class="fields mt">
+          <label class="field"><span>Date of test</span><input type="date" id="l-date" required></label>
+          <label class="field"><span>Test</span><select id="l-marker"></select></label>
+          <label class="field" id="l-name-f" hidden><span>Name</span><input type="text" id="l-name" maxlength="60"></label>
+          <label class="field"><span>Result <b id="l-unit-t"></b></span><input type="number" inputmode="decimal" step="any" min="0" id="l-value" required></label>
+          <label class="field" id="l-unit-f" hidden><span>Unit</span><input type="text" id="l-unit" maxlength="20"></label>
+          <label class="field full"><span>Note</span><input type="text" id="l-note" maxlength="500"></label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn" id="l-add">Add result</button>
+          <span class="status" id="st-lab" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+      <details class="mt"><summary>All results</summary><ul class="rows" id="lab-all"></ul></details>
+    </section>
+
+    <section class="card span2">
+      <details id="ph-details">
+        <summary>Progress photos</summary>
+        <p class="note">Private: stored only on the server, shown only to you, and never sent to your coach (only how many and when). Photos are resized on this device before upload.</p>
+        <div class="fields mt">
+          <label class="field"><span>Date</span><input type="date" id="ph-date"></label>
+          <label class="field"><span>Pose</span><select id="ph-pose"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option></select></label>
+          <label class="field full"><span>Photo</span><input type="file" id="ph-file" accept="image/*"></label>
+        </div>
+        <div class="actions"><span class="status" id="st-photo" role="status" aria-live="polite"></span></div>
+        <h3 class="mt">Compare</h3>
+        <div class="fields">
+          <label class="field full"><span>Pose to compare</span><select id="ph-cpose"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option></select></label>
+          <label class="field"><span>Before</span><select id="ph-a"></select></label>
+          <label class="field"><span>After</span><select id="ph-b"></select></label>
+        </div>
+        <div class="ph-pair" id="ph-pair"></div>
+        <h3 class="mt">All photos</h3>
+        <ul class="rows" id="ph-list"></ul>
+      </details>
+    </section>
+
     <section class="card span2">
       <details>
         <summary>Daily targets</summary>

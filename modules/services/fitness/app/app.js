@@ -851,14 +851,19 @@ function renderDerived(){
    copy the change was made against, used for a field-level merge on conflict.
    What the page shows is the server copy with the outbox laid over it. */
 var server = {}, vers = {};
-var outbox = loadJSON('fitness.outbox', {});
+// Offline storage is per user: Authelia's cookie covers the whole domain, so a
+// shared device can change users. Nothing is sent until the server has said who
+// is signed in, and another user's unsent changes stay under their own key.
+var user = loadJSON('fitness.user', null), confirmed = false;
+function skey(k){ return 'fitness.' + k + '.' + (user || '_'); }
+var outbox = loadJSON(skey('outbox'), {});
 var chain = Promise.resolve(), netState = 'ok', serverSeen = false, typed = false;
 document.addEventListener('input', function(){ typed = true; }, {once: true});
 
 function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
-function persist(){ saveJSON('fitness.outbox', outbox); saveJSON('fitness.cache', {server: server, vers: vers}); }
+function persist(){ saveJSON(skey('outbox'), outbox); saveJSON(skey('cache'), {server: server, vers: vers}); }
 function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : fmtDay(id); }
 
 function rebuild(){
@@ -881,7 +886,7 @@ function queue(id, op, data){
   return flush();
 }
 
-function flush(){ chain = chain.then(drain); return chain; }
+function flush(){ if (!confirmed) return chain; chain = chain.then(drain); return chain; }
 function drain(){
   return Object.keys(outbox).reduce(function(p, id){ return p.then(function(){ return sendOne(id, 0); }); }, Promise.resolve())
     .then(function(){ setNet('ok'); }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
@@ -891,10 +896,12 @@ function sendOne(id, tries){
   var e = outbox[id];
   if (!e) return Promise.resolve();
   var op = e.op, sent = e.data, seq = e.seq, base = e.base;
-  var opts = {method: op === 'delete' ? 'DELETE' : 'PUT', redirect: 'manual', cache: 'no-store', headers: {'If-Match': String(base)}};
+  var opts = {method: op === 'delete' ? 'DELETE' : 'PUT', redirect: 'manual', cache: 'no-store', headers: {'If-Match': String(base), 'X-Fitness-User': user}};
   if (op !== 'delete'){ opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(sent); }
   return fetch('api/log/' + id, opts).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw {auth: true};
+    // Someone else is signed in now: stop, and let load() switch users.
+    if (r.status === 403){ confirmed = false; setTimeout(load, 0); throw {auth: true}; }
     if (r.status === 409) return r.json().then(function(j){ return resolveConflict(id, j.current, tries); });
     if (r.status >= 500) throw {net: true};
     return r.json().catch(function(){ return {}; }).then(function(j){
@@ -972,6 +979,14 @@ function load(){
     if (!r.ok) throw {net: true};
     return r.json();
   }).then(function(j){
+    if (j.user && j.user !== user){
+      // A different user than this device's last one: switch to their own
+      // copy and queue, and refill the forms from their data.
+      user = j.user; saveJSON('fitness.user', user);
+      outbox = loadJSON(skey('outbox'), {});
+      serverSeen = false; typed = false;
+    }
+    confirmed = true;
     server = {}; vers = {};
     j.docs.forEach(function(x){ server[x.id] = x.data; vers[x.id] = x.version; });
     persist(); rebuild();
@@ -982,10 +997,11 @@ function load(){
     setNet('ok');
   }, function(err){ setNet(err && err.auth ? 'auth' : 'offline'); });
 }
-function sync(){ return Object.keys(outbox).length ? flush().then(load) : load(); }
+// load() confirms the user first and then flushes the queue.
+function sync(){ return load(); }
 
 function connect(){
-  var c = loadJSON('fitness.cache', null);
+  var c = loadJSON(skey('cache'), null);
   if (c && c.server){ server = c.server; vers = c.vers || {}; }
   rebuild();
   sync();
@@ -999,7 +1015,7 @@ function importFile(file){
   setStatus('st-data', 'Importing…');
   file.text().then(function(text){
     try { JSON.parse(text); } catch(e){ throw new Error('That file is not valid JSON.'); }
-    return fetch('api/import', {method: 'POST', redirect: 'manual', headers: {'Content-Type': 'application/json'}, body: text});
+    return fetch('api/import', {method: 'POST', redirect: 'manual', headers: {'Content-Type': 'application/json', 'X-Fitness-User': user || ''}, body: text});
   }).then(function(r){
     if (r.type === 'opaqueredirect' || r.status === 401) throw new Error('Signed out. Reload to sign in, then import again.');
     return r.json().then(function(j){

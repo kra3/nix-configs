@@ -13,6 +13,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs, process};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
+mod coach;
+mod mcp;
+
 const INDEX: &str = include_str!("../index.html");
 const APP_JS: &str = include_str!("../app.js");
 const APP_CSS: &str = include_str!("../app.css");
@@ -107,7 +110,8 @@ ALTER TABLE days ADD COLUMN bodyfat REAL;
 PRAGMA user_version = 5;";
 
 // Migrations run in order, each in its own transaction, from the stored user_version.
-const MIGRATIONS: [&str; 5] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5];
+// Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
+const MIGRATIONS: [&str; 6] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -425,12 +429,13 @@ fn get_doc(c: &Connection, user: &str, id: &str) -> rusqlite::Result<Option<(i64
     match id {
         "settings" => get_settings(c, user),
         "plan" => get_plan(c, user),
+        "profile" => coach::get_profile(c, user),
         _ => get_day(c, user, id),
     }
 }
 
 // Ids that are not days.
-const SINGLETONS: [&str; 2] = ["settings", "plan"];
+const SINGLETONS: [&str; 3] = ["settings", "plan", "profile"];
 
 /* ---------- writes (version-checked) ---------- */
 
@@ -558,6 +563,23 @@ fn import_map(c: &Connection, user: &str, v: &Value) -> Result<ImportReport, Str
                     continue;
                 }
             }
+        } else if id == "profile" {
+            match coach::parse_profile(d) {
+                Ok(p) => coach::write_profile(c, user, &p, 0).map_err(|e| e.to_string())?,
+                Err(_) => {
+                    rep.invalid += 1;
+                    continue;
+                }
+            }
+        } else if id == "coach_log" {
+            let (ok, bad) = coach::import_log(c, user, d)?;
+            rep.invalid += bad;
+            if ok > 0 {
+                rep.imported += 1;
+            } else if bad == 0 {
+                rep.skipped += 1;
+            }
+            continue;
         } else if valid_date(id) {
             match parse_day(d) {
                 Ok(day) => write_day(c, user, id, &day, 0).map_err(|e| e.to_string())?,
@@ -590,6 +612,10 @@ fn export_map(c: &Connection, user: &str) -> rusqlite::Result<Value> {
         if let Some((_, d)) = get_doc(c, user, id)? {
             m.insert(id.into(), d);
         }
+    }
+    let log = coach::export_log(c, user)?;
+    if log.as_array().is_some_and(|l| !l.is_empty()) {
+        m.insert("coach_log".into(), log);
     }
     Ok(Value::Object(m))
 }
@@ -638,7 +664,10 @@ fn parse_version(h: Option<&str>) -> Option<i64> {
     s.parse::<i64>().ok().filter(|v| *v >= 0)
 }
 
-fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option<&str>, body: &[u8]) -> Reply {
+fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_match: Option<&str>, body: &[u8]) -> Reply {
+    if path.starts_with("/api/coach/") {
+        return coach::api(c, user, method, path, query, body);
+    }
     match (method, path) {
         (Method::Get, "/api/log") => {
             let mut docs = Vec::new();
@@ -706,6 +735,11 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, if_match: Option
                     Ok(p) => write_plan(c, user, &p, base),
                     Err(e) => return err(400, &e),
                 }
+            } else if id == "profile" {
+                match coach::parse_profile(&v) {
+                    Ok(p) => coach::write_profile(c, user, &p, base),
+                    Err(e) => return err(400, &e),
+                }
             } else {
                 match parse_day(&v) {
                     Ok(d) => write_day(c, user, id, &d, base),
@@ -765,7 +799,10 @@ fn user_of(rq: &Request, header: &str, fallback: Option<&str>) -> Option<String>
 
 fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Option<&str>) {
     let url = rq.url().to_string();
-    let path = url.split('?').next().unwrap_or("/").to_string();
+    let (path, query) = match url.split_once('?') {
+        Some((p, q)) => (p.to_string(), q.to_string()),
+        None => (url.clone(), String::new()),
+    };
     let method = rq.method().clone();
     // Paths are matched as raw bytes, so refuse anything a proxy could have
     // normalised differently: dot segments, empty segments, percent-encoding.
@@ -791,6 +828,11 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     let Some(user) = user_of(&rq, header, fallback) else {
         return respond(rq, err(401, "no user"));
     };
+    // A cross-site form can POST, but only as form or text data; every POST the
+    // page makes is JSON, so anything else is refused.
+    if method == Method::Post && !header_of(&rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with("application/json")) {
+        return respond(rq, err(415, "JSON body expected"));
+    }
     let if_match = header_of(&rq, "If-Match").map(str::to_string);
     let limit = if path == "/api/import" { MAX_IMPORT } else { MAX_BODY };
     let mut body = Vec::new();
@@ -802,7 +844,7 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     }
     let r = {
         let c = db.lock().unwrap_or_else(|p| p.into_inner());
-        api(&c, &user, &method, &path, if_match.as_deref(), &body)
+        api(&c, &user, &method, &path, &query, if_match.as_deref(), &body)
     };
     respond(rq, r)
 }
@@ -921,6 +963,9 @@ fn main() {
         }
         return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
     }
+    if args.get(1).map(String::as_str) == Some("coach") {
+        return mcp::cli(&db_path, &args[2..]);
+    }
     if args.get(1).map(String::as_str) == Some("backup") {
         if args.len() != 3 {
             eprintln!("usage: fitness backup <file>");
@@ -959,7 +1004,8 @@ mod tests {
 
     fn call(c: &Connection, user: &str, m: Method, path: &str, if_match: Option<&str>, body: Value) -> (u16, Value) {
         let b = if body.is_null() { vec![] } else { body.to_string().into_bytes() };
-        let r = api(c, user, &m, path, if_match, &b);
+        let (path, query) = path.split_once('?').unwrap_or((path, ""));
+        let r = api(c, user, &m, path, query, if_match, &b);
         (r.code, serde_json::from_slice(&r.body).unwrap_or(Value::Null))
     }
 
@@ -1261,6 +1307,203 @@ mod tests {
         assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("1"), json!({ "sex": "x" })).0, 400);
         assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("1"), json!({ "kcal": 1800 })).0, 200);
         assert_eq!(get_settings(&c, "kra3").unwrap().unwrap().1, json!({ "kcal": 1800 }));
+    }
+
+    /* ---------- coaching (schema v6) ---------- */
+
+    fn profile() -> Value {
+        json!({ "birth_year": 1990, "goal": "recomp", "goal_notes": " Lose belly fat ", "days_per_week": 4, "days": ["fri", "mon"],
+                "session_minutes": 60, "injuries": "knee sometimes", "diet": "",
+                "goals": [{ "measure": "waist", "target": 85, "by": "2027-03-01",
+                            "milestones": [{ "value": 86, "by": "2027-02-01" }, { "value": 88, "by": "2026-12-15" }] },
+                          { "measure": "exercise", "exercise": "legpress", "target": 100 }] })
+    }
+
+    #[test]
+    fn dates_round_trip() {
+        assert_eq!(coach::day_num("1970-01-01"), 0);
+        assert_eq!(coach::day_num("2026-11-04") - coach::day_num("2026-10-28"), 7);
+        for d in ["2024-02-29", "2026-11-04", "2000-03-01", "1999-12-31"] {
+            assert_eq!(coach::day_str(coach::day_num(d)), d);
+        }
+    }
+
+    #[test]
+    fn profile_validates_normalises_and_keeps_history() {
+        let c = db();
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/profile", Some("0"), profile()).0, 200);
+        let (v, p) = get_doc(&c, "kra3", "profile").unwrap().unwrap();
+        assert_eq!(v, 1);
+        assert_eq!(p["goal_notes"], json!("Lose belly fat"));
+        assert_eq!(p["days"], json!(["mon", "fri"]));
+        assert!(p.get("diet").is_none());
+        assert_eq!(p["goals"][0]["milestones"][0]["by"], json!("2026-12-15"));
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/profile", Some("1"), json!({ "goal": "strength" })).0, 200);
+        let hist: i64 = c.query_row("SELECT count(*) FROM profile_history WHERE user = 'kra3'", [], |r| r.get(0)).unwrap();
+        assert_eq!(hist, 1);
+        for bad in [
+            json!({ "mood": 1 }),
+            json!({ "goal": "bulk" }),
+            json!({ "days": ["someday"] }),
+            json!({ "goals": [{ "measure": "exercise", "target": 100 }] }),
+            json!({ "goals": [{ "measure": "waist", "target": 85, "milestones": [{ "value": 88 }] }] }),
+            json!({ "goals": [{ "measure": "waist", "target": 0 }] }),
+            json!({ "session_minutes": 5 }),
+        ] {
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/profile", Some("2"), bad.clone()).0, 400, "{bad}");
+        }
+    }
+
+    #[test]
+    fn proposals_accept_reject_outdated_superseded() {
+        use coach::Decision;
+        let c = db();
+        let plan = json!({ "A": [{ "k": "legpress", "n": "Leg press", "sets": 3, "lo": 10, "hi": 12, "u": "kg" }], "B": [] });
+        let p1 = coach::propose(&c, "kra3", "plan", &plan, "Start with one exercise").unwrap();
+        let p2 = coach::propose(&c, "kra3", "plan", &plan, "Same, newer").unwrap();
+        assert_eq!(coach::decide(&c, "kra3", p1, true, None).unwrap(), Decision::NotOpen("superseded".into()));
+        assert_eq!(coach::decide(&c, "kra3", p2, true, Some("ok")).unwrap(), Decision::Accepted(1));
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, plan);
+        assert_eq!(coach::decide(&c, "kra3", p2, false, None).unwrap(), Decision::NotOpen("accepted".into()));
+        // The target changed after the proposal was written: refused, nothing written.
+        let p3 = coach::propose(&c, "kra3", "settings", &json!({ "kcal": 2000 }), "More food").unwrap();
+        call(&c, "kra3", Method::Put, "/api/log/settings", Some("0"), json!({ "kcal": 1900 }));
+        assert_eq!(coach::decide(&c, "kra3", p3, true, None).unwrap(), Decision::Outdated);
+        assert_eq!(get_settings(&c, "kra3").unwrap().unwrap().1, json!({ "kcal": 1900 }));
+        let p4 = coach::propose(&c, "kra3", "profile", &profile(), "Your intake").unwrap();
+        assert_eq!(coach::decide(&c, "kra3", p4, false, Some("not yet")).unwrap(), Decision::Rejected);
+        assert_eq!(coach::decide(&c, "other", p4, true, None).unwrap(), Decision::NotFound);
+        assert!(coach::propose(&c, "kra3", "plan", &json!({ "A": [{ "k": "x" }] }), "bad").is_err());
+        assert!(coach::propose(&c, "kra3", "days", &json!({}), "bad").is_err());
+        assert!(coach::propose(&c, "kra3", "plan", &plan, " ").is_err());
+        let log = coach::list_log(&c, "kra3", 50).unwrap();
+        let texts: Vec<&str> = log.iter().map(|e| e["text"].as_str().unwrap()).collect();
+        assert!(texts.iter().any(|t| t.starts_with("Rejected the change to your profile") && t.ends_with("Your note: not yet")));
+        assert!(texts.iter().any(|t| t.contains("was not applied")));
+        assert!(texts.iter().any(|t| t.contains(&format!("#{p1} for your plan was replaced"))));
+        let open = coach::list_proposals(&c, "kra3").unwrap();
+        assert!(open.iter().all(|p| p["status"] != "open"));
+    }
+
+    #[test]
+    fn coach_log_is_append_only() {
+        let c = db();
+        let id = coach::add_log(&c, "kra3", "coach", "check-in", "Week 1").unwrap();
+        assert!(c.execute("UPDATE coach_log SET text = 'x' WHERE id = ?1", params![id]).is_err());
+        assert!(c.execute("DELETE FROM coach_log WHERE id = ?1", params![id]).is_err());
+        assert!(coach::add_log(&c, "kra3", "coach", "rant", "x").is_err());
+        assert!(coach::add_log(&c, "kra3", "someone", "note", "x").is_err());
+        assert!(coach::add_log(&c, "kra3", "you", "note", "  ").is_err());
+    }
+
+    fn seed_month(c: &Connection) {
+        let plan = json!({ "A": [{ "k": "legpress", "n": "Leg press", "sets": 3, "lo": 10, "hi": 12, "u": "kg" }],
+                           "B": [{ "k": "crunch", "n": "Crunch", "sets": 2, "lo": 12, "hi": 15, "u": "reps" }] });
+        call(c, "kra3", Method::Put, "/api/log/plan", Some("0"), plan);
+        call(c, "kra3", Method::Put, "/api/log/profile", Some("0"), profile());
+        let end = coach::day_num("2026-11-04");
+        for i in 0..35 {
+            let d = coach::day_str(end - 34 + i);
+            let mut day = json!({ "date": d, "weight": 68.0 - 0.05 * i as f64, "kcal": 1900, "protein": 115, "steps": 9000, "sleep": 7, "bodyfat": 26.0 - 0.03 * i as f64 });
+            if i % 7 == 0 {
+                day["waist"] = json!(92.0 - 0.2 * i as f64);
+            }
+            if i % 2 == 0 {
+                day["workout"] = json!("A");
+                day["sets"] = json!({ "legpress": [[50 + i, 10], [50 + i, 10]], "crunch": [[null, 12]] });
+            }
+            call(c, "kra3", Method::Put, &format!("/api/log/{d}"), Some("0"), day);
+        }
+    }
+
+    #[test]
+    fn summary_reports_trends_goals_and_alerts() {
+        let c = db();
+        seed_month(&c);
+        let s = coach::summary(&c, "kra3", "2026-11-04", 4).unwrap();
+        assert_eq!(s["weeks_detail"].as_array().unwrap().len(), 4);
+        assert_eq!(s["weeks_detail"][0]["end"], json!("2026-11-04"));
+        assert!(s["body"]["pace_kg_week"].as_f64().unwrap() < -0.3);
+        let lp = s["training"].as_array().unwrap().iter().find(|t| t["key"] == "legpress").unwrap().clone();
+        assert_eq!(lp["sessions"], json!(18));
+        assert!(lp["change_4w_pct"].as_f64().unwrap() > 0.0);
+        let waist = &s["goals"][0];
+        assert_eq!(waist["measure"], json!("waist"));
+        assert!(waist["eta"].as_str().is_some_and(|d| d > "2026-11-04"));
+        assert_eq!(s["goals"][1]["current"], json!(84));
+        assert_eq!(s["nutrition"]["kcal_days"], json!(28));
+        assert!(s["nutrition"]["maintenance"].as_f64().unwrap() > 1900.0);
+        let kinds: Vec<&str> = s["alerts"].as_array().unwrap().iter().map(|a| a["kind"].as_str().unwrap()).collect();
+        assert_eq!(kinds, vec!["check-in"]);
+        let text = coach::summary_text(&s);
+        for part in ["ALERTS", "GOALS", "BODY", "WEEKS", "TRAINING", "NUTRITION", "PLAN", "COACH LOG", "Leg press [legpress]"] {
+            assert!(text.contains(part), "{part}");
+        }
+        // Two weeks later with nothing logged, and a check-in recorded.
+        coach::add_log(&c, "kra3", "coach", "check-in", "Week 5").unwrap();
+        let later = coach::summary(&c, "kra3", "2026-11-18", 2).unwrap();
+        assert!(later["alerts"].as_array().unwrap().iter().any(|a| a["kind"] == "logging"));
+        let empty = coach::summary(&c, "nobody", "2026-11-04", 2).unwrap();
+        assert!(empty["alerts"].as_array().unwrap().iter().any(|a| a["text"] == "Nothing logged yet."));
+        assert!(coach::summary_text(&empty).contains("the app's starting plan"));
+    }
+
+    #[test]
+    fn export_import_carries_profile_and_log() {
+        let c = db();
+        seed_month(&c);
+        coach::add_log(&c, "kra3", "coach", "check-in", "Week 5").unwrap();
+        c.execute("INSERT INTO coach_log(user, at, author, kind, text) VALUES('kra3', 1000, 'you', 'note', 'old')", []).unwrap();
+        let ex = export_map(&c, "kra3").unwrap();
+        assert_eq!(ex["coach_log"].as_array().unwrap().len(), 2);
+        let c2 = db();
+        import_map(&c2, "kra3", &ex).unwrap();
+        assert_eq!(get_doc(&c2, "kra3", "profile").unwrap().unwrap().1, get_doc(&c, "kra3", "profile").unwrap().unwrap().1);
+        let log = coach::list_log(&c2, "kra3", 10).unwrap();
+        assert!(log.iter().any(|e| e["at"] == json!(1000) && e["text"] == "old"));
+        // A second import never doubles the log.
+        import_map(&c2, "kra3", &ex).unwrap();
+        assert_eq!(coach::list_log(&c2, "kra3", 10).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn mcp_protocol() {
+        let c = db();
+        seed_month(&c);
+        let init = mcp::handle_message(&c, "kra3", &json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18" } })).unwrap();
+        assert_eq!(init["result"]["protocolVersion"], json!("2025-06-18"));
+        assert!(init["result"]["instructions"].as_str().unwrap().contains("summary"));
+        assert!(mcp::handle_message(&c, "kra3", &json!({ "jsonrpc": "2.0", "method": "notifications/initialized" })).is_none());
+        let list = mcp::handle_message(&c, "kra3", &json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/list" })).unwrap();
+        let names: Vec<&str> = list["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
+        assert_eq!(names, vec!["summary", "propose", "log", "proposals"]);
+        let call = |name: &str, args: Value| mcp::handle_message(&c, "kra3", &json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": { "name": name, "arguments": args } })).unwrap();
+        let s = call("summary", json!({ "date": "2026-11-04", "weeks": 2 }));
+        assert_eq!(s["result"]["isError"], json!(false));
+        assert!(s["result"]["content"][0]["text"].as_str().unwrap().starts_with("COACH SUMMARY"));
+        let bad = call("propose", json!({ "target": "settings", "data": { "kcal": -1 }, "why": "x" }));
+        assert_eq!(bad["result"]["isError"], json!(true));
+        let ok = call("propose", json!({ "target": "settings", "data": { "kcal": 2000 }, "why": "Eat a bit more" }));
+        assert!(ok["result"]["content"][0]["text"].as_str().unwrap().contains("nothing has changed yet"));
+        assert_eq!(call("log", json!({ "add": "Week 5 reviewed", "kind": "check-in" }))["result"]["isError"], json!(false));
+        assert!(call("log", json!({}))["result"]["content"][0]["text"].as_str().unwrap().contains("Week 5 reviewed"));
+        assert_eq!(call("accept", json!({ "id": 1 }))["result"]["isError"], json!(true));
+        let unknown = mcp::handle_message(&c, "kra3", &json!({ "jsonrpc": "2.0", "id": 9, "method": "resources/list" })).unwrap();
+        assert_eq!(unknown["error"]["code"], json!(-32601));
+    }
+
+    #[test]
+    fn http_coach_routes() {
+        let a = server();
+        let json = "Content-Type: application/json";
+        assert_eq!(status(a, "POST /api/coach/log HTTP/1.1\r\nRemote-User: kra3\r\nContent-Type: text/plain", b"{\"text\":\"hi\"}"), 415);
+        assert_eq!(status(a, &format!("POST /api/coach/log HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{\"text\":\"Travelling next week\"}"), 200);
+        assert_eq!(status(a, "GET /api/coach/log?limit=5 HTTP/1.1\r\nRemote-User: kra3", b""), 200);
+        assert_eq!(status(a, "GET /api/coach/summary?end=2026-11-04&weeks=2 HTTP/1.1\r\nRemote-User: kra3", b""), 200);
+        assert_eq!(status(a, "GET /api/coach/proposals HTTP/1.1\r\nRemote-User: kra3", b""), 200);
+        assert_eq!(status(a, &format!("POST /api/coach/proposals/99/accept HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
+        assert_eq!(status(a, &format!("POST /api/coach/proposals HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
+        assert_eq!(status(a, "GET /api/coach/summary HTTP/1.1", b""), 401);
     }
 
     #[test]

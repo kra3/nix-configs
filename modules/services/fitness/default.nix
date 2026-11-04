@@ -121,6 +121,94 @@
         };
       };
 
+      # Copies health readings Home Assistant already has (phone and scale) into
+      # the log for the two previous days (so one missed run is caught up), only
+      # into fields that are still empty: anything logged by hand is kept.
+      sops.secrets."homeassistant.token" = { };
+      systemd.services.fitness-health-sync = {
+        description = "Fill Fitness steps, sleep, weight and body fat from Home Assistant";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        environment = {
+          DB_FILE = "${stateDir}/fitness.db";
+          HA_URL = "http://127.0.0.1:8123";
+          FITNESS_USER = "kra3";
+        };
+        serviceConfig = sandbox // {
+          Type = "oneshot";
+          # Needs loopback to reach Home Assistant, nothing else.
+          PrivateNetwork = false;
+          IPAddressAllow = "localhost";
+          IPAddressDeny = "any";
+          LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "fitness-health-sync";
+              runtimeInputs = [
+                pkgs.curl
+                pkgs.jq
+                pkgs.coreutils
+                pkgs.gnused
+                fitness
+              ];
+              text = ''
+                token=$(<"$CREDENTIALS_DIRECTORY/token")
+
+                # reading <entity> <day> <max|first>: one number from the readings
+                # recorded during that local day, or nothing. HA's history also
+                # returns the state carried in from before midnight; it is skipped.
+                reading() {
+                  local start end from
+                  start=$(date -d "$2" +%FT%T%:z)
+                  end=$(date -d "$2 + 1 day" +%FT%T%:z)
+                  from=$(date -d "$2" +%s)
+                  curl -fsS --max-time 30 -H "Authorization: Bearer $token" \
+                    "$HA_URL/api/history/period/''${start//+/%2B}?end_time=''${end//+/%2B}&filter_entity_id=$1&minimal_response&no_attributes" |
+                    jq -r --argjson from "$from" --arg pick "$3" '
+                      [.[0][]?
+                       | select((.last_changed // "" | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | try fromdateiso8601 catch 0) > $from)
+                       | .state | tonumber? | select(. > 0)]
+                      | if length == 0 then empty elif $pick == "max" then max else .[0] end'
+                }
+
+                for ago in 2 1; do
+                  day=$(date -d "today - $ago days" +%F)
+                  fields=()
+                  # Phone (Health app via the HA companion app): steps count up
+                  # through the day; sleep is minutes, written the morning after.
+                  if v=$(reading sensor.meghanadha_health_steps "$day" max) && [ -n "$v" ]; then
+                    fields+=("steps=$(printf '%.0f' "$v")")
+                  fi
+                  if v=$(reading sensor.meghanadha_sleep_duration "$day" max) && [ -n "$v" ]; then
+                    fields+=("sleep=$(jq -n --argjson m "$v" '($m / 15 | round) / 4')")
+                  fi
+                  # Withings scale: the first weigh-in of the day (weight and body fat %).
+                  if v=$(reading sensor.office_room_withings_kra_weight "$day" first) && [ -n "$v" ]; then
+                    fields+=("weight=$(printf '%.1f' "$v")")
+                  fi
+                  if v=$(reading sensor.office_room_withings_kra_fat_ratio "$day" first) && [ -n "$v" ]; then
+                    fields+=("bodyfat=$(printf '%.1f' "$v")")
+                  fi
+                  if [ ''${#fields[@]} -eq 0 ]; then
+                    echo "$day: no readings from Home Assistant"
+                    continue
+                  fi
+                  fitness fill "$FITNESS_USER" "$day" "''${fields[@]}"
+                done
+              '';
+            }
+          );
+        };
+      };
+      systemd.timers.fitness-health-sync = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* 06:20:00";
+          RandomizedDelaySec = "10m";
+          Persistent = true;
+        };
+      };
+
       # Lets nginx open the 0660 socket in the 0750 runtime dir. Changing the
       # nginx unit means the switch restarts nginx once, so the group applies.
       systemd.services.nginx.serviceConfig.SupplementaryGroups = [ "fitness" ];

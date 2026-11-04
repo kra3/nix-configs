@@ -1,7 +1,7 @@
 // Offline shell for Fitness. API calls pass straight through: the page keeps its
 // own offline copy of the data and a queue of unsent changes.
 'use strict';
-var CACHE = 'fitness-shell-v2';
+var CACHE = 'fitness-shell-v5';
 var SHELL = ['./', 'app.js', 'app.css', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 var SLOW_MS = 3000;
 
@@ -41,5 +41,13 @@ self.addEventListener('fetch', function(e){
       clearTimeout(timer);
       cached(req).then(function(hit){ if (!done){ done = true; resolve(hit || Response.error()); } });
     });
+  }));
+});
+
+self.addEventListener('notificationclick', function(e){
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(function(cs){
+    for (var i = 0; i < cs.length; i++) if ('focus' in cs[i]) return cs[i].focus();
+    return self.clients.openWindow('./');
   }));
 });

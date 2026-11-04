@@ -8,7 +8,7 @@
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::{json, Map, Value};
 use std::io::Read;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs, process};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
@@ -886,6 +886,13 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
         return respond(rq, err(400, "bad path"));
     }
 
+    // Phone shortcut: calories and protein for one day, behind a bearer token
+    // instead of the login (nginx serves only this path without Authelia).
+    if path == "/api/ingest" {
+        let r = ingest(&mut rq, &method, db);
+        return respond(rq, r);
+    }
+
     if method == Method::Get {
         if let Some((ctype, body)) = static_file(&path) {
             return respond(rq, Reply { code: 200, ctype, body: body.to_vec(), extra: vec![] });
@@ -972,6 +979,103 @@ fn fill_day(c: &Connection, user: &str, date: &str, vals: &[(String, f64)]) -> R
         }
     }
     Err("the day kept changing; try again".into())
+}
+
+// The token and the one user the ingest endpoint writes for. Unset (endpoint
+// off) unless INGEST_TOKEN_FILE and INGEST_USER are both given.
+static INGEST: OnceLock<(String, String)> = OnceLock::new();
+// Fields a phone may send; anything else is refused.
+const INGEST_FIELDS: [&str; 2] = ["kcal", "protein"];
+
+fn ct_eq(a: &[u8], b: &[u8]) -> bool {
+    a.len() == b.len() && a.iter().zip(b).fold(0u8, |d, (x, y)| d | (x ^ y)) == 0
+}
+
+// "Bearer <token>" against the stored token, in constant time.
+fn bearer_ok(header: Option<&str>, token: &str) -> bool {
+    let Some(h) = header.map(str::trim) else { return false };
+    let Some(given) = h.strip_prefix("Bearer ").map(str::trim) else { return false };
+    !token.is_empty() && ct_eq(given.as_bytes(), token.as_bytes())
+}
+
+// Reads the token from `path`, or creates it (32 random bytes as hex, mode 0600)
+// the first time, so no secret has to be set up by hand. Read it with sudo.
+fn load_or_create_token(path: &str) -> Result<String, String> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    match fs::read_to_string(path) {
+        Ok(t) => {
+            let t = t.trim().to_string();
+            return if t.len() >= 32 { Ok(t) } else { Err(format!("{path} holds a token that is too short")) };
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(format!("cannot read {path}: {e}")),
+    }
+    let mut raw = [0u8; 32];
+    fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut raw)).map_err(|e| format!("no random bytes: {e}"))?;
+    let token: String = raw.iter().map(|b| format!("{b:02x}")).collect();
+    let mut f = fs::OpenOptions::new().write(true).create_new(true).mode(0o600).open(path).map_err(|e| format!("cannot create {path}: {e}"))?;
+    f.write_all(token.as_bytes()).map_err(|e| format!("cannot write {path}: {e}"))?;
+    Ok(token)
+}
+
+// {"date": "YYYY-MM-DD", "kcal": n, "protein": n}: fills those fields on that
+// day only where they are empty (so nothing logged by hand is changed). A day
+// after today is refused.
+fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
+    let Ok(Value::Object(o)) = serde_json::from_slice::<Value>(body) else {
+        return err(400, "JSON object expected");
+    };
+    let Some(date) = o.get("date").and_then(Value::as_str).filter(|d| valid_date(d)) else {
+        return err(400, "date must be YYYY-MM-DD");
+    };
+    if date > coach::local_today(c).as_str() {
+        return err(400, "date is in the future");
+    }
+    let mut vals = Vec::new();
+    for (k, v) in &o {
+        if k == "date" {
+            continue;
+        }
+        if !INGEST_FIELDS.contains(&k.as_str()) {
+            return err(400, &format!("unknown field {k}"));
+        }
+        match v.as_f64().filter(|n| n.is_finite() && *n >= 0.0) {
+            Some(n) => vals.push((k.clone(), n)),
+            None => return err(400, &format!("{k} must be a number, 0 or more")),
+        }
+    }
+    if vals.is_empty() {
+        return err(400, "nothing to fill");
+    }
+    match fill_day(c, user, date, &vals) {
+        Ok(set) => reply(200, json!({ "date": date, "filled": set })),
+        Err(e) => err(400, &e),
+    }
+}
+
+fn ingest(rq: &mut Request, method: &Method, db: &Mutex<Connection>) -> Reply {
+    let Some((token, user)) = INGEST.get() else { return err(404, "not found") };
+    if *method != Method::Post {
+        return err(405, "POST only");
+    }
+    if !bearer_ok(header_of(rq, "Authorization"), token) {
+        return err(401, "bad token");
+    }
+    if !header_of(rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with(JSON)) {
+        return err(415, "JSON body expected");
+    }
+    let mut body = Vec::new();
+    if rq.as_reader().take(MAX_BODY + 1).read_to_end(&mut body).is_err() {
+        return err(400, "read failed");
+    }
+    if body.len() as u64 > MAX_BODY {
+        return err(413, "too large");
+    }
+    let c = db.lock().unwrap_or_else(|p| p.into_inner());
+    let r = ingest_fill(&c, user, &body);
+    println!("ingest for {user}: {}", String::from_utf8_lossy(&r.body));
+    r
 }
 
 fn fill_cli(db_path: &str, user: &str, date: &str, pairs: &[String]) {
@@ -1079,6 +1183,18 @@ fn main() {
     // Set ANON_USER only to run without a login proxy (local testing).
     let fallback = env::var("ANON_USER").ok();
     let db = Mutex::new(open(&db_path));
+    // Phone ingest is on only when both are set; the token is made on first start.
+    if let (Ok(file), Ok(user)) = (env::var("INGEST_TOKEN_FILE"), env::var("INGEST_USER")) {
+        match load_or_create_token(&file) {
+            Ok(t) => {
+                let _ = INGEST.set((t, user));
+            }
+            Err(e) => {
+                eprintln!("ingest token: {e}");
+                process::exit(1);
+            }
+        }
+    }
     let server = serve(&listen);
     println!("Fitness listening on {listen}, database {db_path}, user header {header}");
     for rq in server.incoming_requests() {
@@ -1743,5 +1859,84 @@ mod tests {
         assert_eq!(parse_version(Some("-1")), None);
         assert_eq!(parse_version(Some("*")), None);
         assert_eq!(parse_version(None), None);
+    }
+}
+
+#[cfg(test)]
+mod ingest_tests {
+    use super::*;
+
+    fn tmp(name: &str) -> String {
+        let p = std::env::temp_dir().join(format!("fitness-ingest-{}-{name}", std::process::id()));
+        let _ = fs::remove_file(&p);
+        p.to_string_lossy().into_owned()
+    }
+
+    fn body(r: &Reply) -> Value {
+        serde_json::from_slice(&r.body).unwrap()
+    }
+
+    #[test]
+    fn bearer_must_match_exactly() {
+        let t = "a".repeat(64);
+        assert!(bearer_ok(Some(&format!("Bearer {t}")), &t));
+        assert!(!bearer_ok(Some(&format!("Bearer {}b", &t[1..])), &t));
+        assert!(!bearer_ok(Some(&t), &t), "scheme required");
+        assert!(!bearer_ok(Some("Bearer "), &t));
+        assert!(!bearer_ok(None, &t));
+        assert!(!bearer_ok(Some("Bearer "), ""), "an empty token never matches");
+    }
+
+    #[test]
+    fn token_is_made_once_and_kept_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let path = tmp("token");
+        let t = load_or_create_token(&path).unwrap();
+        assert_eq!(t.len(), 64);
+        assert!(t.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+        assert_eq!(load_or_create_token(&path).unwrap(), t, "second start keeps the token");
+        fs::write(&path, "short").unwrap();
+        assert!(load_or_create_token(&path).is_err(), "a short token is refused");
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn ingest_fills_only_empty_fields_for_that_user() {
+        let path = tmp("db");
+        let c = open(&path);
+        let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","kcal":2100,"protein":130}"#);
+        assert_eq!(r.code, 200);
+        assert_eq!(body(&r)["filled"], json!(["kcal", "protein"]));
+        // A later, different reading does not replace what is already there.
+        let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","kcal":9999}"#);
+        assert_eq!(r.code, 200);
+        assert_eq!(body(&r)["filled"], json!([]));
+        let (_, day) = get_day(&c, "kra3", "2026-11-03").unwrap().unwrap();
+        assert_eq!(day["kcal"], json!(2100));
+        assert_eq!(day["protein"], json!(130));
+        assert!(get_day(&c, "someone-else", "2026-11-03").unwrap().is_none());
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn ingest_refuses_bad_input() {
+        let path = tmp("db2");
+        let c = open(&path);
+        for (b, why) in [
+            (&br#"{"date":"2026-11-03","weight":66}"#[..], "field outside the list"),
+            (br#"{"date":"2026-11-03","kcal":-1}"#, "negative"),
+            (br#"{"date":"2026-11-03","kcal":"2100"}"#, "text instead of a number"),
+            (br#"{"date":"2999-01-01","kcal":2100}"#, "future date"),
+            (br#"{"date":"11/03/2026","kcal":2100}"#, "bad date"),
+            (br#"{"date":"2026-11-03"}"#, "nothing to fill"),
+            (b"[1,2]", "not an object"),
+            (b"not json", "not json"),
+        ] {
+            assert_eq!(ingest_fill(&c, "kra3", b).code, 400, "{why}");
+        }
+        // The day must not even exist after the refusals.
+        assert!(get_day(&c, "kra3", "2026-11-03").unwrap().is_none());
+        let _ = fs::remove_file(&path);
     }
 }

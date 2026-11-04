@@ -130,6 +130,12 @@ class TripCard extends HTMLElement {
     return s === "home" ? "Home" : s && !["not_home", "unknown", "unavailable"].includes(s) ? s : "Here";
   }
 
+  _atDest() {
+    const z = this._config.hide_at;
+    const s = this._hass.states[this._config.person]?.state;
+    return !!z && (z === "zone.home" ? s === "home" : s === this._hass.states[z]?.attributes.friendly_name);
+  }
+
   _event() {
     const now = wallNow();
     const today = new Date(now).toISOString().slice(0, 10);
@@ -144,6 +150,7 @@ class TripCard extends HTMLElement {
     const c = this._config;
     const ev = c.calendars && this._event();
     if (c.calendars && !ev) return { none: true };
+    if (this._atDest()) return { none: true };
     const s = this._hass.states[c.entity];
     if (!s || ["unknown", "unavailable"].includes(s.state)) return { ev, need: "Not checked yet" };
     const a = s.attributes;
@@ -199,7 +206,7 @@ class TripCard extends HTMLElement {
     this._busy = true;
     this._render();
     try {
-      await this._hass.callService("script", "transit_check", { person: this._config.person, ...(ev && { place: ev.place, title: ev.title, starts: ev.starts }) });
+      await this._hass.callService("script", "transit_check", { person: this._config.person, ...(this._config.direction && !ev && { direction: this._config.direction }), ...(ev && { place: ev.place, title: ev.title, starts: ev.starts }) });
     } finally {
       this._busy = false;
       this._render();

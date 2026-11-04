@@ -49,6 +49,18 @@
           <label class="field"><span>Steps</span><input type="number" inputmode="numeric" step="1" min="0" id="f-steps"></label>
           <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" step="0.25" min="0" id="f-sleep"></label>
           <label class="field"><span>Body fat (%)</span><input type="number" inputmode="decimal" step="0.1" min="0" max="75" id="f-bodyfat"></label>
+          <div class="field full"><span>Check-in (1 low, 5 high)</span><div class="checkin" id="checkin"></div></div>
+          <div class="field full" id="meal-box" hidden><span>Add a saved meal to today's totals</span><div class="days" id="meal-taps"></div></div>
+          <div class="field full" id="supp-box" hidden><span>Supplements taken</span><div class="days" id="supp-checks"></div></div>
+          <details class="full"><summary class="small">Measurements (cm)</summary>
+            <div class="fields mt">
+              <label class="field"><span>Neck</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-neck"></label>
+              <label class="field"><span>Chest</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-chest"></label>
+              <label class="field"><span>Arm</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-arm"></label>
+              <label class="field"><span>Thigh</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-thigh"></label>
+              <label class="field"><span>Hip</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-hip"></label>
+            </div>
+          </details>
           <label class="field full"><span>Note</span><textarea id="f-note" maxlength="500"></textarea></label>
         </div>
         <div class="actions">
@@ -72,6 +84,12 @@
       <div class="stats" id="cstats"></div>
       <div class="readout" id="ro-waist" aria-live="polite"></div>
       <div class="chart waist" id="ch-waist"></div>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-meas">
+      <h2 id="h-meas">Measurements</h2>
+      <div class="meas" id="meas"></div>
+      <p class="sub" id="meas-empty">Log neck, chest, arm, thigh or hip under Measurements in Log the day.</p>
     </section>
 
     <section class="card span2" aria-labelledby="h-bf">
@@ -129,6 +147,28 @@
       <div class="stats" id="px-stats"></div>
       <div class="readout" id="ro-px" aria-live="polite"></div>
       <div class="chart" id="ch-px"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-meals">
+      <h2 id="h-meals">Meals</h2>
+      <p class="sub">Saved meals add their calories and protein to a day with one tap.</p>
+      <div id="meals-ed"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="meal-add">+ Meal</button>
+        <button type="button" class="btn" id="meals-save">Save meals</button>
+        <span class="status" id="st-meals" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-supps">
+      <h2 id="h-supps">Supplements</h2>
+      <p class="sub">Your daily list. Tick what you took under Log the day; the coach sees how often.</p>
+      <div id="supps-ed"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="supp-add">+ Supplement</button>
+        <button type="button" class="btn" id="supps-save">Save supplements</button>
+        <span class="status" id="st-supps" role="status" aria-live="polite"></span>
+      </div>
     </section>
 
     <section class="card span2">
@@ -232,6 +272,7 @@
         <summary>Daily targets</summary>
         <div class="fields mt">
           <label class="field"><span>Calories (kcal)</span><input type="number" inputmode="numeric" min="0" id="t-kcal"></label>
+          <label class="field"><span>Rest-day calories (kcal)</span><input type="number" inputmode="numeric" min="0" id="t-kcal-rest" placeholder="same as above"></label>
           <label class="field"><span>Protein (g)</span><input type="number" inputmode="numeric" min="0" id="t-protein"></label>
           <label class="field"><span>Steps</span><input type="number" inputmode="numeric" min="0" id="t-steps"></label>
           <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" min="0" step="0.25" id="t-sleep"></label>

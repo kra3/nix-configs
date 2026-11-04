@@ -14,8 +14,10 @@ use std::{env, fs, process};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 mod coach;
+mod daily;
 mod extras;
 mod mcp;
+mod training;
 
 const INDEX: &str = include_str!("../index.html");
 const APP_JS: &str = include_str!("../app.js");
@@ -33,7 +35,7 @@ const CSP: &str = "default-src 'self'; script-src 'self'; style-src 'self'; img-
     base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 // Numeric day fields and their upper bounds (all must be >= 0).
-const DAY_NUM: [(&str, f64); 7] = [
+const DAY_NUM: [(&str, f64); NDAY] = [
     ("weight", 500.0),
     ("waist", 300.0),
     ("kcal", 20_000.0),
@@ -41,8 +43,19 @@ const DAY_NUM: [(&str, f64); 7] = [
     ("steps", 200_000.0),
     ("sleep", 24.0),
     ("bodyfat", 75.0),
+    // Daily check-in, 1 to 5 (checked in parse_day), and body measurements in cm.
+    ("energy", 5.0),
+    ("stress", 5.0),
+    ("soreness", 5.0),
+    ("hunger", 5.0),
+    ("neck", 300.0),
+    ("chest", 300.0),
+    ("arm", 300.0),
+    ("thigh", 300.0),
+    ("hip", 300.0),
 ];
-const SETTING_NUM: [(&str, f64); 8] = [
+const NDAY: usize = 16;
+const SETTING_NUM: [(&str, f64); 9] = [
     ("kcal", 20_000.0),
     ("protein", 1_000.0),
     ("steps", 200_000.0),
@@ -51,6 +64,7 @@ const SETTING_NUM: [(&str, f64); 8] = [
     ("height", 300.0),
     ("start_weight", 500.0),
     ("rest", 900.0),
+    ("kcal_rest", 20_000.0),
 ];
 const MAX_EXERCISES: usize = 30;
 const MAX_SETS: usize = 20;
@@ -111,9 +125,11 @@ ALTER TABLE days ADD COLUMN bodyfat REAL;
 PRAGMA user_version = 5;";
 
 // Migrations run in order, each in its own transaction, from the stored user_version.
-// Schema version 6 (coach profile, proposals, coach log) lives in coach.rs, version 7
-// (blood tests, cardio, photo names) in extras.rs.
-const MIGRATIONS: [&str; 7] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, extras::SCHEMA_9];
+// Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
+// Schema version 7 (RIR and pain per set, training block, progression rule) lives in training.rs,
+// version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs,
+// version 9 (blood tests, cardio, photo names) in extras.rs.
+const MIGRATIONS: [&str; 9] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -169,10 +185,11 @@ fn valid_key(s: &str) -> bool {
 
 #[derive(Debug, PartialEq)]
 struct Day {
-    nums: [Option<f64>; 7],
+    nums: [Option<f64>; NDAY],
+    supps: Vec<String>,
     note: Option<String>,
     workout: Option<String>,
-    sets: Vec<(String, i64, Option<f64>, f64)>,
+    sets: Vec<(String, i64, training::SetRow)>,
 }
 
 fn num_field(v: Option<&Value>, name: &str, max: f64) -> Result<Option<f64>, String> {
@@ -189,15 +206,17 @@ fn num_field(v: Option<&Value>, name: &str, max: f64) -> Result<Option<f64>, Str
 fn parse_day(v: &Value) -> Result<Day, String> {
     let o = v.as_object().ok_or("object expected")?;
     for k in o.keys() {
-        let known = k == "date" || k == "note" || k == "workout" || k == "sets" || DAY_NUM.iter().any(|(n, _)| n == k);
+        let known = k == "date" || k == "supps" || k == "note" || k == "workout" || k == "sets" || DAY_NUM.iter().any(|(n, _)| n == k);
         if !known {
             return Err(format!("unknown field {k}"));
         }
     }
-    let mut nums = [None; 7];
+    let mut nums = [None; NDAY];
     for (i, (name, max)) in DAY_NUM.iter().enumerate() {
         nums[i] = num_field(o.get(*name), name, *max)?;
     }
+    daily::check_scale(&nums)?;
+    let supps = daily::parse_taken(o.get("supps"))?;
     let note = match o.get("note") {
         None | Some(Value::Null) => None,
         Some(Value::String(s)) if s.chars().count() <= MAX_NOTE => Some(s.trim().to_string()).filter(|s| !s.is_empty()),
@@ -224,20 +243,17 @@ fn parse_day(v: &Value) -> Result<Day, String> {
                     return Err(format!("too many sets for {ex}"));
                 }
                 for (i, s) in arr.iter().enumerate() {
-                    let pair = s.as_array().filter(|p| p.len() == 2).ok_or_else(|| format!("set {} of {ex} must be [kg, reps]", i + 1))?;
-                    let kg = num_field(pair.first(), "kg", 1_000.0)?;
-                    let reps = num_field(pair.get(1), "reps", 1_000.0)?.ok_or_else(|| format!("set {} of {ex} needs reps", i + 1))?;
-                    sets.push((ex.clone(), i as i64, kg, reps));
+                    sets.push((ex.clone(), i as i64, training::parse_set(ex, i, s)?));
                 }
             }
         }
         Some(_) => return Err("sets must be an object".into()),
     }
-    Ok(Day { nums, note, workout, sets })
+    Ok(Day { nums, supps, note, workout, sets })
 }
 
 struct Settings {
-    nums: [Option<f64>; 8],
+    nums: [Option<f64>; 9],
     sex: Option<String>,
 }
 
@@ -246,7 +262,7 @@ fn parse_settings(v: &Value) -> Result<Settings, String> {
     if let Some(k) = o.keys().find(|k| *k != "sex" && !SETTING_NUM.iter().any(|(n, _)| n == k)) {
         return Err(format!("unknown field {k}"));
     }
-    let mut nums = [None; 8];
+    let mut nums = [None; 9];
     for (i, (name, max)) in SETTING_NUM.iter().enumerate() {
         nums[i] = num_field(o.get(*name), name, *max)?;
     }
@@ -268,18 +284,30 @@ struct PlanEx {
     hi: i64,
     unit: String,
     inc: Option<f64>,
+    prog: Option<String>,
+}
+
+// The plan document: exercises plus the optional training block.
+#[derive(Debug, PartialEq)]
+struct Plan {
+    ex: Vec<PlanEx>,
+    block: Option<training::Block>,
 }
 
 fn int_field(o: &Map<String, Value>, k: &str, lo: i64, hi: i64) -> Result<i64, String> {
     o.get(k).and_then(Value::as_i64).filter(|x| (lo..=hi).contains(x)).ok_or_else(|| format!("{k} must be a whole number from {lo} to {hi}"))
 }
 
-// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?}, ...], "B": [...]}
-fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
+// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?, "prog"?}, ...], "B": [...], "block"?: {...}}
+fn parse_plan(v: &Value) -> Result<Plan, String> {
     let o = v.as_object().ok_or("object expected")?;
-    if let Some(k) = o.keys().find(|k| !WORKOUTS.contains(&k.as_str())) {
+    if let Some(k) = o.keys().find(|k| *k != "block" && !WORKOUTS.contains(&k.as_str())) {
         return Err(format!("unknown workout {k}"));
     }
+    let block = match o.get("block") {
+        None | Some(Value::Null) => None,
+        Some(b) => Some(training::parse_block(b)?),
+    };
     let mut out = Vec::new();
     for w in WORKOUTS {
         let Some(list) = o.get(w) else { continue };
@@ -291,7 +319,7 @@ fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
         for (i, e) in list.iter().enumerate() {
             let at = format!("workout {w}, exercise {}", i + 1);
             let e = e.as_object().ok_or_else(|| format!("{at} must be an object"))?;
-            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u", "inc"].contains(&k.as_str())) {
+            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u", "inc", "prog"].contains(&k.as_str())) {
                 return Err(format!("{at}: unknown field {k}"));
             }
             let key = e.get("k").and_then(Value::as_str).filter(|k| valid_key(k)).ok_or_else(|| format!("{at}: bad key"))?;
@@ -312,10 +340,11 @@ fn parse_plan(v: &Value) -> Result<Vec<PlanEx>, String> {
             if inc == Some(0.0) {
                 return Err(format!("{at}: inc must be above 0"));
             }
-            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into(), inc });
+            let prog = training::parse_prog(e.get("prog")).map_err(|m| format!("{at}: {m}"))?;
+            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into(), inc, prog });
         }
     }
-    Ok(out)
+    Ok(Plan { ex: out, block })
 }
 
 /* ---------- rows -> JSON document ---------- */
@@ -338,22 +367,25 @@ fn put_num(m: &mut Map<String, Value>, k: &str, v: Option<f64>) {
 fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i64, Value)>> {
     let row = c
         .query_row(
-            "SELECT weight, waist, kcal, protein, steps, sleep, bodyfat, note, workout, version FROM days WHERE user = ?1 AND date = ?2",
+            &format!("SELECT {}, note, workout, version, supps FROM days WHERE user = ?1 AND date = ?2", daily::day_cols()),
             params![user, date],
             |r| {
-                let mut nums = [None; 7];
+                let mut nums = [None; NDAY];
                 for (i, n) in nums.iter_mut().enumerate() {
                     *n = r.get::<_, Option<f64>>(i)?;
                 }
-                Ok((nums, r.get::<_, Option<String>>(7)?, r.get::<_, Option<String>>(8)?, r.get::<_, i64>(9)?))
+                Ok((nums, r.get::<_, Option<String>>(NDAY)?, r.get::<_, Option<String>>(NDAY + 1)?, r.get::<_, i64>(NDAY + 2)?, r.get::<_, Option<String>>(NDAY + 3)?))
             },
         )
         .optional()?;
-    let Some((nums, note, workout, version)) = row else { return Ok(None) };
+    let Some((nums, note, workout, version, supps)) = row else { return Ok(None) };
     let mut m = Map::new();
     m.insert("date".into(), json!(date));
     for (i, (name, _)) in DAY_NUM.iter().enumerate() {
         put_num(&mut m, name, nums[i]);
+    }
+    if let Some(l) = supps.and_then(|s| serde_json::from_str::<Value>(&s).ok()).filter(|l| l.as_array().is_some_and(|a| !a.is_empty())) {
+        m.insert("supps".into(), l);
     }
     if let Some(n) = note {
         m.insert("note".into(), json!(n));
@@ -361,12 +393,14 @@ fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i
     if let Some(w) = workout {
         m.insert("workout".into(), json!(w));
     }
-    let mut st = c.prepare_cached("SELECT exercise, kg, reps FROM sets WHERE user = ?1 AND date = ?2 ORDER BY exercise, idx")?;
-    let rows = st.query_map(params![user, date], |r| Ok((r.get::<_, String>(0)?, r.get::<_, Option<f64>>(1)?, r.get::<_, f64>(2)?)))?;
+    let mut st = c.prepare_cached("SELECT exercise, kg, reps, rir, pain FROM sets WHERE user = ?1 AND date = ?2 ORDER BY exercise, idx")?;
+    let rows = st.query_map(params![user, date], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, Option<f64>>(1)?, r.get::<_, f64>(2)?, r.get::<_, Option<i64>>(3)?, r.get::<_, Option<i64>>(4)?))
+    })?;
     let mut sets = Map::new();
     for row in rows {
-        let (ex, kg, reps) = row?;
-        let entry = json!([kg.map(num_value).unwrap_or(Value::Null), num_value(reps)]);
+        let (ex, kg, reps, rir, pain) = row?;
+        let entry = training::set_value(kg, reps, rir, pain == Some(1));
         if let Value::Array(list) = sets.entry(ex).or_insert_with(|| json!([])) {
             list.push(entry);
         }
@@ -379,17 +413,17 @@ fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i
 
 fn get_settings(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>> {
     c.query_row(
-        "SELECT kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, sex FROM settings WHERE user = ?1",
+        "SELECT kcal, protein, steps, sleep, workouts, height, start_weight, rest, kcal_rest, version, sex FROM settings WHERE user = ?1",
         params![user],
         |r| {
             let mut m = Map::new();
             for (i, (name, _)) in SETTING_NUM.iter().enumerate() {
                 put_num(&mut m, name, r.get::<_, Option<f64>>(i)?);
             }
-            if let Some(x) = r.get::<_, Option<String>>(9)? {
+            if let Some(x) = r.get::<_, Option<String>>(10)? {
                 m.insert("sex".into(), json!(x));
             }
-            Ok((r.get::<_, i64>(8)?, Value::Object(m)))
+            Ok((r.get::<_, i64>(9)?, Value::Object(m)))
         },
     )
     .optional()
@@ -399,12 +433,15 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
     let Some(version) = c.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get::<_, i64>(0)).optional()? else {
         return Ok(None);
     };
-    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit, inc FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
+    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit, inc, prog FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
     let rows = st.query_map(params![user], |r| {
         let mut e = json!({ "k": r.get::<_, String>(1)?, "n": r.get::<_, String>(2)?, "sets": r.get::<_, i64>(3)?,
                             "lo": r.get::<_, i64>(4)?, "hi": r.get::<_, i64>(5)?, "u": r.get::<_, String>(6)? });
         if let (Some(inc), Value::Object(m)) = (r.get::<_, Option<f64>>(7)?, &mut e) {
             m.insert("inc".into(), num_value(inc));
+        }
+        if let (Some(prog), Value::Object(m)) = (r.get::<_, Option<String>>(8)?, &mut e) {
+            m.insert("prog".into(), json!(prog));
         }
         Ok((r.get::<_, String>(0)?, e))
     })?;
@@ -417,6 +454,9 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
         if let Some(Value::Array(list)) = m.get_mut(&w) {
             list.push(e);
         }
+    }
+    if let Some(b) = training::get_block(c, user)? {
+        m.insert("block".into(), training::block_value(&b));
     }
     Ok(Some((version, Value::Object(m))))
 }
@@ -432,12 +472,13 @@ fn get_doc(c: &Connection, user: &str, id: &str) -> rusqlite::Result<Option<(i64
         "settings" => get_settings(c, user),
         "plan" => get_plan(c, user),
         "profile" => coach::get_profile(c, user),
+        "meals" | "supplements" => daily::get_doc(c, user, id),
         _ => get_day(c, user, id),
     }
 }
 
 // Ids that are not days.
-const SINGLETONS: [&str; 3] = ["settings", "plan", "profile"];
+const SINGLETONS: [&str; 5] = ["settings", "plan", "profile", "meals", "supplements"];
 
 /* ---------- writes (version-checked) ---------- */
 
@@ -449,20 +490,12 @@ fn write_day(c: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusq
         return Ok(None);
     }
     let version = base + 1;
-    let n = &d.nums;
-    tx.execute(
-        "INSERT INTO days(user, date, weight, waist, kcal, protein, steps, sleep, bodyfat, note, workout, version, updated)
-         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
-         ON CONFLICT(user, date) DO UPDATE SET weight = excluded.weight, waist = excluded.waist, kcal = excluded.kcal,
-           protein = excluded.protein, steps = excluded.steps, sleep = excluded.sleep, bodyfat = excluded.bodyfat,
-           note = excluded.note, workout = excluded.workout, version = excluded.version, updated = excluded.updated",
-        params![user, date, n[0], n[1], n[2], n[3], n[4], n[5], n[6], d.note, d.workout, version, now()],
-    )?;
+    daily::upsert_day(&tx, user, date, d, version)?;
     tx.execute("DELETE FROM sets WHERE user = ?1 AND date = ?2", params![user, date])?;
     {
-        let mut st = tx.prepare_cached("INSERT INTO sets(user, date, exercise, idx, kg, reps) VALUES(?1, ?2, ?3, ?4, ?5, ?6)")?;
-        for (ex, idx, kg, reps) in &d.sets {
-            st.execute(params![user, date, ex, idx, kg, reps])?;
+        let mut st = tx.prepare_cached("INSERT INTO sets(user, date, exercise, idx, kg, reps, rir, pain) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+        for (ex, idx, (kg, reps, rir, pain)) in &d.sets {
+            st.execute(params![user, date, ex, idx, kg, reps, rir, pain.then_some(1)])?;
         }
     }
     tx.commit()?;
@@ -478,19 +511,19 @@ fn write_settings(c: &Connection, user: &str, st: &Settings, base: i64) -> rusql
     }
     let version = base + 1;
     tx.execute(
-        "INSERT INTO settings(user, kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, updated, sex)
-         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+        "INSERT INTO settings(user, kcal, protein, steps, sleep, workouts, height, start_weight, rest, version, updated, sex, kcal_rest)
+         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
          ON CONFLICT(user) DO UPDATE SET kcal = excluded.kcal, protein = excluded.protein, steps = excluded.steps,
            sleep = excluded.sleep, workouts = excluded.workouts, height = excluded.height,
            start_weight = excluded.start_weight, rest = excluded.rest, version = excluded.version, updated = excluded.updated,
-           sex = excluded.sex",
-        params![user, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], version, now(), st.sex],
+           sex = excluded.sex, kcal_rest = excluded.kcal_rest",
+        params![user, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], version, now(), st.sex, s[8]],
     )?;
     tx.commit()?;
     Ok(Some(version))
 }
 
-fn write_plan(c: &Connection, user: &str, p: &[PlanEx], base: i64) -> rusqlite::Result<Option<i64>> {
+fn write_plan(c: &Connection, user: &str, p: &Plan, base: i64) -> rusqlite::Result<Option<i64>> {
     let tx = c.unchecked_transaction()?;
     let cur: Option<i64> = tx.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get(0)).optional()?;
     if cur.unwrap_or(0) != base {
@@ -505,15 +538,16 @@ fn write_plan(c: &Connection, user: &str, p: &[PlanEx], base: i64) -> rusqlite::
     tx.execute("DELETE FROM plan_exercises WHERE user = ?1", params![user])?;
     {
         let mut st = tx.prepare_cached(
-            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc, prog) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         )?;
         let mut pos = [0i64; 2];
-        for e in p {
+        for e in &p.ex {
             let i = WORKOUTS.iter().position(|w| *w == e.workout).unwrap_or(0);
-            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc])?;
+            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc, e.prog])?;
             pos[i] += 1;
         }
     }
+    training::write_block(&tx, user, p.block.as_ref())?;
     tx.commit()?;
     Ok(Some(version))
 }
@@ -568,6 +602,14 @@ fn import_map(c: &Connection, user: &str, v: &Value) -> Result<ImportReport, Str
         } else if id == "profile" {
             match coach::parse_profile(d) {
                 Ok(p) => coach::write_profile(c, user, &p, 0).map_err(|e| e.to_string())?,
+                Err(_) => {
+                    rep.invalid += 1;
+                    continue;
+                }
+            }
+        } else if id == "meals" || id == "supplements" {
+            match daily::parse_doc(id, d) {
+                Ok(p) => daily::write_doc(c, user, id, &p, 0).map_err(|e| e.to_string())?,
                 Err(_) => {
                     rep.invalid += 1;
                     continue;
@@ -701,6 +743,7 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_
         }
         // The signed-in user, so the page can keep each account's offline copy apart.
         (Method::Get, "/api/me") => reply(200, json!({ "user": user })),
+        (Method::Get, "/api/library") => training::library(),
         (Method::Get, "/api/export") => match export_map(c, user) {
             Ok(v) => Reply {
                 code: 200,
@@ -755,6 +798,11 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_
             } else if id == "profile" {
                 match coach::parse_profile(&v) {
                     Ok(p) => coach::write_profile(c, user, &p, base),
+                    Err(e) => return err(400, &e),
+                }
+            } else if id == "meals" || id == "supplements" {
+                match daily::parse_doc(id, &v) {
+                    Ok(p) => daily::write_doc(c, user, id, &p, base),
                     Err(e) => return err(400, &e),
                 }
             } else {
@@ -1000,6 +1048,9 @@ fn main() {
         }
         return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
     }
+    if args.get(1).map(String::as_str) == Some("remind") {
+        return daily::cli(&db_path, &args[2..]);
+    }
     if args.get(1).map(String::as_str) == Some("coach") {
         return mcp::cli(&db_path, &args[2..]);
     }
@@ -1217,6 +1268,130 @@ mod tests {
         assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["weight"], 66);
         assert_eq!(write_plan(&c, "kra3", &parse_plan(&plan()).unwrap(), 0).unwrap(), Some(1));
         init(&c).unwrap();
+    }
+
+    #[test]
+    fn migrates_version_6_to_latest_keeping_data() {
+        let c = Connection::open_in_memory().unwrap();
+        for m in &MIGRATIONS[..6] {
+            c.execute_batch(&format!("BEGIN; {m} COMMIT;")).unwrap();
+        }
+        c.execute("INSERT INTO days(user, date, weight, kcal, version, updated) VALUES('kra3', '2026-11-03', 66, 1800, 1, 0)", []).unwrap();
+        c.execute("INSERT INTO settings(user, kcal, version, updated) VALUES('kra3', 1900, 1, 0)", []).unwrap();
+        init(&c).unwrap();
+        let day = get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1;
+        assert_eq!((day["weight"].clone(), day["kcal"].clone(), day.get("energy").cloned()), (json!(66), json!(1800), None));
+        let st = get_settings(&c, "kra3").unwrap().unwrap().1;
+        assert_eq!((st["kcal"].clone(), st.get("kcal_rest").cloned()), (json!(1900), None));
+        assert_eq!(daily::write_doc(&c, "kra3", "meals", &daily::parse_meals(&json!({ "meals": [] })).unwrap(), 0).unwrap(), Some(1));
+    }
+
+    #[test]
+    fn checkin_measurements_and_supps_round_trip() {
+        let c = db();
+        let day = json!({ "date": "2026-11-04", "energy": 4, "stress": 2, "soreness": 3, "hunger": 5, "neck": 38.5, "chest": 101, "arm": 34, "thigh": 58, "hip": 99, "supps": ["Creatine", "Vit D", "Creatine"] });
+        let (code, _) = call(&c, "kra3", Method::Put, "/api/log/2026-11-04", Some("0"), day.clone());
+        assert_eq!(code, 200);
+        let (_, got) = call(&c, "kra3", Method::Get, "/api/log", None, Value::Null);
+        let doc = got["docs"].as_array().unwrap().iter().find(|d| d["id"] == "2026-11-04").unwrap();
+        let mut want = day;
+        want["supps"] = json!(["Creatine", "Vit D"]);
+        assert_eq!(doc["data"], want);
+        for bad in [json!({ "energy": 0 }), json!({ "stress": 6 }), json!({ "hunger": 2.5 }), json!({ "neck": 301 }), json!({ "supps": "x" }), json!({ "supps": [""] })] {
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/2026-11-05", Some("0"), bad).0, 400);
+        }
+        // Clearing the check-in and ticks removes them.
+        let (code, _) = call(&c, "kra3", Method::Put, "/api/log/2026-11-04", Some("1"), json!({ "date": "2026-11-04", "weight": 70 }));
+        assert_eq!(code, 200);
+        assert_eq!(get_day(&c, "kra3", "2026-11-04").unwrap().unwrap().1, json!({ "date": "2026-11-04", "weight": 70 }));
+    }
+
+    #[test]
+    fn meals_and_supplements_documents() {
+        let c = db();
+        let meals = json!({ "meals": [{ "name": "Egg bhurji", "kcal": 320, "protein": 22 }] });
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/meals", Some("0"), meals.clone()).0, 200);
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/meals", Some("0"), meals.clone()).0, 409);
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/meals", Some("1"), json!({ "meals": [] })).0, 200);
+        let long = "x".repeat(41);
+        let many: Vec<Value> = (0..41).map(|i| json!({ "name": format!("m{i}"), "kcal": 1, "protein": 1 })).collect();
+        for bad in [
+            json!({ "meals": [{ "name": long, "kcal": 1, "protein": 1 }] }),
+            json!({ "meals": [{ "name": "a", "kcal": 5001, "protein": 1 }] }),
+            json!({ "meals": [{ "name": "a", "kcal": 1, "protein": 301 }] }),
+            json!({ "meals": [{ "name": "a", "kcal": 1 }] }),
+            json!({ "meals": [{ "name": " ", "kcal": 1, "protein": 1 }] }),
+            json!({ "meals": many }),
+            json!({ "other": [] }),
+        ] {
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/meals", Some("2"), bad).0, 400);
+        }
+        let supps = json!({ "items": [{ "name": "Creatine", "dose": "5 g", "timing": "any", "why": "strength" }, { "name": "Omega-3" }] });
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/supplements", Some("0"), supps).0, 200);
+        let (_, got) = call(&c, "kra3", Method::Get, "/api/log", None, Value::Null);
+        let doc = got["docs"].as_array().unwrap().iter().find(|d| d["id"] == "supplements").unwrap();
+        assert_eq!(doc["data"]["items"][1], json!({ "name": "Omega-3", "timing": "any" }));
+        let many: Vec<Value> = (0..16).map(|i| json!({ "name": format!("s{i}") })).collect();
+        for bad in [
+            json!({ "items": many }),
+            json!({ "items": [{ "name": "a", "timing": "noon" }] }),
+            json!({ "items": [{ "name": "a", "dose": "x".repeat(41) }] }),
+            json!({ "items": [{ "name": "a", "why": "x".repeat(201) }] }),
+            json!({ "items": [{ "name": "a" }, { "name": "a" }] }),
+        ] {
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/supplements", Some("1"), bad).0, 400);
+        }
+        // Export and import carry them.
+        let exp = export_map(&c, "kra3").unwrap();
+        assert!(exp["meals"].is_object() && exp["supplements"].is_object());
+        let c2 = db();
+        assert_eq!(import_map(&c2, "kra3", &exp).unwrap().imported, 2);
+        assert_eq!(export_map(&c2, "kra3").unwrap(), exp);
+    }
+
+    #[test]
+    fn rest_day_kcal_target_round_trips_and_applies_in_the_summary() {
+        let c = db();
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("0"), json!({ "kcal": 2000, "kcal_rest": 1700 })).0, 200);
+        assert_eq!(get_settings(&c, "kra3").unwrap().unwrap().1["kcal_rest"], 1700);
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/settings", Some("1"), json!({ "kcal": 2000, "kcal_rest": -1 })).0, 400);
+        // 1800 kcal is fine on a workout day (<= 2100) and over on a rest day (> 1785).
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), json!({ "date": "2026-11-03", "kcal": 1800, "workout": "A" }));
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-04", Some("0"), json!({ "date": "2026-11-04", "kcal": 1800, "energy": 4, "stress": 2, "arm": 33 }));
+        call(&c, "kra3", Method::Put, "/api/log/supplements", Some("0"), json!({ "items": [{ "name": "Creatine" }] }));
+        call(&c, "kra3", Method::Put, "/api/log/2026-11-02", Some("0"), json!({ "date": "2026-11-02", "supps": ["Creatine"] }));
+        let s = coach::summary(&c, "kra3", "2026-11-04", 1).unwrap();
+        assert_eq!(s["targets"]["kcal_rest"], 1700);
+        assert_eq!(s["weeks_detail"][0]["kcal_ok_days"], 1);
+        assert_eq!(s["weeks_detail"][0]["energy_avg"], 4);
+        assert_eq!(s["weeks_detail"][0]["stress_avg"], 2);
+        assert_eq!(s["body"]["measurements"]["arm"]["latest"], 33);
+        assert_eq!(s["supplements"][0], json!({ "name": "Creatine", "taken_days": 1, "logged_days": 3, "pct": 33 }));
+        let t = coach::summary_text(&s);
+        assert!(t.contains("checkin 4/2/—/—") && t.contains("arm 33 cm") && t.contains("Creatine: 1/3 days (33%)"), "{t}");
+    }
+
+    #[test]
+    fn reminders() {
+        let c = db();
+        let today = coach::local_today(&c);
+        let r = |k: &str| daily::remind(&c, "kra3", k).unwrap();
+        assert!(r("weigh-in").is_some() && r("food").is_some() && r("supps").is_none());
+        assert!(r("checkin").unwrap().contains("No coach check-in"));
+        assert!(daily::remind(&c, "kra3", "nope").is_err());
+        call(&c, "kra3", Method::Put, "/api/log/supplements", Some("0"), json!({ "items": [{ "name": "Creatine" }, { "name": "Vit D" }] }));
+        assert_eq!(r("supps").unwrap(), "Supplements not ticked today: Creatine, Vit D.");
+        call(&c, "kra3", Method::Put, &format!("/api/log/{today}"), Some("0"), json!({ "date": today, "supps": ["Creatine"] }));
+        assert_eq!(r("supps").unwrap(), "Supplements not ticked today: Vit D.");
+        assert!(r("weigh-in").is_some());
+        call(&c, "kra3", Method::Put, &format!("/api/log/{today}"), Some("1"), json!({ "date": today, "weight": 70, "kcal": 1800, "supps": ["Creatine", "Vit D"] }));
+        assert!(r("weigh-in").is_none() && r("food").is_none() && r("supps").is_none());
+        coach::add_log(&c, "kra3", "coach", "check-in", "all good").unwrap();
+        assert!(r("checkin").is_none());
+        // An old check-in is due again; users are separate.
+        c.execute_batch("DROP TRIGGER coach_log_no_update; UPDATE coach_log SET at = at - 8 * 86400;").unwrap();
+        assert!(r("checkin").unwrap().contains("due"));
+        assert!(daily::remind(&c, "someone", "weigh-in").unwrap().is_some());
     }
 
     #[test]

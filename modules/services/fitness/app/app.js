@@ -27,6 +27,12 @@ var DEFAULT_PLAN = {
 var PLAN = DEFAULT_PLAN;
 
 var docs = {}, settings = Object.assign({}, DEF);
+var MEAS = ['neck', 'chest', 'arm', 'thigh', 'hip'];
+var CHECKIN = [['energy', 'Energy'], ['stress', 'Stress'], ['soreness', 'Soreness'], ['hunger', 'Hunger']];
+var TIMINGS = ['morning', 'pre-workout', 'post-workout', 'evening', 'any'];
+// Saved meals and the supplement list (documents "meals" and "supplements"); the
+// check-in answers and ticks of the open day are held here until "Save day".
+var meals = [], supps = [], mealsDraft = [], suppsDraft = [], checkin = {}, taken = [];
 var sel = todayStr(), wsel = 'A';
 var firstSnap = true;
 
@@ -57,10 +63,13 @@ function saveDay(){
   var next = Object.assign({}, docs[d] || {});
   next.date = d;
   var map = {weight:'f-weight', waist:'f-waist', kcal:'f-kcal', protein:'f-protein', steps:'f-steps', sleep:'f-sleep', bodyfat:'f-bodyfat'};
+  MEAS.forEach(function(k){ map[k] = 'f-' + k; });
   Object.keys(map).forEach(function(k){
     var v = num($(map[k]).value);
     if (v == null) delete next[k]; else next[k] = v;
   });
+  CHECKIN.forEach(function(c){ if (checkin[c[0]] != null) next[c[0]] = checkin[c[0]]; else delete next[c[0]]; });
+  if (taken.length) next.supps = taken.slice(); else delete next.supps;
   var note = $('f-note').value.trim();
   if (note) next.note = note; else delete next.note;
   docs[d] = next;
@@ -96,7 +105,9 @@ function saveWorkout(){
     for (var i = 0; i < nSets(ex, sv0); i++){
       var r = num($('in-' + ex.k + '-' + i + '-r').value);
       var w = ex.u === 'kg' ? num($('in-' + ex.k + '-' + i + '-w').value) : null;
-      if (r != null) arr.push([w, r]);
+      var q = $('in-' + ex.k + '-' + i + '-q'), pn = $('in-' + ex.k + '-' + i + '-p');
+      var rir = q && q.value !== '' ? Number(q.value) : null, pain = !!pn && pn.getAttribute('aria-pressed') === 'true';
+      if (r != null) arr.push(rir == null && !pain ? [w, r] : [w, r, rir, pain]);
     }
     if (arr.length){ collected[ex.k] = arr; any = true; }
   });
@@ -130,6 +141,8 @@ function saveTargets(){
   if (h) s.height = h;
   if (sx) s.sex = sx;
   if (sw) s.start_weight = sw;
+  var kr = num($('t-kcal-rest').value);
+  if (kr) s.kcal_rest = kr;
   settings = Object.assign({}, DEF, s);
   saveDoc('settings', s, 'st-targets', 'Saved');
 }
@@ -137,7 +150,11 @@ function saveTargets(){
 /* ---------- forms ---------- */
 function fillForm(){
   var d = docs[sel] || {};
-  ['weight','waist','kcal','protein','steps','sleep','bodyfat'].forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  ['weight','waist','kcal','protein','steps','sleep','bodyfat'].concat(MEAS).forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  checkin = {};
+  CHECKIN.forEach(function(c){ if (num(d[c[0]]) != null) checkin[c[0]] = num(d[c[0]]); });
+  taken = Array.isArray(d.supps) ? d.supps.slice() : [];
+  renderCheckin(); renderMealTaps(); renderSuppChecks();
   $('f-note').value = d.note || '';
   setStatus('st-day', '');
   disarmDelete(); updateDelete();
@@ -147,7 +164,151 @@ function fillTargets(){
   $('t-height').value = settings.height != null ? settings.height : '';
   $('t-start').value = settings.start_weight != null ? settings.start_weight : '';
   $('t-sex').value = settings.sex || '';
+  $('t-kcal-rest').value = settings.kcal_rest != null ? settings.kcal_rest : '';
+  mealsDraft = JSON.parse(JSON.stringify(meals)); suppsDraft = JSON.parse(JSON.stringify(supps));
+  renderMealsEditor(); renderSuppsEditor(); renderMealTaps(); renderSuppChecks();
 }
+
+/* ---------- daily inputs: check-in, saved meals, supplements ---------- */
+function renderCheckin(){
+  var host = $('checkin'); host.textContent = '';
+  CHECKIN.forEach(function(c){
+    var row = el('div', 'ci-row');
+    row.appendChild(el('span', 'ci-l', c[1]));
+    [1, 2, 3, 4, 5].forEach(function(n){
+      var b = el('button', 'tab', String(n)); b.type = 'button';
+      b.setAttribute('aria-label', c[1] + ' ' + n); b.setAttribute('aria-pressed', checkin[c[0]] === n ? 'true' : 'false');
+      b.addEventListener('click', function(){ typed = true; if (checkin[c[0]] === n) delete checkin[c[0]]; else checkin[c[0]] = n; renderCheckin(); });
+      row.appendChild(b);
+    });
+    host.appendChild(row);
+  });
+}
+// Tapping a saved meal adds its calories and protein to the day's totals.
+function renderMealTaps(){
+  var host = $('meal-taps'); host.textContent = '';
+  $('meal-box').hidden = !meals.length;
+  meals.forEach(function(m, i){
+    var b = el('button', 'tab', m.name + ' · ' + fmt(m.kcal, 0) + ' kcal, ' + fmt(m.protein, 0) + ' g'); b.type = 'button'; b.id = 'meal-tap-' + i;
+    b.addEventListener('click', function(){
+      typed = true;
+      $('f-kcal').value = Math.round(((num($('f-kcal').value) || 0) + m.kcal) * 10) / 10;
+      $('f-protein').value = Math.round(((num($('f-protein').value) || 0) + m.protein) * 10) / 10;
+      setStatus('st-day', 'Added ' + m.name + '. Save the day to keep it.');
+    });
+    host.appendChild(b);
+  });
+}
+function renderSuppChecks(){
+  var host = $('supp-checks'); host.textContent = '';
+  $('supp-box').hidden = !supps.length;
+  supps.forEach(function(x, i){
+    var lb = el('label', 'day-chk'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'supp-' + i;
+    cb.checked = taken.indexOf(x.name) >= 0;
+    cb.addEventListener('change', function(){
+      typed = true;
+      var at = taken.indexOf(x.name);
+      if (cb.checked && at < 0) taken.push(x.name); else if (!cb.checked && at >= 0) taken.splice(at, 1);
+    });
+    lb.appendChild(cb); lb.appendChild(document.createTextNode(' ' + x.name + (x.dose ? ' (' + x.dose + ')' : '') + (x.timing && x.timing !== 'any' ? ', ' + x.timing : '')));
+    if (x.why) lb.title = x.why;
+    host.appendChild(lb);
+  });
+}
+function textIn(id, label, ph, max, v){
+  var i = document.createElement('input'); i.type = 'text'; i.id = id; i.maxLength = max; i.placeholder = ph; i.value = v || ''; i.setAttribute('aria-label', label); return i;
+}
+function readMeals(){
+  mealsDraft.forEach(function(m, i){
+    if (!$('ml-' + i + '-n')) return;
+    m.name = $('ml-' + i + '-n').value; m.kcal = num($('ml-' + i + '-k').value); m.protein = num($('ml-' + i + '-p').value);
+  });
+}
+function renderMealsEditor(){
+  var host = $('meals-ed'); host.textContent = '';
+  mealsDraft.forEach(function(m, i){
+    var row = el('div', 'goal-ed');
+    row.appendChild(textIn('ml-' + i + '-n', 'Meal ' + (i + 1) + ' name', 'Name (e.g. Egg bhurji, 2 roti)', 40, m.name));
+    var r = el('div', 'goal-row');
+    var k = mkInput('ml-' + i + '-k', 'kcal', 'Meal ' + (i + 1) + ' calories'); k.value = m.kcal != null ? m.kcal : '';
+    var p = mkInput('ml-' + i + '-p', 'protein g', 'Meal ' + (i + 1) + ' protein'); p.value = m.protein != null ? m.protein : '';
+    var rm = el('button', 'btn ghost', 'Delete'); rm.type = 'button';
+    rm.addEventListener('click', function(){ readMeals(); mealsDraft.splice(i, 1); renderMealsEditor(); });
+    r.appendChild(k); r.appendChild(p); r.appendChild(rm); row.appendChild(r); host.appendChild(row);
+  });
+  $('meal-add').hidden = mealsDraft.length >= 40;
+}
+function saveMeals(){
+  readMeals();
+  var bad = null, out = [];
+  mealsDraft.forEach(function(m, i){
+    var n = (m.name || '').trim(), at = 'Meal ' + (i + 1) + ': ';
+    if (bad) return;
+    if (!n) bad = at + 'give it a name.';
+    else if (!(m.kcal != null && m.kcal >= 0 && m.kcal <= 5000)) bad = at + 'calories must be 0 to 5000.';
+    else if (!(m.protein != null && m.protein >= 0 && m.protein <= 300)) bad = at + 'protein must be 0 to 300 g.';
+    else out.push({name: n, kcal: m.kcal, protein: m.protein});
+  });
+  if (bad){ setStatus('st-meals', bad, true); return; }
+  meals = out; mealsDraft = JSON.parse(JSON.stringify(out)); renderMealTaps();
+  saveDoc('meals', {meals: out}, 'st-meals', 'Meals saved');
+}
+function readSupps(){
+  suppsDraft.forEach(function(x, i){
+    if (!$('sp-' + i + '-n')) return;
+    x.name = $('sp-' + i + '-n').value; x.dose = $('sp-' + i + '-d').value; x.timing = $('sp-' + i + '-t').value; x.why = $('sp-' + i + '-w').value;
+  });
+}
+function renderSuppsEditor(){
+  var host = $('supps-ed'); host.textContent = '';
+  suppsDraft.forEach(function(x, i){
+    var row = el('div', 'goal-ed');
+    row.appendChild(textIn('sp-' + i + '-n', 'Supplement ' + (i + 1) + ' name', 'Name (e.g. Creatine)', 40, x.name));
+    var r = el('div', 'goal-row');
+    r.appendChild(textIn('sp-' + i + '-d', 'Supplement ' + (i + 1) + ' dose', 'Dose (5 g)', 40, x.dose));
+    var t = document.createElement('select'); t.id = 'sp-' + i + '-t'; t.setAttribute('aria-label', 'Supplement ' + (i + 1) + ' timing');
+    TIMINGS.forEach(function(v){ opt(t, v, v, (x.timing || 'any') === v); });
+    r.appendChild(t); row.appendChild(r);
+    row.appendChild(textIn('sp-' + i + '-w', 'Supplement ' + (i + 1) + ' reason', 'Why you take it (optional)', 200, x.why));
+    var rm = el('button', 'btn ghost', 'Delete'); rm.type = 'button';
+    rm.addEventListener('click', function(){ readSupps(); suppsDraft.splice(i, 1); renderSuppsEditor(); });
+    var a = el('div', 'actions'); a.appendChild(rm); row.appendChild(a); host.appendChild(row);
+  });
+  $('supp-add').hidden = suppsDraft.length >= 15;
+}
+function saveSupps(){
+  readSupps();
+  var bad = null, out = [];
+  suppsDraft.forEach(function(x, i){
+    var n = (x.name || '').trim(), e = {name: n, timing: x.timing || 'any'};
+    if (bad) return;
+    if (!n) bad = 'Supplement ' + (i + 1) + ': give it a name.';
+    else if (out.some(function(o){ return o.name === n; })) bad = n + ' is listed twice.';
+    else {
+      if ((x.dose || '').trim()) e.dose = x.dose.trim();
+      if ((x.why || '').trim()) e.why = x.why.trim();
+      out.push(e);
+    }
+  });
+  if (bad){ setStatus('st-supps', bad, true); return; }
+  supps = out; suppsDraft = JSON.parse(JSON.stringify(out)); renderSuppChecks();
+  saveDoc('supplements', {items: out}, 'st-supps', 'Supplements saved');
+}
+// First, latest and change for each body measurement.
+function renderMeasurements(){
+  var host = $('meas'); host.textContent = ''; var any = false;
+  MEAS.forEach(function(k){
+    var p = series(k);
+    if (!p.length) return;
+    any = true;
+    var box = el('div'), f = p[0].v, l = p[p.length - 1].v;
+    stat(box, fmt(l, 1) + ' cm', k.charAt(0).toUpperCase() + k.slice(1), 'latest ' + fmtDay(p[p.length - 1].date));
+    box.lastChild.appendChild(el('div', 's', 'first ' + fmt(f, 1) + ' cm · ' + sgn(l - f, 1, 'cm')));
+    host.appendChild(box.firstChild);
+  });
+  $('meas-empty').hidden = any;
+}
+function kcalCap(d){ var r = num(settings.kcal_rest); return r != null && !(d && d.workout) ? r : settings.kcal; }
 
 /* ---------- today bars ---------- */
 function weekWorkouts(){
@@ -160,7 +321,7 @@ function renderBars(){
   $('h-today').textContent = sel === todayStr() ? 'Today' : fmtDay(sel);
   var rows = [
     {l:'Protein', v:num(d.protein), t:settings.protein, u:'g', mode:'min'},
-    {l:'Calories', v:num(d.kcal), t:settings.kcal, u:'kcal', mode:'max'},
+    {l:'Calories', v:num(d.kcal), t:kcalCap(d), u:'kcal', mode:'max'},
     {l:'Steps', v:num(d.steps), t:settings.steps, u:'', mode:'min'},
     {l:'Sleep', v:num(d.sleep), t:settings.sleep, u:'h', mode:'min'},
     {l:'Workouts', v:weekWorkouts(), t:settings.workouts, u:'this week', mode:'min'}
@@ -351,7 +512,7 @@ function renderHabits(){
   var defs = [
     {l:'Workout', f:function(d){ return d && d.workout ? 'on' : null; }},
     {l:'Protein', f:function(d){ var v = d ? num(d.protein) : null; return v == null ? null : (v >= settings.protein ? 'on' : 'none'); }},
-    {l:'Calories', f:function(d){ var v = d ? num(d.kcal) : null; return v == null ? null : (v <= settings.kcal * 1.05 ? 'on' : 'miss'); }},
+    {l:'Calories', f:function(d){ var v = d ? num(d.kcal) : null; return v == null ? null : (v <= kcalCap(d) * 1.05 ? 'on' : 'miss'); }},
     {l:'Steps', f:function(d){ var v = d ? num(d.steps) : null; return v == null ? null : (v >= settings.steps ? 'on' : 'none'); }},
     {l:'Sleep', f:function(d){ var v = d ? num(d.sleep) : null; return v == null ? null : (v >= settings.sleep ? 'on' : 'none'); }}
   ];
@@ -384,16 +545,29 @@ function lastFor(k){
   return {date:d, sets:docs[d].sets[k]};
 }
 function lastText(ex, last){
-  var parts = last.sets.map(function(s){ return ex.u === 'kg' ? fmt(s[0], 2) + '×' + fmt(s[1], 0) : fmt(s[1], 0); });
+  var parts = last.sets.map(function(s){
+    var t = ex.u === 'kg' ? fmt(s[0], 2) + '×' + fmt(s[1], 0) : fmt(s[1], 0);
+    if (s[2] != null) t += ' (RIR ' + s[2] + ')';
+    return s[3] === true ? t + ' (pain)' : t;
+  });
   var suffix = ex.u === 'kg' ? ' (kg × reps)' : ex.u === 'sec' ? ' sec' : ' reps';
   return 'Last, ' + fmtDay(last.date) + ': ' + parts.join(' · ') + suffix + '.';
 }
 function suggestText(ex, sg){
   var first = sg.sets[0], what = ex.u === 'kg' ? fmt(first[0], 2) + ' kg × ' + first[1] : first[1] + (ex.u === 'sec' ? ' sec' : ' reps');
+  if (sg.deloadWeek) return 'Lighter week: ' + what + ', about 10% less and the bottom of the range. Leave reps in the tank.' + (sg.pain ? ' You had pain here last time, so stop if it comes back.' : '');
+  if (sg.pain >= 2) return 'Pain in two sessions running. Keep it at ' + what + ' or stop, and swap it' + swapText(ex) + '.';
+  if (sg.pain) return 'Pain last time, so no increase: ' + what + ' again. Stop or swap this exercise if it hurts again.';
+  if (sg.hold) return 'Hold: same as last time, ' + what + '.';
+  if (sg.capped) return 'Top of the range at this weight. This exercise only adds reps, so keep ' + what + ' and make the reps cleaner.';
   if (sg.deload) return 'No new best in 3 sessions. Today: a lighter session, ' + what + ', then build back up from there.';
   if (ex.u !== 'kg' && stalled(ex.k, sel)) return 'No new best in 3 sessions. Try a harder variation or a slower tempo, or rest a day longer before it.';
   if (sg.up) return 'Today: ' + what + (ex.u === 'kg' ? '. Every set hit ' + ex.hi + ', so one step heavier.' : '. Top of the range last time; make it harder (slower, or a harder variation).');
   return 'Today: ' + (ex.u === 'kg' ? 'same weight, one more rep per set (' + what + ' first).' : 'one more per set (' + what + ' first).');
+}
+function swapText(ex){
+  var e = libEx(ex.k), names = e ? e.swaps.map(function(k){ var x = libEx(k); return x ? x.name : null; }).filter(Boolean).slice(0, 3) : [];
+  return names.length ? ' for ' + names.join(', ') + ' (Edit plan)' : ' for another exercise from the library (Edit plan)';
 }
 // Tap the set number to log the set as suggested (or as last time), then rest.
 function logAsSuggested(ex, i, sg){
@@ -427,6 +601,7 @@ function renderWorkout(){
   $('planed').textContent = '';
   var host = $('exlist'); host.textContent = '';
   var saved = (docs[sel] && docs[sel].sets) || {};
+  host.appendChild(el('p', 'hint', 'Per set: RIR is how many more reps you could have done (–  means not recorded). Tick Pain if the set hurt.'));
   PLAN[wsel].forEach(function(ex){
     var box = document.createElement('div'); box.className = 'ex';
     var head = document.createElement('div'); head.className = 'ex-head';
@@ -462,13 +637,38 @@ function renderWorkout(){
         r2.addEventListener('change', onRepsEntered);
         row.appendChild(r2);
       }
+      var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.className = 'rir'; rq.title = 'Reps in reserve';
+      rq.setAttribute('aria-label', ex.n + ' set ' + (i + 1) + ' reps in reserve');
+      ['', 0, 1, 2, 3, 4, 5].forEach(function(v){ opt(rq, v === '' ? '' : String(v), v === '' ? '–' : String(v), sv && sv[2] === v); });
+      var pn = document.createElement('button'); pn.type = 'button'; pn.className = 'pn'; pn.id = 'in-' + ex.k + '-' + i + '-p'; pn.textContent = 'Pain';
+      pn.setAttribute('aria-label', ex.n + ' set ' + (i + 1) + ' pain'); pn.setAttribute('aria-pressed', sv && sv[3] === true ? 'true' : 'false');
+      pn.addEventListener('click', function(){ this.setAttribute('aria-pressed', this.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); });
+      row.appendChild(rq); row.appendChild(pn);
       sets.appendChild(row);
     }
-    box.appendChild(sets); host.appendChild(box);
+    box.appendChild(sets);
+    var lb = libEx(ex.k);
+    if (lb && lb.cues && lb.cues.length){
+      var dt = el('details', 'cues'); dt.appendChild(el('summary', null, 'Cues'));
+      var ul = el('ul'); lb.cues.forEach(function(c){ ul.appendChild(el('li', null, c)); });
+      dt.appendChild(ul); box.appendChild(dt);
+    }
+    host.appendChild(box);
   });
 }
 
 /* ---------- plan editor ---------- */
+// Library choices matching a text filter, plus "custom" (type your own name below).
+function fillLibSelect(sel_, filter, cur){
+  var f = filter.trim().toLowerCase();
+  sel_.textContent = '';
+  opt(sel_, '', LIB.length ? 'Pick from library (' + LIB.length + ')' : 'Library not loaded', false);
+  LIB.forEach(function(x){
+    if (f && (x.name + ' ' + x.equipment + ' ' + x.muscles.join(' ')).toLowerCase().indexOf(f) < 0) return;
+    opt(sel_, x.key, x.name + ' · ' + x.equipment, x.key === cur);
+  });
+  opt(sel_, 'custom', 'Custom (type a name)', false);
+}
 var draft = null;   // {A: [...], B: [...]} while editing, else null
 function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'exercise'; }
 function keyFor(name, list){
@@ -481,7 +681,7 @@ function keyFor(name, list){
   return k;
 }
 function startEdit(){
-  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B}));
+  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B, block: PLAN.block}));
   setStatus('st-workout', ''); renderWorkout();
 }
 function stopEdit(){ draft = null; renderWorkout(); }
@@ -497,7 +697,13 @@ function readEditor(){
     e.u = g('u').value;
     var inc = num(g('inc').value);
     if (inc == null) delete e.inc; else e.inc = inc;
+    if (g('prog').value === 'double') delete e.prog; else e.prog = g('prog').value;
   });
+  if ($('pb-start')){
+    if (!$('pb-start').value) delete draft.block;
+    else draft.block = {start: $('pb-start').value, weeks: Math.round(num($('pb-weeks').value) || 0),
+      deload: $('pb-deload').value.split(/[\s,]+/).filter(Boolean).map(Number)};
+  }
 }
 function planProblem(){
   var bad = null;
@@ -509,8 +715,14 @@ function planProblem(){
       else if (!(e.sets >= 1 && e.sets <= 10)) bad = at + 'sets must be 1 to 10.';
       else if (!(e.lo >= 1 && e.hi >= e.lo && e.hi <= 600)) bad = at + 'the range must run from low to high, up to 600.';
       else if (e.inc != null && !(e.inc > 0 && e.inc <= 50)) bad = at + 'the weight step must be above 0 and at most 50 kg.';
+      else if (e.k && draft[w].some(function(o, j){ return j < i && o.k === e.k; })) bad = at + 'this exercise is already in the workout.';
     });
   });
+  var b = draft.block;
+  if (!bad && b){
+    if (!(b.weeks >= 4 && b.weeks <= 16)) bad = 'Block: length must be 4 to 16 weeks.';
+    else if (b.deload.some(function(d, i){ return !(d >= 1 && d <= b.weeks && d % 1 === 0) || b.deload.indexOf(d) !== i; })) bad = 'Block: deload weeks must be different whole numbers from 1 to ' + b.weeks + '.';
+  }
   return bad;
 }
 function savePlan(){
@@ -519,7 +731,8 @@ function savePlan(){
   if (bad){ setStatus('st-plan', bad, true); return; }
   ['A', 'B'].forEach(function(w){ draft[w].forEach(function(e){ e.n = e.n.trim(); if (!e.k) e.k = keyFor(e.n, draft[w]); }); });
   var next = {A: draft.A, B: draft.B};
-  PLAN = next; draft = null;
+  if (draft.block) next.block = draft.block;
+  PLAN = next; draft = null; renderHeader();
   setStatus('st-workout', 'Saving plan…');
   renderWorkout();
   queue('plan', 'put', next).then(function(){ setStatus('st-workout', savedText('plan', 'Plan saved')); });
@@ -530,6 +743,13 @@ function renderEditor(){
   var hint = document.createElement('p'); hint.className = 'hint';
   hint.textContent = 'Workout ' + wsel + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last box is the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg).';
   host.appendChild(hint);
+  var bk = draft.block || {}, bx = el('div', 'pe-block');
+  bx.appendChild(el('p', 'hint', 'Training block (optional): a start date, its length in weeks and which weeks are lighter (deload), separated by commas. Leave the date empty for no block.'));
+  var br = el('div', 'pe-nums');
+  var bs = document.createElement('input'); bs.type = 'date'; bs.id = 'pb-start'; bs.value = bk.start || ''; bs.setAttribute('aria-label', 'Block start date');
+  var bwk = mkInput('pb-weeks', 'weeks', 'Block length in weeks'); bwk.min = '4'; bwk.max = '16'; bwk.step = '1'; bwk.inputMode = 'numeric'; bwk.value = bk.weeks || '';
+  var bdl = document.createElement('input'); bdl.type = 'text'; bdl.id = 'pb-deload'; bdl.placeholder = 'deload weeks, e.g. 6'; bdl.value = (bk.deload || []).join(', '); bdl.setAttribute('aria-label', 'Deload weeks');
+  br.appendChild(bs); br.appendChild(bwk); br.appendChild(bdl); bx.appendChild(br); host.appendChild(bx);
   list.forEach(function(e, i){
     var row = document.createElement('div'); row.className = 'pe';
     function field(f, label, v, attrs){
@@ -539,7 +759,25 @@ function renderEditor(){
       el.className = 'pe-' + f;
       return el;
     }
-    row.appendChild(field('n', 'Exercise ' + (i + 1) + ' name', e.n, {type: 'text', maxlength: '60', placeholder: 'Exercise name'}));
+    var main = el('div', 'pe-main'), pick = el('div', 'pe-pick');
+    var flt = field('f', 'Filter the library for exercise ' + (i + 1), '', {type: 'text', maxlength: '30', placeholder: 'Filter library'});
+    var lsel = document.createElement('select'); lsel.id = 'pe-' + i + '-lib'; lsel.setAttribute('aria-label', 'Choose exercise ' + (i + 1) + ' from the library');
+    fillLibSelect(lsel, '', e.k);
+    flt.addEventListener('input', function(){ fillLibSelect(lsel, flt.value, ''); });
+    lsel.addEventListener('change', function(){
+      if (lsel.value === 'custom'){ var nm = $('pe-' + i + '-n'); if (nm) nm.focus(); return; }
+      var x = libEx(lsel.value);
+      if (!x) return;
+      readEditor();
+      e.k = x.key; e.n = x.name; e.u = x.unit; e.lo = x.lo; e.hi = x.hi;
+      renderEditor();
+    });
+    pick.appendChild(flt); pick.appendChild(lsel); main.appendChild(pick);
+    main.appendChild(field('n', 'Exercise ' + (i + 1) + ' name', e.n, {type: 'text', maxlength: '60', placeholder: 'Exercise name'}));
+    var pg = document.createElement('select'); pg.id = 'pe-' + i + '-prog'; pg.setAttribute('aria-label', 'Progression rule');
+    [['double', 'Progress: reps, then weight'], ['reps', 'Progress: reps only, never weight'], ['hold', 'Progress: hold as last time']].forEach(function(o){ opt(pg, o[0], o[1], (e.prog || 'double') === o[0]); });
+    main.appendChild(pg);
+    row.appendChild(main);
     var nums = document.createElement('div'); nums.className = 'pe-nums';
     nums.appendChild(field('sets', 'Sets', e.sets, {type: 'number', inputmode: 'numeric', min: '1', max: '10'}));
     var sx = document.createElement('span'); sx.className = 'x'; sx.textContent = '×'; nums.appendChild(sx);
@@ -644,31 +882,77 @@ function stalled(k, upto){
   return pts.slice(-3).every(function(p){ return p.v <= prev + 1e-9 && p.v >= prev * 0.95; });
 }
 function roundTo(x, step){ return Math.round(x / step) * step; }
-// Suggested [kg, reps] per set for today, from the last session: once every set
-// reached the top of the range, add one weight step and start again at the bottom;
-// otherwise keep each set's weight and go for one more rep.
+// How many of the last two sessions of exercise k (before the selected day, newest
+// first, stopping at the first without) had a pain-flagged set: 0, 1 or 2.
+function painStreak(k){
+  var ds = dates().filter(function(x){ return x < sel && docs[x].sets && docs[x].sets[k]; }), n = 0;
+  for (var i = ds.length - 1; i >= 0 && n < 2; i--){
+    if (docs[ds[i]].sets[k].some(function(st){ return st[3] === true; })) n++; else break;
+  }
+  return n;
+}
+// Suggested [kg, reps] per set for today, from the last session and the exercise's
+// rule (ex.prog): "double" (default): once every set reached the top of the range, add
+// one weight step and start again at the bottom, otherwise keep each set's weight and
+// go for one more rep; "reps": the same without ever adding weight; "hold": as last time.
+// Pain last time keeps the weight; a deload week of the training block is ~10% lighter
+// at the bottom of the range.
 function suggestSets(ex, last){
   if (!last || !last.sets.length) return null;
+  var prog = ex.prog || 'double', step = num(ex.inc) || DEF_INC, pain = painStreak(ex.k);
   var n = nSets(ex, null), top = last.sets.length >= ex.sets && last.sets.every(function(st){ return num(st[1]) >= ex.hi; });
   var heaviest = Math.max.apply(null, last.sets.map(function(st){ return num(st[0]) || 0; })) || null;
-  var out = [];
+  var out = [], j;
+  if (deloadOn(sel)){
+    var lt = ex.u === 'kg' && heaviest ? Math.max(0, roundTo(heaviest * 0.9, step)) : null;
+    for (j = 0; j < n; j++) out.push([lt, ex.lo]);
+    return {sets: out, deloadWeek: true, pain: pain};
+  }
+  if (pain || prog === 'hold'){
+    for (j = 0; j < n; j++){
+      var hs = last.sets[Math.min(j, last.sets.length - 1)];
+      out.push([ex.u === 'kg' ? num(hs[0]) : null, num(hs[1]) || ex.lo]);
+    }
+    return {sets: out, pain: pain, hold: !pain};
+  }
   // Stuck for three sessions: one lighter session (about 10% off, top of the range),
   // after which the usual progression builds back up.
   if (ex.u === 'kg' && heaviest && stalled(ex.k, sel)){
-    var dl = Math.max(0, roundTo(heaviest * 0.9, num(ex.inc) || DEF_INC));
-    for (var j = 0; j < n; j++) out.push([dl, ex.hi]);
+    var dl = Math.max(0, roundTo(heaviest * 0.9, step));
+    for (j = 0; j < n; j++) out.push([dl, ex.hi]);
     return {sets: out, deload: true};
   }
+  var up = top && prog === 'double';
   for (var i = 0; i < n; i++){
     var ls = last.sets[Math.min(i, last.sets.length - 1)], w = num(ls[0]), r = num(ls[1]) || ex.lo;
     if (ex.u === 'kg'){
-      if (top && heaviest) out.push([Math.round((heaviest + (num(ex.inc) || DEF_INC)) * 100) / 100, ex.lo]);
+      if (up && heaviest) out.push([Math.round((heaviest + step) * 100) / 100, ex.lo]);
       else out.push([w, Math.min(ex.hi, Math.max(ex.lo, r + 1))]);
     } else {
       out.push([null, top ? ex.hi : Math.min(ex.hi, r + 1)]);
     }
   }
-  return {sets: out, up: top};
+  return {sets: out, up: up, capped: top && prog === 'reps' && ex.u === 'kg'};
+}
+// The training block (plan.block): which week `date` falls in, and whether it is a deload week.
+function blockWeek(date){
+  var b = PLAN.block;
+  if (!b || !b.start) return null;
+  var n = Math.floor((dayNum(date) - dayNum(b.start)) / 7) + 1;
+  return n < 1 || n > b.weeks ? null : {n: n, weeks: b.weeks, light: (b.deload || []).indexOf(n) >= 0};
+}
+function deloadOn(date){ var b = blockWeek(date); return !!(b && b.light); }
+
+/* ---------- exercise library ---------- */
+var LIB = loadJSON('fitness.library', []);
+function libEx(k){ for (var i = 0; i < LIB.length; i++) if (LIB[i].key === k) return LIB[i]; return null; }
+function loadLibrary(){
+  return fetch('api/library', {cache: 'no-store', redirect: 'manual'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+    if (!j || !j.length || same(j, LIB)) return;
+    LIB = j; saveJSON('fitness.library', j);
+    if (draft) readEditor();
+    renderWorkout();
+  }).catch(function(){});
 }
 
 /* ---------- exercise progress card ---------- */
@@ -804,7 +1088,7 @@ function renderWeek(){
   else if (W === 'down' && (S === 'up' || S === 'flat')){ v = 'Losing weight while keeping your strength. That is the goal.'; cls = 'ok'; }
   else if (W === 'flat' && S === 'up'){ v = 'Weight is flat while lifts go up, which is normal early in a recomp. Watch the waist.'; cls = 'ok'; }
   else v = 'Steady. Keep logging; the trend gets clearer every week.';
-  var stuck = exerciseKeys().filter(function(e){ return PLAN.A.concat(PLAN.B).some(function(p){ return p.k === e.k; }) && stalled(e.k); });
+  var stuck = deloadOn(sel) ? [] : exerciseKeys().filter(function(e){ return PLAN.A.concat(PLAN.B).some(function(p){ return p.k === e.k; }) && stalled(e.k); });
   $('wk-stall').textContent = stuck.length ? 'No new best in the last 3 sessions: ' + stuck.map(function(e){ return e.n; }).join(', ') + '. The workout suggests a lighter session for each.' : '';
   var vp = $('wk-verdict'); vp.className = 'pace' + (cls ? ' ' + cls : '');
   vp.textContent = v + (facts.length ? ' (' + facts.join(', ') + '.)' : '');
@@ -930,11 +1214,11 @@ function saveProfile(){
 }
 
 // One line per change between two documents, for the proposal's diff.
-function fieldName(k){ return {kcal: 'Calories', protein: 'Protein', steps: 'Steps', sleep: 'Sleep', workouts: 'Workouts per week', rest: 'Rest (sec)', height: 'Height', start_weight: 'Start weight', sex: 'Sex',
+function fieldName(k){ return {kcal: 'Calories', kcal_rest: 'Rest-day calories', protein: 'Protein', steps: 'Steps', sleep: 'Sleep', workouts: 'Workouts per week', rest: 'Rest (sec)', height: 'Height', start_weight: 'Start weight', sex: 'Sex',
   birth_year: 'Birth year', goal: 'Goal', goal_notes: 'Goal notes', experience: 'Experience', days_per_week: 'Days per week', days: 'Usual days', session_minutes: 'Session (min)',
   equipment: 'Equipment', injuries: 'Injuries', conditions: 'Conditions and medications', diet: 'Diet', notes: 'Notes', goals: 'Goals'}[k] || k; }
 function show(v){ return v == null || v === '' ? '—' : Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : String(v); }
-function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : ''); }
+function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : '') + (e.prog && e.prog !== 'double' ? ', ' + e.prog + ' only' : ''); }
 function diffLines(target, cur, next){
   var out = [];
   if (target === 'plan'){
@@ -951,6 +1235,7 @@ function diffLines(target, cur, next){
       var kb = b.map(function(x){ return x.k; }).filter(function(k){ return a.some(function(e){ return e.k === k; }); });
       if (ka.join() !== kb.join()) out.push(['chg', 'Workout ' + w + ': new order ' + b.map(function(e){ return e.n; }).join(', ')]);
     });
+    if (!same(cur.block, next.block)) out.push(['chg', 'Training block: ' + show(cur.block) + ' → ' + show(next.block)]);
   } else {
     cur = cur || {};
     var keys = Object.keys(Object.assign({}, cur, next));
@@ -1238,9 +1523,11 @@ function renderHeader(){
     sub.textContent = 'Week ' + Math.max(1, wk) + ' · since ' + fmtDay(ds[0]);
     b.hidden = true;
   }
+  var bw = blockWeek(todayStr());
+  if (bw) sub.textContent += ' · Block week ' + bw.n + ' of ' + bw.weeks + (bw.light ? ' · lighter week' : '');
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress();
+  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------
@@ -1291,7 +1578,7 @@ function switchUser(u){
   document.addEventListener('input', function(){ typed = true; }, {once: true});
   rebuild();
 }
-function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : fmtDay(id); }
+function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : id === 'meals' ? 'Your meals' : id === 'supplements' ? 'Your supplements' : fmtDay(id); }
 
 function rebuild(){
   var view = Object.assign({}, server);
@@ -1300,7 +1587,9 @@ function rebuild(){
   var p = view.plan;
   PLAN = p && Array.isArray(p.A) && Array.isArray(p.B) && (p.A.length || p.B.length) ? p : DEFAULT_PLAN;
   profile = view.profile || {};
-  delete view.settings; delete view.plan; delete view.profile;
+  meals = view.meals && Array.isArray(view.meals.meals) ? view.meals.meals : [];
+  supps = view.supplements && Array.isArray(view.supplements.items) ? view.supplements.items : [];
+  delete view.settings; delete view.plan; delete view.profile; delete view.meals; delete view.supplements;
   docs = view;
   if (firstSnap){ firstSnap = false; wsel = suggestWorkout(sel); fillForm(); fillTargets(); fillProfile(); renderWorkout(); }
   renderDerived(); updateDelete();
@@ -1425,7 +1714,7 @@ function connect(){
   var c = user ? loadJSON(key('cache'), null) : null;
   if (c && c.server){ server = c.server; vers = c.vers || {}; }
   rebuild();
-  sync();
+  sync().then(loadLibrary);
   setInterval(function(){ if (!document.hidden) sync(); }, 30000);
   window.addEventListener('online', sync);
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) sync(); });
@@ -1527,6 +1816,10 @@ $('del-day').addEventListener('click', deleteDay);
 $('save-workout').addEventListener('click', saveWorkout);
 $('edit-plan').addEventListener('click', startEdit);
 $('save-targets').addEventListener('click', saveTargets);
+$('meal-add').addEventListener('click', function(){ readMeals(); mealsDraft.push({name: '', kcal: null, protein: null}); renderMealsEditor(); });
+$('meals-save').addEventListener('click', saveMeals);
+$('supp-add').addEventListener('click', function(){ readSupps(); suppsDraft.push({name: '', timing: 'any'}); renderSuppsEditor(); });
+$('supps-save').addEventListener('click', saveSupps);
 $('imp').addEventListener('change', function(){ var f = this.files && this.files[0]; if (f) importFile(f); this.value = ''; });
 $('rest-add').addEventListener('click', function(){
   if (!restTick){ restStart(); restEnd = Date.now() + 15000; tickRest(); return; }

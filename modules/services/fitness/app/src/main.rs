@@ -684,6 +684,8 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_
             }
             reply(200, json!({ "docs": docs }))
         }
+        // The signed-in user, so the page can keep each account's offline copy apart.
+        (Method::Get, "/api/me") => reply(200, json!({ "user": user })),
         (Method::Get, "/api/export") => match export_map(c, user) {
             Ok(v) => Reply {
                 code: 200,
@@ -832,6 +834,11 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
     // page makes is JSON, so anything else is refused.
     if method == Method::Post && !header_of(&rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with("application/json")) {
         return respond(rq, err(415, "JSON body expected"));
+    }
+    // The page names the account a change was made for; if someone else is signed
+    // in now (a shared device), the change is refused rather than written to them.
+    if header_of(&rq, "X-Fitness-User").is_some_and(|u| !u.is_empty() && u != user) {
+        return respond(rq, reply(403, json!({ "error": "signed in as another user", "user": user })));
     }
     let if_match = header_of(&rq, "If-Match").map(str::to_string);
     let limit = if path == "/api/import" { MAX_IMPORT } else { MAX_BODY };
@@ -1244,6 +1251,10 @@ mod tests {
         assert_eq!(status(a, "GET /api/log HTTP/1.1", b""), 401);
         assert_eq!(status(a, "GET /api/log HTTP/1.1\r\nRemote-User: kra3", b""), 200);
         assert_eq!(status(a, "GET /nope HTTP/1.1\r\nRemote-User: kra3", b""), 404);
+        // A change made for one account is refused when another is signed in.
+        let day = b"{\"date\":\"2026-11-03\",\"weight\":70}";
+        assert_eq!(status(a, "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: anj\r\nX-Fitness-User: kra3\r\nIf-Match: 0", day), 403);
+        assert_eq!(status(a, "PUT /api/log/2026-11-03 HTTP/1.1\r\nRemote-User: kra3\r\nX-Fitness-User: kra3\r\nIf-Match: 0", day), 200);
     }
 
     #[test]
@@ -1504,6 +1515,12 @@ mod tests {
         assert_eq!(status(a, &format!("POST /api/coach/proposals/99/accept HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
         assert_eq!(status(a, &format!("POST /api/coach/proposals HTTP/1.1\r\nRemote-User: kra3\r\n{json}"), b"{}"), 404);
         assert_eq!(status(a, "GET /api/coach/summary HTTP/1.1", b""), 401);
+    }
+
+    #[test]
+    fn me_names_the_signed_in_user() {
+        let c = db();
+        assert_eq!(call(&c, "anj", Method::Get, "/api/me", None, Value::Null), (200, json!({ "user": "anj" })));
     }
 
     #[test]

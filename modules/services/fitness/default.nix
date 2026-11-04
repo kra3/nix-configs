@@ -153,9 +153,14 @@
         };
         serviceConfig = sandbox // {
           Type = "oneshot";
-          # Needs loopback to reach Home Assistant, nothing else.
+          # Needs Home Assistant, nothing else. Its published port 127.0.0.1:8123
+          # is NATed to the container on the home-auto bridge, and the unit's
+          # firewall checks the address after that, so loopback alone times out.
           PrivateNetwork = false;
-          IPAddressAllow = "localhost";
+          IPAddressAllow = [
+            "localhost"
+            config.vars.network.podmanSubnets.homeAuto
+          ];
           IPAddressDeny = "any";
           LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
           ExecStart = lib.getExe (

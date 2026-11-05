@@ -4,7 +4,6 @@
       config,
       lib,
       pkgs,
-      inputs,
       flakeLib,
       ...
     }:
@@ -14,12 +13,21 @@
       baseDir = "/srv/appdata/second-brain";
       stateDir = "${baseDir}/state";
       gitDir = "${baseDir}/vault.git";
-      obConfigHome = "${stateDir}/config";
       publicUrl = "https://${cfg.mcp.publicHost}:${toString cfg.mcp.funnelPort}";
 
-      obsidianHeadless = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.obsidian-headless;
       # Stable: unstable's fastmcp is marked broken against mcp 2.x.
       python = pkgs.python3.withPackages (ps: [ ps.fastmcp ]);
+
+      syncScript = pkgs.writeShellApplication {
+        name = "second-brain-sync";
+        runtimeInputs = [
+          pkgs.git
+          pkgs.openssh
+          pkgs.coreutils
+          pkgs.findutils
+        ];
+        text = builtins.readFile ./sync.sh;
+      };
 
       sandbox = flakeLib.deployment-hardening.mkServiceSandbox {
         readWritePaths = [ baseDir ];
@@ -28,44 +36,28 @@
         User = user;
         Group = user;
         UMask = "0007";
-        # Hides other users' processes, e.g. sync-setup's --password argument.
         ProtectProc = "invisible";
       };
-
-      git = "${pkgs.git}/bin/git --git-dir=${gitDir} --work-tree=${cfg.vaultDir}";
     in
     {
       options.services.secondBrain = {
         vaultDir = lib.mkOption {
           type = lib.types.str;
           default = "${baseDir}/vault";
-          description = "Live copy of the Obsidian vault, kept current by headless Obsidian Sync.";
+          description = "Server copy of the Obsidian vault: a git work tree synced with the hub repo.";
         };
 
         sync = {
-          enable = lib.mkEnableOption "headless Obsidian Sync of the vault";
-          vaultName = lib.mkOption {
-            type = lib.types.str;
-            description = "Remote vault name as shown by `ob sync-list-remote`.";
-          };
-          deviceName = lib.mkOption {
-            type = lib.types.str;
-            default = config.networking.hostName;
-          };
-          endToEndEncrypted = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Remote vault uses end-to-end encryption (needs the vault password secret).";
-          };
-        };
-
-        snapshot = {
-          enable = lib.mkEnableOption "hourly git snapshots of the vault (history kept locally in ${gitDir})";
+          enable = lib.mkEnableOption "two-way git sync of the vault with its hub repo (history in ${gitDir})";
           remote = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
+            type = lib.types.str;
             example = "git@github.com:kra3/second-brain.git";
-            description = "SSH remote to push snapshots to; null keeps history on this host only.";
+            description = "SSH URL of the hub repo the Mac and sutala both push to; sutala uses a deploy key.";
+          };
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "5min";
+            description = "How often sutala commits, rebases onto the hub and pushes.";
           };
         };
 
@@ -102,126 +94,56 @@
       };
 
       config = lib.mkMerge [
-        (lib.mkIf (cfg.sync.enable || cfg.snapshot.enable || cfg.mcp.enable) {
+        (lib.mkIf (cfg.sync.enable || cfg.mcp.enable) {
           users.users.${user} = {
             isSystemUser = true;
             group = user;
             home = stateDir;
           };
           users.groups.${user} = { };
-          # Lets kra3 browse the server copy; edits still belong on a synced device.
+          # kra3 opens the server copy in desktop Obsidian on this host (no sync plugin there).
           users.users.kra3.extraGroups = [ user ];
 
           systemd.tmpfiles.rules = [
             "d ${baseDir} 0750 ${user} ${user} - -"
             "d ${cfg.vaultDir} 2770 ${user} ${user} - -"
             # kra3 edits the same files from desktop Obsidian on this host, under a 022 umask;
-            # default ACLs keep everything group-writable so the sync client can still update it.
+            # default ACLs keep everything group-writable so the sync service can still update it.
             "A+ ${cfg.vaultDir} - - - - group:${user}:rwX,default:group:${user}:rwX,default:mask::rwX"
             "d ${stateDir} 0700 ${user} ${user} - -"
           ];
         })
 
         (lib.mkIf cfg.sync.enable {
-          sops.secrets = {
-            "second-brain.obsidian.auth_token" = { };
-          }
-          // lib.optionalAttrs cfg.sync.endToEndEncrypted {
-            "second-brain.obsidian.vault_password" = { };
-          };
+          sops.secrets."second-brain.git.deploy_key" = { };
+
+          programs.ssh.knownHosts."github.com".publicKey =
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
 
           systemd.services.second-brain-sync = {
-            description = "Headless Obsidian Sync of the second-brain vault";
+            description = "Two-way git sync of the second-brain vault";
             wants = [ "network-online.target" ];
             after = [ "network-online.target" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [
-              obsidianHeadless
-              pkgs.jq
-            ];
-            environment.XDG_CONFIG_HOME = obConfigHome;
-            # The vault link lives in ob's own state; set it up once, idempotently, then follow changes.
-            script = ''
-              OBSIDIAN_AUTH_TOKEN="$(< "$CREDENTIALS_DIRECTORY/auth-token")"
-              export OBSIDIAN_AUTH_TOKEN
-              linked=0
-              for f in "$XDG_CONFIG_HOME"/obsidian-headless/sync/*/config.json; do
-                [ -e "$f" ] || continue
-                if jq -e --arg p ${lib.escapeShellArg cfg.vaultDir} '.vaultPath == $p' "$f" >/dev/null; then
-                  linked=1
-                fi
-              done
-              if [ "$linked" = 0 ]; then
-                echo "linking ${cfg.vaultDir} to remote vault ${cfg.sync.vaultName}"
-                ob sync-setup \
-                  --vault ${lib.escapeShellArg cfg.sync.vaultName} \
-                  --path ${lib.escapeShellArg cfg.vaultDir} \
-                  --device-name ${lib.escapeShellArg cfg.sync.deviceName} \
-                  ${lib.optionalString cfg.sync.endToEndEncrypted ''--password "$(< "$CREDENTIALS_DIRECTORY/vault-password")"''}
-              fi
-              exec ob sync --path ${lib.escapeShellArg cfg.vaultDir} --continuous
-            '';
-            serviceConfig = common // {
-              LoadCredential = [
-                "auth-token:${config.sops.secrets."second-brain.obsidian.auth_token".path}"
-              ]
-              ++ lib.optional cfg.sync.endToEndEncrypted "vault-password:${
-                config.sops.secrets."second-brain.obsidian.vault_password".path
-              }";
-              Restart = "always";
-              RestartSec = 30;
+            environment = {
+              VAULT_DIR = cfg.vaultDir;
+              VAULT_GIT_DIR = gitDir;
+              REMOTE = cfg.sync.remote;
+              SYNC_HOST = config.networking.hostName;
             };
-          };
-        })
-
-        (lib.mkIf cfg.snapshot.enable {
-          sops.secrets = lib.optionalAttrs (cfg.snapshot.remote != null) {
-            "second-brain.git.deploy_key" = { };
-          };
-
-          programs.ssh.knownHosts = lib.optionalAttrs (cfg.snapshot.remote != null) {
-            "github.com".publicKey =
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
-          };
-
-          systemd.services.second-brain-snapshot = {
-            description = "Commit the second-brain vault to git${
-              lib.optionalString (cfg.snapshot.remote != null) " and push it"
-            }";
-            wants = lib.optional (cfg.snapshot.remote != null) "network-online.target";
-            after = lib.optional (cfg.snapshot.remote != null) "network-online.target";
-            path = [ pkgs.openssh ];
-            # The git dir sits outside the vault so Obsidian Sync never sees it.
-            script = ''
-              if [ ! -d ${gitDir} ]; then
-                ${git} init --quiet --initial-branch=main
-                printf '%s\n' '.obsidian/workspace*.json' '.trash/' '.mcp-*.tmp' > ${gitDir}/info/exclude
-              fi
-              ${git} add --all
-              if ! ${git} diff --cached --quiet; then
-                ${git} -c user.name=second-brain -c user.email=second-brain@${config.networking.hostName} \
-                  commit --quiet -m "snapshot $(date --iso-8601=minutes)"
-              fi
-              ${lib.optionalString (cfg.snapshot.remote != null) ''
-                GIT_SSH_COMMAND="ssh -i $CREDENTIALS_DIRECTORY/deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-                export GIT_SSH_COMMAND
-                ${git} push --quiet ${lib.escapeShellArg cfg.snapshot.remote} HEAD:main
-              ''}
-            '';
             serviceConfig = common // {
               Type = "oneshot";
-              LoadCredential =
-                lib.optional (cfg.snapshot.remote != null)
-                  "deploy-key:${config.sops.secrets."second-brain.git.deploy_key".path}";
+              ExecStart = lib.getExe syncScript;
+              LoadCredential = [
+                "deploy-key:${config.sops.secrets."second-brain.git.deploy_key".path}"
+              ];
             };
           };
 
-          systemd.timers.second-brain-snapshot = {
+          systemd.timers.second-brain-sync = {
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnCalendar = "hourly";
-              Persistent = true;
-              RandomizedDelaySec = "5m";
+              OnBootSec = "2min";
+              OnUnitActiveSec = cfg.sync.interval;
             };
           };
         })

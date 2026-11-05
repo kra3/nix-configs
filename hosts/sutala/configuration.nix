@@ -85,17 +85,13 @@
 
   vars.acme.email = "the1.arun@gmail.com";
 
-  # Second brain (Obsidian vault): live copy via headless Obsidian Sync, hourly git
-  # snapshots, and a remote MCP server for Claude on Tailscale Funnel.
+  # Second brain (Obsidian vault): git work tree synced with a private GitHub hub repo (the Mac
+  # pushes to it too), plus a remote MCP server for Claude on Tailscale Funnel.
   # Each part stays off until its sops secrets exist -- setup steps in docs/second-brain.md.
   services.secondBrain = {
     sync = {
       enable = false;
-      vaultName = "Second Brain";
-    };
-    snapshot = {
-      enable = false;
-      remote = null; # e.g. "git@github.com:kra3/second-brain.git" once the private repo exists
+      remote = "git@github.com:kra3/second-brain.git";
     };
     mcp = {
       enable = false;

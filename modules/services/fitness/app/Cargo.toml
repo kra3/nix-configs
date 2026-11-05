@@ -1,0 +1,21 @@
+[package]
+name = "fitness"
+version = "0.7.0"
+edition = "2021"
+
+[dependencies]
+tiny_http = "0.12"
+rusqlite = "0.41"
+serde_json = "1"
+
+# Links the system SQLite (nixpkgs in the Nix build). Use --features bundled
+# to compile SQLite in instead, e.g. on a machine without libsqlite3.
+[features]
+bundled = ["rusqlite/bundled"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

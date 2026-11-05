@@ -130,6 +130,11 @@ class TripCard extends HTMLElement {
     return s === "home" ? "Home" : s && !["not_home", "unknown", "unavailable"].includes(s) ? s : "Here";
   }
 
+  _label() {
+    const d = this._config.direction;
+    return d ? `To ${d}` : "Trips";
+  }
+
   _atDest() {
     const z = this._config.hide_at;
     const s = this._hass.states[this._config.person]?.state;
@@ -184,7 +189,7 @@ class TripCard extends HTMLElement {
         <div class="sub">${extra.filter(Boolean).map((x) => `<span class="route">${x}</span>`).join(" · ")}</div></div>${countdown(h)}`;
     } else {
       html = `<ha-icon class="icon" icon="${d.ev ? "mdi:calendar-clock" : "mdi:train-bus"}"></ha-icon>
-        <div class="txt"><div class="title">${d.ev ? `${esc(d.ev.title)} · ${esc(d.ev.starts.slice(11, 16))}` : "Trips"}</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
+        <div class="txt"><div class="title">${d.ev ? `${esc(d.ev.title)} · ${esc(d.ev.starts.slice(11, 16))}` : this._label()}</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
     }
     if (html !== this._html) {
       this._html = html;
@@ -229,7 +234,7 @@ class TripCard extends HTMLElement {
     if (!this._ov) return;
     const root = this._ov.shadowRoot;
     const a = d.a || {};
-    const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : "Trips";
+    const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : this._label();
     const sub = d.updated ? `${a.by ? `Arrive by ${esc(a.by.slice(11, 16))} · ` : ""}Updated ${hhmm(d.updated)}${d.hidden ? ` · ${d.hidden} slower hidden` : ""}` : "";
     const alert = d.need ? `<ha-alert alert-type="${a.ok === false ? "warning" : "info"}">${esc(d.need)}${a.ok === false ? ". Allow more walking or changes below." : ". Tap Check."}</ha-alert>` : "";
     const rows = (d.need ? [] : d.shown).map((t) => {

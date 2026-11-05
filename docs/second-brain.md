@@ -13,6 +13,22 @@ repo, and gives Claude access to it. Everything is free: no Obsidian Sync subscr
 Each part is off in `hosts/sutala/configuration.nix` until its secrets exist: sops-nix rejects
 a declared key that is missing from `secrets/secrets.yaml`, which would break the nightly upgrade.
 
+## Method
+
+Two layers, with Claude doing the filing:
+- **action:** PARA folders plus GTD capture, clarify and weekly review;
+- **knowledge:** Zettelkasten/evergreen notes plus maps of content.
+
+```
+0 Inbox → (weekly clarify) → 1 Projects / 2 Areas  (tasks)
+                           → 3 Sources → 4 Notes (evergreen, your words) → 5 Maps
+projects draw on notes and maps (express); finished things → 6 Archive
+```
+
+The vault template, rules and process live in `docs/second-brain-starter/`:
+- `CLAUDE.md`: folder rules, the weekly review, and the rule that Claude suggests but never writes evergreen notes;
+- `Templates/`: Capture, Daily, Project, Source, Evergreen, Map.
+
 ## Devices
 
 | Device | Role | How it syncs |
@@ -47,8 +63,8 @@ hub's `main` and the run fails (visible in Loki). Merge the branch on the Mac an
 4. **Config:** set `mcp.publicHost` to the printed name, check `sync.remote`, turn on both
    `enable`s and merge; the nightly upgrade deploys it. The server vault starts empty and takes
    the hub's content on its first sync (it refuses to adopt a hub over a non-empty server vault).
-5. **Mac:** clone the repo (`git clone git@github.com:kra3/second-brain.git`), unzip the starter kit
-   into it, open the folder as a vault in Obsidian, install the **Obsidian Git** community plugin and
+5. **Mac:** clone the repo (`git clone git@github.com:kra3/second-brain.git`), copy the contents of
+   `docs/second-brain-starter/` (including `.gitignore`) into it, open the folder as a vault in Obsidian, install the **Obsidian Git** community plugin and
    set: auto commit-and-sync interval 5 min, auto pull on startup, pull before push. Its first sync
    pushes the starter kit; sutala picks it up within 5 minutes.
 6. **Claude connector:** claude.ai → Settings → Connectors → Add custom connector →
@@ -63,10 +79,16 @@ hub's `main` and the run fails (visible in Loki). Merge the branch on the Mac an
    the consent page right after you started a connection yourself. Closed, `/register` and URL
    (CIMD) client ids are refused; already-connected clients keep working. Reopen it to add one.
 
-Tools: `list_notes`, `read_note`, `search_notes`, `capture` (timestamped note in `0 Inbox`),
-`write_note` (no overwrite unless asked), `append_to_note`, `move_note`. All paths stay inside
-the vault; dot-folders (`.obsidian`, `.trash`) are refused; writes are atomic. No delete tool:
-archive with `move_note`. Every change is a git commit either way.
+Tools:
+
+| Purpose | Tools |
+| --- | --- |
+| Read | `list_notes`, `read_note`, `search_notes` |
+| Write | `capture` (timestamped note in `0 Inbox`), `write_note` (no overwrite unless asked), `append_to_note`, `move_note` |
+| Weekly review | `list_tasks` (open `- [ ]` tasks per note, `waiting:` flagged, archive skipped), `recent_changes`, `orphans` (unlinked notes in `4 Notes`), `backlinks` |
+
+All paths stay inside the vault; dot-folders (`.obsidian`, `.trash`) are refused; writes are atomic.
+There's no delete tool: archive with `move_note`. Every change is a git commit either way.
 
 ## Checking it works
 

@@ -2,6 +2,14 @@
   "mcpServers": {
     "nixos": {
       "command": "mcp-nixos"
+    },
+    "home-assistant": {
+      "type": "http",
+      "url": "https://ha.karunagath.in/api/mcp",
+      "oauth": {
+        "clientId": "http://localhost:7988/",
+        "callbackPort": 7988
+      }
     }
   }
 }

@@ -98,6 +98,10 @@
               domain = config.vars.acme.domain;
               cidrs = config.vars.network.nginxAllowCidrs;
               upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:4533";
+              forwardAuth = true;
+              # Subsonic API: mobile apps and Music Assistant log in with Navidrome's own credentials
+              # and can't follow an Authelia redirect.
+              forwardAuthExcludePrefixes = [ "/rest/" ];
             }
           );
 

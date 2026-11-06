@@ -81,6 +81,12 @@
             mode = "0440";
             group = "jellyfin";
           };
+      sops.secrets."monitoring.grafana.secret_key" =
+        lib.mkIf (config.containers.monitoring.config.services.grafana.enable or false)
+          {
+            mode = "0440";
+            group = "jellyfin";
+          };
 
       # Telegram alert contact point. bottoken/chatid must go through a
       # rendered template (not provision.alerting.contactPoints.settings)
@@ -395,6 +401,10 @@
             };
             "/run/secrets/monitoring.grafana.oidc_client_secret" = {
               hostPath = "/run/secrets/monitoring.grafana.oidc_client_secret";
+              isReadOnly = true;
+            };
+            "/run/secrets/monitoring.grafana.secret_key" = {
+              hostPath = "/run/secrets/monitoring.grafana.secret_key";
               isReadOnly = true;
             };
             "/run/secrets/homeassistant.token" = {

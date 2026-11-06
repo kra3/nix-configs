@@ -88,9 +88,9 @@
 
   # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
   # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
-  # Nothing is exposed on the network. Sync stays off until its deploy key is in sops.
+  # Nothing is exposed on the network. Deploy key: second-brain.home.git.deploy_key.
   services.secondBrain.brains.home.sync = {
-    enable = false;
+    enable = true;
     remote = "git@github.com:kra3/second-brain.git";
   };
 

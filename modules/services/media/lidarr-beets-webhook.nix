@@ -158,7 +158,7 @@
               ];
             })
             {
-              ExecStart = "${pkgs.python3}/bin/python3 ${script}";
+              ExecStart = "${pkgs.python3}/bin/python3 -u ${script}";
               User = "kra3";
               Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
               Restart = "on-failure";

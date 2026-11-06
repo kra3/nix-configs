@@ -86,6 +86,7 @@
           {
             mode = "0440";
             group = "jellyfin";
+            restartUnits = [ "container@monitoring.service" ];
           };
 
       # Telegram alert contact point. bottoken/chatid must go through a

@@ -160,7 +160,10 @@
             {
               ExecStart = "${pkgs.python3}/bin/python3 ${script}";
               User = "kra3";
-              Environment = "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin";
+              Environment = [
+                "PATH=/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin"
+                "PYTHONUNBUFFERED=1"
+              ];
               Restart = "on-failure";
               # beets config lives in /home/kra3, so home stays visible (read-only) ...
               ProtectHome = lib.mkForce "read-only";

@@ -15,3 +15,5 @@ result-*
 modules/home/gh/gh-dash-repo-paths.yml
 modules/home/sesh/sesh-session-paths.toml
 .worktrees/
+__pycache__/
+*.pyc

@@ -143,7 +143,7 @@
       sops.templates."home-assistant/secrets.yaml" = {
         owner = "root";
         group = "root";
-        mode = "0444";
+        mode = "0400";
         content = ''
           homeassistant_latitude: ${config.sops.placeholder."homeassistant.latitude"}
           homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
@@ -194,7 +194,7 @@
         format = "binary";
         owner = "root";
         group = "root";
-        mode = "0444";
+        mode = "0400";
       };
 
       sops.secrets."homeassistant.latitude" = {

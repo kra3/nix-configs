@@ -36,6 +36,7 @@
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
+    flakeModules.nixos.services-second-brain-default
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
@@ -84,6 +85,14 @@
   };
 
   vars.acme.email = "the1.arun@gmail.com";
+
+  # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
+  # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
+  # Nothing is exposed on the network. Deploy key: second-brain.home.git.deploy_key.
+  services.secondBrain.brains.home.sync = {
+    enable = true;
+    remote = "git@github.com:kra3/second-brain.git";
+  };
 
   hardware.enableRedistributableFirmware = true;
 

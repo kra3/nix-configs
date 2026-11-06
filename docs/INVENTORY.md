@@ -56,6 +56,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Homepage dashboard | `modules/services/infrastructure/homepage.nix` | `home.${domain}`; widgets pull live status from most services below |
 | OpenSSH | `modules/services/infrastructure/openssh.nix` | LAN-only, key auth only, no root login |
 | Tailscale | `modules/services/tailscale.nix` | Exit node + `192.168.1.10/32` subnet route |
+| Second brains (Obsidian vaults) | `modules/services/second-brain/default.nix`, shared code in `modules/lib/second-brain/` | Per brain (`services.secondBrain.brains.<name>`): git work tree under `/srv/appdata/second-brain/<name>/` synced with its hub repo, local stdio MCP server for Claude Code in `~/second-brain/<name>` (phone via Remote Control); nothing on the network. Macs use `home-second-brain`. See `docs/second-brain.md` |
 | AdGuard Home (DNS+DHCP) | `modules/services/dns/adguard.nix` | `dns.${domain}`; static leases + rewrites for the domain |
 | Unbound (recursive resolver) | `modules/services/dns/unbound.nix` | `127.0.0.1:5335`, DoT upstreams (Cloudflare family + Quad9), redirect zone for `${domain}.` |
 | PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |

@@ -198,7 +198,11 @@
                 "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin"
               ];
               Restart = "always";
+              # Back off from 30 s up to an hour, so a hard failure (not logged in, folder not yet
+              # trusted) stays quiet instead of retrying every 30 s.
               RestartSec = 30;
+              RestartSteps = 8;
+              RestartMaxDelaySec = 3600;
             };
             Install.WantedBy = [ "default.target" ];
           }

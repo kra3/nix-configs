@@ -123,7 +123,9 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
    `Templates`. On sutala's desktop open `/srv/appdata/second-brain/home/vault` (kra3 is in the
    `second-brain` group; log out and in once after the first deploy). No sync plugin on machines
    that run the agent or timer.
-6. **Phone:** once, log in to Claude Code as kra3 on sutala (`claude`, then `/login`). The
+6. **Phone:** once, as kra3 on sutala, run `cd ~/second-brain/home && claude`: accept the folder
+   trust prompt (Remote Control refuses an untrusted folder, and that choice stays yours) and
+   `/login` if asked. The
    `second-brain-home-remote` user service then keeps `claude remote-control` running in
    `~/second-brain/home`; in the Claude app, open **second-brain-home** to start a session there.
    Check it with `systemctl --user status second-brain-home-remote`.

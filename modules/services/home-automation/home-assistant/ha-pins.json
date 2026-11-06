@@ -58,7 +58,7 @@
     },
     "plejd": {
       "repo": "thomasloven/hass-plejd",
-      "version": "v0.22.0",
+      "version": "v0.22.1",
       "kind": "tree",
       "subpath": "custom_components/plejd",
       "patches": [

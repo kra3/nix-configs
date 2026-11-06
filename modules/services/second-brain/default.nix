@@ -13,10 +13,16 @@
       baseDir = "/srv/appdata/second-brain";
       stateDir = "${baseDir}/state";
       gitDir = "${baseDir}/vault.git";
-      publicUrl = "https://${cfg.mcp.publicHost}:${toString cfg.mcp.funnelPort}";
 
       # Stable: unstable's fastmcp is marked broken against mcp 2.x.
       python = pkgs.python3.withPackages (ps: [ ps.fastmcp ]);
+      mcpServer = pkgs.writeShellApplication {
+        name = "second-brain-mcp";
+        text = ''
+          export VAULT_DIR=${lib.escapeShellArg cfg.vaultDir}
+          exec ${python}/bin/python3 ${./mcp_server.py}
+        '';
+      };
 
       syncScript = pkgs.writeShellApplication {
         name = "second-brain-sync";
@@ -61,36 +67,11 @@
           };
         };
 
-        mcp = {
-          enable = lib.mkEnableOption "remote MCP server for Claude, published via Tailscale Funnel";
-          publicHost = lib.mkOption {
-            type = lib.types.str;
-            example = "sutala.tail1234.ts.net";
-            description = "This node's MagicDNS name; Funnel serves the MCP server there.";
-          };
-          funnelPort = lib.mkOption {
-            # Funnel only allows 443, 8443 and 10000; 443 on the tailnet IP is nginx's.
-            type = lib.types.enum [
-              8443
-              10000
-            ];
-            default = 8443;
-          };
-          allowNewClients = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = ''
-              Accept new OAuth clients (dynamic registration and CIMD). Leave on until your own
-              claude.ai connector (and Claude Code, if wanted) is connected, then turn it off: the
-              endpoint is public, and anyone can register a client that looks just like Claude.
-            '';
-          };
-          port = lib.mkOption {
-            type = lib.types.port;
-            default = 8765;
-            description = "Loopback port of the MCP server; only Funnel reaches it.";
-          };
-        };
+        mcp.enable = lib.mkEnableOption ''
+          the local (stdio) MCP server for Claude Code on this host: ~/second-brain holds the
+          .mcp.json that starts it, so a session there, or one driven by Remote Control from the
+          phone, gets the vault tools without anything listening on the network
+        '';
       };
 
       config = lib.mkMerge [
@@ -149,54 +130,28 @@
         })
 
         (lib.mkIf cfg.mcp.enable {
-          # Root-owned; handed to the service via LoadCredential.
-          sops.secrets."second-brain.mcp.oidc_client_secret" = { };
+          environment.systemPackages = [ mcpServer ];
 
-          systemd.services.second-brain-mcp = {
-            description = "Remote MCP server for the second-brain vault";
-            wants = [ "network-online.target" ];
-            after = [
-              "network-online.target"
-              "authelia.service"
-            ];
-            wantedBy = [ "multi-user.target" ];
-            environment = {
-              VAULT_DIR = cfg.vaultDir;
-              PUBLIC_URL = publicUrl;
-              PORT = toString cfg.mcp.port;
-              ALLOW_NEW_CLIENTS = if cfg.mcp.allowNewClients then "1" else "0";
-              OIDC_DISCOVERY_URL = "https://auth.${config.vars.acme.domain}/.well-known/openid-configuration";
-              OIDC_CLIENT_ID = "second-brain";
-              # OAuth client registrations and FastMCP's token store; must survive restarts.
-              FASTMCP_HOME = "${stateDir}/fastmcp";
-              HOME = stateDir;
+          home-manager.users.kra3.home.file = {
+            "second-brain/.mcp.json".text = builtins.toJSON {
+              mcpServers.second-brain.command = lib.getExe mcpServer;
             };
-            serviceConfig = common // {
-              ExecStart = "${python}/bin/python3 ${./mcp_server.py}";
-              LoadCredential = [
-                "oidc-client-secret:${config.sops.secrets."second-brain.mcp.oidc_client_secret".path}"
-              ];
-              Restart = "on-failure";
-              RestartSec = 10;
+            # Project settings: trust this one server and let Claude edit the vault outside the cwd.
+            "second-brain/.claude/settings.json".text = builtins.toJSON {
+              enabledMcpjsonServers = [ "second-brain" ];
+              permissions.additionalDirectories = [ cfg.vaultDir ];
             };
-          };
+            "second-brain/CLAUDE.md".text = ''
+              # Second brain
 
-          # Funnel config lives in tailscaled's state; this unit (re)asserts it on every boot/deploy.
-          systemd.services.second-brain-funnel = {
-            description = "Publish the second-brain MCP server on Tailscale Funnel";
-            after = [
-              "tailscaled.service"
-              "second-brain-mcp.service"
-            ];
-            requires = [ "tailscaled.service" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [ config.services.tailscale.package ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = "${config.services.tailscale.package}/bin/tailscale funnel --bg --https=${toString cfg.mcp.funnelPort} http://127.0.0.1:${toString cfg.mcp.port}";
-              ExecStop = "${config.services.tailscale.package}/bin/tailscale funnel --https=${toString cfg.mcp.funnelPort} off";
-            };
+              The vault is `${cfg.vaultDir}` (a git work tree; `second-brain-sync.timer` commits and
+              pushes every few minutes, so never run git in it yourself). Read
+              `${cfg.vaultDir}/CLAUDE.md` before doing anything: it holds the folder rules, the
+              weekly review and the rule that Arun writes evergreen notes himself.
+
+              Use the `second-brain` MCP tools (capture, search_notes, list_tasks, recent_changes,
+              orphans, backlinks, ...) or edit the files directly.
+            '';
           };
         })
       ];

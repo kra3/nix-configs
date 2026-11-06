@@ -87,18 +87,15 @@
   vars.acme.email = "the1.arun@gmail.com";
 
   # Second brain (Obsidian vault): git work tree synced with a private GitHub hub repo (the Mac
-  # pushes to it too), plus a remote MCP server for Claude on Tailscale Funnel.
-  # Each part stays off until its sops secrets exist -- setup steps in docs/second-brain.md.
+  # pushes to it too), plus a local MCP server for Claude Code here (~/second-brain), also reachable
+  # from the phone through Remote Control. Nothing is exposed on the network.
+  # Sync stays off until its deploy key is in sops -- setup steps in docs/second-brain.md.
   services.secondBrain = {
     sync = {
       enable = false;
       remote = "git@github.com:kra3/second-brain.git";
     };
-    mcp = {
-      enable = false;
-      publicHost = "sutala.TAILNET.ts.net"; # this node's MagicDNS name
-      allowNewClients = true; # set false once your Claude connectors are connected
-    };
+    mcp.enable = true;
   };
 
   hardware.enableRedistributableFirmware = true;

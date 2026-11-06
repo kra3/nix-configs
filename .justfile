@@ -106,8 +106,8 @@ switch-surasa target="surasa":
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}
 
-# One-time secrets for services-second-brain-default (docs/second-brain.md). Idempotent:
-# keys already in the file are left alone. Values go to sops on stdin, never argv.
+# One-time secret for services-second-brain-default (docs/second-brain.md): the deploy key for the
+# vault hub repo. Idempotent; the key goes to sops on stdin, never argv.
 second-brain-secrets file="secrets/secrets.yaml":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -125,19 +125,6 @@ second-brain-secrets file="secrets/secrets.yaml":
     fi
     echo "  add this as a deploy key WITH write access on the vault repo:"
     echo "    $(ssh-keygen -y -f "$tmp/key")"
-
-    echo "== Authelia OIDC client for the MCP server"
-    if have second-brain.mcp.oidc_client_secret && have authelia.oidc_clients.second-brain.client_secret_hash; then
-      echo "  already set"
-    else
-      nix run --inputs-from . nixpkgs#authelia -- crypto hash generate pbkdf2 \
-        --variant sha512 --random --random.length 72 --random.charset rfc3986 > "$tmp/authelia"
-      sed -n 's/^Random Password: //p' "$tmp/authelia" | tr -d '\n' | put second-brain.mcp.oidc_client_secret
-      sed -n 's/^Digest: //p' "$tmp/authelia" | tr -d '\n' | put authelia.oidc_clients.second-brain.client_secret_hash
-    fi
-
-    echo "== sutala's MagicDNS name (services.secondBrain.mcp.publicHost):"
-    echo "  $(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
 
 # List tools the enabled Neovim extras expect and flag any missing from PATH.
 nvim-check-tools:

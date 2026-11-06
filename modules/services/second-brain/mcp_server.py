@@ -1,65 +1,22 @@
-"""Remote MCP server exposing the Obsidian vault to Claude (claude.ai web/mobile, Claude Code).
+"""Local (stdio) MCP server for the second-brain vault, used by Claude Code on sutala.
 
-Auth: FastMCP's OIDCProxy fronts Authelia, so claude.ai's dynamic client registration works
-against Authelia's single static client. Only the admin group passes (Authelia policy).
+Started by Claude Code from ~/second-brain/.mcp.json, directly or through Remote Control from the
+phone, so it runs as kra3 and is never reachable over the network: no auth layer needed.
 Every path is confined to VAULT_DIR; dot-folders (.obsidian, .trash) are never touched.
-Writes are atomic (temp file + rename) so the headless Obsidian Sync never uploads half a note.
+Writes are atomic (temp file + rename) so the git sync never commits half a note.
 """
 
 import datetime
-import hashlib
 import os
 import re
 import tempfile
 from pathlib import Path
 
 from fastmcp import FastMCP
-from fastmcp.server.auth.oidc_proxy import OIDCProxy
 
 VAULT = Path(os.environ["VAULT_DIR"]).resolve()
 INBOX = os.environ.get("INBOX_FOLDER", "0 Inbox")
-PUBLIC_URL = os.environ["PUBLIC_URL"].rstrip("/")
-PORT = int(os.environ["PORT"])
 MAX_READ_BYTES = 512 * 1024
-# Open only while connecting a new Claude client; closed, nobody can register (DCR) or use a
-# URL client id (CIMD), so a phished authorize link has no client of the attacker to land on.
-ALLOW_NEW_CLIENTS = os.environ.get("ALLOW_NEW_CLIENTS", "0") == "1"
-
-
-def _secret(name: str) -> str:
-    return (Path(os.environ["CREDENTIALS_DIRECTORY"]) / name).read_text().strip()
-
-
-CLIENT_SECRET = _secret("oidc-client-secret")
-
-auth = OIDCProxy(
-    config_url=os.environ["OIDC_DISCOVERY_URL"],
-    client_id=os.environ["OIDC_CLIENT_ID"],
-    client_secret=CLIENT_SECRET,
-    # Stable across restarts, so issued tokens and the encrypted client store stay valid.
-    jwt_signing_key=hashlib.sha256(b"second-brain-mcp-jwt:" + CLIENT_SECRET.encode()).hexdigest(),
-    # Authelia's access tokens are opaque by default; its id_token is always a JWKS-verifiable JWT.
-    verify_id_token=True,
-    # Not checked against the id_token (it has no scope claim), only requested upstream and advertised.
-    required_scopes=["openid", "profile", "email", "groups"],
-    base_url=PUBLIC_URL,
-    # Authelia rejects RFC 8707 resource indicators it has no audience registered for.
-    forward_resource=False,
-    token_endpoint_auth_method="client_secret_basic",
-    # Dynamic registration is open (claude.ai needs it), so every new client must be approved on
-    # FastMCP's own consent page before the upstream Authelia hop; never rely on the default.
-    require_authorization_consent=True,
-    enable_cimd=ALLOW_NEW_CLIENTS,
-    allowed_client_redirect_uris=[
-        "https://claude.ai/api/mcp/auth_callback",
-        "https://claude.com/api/mcp/auth_callback",
-        # Claude Code's local OAuth callback.
-        "http://localhost:*",
-        "http://127.0.0.1:*",
-    ],
-)
-# OAuthProxy always enables DCR; routes are built from this at startup.
-auth.client_registration_options.enabled = ALLOW_NEW_CLIENTS
 
 mcp = FastMCP(
     "second-brain",
@@ -71,7 +28,6 @@ mcp = FastMCP(
         "Paths are relative to the vault root. New, unsorted captures go to the inbox via capture. "
         "For a weekly review use list_tasks, recent_changes, orphans and backlinks."
     ),
-    auth=auth,
 )
 
 
@@ -308,10 +264,4 @@ def move_note(source: str, destination: str) -> str:
 
 
 if __name__ == "__main__":
-    mcp.run(
-        transport="http",
-        host="127.0.0.1",
-        port=PORT,
-        path="/mcp",
-        show_banner=False,
-    )
+    mcp.run(show_banner=False)  # stdio

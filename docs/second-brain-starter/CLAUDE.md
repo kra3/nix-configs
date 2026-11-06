@@ -5,7 +5,8 @@ Arun's second brain. Two layers:
 - a **knowledge layer**: Zettelkasten-style evergreen notes and the maps that link them.
 
 The vault is a git repo that the Mac and sutala sync every few minutes; never commit yourself.
-Claude reaches it through Claude Code (files) or the `second-brain` MCP connector (phone, web).
+Claude reaches it through Claude Code: on the Mac in the clone, or on sutala in `~/second-brain`
+(the `second-brain` MCP tools), which the phone drives through Remote Control.
 
 ## Folders and what goes where
 | Folder | Holds | Rule |

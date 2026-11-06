@@ -9,34 +9,6 @@
     }:
     let
       domain = config.vars.acme.domain;
-      # Defined by services-second-brain-default when imported; absent on hosts without it.
-      secondBrain = lib.attrByPath [ "services" "secondBrain" "mcp" ] { enable = false; } config;
-      # Spliced into the clients list below, so its indentation is spelled out, not ''-stripped.
-      secondBrainClient = lib.optionalString secondBrain.enable (
-        lib.concatMapStrings (line: "\n    " + line) [
-          "  # Remote MCP server (second-brain/default.nix): FastMCP's OIDCProxy is the client; id_token is what it verifies."
-          "  - client_id: 'second-brain'"
-          "    client_name: 'Second Brain MCP'"
-          "    client_secret: '${
-                config.sops.placeholder."authelia.oidc_clients.second-brain.client_secret_hash"
-              }'"
-          "    public: false"
-          "    authorization_policy: 'admin_only'"
-          "    token_endpoint_auth_method: 'client_secret_basic'"
-          "    consent_mode: 'implicit'"
-          "    redirect_uris:"
-          "      - 'https://${secondBrain.publicHost}:${toString secondBrain.funnelPort}/auth/callback'"
-          "    scopes:"
-          "      - 'openid'"
-          "      - 'profile'"
-          "      - 'email'"
-          "      - 'groups'"
-          "    grant_types:"
-          "      - 'authorization_code'"
-          "    response_types:"
-          "      - 'code'"
-        ]
-      );
       configurationYmlContent = ''
         theme: 'auto'
 
@@ -304,7 +276,7 @@
                 grant_types:
                   - 'authorization_code'
                 response_types:
-                  - 'code'${secondBrainClient}
+                  - 'code'
       '';
       usersDatabaseYmlContent = ''
         users:
@@ -420,11 +392,6 @@
         mode = "0400";
       };
       sops.secrets."authelia.oidc_clients.aiometadata.client_secret_hash" = {
-        owner = "authelia";
-        group = "authelia";
-        mode = "0400";
-      };
-      sops.secrets."authelia.oidc_clients.second-brain.client_secret_hash" = lib.mkIf secondBrain.enable {
         owner = "authelia";
         group = "authelia";
         mode = "0400";

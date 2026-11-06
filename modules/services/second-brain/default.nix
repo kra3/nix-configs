@@ -8,6 +8,7 @@
       config,
       lib,
       pkgs,
+      inputs,
       flakeLib,
       ...
     }:
@@ -20,6 +21,8 @@
       enabled = lib.filterAttrs (_: b: b.enable) cfg.brains;
       syncing = lib.filterAttrs (_: b: b.sync.enable) enabled;
       withMcp = lib.filterAttrs (_: b: b.mcp.enable) enabled;
+      withRemote = lib.filterAttrs (_: b: b.mcp.enable && b.remoteControl.enable) enabled;
+      claude = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
       mcpFor =
         name: b:
         sb.mkMcp pkgs {
@@ -84,6 +87,22 @@
                 };
                 mcp.enable = lib.mkEnableOption "the local MCP server for Claude Code in ~/${config.claudeDir}" // {
                   default = true;
+                };
+                remoteControl = {
+                  enable = lib.mkEnableOption ''
+                    an always-on `claude remote-control` in ~/${config.claudeDir} (kra3 user service,
+                    lingering), so the Claude app can open a session on this brain at any time.
+                    Needs a one-time `claude` login as kra3
+                  '';
+                  permissionMode = lib.mkOption {
+                    type = lib.types.enum [
+                      "default"
+                      "acceptEdits"
+                      "plan"
+                    ];
+                    default = "default";
+                    description = "Permission mode for sessions opened from the phone; acceptEdits skips approving each file edit.";
+                  };
                 };
               };
             }
@@ -156,6 +175,34 @@
         ) syncing;
 
         environment.systemPackages = lib.mapAttrsToList mcpFor withMcp;
+
+        # User services for Remote Control must outlive logins and start at boot.
+        users.users.kra3.linger = lib.mkIf (withRemote != { }) true;
+
+        home-manager.users.kra3.systemd.user.services = lib.mapAttrs' (
+          name: b:
+          lib.nameValuePair "second-brain-${name}-remote" {
+            Unit.Description = "Claude Code Remote Control for the ${name} second brain";
+            Service = {
+              WorkingDirectory = "%h/${b.claudeDir}";
+              ExecStart = lib.escapeShellArgs [
+                "${claude}/bin/claude"
+                "remote-control"
+                "--name"
+                "second-brain-${name}"
+                "--permission-mode"
+                b.remoteControl.permissionMode
+              ];
+              # Spawned sessions run git, ripgrep etc. from the user's profile.
+              Environment = [
+                "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin"
+              ];
+              Restart = "always";
+              RestartSec = 30;
+            };
+            Install.WantedBy = [ "default.target" ];
+          }
+        ) withRemote;
 
         home-manager.users.kra3.home.file = lib.mkMerge (
           lib.mapAttrsToList (

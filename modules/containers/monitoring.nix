@@ -38,12 +38,17 @@
           );
 
       # Host nginx reverse proxy for Loki -- lets surasa push logs since the container's veth address isn't LAN-routable.
+      # LAN + tailnet + loopback only (not nginxAllowCidrs): Loki has auth_enabled = false, so podman subnets must not reach it here.
       services.nginx.virtualHosts."loki.${config.vars.acme.domain}" =
         lib.mkIf (config.containers.monitoring.config.services.loki.enable or false)
           (
             flakeLib.nginx.mkProxyVhost {
               domain = config.vars.acme.domain;
-              cidrs = config.vars.network.nginxAllowCidrs;
+              cidrs = [
+                config.vars.network.lanCidr
+                "100.64.0.0/10"
+                "127.0.0.1"
+              ];
               upstream = "http://${config.vars.network.containers.monitoring.localAddress}:3100";
             }
           );

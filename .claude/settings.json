@@ -50,5 +50,16 @@
       "Bash(git worktree prune*)",
       "Bash(git branch -D *)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "home-assistant-skills": {
+      "source": {
+        "source": "github",
+        "repo": "homeassistant-ai/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "home-assistant-skills@home-assistant-skills": true
   }
 }

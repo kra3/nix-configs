@@ -7,7 +7,7 @@ it holds; nothing listens on the network, and brains never share a repo, folder 
 | --- | --- | --- |
 | Sync script (`sync.sh`), MCP server (`mcp_server.py`), builders | `modules/lib/second-brain/` (`flake.lib.second-brain-packages`) | both modules |
 | NixOS module: always-on server copies, system timer, deploy key from sops | `modules/services/second-brain/default.nix` (`services-second-brain-default`) | sutala |
-| Home Manager module: the user's own vaults, launchd agent (macOS) / systemd user timer (Linux), the user's ssh setup | `modules/home/second-brain.nix` (`home-second-brain`) | Macs |
+| Home Manager module: the user's own vaults, launchd agent (macOS) / systemd user timer (Linux), the user's ssh setup | `modules/home/second-brain.nix` (`home-second-brain`) | Macs that import it (e.g. the work overlay) |
 | Vault template: folders, `CLAUDE.md` rules, templates | `docs/second-brain-starter/` | every new vault |
 
 ## Brains and machines
@@ -17,8 +17,14 @@ it holds; nothing listens on the network, and brains never share a repo, folder 
 | home | `github.com/kra3/second-brain` (private) | Server copy + MCP (personal Claude) | Opt-in, files only (no Claude) | Vault + MCP | Remote Control → sutala; optionally Obsidian + Git plugin | Never |
 | work | Work git server (over the VPN) | Never | Vault + MCP (work Claude Code) | Never | Never | Obsidian + Git plugin over VPN if allowed, else the git web UI |
 
-The mac-work host in this repo is a baseline: it only imports `home-second-brain`. Its brains are
-declared in the private work overlay on top of it, so work repo URLs never land here.
+No host in this repo sets up a work brain. The mac-work host here is a baseline, and the private
+work overlay on top of it imports the exported module and declares the brain, so nothing about the
+work brain lands here. The module takes its builders from this flake, not from a `flakeLib`
+specialArg, so another flake can import it as-is:
+
+```nix
+home-manager.users.<me>.imports = [ inputs.nix-configs.homeManagerModules.home-second-brain ];
+```
 
 ## Options
 
@@ -44,7 +50,7 @@ Examples:
 # sutala (hosts/sutala/configuration.nix)
 services.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
 
-# work overlay on top of mac-work
+# work overlay on top of mac-work (after importing the module, above)
 programs.secondBrain.hostLabel = "work-mac";
 programs.secondBrain.brains.work.sync = { enable = true; remote = "git@git.corp.example:me/brain.git"; };
 # opt-in, files only:
@@ -121,8 +127,8 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
 ## Setup: work brain (work overlay)
 
 1. Create the repo on the work git server, empty.
-2. In the overlay: `programs.secondBrain.brains.work.sync = { enable = true; remote = "…"; };` and
-   switch. The agent uses your normal ssh setup over the VPN; logs go to
+2. In the overlay: import `homeManagerModules.home-second-brain`, set
+   `programs.secondBrain.brains.work.sync = { enable = true; remote = "…"; };` and switch. The agent uses your normal ssh setup over the VPN; logs go to
    `~/Library/Logs/second-brain-work-sync.log`.
 3. Copy `docs/second-brain-starter/` into `~/Brains/work`, open it in Obsidian, and run Claude Code in
    `~/second-brain/work`.

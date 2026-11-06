@@ -1,11 +1,17 @@
+# Takes the builders from this flake directly (not from a flakeLib specialArg), so another flake,
+# e.g. a private work overlay, can import it as-is:
+#   home-manager.users.<me>.imports = [ inputs.nix-configs.homeManagerModules.home-second-brain ];
+{ config, ... }:
+let
+  sb = config.flake.lib.second-brain-packages;
+in
 {
   # Second brains on a user's own machine (the Macs): per brain, a vault the user edits in
   # Obsidian, synced with its hub repo by a background agent (launchd on macOS, a systemd user
   # timer on Linux) using the user's own ssh setup, plus a local MCP server for Claude Code in
   # ~/<claudeDir>. Nothing listens on the network.
   #
-  # Hosts in this repo only import it; which brains a machine holds is declared where that
-  # machine's private config lives (e.g. the work overlay on top of the mac-work baseline):
+  # No host in this repo declares a work brain: a work overlay imports this module and sets e.g.
   #   programs.secondBrain.brains.work.sync = { enable = true; remote = "git@git.corp.example:me/brain.git"; };
   # A personal brain on a work machine is opt-in, and should be files only:
   #   programs.secondBrain.brains.home = { mcp.enable = false; sync = { enable = true; remote = "..."; }; };
@@ -14,12 +20,10 @@
       config,
       lib,
       pkgs,
-      flakeLib,
       ...
     }:
     let
       cfg = config.programs.secondBrain;
-      sb = flakeLib.second-brain-packages;
       home = config.home.homeDirectory;
       syncScript = sb.mkSync pkgs;
       enabled = lib.filterAttrs (_: b: b.enable) cfg.brains;

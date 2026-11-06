@@ -106,9 +106,9 @@ switch-surasa target="surasa":
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}
 
-# One-time secret for services-second-brain-default (docs/second-brain.md): the deploy key for the
-# vault hub repo. Idempotent; the key goes to sops on stdin, never argv.
-second-brain-secrets file="secrets/secrets.yaml":
+# One-time secret for a sutala brain (services.secondBrain.brains.<brain>, docs/second-brain.md):
+# the deploy key for its hub repo. Idempotent; the key goes to sops on stdin, never argv.
+second-brain-secrets brain="home" file="secrets/secrets.yaml":
     #!/usr/bin/env bash
     set -euo pipefail
     file={{file}}
@@ -116,12 +116,13 @@ second-brain-secrets file="secrets/secrets.yaml":
     have() { sops decrypt --extract "[\"$1\"]" "$file" >/dev/null 2>&1; }
     put() { jq -Rs . | sops set --value-stdin "$file" "[\"$1\"]"; echo "  added $1"; }
 
-    echo "== Deploy key for the vault hub repo"
-    if have second-brain.git.deploy_key; then
-      sops decrypt --extract '["second-brain.git.deploy_key"]' "$file" > "$tmp/key"; chmod 600 "$tmp/key"
+    key="second-brain.{{brain}}.git.deploy_key"
+    echo "== Deploy key for the {{brain}} brain's hub repo"
+    if have "$key"; then
+      sops decrypt --extract "[\"$key\"]" "$file" > "$tmp/key"; chmod 600 "$tmp/key"
     else
-      ssh-keygen -q -t ed25519 -N "" -C "second-brain@sutala" -f "$tmp/key"
-      put second-brain.git.deploy_key < "$tmp/key"
+      ssh-keygen -q -t ed25519 -N "" -C "second-brain-{{brain}}@sutala" -f "$tmp/key"
+      put "$key" < "$tmp/key"
     fi
     echo "  add this as a deploy key WITH write access on the vault repo:"
     echo "    $(ssh-keygen -y -f "$tmp/key")"

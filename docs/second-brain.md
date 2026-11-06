@@ -1,18 +1,73 @@
-# Second brain on sutala
+# Second brains
 
-`modules/services/second-brain/default.nix` (`flake.nixosModules.services-second-brain-default`)
-keeps a copy of the Obsidian vault on sutala, in sync with the Mac through a private GitHub
-repo, and gives Claude Code on sutala the vault tools. Everything is free, and nothing listens on
-the network.
+A second brain is one Obsidian vault plus its own git hub repo. Each machine declares which brains
+it holds; nothing listens on the network, and brains never share a repo, folder or Claude session.
 
-| Part | Where | What it does |
+| Piece | File | Used by |
 | --- | --- | --- |
-| Sync | `second-brain-sync.timer` (every 5 min) | `sync.sh`: commits sutala's changes, rebases onto the hub's `main`, pushes. Work tree `/srv/appdata/second-brain/vault`, git dir `/srv/appdata/second-brain/vault.git` (outside the vault) |
-| MCP | `~/second-brain/.mcp.json` (kra3) | Local stdio server `second-brain-mcp` (`mcp_server.py`), started by Claude Code in `~/second-brain`, directly or through Remote Control from the phone |
+| Sync script (`sync.sh`), MCP server (`mcp_server.py`), builders | `modules/lib/second-brain/` (`flake.lib.second-brain-packages`) | both modules |
+| NixOS module: always-on server copies, system timer, deploy key from sops | `modules/services/second-brain/default.nix` (`services-second-brain-default`) | sutala |
+| Home Manager module: the user's own vaults, launchd agent (macOS) / systemd user timer (Linux), the user's ssh setup | `modules/home/second-brain.nix` (`home-second-brain`) | Macs |
+| Vault template: folders, `CLAUDE.md` rules, templates | `docs/second-brain-starter/` | every new vault |
 
-Sync stays off in `hosts/sutala/configuration.nix` until its deploy key exists: sops-nix rejects
-a declared key that is missing from `secrets/secrets.yaml`, which would break the nightly upgrade.
-The MCP part needs no secret and is on.
+## Brains and machines
+
+| Brain | Hub | sutala | Work Mac | Personal Mac (later) | Personal iPhone | Work phone |
+| --- | --- | --- | --- | --- | --- | --- |
+| home | `github.com/kra3/second-brain` (private) | Server copy + MCP (personal Claude) | Opt-in, files only (no Claude) | Vault + MCP | Remote Control → sutala; optionally Obsidian + Git plugin | Never |
+| work | Work git server (over the VPN) | Never | Vault + MCP (work Claude Code) | Never | Never | Obsidian + Git plugin over VPN if allowed, else the git web UI |
+
+The mac-work host in this repo is a baseline: it only imports `home-second-brain`. Its brains are
+declared in the private work overlay on top of it, so work repo URLs never land here.
+
+## Options
+
+`services.secondBrain.brains.<name>` (NixOS, sutala) and `programs.secondBrain.brains.<name>`
+(Home Manager, Macs) take the same shape:
+
+| Option | NixOS default | Home Manager default | Notes |
+| --- | --- | --- | --- |
+| `enable` | `true` | `true` | Declaring a brain enables it |
+| `vaultDir` | `/srv/appdata/second-brain/<name>/vault` | `~/Brains/<name>` | The folder Obsidian opens; a git work tree |
+| `gitDir` | `…/<name>/vault.git` | `<vaultDir>.git` | Kept outside the vault |
+| `claudeDir` | `second-brain/<name>` | `second-brain/<name>` | Under `$HOME`: `.mcp.json`, project settings, a `CLAUDE.md` pointer |
+| `mcp.enable` | `true` | `true` | Local stdio MCP server in `claudeDir`; set `false` for a files-only brain |
+| `sync.enable` | `false` | `false` | Two-way git sync every interval |
+| `sync.remote` | (required with sync) | (required with sync) | Hub repo URL |
+| `sync.interval` / `sync.intervalSeconds` | `"5min"` | `300` | |
+| `sync.deployKeySecret` | `second-brain.<name>.git.deploy_key` | n/a | Home Manager uses the user's own ssh keys, config and agent |
+| `programs.secondBrain.hostLabel` | n/a | `"mac"` | Names the machine in commits and `conflict/<host>-…` branches; sutala uses its hostname |
+
+Examples:
+
+```nix
+# sutala (hosts/sutala/configuration.nix)
+services.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
+
+# work overlay on top of mac-work
+programs.secondBrain.hostLabel = "work-mac";
+programs.secondBrain.brains.work.sync = { enable = true; remote = "git@git.corp.example:me/brain.git"; };
+# opt-in, files only:
+programs.secondBrain.brains.home = { mcp.enable = false; sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; }; };
+
+# personal Mac, once it's a host here
+programs.secondBrain.hostLabel = "mac";
+programs.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
+```
+
+## Sync
+
+Every device holding a brain runs `sync.sh` every interval: commit local changes → fetch → rebase
+onto the hub's `main` → push. Other devices see a change within about 5–10 minutes.
+
+- **Hub unreachable** (offline, VPN down): changes are committed locally, the run exits 75 (not a
+  failure), and the next run catches up.
+- **Conflict** (same lines changed on two devices between syncs): this device's commits go to
+  `conflict/<host>-<time>` on the hub, the vault resets to `main`, and the run fails visibly. Merge
+  the branch on a machine with the vault.
+- **First sync** adopts the hub's history only into an empty vault; it refuses otherwise.
+- Phones with the Obsidian Git plugin take part like any other clone (HTTPS + access token; the
+  plugin's settings file is git-ignored so the token is never committed).
 
 ## Method
 
@@ -26,49 +81,15 @@ Two layers, with Claude doing the filing:
 projects draw on notes and maps (express); finished things → 6 Archive
 ```
 
-The vault template, rules and process live in `docs/second-brain-starter/`:
-- `CLAUDE.md`: folder rules, the weekly review, and the rule that Claude suggests but never writes evergreen notes;
-- `Templates/`: Capture, Daily, Project, Source, Evergreen, Map.
+`docs/second-brain-starter/CLAUDE.md` holds the folder rules, the weekly review and the rule that
+Claude suggests but never writes evergreen notes.
 
-## Devices
+## Claude access
 
-| Device | Role | How it reaches the vault |
-| --- | --- | --- |
-| Mac | Main writing | Obsidian + the Obsidian Git community plugin, auto pull/commit/push every few minutes; Claude Code in the clone works on the files directly |
-| sutala (server) | Always-on copy | `second-brain-sync.timer` |
-| sutala (desktop, niri) | Occasional editing | Open `/srv/appdata/second-brain/vault` in Obsidian **without** the Git plugin; the timer syncs it |
-| iPhone | Quick capture, lookups, weekly review | Claude app → **Remote Control** into a Claude Code session on sutala started in `~/second-brain` (needs sutala online, not Tailscale); URL clips via the share-sheet clipper |
-
-Why not a claude.ai custom connector: those calls come from Anthropic's servers, not the phone, so
-they need a public endpoint. Remote Control gives the phone the same tools with nothing exposed.
-
-kra3 is in the `second-brain` group (log out and in once after the first deploy) and the vault
-carries default ACLs, so files written by kra3 (desktop Obsidian, the MCP server, Claude Code) stay
-writable by the sync service.
-
-**Conflicts:** if sutala's commits can't rebase onto the hub (the same lines changed on the Mac and on
-sutala between syncs), sutala pushes them to a `conflict/sutala-<time>` branch, resets the vault to the
-hub's `main` and the run fails (visible in Loki). Merge the branch on the Mac and delete it.
-
-## Setup
-
-1. **GitHub:** create a private repo `kra3/second-brain`, empty (no README).
-2. **Deploy key:** on sutala, in `nix develop`, on this branch: `just second-brain-secrets`. It
-   generates `second-brain.git.deploy_key` (on stdin to `sops set`, never argv) and prints the public
-   key: add it on the repo under Settings → Deploy keys, **with write access**. Commit the updated
-   `secrets/secrets.yaml`.
-3. **Config:** check `sync.remote`, set `sync.enable = true` and merge; the nightly upgrade deploys it.
-   The server vault starts empty and takes the hub's content on its first sync (it refuses to adopt a
-   hub over a non-empty server vault).
-4. **Mac:** clone the repo (`git clone git@github.com:kra3/second-brain.git`), copy the contents of
-   `docs/second-brain-starter/` (including `.gitignore`) into it, open the folder as a vault in
-   Obsidian, install the **Obsidian Git** community plugin and set: auto commit-and-sync interval
-   5 min, auto pull on startup, pull before push. In Obsidian, set the Daily notes folder to
-   `0 Inbox` and the Templates folder to `Templates`. Its first sync pushes the starter kit;
-   sutala picks it up within 5 minutes.
-5. **Phone:** on sutala, start `claude` in `~/second-brain` with Remote Control enabled, then open
-   that session from the Claude app. Say "save to my inbox: …", "what did I note about …?" or
-   "weekly review".
+- Claude Code in `~/<claudeDir>` gets that brain's tools; a session sees only one brain.
+- Personal iPhone: Claude app → **Remote Control** into the session on sutala (personal account).
+- Work: Claude Code on the work Mac only (no Claude app, so no Remote Control from the work phone).
+- If a managed Claude Code policy blocks project MCP servers, Claude still works on the vault's files.
 
 Tools:
 
@@ -78,25 +99,51 @@ Tools:
 | Write | `capture` (timestamped note in `0 Inbox`), `write_note` (no overwrite unless asked), `append_to_note`, `move_note` |
 | Weekly review | `list_tasks` (open `- [ ]` tasks per note, `waiting:` flagged, archive skipped), `recent_changes`, `orphans` (unlinked notes in `4 Notes`), `backlinks` |
 
-All paths stay inside the vault; dot-folders (`.obsidian`, `.trash`) are refused; writes are atomic.
-There's no delete tool: archive with `move_note`. Every change is a git commit either way.
+All paths stay inside the vault; dot-folders are refused; writes are atomic; there is no delete tool.
+
+## Setup: home brain
+
+1. **GitHub:** create a private repo `kra3/second-brain`, empty (no README).
+2. **Deploy key (sutala):** in `nix develop`, `just second-brain-secrets home`. It adds
+   `second-brain.home.git.deploy_key` to sops via stdin and prints the public key: add it on the repo
+   under Settings → Deploy keys **with write access**, then commit `secrets/secrets.yaml`.
+3. **Enable:** set `services.secondBrain.brains.home.sync.enable = true` and merge; the nightly
+   upgrade deploys it. The empty server vault takes the hub's content on its first sync.
+4. **First content:** copy `docs/second-brain-starter/` (including `.gitignore`) into the server
+   vault, or into a Mac's vault once one holds the home brain; the next sync pushes it.
+5. **Obsidian:** open the vault; set the Daily notes folder to `0 Inbox` and Templates to
+   `Templates`. On sutala's desktop open `/srv/appdata/second-brain/home/vault` (kra3 is in the
+   `second-brain` group; log out and in once after the first deploy). No sync plugin on machines
+   that run the agent or timer.
+6. **Phone:** on sutala, `claude` in `~/second-brain/home` with Remote Control on, then open that
+   session from the Claude app.
+
+## Setup: work brain (work overlay)
+
+1. Create the repo on the work git server, empty.
+2. In the overlay: `programs.secondBrain.brains.work.sync = { enable = true; remote = "…"; };` and
+   switch. The agent uses your normal ssh setup over the VPN; logs go to
+   `~/Library/Logs/second-brain-work-sync.log`.
+3. Copy `docs/second-brain-starter/` into `~/Brains/work`, open it in Obsidian, and run Claude Code in
+   `~/second-brain/work`.
+4. Work phone (optional): Obsidian + the Obsidian Git plugin, cloning over HTTPS with an access
+   token on the VPN, if your device policy allows it; otherwise use the git server's web UI to read
+   and to add captures to `0 Inbox/`.
 
 ## Checking it works
 
-Logs reach Loki through the host Alloy agent's catch-all journal source:
-
-- Sync healthy: `{host="sutala", systemd_unit="second-brain-sync.service"} |~ "(?i)fatal|error|refusing|conflict"` should be empty.
-- On the host: `systemctl list-timers second-brain-sync`,
-  `git --git-dir=/srv/appdata/second-brain/vault.git log --oneline -3`, and in `~/second-brain`,
-  `claude mcp list` shows `second-brain` connected.
+- sutala: `{host="sutala", systemd_unit=~"second-brain-.*-sync.service"} |~ "(?i)fatal|error|refusing|conflict"`
+  should be empty (remote-unreachable lines are fine); `systemctl list-timers 'second-brain-*'`;
+  `git --git-dir=/srv/appdata/second-brain/home/vault.git log --oneline -3`.
+- Macs: `launchctl list | grep second-brain`, `tail ~/Library/Logs/second-brain-<name>-sync.log`.
+- Claude: in `~/second-brain/<name>`, `claude mcp list` shows `second-brain` connected.
 
 ## Later
 
 - **Plain-text capture without Claude:** the share-sheet clipper (`clip.${domain}`, tailnet-only,
-  bearer token) takes URLs only; a text mode would let an iOS Shortcut drop a capture into
-  `0 Inbox` over Tailscale in seconds.
-- **Quartz web view:** a read-only, tailnet-only site of the vault for browsing on the phone.
-- **Self-hosted LiveSync** (free Obsidian community plugin, CouchDB on sutala, Tailscale-only), if
-  Obsidian on the phone with near-real-time sync becomes worth it. Needs CouchDB (~100–200 MB RAM)
-  plus a headless LiveSync client (livesync-bridge on Deno, or the LiveSync CLI on Node) packaged
-  for Nix to keep the plain-file vault the MCP server and git use. Git stays as the history.
+  bearer token) takes URLs only; a text mode would let an iOS Shortcut drop a capture into the
+  home brain's `0 Inbox` over Tailscale.
+- **Quartz web view:** a read-only, tailnet-only site of a vault for browsing on the phone.
+- **Self-hosted LiveSync** (free Obsidian plugin, CouchDB on sutala, Tailscale-only), if Obsidian
+  on the phone with near-real-time sync becomes worth it. ~200–350 MB RAM plus a headless LiveSync
+  client packaged for Nix; git stays as the history.

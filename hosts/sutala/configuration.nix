@@ -86,16 +86,12 @@
 
   vars.acme.email = "the1.arun@gmail.com";
 
-  # Second brain (Obsidian vault): git work tree synced with a private GitHub hub repo (the Mac
-  # pushes to it too), plus a local MCP server for Claude Code here (~/second-brain), also reachable
-  # from the phone through Remote Control. Nothing is exposed on the network.
-  # Sync stays off until its deploy key is in sops -- setup steps in docs/second-brain.md.
-  services.secondBrain = {
-    sync = {
-      enable = false;
-      remote = "git@github.com:kra3/second-brain.git";
-    };
-    mcp.enable = true;
+  # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
+  # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
+  # Nothing is exposed on the network. Sync stays off until its deploy key is in sops.
+  services.secondBrain.brains.home.sync = {
+    enable = false;
+    remote = "git@github.com:kra3/second-brain.git";
   };
 
   hardware.enableRedistributableFirmware = true;

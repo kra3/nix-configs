@@ -35,6 +35,8 @@
       flakeModules.homeManager.home-jankyborders
       flakeModules.homeManager.home-sketchybar
       flakeModules.homeManager.home-wallpaper-darwin
+      # Brains are declared by the machine's private overlay (docs/second-brain.md).
+      flakeModules.homeManager.home-second-brain
     ];
 
     home.username = "akarunagath";

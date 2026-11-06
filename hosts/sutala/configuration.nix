@@ -89,9 +89,16 @@
   # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
   # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
   # Nothing is exposed on the network. Deploy key: second-brain.home.git.deploy_key.
-  services.secondBrain.brains.home.sync = {
-    enable = true;
-    remote = "git@github.com:kra3/second-brain.git";
+  services.secondBrain.brains.home = {
+    sync = {
+      enable = true;
+      remote = "git@github.com:kra3/second-brain.git";
+    };
+    # Always-on `claude remote-control` for the phone; edits stay inside the vault (and its git history).
+    remoteControl = {
+      enable = true;
+      permissionMode = "acceptEdits";
+    };
   };
 
   hardware.enableRedistributableFirmware = true;

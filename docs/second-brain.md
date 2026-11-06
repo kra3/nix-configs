@@ -41,6 +41,8 @@ home-manager.users.<me>.imports = [ inputs.nix-configs.homeManagerModules.home-s
 | `sync.enable` | `false` | `false` | Two-way git sync every interval |
 | `sync.remote` | (required with sync) | (required with sync) | Hub repo URL |
 | `sync.interval` / `sync.intervalSeconds` | `"5min"` | `300` | |
+| `remoteControl.enable` | `false` | n/a | Always-on `claude remote-control` in `claudeDir` (kra3 user service, lingering) so the phone can always connect |
+| `remoteControl.permissionMode` | `"default"` | n/a | `acceptEdits` skips approving each edit from the phone |
 | `sync.deployKeySecret` | `second-brain.<name>.git.deploy_key` | n/a | Home Manager uses the user's own ssh keys, config and agent |
 | `programs.secondBrain.hostLabel` | n/a | `"mac"` | Names the machine in commits and `conflict/<host>-…` branches; sutala uses its hostname |
 
@@ -117,12 +119,14 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
    upgrade deploys it. The empty server vault takes the hub's content on its first sync.
 4. **First content:** copy `docs/second-brain-starter/` (including `.gitignore`) into the server
    vault, or into a Mac's vault once one holds the home brain; the next sync pushes it.
-5. **Obsidian:** open the vault; set the Daily notes folder to `0 Inbox` and Templates to
+5. **Obsidian** (installed on sutala via `hosts/sutala/home.nix`): open the vault; set the Daily notes folder to `0 Inbox` and Templates to
    `Templates`. On sutala's desktop open `/srv/appdata/second-brain/home/vault` (kra3 is in the
    `second-brain` group; log out and in once after the first deploy). No sync plugin on machines
    that run the agent or timer.
-6. **Phone:** on sutala, `claude` in `~/second-brain/home` with Remote Control on, then open that
-   session from the Claude app.
+6. **Phone:** once, log in to Claude Code as kra3 on sutala (`claude`, then `/login`). The
+   `second-brain-home-remote` user service then keeps `claude remote-control` running in
+   `~/second-brain/home`; in the Claude app, open **second-brain-home** to start a session there.
+   Check it with `systemctl --user status second-brain-home-remote`.
 
 ## Setup: work brain (work overlay)
 

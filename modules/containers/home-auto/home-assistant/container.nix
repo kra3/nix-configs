@@ -149,6 +149,7 @@
           homeassistant_longitude: ${config.sops.placeholder."homeassistant.longitude"}
           mosquitto_pwd: ${config.sops.placeholder."mqtt.password"}
           alarm_code: ${config.sops.placeholder."homeassistant.alarm_code"}
+          camera_announce_bearer: "Bearer ${config.sops.placeholder."surveillance.camera_announce.token"}"
           lidarr_api_key: ${config.sops.placeholder."media.lidarr.api_key"}
           recorder_db_url: postgresql://hass:${config.sops.placeholder."db.hass_password"}@10.3.2.1/hass
           resrobot_trip_url: "https://api.resrobot.se/v2.1/trip?format=json&searchForArrival={{ for_arrival | default(0) }}&accessId=${

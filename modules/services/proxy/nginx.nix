@@ -33,10 +33,29 @@
           # which Prometheus scrapes, so it is intentionally left without them.
           # If you add add_header elsewhere, repeat these lines there.
           # No repo vhost is embedded in an iframe (no panel_iframe/frame usage), so SAMEORIGIN is safe.
-          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-          add_header X-Content-Type-Options "nosniff" always;
-          add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-          add_header X-Frame-Options "SAMEORIGIN" always;
+          # Each one only when the upstream didn't already send it (add_header skips empty
+          # values), so apps with their own, stricter policy (e.g. HA's no-referrer) win
+          # and responses never carry duplicates.
+          map $upstream_http_strict_transport_security $sec_hsts {
+            "" "max-age=31536000; includeSubDomains";
+            default "";
+          }
+          map $upstream_http_x_content_type_options $sec_nosniff {
+            "" "nosniff";
+            default "";
+          }
+          map $upstream_http_referrer_policy $sec_referrer {
+            "" "strict-origin-when-cross-origin";
+            default "";
+          }
+          map $upstream_http_x_frame_options $sec_xfo {
+            "" "SAMEORIGIN";
+            default "";
+          }
+          add_header Strict-Transport-Security $sec_hsts always;
+          add_header X-Content-Type-Options $sec_nosniff always;
+          add_header Referrer-Policy $sec_referrer always;
+          add_header X-Frame-Options $sec_xfo always;
         '';
 
         virtualHosts.${config.vars.acme.domain} = {

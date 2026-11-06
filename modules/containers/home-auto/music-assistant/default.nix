@@ -66,9 +66,11 @@
         domain = config.vars.acme.domain;
         cidrs = config.vars.network.nginxAllowCidrs;
         upstream = "http://127.0.0.1:8095";
+        # Admin-only in Authelia; HA (10.3.2.10) is bypassed there for its integration.
+        forwardAuth = true;
       };
 
-      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss)
+      # Snapcast JSON-RPC WebSocket on 1705 (ws/wss) -- no forward auth: real speaker clients can't log in.
       services.nginx.virtualHosts."ma-snapcast" = {
         serverName = "ma.${config.vars.acme.domain}";
         useACMEHost = config.vars.acme.domain;

@@ -40,6 +40,10 @@ in
         vhostExtraConfig ? "",
         locationExtraConfig ? null,
         forwardAuth ? false,
+        # Path prefixes proxied without forward auth, for clients that authenticate with the
+        # app itself and can't follow a login redirect (e.g. Subsonic API apps). ^~ so no
+        # regex location can pull these back under auth.
+        forwardAuthExcludePrefixes ? [ ],
       }:
       {
         useACMEHost = domain;
@@ -61,6 +65,17 @@ in
             );
           };
         }
+        // lib.optionalAttrs forwardAuth (
+          lib.listToAttrs (
+            map (prefix: {
+              name = "^~ ${prefix}";
+              value = {
+                proxyPass = upstream;
+                proxyWebsockets = websockets;
+              };
+            }) forwardAuthExcludePrefixes
+          )
+        )
         // lib.optionalAttrs forwardAuth {
           "/internal/authelia/authz" = {
             extraConfig = ''

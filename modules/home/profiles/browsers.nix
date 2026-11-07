@@ -18,8 +18,8 @@
               bookmarks = [ ];
             }
           ];
-          # bitwarden is installed but left disabled in about:addons on first launch
-          # (no declarative "installed but off" state; HM just symlinks the xpi).
+          # HM only symlinks these xpis, so sideloaded add-ons start disabled in
+          # about:addons; bitwarden is force-enabled via policies below.
           extensions.packages =
             (with pkgs.nur.repos.rycee.firefox-addons; [
               ublock-origin
@@ -50,11 +50,29 @@
             ];
         };
       };
+      # Force-enable Bitwarden from the Nix-pinned xpi above (not AMO), and point it
+      # at the self-hosted Vaultwarden so the login screen is pre-set to it.
+      programs.librewolf.policies =
+        let
+          bitwarden = pkgs.nur.repos.rycee.firefox-addons.bitwarden;
+        in
+        {
+          ExtensionSettings.${bitwarden.addonId} = {
+            installation_mode = "force_installed";
+            install_url = "file://${bitwarden}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/${bitwarden.addonId}.xpi";
+          };
+          "3rdparty".Extensions.${bitwarden.addonId}.environment.base = "https://vault.${domain}";
+        };
       catppuccin.librewolf.force = true;
 
       programs.chromium = {
         enable = true;
         package = pkgs.ungoogled-chromium;
+        # Bitwarden (Chrome Web Store id). HM installs it via Chromium's
+        # External Extensions mechanism using the Web Store update URL.
+        extensions = [
+          { id = "nngceckbapebfimnlniiiahkandclblb"; }
+        ];
       };
 
       # xdg-open has no default browser without this, so apps that shell out to it

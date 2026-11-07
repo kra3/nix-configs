@@ -44,6 +44,7 @@
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
+    flakeModules.nixos.services-selfheal
     flakeModules.nixos.containers-monitoring
     flakeModules.nixos.containers-media-mgmt-default
     flakeModules.nixos.containers-media-play
@@ -64,7 +65,10 @@
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
     flakeModules.nixos.users-authelia
+    flakeModules.nixos.users-selfheal
   ];
+
+  services.selfheal.enable = true;
 
   vars.network = {
     lanIf = "enp2s0";

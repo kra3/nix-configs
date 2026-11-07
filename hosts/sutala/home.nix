@@ -25,6 +25,7 @@ in
   ];
 
   programs.neovim-claudecode.enable = true;
+  programs.claude-code-selfheal.enable = true;
 
   # Desktop Obsidian for the second-brain server copies (/srv/appdata/second-brain/<name>/vault);
   # no sync plugin: second-brain-<name>-sync.timer does the git work.

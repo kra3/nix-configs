@@ -23,6 +23,8 @@
       sops.secrets."life.vaultwarden.push_installation_key" = { };
       # Plaintext half of authelia.oidc_clients.vaultwarden.client_secret_hash.
       sops.secrets."life.vaultwarden.sso_client_secret" = { };
+      # Gmail app password, shared with alarm-person-photos (home-auto.nix).
+      sops.secrets."alarm.smtp_password" = { };
 
       sops.templates."life.vaultwarden.env" = {
         owner = "root";
@@ -36,6 +38,7 @@
           PUSH_INSTALLATION_ID=${config.sops.placeholder."life.vaultwarden.push_installation_id"}
           PUSH_INSTALLATION_KEY=${config.sops.placeholder."life.vaultwarden.push_installation_key"}
           SSO_CLIENT_SECRET=${config.sops.placeholder."life.vaultwarden.sso_client_secret"}
+          SMTP_PASSWORD=${config.sops.placeholder."alarm.smtp_password"}
         '';
       };
 

@@ -26,6 +26,9 @@
         owner = "root";
         group = "life";
         mode = "0440";
+        # The RESTART_TRIGGER hash below only sees placeholders, so a rotated
+        # secret value (e.g. a new admin token) needs this to take effect.
+        restartUnits = [ "vaultwarden.service" ];
         content = ''
           ADMIN_TOKEN=${config.sops.placeholder."life.vaultwarden.admin_token_hash"}
           PUSH_INSTALLATION_ID=${config.sops.placeholder."life.vaultwarden.push_installation_id"}

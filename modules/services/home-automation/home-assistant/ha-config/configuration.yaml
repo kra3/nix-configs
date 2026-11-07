@@ -14,6 +14,10 @@ homeassistant:
 
 default_config:
 
+frontend:
+  extra_module_url:
+    - /local/community/card-mod/card-mod.js?v=@card-mod@
+
 network:
 
 # Removed http: block — now configured via Home Assistant UI (Settings > System > Network)
@@ -64,16 +68,22 @@ rest_command:
   announce_hallway:
     url: http://10.3.2.1:8098/say
     method: post
+    headers:
+      Authorization: !secret camera_announce_bearer
     content_type: application/json
     payload: '{"text": {{ message | tojson }}}'
     timeout: 60
   chime_hallway:
     url: http://10.3.2.1:8098/chime
     method: post
+    headers:
+      Authorization: !secret camera_announce_bearer
     timeout: 60
   siren_hallway:
     url: http://10.3.2.1:8098/siren
     method: post
+    headers:
+      Authorization: !secret camera_announce_bearer
     content_type: application/json
     payload: '{"seconds": 10}'
     timeout: 60

@@ -6,12 +6,13 @@ blueprint:
     light comes back on while presence is still held, the boost is applied
     again. The boost also applies when the window opens or it turns dark while
     the room is occupied, and a once-a-minute check boosts a light that should
-    be boosted but isn't (after a restart) unless Adaptive Lighting already
-    holds it in manual control. When the room empties or the light goes off,
-    Adaptive Lighting takes the light back and the companion goes off. Party
-    mode holds the boost; it
-    is released when automations resume. No reaction while the alarm is
-    pending or triggered.
+    be boosted but isn't unless Adaptive Lighting already holds it in manual
+    control. When automations resume or the light returns after a restart with
+    the room occupied, the boost applies at once without the 2.5 min wait.
+    When the room empties or the light goes off, Adaptive Lighting takes the
+    light back and the companion goes off. Party mode holds the boost; it is
+    released when automations resume and the room is empty. No reaction while
+    the alarm is pending or triggered.
   domain: automation
   input:
     light_entity:
@@ -74,7 +75,7 @@ triggers:
     id: release
   - trigger: event
     event_type: automations_resumed
-    id: release
+    id: resume
 
 mode: queued
 
@@ -89,6 +90,7 @@ conditions:
 
 variables:
   light_entity: !input light_entity
+  presence_sensor: !input presence_sensor
   companion: !input companion_light
   block_entity: !input block_entity
   lights: "{{ [light_entity] + ([companion] if companion else []) }}"
@@ -100,6 +102,7 @@ actions:
             id:
               - boost
               - tick
+              - resume
           - condition: template
             value_template: >-
               {{ trigger.id != 'tick' or light_entity not in
@@ -107,7 +110,12 @@ actions:
           - condition: state
             entity_id: !input presence_sensor
             state: "on"
-            for: "00:02:30"
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'resume'
+                 or (trigger.id == 'boost' and trigger.entity_id == light_entity
+                     and trigger.from_state.state in ['unknown', 'unavailable'])
+                 or (now() - states[presence_sensor].last_changed).total_seconds() >= 150 }}
           - condition: state
             entity_id: !input light_entity
             state: "on"
@@ -138,7 +146,9 @@ actions:
               transition: 5
       - conditions:
           - condition: trigger
-            id: release
+            id:
+              - release
+              - resume
           - condition: state
             entity_id: input_boolean.party_mode
             state: "off"

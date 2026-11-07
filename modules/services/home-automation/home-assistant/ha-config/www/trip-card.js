@@ -130,6 +130,17 @@ class TripCard extends HTMLElement {
     return s === "home" ? "Home" : s && !["not_home", "unknown", "unavailable"].includes(s) ? s : "Here";
   }
 
+  _label() {
+    const d = this._config.direction;
+    return d ? `To ${d}` : "Trips";
+  }
+
+  _atDest() {
+    const z = this._config.hide_at;
+    const s = this._hass.states[this._config.person]?.state;
+    return !!z && (z === "zone.home" ? s === "home" : s === this._hass.states[z]?.attributes.friendly_name);
+  }
+
   _event() {
     const now = wallNow();
     const today = new Date(now).toISOString().slice(0, 10);
@@ -144,6 +155,7 @@ class TripCard extends HTMLElement {
     const c = this._config;
     const ev = c.calendars && this._event();
     if (c.calendars && !ev) return { none: true };
+    if (this._atDest()) return { none: true };
     const s = this._hass.states[c.entity];
     if (!s || ["unknown", "unavailable"].includes(s.state)) return { ev, need: "Not checked yet" };
     const a = s.attributes;
@@ -177,7 +189,7 @@ class TripCard extends HTMLElement {
         <div class="sub">${extra.filter(Boolean).map((x) => `<span class="route">${x}</span>`).join(" · ")}</div></div>${countdown(h)}`;
     } else {
       html = `<ha-icon class="icon" icon="${d.ev ? "mdi:calendar-clock" : "mdi:train-bus"}"></ha-icon>
-        <div class="txt"><div class="title">${d.ev ? `${esc(d.ev.title)} · ${esc(d.ev.starts.slice(11, 16))}` : "Trips"}</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
+        <div class="txt"><div class="title">${d.ev ? `${esc(d.ev.title)} · ${esc(d.ev.starts.slice(11, 16))}` : this._label()}</div><div class="sub">${esc(d.need)} · tap to check</div></div>`;
     }
     if (html !== this._html) {
       this._html = html;
@@ -199,7 +211,7 @@ class TripCard extends HTMLElement {
     this._busy = true;
     this._render();
     try {
-      await this._hass.callService("script", "transit_check", { person: this._config.person, ...(ev && { place: ev.place, title: ev.title, starts: ev.starts }) });
+      await this._hass.callService("script", "transit_check", { person: this._config.person, ...(this._config.direction && !ev && { direction: this._config.direction }), ...(ev && { place: ev.place, title: ev.title, starts: ev.starts }) });
     } finally {
       this._busy = false;
       this._render();
@@ -222,7 +234,7 @@ class TripCard extends HTMLElement {
     if (!this._ov) return;
     const root = this._ov.shadowRoot;
     const a = d.a || {};
-    const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : "Trips";
+    const title = a.origin ? `${esc(a.origin)} → ${esc(a.destination)}` : this._label();
     const sub = d.updated ? `${a.by ? `Arrive by ${esc(a.by.slice(11, 16))} · ` : ""}Updated ${hhmm(d.updated)}${d.hidden ? ` · ${d.hidden} slower hidden` : ""}` : "";
     const alert = d.need ? `<ha-alert alert-type="${a.ok === false ? "warning" : "info"}">${esc(d.need)}${a.ok === false ? ". Allow more walking or changes below." : ". Tap Check."}</ha-alert>` : "";
     const rows = (d.need ? [] : d.shown).map((t) => {

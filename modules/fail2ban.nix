@@ -15,9 +15,12 @@
       services.fail2ban = {
         enable = true;
 
+        # Loopback plus the two trusted hosts only (not the whole LAN, so a compromised LAN
+        # device brute-forcing SSH/nginx still gets banned). Tailnet was never ignored; unchanged.
         ignoreIP = [
           "127.0.0.1/8"
-          config.vars.network.lanCidr
+          "192.168.1.10" # sutala
+          "192.168.1.39" # surasa
         ];
 
         jails = {
@@ -38,13 +41,9 @@
             };
           };
 
-          nginx-http-auth = {
-            enabled = true;
-          };
-
-          nginx-botsearch = {
-            enabled = true;
-          };
+          # Hosts without nginx (surasa) only get the sshd jail.
+          nginx-http-auth.enabled = config.services.nginx.enable;
+          nginx-botsearch.enabled = config.services.nginx.enable;
         };
       };
 
@@ -52,8 +51,8 @@
         (flakeLib.deployment-hardening.mkServiceSandbox {
           readWritePaths = [
             "/var/lib/fail2ban"
-            "/var/log/nginx"
-          ];
+          ]
+          ++ lib.optional config.services.nginx.enable "/var/log/nginx";
           capabilities = [ "CAP_NET_ADMIN" ];
           extraAddressFamilies = [ "AF_NETLINK" ];
         })

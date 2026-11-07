@@ -26,8 +26,8 @@
           security = {
             admin_user = "$__file{/run/secrets/monitoring.grafana.admin.user}";
             admin_password = "$__file{/run/secrets/monitoring.grafana.admin.password}";
-            # Preserves the pre-26.05 nixpkgs default so the existing Grafana DB keeps decrypting.
-            secret_key = "SW2YcwTIb9zpOOhoPsMm";
+            # Initial sops value must equal the pre-26.05 nixpkgs default so the existing Grafana DB keeps decrypting.
+            secret_key = "$__file{/run/secrets/monitoring.grafana.secret_key}";
           };
           "auth.generic_oauth" = {
             enabled = true;

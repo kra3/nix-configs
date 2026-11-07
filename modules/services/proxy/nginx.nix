@@ -26,6 +26,17 @@
           proxy_set_header X-Forwarded-Port $server_port;
           proxy_headers_hash_max_size 1024;
           proxy_headers_hash_bucket_size 128;
+
+          # Security headers at http level so every vhost inherits them. nginx drops
+          # inherited add_header in any server/location that sets its own add_header;
+          # today only the internal Frigate /api/metrics location does (Cache-Control),
+          # which Prometheus scrapes, so it is intentionally left without them.
+          # If you add add_header elsewhere, repeat these lines there.
+          # No repo vhost is embedded in an iframe (no panel_iframe/frame usage), so SAMEORIGIN is safe.
+          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+          add_header X-Frame-Options "SAMEORIGIN" always;
         '';
 
         virtualHosts.${config.vars.acme.domain} = {

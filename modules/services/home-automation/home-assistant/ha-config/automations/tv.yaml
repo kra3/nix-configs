@@ -1,163 +1,170 @@
 # ── TV ─────────────────────────────────────────────────────────
-- id: tv_power_on
-  alias: TV — Power on + backlight + HT
+- id: tv_power_and_ht
+  alias: TV — Power, backlight and home theater
   description: >-
-    WoL if TV is off; turn on ambient backlight if dark or overcast; turn on
-    the home theater and switch it to TV audio.
+    Follows binary_sensor.tv_on, which ignores the TV's short Wi-Fi
+    dropouts. On: backlight if dark or overcast, home theater on TV Audio,
+    YouTube instead of Live TV. Off: backlight off, and the home theater off
+    if its source was TV Audio or PS5 passthrough. Also wakes the TV over
+    WoL when HA turns it on. Playback start: home theater on and on TV
+    Audio, unless it is on PS5 passthrough.
   triggers:
   # webostv.turn_on only fires when HA's own turn_on service is called (confirmed
-  # against webostv/media_player.py) -- never on remote/CEC power-on, so the
-  # backlight never followed real-world use. This state trigger covers that.
+  # against webostv/media_player.py) -- never on remote/CEC power-on.
   - device_id: 346b2b9e49e306b3d7e24530babb842c
     domain: webostv
     type: webostv.turn_on
     trigger: device
-  - entity_id: media_player.lg_webos_tv_oled77c35la
+    id: wake
+  - entity_id: binary_sensor.tv_on
     from: "off"
-    not_to:
-    - "off"
-    - unavailable
-    - unknown
+    to: "on"
     trigger: state
-  actions:
-  - if:
-    - condition: state
-      entity_id: media_player.lg_webos_tv_oled77c35la
-      state: "off"
-    then:
-    - repeat:
-        count: 5
-        sequence:
-        - if:
-          - condition: state
-            entity_id: media_player.lg_webos_tv_oled77c35la
-            state: "off"
-          then:
-          - action: wake_on_lan.send_magic_packet
-            data:
-              mac: 20:28:bc:b7:ff:3e
-              broadcast_address: 192.168.1.255
-              broadcast_port: 7
-          - delay: 3
-  - if:
-    - condition: template
-      value_template: >-
-        {{ state_attr('media_player.ma_home_theater', 'group_members') | default([], true) | count > 1 }}
-    then:
-    - action: media_player.unjoin
-      continue_on_error: true
-      target:
-        entity_id: media_player.ma_home_theater
-  - alias: Pause other streams on the home theater
-    repeat:
-      for_each:
-      - media_player.ma_home_theater
-      - media_player.home_theater
-      sequence:
-      - if:
-        - condition: template
-          value_template: "{{ is_state(repeat.item, 'playing') }}"
-        then:
-        - action: "{{ 'media_player.media_stop' if repeat.item == 'media_player.home_theater' else 'media_player.media_pause' }}"
-          continue_on_error: true
-          target:
-            entity_id: "{{ repeat.item }}"
-  - if:
-    - condition: or
-      conditions:
-      - condition: template
-        value_template: >-
-          {{ state_attr('sun.sun', 'elevation') | float(0)
-             < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
-      - condition: template
-        value_template: >-
-          {{ states('sensor.openweathermap_cloud_coverage') | float(0) > 70 }}
-    then:
-    - action: light.turn_on
-      target:
-        entity_id: light.tv_backlight
-  - action: media_player.turn_on
-    target:
-      entity_id: media_player.home_theater_2
-  # Denon needs a moment after power-on before it accepts a source select
-  # (same slow-to-respond behavior already worked around in front-door.yaml).
-  - delay: "00:00:03"
-  - if:
-    - condition: template
-      value_template: >-
-        {{ state_attr('media_player.home_theater_2', 'source') != 'PlayStation 5' }}
-    then:
-    - action: media_player.select_source
-      target:
-        entity_id: media_player.home_theater_2
-      data:
-        source: TV Audio
-  - alias: Open YouTube when the TV boots into Live TV
-    wait_template: "{{ is_state('media_player.lg_webos_tv_oled77c35la', 'on') }}"
-    timeout: "00:01:00"
-    continue_on_timeout: false
-  - delay: "00:00:05"
-  - if:
-    - condition: template
-      value_template: "{{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source') == 'Live TV' }}"
-    then:
-    - action: media_player.select_source
-      target:
-        entity_id: media_player.lg_webos_tv_oled77c35la
-      data:
-        source: YouTube AdFree
-  mode: restart
-
-- id: tv_ht_on_when_playing
-  alias: TV — HT on when playback starts
-  description: >-
-    Turn the home theater back on with TV Audio when the TV starts playing
-    while it is off (it powers off with the TV, and a resume does not always
-    go through the TV's off state).
-  triggers:
+    id: "on"
+  - entity_id: binary_sensor.tv_on
+    from: "on"
+    to: "off"
+    trigger: state
+    id: "off"
   - entity_id: media_player.lg_webos_tv_oled77c35la
     to: playing
     trigger: state
-  conditions:
-  - condition: state
-    entity_id: media_player.home_theater_2
-    state: "off"
+    id: playing
   actions:
-  - action: media_player.turn_on
-    target:
-      entity_id: media_player.home_theater_2
-  - delay: "00:00:05"
-  - action: media_player.select_source
-    target:
-      entity_id: media_player.home_theater_2
-    data:
-      source: TV Audio
-  mode: single
-
-- id: tv_backlight_off
-  alias: TV — Backlight off + HT
-  description: >-
-    Turns off backlight when TV powers off; also turns off the home
-    theater, but only if its source was TV Audio or PS5 passthrough.
-  triggers:
-  - trigger: state
-    entity_id: media_player.lg_webos_tv_oled77c35la
-    to: "off"
-    for: "00:02:00"
-  actions:
-  - action: light.turn_off
-    target:
-      entity_id: light.tv_backlight
-  - if:
-    - condition: template
-      value_template: >-
-        {{ state_attr('media_player.home_theater_2', 'source')
-           in ['PlayStation 5', 'TV Audio'] }}
-    then:
-    - action: media_player.turn_off
-      target:
-        entity_id: media_player.home_theater_2
-  mode: single
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: wake
+      sequence:
+      - repeat:
+          count: 5
+          sequence:
+          - if:
+            - condition: state
+              entity_id: media_player.lg_webos_tv_oled77c35la
+              state: "off"
+            then:
+            - action: wake_on_lan.send_magic_packet
+              data:
+                mac: 20:28:bc:b7:ff:3e
+                broadcast_address: 192.168.1.255
+                broadcast_port: 7
+            - delay: 3
+    - conditions:
+      - condition: trigger
+        id: "on"
+      sequence:
+      - if:
+        - condition: template
+          value_template: >-
+            {{ state_attr('media_player.ma_home_theater', 'group_members') | default([], true) | count > 1 }}
+        then:
+        - action: media_player.unjoin
+          continue_on_error: true
+          target:
+            entity_id: media_player.ma_home_theater
+      - alias: Pause other streams on the home theater
+        repeat:
+          for_each:
+          - media_player.ma_home_theater
+          - media_player.home_theater
+          sequence:
+          - if:
+            - condition: template
+              value_template: "{{ is_state(repeat.item, 'playing') }}"
+            then:
+            - action: "{{ 'media_player.media_stop' if repeat.item == 'media_player.home_theater' else 'media_player.media_pause' }}"
+              continue_on_error: true
+              target:
+                entity_id: "{{ repeat.item }}"
+      - if:
+        - condition: or
+          conditions:
+          - condition: template
+            value_template: >-
+              {{ state_attr('sun.sun', 'elevation') | float(0)
+                 < states('input_number.light_on_sun_elevation_threshold') | float(0) }}
+          - condition: template
+            value_template: >-
+              {{ states('sensor.openweathermap_cloud_coverage') | float(0) > 70 }}
+        then:
+        - action: light.turn_on
+          continue_on_error: true
+          target:
+            entity_id: light.tv_backlight
+      - action: media_player.turn_on
+        target:
+          entity_id: media_player.home_theater_2
+      # Denon needs a moment after power-on before it accepts a source select
+      # (same slow-to-respond behavior already worked around in front-door.yaml).
+      - delay: "00:00:03"
+      - if:
+        - condition: template
+          value_template: >-
+            {{ state_attr('media_player.home_theater_2', 'source') != 'PlayStation 5' }}
+        then:
+        - action: media_player.select_source
+          target:
+            entity_id: media_player.home_theater_2
+          data:
+            source: TV Audio
+      - alias: Open YouTube when the TV boots into Live TV
+        wait_template: "{{ is_state('media_player.lg_webos_tv_oled77c35la', 'on') }}"
+        timeout: "00:01:00"
+        continue_on_timeout: false
+      - delay: "00:00:05"
+      - if:
+        - condition: template
+          value_template: "{{ state_attr('media_player.lg_webos_tv_oled77c35la', 'source') == 'Live TV' }}"
+        then:
+        - action: media_player.select_source
+          target:
+            entity_id: media_player.lg_webos_tv_oled77c35la
+          data:
+            source: YouTube AdFree
+    - conditions:
+      - condition: trigger
+        id: "off"
+      sequence:
+      - action: light.turn_off
+        continue_on_error: true
+        target:
+          entity_id: light.tv_backlight
+      - if:
+        - condition: template
+          value_template: >-
+            {{ state_attr('media_player.home_theater_2', 'source')
+               in ['PlayStation 5', 'TV Audio'] }}
+        then:
+        - action: media_player.turn_off
+          target:
+            entity_id: media_player.home_theater_2
+    - conditions:
+      - condition: trigger
+        id: playing
+      sequence:
+      - if:
+        - condition: state
+          entity_id: media_player.home_theater_2
+          state: "off"
+        then:
+        - action: media_player.turn_on
+          target:
+            entity_id: media_player.home_theater_2
+        - delay: "00:00:05"
+      - if:
+        - condition: template
+          value_template: >-
+            {{ state_attr('media_player.home_theater_2', 'source')
+               not in ['TV Audio', 'PlayStation 5'] }}
+        then:
+        - action: media_player.select_source
+          target:
+            entity_id: media_player.home_theater_2
+          data:
+            source: TV Audio
+  mode: queued
+  max: 5
 
 - id: tv_off_at_bedtime
   alias: TV — Off at bedtime if idle

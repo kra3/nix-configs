@@ -18,6 +18,13 @@
         restartUnits = [ "camera-announce.service" ];
       };
 
+      sops.secrets."surveillance.camera_announce.token" = {
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [ "camera-announce.service" ];
+      };
+
       systemd.services.camera-announce = {
         description = "Speak through the hallway camera speaker (Piper TTS to Imou talk)";
         wantedBy = [ "multi-user.target" ];
@@ -29,9 +36,12 @@
           PIPER_HOST = "10.3.2.15";
           CAMERA_HOST = "192.168.1.22";
           TALK_TRACK = "64";
+          # POST /say|/chime|/siren require "Authorization: Bearer <token>"; GET *.wav stay open (HA media_player can't send headers).
+          CAMERA_ANNOUNCE_TOKEN_FILE = "%d/token";
         };
         serviceConfig = {
           ExecStart = announce;
+          LoadCredential = "token:${config.sops.secrets."surveillance.camera_announce.token".path}";
           EnvironmentFile = config.sops.templates."camera-announce.env".path;
           DynamicUser = true;
           Restart = "always";

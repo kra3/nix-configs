@@ -41,7 +41,7 @@
             entity_id: input_text.alarm_lights_revert
           data:
             value: >-
-              on:{{ ['light.kitchen_dining_lights', 'light.office_room_light'] | select('is_state', 'off') | join(',') }}
+              on:{{ ['light.office_room_light'] | select('is_state', 'off') | join(',') }}
       - action: timer.cancel
         target:
           entity_id: timer.alarm_lights_handback

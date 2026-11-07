@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fitness</title>
+<meta name="theme-color" content="#0B7285">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="lbl">Strength and fat loss</div>
+      <h1>Fitness</h1>
+      <div class="sub" id="sub">Start with today's weigh-in.</div>
+      <p class="net" id="net" role="status" aria-live="polite" hidden></p>
+    </div>
+    <div class="datebox">
+      <label class="lbl" for="f-date">Day</label>
+      <input type="date" id="f-date">
+      <button type="button" class="btn ghost" id="gym-btn" aria-pressed="false">Gym view</button>
+    </div>
+  </header>
+
+  <p class="banner" id="banner" hidden></p>
+
+  <div class="grid">
+    <section class="card span2 coach-prop" id="props" aria-label="Coach suggestions" hidden></section>
+
+    <section class="card" aria-labelledby="h-today">
+      <h2 id="h-today">Today</h2>
+      <div id="bars"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-log">
+      <h2 id="h-log">Log the day</h2>
+      <form id="day-form" autocomplete="off">
+        <div class="fields">
+          <label class="field"><span>Weight (kg)</span><input type="number" inputmode="decimal" step="0.1" min="0" id="f-weight"></label>
+          <label class="field"><span>Waist at navel (cm)</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-waist"></label>
+          <label class="field"><span>Calories (kcal)</span><input type="number" inputmode="numeric" step="1" min="0" id="f-kcal"></label>
+          <label class="field"><span>Protein (g)</span><input type="number" inputmode="numeric" step="1" min="0" id="f-protein"></label>
+          <label class="field"><span>Steps</span><input type="number" inputmode="numeric" step="1" min="0" id="f-steps"></label>
+          <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" step="0.25" min="0" id="f-sleep"></label>
+          <label class="field"><span>Body fat (%)</span><input type="number" inputmode="decimal" step="0.1" min="0" max="75" id="f-bodyfat"></label>
+          <div class="field full"><span>Check-in (1 low, 5 high)</span><div class="checkin" id="checkin"></div></div>
+          <div class="field full" id="meal-box" hidden><span>Add a saved meal to today's totals</span><div class="days" id="meal-taps"></div></div>
+          <div class="field full" id="supp-box" hidden><span>Supplements taken</span><div class="days" id="supp-checks"></div></div>
+          <details class="full"><summary class="small">Measurements (cm)</summary>
+            <div class="fields mt">
+              <label class="field"><span>Neck</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-neck"></label>
+              <label class="field"><span>Chest</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-chest"></label>
+              <label class="field"><span>Arm</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-arm"></label>
+              <label class="field"><span>Thigh</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-thigh"></label>
+              <label class="field"><span>Hip</span><input type="number" inputmode="decimal" step="0.5" min="0" id="f-hip"></label>
+            </div>
+          </details>
+          <label class="field full"><span>Note</span><textarea id="f-note" maxlength="500"></textarea></label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn" id="save-day">Save day</button>
+          <button type="button" class="btn danger" id="del-day" hidden>Delete day</button>
+          <span class="status" id="st-day" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="h-weight">
+      <h2 id="h-weight">Body weight</h2>
+      <div class="stats" id="wstats"></div>
+      <p class="pace" id="pace"></p>
+      <div class="readout" id="ro-weight" aria-live="polite"></div>
+      <div class="chart" id="ch-weight"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-waist">
+      <h2 id="h-waist">Waist</h2>
+      <div class="stats" id="cstats"></div>
+      <div class="readout" id="ro-waist" aria-live="polite"></div>
+      <div class="chart waist" id="ch-waist"></div>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-meas">
+      <h2 id="h-meas">Measurements</h2>
+      <div class="meas" id="meas"></div>
+      <p class="sub" id="meas-empty">Log neck, chest, arm, thigh or hip under Measurements in Log the day.</p>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-bf">
+      <h2 id="h-bf">Body fat</h2>
+      <div class="stats" id="bstats"></div>
+      <div class="readout" id="ro-bf" aria-live="polite"></div>
+      <div class="chart" id="ch-bf"></div>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-week">
+      <h2 id="h-week">Week in review</h2>
+      <p class="pace" id="wk-verdict"></p>
+      <p class="pace warn" id="wk-stall"></p>
+      <div class="wk" id="wk-table"></div>
+      <p class="sub" id="wk-kcal"></p>
+      <div class="actions"><button type="button" class="btn ghost" id="wk-kcal-use" hidden></button></div>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-coach">
+      <h2 id="h-coach">Coach</h2>
+      <ul class="co-alerts" id="co-alerts"></ul>
+      <h3 id="co-goals-h" hidden>Goals</h3>
+      <ul class="co-goals" id="co-goals"></ul>
+      <h3>Coach log</h3>
+      <ul class="co-log" id="co-log"></ul>
+      <div class="actions">
+        <label class="field full grow"><span>Note for your coach</span><input type="text" id="co-note" maxlength="1000" placeholder="Travelling next week, knee sore after leg press…"></label>
+        <button type="button" class="btn ghost" id="co-note-add">Add note</button>
+        <span class="status" id="st-note" role="status" aria-live="polite"></span>
+      </div>
+      <details class="mt"><summary>What your coach sees</summary><pre class="co-text" id="co-text"></pre></details>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-habits">
+      <h2 id="h-habits">Last 14 days</h2>
+      <div class="habits" id="habits"></div>
+      <p class="hsum" id="hsum"></p>
+    </section>
+
+    <section class="card span2" id="wo-card" aria-labelledby="h-workout">
+      <h2 id="h-workout">Workout</h2>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="exlist"></div>
+      <div id="planed" hidden></div>
+      <div class="actions">
+        <button type="button" class="btn" id="save-workout">Save workout</button>
+        <button type="button" class="btn ghost" id="edit-plan">Edit plan</button>
+        <span class="status" id="st-workout" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card span2" id="px-card" aria-labelledby="h-px" hidden>
+      <h2 id="h-px">Exercise progress</h2>
+      <label class="field"><span>Exercise</span><select id="px-sel"></select></label>
+      <div class="stats" id="px-stats"></div>
+      <div class="readout" id="ro-px" aria-live="polite"></div>
+      <div class="chart" id="ch-px"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-meals">
+      <h2 id="h-meals">Meals</h2>
+      <p class="sub">Saved meals add their calories and protein to a day with one tap.</p>
+      <div id="meals-ed"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="meal-add">+ Meal</button>
+        <button type="button" class="btn" id="meals-save">Save meals</button>
+        <span class="status" id="st-meals" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-supps">
+      <h2 id="h-supps">Supplements</h2>
+      <p class="sub">Your daily list. Tick what you took under Log the day; the coach sees how often.</p>
+      <div id="supps-ed"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="supp-add">+ Supplement</button>
+        <button type="button" class="btn" id="supps-save">Save supplements</button>
+        <span class="status" id="st-supps" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card span2">
+      <details>
+        <summary>Profile and goals</summary>
+        <div class="fields mt">
+          <label class="field"><span>Birth year</span><input type="number" inputmode="numeric" min="1900" max="2030" id="p-birth"></label>
+          <label class="field"><span>Goal</span><select id="p-goal"></select></label>
+          <label class="field full"><span>About your goal</span><textarea id="p-goal-notes" maxlength="500" placeholder="Lose belly fat, build arms, legs and chest; then tone"></textarea></label>
+          <label class="field full"><span>Training background</span><input type="text" id="p-exp" maxlength="300" placeholder="Back after many years, starting from zero"></label>
+          <label class="field"><span>Days per week</span><input type="number" inputmode="numeric" min="1" max="7" id="p-dpw"></label>
+          <label class="field"><span>Session length (min)</span><input type="number" inputmode="numeric" min="10" max="240" id="p-min"></label>
+          <div class="field full"><span>Usual days (leave empty if they vary)</span><div class="days" id="p-days"></div></div>
+          <label class="field full"><span>Gym and equipment</span><textarea id="p-equip" maxlength="1500"></textarea></label>
+          <label class="field full"><span>Injuries and limits</span><textarea id="p-inj" maxlength="500"></textarea></label>
+          <label class="field full"><span>Conditions and medications</span><textarea id="p-cond" maxlength="500"></textarea></label>
+          <label class="field full"><span>Diet and allergies</span><textarea id="p-diet" maxlength="500"></textarea></label>
+          <label class="field full"><span>Anything else</span><textarea id="p-notes" maxlength="1000"></textarea></label>
+        </div>
+        <h3>Goals</h3>
+        <p class="note">Up to five, each with an optional date and checkpoints on the way. Exercise goals are a working weight for that machine.</p>
+        <div id="p-goals"></div>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="p-add-goal">+ Goal</button>
+          <button type="button" class="btn" id="p-save">Save profile</button>
+          <span class="status" id="st-profile" role="status" aria-live="polite"></span>
+        </div>
+      </details>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-cardio">
+      <h2 id="h-cardio">Cardio</h2>
+      <p class="sub">Walks, bike, cross-trainer and sport. Low impact is easier on the ankle.</p>
+      <form id="cardio-form" autocomplete="off">
+        <div class="fields">
+          <label class="field"><span>Date</span><input type="date" id="c-date" required></label>
+          <label class="field"><span>Kind</span><select id="c-kind">
+            <option value="walk">Walk</option><option value="incline-walk">Incline walk</option><option value="cycle">Cycle</option>
+            <option value="cross-trainer">Cross-trainer</option><option value="row">Row</option><option value="swim">Swim</option>
+            <option value="sport">Sport</option><option value="other">Other</option></select></label>
+          <label class="field"><span>Minutes</span><input type="number" inputmode="numeric" min="1" max="600" step="1" id="c-min" required></label>
+          <label class="field"><span>Distance (km)</span><input type="number" inputmode="decimal" min="0" step="0.1" id="c-km"></label>
+          <label class="field"><span>Average heart rate</span><input type="number" inputmode="numeric" min="40" max="220" step="1" id="c-hr"></label>
+          <label class="field"><span>Effort (1 to 10)</span><input type="number" inputmode="numeric" min="1" max="10" step="1" id="c-rpe"></label>
+          <label class="field full"><span>Note</span><input type="text" id="c-note" maxlength="500"></label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn" id="c-add">Add session</button>
+          <span class="status" id="st-cardio" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+      <h3 class="mt">Last 14 days</h3>
+      <ul class="rows" id="c-list"></ul>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-labs">
+      <h2 id="h-labs">Blood tests</h2>
+      <p class="sub">Typical ranges are general references. They are not a diagnosis; talk to your doctor about any result.</p>
+      <ul class="rows" id="lab-latest"></ul>
+      <form id="lab-form" autocomplete="off">
+        <div class="fields mt">
+          <label class="field"><span>Date of test</span><input type="date" id="l-date" required></label>
+          <label class="field"><span>Test</span><select id="l-marker"></select></label>
+          <label class="field" id="l-name-f" hidden><span>Name</span><input type="text" id="l-name" maxlength="60"></label>
+          <label class="field"><span>Result <b id="l-unit-t"></b></span><input type="number" inputmode="decimal" step="any" min="0" id="l-value" required></label>
+          <label class="field" id="l-unit-f" hidden><span>Unit</span><input type="text" id="l-unit" maxlength="20"></label>
+          <label class="field full"><span>Note</span><input type="text" id="l-note" maxlength="500"></label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn" id="l-add">Add result</button>
+          <span class="status" id="st-lab" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+      <details class="mt"><summary>All results</summary><ul class="rows" id="lab-all"></ul></details>
+    </section>
+
+    <section class="card span2">
+      <details id="ph-details">
+        <summary>Progress photos</summary>
+        <p class="note">Private: stored only on the server, shown only to you, and never sent to your coach (only how many and when). Photos are resized on this device before upload.</p>
+        <div class="fields mt">
+          <label class="field"><span>Date</span><input type="date" id="ph-date"></label>
+          <label class="field"><span>Pose</span><select id="ph-pose"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option></select></label>
+          <label class="field full"><span>Photo</span><input type="file" id="ph-file" accept="image/*"></label>
+        </div>
+        <div class="actions"><span class="status" id="st-photo" role="status" aria-live="polite"></span></div>
+        <h3 class="mt">Compare</h3>
+        <div class="fields">
+          <label class="field full"><span>Pose to compare</span><select id="ph-cpose"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option></select></label>
+          <label class="field"><span>Before</span><select id="ph-a"></select></label>
+          <label class="field"><span>After</span><select id="ph-b"></select></label>
+        </div>
+        <div class="ph-pair" id="ph-pair"></div>
+        <h3 class="mt">All photos</h3>
+        <ul class="rows" id="ph-list"></ul>
+      </details>
+    </section>
+
+    <section class="card span2">
+      <details>
+        <summary>Daily targets</summary>
+        <div class="fields mt">
+          <label class="field"><span>Calories (kcal)</span><input type="number" inputmode="numeric" min="0" id="t-kcal"></label>
+          <label class="field"><span>Rest-day calories (kcal)</span><input type="number" inputmode="numeric" min="0" id="t-kcal-rest" placeholder="same as above"></label>
+          <label class="field"><span>Protein (g)</span><input type="number" inputmode="numeric" min="0" id="t-protein"></label>
+          <label class="field"><span>Steps</span><input type="number" inputmode="numeric" min="0" id="t-steps"></label>
+          <label class="field"><span>Sleep (hours)</span><input type="number" inputmode="decimal" min="0" step="0.25" id="t-sleep"></label>
+          <label class="field"><span>Workouts per week</span><input type="number" inputmode="numeric" min="0" max="7" id="t-workouts"></label>
+          <label class="field"><span>Rest between sets (sec)</span><input type="number" inputmode="numeric" min="15" max="900" step="15" id="t-rest"></label>
+          <label class="field"><span>Height (cm), for BMI</span><input type="number" inputmode="decimal" min="0" step="0.5" id="t-height"></label>
+          <label class="field"><span>Sex, for the body-fat estimate</span><select id="t-sex"><option value="">Not set</option><option value="m">Male</option><option value="f">Female</option></select></label>
+          <label class="field"><span>Start weight (kg)</span><input type="number" inputmode="decimal" min="0" step="0.1" id="t-start" placeholder="first weigh-in"></label>
+        </div>
+        <p class="note">For a slow cut, set calories about 300 below maintenance and protein at 1.6 to 2 g per kg of body weight. Adjust calories by 100 to 150 after two or three weeks of data. Leave start weight blank to use your first weigh-in.</p>
+        <div class="actions">
+          <button type="button" class="btn" id="save-targets">Save targets</button>
+          <span class="status" id="st-targets" role="status" aria-live="polite"></span>
+        </div>
+      </details>
+    </section>
+
+    <section class="card span2" aria-labelledby="h-data">
+      <h2 id="h-data">Your data</h2>
+      <p class="sub">Download everything as a JSON file, or load one exported from here or from the earlier tracker. Days you already have are kept, never overwritten.</p>
+      <div class="actions">
+        <a class="btn ghost" href="api/export" download="fitness-export.json">Export JSON</a>
+        <label class="btn ghost" for="imp">Import JSON</label>
+        <input type="file" id="imp" accept="application/json,.json" hidden>
+        <span class="status" id="st-data" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="rest" id="rest" role="timer" aria-live="off" hidden>
+  <span class="rl" id="rest-l">Rest</span>
+  <span class="rt" id="rest-t">1:30</span>
+  <button type="button" class="btn ghost" id="rest-add">+15 s</button>
+  <button type="button" class="btn ghost" id="rest-skip">Done</button>
+  <button type="button" class="btn ghost" id="rest-notify" hidden title="Get a notification when the rest ends while the app is in the background">Alert me</button>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

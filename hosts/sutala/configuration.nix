@@ -36,9 +36,11 @@
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
+    flakeModules.nixos.services-second-brain-default
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
+    flakeModules.nixos.services-fitness-default
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
@@ -83,6 +85,21 @@
   };
 
   vars.acme.email = "the1.arun@gmail.com";
+
+  # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
+  # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
+  # Nothing is exposed on the network. Deploy key: second-brain.home.git.deploy_key.
+  services.secondBrain.brains.home = {
+    sync = {
+      enable = true;
+      remote = "git@github.com:kra3/second-brain.git";
+    };
+    # Always-on `claude remote-control` for the phone; edits stay inside the vault (and its git history).
+    remoteControl = {
+      enable = true;
+      permissionMode = "acceptEdits";
+    };
+  };
 
   hardware.enableRedistributableFirmware = true;
 
@@ -283,9 +300,9 @@
   };
 
   services.journald.extraConfig = ''
-    SystemMaxUse=200M
-    SystemMaxFileSize=50M
-    MaxRetentionSec=12h
+    SystemMaxUse=2G
+    SystemMaxFileSize=128M
+    MaxRetentionSec=30day
   '';
 
   services.logrotate.enable = true;

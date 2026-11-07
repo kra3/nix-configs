@@ -74,6 +74,8 @@
           ];
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "640m";
+          # .NET's default heap cap (75% of the limit) leaves too little for native + shmem; 0x3C = 60%.
+          environments.DOTNET_GCHeapHardLimitPercent = "0x3C";
           podmanArgs = [ "--cpus=1" ];
         };
       }

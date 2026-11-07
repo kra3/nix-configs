@@ -17,8 +17,8 @@
             TZ = "UTC";
             ROCKET_PORT = "8080";
             DOMAIN = "https://vault.${config.vars.acme.domain}";
-            # Accounts are created by invitation from /admin only. Without SMTP,
-            # an invited address can register directly on the login page.
+            # Accounts are created by invitation from /admin only; the invite
+            # arrives by email (SMTP below) with a sign-up link.
             SIGNUPS_ALLOWED = "false";
             INVITATIONS_ALLOWED = "true";
             SHOW_PASSWORD_HINT = "false";
@@ -42,6 +42,15 @@
             SSO_PKCE = "true";
             SSO_AUTH_ONLY_NOT_SESSION = "true";
             SSO_SIGNUPS_MATCH_EMAIL = "true";
+            # Invites, new-device alerts, email 2FA and emergency access. Same
+            # Gmail account + app password as alarm-person-photos (home-auto.nix);
+            # SMTP_PASSWORD comes from the env file (container module).
+            SMTP_HOST = "smtp.gmail.com";
+            SMTP_PORT = "587";
+            SMTP_SECURITY = "starttls";
+            SMTP_FROM = config.vars.acme.email;
+            SMTP_FROM_NAME = "Vaultwarden";
+            SMTP_USERNAME = config.vars.acme.email;
           };
         };
       };

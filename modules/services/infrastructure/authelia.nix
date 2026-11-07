@@ -80,6 +80,17 @@
                 - 'nvr.${domain}'
                 - 'z2m.${domain}'
               policy: 'deny'
+            # Vaultwarden's admin panel. Only /admin is forward-authed in nginx;
+            # the API/web vault must stay reachable for Bitwarden clients.
+            - domain: 'vault.${domain}'
+              resources:
+                - '^/admin([/?].*)?$'
+              subject: 'group:admin'
+              policy: 'one_factor'
+            - domain: 'vault.${domain}'
+              resources:
+                - '^/admin([/?].*)?$'
+              policy: 'deny'
 
         session:
           secret: '${config.sops.placeholder."authelia.session_secret"}'
@@ -112,6 +123,12 @@
               id_token_groups:
                 id_token:
                   - 'groups'
+              id_token_email:
+                id_token:
+                  - 'email'
+                  - 'email_verified'
+                  - 'preferred_username'
+                  - 'name'
             authorization_policies:
               admin_only:
                 default_policy: 'deny'
@@ -292,6 +309,30 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
+              # Authentication only (SSO_AUTH_ONLY_NOT_SESSION): Vaultwarden keeps
+              # its own sessions, so no offline_access/refresh tokens. The master
+              # password still decrypts the vault after SSO.
+              - client_id: 'vaultwarden'
+                client_name: 'Vaultwarden'
+                client_secret: '${
+                  config.sops.placeholder."authelia.oidc_clients.vaultwarden.client_secret_hash"
+                }'
+                public: false
+                authorization_policy: 'one_factor'
+                claims_policy: 'id_token_email'
+                require_pkce: true
+                pkce_challenge_method: 'S256'
+                token_endpoint_auth_method: 'client_secret_basic'
+                redirect_uris:
+                  - 'https://vault.${domain}/identity/connect/oidc-signin'
+                scopes:
+                  - 'openid'
+                  - 'profile'
+                  - 'email'
+                grant_types:
+                  - 'authorization_code'
+                response_types:
+                  - 'code'
       '';
       usersDatabaseYmlContent = ''
         users:
@@ -407,6 +448,11 @@
         mode = "0400";
       };
       sops.secrets."authelia.oidc_clients.aiometadata.client_secret_hash" = {
+        owner = "authelia";
+        group = "authelia";
+        mode = "0400";
+      };
+      sops.secrets."authelia.oidc_clients.vaultwarden.client_secret_hash" = {
         owner = "authelia";
         group = "authelia";
         mode = "0400";

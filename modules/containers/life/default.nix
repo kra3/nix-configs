@@ -4,6 +4,7 @@
       flakeModules.nixos.containers-life-network
       flakeModules.nixos.containers-life-storage
       flakeModules.nixos.containers-life-actualbudget
+      flakeModules.nixos.containers-life-vaultwarden
       flakeModules.nixos.containers-life-ghostfolio-default
     ];
 

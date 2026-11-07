@@ -83,6 +83,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | App | Container file | Service config |
 |---|---|---|
 | Actual Budget | `life/actualbudget.nix` | `modules/services/finance/actualbudget.nix` |
+| Vaultwarden | `life/vaultwarden.nix` | `modules/services/infrastructure/vaultwarden.nix` |
 | Ghostfolio | `life/ghostfolio/ghostfolio.nix` | `modules/services/finance/ghostfolio/{ghostfolio,scraper,backfill}.nix` |
 
 **`media-mgmt` zone (`br-media-mgmt`)** — `modules/containers/media-mgmt/*.nix`,

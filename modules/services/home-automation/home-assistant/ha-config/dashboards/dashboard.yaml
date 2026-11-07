@@ -1891,6 +1891,16 @@ views:
           action: more-info
         hold_action:
           action: toggle
+      - type: custom:mushroom-entity-card
+        entity: switch.front_entrance_double_switch_left
+        name: Entrance
+        icon: mdi:ceiling-light
+        fill_container: true
+        icon_color: orange
+        primary_info: name
+        secondary_info: state
+        tap_action:
+          action: toggle
     - type: heading
       heading: Accessories
       heading_style: subtitle
@@ -1926,6 +1936,20 @@ views:
         icon_color: orange
         primary_info: name
         secondary_info: state
+    - type: heading
+      heading: Outdoor
+      heading_style: subtitle
+    - type: custom:mushroom-entity-card
+      entity: switch.front_entrance_double_switch_right
+      name: Street Light
+      icon: mdi:coach-lamp
+      icon_color: orange
+      primary_info: name
+      secondary_info: state
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: full
   - type: grid
     column_span: 1
     cards:

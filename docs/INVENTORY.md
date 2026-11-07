@@ -121,6 +121,12 @@ Streaming is the default; disk is the exception.
   excluding the item in Maintainerr, which writes the tag back for
   movies/shows). Keep profiles: Radarr `UHD Bluray + WEB` / Sonarr `Ultra-HD`
   grab >=1080p and upgrade to UHD. Tagged items are never reaped.
+- **Telegram bot:** `media-bot.service` (`modules/services/media/media-bot.nix`
+  + `media-bot.py`) in the family group and the admin's private chat:
+  `/s <title>` (Seerr search cards with Request/Keep/Unkeep), `/queue`,
+  `/disk`, `/leaving`, `/kept`, plus an 18:00 digest of Maintainerr items due
+  within 3 days. Keep/Unkeep are admin-only; requests go through Seerr as the
+  API key's user. Long polling, no inbound port. Secrets `media.bot.*`.
 
 | Cleanup rule | Timing |
 |---|---|

@@ -39,6 +39,7 @@
     flakeModules.nixos.services-second-brain-default
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
+    flakeModules.nixos.services-media-media-bot
     flakeModules.nixos.services-media-streaming-iptv
     flakeModules.nixos.services-fitness-default
     flakeModules.nixos.services-surveillance-proxy

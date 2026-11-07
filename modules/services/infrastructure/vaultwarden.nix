@@ -31,6 +31,17 @@
             PUSH_ENABLED = "true";
             PUSH_RELAY_URI = "https://api.bitwarden.eu";
             PUSH_IDENTITY_URI = "https://identity.bitwarden.eu";
+            # "Log in with SSO" via Authelia, alongside email+password (not SSO-only).
+            # Existing accounts link by matching email; the client secret comes
+            # from the env file (container module).
+            SSO_ENABLED = "true";
+            SSO_ONLY = "false";
+            SSO_AUTHORITY = "https://auth.${config.vars.acme.domain}";
+            SSO_CLIENT_ID = "vaultwarden";
+            SSO_SCOPES = "email profile";
+            SSO_PKCE = "true";
+            SSO_AUTH_ONLY_NOT_SESSION = "true";
+            SSO_SIGNUPS_MATCH_EMAIL = "true";
           };
         };
       };

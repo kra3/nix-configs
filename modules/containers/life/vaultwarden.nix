@@ -21,6 +21,8 @@
       # tokens and "sync now" signals, never vault data.
       sops.secrets."life.vaultwarden.push_installation_id" = { };
       sops.secrets."life.vaultwarden.push_installation_key" = { };
+      # Plaintext half of authelia.oidc_clients.vaultwarden.client_secret_hash.
+      sops.secrets."life.vaultwarden.sso_client_secret" = { };
 
       sops.templates."life.vaultwarden.env" = {
         owner = "root";
@@ -33,6 +35,7 @@
           ADMIN_TOKEN=${config.sops.placeholder."life.vaultwarden.admin_token_hash"}
           PUSH_INSTALLATION_ID=${config.sops.placeholder."life.vaultwarden.push_installation_id"}
           PUSH_INSTALLATION_KEY=${config.sops.placeholder."life.vaultwarden.push_installation_key"}
+          SSO_CLIENT_SECRET=${config.sops.placeholder."life.vaultwarden.sso_client_secret"}
         '';
       };
 
@@ -41,6 +44,12 @@
           # Pinned IP centralized in vars.nix (podmanAddresses.vaultwarden) —
           # see media-mgmt/radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
+          # SSO discovery/token calls hit auth.${domain}; route via the bridge
+          # gateway since the LAN/public IP doesn't route back in from here
+          # (same as actualbudget.nix).
+          addHosts = [
+            "auth.${config.vars.acme.domain}:10.3.0.1"
+          ];
           # SQLite DB, attachments, RSA keys. Lives under rpool/appdata, so it's
           # covered by sanoid's hourly snapshots + the USB replica (backup-usb.nix).
           volumes = [
@@ -63,12 +72,31 @@
       # No forwardAuth: Bitwarden clients talk to the API directly and can't do
       # an Authelia redirect. The master password (+ per-user 2FA) is the auth;
       # nginx still restricts to LAN + tailnet via nginxAllowCidrs.
-      services.nginx.virtualHosts."vault.${config.vars.acme.domain}" = flakeLib.nginx.mkProxyVhost {
-        domain = config.vars.acme.domain;
-        cidrs = config.vars.network.nginxAllowCidrs;
-        upstream = "http://${ip}:8080";
-        # Attachments / Sends.
-        vhostExtraConfig = "client_max_body_size 128m;";
-      };
+      #
+      # /admin is the exception: it's browser-only, so it additionally sits behind
+      # Authelia forward-auth (admin group, see authelia.nix access_control) on top
+      # of ADMIN_TOKEN. Built with forwardAuth = true, then "/" swapped back to a
+      # plain proxy and the forward-authed location moved to "/admin".
+      services.nginx.virtualHosts."vault.${config.vars.acme.domain}" =
+        let
+          vhost = flakeLib.nginx.mkProxyVhost {
+            domain = config.vars.acme.domain;
+            cidrs = config.vars.network.nginxAllowCidrs;
+            upstream = "http://${ip}:8080";
+            forwardAuth = true;
+            # Attachments / Sends.
+            vhostExtraConfig = "client_max_body_size 128m;";
+          };
+        in
+        vhost
+        // {
+          locations = vhost.locations // {
+            "/" = {
+              proxyPass = "http://${ip}:8080";
+              proxyWebsockets = true;
+            };
+            "/admin" = vhost.locations."/";
+          };
+        };
     };
 }

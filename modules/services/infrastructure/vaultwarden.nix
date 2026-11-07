@@ -22,6 +22,11 @@
             SIGNUPS_ALLOWED = "false";
             INVITATIONS_ALLOWED = "true";
             SHOW_PASSWORD_HINT = "false";
+            # No hints at all: a hint is stored server-side in plaintext and
+            # only ever weakens the master password.
+            PASSWORD_HINTS_ALLOWED = "false";
+            # Only the admin can create organizations (used for sharing).
+            ORG_CREATION_USERS = "kra3@${config.vars.acme.domain}";
             # nginx sets X-Real-IP; this is what lands in the failed-login log
             # lines that the fail2ban jail below matches.
             IP_HEADER = "X-Real-IP";

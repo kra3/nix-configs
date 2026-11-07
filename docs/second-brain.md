@@ -150,10 +150,74 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
 - Macs: `launchctl list | grep second-brain`, `tail ~/Library/Logs/second-brain-<name>-sync.log`.
 - Claude: in `~/second-brain/<name>`, `claude mcp list` shows `second-brain` connected.
 
+## Clipper: share a reel or video, get a capture
+
+`modules/services/second-brain/clipper.nix` (`services-second-brain-clipper`) + `clipper.py`.
+Share an Instagram reel, a YouTube video or Short (anything yt-dlp handles) from the iPhone share
+sheet. A capture lands in the brain's `0 Inbox` (default brain: `home`), and the brain's git sync
+carries it to the hub and every device within one sync interval or so.
+
+```
+Share sheet → "Clip to Second Brain" Shortcut ──POST /clip──▶ https://clip.<domain>  (LAN/tailnet only)
+  second-brain-clipper.service (user second-brain, Nice 10, CPUWeight 20, MemoryMax 4G)
+    1. yt-dlp metadata: title, author, caption/description, upload date
+    2. transcript: platform subtitles when present (most YouTube), else
+       audio → faster-whisper (`clipper.whisperModel`, default small, CPU int8)
+    3. Claude (`clipper.summaryModel`, default claude-haiku-5-5): title, summary, key points,
+       0–3 candidate evergreen ideas (claims only; Arun writes the notes)
+    4. atomic write → <vault>/0 Inbox/YYYY-MM-DD HHMM <title>.md → next second-brain-<brain>-sync run
+```
+
+The note follows the [vault rules](second-brain-starter/CLAUDE.md): frontmatter `created`,
+`type: capture`, `source` (the link), `kind: video`, plus `platform`, `author`, `published`,
+`duration` and `transcript` (`subtitles` or `whisper-<model> (<lang>)`); no topic tags, and the
+caption's hashtags are escaped so Obsidian doesn't turn them into tags. Body: Claude's draft
+summary (marked as a draft to rewrite when filing), key points, `- [ ]` ideas for evergreen notes,
+the original caption, the full transcript. In the weekly review it clarifies like any capture,
+usually into a source stub in `3 Sources`.
+
+The request returns `202 queued` at once. Jobs live in `/srv/appdata/second-brain/clipper/queue`
+and survive restarts; each is tried three times (1 and 2 minutes apart), then a `Clip failed`
+capture (`clip: failed`) with the error lands in the inbox instead, so a share never vanishes.
+The same link shared again answers `exists` with the note's path; `{"url": "…", "force": true}`
+redoes it.
+
+### Setup
+
+1. **Secrets:** on sutala, in `nix develop`: `just clipper-secrets`. It generates
+   `second-brain.clipper.token` and asks for an Anthropic API key
+   (`second-brain.clipper.anthropic_api_key`, from console.anthropic.com; Haiku costs a fraction of
+   a cent per clip). Commit `secrets/secrets.yaml`.
+2. **Config:** `services.secondBrain.clipper.enable = true;` in `hosts/sutala/configuration.nix`
+   (`clipper.brain` picks the brain; it must have `sync.enable`). Merge; the nightly upgrade
+   deploys it. The first clip that needs Whisper downloads the model (~500 MB for `small`) into
+   `/srv/appdata/second-brain/clipper/models`.
+3. **Instagram, only if anonymous fetching fails:** export a Netscape `cookies.txt` from a
+   logged-in browser, `sops set` it as `second-brain.clipper.cookies`, and set
+   `clipper.instagramCookies = true`. Use a throwaway account: Instagram may flag scraping.
+4. **iPhone Shortcut** (Shortcuts → + → *Clip to Second Brain*):
+   - Details (ⓘ): **Show in Share Sheet** on; accepted types **URLs** and **Text** (Instagram
+     shares text with the link inside; the server takes the first link).
+   - **Get Contents of URL**: `https://clip.<domain>/clip`, Method **POST**, Header
+     `Authorization` = `Bearer <token>`, Request Body **JSON**: key `url` (Text) = *Shortcut Input*.
+   - **Get Dictionary Value** `status` from *Contents of URL* → **Show Notification**
+     "Clip: *Dictionary Value*".
+
+   The phone must be on home Wi-Fi or Tailscale (`nginxAllowCidrs`: LAN + `100.64.0.0/10`).
+
+### Checking it works
+
+- After a share: `{host="sutala", systemd_unit="second-brain-clipper.service"} |= "clipped"` shows
+  `clipped <url> -> 0 Inbox/<note>.md (<transcript source>)`, and the next
+  `second-brain-<brain>-sync` run pushes it.
+- Failures: `{host="sutala", systemd_unit="second-brain-clipper.service"} |~ "ERROR|Traceback"`;
+  inbox captures with `clip: failed`.
+- On the host: `curl -s https://clip.<domain>/health` → `{"ok": true, "queued": N}`.
+
 ## Later
 
-- **Plain-text capture without Claude:** the share-sheet clipper (`clip.${domain}`, tailnet-only,
-  bearer token) takes URLs only; a text mode would let an iOS Shortcut drop a capture into the
+- **Plain-text capture without Claude:** the [clipper](#clipper-share-a-reel-or-video-get-a-capture)
+  takes video links only; a text mode would let an iOS Shortcut drop any capture into the
   home brain's `0 Inbox` over Tailscale.
 - **Quartz web view:** a read-only, tailnet-only site of a vault for browsing on the phone.
 - **Self-hosted LiveSync** (free Obsidian plugin, CouchDB on sutala, Tailscale-only), if Obsidian

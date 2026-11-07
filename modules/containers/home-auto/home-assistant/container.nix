@@ -15,6 +15,9 @@
       haData = "/srv/appdata/home-auto/home-assistant/data";
       haConfig = ../../../services/home-automation/home-assistant/ha-config;
       lovelace = pkgs.replaceVars (haConfig + "/lovelace.yaml") pins.frontendVersions;
+      configuration = pkgs.replaceVars (haConfig + "/configuration.yaml") {
+        inherit (pins.frontendVersions) card-mod;
+      };
     in
     {
       imports = [ flakeModules.nixos.services-home-automation-home-assistant ];
@@ -48,7 +51,7 @@
                 ];
                 volumes = [
                   "${haData}:/config"
-                  "${../../../services/home-automation/home-assistant/ha-config/configuration.yaml}:/config/configuration.yaml:ro"
+                  "${configuration}:/config/configuration.yaml:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/automations}:/config/automations:ro"
                   "${lovelace}:/config/lovelace.yaml:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/dashboards}:/config/dashboards:ro"

@@ -41,6 +41,7 @@
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
+    flakeModules.nixos.services-fitness-default
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
@@ -86,26 +87,23 @@
 
   vars.acme.email = "the1.arun@gmail.com";
 
-  # Second brain (Obsidian vault): live copy via headless Obsidian Sync, hourly git
-  # snapshots, and a remote MCP server for Claude on Tailscale Funnel.
-  # Each part stays off until its sops secrets exist -- setup steps in docs/second-brain.md.
-  services.secondBrain = {
+  # Second brains (docs/second-brain.md): per brain a git work tree synced with its hub repo, plus
+  # a local MCP server for Claude Code in ~/second-brain/<name> (the phone uses Remote Control).
+  # Nothing is exposed on the network. Deploy key: second-brain.home.git.deploy_key.
+  services.secondBrain.brains.home = {
     sync = {
-      enable = false;
-      vaultName = "Second Brain";
+      enable = true;
+      remote = "git@github.com:kra3/second-brain.git";
     };
-    snapshot = {
-      enable = false;
-      remote = null; # e.g. "git@github.com:kra3/second-brain.git" once the private repo exists
+    # Always-on `claude remote-control` for the phone; edits stay inside the vault (and its git history).
+    remoteControl = {
+      enable = true;
+      permissionMode = "acceptEdits";
     };
-    mcp = {
-      enable = false;
-      publicHost = "sutala.TAILNET.ts.net"; # this node's MagicDNS name
-      allowNewClients = true; # set false once your Claude connectors are connected
-    };
-    # Share-sheet clipper: reel/YouTube link -> transcript + summary -> note in "0 Inbox".
-    clipper.enable = false;
   };
+  # Share-sheet clipper: reel/YouTube link -> transcript + summary -> capture in the home brain's
+  # "0 Inbox". Off until `just clipper-secrets` has run (docs/second-brain.md, Clipper).
+  services.secondBrain.clipper.enable = false;
 
   hardware.enableRedistributableFirmware = true;
 
@@ -306,9 +304,9 @@
   };
 
   services.journald.extraConfig = ''
-    SystemMaxUse=200M
-    SystemMaxFileSize=50M
-    MaxRetentionSec=12h
+    SystemMaxUse=2G
+    SystemMaxFileSize=128M
+    MaxRetentionSec=30day
   '';
 
   services.logrotate.enable = true;

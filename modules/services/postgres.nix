@@ -114,14 +114,18 @@
             psql = lib.getExe' config.services.postgresql.package "psql";
           in
           ''
-            GHOSTFOLIO_PW=$(cat ${config.sops.secrets."db.ghostfolio_password".path})
-            ${psql} -c "ALTER USER ghostfolio PASSWORD '$GHOSTFOLIO_PW'"
-            HASS_PW=$(cat ${config.sops.secrets."db.hass_password".path})
-            ${psql} -c "ALTER USER hass PASSWORD '$HASS_PW'"
-            RG_PW=$(cat ${config.sops.secrets."db.rreading_glasses_password".path})
-            ${psql} -c "ALTER USER rreading_glasses PASSWORD '$RG_PW'"
-            GRAFANA_RO_PW=$(cat ${config.sops.secrets."db.grafana_ro_password".path})
-            ${psql} -c "ALTER USER grafana_ro PASSWORD '$GRAFANA_RO_PW'"
+            # Passwords are read by psql itself (backtick \set) and quoted via :'var',
+            # fed through stdin, so they never appear on any command line.
+            ${psql} -v ON_ERROR_STOP=1 <<'SQL'
+            \set ghostfolio_pw `cat ${config.sops.secrets."db.ghostfolio_password".path}`
+            ALTER USER ghostfolio PASSWORD :'ghostfolio_pw';
+            \set hass_pw `cat ${config.sops.secrets."db.hass_password".path}`
+            ALTER USER hass PASSWORD :'hass_pw';
+            \set rg_pw `cat ${config.sops.secrets."db.rreading_glasses_password".path}`
+            ALTER USER rreading_glasses PASSWORD :'rg_pw';
+            \set grafana_ro_pw `cat ${config.sops.secrets."db.grafana_ro_password".path}`
+            ALTER USER grafana_ro PASSWORD :'grafana_ro_pw';
+            SQL
             ${psql} -d hass -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafana_ro" \
               -c "ALTER DEFAULT PRIVILEGES FOR ROLE hass IN SCHEMA public GRANT SELECT ON TABLES TO grafana_ro"
           '';

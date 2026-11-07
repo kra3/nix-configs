@@ -4,6 +4,7 @@
 import array
 import base64
 import hashlib
+import hmac
 import io
 import json
 import math
@@ -235,9 +236,25 @@ def speak(adts):
             talk.close()
 
 
+def load_token():
+    path = os.environ.get("CAMERA_ANNOUNCE_TOKEN_FILE")
+    return open(path).read().strip() if path else ""
+
+
+TOKEN = load_token()
+
+
 class Handler(BaseHTTPRequestHandler):
+    def authorized(self):
+        if not TOKEN:
+            return True
+        got = self.headers.get("Authorization", "")
+        return hmac.compare_digest(got.encode(), f"Bearer {TOKEN}".encode())
+
     def do_POST(self):
         try:
+            if not self.authorized():
+                return self.reply(401, "unauthorized")
             if self.path not in ("/say", "/siren", "/chime"):
                 return self.reply(404, "not found")
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
@@ -301,5 +318,7 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["--check"]:
         self_check()
     else:
+        if not TOKEN:
+            print("WARNING: CAMERA_ANNOUNCE_TOKEN_FILE unset or empty; POST endpoints are unauthenticated", file=sys.stderr, flush=True)
         host, port = os.environ["LISTEN"].rsplit(":", 1)
         ThreadingHTTPServer((host, int(port)), Handler).serve_forever()

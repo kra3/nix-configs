@@ -31,6 +31,8 @@
             "NET_ADMIN"
             "NET_RAW"
           ];
+          # OTBR manages tun/iptables/ipset at runtime with file-capability binaries; keep exec privilege gain.
+          noNewPrivileges = false;
           # Sized from ~21h process-exporter peak + safety margin.
           memory = "128m";
           podmanArgs = [ "--cpus=1" ];

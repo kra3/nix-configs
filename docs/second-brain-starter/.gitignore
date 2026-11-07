@@ -1,0 +1,7 @@
+.obsidian/workspace*.json
+.obsidian/cache
+.trash/
+.mcp-*.tmp
+.DS_Store
+# Obsidian Git plugin settings (phones): may hold an access token
+.obsidian/plugins/obsidian-git/data.json

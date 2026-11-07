@@ -1,4 +1,8 @@
 {
+  # sutala's always-on copies of second brains: per brain, a git work tree synced with its hub
+  # repo by a system timer, plus a local MCP server for Claude Code in ~/<claudeDir> (also
+  # reachable from the phone through Remote Control). Nothing listens on the network.
+  # Macs use the Home Manager module home-second-brain instead.
   flake.nixosModules.services-second-brain-default =
     {
       config,
@@ -10,273 +14,212 @@
     }:
     let
       cfg = config.services.secondBrain;
+      sb = flakeLib.second-brain-packages;
       user = "second-brain";
       baseDir = "/srv/appdata/second-brain";
-      stateDir = "${baseDir}/state";
-      gitDir = "${baseDir}/vault.git";
-      obConfigHome = "${stateDir}/config";
-      publicUrl = "https://${cfg.mcp.publicHost}:${toString cfg.mcp.funnelPort}";
+      syncScript = sb.mkSync pkgs;
+      enabled = lib.filterAttrs (_: b: b.enable) cfg.brains;
+      syncing = lib.filterAttrs (_: b: b.sync.enable) enabled;
+      withMcp = lib.filterAttrs (_: b: b.mcp.enable) enabled;
+      withRemote = lib.filterAttrs (_: b: b.mcp.enable && b.remoteControl.enable) enabled;
+      claude = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+      mcpFor =
+        name: b:
+        sb.mkMcp pkgs {
+          inherit name;
+          inherit (b) vaultDir;
+        };
 
-      obsidianHeadless = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.obsidian-headless;
-      # Stable: unstable's fastmcp is marked broken against mcp 2.x.
-      python = pkgs.python3.withPackages (ps: [ ps.fastmcp ]);
-
-      sandbox = flakeLib.deployment-hardening.mkServiceSandbox {
-        readWritePaths = [ baseDir ];
-      };
-      common = sandbox // {
-        User = user;
-        Group = user;
-        UMask = "0007";
-        # Hides other users' processes, e.g. sync-setup's --password argument.
-        ProtectProc = "invisible";
-      };
-
-      git = "${pkgs.git}/bin/git --git-dir=${gitDir} --work-tree=${cfg.vaultDir}";
+      common =
+        flakeLib.deployment-hardening.mkServiceSandbox {
+          readWritePaths = [ baseDir ];
+        }
+        // {
+          User = user;
+          Group = user;
+          UMask = "0007";
+          ProtectProc = "invisible";
+        };
     in
     {
-      options.services.secondBrain = {
-        vaultDir = lib.mkOption {
-          type = lib.types.str;
-          default = "${baseDir}/vault";
-          description = "Live copy of the Obsidian vault, kept current by headless Obsidian Sync.";
-        };
-
-        sync = {
-          enable = lib.mkEnableOption "headless Obsidian Sync of the vault";
-          vaultName = lib.mkOption {
-            type = lib.types.str;
-            description = "Remote vault name as shown by `ob sync-list-remote`.";
-          };
-          deviceName = lib.mkOption {
-            type = lib.types.str;
-            default = config.networking.hostName;
-          };
-          endToEndEncrypted = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Remote vault uses end-to-end encryption (needs the vault password secret).";
-          };
-        };
-
-        snapshot = {
-          enable = lib.mkEnableOption "hourly git snapshots of the vault (history kept locally in ${gitDir})";
-          remote = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-            example = "git@github.com:kra3/second-brain.git";
-            description = "SSH remote to push snapshots to; null keeps history on this host only.";
-          };
-        };
-
-        mcp = {
-          enable = lib.mkEnableOption "remote MCP server for Claude, published via Tailscale Funnel";
-          publicHost = lib.mkOption {
-            type = lib.types.str;
-            example = "sutala.tail1234.ts.net";
-            description = "This node's MagicDNS name; Funnel serves the MCP server there.";
-          };
-          funnelPort = lib.mkOption {
-            # Funnel only allows 443, 8443 and 10000; 443 on the tailnet IP is nginx's.
-            type = lib.types.enum [
-              8443
-              10000
-            ];
-            default = 8443;
-          };
-          allowNewClients = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = ''
-              Accept new OAuth clients (dynamic registration and CIMD). Leave on until your own
-              claude.ai connector (and Claude Code, if wanted) is connected, then turn it off: the
-              endpoint is public, and anyone can register a client that looks just like Claude.
-            '';
-          };
-          port = lib.mkOption {
-            type = lib.types.port;
-            default = 8765;
-            description = "Loopback port of the MCP server; only Funnel reaches it.";
-          };
-        };
+      options.services.secondBrain.brains = lib.mkOption {
+        default = { };
+        description = "Second brains kept on this host, by name (e.g. home).";
+        type = lib.types.attrsOf (
+          lib.types.submodule (
+            { name, config, ... }:
+            {
+              options = {
+                enable = lib.mkEnableOption "this second brain" // {
+                  default = true;
+                };
+                vaultDir = lib.mkOption {
+                  type = lib.types.str;
+                  default = "${baseDir}/${name}/vault";
+                  description = "Server copy of the vault: a git work tree synced with the hub repo.";
+                };
+                gitDir = lib.mkOption {
+                  type = lib.types.str;
+                  default = "${baseDir}/${name}/vault.git";
+                  description = "The vault's git dir, kept outside the vault.";
+                };
+                claudeDir = lib.mkOption {
+                  type = lib.types.str;
+                  default = "second-brain/${name}";
+                  description = "Directory under kra3's home where Claude Code gets this brain's tools.";
+                };
+                sync = {
+                  enable = lib.mkEnableOption "two-way git sync with the hub repo (needs the deploy key in sops)";
+                  remote = lib.mkOption {
+                    type = lib.types.str;
+                    example = "git@github.com:kra3/second-brain.git";
+                    description = "SSH URL of the hub repo every device pushes to; sutala uses a deploy key.";
+                  };
+                  interval = lib.mkOption {
+                    type = lib.types.str;
+                    default = "5min";
+                  };
+                  deployKeySecret = lib.mkOption {
+                    type = lib.types.str;
+                    default = "second-brain.${name}.git.deploy_key";
+                    description = "sops key holding the deploy key (`just second-brain-secrets ${name}`).";
+                  };
+                };
+                mcp.enable = lib.mkEnableOption "the local MCP server for Claude Code in ~/${config.claudeDir}" // {
+                  default = true;
+                };
+                remoteControl = {
+                  enable = lib.mkEnableOption ''
+                    an always-on `claude remote-control` in ~/${config.claudeDir} (kra3 user service,
+                    lingering), so the Claude app can open a session on this brain at any time.
+                    Needs a one-time `claude` login as kra3
+                  '';
+                  permissionMode = lib.mkOption {
+                    type = lib.types.enum [
+                      "default"
+                      "acceptEdits"
+                      "plan"
+                    ];
+                    default = "default";
+                    description = "Permission mode for sessions opened from the phone; acceptEdits skips approving each file edit.";
+                  };
+                };
+              };
+            }
+          )
+        );
       };
 
-      config = lib.mkMerge [
-        (lib.mkIf (cfg.sync.enable || cfg.snapshot.enable || cfg.mcp.enable) {
-          users.users.${user} = {
-            isSystemUser = true;
-            group = user;
-            home = stateDir;
-          };
-          users.groups.${user} = { };
-          # Lets kra3 browse the server copy; edits still belong on a synced device.
-          users.users.kra3.extraGroups = [ user ];
+      config = lib.mkIf (enabled != { }) {
+        users.users.${user} = {
+          isSystemUser = true;
+          group = user;
+          home = "${baseDir}/state";
+        };
+        users.groups.${user} = { };
+        # kra3 opens server copies in desktop Obsidian here and runs the MCP servers.
+        users.users.kra3.extraGroups = [ user ];
 
-          systemd.tmpfiles.rules = [
-            "d ${baseDir} 0750 ${user} ${user} - -"
-            "d ${cfg.vaultDir} 2770 ${user} ${user} - -"
-            # kra3 edits the same files from desktop Obsidian on this host, under a 022 umask;
-            # default ACLs keep everything group-writable so the sync client can still update it.
-            "A+ ${cfg.vaultDir} - - - - group:${user}:rwX,default:group:${user}:rwX,default:mask::rwX"
-            "d ${stateDir} 0700 ${user} ${user} - -"
-          ];
-        })
+        systemd.tmpfiles.rules = [
+          "d ${baseDir} 0750 ${user} ${user} - -"
+          "d ${baseDir}/state 0700 ${user} ${user} - -"
+        ]
+        ++ lib.concatLists (
+          lib.mapAttrsToList (_: b: [
+            "d ${dirOf b.vaultDir} 0750 ${user} ${user} - -"
+            "d ${b.vaultDir} 2770 ${user} ${user} - -"
+            # kra3 edits the same files under a 022 umask; default ACLs keep everything
+            # group-writable so the sync service can still update it.
+            "A+ ${b.vaultDir} - - - - group:${user}:rwX,default:group:${user}:rwX,default:mask::rwX"
+          ]) enabled
+        );
 
-        (lib.mkIf cfg.sync.enable {
-          sops.secrets = {
-            "second-brain.obsidian.auth_token" = { };
-          }
-          // lib.optionalAttrs cfg.sync.endToEndEncrypted {
-            "second-brain.obsidian.vault_password" = { };
-          };
+        sops.secrets = lib.mapAttrs' (_: b: lib.nameValuePair b.sync.deployKeySecret { }) syncing;
 
-          systemd.services.second-brain-sync = {
-            description = "Headless Obsidian Sync of the second-brain vault";
+        programs.ssh.knownHosts = lib.mkIf (syncing != { }) {
+          "github.com".publicKey =
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+        };
+
+        systemd.services = lib.mapAttrs' (
+          name: b:
+          lib.nameValuePair "second-brain-${name}-sync" {
+            description = "Two-way git sync of the ${name} second brain";
             wants = [ "network-online.target" ];
             after = [ "network-online.target" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [
-              obsidianHeadless
-              pkgs.jq
-            ];
-            environment.XDG_CONFIG_HOME = obConfigHome;
-            # The vault link lives in ob's own state; set it up once, idempotently, then follow changes.
-            script = ''
-              OBSIDIAN_AUTH_TOKEN="$(< "$CREDENTIALS_DIRECTORY/auth-token")"
-              export OBSIDIAN_AUTH_TOKEN
-              linked=0
-              for f in "$XDG_CONFIG_HOME"/obsidian-headless/sync/*/config.json; do
-                [ -e "$f" ] || continue
-                if jq -e --arg p ${lib.escapeShellArg cfg.vaultDir} '.vaultPath == $p' "$f" >/dev/null; then
-                  linked=1
-                fi
-              done
-              if [ "$linked" = 0 ]; then
-                echo "linking ${cfg.vaultDir} to remote vault ${cfg.sync.vaultName}"
-                ob sync-setup \
-                  --vault ${lib.escapeShellArg cfg.sync.vaultName} \
-                  --path ${lib.escapeShellArg cfg.vaultDir} \
-                  --device-name ${lib.escapeShellArg cfg.sync.deviceName} \
-                  ${lib.optionalString cfg.sync.endToEndEncrypted ''--password "$(< "$CREDENTIALS_DIRECTORY/vault-password")"''}
-              fi
-              exec ob sync --path ${lib.escapeShellArg cfg.vaultDir} --continuous
-            '';
-            serviceConfig = common // {
-              LoadCredential = [
-                "auth-token:${config.sops.secrets."second-brain.obsidian.auth_token".path}"
-              ]
-              ++ lib.optional cfg.sync.endToEndEncrypted "vault-password:${
-                config.sops.secrets."second-brain.obsidian.vault_password".path
-              }";
-              Restart = "always";
-              RestartSec = 30;
+            environment = {
+              VAULT_DIR = b.vaultDir;
+              VAULT_GIT_DIR = b.gitDir;
+              REMOTE = b.sync.remote;
+              SYNC_HOST = config.networking.hostName;
             };
-          };
-        })
-
-        (lib.mkIf cfg.snapshot.enable {
-          sops.secrets = lib.optionalAttrs (cfg.snapshot.remote != null) {
-            "second-brain.git.deploy_key" = { };
-          };
-
-          programs.ssh.knownHosts = lib.optionalAttrs (cfg.snapshot.remote != null) {
-            "github.com".publicKey =
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
-          };
-
-          systemd.services.second-brain-snapshot = {
-            description = "Commit the second-brain vault to git${
-              lib.optionalString (cfg.snapshot.remote != null) " and push it"
-            }";
-            wants = lib.optional (cfg.snapshot.remote != null) "network-online.target";
-            after = lib.optional (cfg.snapshot.remote != null) "network-online.target";
-            path = [ pkgs.openssh ];
-            # The git dir sits outside the vault so Obsidian Sync never sees it.
-            script = ''
-              if [ ! -d ${gitDir} ]; then
-                ${git} init --quiet --initial-branch=main
-                printf '%s\n' '.obsidian/workspace*.json' '.trash/' '.mcp-*.tmp' > ${gitDir}/info/exclude
-              fi
-              ${git} add --all
-              if ! ${git} diff --cached --quiet; then
-                ${git} -c user.name=second-brain -c user.email=second-brain@${config.networking.hostName} \
-                  commit --quiet -m "snapshot $(date --iso-8601=minutes)"
-              fi
-              ${lib.optionalString (cfg.snapshot.remote != null) ''
-                GIT_SSH_COMMAND="ssh -i $CREDENTIALS_DIRECTORY/deploy-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
-                export GIT_SSH_COMMAND
-                ${git} push --quiet ${lib.escapeShellArg cfg.snapshot.remote} HEAD:main
-              ''}
-            '';
             serviceConfig = common // {
               Type = "oneshot";
-              LoadCredential =
-                lib.optional (cfg.snapshot.remote != null)
-                  "deploy-key:${config.sops.secrets."second-brain.git.deploy_key".path}";
+              ExecStart = lib.getExe syncScript;
+              # 75 = remote unreachable; changes are committed locally and the next run catches up.
+              SuccessExitStatus = [ 75 ];
+              LoadCredential = [ "deploy-key:${config.sops.secrets.${b.sync.deployKeySecret}.path}" ];
             };
-          };
+          }
+        ) syncing;
 
-          systemd.timers.second-brain-snapshot = {
+        systemd.timers = lib.mapAttrs' (
+          name: b:
+          lib.nameValuePair "second-brain-${name}-sync" {
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnCalendar = "hourly";
-              Persistent = true;
-              RandomizedDelaySec = "5m";
+              OnBootSec = "2min";
+              OnUnitActiveSec = b.sync.interval;
             };
-          };
-        })
+          }
+        ) syncing;
 
-        (lib.mkIf cfg.mcp.enable {
-          # Root-owned; handed to the service via LoadCredential.
-          sops.secrets."second-brain.mcp.oidc_client_secret" = { };
+        environment.systemPackages = lib.mapAttrsToList mcpFor withMcp;
 
-          systemd.services.second-brain-mcp = {
-            description = "Remote MCP server for the second-brain vault";
-            wants = [ "network-online.target" ];
-            after = [
-              "network-online.target"
-              "authelia.service"
-            ];
-            wantedBy = [ "multi-user.target" ];
-            environment = {
-              VAULT_DIR = cfg.vaultDir;
-              PUBLIC_URL = publicUrl;
-              PORT = toString cfg.mcp.port;
-              ALLOW_NEW_CLIENTS = if cfg.mcp.allowNewClients then "1" else "0";
-              OIDC_DISCOVERY_URL = "https://auth.${config.vars.acme.domain}/.well-known/openid-configuration";
-              OIDC_CLIENT_ID = "second-brain";
-              # OAuth client registrations and FastMCP's token store; must survive restarts.
-              FASTMCP_HOME = "${stateDir}/fastmcp";
-              HOME = stateDir;
-            };
-            serviceConfig = common // {
-              ExecStart = "${python}/bin/python3 ${./mcp_server.py}";
-              LoadCredential = [
-                "oidc-client-secret:${config.sops.secrets."second-brain.mcp.oidc_client_secret".path}"
+        # User services for Remote Control must outlive logins and start at boot.
+        users.users.kra3.linger = lib.mkIf (withRemote != { }) true;
+
+        home-manager.users.kra3.systemd.user.services = lib.mapAttrs' (
+          name: b:
+          lib.nameValuePair "second-brain-${name}-remote" {
+            Unit.Description = "Claude Code Remote Control for the ${name} second brain";
+            Service = {
+              WorkingDirectory = "%h/${b.claudeDir}";
+              ExecStart = lib.escapeShellArgs [
+                "${claude}/bin/claude"
+                "remote-control"
+                "--name"
+                "second-brain-${name}"
+                "--permission-mode"
+                b.remoteControl.permissionMode
               ];
-              Restart = "on-failure";
-              RestartSec = 10;
+              # Spawned sessions run git, ripgrep etc. from the user's profile.
+              Environment = [
+                "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin"
+              ];
+              Restart = "always";
+              # Back off from 30 s up to an hour, so a hard failure (not logged in, folder not yet
+              # trusted) stays quiet instead of retrying every 30 s.
+              RestartSec = 30;
+              RestartSteps = 8;
+              RestartMaxDelaySec = 3600;
             };
-          };
+            Install.WantedBy = [ "default.target" ];
+          }
+        ) withRemote;
 
-          # Funnel config lives in tailscaled's state; this unit (re)asserts it on every boot/deploy.
-          systemd.services.second-brain-funnel = {
-            description = "Publish the second-brain MCP server on Tailscale Funnel";
-            after = [
-              "tailscaled.service"
-              "second-brain-mcp.service"
-            ];
-            requires = [ "tailscaled.service" ];
-            wantedBy = [ "multi-user.target" ];
-            path = [ config.services.tailscale.package ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = "${config.services.tailscale.package}/bin/tailscale funnel --bg --https=${toString cfg.mcp.funnelPort} http://127.0.0.1:${toString cfg.mcp.port}";
-              ExecStop = "${config.services.tailscale.package}/bin/tailscale funnel --https=${toString cfg.mcp.funnelPort} off";
-            };
-          };
-        })
-      ];
+        home-manager.users.kra3.home.file = lib.mkMerge (
+          lib.mapAttrsToList (
+            name: b:
+            lib.mapAttrs' (f: v: lib.nameValuePair "${b.claudeDir}/${f}" v) (
+              sb.claudeDirFiles {
+                inherit name;
+                inherit (b) vaultDir;
+                mcp = mcpFor name b;
+              }
+            )
+          ) withMcp
+        );
+      };
     };
 }

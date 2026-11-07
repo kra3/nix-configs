@@ -10,6 +10,9 @@
 
       services.redis.servers.default = {
         enable = true;
+        # 0.0.0.0 on purpose: br-life/br-media-mgmt only exist once netavark starts a container on
+        # them, so binding their gateway IPs at boot would silently drop them after a reboot.
+        # Exposure is limited by the firewall below: 6379 is opened only on br-life and br-media-mgmt.
         bind = "0.0.0.0";
         port = 6379;
         save = [

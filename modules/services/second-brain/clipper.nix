@@ -9,8 +9,8 @@
       ...
     }:
     let
-      sb = config.services.secondBrain;
-      cfg = sb.clipper;
+      cfg = config.services.secondBrain.clipper;
+      brain = config.services.secondBrain.brains.${cfg.brain} or null;
       user = "second-brain";
       stateDir = "/srv/appdata/second-brain/clipper";
       domain = config.vars.acme.domain;
@@ -22,7 +22,12 @@
     in
     {
       options.services.secondBrain.clipper = {
-        enable = lib.mkEnableOption "the share-sheet clipper: video link to transcript to Obsidian inbox note";
+        enable = lib.mkEnableOption "the share-sheet clipper: video link to transcript to a brain's inbox note";
+        brain = lib.mkOption {
+          type = lib.types.str;
+          default = "home";
+          description = "Which services.secondBrain.brains entry receives the notes.";
+        };
         hostName = lib.mkOption {
           type = lib.types.str;
           default = "clip.${domain}";
@@ -59,8 +64,8 @@
       config = lib.mkIf cfg.enable {
         assertions = [
           {
-            assertion = sb.sync.enable;
-            message = "services.secondBrain.clipper needs services.secondBrain.sync: notes reach your devices through it.";
+            assertion = brain != null && brain.enable && brain.sync.enable;
+            message = "services.secondBrain.clipper.brain = \"${cfg.brain}\" must be an enabled brain with sync on: notes reach your devices through its git sync.";
           }
         ];
 
@@ -75,11 +80,11 @@
         systemd.tmpfiles.rules = [ "d ${stateDir} 0700 ${user} ${user} - -" ];
 
         systemd.services.second-brain-clipper = {
-          description = "Video link to transcript to Obsidian note";
+          description = "Video link to transcript to a note in the ${cfg.brain} brain";
           wants = [ "network-online.target" ];
           after = [
             "network-online.target"
-            "second-brain-sync.service"
+            "second-brain-${cfg.brain}-sync.service"
           ];
           wantedBy = [ "multi-user.target" ];
           path = [
@@ -87,7 +92,7 @@
             pkgs.ffmpeg-headless
           ];
           environment = {
-            VAULT_DIR = sb.vaultDir;
+            VAULT_DIR = if brain != null then brain.vaultDir else ""; # assertion above reports a bad brain
             INBOX_FOLDER = cfg.inboxFolder;
             STATE_DIR = stateDir;
             PORT = toString cfg.port;

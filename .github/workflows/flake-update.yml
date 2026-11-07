@@ -8,25 +8,25 @@ on:
   workflow_dispatch: null
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update-flake:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
 
       - name: Update flake.lock
         run: nix flake update
 
       - name: Open pull request
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: ${{ secrets.GH_PAT }}
           commit-message: "chore(deps): bump flake.lock"

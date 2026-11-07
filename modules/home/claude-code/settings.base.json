@@ -99,19 +99,22 @@
     "superpowers-dev": {
       "source": {
         "source": "github",
-        "repo": "obra/superpowers"
+        "repo": "obra/superpowers",
+        "ref": "v7.0.2"
       }
     },
     "ponytail": {
       "source": {
         "source": "github",
-        "repo": "DietrichGebert/ponytail"
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.3.3"
       }
     },
     "i-have-adhd": {
       "source": {
         "source": "github",
-        "repo": "ayghri/i-have-adhd"
+        "repo": "ayghri/i-have-adhd",
+        "ref": "v0.4.1"
       }
     }
   },

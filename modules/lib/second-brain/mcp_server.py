@@ -1,74 +1,33 @@
-"""Remote MCP server exposing the Obsidian vault to Claude (claude.ai web/mobile, Claude Code).
+"""Local (stdio) MCP server for the second-brain vault, used by Claude Code on sutala.
 
-Auth: FastMCP's OIDCProxy fronts Authelia, so claude.ai's dynamic client registration works
-against Authelia's single static client. Only the admin group passes (Authelia policy).
+Started by Claude Code from ~/second-brain/.mcp.json, directly or through Remote Control from the
+phone, so it runs as kra3 and is never reachable over the network: no auth layer needed.
 Every path is confined to VAULT_DIR; dot-folders (.obsidian, .trash) are never touched.
-Writes are atomic (temp file + rename) so the headless Obsidian Sync never uploads half a note.
+Writes are atomic (temp file + rename) so the git sync never commits half a note.
 """
 
 import datetime
-import hashlib
 import os
 import re
 import tempfile
 from pathlib import Path
 
 from fastmcp import FastMCP
-from fastmcp.server.auth.oidc_proxy import OIDCProxy
 
 VAULT = Path(os.environ["VAULT_DIR"]).resolve()
 INBOX = os.environ.get("INBOX_FOLDER", "0 Inbox")
-PUBLIC_URL = os.environ["PUBLIC_URL"].rstrip("/")
-PORT = int(os.environ["PORT"])
 MAX_READ_BYTES = 512 * 1024
-# Open only while connecting a new Claude client; closed, nobody can register (DCR) or use a
-# URL client id (CIMD), so a phished authorize link has no client of the attacker to land on.
-ALLOW_NEW_CLIENTS = os.environ.get("ALLOW_NEW_CLIENTS", "0") == "1"
-
-
-def _secret(name: str) -> str:
-    return (Path(os.environ["CREDENTIALS_DIRECTORY"]) / name).read_text().strip()
-
-
-CLIENT_SECRET = _secret("oidc-client-secret")
-
-auth = OIDCProxy(
-    config_url=os.environ["OIDC_DISCOVERY_URL"],
-    client_id=os.environ["OIDC_CLIENT_ID"],
-    client_secret=CLIENT_SECRET,
-    # Stable across restarts, so issued tokens and the encrypted client store stay valid.
-    jwt_signing_key=hashlib.sha256(b"second-brain-mcp-jwt:" + CLIENT_SECRET.encode()).hexdigest(),
-    # Authelia's access tokens are opaque by default; its id_token is always a JWKS-verifiable JWT.
-    verify_id_token=True,
-    # Not checked against the id_token (it has no scope claim), only requested upstream and advertised.
-    required_scopes=["openid", "profile", "email", "groups"],
-    base_url=PUBLIC_URL,
-    # Authelia rejects RFC 8707 resource indicators it has no audience registered for.
-    forward_resource=False,
-    token_endpoint_auth_method="client_secret_basic",
-    # Dynamic registration is open (claude.ai needs it), so every new client must be approved on
-    # FastMCP's own consent page before the upstream Authelia hop; never rely on the default.
-    require_authorization_consent=True,
-    enable_cimd=ALLOW_NEW_CLIENTS,
-    allowed_client_redirect_uris=[
-        "https://claude.ai/api/mcp/auth_callback",
-        "https://claude.com/api/mcp/auth_callback",
-        # Claude Code's local OAuth callback.
-        "http://localhost:*",
-        "http://127.0.0.1:*",
-    ],
-)
-# OAuthProxy always enables DCR; routes are built from this at startup.
-auth.client_registration_options.enabled = ALLOW_NEW_CLIENTS
 
 mcp = FastMCP(
     "second-brain",
     instructions=(
-        "Arun's Obsidian vault (PARA layout: '0 Inbox', '1 Projects', '2 Areas', '3 Resources', "
-        "'4 Archive'). If CLAUDE.md exists at the vault root, read it first for filing and naming rules. "
-        "Paths are relative to the vault root. New, unsorted captures go to the inbox via capture."
+        "Arun's second brain, an Obsidian vault with an action layer (PARA + GTD: '0 Inbox', "
+        "'1 Projects', '2 Areas', '6 Archive') and a knowledge layer (Zettelkasten/evergreen: "
+        "'3 Sources', '4 Notes', '5 Maps'). Read CLAUDE.md at the vault root first: it holds the "
+        "filing rules, the weekly review, and the rule that Arun writes evergreen notes himself. "
+        "Paths are relative to the vault root. New, unsorted captures go to the inbox via capture. "
+        "For a weekly review use list_tasks, recent_changes, orphans and backlinks."
     ),
-    auth=auth,
 )
 
 
@@ -171,6 +130,95 @@ def search_notes(query: str, folder: str = "", limit: int = 20) -> list[dict]:
     return hits[: max(1, min(limit, 100))]
 
 
+WIKILINK = re.compile(r"\[\[([^\]|#^]+)(?:[#^][^\]|]*)?(?:\|[^\]]*)?\]\]")
+TASK = re.compile(r"^\s*[-*] \[( |x|X)\] (.+)$")
+
+
+def _link_targets(text: str) -> set[str]:
+    """Wiki-link targets, normalised the way Obsidian resolves them: by note name."""
+    return {Path(m.group(1).strip()).name.removesuffix(".md").lower() for m in WIKILINK.finditer(text)}
+
+
+def _link_index() -> dict[str, set[str]]:
+    """Note name (lowercased) -> vault paths of the notes linking to it."""
+    index: dict[str, set[str]] = {}
+    for note in _visible_notes(VAULT):
+        try:
+            text = note.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for target in _link_targets(text):
+            if target != note.stem.lower():
+                index.setdefault(target, set()).add(_rel(note))
+    return index
+
+
+@mcp.tool(annotations=READ_ONLY)
+def backlinks(path: str) -> list[str]:
+    """Notes that link to the given note with [[wiki links]] (Obsidian resolves links by note name)."""
+    note = _note(path)
+    return sorted(_link_index().get(note.stem.lower(), set()))
+
+
+@mcp.tool(annotations=READ_ONLY)
+def orphans(folder: str = "4 Notes") -> list[str]:
+    """Notes in a folder (default: the evergreen notes) that no other note links to. README notes are skipped."""
+    index = _link_index()
+    return [
+        _rel(n) for n in _visible_notes(_resolve(folder)) if n.stem != "README" and not index.get(n.stem.lower())
+    ]
+
+
+@mcp.tool(annotations=READ_ONLY)
+def recent_changes(days: int = 7) -> list[dict]:
+    """Notes created or edited in the last N days, newest first, with their folder, for the weekly review."""
+    cutoff = datetime.datetime.now().timestamp() - max(1, min(days, 90)) * 86400
+    changed = []
+    for note in _visible_notes(VAULT):
+        mtime = note.stat().st_mtime
+        if mtime >= cutoff and note.stem != "README":
+            changed.append(
+                {
+                    "path": _rel(note),
+                    "folder": _rel(note).split("/", 1)[0] if "/" in _rel(note) else "",
+                    "modified": datetime.datetime.fromtimestamp(mtime).astimezone().isoformat(timespec="minutes"),
+                }
+            )
+    changed.sort(key=lambda c: c["modified"], reverse=True)
+    return changed[:200]
+
+
+@mcp.tool(annotations=READ_ONLY)
+def list_tasks(folder: str = "", include_done: bool = False) -> list[dict]:
+    """Checkbox tasks ("- [ ] ...") across notes, grouped per note: the GTD next-actions view.
+
+    Defaults to every folder except the archive. Items starting "waiting:" are flagged.
+    """
+    root = _resolve(folder)
+    result = []
+    for note in _visible_notes(root):
+        rel = _rel(note)
+        if not folder and (rel.startswith("6 Archive/") or rel.startswith("Templates/")):
+            continue
+        try:
+            lines = note.read_text(encoding="utf-8").splitlines()
+        except (UnicodeDecodeError, OSError):
+            continue
+        tasks = []
+        for line in lines:
+            m = TASK.match(line)
+            if not m or not m.group(2).strip():
+                continue
+            done = m.group(1) != " "
+            if done and not include_done:
+                continue
+            text = m.group(2).strip()
+            tasks.append({"task": text, "done": done, "waiting": text.lower().startswith("waiting:")})
+        if tasks:
+            result.append({"note": rel, "tasks": tasks})
+    return result
+
+
 @mcp.tool(annotations=WRITES)
 def write_note(path: str, content: str, overwrite: bool = False) -> str:
     """Create a note, or replace one when overwrite is true. Returns the vault-relative path."""
@@ -198,7 +246,7 @@ def capture(text: str, title: str = "") -> str:
     slug = re.sub(r"[^\w\- ]+", "", title).strip()[:60] or "capture"
     name = f"{now:%Y-%m-%d %H%M} {slug}.md"
     note = _note(f"{INBOX}/{name}", must_exist=False)
-    body = f"---\ncreated: {now.isoformat(timespec='seconds')}\nsource: claude\n---\n\n{text.rstrip()}\n"
+    body = f"---\ncreated: {now.isoformat(timespec='seconds')}\ntype: capture\nsource: claude\n---\n\n{text.rstrip()}\n"
     _atomic_write(note, body)
     return _rel(note)
 
@@ -216,10 +264,4 @@ def move_note(source: str, destination: str) -> str:
 
 
 if __name__ == "__main__":
-    mcp.run(
-        transport="http",
-        host="127.0.0.1",
-        port=PORT,
-        path="/mcp",
-        show_banner=False,
-    )
+    mcp.run(show_banner=False)  # stdio

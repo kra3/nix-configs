@@ -106,10 +106,9 @@ switch-surasa target="surasa":
 sops-edit file="secrets/secrets.yaml":
     sops {{file}}
 
-# One-time secrets for services-second-brain-default (docs/second-brain.md). Idempotent:
-# keys already in the file are left alone. Values go to sops on stdin, never argv.
-# Pass deploy_key=yes to also generate the snapshot push key.
-second-brain-secrets deploy_key="no" file="secrets/secrets.yaml":
+# One-time secret for a sutala brain (services.secondBrain.brains.<brain>, docs/second-brain.md):
+# the deploy key for its hub repo. Idempotent; the key goes to sops on stdin, never argv.
+second-brain-secrets brain="home" file="secrets/secrets.yaml":
     #!/usr/bin/env bash
     set -euo pipefail
     file={{file}}
@@ -117,59 +116,39 @@ second-brain-secrets deploy_key="no" file="secrets/secrets.yaml":
     have() { sops decrypt --extract "[\"$1\"]" "$file" >/dev/null 2>&1; }
     put() { jq -Rs . | sops set --value-stdin "$file" "[\"$1\"]"; echo "  added $1"; }
 
-    echo "== Obsidian Sync token (ob login; the throwaway login is not logged out, which would revoke the token)"
-    if have second-brain.obsidian.auth_token; then echo "  already set"; else
-      XDG_CONFIG_HOME="$tmp/ob" nix run .#obsidian-headless -- login
-      tr -d '\n' < "$tmp/ob/obsidian-headless/auth_token" | put second-brain.obsidian.auth_token
-      echo "  remote vaults (set services.secondBrain.sync.vaultName to one of these):"
-      OBSIDIAN_AUTH_TOKEN="$(cat "$tmp/ob/obsidian-headless/auth_token")" XDG_CONFIG_HOME="$tmp/ob" \
-        nix run .#obsidian-headless -- sync-list-remote | sed 's/^/    /'
-    fi
-
-    echo "== Vault end-to-end encryption password (skip with an empty answer if the vault uses standard encryption)"
-    if have second-brain.obsidian.vault_password; then echo "  already set"; else
-      read -rsp "  password: " pw; echo
-      if [ -n "$pw" ]; then printf '%s' "$pw" | put second-brain.obsidian.vault_password
-      else echo "  skipped: set services.secondBrain.sync.endToEndEncrypted = false"; fi
-      unset pw
-    fi
-
-    echo "== Authelia OIDC client for the MCP server"
-    if have second-brain.mcp.oidc_client_secret && have authelia.oidc_clients.second-brain.client_secret_hash; then
-      echo "  already set"
+    key="second-brain.{{brain}}.git.deploy_key"
+    echo "== Deploy key for the {{brain}} brain's hub repo"
+    if have "$key"; then
+      sops decrypt --extract "[\"$key\"]" "$file" > "$tmp/key"; chmod 600 "$tmp/key"
     else
-      nix run --inputs-from . nixpkgs#authelia -- crypto hash generate pbkdf2 \
-        --variant sha512 --random --random.length 72 --random.charset rfc3986 > "$tmp/authelia"
-      sed -n 's/^Random Password: //p' "$tmp/authelia" | tr -d '\n' | put second-brain.mcp.oidc_client_secret
-      sed -n 's/^Digest: //p' "$tmp/authelia" | tr -d '\n' | put authelia.oidc_clients.second-brain.client_secret_hash
+      ssh-keygen -q -t ed25519 -N "" -C "second-brain-{{brain}}@sutala" -f "$tmp/key"
+      put "$key" < "$tmp/key"
     fi
+    echo "  add this as a deploy key WITH write access on the vault repo:"
+    echo "    $(ssh-keygen -y -f "$tmp/key")"
 
-    if [ "{{deploy_key}}" = yes ]; then
-      echo "== Snapshot deploy key"
-      if have second-brain.git.deploy_key; then
-        sops decrypt --extract '["second-brain.git.deploy_key"]' "$file" > "$tmp/key"; chmod 600 "$tmp/key"
-      else
-        ssh-keygen -q -t ed25519 -N "" -C "second-brain@sutala" -f "$tmp/key"
-        put second-brain.git.deploy_key < "$tmp/key"
-      fi
-      echo "  add this as a deploy key WITH write access on the vault repo:"
-      echo "    $(ssh-keygen -y -f "$tmp/key")"
-    fi
+# services.secondBrain.clipper (docs/second-brain.md). Idempotent; values go to sops on stdin, never argv.
+# One-time secrets for the share-sheet clipper: the iOS Shortcut's bearer token and an Anthropic API key.
+clipper-secrets file="secrets/secrets.yaml":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    file={{file}}
+    have() { sops decrypt --extract "[\"$1\"]" "$file" >/dev/null 2>&1; }
+    put() { jq -Rs . | sops set --value-stdin "$file" "[\"$1\"]"; echo "  added $1"; }
 
-    echo "== Clipper (share-sheet transcripts)"
-    if have second-brain.clipper.token; then echo "  token already set"; else
+    echo "== Shortcut token"
+    if have second-brain.clipper.token; then echo "  already set"; else
       od -An -tx1 -N32 /dev/urandom | tr -d ' \n' | put second-brain.clipper.token
-      echo "  paste into the iOS Shortcut's Authorization header as: Bearer <token>"
-      echo "  (read it back with: sops decrypt --extract '[\"second-brain.clipper.token\"]' $file)"
     fi
-    if have second-brain.clipper.anthropic_api_key; then echo "  Anthropic API key already set"; else
-      read -rsp "  Anthropic API key (console.anthropic.com; empty to skip): " key; echo
-      if [ -n "$key" ]; then printf '%s' "$key" | put second-brain.clipper.anthropic_api_key; fi
+    echo "  the Shortcut's Authorization header is: Bearer <token>; read it with"
+    echo "    sops decrypt --extract '[\"second-brain.clipper.token\"]' $file"
+    echo "== Anthropic API key (console.anthropic.com)"
+    if have second-brain.clipper.anthropic_api_key; then echo "  already set"; else
+      read -rsp "  key: " key; echo
+      [ -n "$key" ] || { echo "  no key given; run again with one"; exit 1; }
+      printf '%s' "$key" | put second-brain.clipper.anthropic_api_key
       unset key
     fi
-
-    echo "== sutala's MagicDNS name (services.secondBrain.mcp.publicHost):"
-    echo "  $(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')"
 
 # List tools the enabled Neovim extras expect and flag any missing from PATH.
 nvim-check-tools:

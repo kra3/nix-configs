@@ -5,11 +5,15 @@ at once; a single worker thread then
   1. reads the post's metadata with yt-dlp (title, author, caption/description),
   2. takes the transcript from existing subtitles when the platform has them, otherwise
      downloads the audio and transcribes it with faster-whisper,
-  3. asks Claude for a title, summary, key points and tags (structured JSON output),
+  3. asks Claude for a title, summary, key points and candidate evergreen ideas (structured
+     JSON output),
   4. writes the note into the vault's inbox, atomically, so Obsidian Sync never uploads
      half a file.
 Jobs are files under STATE_DIR/queue, so a restart resumes them. A job that keeps failing
 still produces a short note saying so, so nothing shared from the phone vanishes silently.
+
+Notes follow the vault rules (docs/second-brain-starter/CLAUDE.md): a capture in `0 Inbox`
+named `YYYY-MM-DD HHMM <title>.md`, frontmatter `created` + `type: capture`, no topic tags.
 """
 
 import datetime
@@ -103,7 +107,7 @@ def write_atomic(path: Path, text: str) -> None:
 def unique_note_path(title: str, when: datetime.datetime) -> Path:
     slug = re.sub(r'[\\/:*?"<>|#^\[\]]+', "", title).strip()
     slug = re.sub(r"\s+", " ", slug)[:80].rstrip(" .") or "Clip"
-    base = VAULT / INBOX / f"{when:%Y-%m-%d} {slug}"
+    base = VAULT / INBOX / f"{when:%Y-%m-%d %H%M} {slug}"
     path, n = base.with_suffix(".md"), 2
     while path.exists():
         path, n = Path(f"{base} ({n}).md"), n + 1
@@ -182,10 +186,11 @@ NOTE_SCHEMA = {
         "title": {"type": "string", "description": "Short, specific note title (max ~8 words)."},
         "summary": {"type": "string", "description": "2-4 sentence summary of the content."},
         "key_points": {"type": "array", "items": {"type": "string"}},
-        "tags": {"type": "array", "items": {"type": "string"},
-                 "description": "3-6 lowercase kebab-case topic tags, no '#'."},
+        "candidate_ideas": {"type": "array", "items": {"type": "string"},
+                            "description": "0-3 claims from the video worth an evergreen note, "
+                                           "each phrased as a full claim in sentence case."},
     },
-    "required": ["title", "summary", "key_points", "tags"],
+    "required": ["title", "summary", "key_points", "candidate_ideas"],
     "additionalProperties": False,
 }
 
@@ -194,7 +199,8 @@ SYSTEM = (
     "Write in English even when the video is in another language. Capture the substance: "
     "facts, steps, recommendations, numbers, names. Leave out filler, greetings, and calls "
     "to like or subscribe. If the transcript is empty or meaningless (music only), say so "
-    "in the summary and base the note on the caption."
+    "in the summary and base the note on the caption. Candidate ideas are suggestions only: "
+    "the user writes evergreen notes in their own words, so list claims, never draft their notes."
 )
 
 
@@ -225,11 +231,13 @@ def summarise(meta: dict, transcript: str) -> dict:
 
 def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
                 when: datetime.datetime) -> str:
-    tags = ["clip"] + [re.sub(r"[^\w/-]+", "-", t.strip().lower().lstrip("#")) for t in note["tags"]]
     upload = meta.get("upload_date")
     fm = [
         "---",
+        f"created: {when:%Y-%m-%dT%H:%M}",
+        "type: capture",
         f"source: {yaml_str(meta.get('webpage_url') or url)}",
+        "kind: video",
         f"platform: {yaml_str(meta.get('extractor_key') or '')}",
         f"author: {yaml_str(meta.get('uploader') or meta.get('channel') or '')}",
     ]
@@ -237,24 +245,24 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         fm.append(f"published: {upload[:4]}-{upload[4:6]}-{upload[6:]}")
     if meta.get("duration"):
         fm.append(f"duration: {int(meta['duration'])}")
-    fm += [
-        f"captured: {when.isoformat(timespec='seconds')}",
-        f"transcript: {source}",
-        "tags:",
-        *[f"  - {yaml_str(t)}" for t in dict.fromkeys(tags) if t],
-        "---",
-    ]
+    fm += [f"transcript: {yaml_str(source)}", "---"]
     body = [
         f"# {note['title']}",
         "",
+        "## Summary",
+        "<!-- Drafted by Claude from the transcript; rewrite it in your words when you file it. -->",
         note["summary"].strip(),
         "",
         "## Key points",
         *[f"- {p.strip()}" for p in note["key_points"]],
         "",
     ]
+    if note["candidate_ideas"]:
+        body += ["## Ideas for evergreen notes", *[f"- [ ] {i.strip()}" for i in note["candidate_ideas"]], ""]
     desc = (meta.get("description") or "").strip()
     if desc:
+        # Escape hashtags: Obsidian would turn them into topic tags, which the vault rules forbid.
+        desc = re.sub(r"(?<!\S)#(?=\w)", r"\\#", desc)
         body += ["## Caption", "", "> " + desc.replace("\n", "\n> "), ""]
     body += ["## Transcript", "", transcript.strip() or "_(no speech)_", ""]
     return "\n".join(fm + [""] + body)
@@ -263,11 +271,10 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
 def failure_note(url: str, error: str, when: datetime.datetime) -> str:
     return "\n".join([
         "---",
+        f"created: {when:%Y-%m-%dT%H:%M}",
+        "type: capture",
         f"source: {yaml_str(url)}",
-        f"captured: {when.isoformat(timespec='seconds')}",
-        "tags:",
-        '  - "clip"',
-        '  - "clip-failed"',
+        "clip: failed",
         "---",
         "",
         "# Clip failed",

@@ -223,6 +223,10 @@
               "Z /var/log/jellyfin/*.txt 0640 jellyfin jellyfin - -"
             ];
 
+            # Pinned to match the host's jellyfin group (gid 999), so host-side group-only sops
+            # secrets/templates (password, SSO-Auth.xml) stay readable here regardless of allocation order.
+            users.groups.jellyfin.gid = 999;
+
             # Jellyfin only reads SSO-Auth.xml at startup; nothing else here
             # would trigger a restart on content-only changes.
             systemd.services.jellyfin = lib.mkIf config.vars.localMedia.enable {
@@ -347,8 +351,9 @@
         lib.mkIf (config.containers.media-play.config.services.declarative-jellyfin.enable or false)
           {
             owner = "root";
-            group = "root";
-            mode = "0444";
+            # Host gid 999 == the container's pinned jellyfin gid.
+            group = "jellyfin";
+            mode = "0440";
             content = jellyfinSsoAuthXmlContent;
           };
     };

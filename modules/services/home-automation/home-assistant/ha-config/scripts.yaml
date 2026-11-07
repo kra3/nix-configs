@@ -498,8 +498,8 @@ transit_check:
   alias: "Transit: check trips"
   description: >-
     Public transport options for the next 90 min for one person (the caller
-    unless given): home to their work when at home, otherwise from their
-    phone's location to home. With an event place: to the event, arriving
+    unless given), from their phone's location (or home) to their work or to
+    home, as set by direction. With an event place: to the event, arriving
     5 min before it starts, or home when already within 500 m of it.
     Publishes the result as a transit_trips event for the trips sensors.
   fields:
@@ -508,6 +508,14 @@ transit_check:
       selector:
         entity:
           domain: person
+    direction:
+      description: work or home. Defaults to work when the person is at home, otherwise home.
+      required: false
+      selector:
+        select:
+          options:
+          - work
+          - home
     place:
       required: false
       selector:
@@ -527,6 +535,7 @@ transit_check:
         {{ person | default(states.person | selectattr('attributes.user_id', 'eq', context.user_id)
                                           | map(attribute='entity_id') | first | default('')) }}
       kind: "{{ 'event' if place | default('') | trim else 'zone' }}"
+      dir: "{{ direction | default('work' if is_state(who, 'home') else 'home') }}"
       geo: {}
   - if:
     - condition: template
@@ -549,12 +558,12 @@ transit_check:
         {% from 'transit.jinja' import origin_name %}{{ (title | default('') or place) if at_event else origin_name(who) }}
       destination_name: >-
         {% from 'transit.jinja' import destination_name %}
-        {{ ('Home' if at_event else (title | default('') or place)) if kind == 'event' else destination_name(who) }}
+        {{ ('Home' if at_event else (title | default('') or place)) if kind == 'event' else destination_name(who, dir) }}
       from_ll: >-
         {% set e = 'zone.home' if at_home else who %}
         {{ [spot.lat | float, spot.lon | float] if at_event else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
       to_ll: >-
-        {% set e = 'zone.home' if at_event or (kind == 'zone' and not at_home) else work_zone %}
+        {% set e = 'zone.home' if at_event or (kind == 'zone' and dir == 'home') else work_zone %}
         {{ [spot.get('lat') | float(0), spot.get('lon') | float(0)] if kind == 'event' and not at_event
            else [state_attr(e, 'latitude'), state_attr(e, 'longitude')] }}
       coords_ok: >-
@@ -688,6 +697,7 @@ transit_check:
     event_data:
       person: "{{ who }}"
       kind: "{{ kind }}"
+      direction: "{{ dir if kind == 'zone' else '' }}"
       from_state: "{{ states(who) }}"
       event: "{{ (title | default('') or place) ~ '|' ~ starts | default('') if kind == 'event' else '' }}"
       by: "{{ by }}"

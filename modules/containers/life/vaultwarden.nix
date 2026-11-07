@@ -16,6 +16,11 @@
       # Argon2id PHC string, not the raw token — generate with
       # `podman run --rm -it docker.io/vaultwarden/server:<tag> /vaultwarden hash`.
       sops.secrets."life.vaultwarden.admin_token_hash" = { };
+      # From bitwarden.com/host (EU region). Lets iOS/iPadOS get instant sync
+      # via Bitwarden's push relay -> APNs; the relay only sees device push
+      # tokens and "sync now" signals, never vault data.
+      sops.secrets."life.vaultwarden.push_installation_id" = { };
+      sops.secrets."life.vaultwarden.push_installation_key" = { };
 
       sops.templates."life.vaultwarden.env" = {
         owner = "root";
@@ -23,6 +28,8 @@
         mode = "0440";
         content = ''
           ADMIN_TOKEN=${config.sops.placeholder."life.vaultwarden.admin_token_hash"}
+          PUSH_INSTALLATION_ID=${config.sops.placeholder."life.vaultwarden.push_installation_id"}
+          PUSH_INSTALLATION_KEY=${config.sops.placeholder."life.vaultwarden.push_installation_key"}
         '';
       };
 

@@ -25,6 +25,12 @@
             # nginx sets X-Real-IP; this is what lands in the failed-login log
             # lines that the fail2ban jail below matches.
             IP_HEADER = "X-Real-IP";
+            # Mobile push via Bitwarden's relay. The installation ID/key come
+            # from the env file (container module); the relay URIs must match
+            # the region the installation was registered in (EU).
+            PUSH_ENABLED = "true";
+            PUSH_RELAY_URI = "https://api.bitwarden.eu";
+            PUSH_IDENTITY_URI = "https://identity.bitwarden.eu";
           };
         };
       };

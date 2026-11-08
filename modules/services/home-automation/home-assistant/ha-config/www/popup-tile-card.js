@@ -68,6 +68,7 @@ class PopupTileCard extends HTMLElement {
       this._html = html;
       this.shadowRoot.innerHTML = `<style>${STYLE}</style>${html}`;
       this.shadowRoot.querySelector("ha-card").addEventListener("click", () => this._open());
+      if (this._overlay) this.shadowRoot.appendChild(this._overlay);
     }
     this.shadowRoot.querySelector(".name").textContent = c.name || (s && s.attributes.friendly_name) || c.entity;
     this.shadowRoot.querySelector(".state").textContent = c.subtitle || (c.unit ? `${state} ${c.unit}` : state);
@@ -75,18 +76,16 @@ class PopupTileCard extends HTMLElement {
 
   async _open() {
     if (this._overlay) return;
-    if (!document.getElementById("ptc-style")) {
-      const st = document.createElement("style");
-      st.id = "ptc-style";
-      st.textContent = POPUP_STYLE;
-      document.head.appendChild(st);
-    }
     const helpers = await window.loadCardHelpers();
-    const card = await helpers.createCardElement(this._config.popup);
+    let card = helpers.createCardElement(this._config.popup);
+    if (!customElements.get(card.localName)) {
+      await customElements.whenDefined(card.localName);
+      card = helpers.createCardElement(this._config.popup);
+    }
     card.hass = this._hass;
     const ov = document.createElement("div");
     ov.className = "ptc-overlay";
-    ov.innerHTML = `<div class="ptc-sheet" role="dialog" aria-modal="true"><div class="ptc-head"><span class="ptc-title"></span><button class="ptc-close" aria-label="Close">×</button></div></div>`;
+    ov.innerHTML = `<style>${POPUP_STYLE}</style><div class="ptc-sheet" role="dialog" aria-modal="true"><div class="ptc-head"><span class="ptc-title"></span><button class="ptc-close" aria-label="Close">×</button></div></div>`;
     ov.querySelector(".ptc-title").textContent = this._config.title || "";
     if (this._config.width) ov.querySelector(".ptc-sheet").style.setProperty("--ptc-w", this._config.width);
     ov.querySelector(".ptc-sheet").appendChild(card);
@@ -100,11 +99,12 @@ class PopupTileCard extends HTMLElement {
       if (e.key === "Escape") close();
     };
     ov.addEventListener("click", (e) => {
+      e.stopPropagation();
       if (e.target === ov) close();
     });
     ov.querySelector(".ptc-close").addEventListener("click", close);
     document.addEventListener("keydown", onKey);
-    document.body.appendChild(ov);
+    this.shadowRoot.appendChild(ov);
     this._overlay = ov;
     this._popupCard = card;
   }

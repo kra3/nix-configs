@@ -112,6 +112,16 @@ powercalc:
             power: 2
         - power_sensor_id: sensor.fridge_power
           energy_sensor_id: sensor.fridge_energy
+        - power_sensor_id: sensor.hob_power
+          energy_sensor_id: sensor.hob_energy
+        - power_sensor_id: sensor.hood_power
+          energy_sensor_id: sensor.hood_energy
+        - power_sensor_id: sensor.dishwasher_power
+          energy_sensor_id: sensor.dishwasher_energy
+        - power_sensor_id: sensor.oven_power
+          energy_sensor_id: sensor.oven_energy
+        - power_sensor_id: sensor.microwave_power
+          energy_sensor_id: sensor.microwave_energy
 
 template:
   - sensor:
@@ -123,12 +133,79 @@ template:
         state_class: measurement
         state: "35.2"
 
+      - name: "Hob Power"
+        unique_id: hob_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "{{ (105 * 1500 / 1440) | round(1) }}"
+        attributes:
+          assumes: "105 min/day at 1.5 kW average (induction, daily average)"
+
+      - name: "Hood Power"
+        unique_id: hood_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "{{ (105 * 150 / 1440) | round(1) }}"
+        attributes:
+          assumes: "105 min/day at 150 W (270 W max, daily average)"
+
+      - name: "Dishwasher Power"
+        unique_id: dishwasher_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "{{ (4 * 1200 / 168) | round(1) }}"
+        attributes:
+          assumes: "4 cycles/week at 1.2 kWh (class A, weekly average)"
+
+      - name: "Oven Power"
+        unique_id: oven_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "{{ (3 * 1000 / 168) | round(1) }}"
+        attributes:
+          assumes: "3 uses/week at 1.0 kWh (label 0.93 kWh/cycle plus preheat, weekly average)"
+
+      - name: "Microwave Power"
+        unique_id: microwave_power
+        device_class: power
+        unit_of_measurement: W
+        state_class: measurement
+        state: "{{ (10 * 1300 / 1440) | round(1) }}"
+        attributes:
+          assumes: "10 min/day at 1300 W input (daily average)"
+
       - name: "Energy Cost Month"
         unique_id: energy_cost_month
+        unit_of_measurement: kr
+        state_class: measurement
+        state: >-
+          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0) + states('sensor.energy_fees_month') | float(0)) | round(2) }}
+
+      - name: "Energy Fees Month"
+        unique_id: energy_fees_month
         device_class: monetary
         unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import fees %}{{ fees(now().year, now().month) }}"
+        attributes:
+          covers: "E.ON grid subscription 193 kr/month and contract fee 384 kr/year, with VAT"
+
+      - name: "Energy Used Today"
+        unique_id: energy_used_today
+        device_class: energy
+        unit_of_measurement: kWh
         state: >-
-          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
+          {{ (states('sensor.washer_energy_day') | float(0) + states('sensor.dryer_energy_day') | float(0) + states('sensor.sutala_energy_day') | float(0) + states('sensor.lights_energy_day') | float(0) + states('sensor.devices_energy_day') | float(0)) | round(2) }}
+
+      - name: "Energy Used Month"
+        unique_id: energy_used_month
+        device_class: energy
+        unit_of_measurement: kWh
+        state: >-
+          {{ (states('sensor.washer_energy_month') | float(0) + states('sensor.dryer_energy_month') | float(0) + states('sensor.sutala_energy_month') | float(0) + states('sensor.lights_energy_month') | float(0) + states('sensor.devices_energy_month') | float(0)) | round(2) }}
 
       - name: "Home Power Estimate"
         unique_id: home_power_estimate
@@ -142,121 +219,187 @@ template:
 
       - name: "Cost Today All lights"
         unique_id: cost_today_all_lights
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights') }}"
         attributes:
           power: "{{ states('sensor.lights_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Bedroom"
         unique_id: cost_today_bedroom
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_bedroom') }}"
         attributes:
           power: "{{ states('sensor.lights_bedroom_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Kitchen"
         unique_id: cost_today_kitchen
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen') }}"
         attributes:
           power: "{{ states('sensor.lights_kitchen_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Kitchen dining"
         unique_id: cost_today_kitchen_dining
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_kitchen_dining') }}"
         attributes:
           power: "{{ states('sensor.lights_kitchen_dining_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Dining room"
         unique_id: cost_today_dining_room
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_dining_room') }}"
         attributes:
           power: "{{ states('sensor.lights_dining_room_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Living room"
         unique_id: cost_today_living_room
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_living_room') }}"
         attributes:
           power: "{{ states('sensor.lights_living_room_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Office"
         unique_id: cost_today_office
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_office') }}"
         attributes:
           power: "{{ states('sensor.lights_office_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Hall"
         unique_id: cost_today_hall
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lights_hall') }}"
         attributes:
           power: "{{ states('sensor.lights_hall_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today TV"
         unique_id: cost_today_tv
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('lg_tv') }}"
         attributes:
           power: "{{ states('sensor.lg_tv_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Receiver"
         unique_id: cost_today_receiver
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('marantz_nr1711') }}"
         attributes:
           power: "{{ states('sensor.marantz_nr1711_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Camera Duo"
         unique_id: cost_today_camera_duo
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('camera_duo') }}"
         attributes:
           power: "{{ states('sensor.camera_duo_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Camera Uno"
         unique_id: cost_today_camera_uno
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('camera_uno') }}"
         attributes:
           power: "{{ states('sensor.camera_uno_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Fridge"
         unique_id: cost_today_fridge
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('fridge') }}"
         attributes:
           power: "{{ states('sensor.fridge_power') | float(0) | round(1) }} W"
 
       - name: "Cost Today Kitchen speaker"
         unique_id: cost_today_kitchen_speaker
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
         state: "{% from 'laundry.jinja' import today %}{{ today('kitchen_speaker') }}"
         attributes:
           power: "{{ states('sensor.kitchen_speaker_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Hob"
+        unique_id: cost_today_hob
+        unit_of_measurement: kr
+        state: "{% from 'laundry.jinja' import today %}{{ today('hob') }}"
+        attributes:
+          power: "{{ states('sensor.hob_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Hood"
+        unique_id: cost_today_hood
+        unit_of_measurement: kr
+        state: "{% from 'laundry.jinja' import today %}{{ today('hood') }}"
+        attributes:
+          power: "{{ states('sensor.hood_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Dishwasher"
+        unique_id: cost_today_dishwasher
+        unit_of_measurement: kr
+        state: "{% from 'laundry.jinja' import today %}{{ today('dishwasher') }}"
+        attributes:
+          power: "{{ states('sensor.dishwasher_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Oven"
+        unique_id: cost_today_oven
+        unit_of_measurement: kr
+        state: "{% from 'laundry.jinja' import today %}{{ today('oven') }}"
+        attributes:
+          power: "{{ states('sensor.oven_power') | float(0) | round(1) }} W"
+
+      - name: "Cost Today Microwave"
+        unique_id: cost_today_microwave
+        unit_of_measurement: kr
+        state: "{% from 'laundry.jinja' import today %}{{ today('microwave') }}"
+        attributes:
+          power: "{{ states('sensor.microwave_power') | float(0) | round(1) }} W"
 
 sensor:
   - platform: integration
     source: sensor.fridge_power
     name: Fridge Energy
     unique_id: fridge_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+  - platform: integration
+    source: sensor.hob_power
+    name: Hob Energy
+    unique_id: hob_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+  - platform: integration
+    source: sensor.hood_power
+    name: Hood Energy
+    unique_id: hood_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+  - platform: integration
+    source: sensor.dishwasher_power
+    name: Dishwasher Energy
+    unique_id: dishwasher_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+  - platform: integration
+    source: sensor.oven_power
+    name: Oven Energy
+    unique_id: oven_energy
+    unit_prefix: k
+    round: 4
+    method: left
+    max_sub_interval:
+      minutes: 10
+  - platform: integration
+    source: sensor.microwave_power
+    name: Microwave Energy
+    unique_id: microwave_energy
     unit_prefix: k
     round: 4
     method: left
@@ -281,4 +424,19 @@ utility_meter:
     cycle: daily
   kitchen_speaker_energy_day:
     source: sensor.kitchen_speaker_energy
+    cycle: daily
+  hob_energy_day:
+    source: sensor.hob_energy
+    cycle: daily
+  hood_energy_day:
+    source: sensor.hood_energy
+    cycle: daily
+  dishwasher_energy_day:
+    source: sensor.dishwasher_energy
+    cycle: daily
+  oven_energy_day:
+    source: sensor.oven_energy
+    cycle: daily
+  microwave_energy_day:
+    source: sensor.microwave_energy
     cycle: daily

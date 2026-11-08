@@ -6,6 +6,11 @@
 {{ (states('sensor.' ~ dev ~ '_energy_month') | float(0) * states('sensor.electricity_price_per_kwh') | float(0)) | round(2) }}
 {%- endmacro %}
 
+{% macro fees(y, m) -%}
+{% set days = [31, 29 if y % 4 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] -%}
+{{ ((193 + 384 * days / 365) * 1.25) | round(2) }}
+{%- endmacro %}
+
 {% macro last_month(dev) -%}
 {{ (states('input_text.' ~ dev ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | map('float') | list | first | default(0)) }}
 {%- endmacro %}

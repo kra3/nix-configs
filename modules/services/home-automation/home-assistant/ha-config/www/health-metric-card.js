@@ -23,7 +23,7 @@ function carryForward(pts, from, to) {
   const out = [];
   let i = 0;
   let cur = pts[0].v;
-  for (let t = from; t <= to; t = dayStart(t + 30 * 36e5)) {
+  for (let t = Math.max(from, dayStart(pts[0].t)); t <= to; t = dayStart(t + 30 * 36e5)) {
     while (i < pts.length && pts[i].t <= t) cur = pts[i++].v;
     out.push({ t, v: cur });
   }
@@ -45,6 +45,7 @@ function bucketDaily(raw, stat) {
 const PALETTE = ["#9fa8ff", "#8fd9c0", "#c9a7e8", "#f2c14e"];
 const DUR_STEPS = [30, 60, 120, 180, 240, 360, 480];
 const RANGES = [[7, "Week"], [30, "Month"], [90, "3M"], [180, "6M"]];
+const RANGE_LABELS = { 7: "Week", 30: "Month", 90: "3M", 180: "6M", 365: "1Y" };
 const TONE_COLOR = { good: "#7ccf7c", mid: "#f2c14e", bad: "#f08a80" };
 let chartSeq = 0;
 
@@ -107,8 +108,10 @@ function chartSvg(list, type, days, stacked, lang, opts = {}) {
   if (!list.some((s) => s.pts.length)) return "";
   const end = opts.end || dayStart(Date.now());
   const sd = new Date(end);
-  sd.setDate(sd.getDate() - (days - 1));
+  if (opts.months) sd.setMonth(sd.getMonth() - (opts.months - 1), 1);
+  else sd.setDate(sd.getDate() - (days - 1));
   const t0 = sd.getTime();
+  const mi = (t) => new Date(t).getFullYear() * 12 + new Date(t).getMonth() - (sd.getFullYear() * 12 + sd.getMonth());
   const bar = type === "bar";
   const sums = new Map();
   if (stacked) for (const s of list) for (const p of s.pts) sums.set(dayStart(p.t), (sums.get(dayStart(p.t)) || 0) + p.v);
@@ -125,25 +128,26 @@ function chartSvg(list, type, days, stacked, lang, opts = {}) {
   const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
   const hf = opts.fmt || ((v) => fmt(v, autoDecimals(v), lang));
   const af = opts.axisFmt || ((v) => fmt(v, autoDecimals(hi), lang));
-  const dl = (t) => new Date(t).toLocaleDateString(lang, { month: "short", day: "numeric" });
+  const dl = (t) => new Date(t).toLocaleDateString(lang, opts.months ? { month: "short", year: "2-digit" } : { month: "short", day: "numeric" });
   const id = "hmc" + ++chartSeq;
   let out = "";
   const ticks = niceTicks(lo, hi, opts.steps);
   for (const v of ticks) out += `<line class="grid" x1="${L}" x2="${W - R / 2}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>`;
   out += `<text x="${L}" y="${H - 6}" text-anchor="start">${dl(t0)}</text><text x="${((L + W - R) / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${dl((t0 + end) / 2)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${dl(end)}</text>`;
-  const slot = (W - L - R) / days;
+  const slot = (W - L - R) / (opts.months || days);
   const acc = new Map();
   list.forEach((s, i) => {
     const color = s.color || PALETTE[i % PALETTE.length];
     if (bar) {
       for (const p of s.pts) {
-        const k = dayStart(p.t);
+        const k = opts.months ? p.t + 15 * 864e5 : dayStart(p.t);
         const base = stacked ? acc.get(k) || 0 : 0;
         acc.set(k, base + p.v);
         const top = y(base + p.v);
         const h = Math.max(1.5, y(base) - top);
         const bw = Math.max(2, slot * 0.6);
-        out += `<rect x="${(x(k) - bw / 2 + slot / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}"><title>${dl(k)}: ${hf(p.v)}</title></rect>`;
+        const xk = opts.months ? L + mi(k) * slot : x(k);
+        out += `<rect x="${(xk - bw / 2 + slot / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}"><title>${dl(k)}: ${hf(p.v)}</title></rect>`;
       }
       return;
     }
@@ -171,12 +175,12 @@ function statRow(name, value) {
 }
 
 // Average / range (lines) or average / total / best day (bars) for a single series.
-function statsHtml(list, type, fmtv) {
+function statsHtml(list, type, fmtv, per = "day") {
   if (list.length !== 1 || !list[0].pts.length) return "";
   const v = list[0].pts.map((p) => p.v);
   const sum = v.reduce((a, b) => a + b, 0);
   const avg = sum / v.length;
-  if (type === "bar") return statRow("Average", fmtv(avg)) + statRow("Total", fmtv(sum)) + statRow("Best day", fmtv(Math.max(...v)));
+  if (type === "bar") return statRow("Average", fmtv(avg)) + statRow("Total", fmtv(sum)) + statRow(`Best ${per}`, fmtv(Math.max(...v)));
   return statRow("Average", fmtv(avg)) + statRow("Range (min – max)", `${fmtv(Math.min(...v))} – ${fmtv(Math.max(...v))}`) + statRow("Latest", fmtv(v[v.length - 1]));
 }
 
@@ -645,10 +649,11 @@ class HealthMetricCard extends HTMLElement {
     const scale = spec.scale || 1;
     const now = spec.end ? new Date(new Date(spec.end).getFullYear(), new Date(spec.end).getMonth(), new Date(spec.end).getDate() + 1) : new Date();
     const last = spec.end ? new Date(spec.end) : now;
-    const start = new Date(last.getFullYear(), last.getMonth(), last.getDate() - (days - 1));
+    const monthly = spec.period === "month";
+    const start = monthly ? new Date(last.getFullYear(), last.getMonth() - (spec.months - 1), 1) : new Date(last.getFullYear(), last.getMonth(), last.getDate() - (days - 1));
     const st = hass.states[entityId];
     let source = spec.source || "auto";
-    if (source === "auto") source = st && st.attributes.state_class ? "statistics" : "history";
+    if (source === "auto" || monthly) source = monthly || (st && st.attributes.state_class) ? "statistics" : "history";
     let pts = [];
     if (source === "statistics") {
       try {
@@ -657,7 +662,7 @@ class HealthMetricCard extends HTMLElement {
           start_time: start.toISOString(),
           end_time: now.toISOString(),
           statistic_ids: [entityId],
-          period: "day",
+          period: monthly ? "month" : "day",
           types: stat === "reading" ? ["min", "max"] : [stat === "last" ? "mean" : stat],
         });
         const rows = res[entityId] || [];
@@ -669,7 +674,7 @@ class HealthMetricCard extends HTMLElement {
       } catch (e) {
         pts = [];
       }
-      if (!pts.length) source = "history";
+      if (!pts.length && !monthly) source = "history";
     }
     if (source === "history") {
       const res = await hass.callWS({
@@ -799,15 +804,16 @@ class HealthMetricCard extends HTMLElement {
       }
     }
 
-    if (c.secondary) {
-      const sec = this._hass.states[c.secondary.entity];
+    const subs = [];
+    for (const s2 of [].concat(c.secondary || [])) {
+      const sec = this._hass.states[s2.entity];
       const sv = sec ? parseFloat(sec.state) : NaN;
-      if (isFinite(sv)) {
-        const txt = c.secondary.format === "duration" ? durationText(sv, lang) : fmt(sv, c.secondary.decimals || 0, lang);
-        if (c.secondary.inline) heroHtml += `<span class="alt">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</span>`;
-        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</div>`;
-      }
+      if (!isFinite(sv)) continue;
+      const txt = `${s2.prefix || ""}${s2.format === "duration" ? durationText(sv, lang) : fmt(sv, s2.decimals || 0, lang)}${s2.unit || ""}`;
+      if (s2.inline) heroHtml += `<span class="alt">${txt}</span>`;
+      else subs.push(txt);
     }
+    if (subs.length) under += `<div class="sub">${subs.join(" · ")}</div>`;
 
     const type = c.chart.type || "line";
     const spark = !main.length
@@ -969,16 +975,19 @@ class HealthMetricCard extends HTMLElement {
     const lang = this._hass.language;
     const stat = popupStat(this._hass.states, g);
     const ents = g.entities.map((e) => (typeof e === "string" ? { entity: e } : e)).filter((e) => usable(this._hass, e.entity));
-    const ranges = RANGES.some((r) => r[0] === (g.days || 30)) ? RANGES : [...RANGES, [g.days, g.days + "d"]].sort((a, b) => a[0] - b[0]);
+    const base = g.ranges ? g.ranges.map((d) => [d, RANGE_LABELS[d] || d + "d"]) : RANGES;
+    const ranges = base.some((r) => r[0] === (g.days || 30)) ? base : [...base, [g.days, g.days + "d"]].sort((a, b) => a[0] - b[0]);
     const state = { days: g.days || 30, offset: 0 };
     const draw = async () => {
       const end = new Date(dayStart(Date.now()));
       end.setDate(end.getDate() - state.offset * state.days);
+      const months = g.monthly && state.days > 31 ? Math.round(state.days / 30.4) : 0;
+      const src = months ? [{ entity: g.monthly }] : ents;
       const list = await Promise.all(
-        ents.map(async (e) => {
+        src.map(async (e) => {
           let pts = [];
           try {
-            pts = await this._series(e.entity, { days: state.days, stat, scale: g.scale, end: end.getTime() });
+            pts = await this._series(e.entity, months ? { stat: g.stat || "max", period: "month", months, end: end.getTime() } : { days: state.days, stat, scale: g.scale, end: end.getTime() });
           } catch (err) {
             /* leave empty */
           }
@@ -989,12 +998,12 @@ class HealthMetricCard extends HTMLElement {
       const tabs =
         `<div class="hmc-tabs">${ranges.map((r) => `<button data-days="${r[0]}" class="${r[0] === state.days ? "on" : ""}">${r[1]}</button>`).join("")}` +
         `<span class="sp"></span><button data-nav="1" aria-label="Earlier">‹</button><button data-nav="-1" aria-label="Later" ${state.offset === 0 ? "disabled" : ""}>›</button></div>`;
-      const svg = chartSvg(list, g.type || "line", state.days, !!g.stacked, lang, { end: end.getTime(), fmt: fmtv, axisFmt, steps });
+      const svg = chartSvg(list, g.type || "line", state.days, !!g.stacked, lang, { end: end.getTime(), fmt: fmtv, axisFmt, steps, months });
       const legend =
         list.length > 1
           ? `<div class="hmc-legend">${list.map((s, i) => `<span><i style="background:${s.color || PALETTE[i % PALETTE.length]}"></i>${s.name}</span>`).join("")}</div>`
           : "";
-      box.innerHTML = tabs + (svg ? svg + legend + `<div class="hmc-stats">${statsHtml(list, g.type || "line", fmtv)}</div>` : `<div class="empty">No data in this period</div>`);
+      box.innerHTML = tabs + (svg ? svg + legend + `<div class="hmc-stats">${statsHtml(list, g.type || "line", fmtv, months ? "month" : "day")}</div>` : `<div class="empty">No data in this period</div>`);
     };
     sec.addEventListener("click", (e) => {
       const b = e.target.closest && e.target.closest("button");
@@ -1063,6 +1072,7 @@ class HealthMetricCard extends HTMLElement {
       return;
     }
     const a = this._config.tap_action;
+    if (a && a.action === "none") return;
     if (a && a.action === "navigate" && a.navigation_path) {
       history.pushState(null, "", a.navigation_path);
       window.dispatchEvent(new Event("location-changed"));

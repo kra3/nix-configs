@@ -2649,6 +2649,9 @@ views:
     - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
+      card_mod: &full_height
+        style: |
+          ha-card { height: 100%; }
       icon: mdi:cash-clock
       color: "#7fdbca"
       unit: kr
@@ -2659,17 +2662,20 @@ views:
         days: 14
         stat: max
       secondary:
-        entity: sensor.energy_cost_month
-        prefix: "This month "
-        unit: " kr"
-        decimals: 2
+      - entity: sensor.energy_used_today
+        unit: " kWh"
+        decimals: 1
+      - entity: sensor.home_power_estimate
+        prefix: "Now "
+        unit: " W"
       grid_options:
-        columns: 8
+        columns: 12
     - type: custom:health-metric-card
-      entity: sensor.lights_cost
-      name: Lights this month (approx.)
-      icon: mdi:lightbulb-group
-      color: "#c3e88d"
+      entity: sensor.energy_cost_month
+      name: This month
+      card_mod: *full_height
+      icon: mdi:calendar-month
+      color: "#7fdbca"
       unit: kr
       decimals: 2
       show_date: false
@@ -2678,47 +2684,24 @@ views:
         days: 30
         stat: max
       secondary:
-        entity: sensor.lights_power
-        prefix: "Now "
-        unit: " W"
+        entity: sensor.energy_used_month
+        unit: " kWh"
         decimals: 1
       popup:
+        title: Electricity cost
         graphs:
-        - name: Lights energy per day
+        - name: Cost per day (month view) or per month, fees included
           entities:
-          - sensor.lights_energy
-          days: 30
-          stat: change
+          - sensor.energy_cost_today
+          monthly: sensor.energy_cost_month
+          stat: max
           type: bar
-      grid_options:
-        columns: 8
-    - type: custom:health-metric-card
-      entity: sensor.devices_cost
-      name: Devices this month (approx.)
-      icon: mdi:television
-      color: "#c792ea"
-      unit: kr
-      decimals: 2
-      show_date: false
-      chart:
-        type: line
-        days: 30
-        stat: max
-      secondary:
-        entity: sensor.estimated_devices_power
-        prefix: "Now "
-        unit: " W"
-        decimals: 1
-      popup:
-        graphs:
-        - name: Devices energy per day
-          entities:
-          - sensor.estimated_devices_energy
+          unit: kr
+          decimals: 0
           days: 30
-          stat: change
-          type: bar
+          ranges: [30, 90, 180, 365]
       grid_options:
-        columns: 8
+        columns: 12
   - type: grid
     column_span: 1
     cards:
@@ -2856,6 +2839,51 @@ views:
       - power
       grid_options:
         columns: 6
+    - type: tile
+      entity: sensor.cost_today_hob
+      name: Hob
+      icon: mdi:pot-steam
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_oven
+      name: Oven
+      icon: mdi:stove
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_dishwasher
+      name: Dishwasher
+      icon: mdi:dishwasher
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_microwave
+      name: Microwave
+      icon: mdi:microwave
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_hood
+      name: Hood
+      icon: mdi:fan
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 12
   - type: grid
     column_span: 1
     cards:
@@ -2871,23 +2899,68 @@ views:
       - name: Lights
         icon: mdi:lightbulb-group
         entity: sensor.lights_cost
+        energy: sensor.lights_energy
         color: "#c3e88d"
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.lights_energy
+            stat: change
+            type: bar
+            days: 30
       - name: Devices
         icon: mdi:television
         entity: sensor.devices_cost
+        energy: sensor.devices_energy
         color: "#c792ea"
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.estimated_devices_energy
+            stat: change
+            type: bar
+            days: 30
       - name: Washer
         icon: mdi:washing-machine
         entity: sensor.washer_cost
+        energy: sensor.washer_energy
         color: "#6ab7ff"
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.washer_power_monitor_energy
+            stat: change
+            type: bar
+            days: 30
       - name: Dryer
         icon: mdi:tumble-dryer
         entity: sensor.dryer_cost
+        energy: sensor.dryer_energy
         color: "#ffb06b"
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.dryer_power_monitor_energy
+            stat: change
+            type: bar
+            days: 30
       - name: Home server
         icon: mdi:flash
         entity: sensor.sutala_cost
+        energy: sensor.sutala_energy
         color: "#ffd86b"
+        popup:
+          graphs:
+          - name: Energy per day
+            entities:
+            - sensor.power_monitor_1_energy
+            stat: change
+            type: bar
+            days: 30
 - type: sections
   title: Laundry
   path: dash-laundry

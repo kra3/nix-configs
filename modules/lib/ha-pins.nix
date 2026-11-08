@@ -29,7 +29,10 @@
           applyPatches = lib.concatMapStringsSep "\n" (
             pt:
             "(cd src && git apply ${lib.concatMapStringsSep " " (e: "--exclude=${e}") (pt.excludes or [ ])} ${
-              pkgs.fetchurl { inherit (pt) url hash; }
+              if pt ? path then
+                ../services/home-automation/home-assistant + "/${pt.path}"
+              else
+                pkgs.fetchurl { inherit (pt) url hash; }
             })"
           ) (p.patches or [ ]);
           requirements = lib.optionalString (p ? requirements) ''

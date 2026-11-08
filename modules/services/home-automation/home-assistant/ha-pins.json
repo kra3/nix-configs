@@ -63,11 +63,7 @@
       "subpath": "custom_components/plejd",
       "patches": [
         {
-          "url": "https://github.com/clsjon/hass-plejd/commit/691134319d0251996121ab543aba635d7dc1e208.patch",
-          "excludes": [
-            "pyplejd"
-          ],
-          "hash": "sha256-CRj8VrsOMupio4cAN7jreMxolkl5PWYbHgsnK4J4z1k="
+          "path": "patches/plejd-reconnect-registry.patch"
         }
       ],
       "hash": "sha256-rpizri9SfRyXSA6rNsj/hhVWR3uc7wAGorzVnb/JCM0=",

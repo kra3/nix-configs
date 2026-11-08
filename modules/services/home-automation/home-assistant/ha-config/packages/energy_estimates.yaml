@@ -128,7 +128,15 @@ template:
         device_class: monetary
         unit_of_measurement: SEK
         state: >-
-          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
+          {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0) + states('sensor.energy_fees_month') | float(0)) | round(2) }}
+
+      - name: "Energy Fees Month"
+        unique_id: energy_fees_month
+        device_class: monetary
+        unit_of_measurement: SEK
+        state: "{% from 'laundry.jinja' import fees %}{{ fees(now().year, now().month) }}"
+        attributes:
+          covers: "E.ON grid subscription 193 kr/month and contract fee 384 kr/year, with VAT"
 
       - name: "Energy Used Today"
         unique_id: energy_used_today

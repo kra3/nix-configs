@@ -2703,19 +2703,21 @@ views:
           {%- endfor -%}
           {%- set marker = states('input_number.electricity_month_marker') | int(0) or now().month -%}
           {%- set k0 = (now().year if marker <= now().month else now().year - 1) * 12 + marker - 1 -%}
-          {%- set out = namespace(s='| Month | Total | ' ~ (devs | map(attribute=1) | join(' | ')) ~ ' |\n|:--|--:|' ~ ('--:|' * devs | count) ~ '\n') -%}
+          {%- from 'laundry.jinja' import fees -%}
+          {%- set out = namespace(s='| Month | Total | ' ~ (devs | map(attribute=1) | join(' | ')) ~ ' | Fees |\n|:--|--:|' ~ ('--:|' * devs | count) ~ '--:|\n') -%}
           {%- set r = namespace(c='') -%}
           {%- for d in devs -%}{%- set r.c = r.c ~ (states('sensor.' ~ d[0] ~ '_cost') | float(0) | round(0) | int) ~ ' | ' -%}{%- endfor -%}
-          {%- set out.s = out.s ~ '| ' ~ names[now().month - 1] ~ ' ' ~ now().year ~ ' *(so far)* | **' ~ (states('sensor.energy_cost_month') | float(0) | round(0) | int) ~ '** | ' ~ r.c ~ '\n' -%}
+          {%- set out.s = out.s ~ '| ' ~ names[now().month - 1] ~ ' ' ~ now().year ~ ' *(so far)* | **' ~ (states('sensor.energy_cost_month') | float(0) | round(0) | int) ~ '** | ' ~ r.c ~ (states('sensor.energy_fees_month') | float(0) | round(0) | int) ~ ' |\n' -%}
           {%- for i in range(ns.n) -%}
           {%- set k = k0 - 1 - i -%}
-          {%- set r = namespace(t=0, c='') -%}
+          {%- set f = fees(k // 12, k % 12 + 1) | float -%}
+          {%- set r = namespace(t=f, c='') -%}
           {%- for h in ns.h -%}
           {%- set v = h[i] if i < h | count else 0 -%}
           {%- set r.t = r.t + v -%}
           {%- set r.c = r.c ~ (v | round(0) | int) ~ ' | ' -%}
           {%- endfor -%}
-          {%- set out.s = out.s ~ '| ' ~ names[k % 12] ~ ' ' ~ (k // 12) ~ ' | **' ~ (r.t | round(0) | int) ~ '** | ' ~ r.c ~ '\n' -%}
+          {%- set out.s = out.s ~ '| ' ~ names[k % 12] ~ ' ' ~ (k // 12) ~ ' | **' ~ (r.t | round(0) | int) ~ '** | ' ~ r.c ~ (f | round(0) | int) ~ ' |\n' -%}
           {%- endfor -%}
           {{ out.s }}
           {%- if ns.n == 0 %}

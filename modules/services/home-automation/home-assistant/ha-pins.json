@@ -84,7 +84,7 @@
       "version": "261031",
       "kind": "zip",
       "asset": "powerline.zip",
-      "hash": "sha256-L4njIbPnBiVS0kNJF8PIftLY/0g4EOrVJYG7EcHxqtA="
+      "hash": "sha256-AfrYDu7eB1DWpd6ESIGPAtKRMHy0yc2oSEp+cNIRtnQ="
     },
     "scene_presets": {
       "repo": "Hypfer/hass-scene_presets",

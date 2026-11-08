@@ -25,7 +25,7 @@ while IFS=$'\t' read -r group name repo version kind asset; do
   mv "$tmp.new" "$tmp"
   echo "$group.$name $version $hash"
   for i in $(jq -r --arg g "$group" --arg n "$name" '.[$g][$n].patches // [] | keys[]' "$tmp"); do
-    purl="$(jq -r --arg g "$group" --arg n "$name" --argjson i "$i" '.[$g][$n].patches[$i].url // empty' "$tmp")"
+    purl="$(jq -r --arg g "$group" --arg n "$name" --argjson i "$i" '.[$g][$n].patches[$i] | if has("path") then empty else .url end' "$tmp")"
     [ -n "$purl" ] || continue
     phash="$(nix store prefetch-file --json "$purl" | jq -r .hash)"
     jq --arg g "$group" --arg n "$name" --argjson i "$i" --arg h "$phash" '.[$g][$n].patches[$i].hash = $h' "$tmp" >"$tmp.new"

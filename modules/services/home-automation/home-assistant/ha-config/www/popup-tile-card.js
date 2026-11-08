@@ -82,7 +82,11 @@ class PopupTileCard extends HTMLElement {
       document.head.appendChild(st);
     }
     const helpers = await window.loadCardHelpers();
-    const card = await helpers.createCardElement(this._config.popup);
+    let card = await helpers.createCardElement(this._config.popup);
+    if (!customElements.get(card.localName)) {
+      await customElements.whenDefined(card.localName);
+      card = await helpers.createCardElement(this._config.popup);
+    }
     card.hass = this._hass;
     const ov = document.createElement("div");
     ov.className = "ptc-overlay";

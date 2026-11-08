@@ -14,7 +14,7 @@ resources:
     type: module
   - url: /local/status-row-card.js?v=13
     type: module
-  - url: /local/laundry-machine-card.js?v=6
+  - url: /local/laundry-machine-card.js?v=7
     type: module
   - url: /local/scene-picker-card.js?v=2
     type: module
@@ -28,7 +28,7 @@ resources:
     type: module
   - url: /local/home-hero-card.js?v=4
     type: module
-  - url: /local/popup-tile-card.js?v=4
+  - url: /local/popup-tile-card.js?v=5
     type: module
   - url: /local/trip-card.js?v=5
     type: module

@@ -187,6 +187,7 @@ class PlugCostCard extends HTMLElement {
         tile.setConfig({ entity: d.entity, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
         tile.hass = this._hass;
         tile._open();
+        this._tile = tile;
       });
     }
   }
@@ -197,6 +198,7 @@ class PlugCostCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    if (this._tile) this._tile.hass = hass;
     this._render();
   }
 

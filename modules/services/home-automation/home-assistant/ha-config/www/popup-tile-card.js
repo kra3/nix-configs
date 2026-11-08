@@ -61,7 +61,6 @@ class PopupTileCard extends HTMLElement {
       this._renderInline();
       return;
     }
-    if (c.headless) return;
     const s = this._hass.states[c.entity];
     const state = s ? s.state : "unavailable";
     const html = `<ha-card><div class="tile" tabindex="0"><ha-icon class="icon" icon="${c.icon || "mdi:format-list-bulleted"}"></ha-icon><div><div class="name"></div><div class="state"></div></div></div></ha-card>`;

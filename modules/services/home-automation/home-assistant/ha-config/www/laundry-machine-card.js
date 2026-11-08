@@ -182,17 +182,12 @@ class PlugCostCard extends HTMLElement {
       this.shadowRoot.addEventListener("click", (e) => {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
-        if (!d || !d.popup || !customElements.get("popup-tile-card")) return;
-        if (!this._tile) {
-          this._tile = document.createElement("popup-tile-card");
-          this.shadowRoot.appendChild(this._tile);
-        }
-        this._tile.setConfig({ entity: d.entity, headless: true, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
-        this._tile.hass = this._hass;
-        this._tile._open();
+        if (!d || !d.popup || !customElements.get("health-metric-card")) return;
+        const card = document.createElement("health-metric-card");
+        card.setConfig({ entity: d.entity, name: d.name, color: d.color, popup: d.popup });
+        card.hass = this._hass;
+        card._openPopup();
       });
-      this._body = document.createElement("div");
-      this.shadowRoot.appendChild(this._body);
     }
   }
 
@@ -202,7 +197,6 @@ class PlugCostCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (this._tile) this._tile.hass = hass;
     this._render();
   }
 
@@ -226,7 +220,7 @@ class PlugCostCard extends HTMLElement {
       .join("");
     const price = this._config.price && this._hass.states[this._config.price];
     const foot = `${price ? `Price now ${num(price.state)} kr/kWh with VAT. ` : ""}Estimated from this month's average spot; E.ON sets the final price after the month ends.`;
-    this._body.innerHTML = `<style>${COST_STYLE}</style><ha-card><div class="row">${cells}</div><div class="foot">${esc(foot)}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${COST_STYLE}</style><ha-card><div class="row">${cells}</div><div class="foot">${esc(foot)}</div></ha-card>`;
   }
 }
 

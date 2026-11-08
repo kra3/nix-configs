@@ -234,8 +234,8 @@ template:
 
       - name: "Energy Cost Today"
         unique_id: energy_cost_today
-        device_class: monetary
-        unit_of_measurement: SEK
+        unit_of_measurement: kr
+        state_class: measurement
         icon: mdi:cash-clock
         state: >-
           {% from 'laundry.jinja' import today %}

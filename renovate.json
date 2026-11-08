@@ -50,6 +50,10 @@
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
+      "matchPackageNames": ["Chance-Konstruktion/ha-powerline"],
+      "allowedVersions": "/^\\d{6}$/"
+    },
+    {
       "matchPackageNames": ["/^lscr\\.io\\/linuxserver\\//"],
       "allowedVersions": "/^v?\\d+(\\.\\d+)*-ls\\d+$/"
     },

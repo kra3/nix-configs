@@ -182,7 +182,7 @@ class PlugCostCard extends HTMLElement {
       this.shadowRoot.addEventListener("click", (e) => {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
-        if (!d || !d.popup) return;
+        if (!d || !d.popup || !customElements.get("popup-tile-card")) return;
         const tile = document.createElement("popup-tile-card");
         tile.setConfig({ entity: d.entity, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
         tile.hass = this._hass;

@@ -183,12 +183,16 @@ class PlugCostCard extends HTMLElement {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
         if (!d || !d.popup || !customElements.get("popup-tile-card")) return;
-        const tile = document.createElement("popup-tile-card");
-        tile.setConfig({ entity: d.entity, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
-        tile.hass = this._hass;
-        tile._open();
-        this._tile = tile;
+        if (!this._tile) {
+          this._tile = document.createElement("popup-tile-card");
+          this.shadowRoot.appendChild(this._tile);
+        }
+        this._tile.setConfig({ entity: d.entity, headless: true, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
+        this._tile.hass = this._hass;
+        this._tile._open();
       });
+      this._body = document.createElement("div");
+      this.shadowRoot.appendChild(this._body);
     }
   }
 
@@ -222,7 +226,7 @@ class PlugCostCard extends HTMLElement {
       .join("");
     const price = this._config.price && this._hass.states[this._config.price];
     const foot = `${price ? `Price now ${num(price.state)} kr/kWh with VAT. ` : ""}Estimated from this month's average spot; E.ON sets the final price after the month ends.`;
-    this.shadowRoot.innerHTML = `<style>${COST_STYLE}</style><ha-card><div class="row">${cells}</div><div class="foot">${esc(foot)}</div></ha-card>`;
+    this._body.innerHTML = `<style>${COST_STYLE}</style><ha-card><div class="row">${cells}</div><div class="foot">${esc(foot)}</div></ha-card>`;
   }
 }
 

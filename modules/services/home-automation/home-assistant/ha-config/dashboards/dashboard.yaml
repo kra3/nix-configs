@@ -2649,6 +2649,9 @@ views:
     - type: custom:health-metric-card
       entity: sensor.energy_cost_today
       name: Energy today
+      card_mod: &full_height
+        style: |
+          ha-card { height: 100%; }
       icon: mdi:cash-clock
       color: "#7fdbca"
       unit: kr
@@ -2675,6 +2678,7 @@ views:
         type: custom:health-metric-card
         entity: sensor.energy_cost_month
         name: This month
+        card_mod: *full_height
         icon: mdi:calendar-month
         color: "#7fdbca"
         unit: kr
@@ -2726,7 +2730,8 @@ views:
           {%- endif %}
     - type: custom:health-metric-card
       entity: sensor.lights_cost
-      name: Lights this month (approx.)
+      name: Lights (approx.)
+      card_mod: *full_height
       icon: mdi:lightbulb-group
       color: "#c3e88d"
       unit: kr
@@ -2755,7 +2760,8 @@ views:
         columns: 6
     - type: custom:health-metric-card
       entity: sensor.devices_cost
-      name: Devices this month (approx.)
+      name: Devices (approx.)
+      card_mod: *full_height
       icon: mdi:television
       color: "#c792ea"
       unit: kr
@@ -2922,7 +2928,7 @@ views:
     - type: tile
       entity: sensor.cost_today_hob
       name: Hob
-      icon: mdi:stove
+      icon: mdi:pot-steam
       state_content:
       - state
       - power
@@ -2931,7 +2937,7 @@ views:
     - type: tile
       entity: sensor.cost_today_oven
       name: Oven
-      icon: mdi:toaster-oven
+      icon: mdi:stove
       state_content:
       - state
       - power

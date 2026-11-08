@@ -23,7 +23,7 @@ function carryForward(pts, from, to) {
   const out = [];
   let i = 0;
   let cur = pts[0].v;
-  for (let t = from; t <= to; t = dayStart(t + 30 * 36e5)) {
+  for (let t = Math.max(from, dayStart(pts[0].t)); t <= to; t = dayStart(t + 30 * 36e5)) {
     while (i < pts.length && pts[i].t <= t) cur = pts[i++].v;
     out.push({ t, v: cur });
   }
@@ -140,7 +140,7 @@ function chartSvg(list, type, days, stacked, lang, opts = {}) {
     const color = s.color || PALETTE[i % PALETTE.length];
     if (bar) {
       for (const p of s.pts) {
-        const k = dayStart(p.t);
+        const k = opts.months ? p.t + 15 * 864e5 : dayStart(p.t);
         const base = stacked ? acc.get(k) || 0 : 0;
         acc.set(k, base + p.v);
         const top = y(base + p.v);

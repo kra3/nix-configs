@@ -2659,12 +2659,69 @@ views:
         days: 14
         stat: max
       secondary:
-        entity: sensor.energy_cost_month
-        prefix: "This month "
-        unit: " kr"
-        decimals: 2
+      - entity: sensor.energy_used_today
+        unit: " kWh"
+        decimals: 1
+      - entity: sensor.home_power_estimate
+        prefix: "Now "
+        unit: " W"
       grid_options:
-        columns: 8
+        columns: 6
+    - type: custom:popup-tile-card
+      title: Cost by month (kr)
+      grid_options:
+        columns: 6
+      inline:
+        type: custom:health-metric-card
+        entity: sensor.energy_cost_month
+        name: This month
+        icon: mdi:calendar-month
+        color: "#7fdbca"
+        unit: kr
+        decimals: 2
+        show_date: false
+        chart:
+          type: line
+          days: 30
+          stat: max
+        secondary:
+          entity: sensor.energy_used_month
+          unit: " kWh"
+          decimals: 1
+        tap_action:
+          action: none
+      popup:
+        type: markdown
+        content: |-
+          {%- set devs = [['lights', 'Lights'], ['devices', 'Devices'], ['sutala', 'Server'], ['washer', 'Washer'], ['dryer', 'Dryer']] -%}
+          {%- set names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] -%}
+          {%- set ns = namespace(h=[], n=0) -%}
+          {%- for d in devs -%}
+          {%- set v = states('input_text.' ~ d[0] ~ '_cost_history').split(',') | select('match', '^[0-9.]+$') | map('float') | list -%}
+          {%- set ns.h = ns.h + [v] -%}
+          {%- set ns.n = [ns.n, v | count] | max -%}
+          {%- endfor -%}
+          {%- set marker = states('input_number.electricity_month_marker') | int(0) or now().month -%}
+          {%- set k0 = (now().year if marker <= now().month else now().year - 1) * 12 + marker - 1 -%}
+          {%- set out = namespace(s='| Month | Total | ' ~ (devs | map(attribute=1) | join(' | ')) ~ ' |\n|:--|--:|' ~ ('--:|' * devs | count) ~ '\n') -%}
+          {%- set r = namespace(c='') -%}
+          {%- for d in devs -%}{%- set r.c = r.c ~ (states('sensor.' ~ d[0] ~ '_cost') | float(0) | round(0) | int) ~ ' | ' -%}{%- endfor -%}
+          {%- set out.s = out.s ~ '| ' ~ names[now().month - 1] ~ ' ' ~ now().year ~ ' *(so far)* | **' ~ (states('sensor.energy_cost_month') | float(0) | round(0) | int) ~ '** | ' ~ r.c ~ '\n' -%}
+          {%- for i in range(ns.n) -%}
+          {%- set k = k0 - 1 - i -%}
+          {%- set r = namespace(t=0, c='') -%}
+          {%- for h in ns.h -%}
+          {%- set v = h[i] if i < h | count else 0 -%}
+          {%- set r.t = r.t + v -%}
+          {%- set r.c = r.c ~ (v | round(0) | int) ~ ' | ' -%}
+          {%- endfor -%}
+          {%- set out.s = out.s ~ '| ' ~ names[k % 12] ~ ' ' ~ (k // 12) ~ ' | **' ~ (r.t | round(0) | int) ~ '** | ' ~ r.c ~ '\n' -%}
+          {%- endfor -%}
+          {{ out.s }}
+          {%- if ns.n == 0 %}
+
+          No earlier months saved yet.
+          {%- endif %}
     - type: custom:health-metric-card
       entity: sensor.lights_cost
       name: Lights this month (approx.)
@@ -2678,10 +2735,12 @@ views:
         days: 30
         stat: max
       secondary:
-        entity: sensor.lights_power
+      - entity: sensor.lights_energy_month
+        unit: " kWh"
+        decimals: 1
+      - entity: sensor.lights_power
         prefix: "Now "
         unit: " W"
-        decimals: 1
       popup:
         graphs:
         - name: Lights energy per day
@@ -2691,7 +2750,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 8
+        columns: 6
     - type: custom:health-metric-card
       entity: sensor.devices_cost
       name: Devices this month (approx.)
@@ -2705,10 +2764,12 @@ views:
         days: 30
         stat: max
       secondary:
-        entity: sensor.estimated_devices_power
+      - entity: sensor.devices_energy_month
+        unit: " kWh"
+        decimals: 1
+      - entity: sensor.estimated_devices_power
         prefix: "Now "
         unit: " W"
-        decimals: 1
       popup:
         graphs:
         - name: Devices energy per day
@@ -2718,7 +2779,7 @@ views:
           stat: change
           type: bar
       grid_options:
-        columns: 8
+        columns: 6
   - type: grid
     column_span: 1
     cards:
@@ -2871,22 +2932,27 @@ views:
       - name: Lights
         icon: mdi:lightbulb-group
         entity: sensor.lights_cost
+        energy: sensor.lights_energy
         color: "#c3e88d"
       - name: Devices
         icon: mdi:television
         entity: sensor.devices_cost
+        energy: sensor.devices_energy
         color: "#c792ea"
       - name: Washer
         icon: mdi:washing-machine
         entity: sensor.washer_cost
+        energy: sensor.washer_energy
         color: "#6ab7ff"
       - name: Dryer
         icon: mdi:tumble-dryer
         entity: sensor.dryer_cost
+        energy: sensor.dryer_energy
         color: "#ffb06b"
       - name: Home server
         icon: mdi:flash
         entity: sensor.sutala_cost
+        energy: sensor.sutala_energy
         color: "#ffd86b"
 - type: sections
   title: Laundry

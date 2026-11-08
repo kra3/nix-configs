@@ -130,6 +130,20 @@ template:
         state: >-
           {{ (states('sensor.washer_cost') | float(0) + states('sensor.dryer_cost') | float(0) + states('sensor.sutala_cost') | float(0) + states('sensor.lights_cost') | float(0) + states('sensor.devices_cost') | float(0)) | round(2) }}
 
+      - name: "Energy Used Today"
+        unique_id: energy_used_today
+        device_class: energy
+        unit_of_measurement: kWh
+        state: >-
+          {{ (states('sensor.washer_energy_day') | float(0) + states('sensor.dryer_energy_day') | float(0) + states('sensor.sutala_energy_day') | float(0) + states('sensor.lights_energy_day') | float(0) + states('sensor.devices_energy_day') | float(0)) | round(2) }}
+
+      - name: "Energy Used Month"
+        unique_id: energy_used_month
+        device_class: energy
+        unit_of_measurement: kWh
+        state: >-
+          {{ (states('sensor.washer_energy_month') | float(0) + states('sensor.dryer_energy_month') | float(0) + states('sensor.sutala_energy_month') | float(0) + states('sensor.lights_energy_month') | float(0) + states('sensor.devices_energy_month') | float(0)) | round(2) }}
+
       - name: "Home Power Estimate"
         unique_id: home_power_estimate
         device_class: power

@@ -168,6 +168,7 @@ const COST_STYLE = `
   .k { min-width: 0; }
   .k .t { font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--secondary-text-color); }
   .k .v { font-size: 14px; font-weight: 600; color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
+  .k .w { font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
   .foot { margin: 10px 4px 2px; font-size: 12px; line-height: 1.4; color: var(--secondary-text-color); }
 `;
 
@@ -194,10 +195,15 @@ class PlugCostCard extends HTMLElement {
       .map((d) => {
         const s = hass.states[d.entity];
         const a = (s && s.attributes) || {};
-        const k = (t, v) => `<div class="k"><div class="t">${t}</div><div class="v">${esc(num(v))}</div></div>`;
+        const kwh = (p) => {
+          const e = d.energy && hass.states[`${d.energy}_${p}`];
+          return e && !isNaN(parseFloat(e.state)) ? `${num(e.state, 1)} kWh` : "";
+        };
+        const k = (t, v, w = "") => `<div class="k"><div class="t">${t}</div><div class="v">${esc(num(v))}</div>${w ? `<div class="w">${esc(w)}</div>` : ""}</div>`;
+        const mk = kwh("month");
         return `<div class="d" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
-          <div class="hero">${esc(num(s && s.state))}<small>kr this month</small></div></div>
-          <div class="grid">${k("Today", a.today)}${k("Week", a.week)}${k("Quarter", a.quarter)}${k("Last month", a.last_month)}</div></div>`;
+          <div class="hero">${esc(num(s && s.state))}<small>kr this month${mk ? ` · ${esc(mk)}` : ""}</small></div></div>
+          <div class="grid">${k("Today", a.today, kwh("day"))}${k("Week", a.week, kwh("week"))}${k("Quarter", a.quarter)}${k("Last month", a.last_month)}</div></div>`;
       })
       .join("");
     const price = this._config.price && this._hass.states[this._config.price];

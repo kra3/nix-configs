@@ -799,15 +799,16 @@ class HealthMetricCard extends HTMLElement {
       }
     }
 
-    if (c.secondary) {
-      const sec = this._hass.states[c.secondary.entity];
+    const subs = [];
+    for (const s2 of [].concat(c.secondary || [])) {
+      const sec = this._hass.states[s2.entity];
       const sv = sec ? parseFloat(sec.state) : NaN;
-      if (isFinite(sv)) {
-        const txt = c.secondary.format === "duration" ? durationText(sv, lang) : fmt(sv, c.secondary.decimals || 0, lang);
-        if (c.secondary.inline) heroHtml += `<span class="alt">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</span>`;
-        else under += `<div class="sub">${c.secondary.prefix || ""}${txt}${c.secondary.unit || ""}</div>`;
-      }
+      if (!isFinite(sv)) continue;
+      const txt = `${s2.prefix || ""}${s2.format === "duration" ? durationText(sv, lang) : fmt(sv, s2.decimals || 0, lang)}${s2.unit || ""}`;
+      if (s2.inline) heroHtml += `<span class="alt">${txt}</span>`;
+      else subs.push(txt);
     }
+    if (subs.length) under += `<div class="sub">${subs.join(" · ")}</div>`;
 
     const type = c.chart.type || "line";
     const spark = !main.length
@@ -1063,6 +1064,7 @@ class HealthMetricCard extends HTMLElement {
       return;
     }
     const a = this._config.tap_action;
+    if (a && a.action === "none") return;
     if (a && a.action === "navigate" && a.navigation_path) {
       history.pushState(null, "", a.navigation_path);
       window.dispatchEvent(new Event("location-changed"));

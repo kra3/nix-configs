@@ -81,7 +81,7 @@
     },
     "powerline": {
       "repo": "Chance-Konstruktion/ha-powerline",
-      "version": "261016",
+      "version": "261031",
       "kind": "zip",
       "asset": "powerline.zip",
       "hash": "sha256-L4njIbPnBiVS0kNJF8PIftLY/0g4EOrVJYG7EcHxqtA="

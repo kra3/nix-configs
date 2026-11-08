@@ -2919,6 +2919,51 @@ views:
       - power
       grid_options:
         columns: 6
+    - type: tile
+      entity: sensor.cost_today_hob
+      name: Hob
+      icon: mdi:stove
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_oven
+      name: Oven
+      icon: mdi:toaster-oven
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_dishwasher
+      name: Dishwasher
+      icon: mdi:dishwasher
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_microwave
+      name: Microwave
+      icon: mdi:microwave
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.cost_today_hood
+      name: Hood
+      icon: mdi:fan
+      state_content:
+      - state
+      - power
+      grid_options:
+        columns: 12
   - type: grid
     column_span: 1
     cards:

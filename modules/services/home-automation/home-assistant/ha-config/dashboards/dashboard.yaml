@@ -2669,11 +2669,11 @@ views:
         prefix: "Now "
         unit: " W"
       grid_options:
-        columns: 6
+        columns: 12
     - type: custom:popup-tile-card
       title: Cost by month (kr)
       grid_options:
-        columns: 6
+        columns: 12
       inline:
         type: custom:health-metric-card
         entity: sensor.energy_cost_month
@@ -2728,66 +2728,6 @@ views:
 
           No earlier months saved yet.
           {%- endif %}
-    - type: custom:health-metric-card
-      entity: sensor.lights_cost
-      name: Lights (approx.)
-      card_mod: *full_height
-      icon: mdi:lightbulb-group
-      color: "#c3e88d"
-      unit: kr
-      decimals: 2
-      show_date: false
-      chart:
-        type: line
-        days: 30
-        stat: max
-      secondary:
-      - entity: sensor.lights_energy_month
-        unit: " kWh"
-        decimals: 1
-      - entity: sensor.lights_power
-        prefix: "Now "
-        unit: " W"
-      popup:
-        graphs:
-        - name: Lights energy per day
-          entities:
-          - sensor.lights_energy
-          days: 30
-          stat: change
-          type: bar
-      grid_options:
-        columns: 6
-    - type: custom:health-metric-card
-      entity: sensor.devices_cost
-      name: Devices (approx.)
-      card_mod: *full_height
-      icon: mdi:television
-      color: "#c792ea"
-      unit: kr
-      decimals: 2
-      show_date: false
-      chart:
-        type: line
-        days: 30
-        stat: max
-      secondary:
-      - entity: sensor.devices_energy_month
-        unit: " kWh"
-        decimals: 1
-      - entity: sensor.estimated_devices_power
-        prefix: "Now "
-        unit: " W"
-      popup:
-        graphs:
-        - name: Devices energy per day
-          entities:
-          - sensor.estimated_devices_energy
-          days: 30
-          stat: change
-          type: bar
-      grid_options:
-        columns: 6
   - type: grid
     column_span: 1
     cards:
@@ -2987,26 +2927,51 @@ views:
         entity: sensor.lights_cost
         energy: sensor.lights_energy
         color: "#c3e88d"
+        popup: &kwh_per_day
+          type: statistics-graph
+          entities:
+          - sensor.lights_energy
+          period: day
+          stat_types:
+          - change
+          chart_type: bar
+          days_to_show: 30
       - name: Devices
         icon: mdi:television
         entity: sensor.devices_cost
         energy: sensor.devices_energy
         color: "#c792ea"
+        popup:
+          <<: *kwh_per_day
+          entities:
+          - sensor.estimated_devices_energy
       - name: Washer
         icon: mdi:washing-machine
         entity: sensor.washer_cost
         energy: sensor.washer_energy
         color: "#6ab7ff"
+        popup:
+          <<: *kwh_per_day
+          entities:
+          - sensor.washer_power_monitor_energy
       - name: Dryer
         icon: mdi:tumble-dryer
         entity: sensor.dryer_cost
         energy: sensor.dryer_energy
         color: "#ffb06b"
+        popup:
+          <<: *kwh_per_day
+          entities:
+          - sensor.dryer_power_monitor_energy
       - name: Home server
         icon: mdi:flash
         entity: sensor.sutala_cost
         energy: sensor.sutala_energy
         color: "#ffd86b"
+        popup:
+          <<: *kwh_per_day
+          entities:
+          - sensor.power_monitor_1_energy
 - type: sections
   title: Laundry
   path: dash-laundry

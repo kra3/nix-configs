@@ -159,6 +159,7 @@ const COST_STYLE = `
   ha-card { padding: 10px; }
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
   .d { padding: 12px 14px; border-radius: 12px; min-width: 0; background: var(--secondary-background-color); }
+  .d.tap { cursor: pointer; }
   .top { display: flex; align-items: center; gap: 10px; }
   .top ha-icon { --mdc-icon-size: 22px; color: var(--c); flex: none; }
   .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); flex: 1; }
@@ -176,7 +177,18 @@ class PlugCostCard extends HTMLElement {
   setConfig(config) {
     if (!config || !Array.isArray(config.devices) || !config.devices.length) throw new Error("plug-cost-card: devices are required");
     this._config = config;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.addEventListener("click", (e) => {
+        const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
+        const d = cell && this._config.devices[cell.dataset.i];
+        if (!d || !d.popup) return;
+        const tile = document.createElement("popup-tile-card");
+        tile.setConfig({ entity: d.entity, title: `${d.name}: kWh per day, 30 days`, popup: d.popup });
+        tile.hass = this._hass;
+        tile._open();
+      });
+    }
   }
 
   getCardSize() {
@@ -192,7 +204,7 @@ class PlugCostCard extends HTMLElement {
     if (!this._config || !this._hass) return;
     const hass = this._hass;
     const cells = this._config.devices
-      .map((d) => {
+      .map((d, i) => {
         const s = hass.states[d.entity];
         const a = (s && s.attributes) || {};
         const kwh = (p) => {
@@ -201,7 +213,7 @@ class PlugCostCard extends HTMLElement {
         };
         const k = (t, v, w = "") => `<div class="k"><div class="t">${t}</div><div class="v">${esc(num(v))}</div>${w ? `<div class="w">${esc(w)}</div>` : ""}</div>`;
         const mk = kwh("month");
-        return `<div class="d" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
+        return `<div class="d${d.popup ? " tap" : ""}" data-i="${i}" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
           <div class="hero">${esc(num(s && s.state))}<small>kr this month${mk ? ` · ${esc(mk)}` : ""}</small></div></div>
           <div class="grid">${k("Today", a.today, kwh("day"))}${k("Week", a.week, kwh("week"))}${k("Quarter", a.quarter)}${k("Last month", a.last_month)}</div></div>`;
       })

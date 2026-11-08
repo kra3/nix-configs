@@ -4,9 +4,8 @@
   flake.lib.ha-pins =
     pkgs:
     let
-      pins = builtins.fromJSON (
-        builtins.readFile ../services/home-automation/home-assistant/ha-pins.json
-      );
+      dir = ../services/home-automation/home-assistant;
+      pins = builtins.fromJSON (builtins.readFile (dir + "/ha-pins.json"));
 
       tarball =
         p:
@@ -29,7 +28,7 @@
           applyPatches = lib.concatMapStringsSep "\n" (
             pt:
             "(cd src && git apply ${lib.concatMapStringsSep " " (e: "--exclude=${e}") (pt.excludes or [ ])} ${
-              pkgs.fetchurl { inherit (pt) url hash; }
+              if pt ? path then dir + "/${pt.path}" else pkgs.fetchurl { inherit (pt) url hash; }
             })"
           ) (p.patches or [ ]);
           requirements = lib.optionalString (p ? requirements) ''

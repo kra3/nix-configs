@@ -69,6 +69,7 @@ class PopupTileCard extends HTMLElement {
       this._html = html;
       this.shadowRoot.innerHTML = `<style>${STYLE}</style>${html}`;
       this.shadowRoot.querySelector("ha-card").addEventListener("click", () => this._open());
+      if (this._overlay) this.shadowRoot.appendChild(this._overlay);
     }
     this.shadowRoot.querySelector(".name").textContent = c.name || (s && s.attributes.friendly_name) || c.entity;
     this.shadowRoot.querySelector(".state").textContent = c.subtitle || (c.unit ? `${state} ${c.unit}` : state);

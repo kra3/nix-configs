@@ -24,6 +24,19 @@
         hash = "sha256-YVWBjyLhDe6I9dCdCt8Bu3Ah5fVNqDF8eSsktZL0Z0c=";
       };
 
+      shellProgress = pkgs.rustPlatform.buildRustPackage rec {
+        pname = "herdr-shell-progress";
+        version = "0.5.2";
+        src = pkgs.fetchFromGitHub {
+          owner = "bayoudhi";
+          repo = "herdr-shell-progress";
+          rev = "v${version}";
+          hash = "sha256-40FECfvJn6w9lwp+tERZJKMNW0sMK5Ms9RrUTpxqFDU=";
+        };
+        cargoHash = "sha256-6DgieytxTbVrlTcccoWpRoes1qP5kfO2zaOAXxhsWA0=";
+        doCheck = false;
+      };
+
       plugins = {
         # Its claude..maki codepoints match herdr-bar's icon font, so it reuses that font instead of a second clashing one.
         "testy-cool.herdr-sidebar" = pkgs.runCommand "herdr-sidebar-plugin" { } ''
@@ -267,6 +280,12 @@
 
         # Owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate (plugins/editing.lua disables that plugin's own mappings).
         xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
+
+        # Reports slow shell commands to the agents sidebar; a no-op outside herdr panes.
+        programs.zsh.initContent = ''
+          HSP_BIN=${shellProgress}/bin/herdr-shell-progress
+          source ${shellProgress.src}/shell/init.zsh
+        '';
 
         # herdr-bar's agent logos.
         programs.ghostty.settings.font-codepoint-map = "U+E1A0-U+E1B7=Herdr Agent Icons Max";

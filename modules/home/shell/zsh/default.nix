@@ -70,6 +70,11 @@
             # Load p10k config
             [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
+            # Ghostty's newline marks break p10k's ''${...} prompt on the first prompt (literal "}}"); pre-seeding makes it skip them.
+            if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
+              typeset -g _ghostty_saved_ps1=ghostty-p10k-preseed _ghostty_saved_ps2=
+            fi
+
             # Source common shell configuration (after instant prompt)
             [[ -f ~/.shell_common.sh ]] && source ~/.shell_common.sh
 

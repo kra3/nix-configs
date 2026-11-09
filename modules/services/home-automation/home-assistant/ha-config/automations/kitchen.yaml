@@ -2,7 +2,7 @@
 - id: kitchen_darkness
   alias: Kitchen — Darkness detection
   description: >-
-    Dark while it is gloomy outside and the kitchen reads below 10 lux for 2 min.
+    Dark while it is gloomy outside and the kitchen reads below its dark threshold for 2 min.
   use_blueprint:
     path: local/darkness-detection.yaml
     input:
@@ -10,7 +10,7 @@
       occupancy_sensor: binary_sensor.hue_pir_kitchen_occupancy
       light_entity: light.kitchen_lights
       dark_boolean: input_boolean.kitchen_is_dark
-      dark_below: 10
+      dark_below: input_number.kitchen_dark_below
 
 - id: kitchen_lighting
   alias: Kitchen — Lighting

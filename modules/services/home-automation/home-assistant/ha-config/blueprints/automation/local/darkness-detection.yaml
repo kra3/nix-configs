@@ -3,7 +3,7 @@ blueprint:
   description: >-
     Turns a room's "is dark" helper on while binary_sensor.gloomy_outside is
     on and, for rooms with their own illuminance sensor, that sensor reads
-    below dark_below for 2 min. Turns it off when it is no longer gloomy
+    below the dark_below threshold helper for 2 min. Turns it off when it is no longer gloomy
     outside, turning the light off too if the room is empty. While it is not
     dark, a light left on in an empty room goes off once the room clears or
     after the light has been on for 2 min, whatever turned it on. Rooms without
@@ -17,14 +17,12 @@ blueprint:
         entity:
           domain: sensor
     dark_below:
-      name: Dark threshold (lux)
-      description: The room's own reading must be below this, sustained 2 min, before it counts as dark.
-      default: 30
+      name: Dark threshold helper
+      description: Helper holding the room's dark threshold (lux); the room must read below it for 2 min.
+      default: ""
       selector:
-        number:
-          min: 0
-          max: 1000
-          unit_of_measurement: lx
+        entity:
+          domain: input_number
     occupancy_sensor:
       name: Occupancy sensor
       selector:
@@ -58,7 +56,7 @@ triggers:
     trigger: state
     id: gloomy
   - value_template: >-
-      {{ illuminance_sensor not in [none, ''] and states(illuminance_sensor) | float(0) < dark_below }}
+      {{ illuminance_sensor not in [none, ''] and states(illuminance_sensor) | float(0) < states(dark_below) | float(state_attr(dark_below, 'default') | float(30)) }}
     for: "00:02:00"
     trigger: template
     id: gloomy
@@ -101,7 +99,7 @@ actions:
             state: "off"
           - condition: template
             value_template: >-
-              {{ illuminance_sensor in [none, ''] or states(illuminance_sensor) | float(0) < dark_below }}
+              {{ illuminance_sensor in [none, ''] or states(illuminance_sensor) | float(0) < states(dark_below) | float(state_attr(dark_below, 'default') | float(30)) }}
         sequence:
           - target:
               entity_id: !input dark_boolean

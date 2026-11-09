@@ -107,3 +107,38 @@
             entity_id: "{{ bulbs }}"
           transition: 2
   mode: queued
+
+- id: lighting_seed_defaults
+  alias: "Lighting: seed darkness thresholds once"
+  description: >-
+    Sets the darkness thresholds on the first start after they were added, so
+    later edits on the dashboard survive restarts.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: input_boolean.lighting_defaults_v2
+    state: "off"
+  actions:
+  - repeat:
+      for_each:
+      - input_number.daylight_gloomy_below_day
+      - input_number.daylight_gloomy_below_evening
+      - input_number.daylight_clear_above
+      - input_number.daylight_evening_offset
+      - input_number.living_room_dark_below
+      - input_number.bedroom_dark_below
+      - input_number.kitchen_dark_below
+      - input_number.hall_dark_below
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: "{{ repeat.item }}"
+        data:
+          value: "{{ state_attr(repeat.item, 'default') }}"
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.lighting_defaults_v2
+  - event: automations_resumed
+  mode: single

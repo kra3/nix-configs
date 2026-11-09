@@ -5,10 +5,10 @@
       virtualisation.quadlet.containers.ghostfolio = {
         containerConfig = {
           image = "docker.io/ghostfolio/ghostfolio:3.98.0";
-          healthCmd = "curl -sf http://localhost:3333/api/v1/health";
+          healthCmd = "i=0; while [ $i -lt 12 ]; do curl -sf http://localhost:3333/api/v1/health && exit 0; sleep 2; i=$((i+1)); done; exit 1";
           healthOnFailure = "none";
-          healthInterval = "30s";
-          healthTimeout = "10s";
+          healthInterval = "60s";
+          healthTimeout = "55s";
           healthRetries = 3;
           healthStartPeriod = "60s";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx

@@ -12,6 +12,12 @@ const STYLE = `
   .nm { font-size: 15px; font-weight: 600; color: var(--primary-text-color); overflow-wrap: anywhere; }
   .sub, .hint { font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); overflow-wrap: anywhere; }
   .vd { font-size: 13px; font-weight: 500; color: var(--c); overflow-wrap: anywhere; }
+  .dk { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 2px 0 0 32px; font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); }
+  .mini { font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .mini.ok { color: var(--success-color); }
+  .mini.no { color: var(--error-color); }
+  .mini.na { color: var(--state-inactive-color); }
+  .rule { padding: 10px 16px 0; font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); }
   .lx { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; }
   .bar { position: relative; height: 8px; border-radius: 4px; background: var(--divider-color, rgba(127,127,127,.25)); margin: 16px 6px 20px; }
   .bar.sm { margin: 10px 6px 18px 32px; height: 6px; }
@@ -262,9 +268,8 @@ class LightLogicCard extends HTMLElement {
     else if (light !== "on" && this._on(r.block)) t = ["Film playing · kept off", "inactive"];
     else if (dark === null) t = ["no data", "inactive"];
     else if (dark === "off") {
-      if (this._val(this._config.outside.gloomy) === "off") t = ["Off · light outside", "inactive"];
-      else if (lux !== null && T !== null && lux >= T) t = [`Room bright · dark below ${fmt(T)} lx`, "inactive"];
-      else t = ["Getting dark · within 2 min", "info"];
+      const soon = this._val(this._config.outside.gloomy) === "on" && (!r.lux || (lux !== null && T !== null && lux < T));
+      t = soon ? ["Off · getting dark", "info"] : ["Off · not dark", "inactive"];
     } else if (light === "on") {
       if (this._on(r.occupancy)) t = ["On · dark + someone in", "success"];
       else if (r.evening_hold) t = [this._on(h.sleep) ? "Bedtime · off once empty" : "Evening hold · stays on until bedtime", "success"];
@@ -272,8 +277,28 @@ class LightLogicCard extends HTMLElement {
     } else if (light === null) t = ["no data", "inactive"];
     else t = ["Dark · on when someone enters", "info"];
     if (light === "on" && ((r.sleep_off && this._on(h.sleep)) || this._on(r.nap) || this._on(r.block))) t[0] += " · by hand";
-    if (dark === "on" && lux !== null && T !== null && lux >= T) t[0] += " · stays dark until outside clears";
     return t;
+  }
+
+  _dark(r) {
+    const dark = this._val(r.dark);
+    const gl = this._val(this._config.outside.gloomy);
+    const [g, c] = this._gl(this._on(this._config.outside.evening_rule) ? "evening" : "day");
+    const lux = r.lux ? this._num(r.lux) : null;
+    const T = this._thr(r);
+    const dim = lux !== null && T !== null ? lux < T : null;
+    const mark = (ok, label) => `<span class="mini ${ok === null ? "na" : ok ? "ok" : "no"}">${ok === null ? "?" : ok ? "✓" : "✗"} ${label}</span>`;
+    const ticks = mark(gl === null ? null : gl === "on", "gloomy") + (r.lux ? mark(dim, T === null ? "lux" : `&lt;${fmt(T)} lx`) : "");
+    let t;
+    if (dark === null) t = "no data";
+    else if (dark === "on") {
+      const lc = this._hass.states[r.dark].last_changed;
+      t = `Dark since ${new Date(lc).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · until it's light outside (&gt;${fmt(c)} %)`;
+    } else if (!r.lux) t = gl === "on" ? "Dark any moment · no sensor, follows outside" : "Not dark · no sensor, dark when it's gloomy outside";
+    else if (dim === null) t = "Not dark · room lux no data";
+    else if (gl === "on") t = dim ? `Dark in ≤2 min · gloomy and ${fmt(lux)} &lt; ${fmt(T)} lx` : `Not dark · needs below ${fmt(T)} lx (now ${fmt(lux)})`;
+    else t = dim ? `Not dark · dim enough (${fmt(lux)} &lt; ${fmt(T)} lx), waiting for gloomy outside (&lt;${fmt(g)} %)` : `Not dark · needs gloomy outside and below ${fmt(T)} lx (now ${fmt(lux)})`;
+    return `<div class="dk">${dark === "on" ? "" : ticks}<span>${t}</span></div>`;
   }
 
   _chk(label, v) {
@@ -314,7 +339,7 @@ class LightLogicCard extends HTMLElement {
       ex = `<div class="ex"><div class="row">${checks}</div><div class="hint">${hint}</div></div>`;
     }
     return `<div class="blk" data-act="room" data-i="${i}" style="--c:${TONES[tn]}"><div class="hd"><ha-icon icon="${this._on(r.light) ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon>` +
-      `<div class="tx"><div class="row"><span class="nm">${esc(r.name)}</span>${chips}</div><div class="vd">${esc(text)}</div></div>${luxHtml}</div>${bar}${ex}</div>`;
+      `<div class="tx"><div class="row"><span class="nm">${esc(r.name)}</span>${chips}</div><div class="vd">${esc(text)}</div></div>${luxHtml}</div>${this._dark(r)}${bar}${ex}</div>`;
   }
 
   _render() {
@@ -322,7 +347,7 @@ class LightLogicCard extends HTMLElement {
     const fa = this.shadowRoot.activeElement;
     const fe = fa && fa.dataset && fa.dataset.ent;
     const fb = fa && fa.dataset && fa.dataset.band;
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._outside()}${this._config.rooms.map((r, i) => this._room(r, i)).join("")}</ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div class="rule">A room is dark when it's gloomy outside and below its lux mark for 2 min. It stays dark until it's light outside.</div>${this._outside()}${this._config.rooms.map((r, i) => this._room(r, i)).join("")}</ha-card>`;
     if (fe) {
       const n = [...this.shadowRoot.querySelectorAll("input[data-ent]")].find((i) => i.dataset.ent === fe && i.dataset.band === fb);
       if (n) n.focus();

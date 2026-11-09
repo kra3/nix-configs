@@ -46,7 +46,7 @@ const STYLE = `
   .band, .eb { position: relative; }
   .band { height: 44px; margin: 22px 0 14px; }
   .tl { position: absolute; top: 40px; font-size: 11px; white-space: nowrap; color: var(--secondary-text-color); }
-  .tl.lo { transform: translateX(-100%); padding-right: 4px; }
+  .tl.lo { padding-right: 4px; }
   .tl.hi { padding-left: 4px; }
   .cut { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--primary-text-color); }
   .cut .seg { flex: 1; }
@@ -186,6 +186,10 @@ class LightLogicCard extends HTMLElement {
     el.value = v;
   }
 
+  _lpos(v) {
+    return v < 15 ? "0px" : this._tpos(v);
+  }
+
   _tpos(v) {
     return `calc(14px + (100% - 28px) * ${Math.min(1, Math.max(0, v / 50))})`;
   }
@@ -206,7 +210,8 @@ class LightLogicCard extends HTMLElement {
     const sh = sr.querySelector(".shade");
     sh.style.left = `${(g / 50) * 100}%`;
     sh.style.width = `${((c - g) / 50) * 100}%`;
-    const tl = (cls, v) => { const e = sr.querySelector(`.tl.${cls}`); e.style.left = this._tpos(v); e.innerHTML = cls === "lo" ? `gloomy &lt;${fmt(v)} %` : `light &gt;${fmt(v)} %`; };
+    const tl = (cls, v) => { const e = sr.querySelector(`.tl.${cls}`); e.style.left = cls === "lo" ? this._lpos(v) : this._tpos(v);
+      if (cls === "lo") e.style.transform = v < 15 ? "none" : "translateX(-100%)"; e.innerHTML = cls === "lo" ? `gloomy &lt;${fmt(v)} %` : `light &gt;${fmt(v)} %`; };
     tl("lo", g);
     tl("hi", c);
     sr.querySelector(".seg .on span").textContent = `${fmt(g)} %`;
@@ -249,7 +254,7 @@ class LightLogicCard extends HTMLElement {
         `<div class="band" style="--c:${TONES[tn]}"><div class="trk"><div class="shade" style="left:${pos(g)}%;width:${pos(c) - pos(g)}%"></div>` +
         `${frac === null ? "" : `<div class="mk${pos(frac * 100) > 80 ? " r" : pos(frac * 100) < 20 ? " l" : ""}" style="left:${pos(frac * 100)}%">${pos(frac * 100) > 80 ? `now ${fmt(frac * 100, 1)} % ▼` : `▼ now ${fmt(frac * 100, 1)} %`}</div>`}</div>` +
         `${inp(o[`gloomy_below_${sel}`], "lo", g, ga, ga.step ?? 1)}${inp(o.clear_above, "hi", c, ca, ca.step ?? 1)}` +
-        `<div class="tl lo" style="left:${this._tpos(g)}">gloomy &lt;${fmt(g)} %</div><div class="tl hi" style="left:${this._tpos(c)}">light &gt;${fmt(c)} %</div></div>` +
+        `<div class="tl lo" style="left:${this._lpos(g)};transform:${g < 15 ? "none" : "translateX(-100%)"}">gloomy &lt;${fmt(g)} %</div><div class="tl hi" style="left:${this._tpos(c)}">light &gt;${fmt(c)} %</div></div>` +
         `<div class="top"><span>In between nothing changes, so lights don't flicker.</span><span>default ${fmt(ga.default ?? 0)} / ${fmt(ca.default ?? 0)}</span></div>` +
         `<div class="cut">Gloomy cut-off<div class="seg">${seg}</div></div>` +
         `<div class="stp">Evening <button type="button" data-step="-1" aria-label="earlier">−</button> ${fmt(ov)} ${esc(oa.unit_of_measurement || "min")} before sunset <button type="button" data-step="1" aria-label="later">+</button></div></div>`;

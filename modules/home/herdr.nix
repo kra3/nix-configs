@@ -10,6 +10,7 @@
     let
       herdr = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.herdr;
 
+      # neovim/default.nix pins the same release for editor/nvim.lua; bump both together.
       navSrc = pkgs.fetchFromGitHub {
         owner = "paulbkim-dev";
         repo = "vim-herdr-navigation";
@@ -113,7 +114,17 @@
       };
 
       config = {
-        home.packages = [ herdr ];
+        home.packages = [
+          herdr
+          (pkgs.runCommand "herdr-agent-icons-font" { } ''
+            install -Dm644 ${
+              pkgs.fetchurl {
+                url = "https://raw.githubusercontent.com/hhdebb/herdr-radar/v1.5.2/dist/HerdrAgentIconsMax-Regular.ttf";
+                hash = "sha256-G4GZSWsiPQdh/DpJ1bJRC9o43quCyzdYvzmASVvwUnI=";
+              }
+            } $out/share/fonts/truetype/HerdrAgentIconsMax-Regular.ttf
+          '')
+        ];
 
         # herdr rewrites this file for onboarding and the Settings UI; those writes fail on the read-only symlink, so change it here.
         xdg.configFile."herdr/config.toml".source =
@@ -230,8 +241,9 @@
           )
         );
 
-        # Sourced after lazy.nvim's key stubs, so it owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate.
-        xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
+        # herdr-bar's agent logos; Ghostty only finds a home.packages font on Linux with fontconfig enabled.
+        fonts.fontconfig.enable = true;
+        programs.ghostty.settings.font-codepoint-map = "U+E1A0-U+E1B7=Herdr Agent Icons Max";
 
         home.file.".claude/skills/herdr/SKILL.md".source =
           pkgs.runCommand "herdr-skill.md" { }

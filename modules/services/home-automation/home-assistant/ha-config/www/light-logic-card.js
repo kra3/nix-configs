@@ -41,16 +41,22 @@ const STYLE = `
   .seg button:first-child { border-radius: 22px 0 0 22px; }
   .seg button:last-child { border-radius: 0 22px 22px 0; }
   .seg button.on { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
-  .stp { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--primary-text-color); }
+  .stp { display: flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; gap: 8px; font-size: 13px; color: var(--primary-text-color); }
   .stp button { min-width: 44px; border-radius: 22px; font-size: 20px; }
   .band, .eb { position: relative; }
-  .band { height: 44px; margin-top: 22px; }
+  .band { height: 44px; margin: 22px 0 14px; }
+  .tl { position: absolute; top: 40px; font-size: 11px; white-space: nowrap; color: var(--secondary-text-color); }
+  .tl.lo { transform: translateX(-100%); padding-right: 4px; }
+  .tl.hi { padding-left: 4px; }
+  .cut { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--primary-text-color); }
+  .cut .seg { flex: 1; }
+  .ex.oe { padding-left: 0; }
   .trk { position: absolute; left: 14px; right: 14px; top: 18px; height: 8px; border-radius: 4px; background: var(--secondary-background-color); }
   .shade { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--primary-color); opacity: 0.45; }
   .mk { position: absolute; top: -20px; transform: translateX(-50%); font-size: 11px; line-height: 1; white-space: nowrap; color: var(--c); }
   .mk.r { transform: translateX(-100%); }
   .mk.l { transform: none; }
-  .eb { margin-left: 18px; padding: 19px 14px; }
+  .eb { margin: 9px 0 0 18px; padding: 19px 14px; }
   .eb .bar { margin: 0; }
   .band input, .eb input { position: absolute; left: 0; top: 0; width: 100%; height: 44px; margin: 0; padding: 0; background: transparent; pointer-events: none; -webkit-appearance: none; appearance: none; }
   .eb input { top: 50%; margin-top: -22px; }
@@ -180,8 +186,8 @@ class LightLogicCard extends HTMLElement {
     el.value = v;
   }
 
-  _bandText(g, c) {
-    return `gloomy &lt;${fmt(g)} %  ·  light &gt;${fmt(c)} %`;
+  _tpos(v) {
+    return `calc(14px + (100% - 28px) * ${Math.min(1, Math.max(0, v / 50))})`;
   }
 
   _tip(gl, sun, g, c) {
@@ -200,7 +206,10 @@ class LightLogicCard extends HTMLElement {
     const sh = sr.querySelector(".shade");
     sh.style.left = `${(g / 50) * 100}%`;
     sh.style.width = `${((c - g) / 50) * 100}%`;
-    sr.querySelector(".glab b").innerHTML = this._bandText(g, c);
+    const tl = (cls, v) => { const e = sr.querySelector(`.tl.${cls}`); e.style.left = this._tpos(v); e.innerHTML = cls === "lo" ? `gloomy &lt;${fmt(v)} %` : `light &gt;${fmt(v)} %`; };
+    tl("lo", g);
+    tl("hi", c);
+    sr.querySelector(".seg .on span").textContent = `${fmt(g)} %`;
     sr.querySelector(".tip").textContent = this._tip(this._val(this._config.outside.gloomy), this._val(this._config.outside.sun), g, c);
   }
 
@@ -235,13 +244,15 @@ class LightLogicCard extends HTMLElement {
       const oa = this._attrs(o.evening_offset);
       const ov = this._num(o.evening_offset) ?? oa.default ?? 60;
       const inp = (id, band, v, a, st) => `<input type="range" data-ent="${esc(id)}" data-band="${band}" data-min="${a.min ?? 0}" data-max="${a.max ?? 50}" min="0" max="50" step="${st}" value="${v}" style="z-index:${band === "lo" ? (g >= 25 ? 2 : 1) : 1}">`;
-      const seg = ["day", "evening"].map((s) => `<button type="button" data-seg="${s}" class="${s === sel ? "on" : ""}">${s === "day" ? "Day" : "Evening"}</button>`).join("");
-      mid = `<div class="ex sl"><div class="seg">${seg}</div>` +
+      const seg = ["day", "evening"].map((s) => `<button type="button" data-seg="${s}" class="${s === sel ? "on" : ""}">${s === "day" ? "Day" : "Evening"} <span>${fmt(this._gl(s)[0])} %</span></button>`).join("");
+      mid = `<div class="ex sl oe">` +
         `<div class="band" style="--c:${TONES[tn]}"><div class="trk"><div class="shade" style="left:${pos(g)}%;width:${pos(c) - pos(g)}%"></div>` +
         `${frac === null ? "" : `<div class="mk${pos(frac * 100) > 80 ? " r" : pos(frac * 100) < 20 ? " l" : ""}" style="left:${pos(frac * 100)}%">${pos(frac * 100) > 80 ? `now ${fmt(frac * 100, 1)} % ▼` : `▼ now ${fmt(frac * 100, 1)} %`}</div>`}</div>` +
-        `${inp(o[`gloomy_below_${sel}`], "lo", g, ga, ga.step ?? 1)}${inp(o.clear_above, "hi", c, ca, ca.step ?? 1)}</div>` +
-        `<div class="top glab"><b>${this._bandText(g, c)}</b><span>default ${fmt(ga.default ?? 0)}/${fmt(ca.default ?? 0)}</span></div>` +
-        `<div class="stp">Evening from <button type="button" data-step="-1" aria-label="earlier">−</button> ${fmt(ov)} ${esc(oa.unit_of_measurement || "min")} before sunset <button type="button" data-step="1" aria-label="later">+</button></div></div>`;
+        `${inp(o[`gloomy_below_${sel}`], "lo", g, ga, ga.step ?? 1)}${inp(o.clear_above, "hi", c, ca, ca.step ?? 1)}` +
+        `<div class="tl lo" style="left:${this._tpos(g)}">gloomy &lt;${fmt(g)} %</div><div class="tl hi" style="left:${this._tpos(c)}">light &gt;${fmt(c)} %</div></div>` +
+        `<div class="top"><span>In between nothing changes, so lights don't flicker.</span><span>default ${fmt(ga.default ?? 0)} / ${fmt(ca.default ?? 0)}</span></div>` +
+        `<div class="cut">Gloomy cut-off<div class="seg">${seg}</div></div>` +
+        `<div class="stp">Evening <button type="button" data-step="-1" aria-label="earlier">−</button> ${fmt(ov)} ${esc(oa.unit_of_measurement || "min")} before sunset <button type="button" data-step="1" aria-label="later">+</button></div></div>`;
     } else {
       mid = `<div class="bar${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}">${frac === null ? "" : `<div class="fill" style="width:${pos(frac * 100)}%"></div>`}` +
         `<div class="tk" style="left:${pos(g)}%"><span>gloomy &lt;${fmt(g)} %</span></div><div class="tk up" style="left:${pos(c)}%"><span>light &gt;${fmt(c)} %</span></div></div>`;
@@ -318,7 +329,7 @@ class LightLogicCard extends HTMLElement {
         const edit = this._open === i && r.threshold && T !== null && this._hass.states[r.threshold];
         const ta = edit ? this._attrs(r.threshold) : {};
         const max = edit ? ta.max ?? 100 : Math.max((T || 0) * 2, lux, 1);
-        const b = `<div class="bar sm${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}"><div class="fill" style="width:${Math.min(100, (lux / max) * 100)}%"></div>` + (edit || T === null ? "" : `<div class="tk" style="left:${(T / max) * 100}%"><span>&lt;${fmt(T)}</span></div>`) + `</div>`;
+        const b = `<div class="bar sm${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}"><div class="fill" style="width:${Math.min(100, (lux / max) * 100)}%"></div>` + (edit ? `<div class="mk${lux / max > 0.8 ? " r" : lux / max < 0.2 ? " l" : ""}" style="left:${Math.min(100, (lux / max) * 100)}%">${lux / max > 0.8 ? `now ${fmt(lux)} lx ▼` : `▼ now ${fmt(lux)} lx`}</div>` : "") + (edit || T === null ? "" : `<div class="tk" style="left:${(T / max) * 100}%"><span>&lt;${fmt(T)}</span></div>`) + `</div>`;
         bar = edit ? `<div class="eb sl">${b.replace("bar sm", "bar")}<input type="range" data-ent="${esc(r.threshold)}" data-unit="${esc(ta.unit_of_measurement || "")}" data-def="${ta.default ?? ""}" min="${ta.min ?? 0}" max="${max}" step="${ta.step ?? 1}" value="${T}"></div><div class="sl" style="margin-left:32px"><div class="top tlab">${this._tlab(ta.unit_of_measurement, T, ta.default)}</div></div>` : b;
       }
     }
@@ -336,7 +347,7 @@ class LightLogicCard extends HTMLElement {
         this._chk("Not paused", this._inv(h.paused)),
       ].join("");
       const hint = r.hint ? esc(r.hint) : r.evening_hold ? "Stays on from dark until bedtime while anyone is home; dims to 15 % when empty for 2 min" : "Turns off 2 min after the room clears";
-      ex = `<div class="ex"><div class="row">${checks}</div><div class="hint">${hint}</div></div>`;
+      ex = `<div class="ex"><div class="row"><span class="sub">Light comes on when all are ✓:</span>${checks}</div><div class="hint">Then: ${hint}</div></div>`;
     }
     return `<div class="blk" data-act="room" data-i="${i}" style="--c:${TONES[tn]}"><div class="hd"><ha-icon icon="${this._on(r.light) ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon>` +
       `<div class="tx"><div class="row"><span class="nm">${esc(r.name)}</span>${chips}</div><div class="vd">${esc(text)}</div></div>${luxHtml}</div>${this._dark(r)}${bar}${ex}</div>`;

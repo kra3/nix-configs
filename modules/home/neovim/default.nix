@@ -148,16 +148,6 @@
           recursive = true;
         };
 
-        # Owns <C-h/j/k/l>: crosses into herdr panes inside herdr, else falls back to TmuxNavigate. Same pin as herdr.nix.
-        xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${
-          pkgs.fetchFromGitHub {
-            owner = "paulbkim-dev";
-            repo = "vim-herdr-navigation";
-            rev = "v0.1.0";
-            hash = "sha256-4lFrDzbdZiCIHIdkJ9q2lMlo+RCsu9eBXjK58VEuhDE=";
-          }
-        }/editor/nvim.lua";
-
         # Read by lua/config/lazy.lua, plugins/* and check-tools.lua.
         xdg.configFile."nvim/lua/config/nix-langs.lua".text = ''
           return ${

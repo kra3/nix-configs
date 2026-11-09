@@ -10,7 +10,6 @@
     let
       herdr = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.herdr;
 
-      # neovim/default.nix pins the same release for editor/nvim.lua; bump both together.
       navSrc = pkgs.fetchFromGitHub {
         owner = "paulbkim-dev";
         repo = "vim-herdr-navigation";
@@ -241,8 +240,10 @@
           )
         );
 
-        # herdr-bar's agent logos; Ghostty only finds a home.packages font on Linux with fontconfig enabled.
-        fonts.fontconfig.enable = true;
+        # Owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate (plugins/editing.lua disables that plugin's own mappings).
+        xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
+
+        # herdr-bar's agent logos.
         programs.ghostty.settings.font-codepoint-map = "U+E1A0-U+E1B7=Herdr Agent Icons Max";
 
         home.file.".claude/skills/herdr/SKILL.md".source =

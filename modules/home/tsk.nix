@@ -2,6 +2,7 @@
   flake.homeManagerModules.home-tsk =
     {
       flakeLib,
+      flakeModules,
       inputs,
       config,
       lib,
@@ -86,6 +87,8 @@
       };
     in
     {
+      imports = [ flakeModules.homeManager.home-claude-personas ];
+
       home.packages = [
         tsk
         runner

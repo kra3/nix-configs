@@ -1,7 +1,6 @@
 {
   flake.homeManagerModules.home-claude-code =
     {
-      flakeLib,
       inputs,
       lib,
       pkgs,
@@ -41,57 +40,36 @@
         fi
       '';
 
-      home.file =
-        lib.listToAttrs (
-          map (
-            p:
-            lib.nameValuePair ".claude/agents/${p.name}.md" {
-              text = lib.concatStringsSep "\n" (
-                [
-                  "---"
-                  "name: ${p.name}"
-                  "description: ${builtins.toJSON p.description}"
-                  "model: ${p.model}"
-                ]
-                ++ lib.optional (p ? tools) "tools: ${p.tools}"
-                ++ [
-                  "---"
-                  p.prompt
-                ]
-              );
-            }
-          ) flakeLib.claude-personas
-        )
-        // {
-          ".claude/CLAUDE.md" = {
-            source = ./claude-code/CLAUDE.md;
-            force = true;
-          };
-          ".claude/statusline.sh" = {
-            source = ./claude-code/statusline.sh;
-            force = true;
-          };
-          ".claude/hooks/guard-bash.sh" = {
-            source = ./claude-code/hooks/guard-bash.sh;
-            executable = true;
-            force = true;
-          };
-          ".claude/hooks/ask-main-merge.sh" = {
-            source = ./claude-code/hooks/ask-main-merge.sh;
-            executable = true;
-            force = true;
-          };
-          ".claude/hooks/review-gate.sh" = {
-            source = ./claude-code/hooks/review-gate.sh;
-            executable = true;
-            force = true;
-          };
-          ".claude/hooks/notify.sh" = {
-            source = ./claude-code/hooks/notify.sh;
-            executable = true;
-            force = true;
-          };
-          ".claude/.i-have-adhd-always".text = "";
+      home.file = {
+        ".claude/CLAUDE.md" = {
+          source = ./claude-code/CLAUDE.md;
+          force = true;
         };
+        ".claude/statusline.sh" = {
+          source = ./claude-code/statusline.sh;
+          force = true;
+        };
+        ".claude/hooks/guard-bash.sh" = {
+          source = ./claude-code/hooks/guard-bash.sh;
+          executable = true;
+          force = true;
+        };
+        ".claude/hooks/ask-main-merge.sh" = {
+          source = ./claude-code/hooks/ask-main-merge.sh;
+          executable = true;
+          force = true;
+        };
+        ".claude/hooks/review-gate.sh" = {
+          source = ./claude-code/hooks/review-gate.sh;
+          executable = true;
+          force = true;
+        };
+        ".claude/hooks/notify.sh" = {
+          source = ./claude-code/hooks/notify.sh;
+          executable = true;
+          force = true;
+        };
+        ".claude/.i-have-adhd-always".text = "";
+      };
     };
 }

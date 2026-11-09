@@ -97,6 +97,7 @@
             agent_panel_sort = "spaces";
             tab_bar_position = "bottom";
             pane_outer_borders = false;
+            pane_gaps = false;
             prompt_new_tab_name = false;
             toast.delivery = "system";
             sidebar_start_collapsed = lib.mkDefault true;

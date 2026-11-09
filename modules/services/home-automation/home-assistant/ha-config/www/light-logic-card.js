@@ -294,10 +294,10 @@ class LightLogicCard extends HTMLElement {
     else if (dark === "on") {
       const lc = this._hass.states[r.dark].last_changed;
       t = `Dark since ${new Date(lc).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · until it's light outside (&gt;${fmt(c)} %)`;
-    } else if (!r.lux) t = gl === "on" ? "Dark any moment · no sensor, follows outside" : "Not dark · no sensor, dark when it's gloomy outside";
-    else if (dim === null) t = "Not dark · room lux no data";
-    else if (gl === "on") t = dim ? `Dark in ≤2 min · gloomy and ${fmt(lux)} &lt; ${fmt(T)} lx` : `Not dark · needs below ${fmt(T)} lx (now ${fmt(lux)})`;
-    else t = dim ? `Not dark · dim enough (${fmt(lux)} &lt; ${fmt(T)} lx), waiting for gloomy outside (&lt;${fmt(g)} %)` : `Not dark · needs gloomy outside and below ${fmt(T)} lx (now ${fmt(lux)})`;
+    } else if (!r.lux) t = gl === "on" ? "· dark any moment" : `· waiting for gloomy outside (&lt;${fmt(g)} %)`;
+    else if (dim === null) t = "· room lux no data";
+    else if (gl === "on") t = dim ? "· dark in ≤2 min" : `· needs below ${fmt(T)} lx`;
+    else t = dim ? `· waiting for gloomy outside (&lt;${fmt(g)} %)` : "· needs both";
     return `<div class="dk">${dark === "on" ? "" : ticks}<span>${t}</span></div>`;
   }
 

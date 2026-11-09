@@ -175,7 +175,16 @@ class LightLogicCard extends HTMLElement {
   }
 
   _bandText(g, c) {
-    return `dark &lt;${fmt(g)} %  ·  clear &gt;${fmt(c)} %`;
+    return `gloomy &lt;${fmt(g)} %  ·  light &gt;${fmt(c)} %`;
+  }
+
+  _tip(gl, sun, g, c) {
+    const o = this._config.outside;
+    const act = this._on(o.evening_rule) ? "evening" : "day";
+    if ((this._seg || act) !== act) g = this._gl(act)[0];
+    if (gl === null) return "";
+    if (sun === "below_horizon") return "Sun is down · rooms may light up until sunrise";
+    return gl === "on" ? `Stays gloomy until daylight is above ${fmt(c)} % for 10 min` : `Lights stay off · goes gloomy below ${fmt(g)} %`;
   }
 
   _bandLive() {
@@ -186,6 +195,7 @@ class LightLogicCard extends HTMLElement {
     sh.style.left = `${(g / 50) * 100}%`;
     sh.style.width = `${((c - g) / 50) * 100}%`;
     sr.querySelector(".glab b").innerHTML = this._bandText(g, c);
+    sr.querySelector(".tip").textContent = this._tip(this._val(this._config.outside.gloomy), this._val(this._config.outside.sun), g, c);
   }
 
   _tlab(unit, v, def) {
@@ -228,12 +238,12 @@ class LightLogicCard extends HTMLElement {
         `<div class="stp">Evening from <button type="button" data-step="-1" aria-label="earlier">−</button> ${fmt(ov)} ${esc(oa.unit_of_measurement || "min")} before sunset <button type="button" data-step="1" aria-label="later">+</button></div></div>`;
     } else {
       mid = `<div class="bar${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}">${frac === null ? "" : `<div class="fill" style="width:${pos(frac * 100)}%"></div>`}` +
-        `<div class="tk" style="left:${pos(g)}%"><span>dark &lt;${fmt(g)} %</span></div><div class="tk up" style="left:${pos(c)}%"><span>clear &gt;${fmt(c)} %</span></div></div>`;
+        `<div class="tk" style="left:${pos(g)}%"><span>gloomy &lt;${fmt(g)} %</span></div><div class="tk up" style="left:${pos(c)}%"><span>light &gt;${fmt(c)} %</span></div></div>`;
     }
     return `<div class="blk" data-act="out" style="--c:${TONES[tn]}"><div class="hd"><ha-icon icon="${gl === "on" ? "mdi:weather-cloudy" : "mdi:weather-sunny"}"></ha-icon>` +
-      `<div class="tx"><div class="nm">${gl === null ? "Outside: no data" : gl === "on" ? "Gloomy outside" : "Light outside"}</div>` +
+      `<div class="tx"><div class="nm">${gl === null ? "Outside: no data" : gl === "on" ? "Gloomy outside · rooms may light up" : "Light outside"}</div>` +
       `<div class="sub">${frac === null ? "daylight no data" : `daylight ${fmt(frac * 100, 1)} % of today's peak`}</div></div></div>` +
-      `${mid}<div class="sub">${esc(line)}</div></div>`;
+      `${mid}<div class="sub tip">${esc(this._tip(gl, sun, g, c))}</div>${this._outOpen ? `<div class="sub">${esc(line)}</div>` : ""}</div>`;
   }
 
 

@@ -10,32 +10,99 @@
     let
       herdr = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.herdr;
 
-      # Workspaces plus zoxide dirs; picking a dir opens a workspace there.
-      workspacePicker = pkgs.writeShellScript "herdr-workspace-picker" ''
-        export PATH=${
-          pkgs.lib.makeBinPath [
-            pkgs.fzf
-            pkgs.jq
-            pkgs.zoxide
-            pkgs.coreutils
-            pkgs.gawk
-          ]
-        }:$PATH
-        pick=$(
-          {
-            "$HERDR_BIN_PATH" workspace list |
-              jq -r '.result.workspaces[] | "ws\t\(.workspace_id)\t\(.label)"'
-            zoxide query -l | awk -v h="$HOME" '{ p = $0; sub("^" h, "~", p); print "dir\t" $0 "\t" p }'
-          } | fzf --delimiter '\t' --with-nth 3 --prompt 'workspace > '
-        ) || exit 0
-        kind=''${pick%%$'\t'*}
-        rest=''${pick#*$'\t'}
-        val=''${rest%%$'\t'*}
-        case $kind in
-          ws) "$HERDR_BIN_PATH" workspace focus "$val" ;;
-          dir) "$HERDR_BIN_PATH" workspace create --cwd "$val" --label "$(basename "$val")" --focus ;;
-        esac
-      '';
+      navSrc = pkgs.fetchFromGitHub {
+        owner = "paulbkim-dev";
+        repo = "vim-herdr-navigation";
+        rev = "v0.1.0";
+        hash = "sha256-4lFrDzbdZiCIHIdkJ9q2lMlo+RCsu9eBXjK58VEuhDE=";
+      };
+
+      plugins = {
+        # Without jq on PATH navigate.sh silently skips Vim detection.
+        vim-herdr-navigation = pkgs.runCommand "vim-herdr-navigation-plugin" { } ''
+          mkdir -p $out
+          cp ${navSrc}/herdr-plugin.toml $out/
+          install -m755 ${navSrc}/navigate.sh $out/
+          substituteInPlace $out/navigate.sh \
+            --replace-fail 'set -euo pipefail' 'set -euo pipefail; PATH=${pkgs.jq}/bin:$PATH'
+        '';
+        # `herdr plugin link` skips the manifest's [[build]] download, so bin/ comes from a Nix build.
+        herdr-bar =
+          let
+            bin = pkgs.rustPlatform.buildRustPackage rec {
+              pname = "herdr-bar";
+              version = "0.14.0";
+              src = pkgs.fetchFromGitHub {
+                owner = "jeffarese";
+                repo = "herdr-bar";
+                rev = "v${version}";
+                hash = "sha256-7ybX/DwOZkI7yr0U6fszlerx5/96mGO9DtLXoA4DuHs=";
+              };
+              cargoHash = "sha256-6aTRYRoG2bkVZiMmGWQoBEmimMUIzQGd/eeSjqboLEw=";
+              doCheck = false;
+            };
+          in
+          pkgs.runCommand "herdr-bar-plugin" { } ''
+            mkdir -p $out/bin
+            cp ${bin.src}/herdr-plugin.toml $out/
+            ln -s ${bin}/bin/herdr-bar $out/bin/herdr-bar
+          '';
+        # Needs rustc 1.99.1, newer than nixpkgs; use the release binary its own installer fetches.
+        "persiyanov.reviewr" =
+          let
+            version = "0.52.1";
+            target =
+              {
+                x86_64-linux = {
+                  triple = "x86_64-unknown-linux-musl";
+                  hash = "sha256-+av+rCdF8MKT4d2gacAxk1GygEGfBbciXEjoGn/dVs0=";
+                };
+                aarch64-darwin = {
+                  triple = "aarch64-apple-darwin";
+                  hash = "sha256-bZfE10ZCCeDvzJvfqWlOkX9ZYl7j2VVsIgezawS8/7Y=";
+                };
+              }
+              .${pkgs.stdenv.hostPlatform.system};
+            src = pkgs.fetchFromGitHub {
+              owner = "persiyanov";
+              repo = "herdr-reviewr";
+              rev = "v${version}";
+              hash = "sha256-i+JtSYpEfBO9QF+UM1+TQTUvmRMQyGf1J+EKdhw0gOo=";
+            };
+            tarball = pkgs.fetchurl {
+              url = "https://github.com/persiyanov/herdr-reviewr/releases/download/v${version}/herdr-reviewr-${target.triple}.tar.gz";
+              inherit (target) hash;
+            };
+          in
+          pkgs.runCommand "herdr-reviewr-plugin" { } ''
+            mkdir -p $out/bin
+            cp ${src}/herdr-plugin.toml $out/
+            tar -xzf ${tarball} -C $out/bin herdr-reviewr
+          '';
+        "herdr.auto-title" =
+          let
+            version = "0.21.0";
+            bin = pkgs.buildGoModule {
+              pname = "herdr-auto-title";
+              inherit version;
+              src = pkgs.fetchFromGitHub {
+                owner = "kryptamine";
+                repo = "herdr-auto-title";
+                rev = "v${version}";
+                hash = "sha256-uuSPjktw0CM799k+R0k2IPaiaXCCtaDVBzzBSOQkLgM=";
+              };
+              vendorHash = "sha256-BN/q/5o9CiklREYZloLZU2rLKUIW6Eq6Yy1Wr9vK3hU=";
+              subPackages = [ "cmd/herdr-auto-title" ];
+              doCheck = false;
+            };
+          in
+          pkgs.runCommand "herdr-auto-title-plugin" { } ''
+            mkdir -p $out
+            cp ${bin.src}/herdr-plugin.toml $out/
+            ln -s ${bin}/bin/herdr-auto-title $out/herdr-auto-title
+          '';
+      };
+
       toml = pkgs.formats.toml { };
     in
     {
@@ -46,7 +113,17 @@
       };
 
       config = {
-        home.packages = [ herdr ];
+        home.packages = [
+          herdr
+          (pkgs.runCommand "herdr-agent-icons-font" { } ''
+            install -Dm644 ${
+              pkgs.fetchurl {
+                url = "https://raw.githubusercontent.com/hhdebb/herdr-radar/v1.5.2/dist/HerdrAgentIconsMax-Regular.ttf";
+                hash = "sha256-G4GZSWsiPQdh/DpJ1bJRC9o43quCyzdYvzmASVvwUnI=";
+              }
+            } $out/share/fonts/truetype/HerdrAgentIconsMax-Regular.ttf
+          '')
+        ];
 
         # herdr rewrites this file for onboarding and the Settings UI; those writes fail on the read-only symlink, so change it here.
         xdg.configFile."herdr/config.toml".source =
@@ -70,14 +147,21 @@
             resize_pane_up = "prefix+shift+k";
             resize_pane_right = "prefix+shift+l";
             reload_config = "prefix+r";
+            goto = "";
+            clear_pane = "prefix+ctrl+l";
             resize_mode = "prefix+shift+r";
             command = [
               {
-                key = "prefix+shift+s";
-                type = "popup";
-                command = "${workspacePicker}";
-                width = "60%";
-                height = "60%";
+                key = "prefix+g";
+                type = "plugin_action";
+                command = "herdr-bar.open";
+                description = "command bar";
+              }
+              {
+                key = "prefix+alt+r";
+                type = "plugin_action";
+                command = "persiyanov.reviewr.toggle";
+                description = "reviewr";
               }
               {
                 key = "prefix+t";
@@ -91,6 +175,30 @@
                 command = "herdr-tsk.quick-capture";
                 description = "tsk quick capture";
               }
+              {
+                key = "ctrl+h";
+                type = "plugin_action";
+                command = "vim-herdr-navigation.left";
+                description = "navigate left (vim/herdr)";
+              }
+              {
+                key = "ctrl+j";
+                type = "plugin_action";
+                command = "vim-herdr-navigation.down";
+                description = "navigate down (vim/herdr)";
+              }
+              {
+                key = "ctrl+k";
+                type = "plugin_action";
+                command = "vim-herdr-navigation.up";
+                description = "navigate up (vim/herdr)";
+              }
+              {
+                key = "ctrl+l";
+                type = "plugin_action";
+                command = "vim-herdr-navigation.right";
+                description = "navigate right (vim/herdr)";
+              }
             ];
           };
           ui = {
@@ -102,9 +210,41 @@
             toast.delivery = "system";
             sidebar_start_collapsed = lib.mkDefault true;
             status_indicators = lib.mkDefault "symbols";
+            # auto-title fills $topic with the workspace's current task.
+            sidebar.spaces.rows = [
+              [
+                "state_icon"
+                "workspace"
+                "branch"
+                "git_status"
+              ]
+              [
+                {
+                  token = "$topic";
+                  bold = true;
+                  dim = false;
+                }
+              ]
+            ];
           };
           experimental.pane_history = true;
         };
+
+        # herdr rewrites its plugin registry at runtime, so link at activation; re-linking picks up new store paths.
+        home.activation.herdrPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+          lib.concatStrings (
+            lib.mapAttrsToList (id: dir: ''
+              ${herdr}/bin/herdr plugin unlink ${id} >/dev/null 2>&1 || true
+              run ${herdr}/bin/herdr plugin link ${dir} --enabled
+            '') plugins
+          )
+        );
+
+        # Owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate (plugins/editing.lua disables that plugin's own mappings).
+        xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
+
+        # herdr-bar's agent logos.
+        programs.ghostty.settings.font-codepoint-map = "U+E1A0-U+E1B7=Herdr Agent Icons Max";
 
         home.file.".claude/skills/herdr/SKILL.md".source =
           pkgs.runCommand "herdr-skill.md" { }

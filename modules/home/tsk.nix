@@ -1,6 +1,7 @@
 {
   flake.homeManagerModules.home-tsk =
     {
+      flakeLib,
       inputs,
       config,
       lib,
@@ -44,23 +45,18 @@
       '';
 
       # tsk also writes config.toml (backup, board settings), so only this marked block is ours.
-      agents = pkgs.writeText "tsk-agents.toml" ''
-        # BEGIN nix-managed agents
-        [agent.scout]
-        command = ["claude", "--permission-mode", "auto", "--model", "claude-haiku-5-5", "--effort", "low"]
-        prompt_append = "Research only: write findings into the task notes with tsk and change no code."
-
-        [agent.builder]
-        command = ["claude", "--permission-mode", "auto", "--model", "claude-sonnet-5-5", "--effort", "medium"]
-        prompt_append = "Implement exactly the task's steps and run its acceptance check. If anything is unclear, block the task instead of guessing."
-
-        [agent.claude]
-        command = ["claude", "--permission-mode", "auto", "--model", "claude-opus-5-5", "--effort", "high"]
-        # END nix-managed agents
-      '';
+      personas = flakeLib.claude-personas;
+      agents = pkgs.writeText "tsk-agents.toml" (
+        "# BEGIN nix-managed agents\n"
+        + lib.concatMapStrings (p: ''
+          [agent.${p.name}]
+          command = ["claude", "--agent", "${p.name}", "--permission-mode", "auto", "--effort", "${p.effort}"]
+        '') personas
+        + "# END nix-managed agents\n"
+      );
 
       maxStarted = 1;
-      triagePrompt = "Triage tsk task T$n. Read it with 'tsk list $n'. If it lacks concrete steps or an acceptance check and you can infer them, add them. If it is not work an agent can do in a git repo (an errand, a call, a decision only the user can make), assign me instead. Otherwise assign exactly one profile with 'tsk edit $n --assignee <profile>': scout for research or a question with no code change, builder when it has concrete steps and a check, claude when it is vague, design or debugging. Do not change its status.";
+      triagePrompt = "Triage tsk task T$n.";
       runner = pkgs.writeShellApplication {
         name = "tsk-runner";
         runtimeInputs = [
@@ -77,7 +73,7 @@
           started=$(jq '[.[] | select(.status == "started")] | length' <<<"$tasks")
           (( started < ${toString maxStarted} )) || exit 0
           for n in $(jq -r '.[] | select(.status == "ready" and .project != null and .assignee == null) | .number' <<<"$tasks"); do
-            timeout 300 claude -p --model claude-haiku-5-5 --effort low \
+            timeout 300 claude -p --agent tsk-triage --effort low \
               --allowedTools='Bash(tsk list *),Bash(tsk edit *),Bash(tsk steps *)' \
               "${triagePrompt}" || true
           done
@@ -121,6 +117,23 @@
           StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/tsk-runner.log";
         };
       };
+
+      home.file.".claude/agents/tsk-triage.md".text = ''
+        ---
+        name: tsk-triage
+        description: Use when a tsk task needs a persona assigned before dispatch.
+        model: haiku
+        tools: Bash
+        ---
+        You triage one tsk task so the right agent can pick it up.
+
+        1. Read it with `tsk list <n>`.
+        2. If it lacks concrete steps or an acceptance check and you can infer them from the title and notes, add them with `tsk steps` / `tsk edit`. Never invent requirements.
+        3. If it is not work an agent can do in a git repo (an errand, a call, a decision only the user can make), run `tsk edit <n> --assignee me` and stop.
+        4. Otherwise assign the single best persona with `tsk edit <n> --assignee <name>`. Prefer a domain persona over a generic one, and the cheapest one that fits:
+        ${lib.concatMapStrings (p: "   - ${p.name} (${p.model}): ${p.description}\n") personas}
+        Never change the task's status. Reply with one line: the persona you chose and why.
+      '';
 
       home.file.".claude/skills/tsk-cli/SKILL.md".source = "${tsk.src}/skills/tsk-cli/SKILL.md";
 

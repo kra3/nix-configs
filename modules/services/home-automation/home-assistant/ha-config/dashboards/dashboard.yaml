@@ -1765,6 +1765,90 @@ views:
         confirm: Pause the lighting, TV, door and bedtime automations (this includes arming the alarm at night)?
         hint: Lighting, Adaptive Lighting, TV, door and bedtime automations are off, including arming the alarm at night. Ends at wake-up or when everyone leaves.
   - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Floor plan
+      icon: mdi:floor-plan
+      heading_style: title
+    - type: custom:streamline-card
+      template: floor_plan
+      variables:
+        layer: lights
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 1
+    cards:
+    - type: heading
+      heading: Why lights are on
+      icon: mdi:lightbulb-question
+      heading_style: title
+    - type: custom:light-logic-card
+      outside:
+        gloomy: binary_sensor.gloomy_outside
+        fraction: sensor.daylight_fraction
+        reference: sensor.daylight_reference_5_min
+        peak: sensor.daylight_peak_24h
+        sun: sun.sun
+        gloomy_below_day: input_number.daylight_gloomy_below_day
+        gloomy_below_evening: input_number.daylight_gloomy_below_evening
+        clear_above: input_number.daylight_clear_above
+        evening_rule: binary_sensor.daylight_evening_rule
+        evening_offset: input_number.daylight_evening_offset
+      house:
+        paused: input_boolean.automations_paused
+        party: input_boolean.party_mode
+        sleep: schedule.sleep
+        alarm: alarm_control_panel.vasudha_secure
+        home: binary_sensor.anyone_home
+        adaptive: switch.home_adaptive_lighting_home
+      rooms:
+      - name: Living
+        light: light.living_room_lights
+        dark: input_boolean.living_room_is_dark
+        occupancy: binary_sensor.living_room_occupancy_presence
+        lux: sensor.living_room_occupancy_illuminance
+        threshold: input_number.living_room_dark_below
+        block: binary_sensor.tv_watching
+        evening_hold: true
+      - name: Dining
+        light: light.dining_lights
+        dark: input_boolean.dining_is_dark
+        occupancy: binary_sensor.dining_room_person_occupancy
+        block: binary_sensor.tv_watching
+        evening_hold: true
+      - name: Kitchen
+        light: light.kitchen_lights
+        dark: input_boolean.kitchen_is_dark
+        occupancy: binary_sensor.hue_pir_kitchen_occupancy
+        lux: sensor.kitchen_illuminance_filtered
+        threshold: input_number.kitchen_dark_below
+        hint: "Off 2 min after motion stops; 5 min from 17:00 to 21:00 or once someone has been there 7 min"
+      - name: Bedroom
+        light: light.bedroom_wardrobe_lights
+        dark: input_boolean.bedroom_is_dark
+        occupancy: binary_sensor.bedroom_occupancy_presence
+        lux: sensor.bedroom_occupancy_illuminance
+        threshold: input_number.bedroom_dark_below
+        hint: "Turns off 10 min after the room clears while it is dark; ignores motion in sleep hours and naps"
+        nap: input_boolean.bedroom_nap
+        sleep_off: true
+      - name: Office
+        light: light.office_room_light
+        dark: input_boolean.office_is_dark
+        occupancy: binary_sensor.room_presence_office
+      - name: Hall
+        light: light.hallway_hall_lights
+        dark: input_boolean.hall_is_dark
+        occupancy: binary_sensor.hue_pir_hallway_occupancy
+        lux: sensor.hall_illuminance_filtered
+        threshold: input_number.hall_dark_below
+        away_off: true
+        hint: "45 % on motion, 80 % after 2 min, 15 % once clear for 2 min; night light in sleep hours; off when nobody is home"
+      grid_options:
+        columns: full
+  - type: grid
     column_span: 1
     cards:
     - type: heading
@@ -1951,18 +2035,8 @@ views:
       grid_options:
         columns: full
   - type: grid
-    column_span: 1
+    column_span: 2
     cards:
-    - type: heading
-      heading: Floor plan
-      icon: mdi:floor-plan
-      heading_style: title
-    - type: custom:streamline-card
-      template: floor_plan
-      variables:
-        layer: lights
-      grid_options:
-        columns: full
     - type: heading
       heading: Scenes
       heading_style: subtitle

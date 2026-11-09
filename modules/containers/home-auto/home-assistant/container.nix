@@ -67,6 +67,7 @@
                   "${../../../services/home-automation/home-assistant/ha-config/www/status-row-card.js}:/config/www/status-row-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/laundry-machine-card.js}:/config/www/laundry-machine-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/scene-picker-card.js}:/config/www/scene-picker-card.js:ro"
+                  "${../../../services/home-automation/home-assistant/ha-config/www/light-logic-card.js}:/config/www/light-logic-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/mode-switch-card.js}:/config/www/mode-switch-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/comfort-card.js}:/config/www/comfort-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/maintenance-cards.js}:/config/www/maintenance-cards.js:ro"

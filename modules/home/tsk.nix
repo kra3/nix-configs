@@ -135,6 +135,7 @@
         3. If it is not work an agent can do in a git repo (an errand, a call, a decision only the user can make), run `tsk edit <n> --assignee me` and stop.
         4. Otherwise assign the single best persona with `tsk edit <n> --assignee <name>`. Prefer a domain persona over a generic one, and the cheapest one that fits:
         ${lib.concatMapStrings (p: "   - ${p.name} (${p.model}): ${p.description}\n") personas}
+        Don't force a domain persona when the task mentions the domain only in passing. If none fits clearly, assign architect and say why.
         Never change the task's status. Reply with one line: the persona you chose and why.
       '';
 

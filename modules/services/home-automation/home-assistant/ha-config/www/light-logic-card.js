@@ -13,9 +13,10 @@ const STYLE = `
   .sub, .hint { font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); overflow-wrap: anywhere; }
   .vd { font-size: 13px; font-weight: 500; color: var(--c); overflow-wrap: anywhere; }
   .lx { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; }
-  .bar { position: relative; height: 8px; border-radius: 4px; background: var(--secondary-background-color); margin: 16px 6px 20px; }
+  .bar { position: relative; height: 8px; border-radius: 4px; background: var(--divider-color, rgba(127,127,127,.25)); margin: 16px 6px 20px; }
   .bar.sm { margin: 10px 6px 18px 32px; height: 6px; }
   .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--c); }
+  .bar.ia .fill { background: var(--secondary-text-color); }
   .tk { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--secondary-text-color); }
   .tk span { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-size: 10px; line-height: 1.2; white-space: nowrap; color: var(--secondary-text-color); }
   .tk.up span { top: auto; bottom: 100%; }
@@ -41,6 +42,8 @@ const STYLE = `
   .trk { position: absolute; left: 14px; right: 14px; top: 18px; height: 8px; border-radius: 4px; background: var(--secondary-background-color); }
   .shade { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--primary-color); opacity: 0.45; }
   .mk { position: absolute; top: -20px; transform: translateX(-50%); font-size: 11px; line-height: 1; white-space: nowrap; color: var(--c); }
+  .mk.r { transform: translateX(-100%); }
+  .mk.l { transform: none; }
   .eb { margin-left: 18px; padding: 19px 14px; }
   .eb .bar { margin: 0; }
   .band input, .eb input { position: absolute; left: 0; top: 0; width: 100%; height: 44px; margin: 0; padding: 0; background: transparent; pointer-events: none; -webkit-appearance: none; appearance: none; }
@@ -219,12 +222,12 @@ class LightLogicCard extends HTMLElement {
       const seg = ["day", "evening"].map((s) => `<button type="button" data-seg="${s}" class="${s === sel ? "on" : ""}">${s === "day" ? "Day" : "Evening"}</button>`).join("");
       mid = `<div class="ex sl"><div class="seg">${seg}</div>` +
         `<div class="band" style="--c:${TONES[tn]}"><div class="trk"><div class="shade" style="left:${pos(g)}%;width:${pos(c) - pos(g)}%"></div>` +
-        `${frac === null ? "" : `<div class="mk" style="left:${pos(frac * 100)}%">▼ now ${fmt(frac * 100, 1)} %</div>`}</div>` +
+        `${frac === null ? "" : `<div class="mk${pos(frac * 100) > 80 ? " r" : pos(frac * 100) < 20 ? " l" : ""}" style="left:${pos(frac * 100)}%">${pos(frac * 100) > 80 ? `now ${fmt(frac * 100, 1)} % ▼` : `▼ now ${fmt(frac * 100, 1)} %`}</div>`}</div>` +
         `${inp(o[`gloomy_below_${sel}`], "lo", g, ga, ga.step ?? 1)}${inp(o.clear_above, "hi", c, ca, ca.step ?? 1)}</div>` +
         `<div class="top glab"><b>${this._bandText(g, c)}</b><span>default ${fmt(ga.default ?? 0)}/${fmt(ca.default ?? 0)}</span></div>` +
         `<div class="stp">Evening from <button type="button" data-step="-1" aria-label="earlier">−</button> ${fmt(ov)} ${esc(oa.unit_of_measurement || "min")} before sunset <button type="button" data-step="1" aria-label="later">+</button></div></div>`;
     } else {
-      mid = `<div class="bar" style="--c:${TONES[tn]}">${frac === null ? "" : `<div class="fill" style="width:${pos(frac * 100)}%"></div>`}` +
+      mid = `<div class="bar${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}">${frac === null ? "" : `<div class="fill" style="width:${pos(frac * 100)}%"></div>`}` +
         `<div class="tk" style="left:${pos(g)}%"><span>dark &lt;${fmt(g)} %</span></div><div class="tk up" style="left:${pos(c)}%"><span>clear &gt;${fmt(c)} %</span></div></div>`;
     }
     return `<div class="blk" data-act="out" style="--c:${TONES[tn]}"><div class="hd"><ha-icon icon="${gl === "on" ? "mdi:weather-cloudy" : "mdi:weather-sunny"}"></ha-icon>` +
@@ -245,11 +248,11 @@ class LightLogicCard extends HTMLElement {
     if (this._on(h.paused)) t = ["Paused · automations off", "warning"];
     else if (["pending", "triggered"].includes(this._val(h.alarm))) t = ["Alarm · automations stand by", "error"];
     else if (this._val(h.home) === "off" && (r.evening_hold || r.away_off)) t = ["Nobody home · off", "inactive"];
-    else if (light !== "on" && ((r.sleep_off && this._on(h.sleep)) || this._on(r.nap))) t = ["Sleep · stays off", "inactive"];
+    else if (light !== "on" && ((r.sleep_off && this._on(h.sleep)) || this._on(r.nap))) t = [this._on(r.nap) ? "Nap · off until it ends" : "Sleep · stays off", "inactive"];
     else if (light !== "on" && this._on(r.block)) t = ["Film playing · kept off", "inactive"];
     else if (dark === null) t = ["no data", "inactive"];
     else if (dark === "off") {
-      if (this._val(this._config.outside.gloomy) === "off") t = [`Light outside · dark below ${fmt(g)} %`, "inactive"];
+      if (this._val(this._config.outside.gloomy) === "off") t = ["Off · light outside", "inactive"];
       else if (lux !== null && T !== null && lux >= T) t = [`Room bright · dark below ${fmt(T)} lx`, "inactive"];
       else t = ["Getting dark · within 2 min", "info"];
     } else if (light === "on") {
@@ -280,7 +283,7 @@ class LightLogicCard extends HTMLElement {
         const edit = this._open === i && r.threshold && T !== null && this._hass.states[r.threshold];
         const ta = edit ? this._attrs(r.threshold) : {};
         const max = edit ? ta.max ?? 100 : Math.max((T || 0) * 2, lux, 1);
-        const b = `<div class="bar sm" style="--c:${TONES[tn]}"><div class="fill" style="width:${Math.min(100, (lux / max) * 100)}%"></div>` + (edit || T === null ? "" : `<div class="tk" style="left:${(T / max) * 100}%"><span>&lt;${fmt(T)}</span></div>`) + `</div>`;
+        const b = `<div class="bar sm${tn === "inactive" ? " ia" : ""}" style="--c:${TONES[tn]}"><div class="fill" style="width:${Math.min(100, (lux / max) * 100)}%"></div>` + (edit || T === null ? "" : `<div class="tk" style="left:${(T / max) * 100}%"><span>&lt;${fmt(T)}</span></div>`) + `</div>`;
         bar = edit ? `<div class="eb sl">${b.replace("bar sm", "bar")}<input type="range" data-ent="${esc(r.threshold)}" data-unit="${esc(ta.unit_of_measurement || "")}" data-def="${ta.default ?? ""}" min="${ta.min ?? 0}" max="${max}" step="${ta.step ?? 1}" value="${T}"></div><div class="sl" style="margin-left:32px"><div class="top tlab">${this._tlab(ta.unit_of_measurement, T, ta.default)}</div></div>` : b;
       }
     }

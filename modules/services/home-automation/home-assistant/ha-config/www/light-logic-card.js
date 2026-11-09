@@ -347,7 +347,7 @@ class LightLogicCard extends HTMLElement {
         this._chk("Not paused", this._inv(h.paused)),
       ].join("");
       const hint = r.hint ? esc(r.hint) : r.evening_hold ? "Stays on from dark until bedtime while anyone is home; dims to 15 % when empty for 2 min" : "Turns off 2 min after the room clears";
-      ex = `<div class="ex"><div class="row"><span class="sub">Light comes on when all are ✓:</span>${checks}</div><div class="hint">Then: ${hint}</div></div>`;
+      ex = `<div class="ex"><div class="row"><span class="sub">Light comes on when all are ✓:</span>${checks}</div><div class="hint">Then: ${hint.replace(/ %/g, "&nbsp;%")}</div></div>`;
     }
     return `<div class="blk" data-act="room" data-i="${i}" style="--c:${TONES[tn]}"><div class="hd"><ha-icon icon="${this._on(r.light) ? "mdi:lightbulb-on" : "mdi:lightbulb-outline"}"></ha-icon>` +
       `<div class="tx"><div class="row"><span class="nm">${esc(r.name)}</span>${chips}</div><div class="vd">${esc(text)}</div></div>${luxHtml}</div>${this._dark(r)}${bar}${ex}</div>`;

@@ -76,6 +76,7 @@
         "fitness"
         (lib.getExe coachTool)
       ];
+      claude = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
       # Phone nudges through Home Assistant: `fitness remind` prints a message when
       # there is something to remind about (nothing logged yet today, supplements
       # not ticked, no coach check-in for a week), and it is sent to the phone.
@@ -323,6 +324,40 @@
           };
         };
         "agents/fitness-coach/CLAUDE.md".source = ./coach/CLAUDE.md;
+      };
+
+      # Always-on Claude Code session for the coach, started at boot like
+      # second-brain's: open "fitness-coach" in the Claude app (Remote Control) and
+      # ask for the check-in. It runs in ~/agents/fitness-coach, so its .mcp.json and
+      # CLAUDE.md apply. The default permission mode (not acceptEdits) is deliberate:
+      # the coach has no business editing files, and each propose call is asked about.
+      # Needs a one-time interactive `claude` login as kra3 (already done for
+      # second-brain) and one interactive `claude` in the folder to trust it; until
+      # then the unit fails quietly and backs off.
+      users.users.kra3.linger = true;
+      home-manager.users.kra3.systemd.user.services.fitness-coach-remote = {
+        Unit.Description = "Claude Code Remote Control for the Fitness coach";
+        Service = {
+          WorkingDirectory = "%h/agents/fitness-coach";
+          ExecStart = lib.escapeShellArgs [
+            "${claude}/bin/claude"
+            "remote-control"
+            "--name"
+            "fitness-coach"
+            "--permission-mode"
+            "default"
+          ];
+          Environment = [
+            "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/kra3/bin:/run/current-system/sw/bin"
+          ];
+          Restart = "always";
+          # Back off from 30 s up to an hour, so a hard failure (not logged in,
+          # folder not yet trusted) stays quiet instead of retrying every 30 s.
+          RestartSec = 30;
+          RestartSteps = 8;
+          RestartMaxDelaySec = 3600;
+        };
+        Install.WantedBy = [ "default.target" ];
       };
 
       # Lets nginx open the 0660 socket in the 0750 runtime dir. Changing the

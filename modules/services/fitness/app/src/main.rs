@@ -1019,17 +1019,39 @@ fn load_or_create_token(path: &str) -> Result<String, String> {
     Ok(token)
 }
 
-// {"date": "YYYY-MM-DD", "kcal": n, "protein": n}: fills those fields on that
-// day only where they are empty (so nothing logged by hand is changed). A day
-// after today is refused.
+fn utc_offset(z: &str) -> Option<i64> {
+    let b = z.as_bytes();
+    if b.len() != 5 || !b[1..].iter().all(u8::is_ascii_digit) {
+        return None;
+    }
+    let sign = match b[0] {
+        b'+' => 1,
+        b'-' => -1,
+        _ => return None,
+    };
+    let (h, m): (i64, i64) = (z[1..3].parse().ok()?, z[3..].parse().ok()?);
+    (h <= 14 && m < 60).then_some(sign * (h * 3600 + m * 60))
+}
+
+fn ingest_date<'a>(c: &Connection, s: &'a str, now_ts: i64) -> Option<(&'a str, String)> {
+    let (date, today) = match s.split_once(' ') {
+        Some((d, z)) => (d, coach::day_str((now_ts + utc_offset(z)?).div_euclid(86_400))),
+        None => (s, coach::local_today(c)),
+    };
+    valid_date(date).then_some((date, today))
+}
+
+// {"date": "YYYY-MM-DD[ +HHMM]", "kcal": n, "protein": n}: fills those fields on
+// that day only where they are empty (so nothing logged by hand is changed). A
+// day after today (the client's, when it sends its UTC offset) is refused.
 fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
     let Ok(Value::Object(o)) = serde_json::from_slice::<Value>(body) else {
         return err(400, "JSON object expected");
     };
-    let Some(date) = o.get("date").and_then(Value::as_str).filter(|d| valid_date(d)) else {
-        return err(400, "date must be YYYY-MM-DD");
+    let Some((date, today)) = o.get("date").and_then(Value::as_str).and_then(|d| ingest_date(c, d, now())) else {
+        return err(400, "date must be YYYY-MM-DD or YYYY-MM-DD +HHMM");
     };
-    if date > coach::local_today(c).as_str() {
+    if date > today.as_str() {
         return err(400, "date is in the future");
     }
     let mut vals = Vec::new();
@@ -1928,6 +1950,9 @@ mod ingest_tests {
             (br#"{"date":"2026-11-03","kcal":-1}"#, "negative"),
             (br#"{"date":"2026-11-03","kcal":"2100"}"#, "text instead of a number"),
             (br#"{"date":"2999-01-01","kcal":2100}"#, "future date"),
+            (br#"{"date":"2999-01-01 +0100","kcal":2100}"#, "future date with offset"),
+            (br#"{"date":"2026-11-03 +01:00","kcal":2100}"#, "offset with colon"),
+            (br#"{"date":"2026-11-03 +1500","kcal":2100}"#, "offset out of range"),
             (br#"{"date":"11/03/2026","kcal":2100}"#, "bad date"),
             (br#"{"date":"2026-11-03"}"#, "nothing to fill"),
             (b"[1,2]", "not an object"),
@@ -1937,6 +1962,19 @@ mod ingest_tests {
         }
         // The day must not even exist after the refusals.
         assert!(get_day(&c, "kra3", "2026-11-03").unwrap().is_none());
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn ingest_date_uses_client_offset() {
+        let path = tmp("db3");
+        let c = open(&path);
+        let ts = 1_794_352_680; // 2026-11-10 23:18 UTC
+        let d = |s| ingest_date(&c, s, ts).map(|(d, t)| (d.to_string(), t));
+        assert_eq!(d("2026-11-11 +0100"), Some(("2026-11-11".into(), "2026-11-11".into())));
+        assert_eq!(d("2026-11-10 -0500"), Some(("2026-11-10".into(), "2026-11-10".into())));
+        assert_eq!(d("2026-11-11 +0530"), Some(("2026-11-11".into(), "2026-11-11".into())));
+        assert_eq!(d("2026-11-11 Z"), None);
         let _ = fs::remove_file(&path);
     }
 }

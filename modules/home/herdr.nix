@@ -17,7 +17,36 @@
         hash = "sha256-4lFrDzbdZiCIHIdkJ9q2lMlo+RCsu9eBXjK58VEuhDE=";
       };
 
+      sidebarSrc = pkgs.fetchFromGitHub {
+        owner = "testy-cool";
+        repo = "herdr-sidebar-config";
+        rev = "8a45adc5c0dd02f5cffeae5e900738035c9b3b82";
+        hash = "sha256-YVWBjyLhDe6I9dCdCt8Bu3Ah5fVNqDF8eSsktZL0Z0c=";
+      };
+
+      shellProgress = pkgs.rustPlatform.buildRustPackage rec {
+        pname = "herdr-shell-progress";
+        version = "0.5.2";
+        src = pkgs.fetchFromGitHub {
+          owner = "bayoudhi";
+          repo = "herdr-shell-progress";
+          rev = "v${version}";
+          hash = "sha256-40FECfvJn6w9lwp+tERZJKMNW0sMK5Ms9RrUTpxqFDU=";
+        };
+        cargoHash = "sha256-6DgieytxTbVrlTcccoWpRoes1qP5kfO2zaOAXxhsWA0=";
+        doCheck = false;
+      };
+
       plugins = {
+        # Its claude..maki codepoints match herdr-bar's icon font, so it reuses that font instead of a second clashing one.
+        "testy-cool.herdr-sidebar" = pkgs.runCommand "herdr-sidebar-plugin" { } ''
+          cp -r ${sidebarSrc} $out
+          chmod -R u+w $out
+          substituteInPlace $out/run.sh \
+            --replace-fail 'exec python3' 'PATH=${pkgs.fontconfig.bin}/bin:$PATH exec ${pkgs.python3}/bin/python3'
+          substituteInPlace $out/runtime.py \
+            --replace-fail 'FONT_FAMILY = "Herdr Sidebar Logos"' 'FONT_FAMILY = "Herdr Agent Icons Max"'
+        '';
         # Without jq on PATH navigate.sh silently skips Vim detection.
         vim-herdr-navigation = pkgs.runCommand "vim-herdr-navigation-plugin" { } ''
           mkdir -p $out
@@ -210,11 +239,20 @@
             toast.delivery = "system";
             sidebar_start_collapsed = lib.mkDefault true;
             status_indicators = lib.mkDefault "symbols";
+            sidebar.agents = (lib.importTOML "${sidebarSrc}/sidebar-layout.toml").ui.sidebar.agents;
             # auto-title fills $topic with the workspace's current task.
+            # herdr-sidebar dims idle workspaces via $hs_space/$hs_space_dim in place of "workspace".
             sidebar.spaces.rows = [
               [
                 "state_icon"
-                "workspace"
+                {
+                  token = "$hs_space";
+                  dim = false;
+                }
+                {
+                  token = "$hs_space_dim";
+                  dim = true;
+                }
                 "branch"
                 "git_status"
               ]
@@ -242,6 +280,12 @@
 
         # Owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate (plugins/editing.lua disables that plugin's own mappings).
         xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
+
+        # Reports slow shell commands to the agents sidebar; a no-op outside herdr panes.
+        programs.zsh.initContent = ''
+          HSP_BIN=${shellProgress}/bin/herdr-shell-progress
+          source ${shellProgress.src}/shell/init.zsh
+        '';
 
         # herdr-bar's agent logos.
         programs.ghostty.settings.font-codepoint-map = "U+E1A0-U+E1B7=Herdr Agent Icons Max";

@@ -27,8 +27,13 @@ in
   programs.neovim-claudecode.enable = true;
 
   # Desktop Obsidian for the second-brain server copies (/srv/appdata/second-brain/<name>/vault);
-  # no sync plugin: second-brain-<name>-sync.timer does the git work.
-  home.packages = [ pkgs.obsidian ];
+  # no sync plugin: second-brain-<name>-sync.timer does the git work. No vaults declared here:
+  # their .obsidian/ (theme, plugins, settings) is vault content, synced through git like notes.
+  # cli.enable turns on `obsidian-cli` (talks to the running app) in ~/.config/obsidian/obsidian.json.
+  programs.obsidian = {
+    enable = true;
+    cli.enable = true;
+  };
 
   catppuccin.enable = true;
   catppuccin.flavor = "mocha";

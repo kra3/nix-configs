@@ -310,20 +310,20 @@
           ];
         }
       ];
-      # ~/fitness-coach: start Claude Code there (directly or via Remote Control)
+      # ~/agents/fitness-coach: start Claude Code there (directly or via Remote Control)
       # for a check-in. Its .mcp.json brings in the fitness tools; CLAUDE.md the
       # check-in routine. `fitness-coach-cli summary` etc. work from any shell.
       environment.systemPackages = [
         (pkgs.writeShellScriptBin "fitness-coach-cli" ''exec ${lib.escapeShellArgs coachRun} "$@"'')
       ];
       home-manager.users.kra3.home.file = {
-        "fitness-coach/.mcp.json".text = builtins.toJSON {
+        "agents/fitness-coach/.mcp.json".text = builtins.toJSON {
           mcpServers.fitness = {
             command = builtins.head coachRun;
             args = builtins.tail coachRun ++ [ "mcp" ];
           };
         };
-        "fitness-coach/CLAUDE.md".source = ./coach/CLAUDE.md;
+        "agents/fitness-coach/CLAUDE.md".source = ./coach/CLAUDE.md;
       };
 
       # Always-on Claude Code session for the coach, started at boot like

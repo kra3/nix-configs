@@ -28,7 +28,7 @@
     };
 
     declarative-jellyfin = {
-      url = "github:provokateurin/declarative-jellyfin/support-12.x";
+      url = "github:provokateurin/declarative-jellyfin/main";
     };
 
     quadlet-nix = {

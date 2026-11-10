@@ -77,7 +77,7 @@
       "version": "v1.27.0",
       "kind": "zip",
       "asset": "powercalc.zip",
-      "hash": "sha256-1OQ4s8uLGYtirlsyubjmabDEvWlinTFOITIFHBnRDNg="
+      "hash": "sha256-btFaNOLrSrd2ou1fSK/ezh+nSjC631QETnTpO3U3bLM="
     },
     "powerline": {
       "repo": "Chance-Konstruktion/ha-powerline",

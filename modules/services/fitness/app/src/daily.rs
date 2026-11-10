@@ -216,7 +216,7 @@ pub fn remind(c: &Connection, user: &str, kind: &str) -> Result<Option<String>, 
             match last {
                 Some(t) if now() - t < 7 * 86_400 => None,
                 Some(_) => Some("Your weekly coach check-in is due: it has been over a week.".into()),
-                None => Some("No coach check-in yet. Start one from ~/fitness-coach.".into()),
+                None => Some("No coach check-in yet. Start one from ~/agents/fitness-coach.".into()),
             }
         }
         _ => return Err(format!("kind must be one of {}", KINDS.join(", "))),

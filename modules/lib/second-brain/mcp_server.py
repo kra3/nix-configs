@@ -1,6 +1,6 @@
 """Local (stdio) MCP server for the second-brain vault, used by Claude Code on sutala.
 
-Started by Claude Code from ~/second-brain/.mcp.json, directly or through Remote Control from the
+Started by Claude Code from ~/agents/second-brain-<name>/.mcp.json, directly or through Remote Control from the
 phone, so it runs as kra3 and is never reachable over the network: no auth layer needed.
 Every path is confined to VAULT_DIR; dot-folders (.obsidian, .trash) are never touched.
 Writes are atomic (temp file + rename) so the git sync never commits half a note.

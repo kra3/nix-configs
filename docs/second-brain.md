@@ -36,7 +36,7 @@ home-manager.users.<me>.imports = [ inputs.nix-configs.homeManagerModules.home-s
 | `enable` | `true` | `true` | Declaring a brain enables it |
 | `vaultDir` | `/srv/appdata/second-brain/<name>/vault` | `~/Brains/<name>` | The folder Obsidian opens; a git work tree |
 | `gitDir` | `…/<name>/vault.git` | `<vaultDir>.git` | Kept outside the vault |
-| `claudeDir` | `second-brain/<name>` | `second-brain/<name>` | Under `$HOME`: `.mcp.json`, project settings, a `CLAUDE.md` pointer |
+| `claudeDir` | `agents/second-brain-<name>` | `agents/second-brain-<name>` | The brain's agent folder under `$HOME` (all agents live in `~/agents`): `.mcp.json`, project settings, a `CLAUDE.md` pointer. One folder per brain keeps a session from seeing two brains; sutala only holds one, so it uses `agents/second-brain` |
 | `mcp.enable` | `true` | `true` | Local stdio MCP server in `claudeDir`; set `false` for a files-only brain |
 | `sync.enable` | `false` | `false` | Two-way git sync every interval |
 | `sync.remote` | (required with sync) | (required with sync) | Hub repo URL |
@@ -123,11 +123,11 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
    `Templates`. On sutala's desktop open `/srv/appdata/second-brain/home/vault` (kra3 is in the
    `second-brain` group; log out and in once after the first deploy). No sync plugin on machines
    that run the agent or timer.
-6. **Phone:** once, as kra3 on sutala, run `cd ~/second-brain/home && claude`: accept the folder
+6. **Phone:** once, as kra3 on sutala, run `cd ~/agents/second-brain && claude`: accept the folder
    trust prompt (Remote Control refuses an untrusted folder, and that choice stays yours) and
    `/login` if asked. The
    `second-brain-home-remote` user service then keeps `claude remote-control` running in
-   `~/second-brain/home`; in the Claude app, open **second-brain-home** to start a session there.
+   `~/agents/second-brain`; in the Claude app, open **second-brain-home** to start a session there.
    Check it with `systemctl --user status second-brain-home-remote`.
 
 ## Setup: work brain (work overlay)
@@ -137,7 +137,7 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
    `programs.secondBrain.brains.work.sync = { enable = true; remote = "…"; };` and switch. The agent uses your normal ssh setup over the VPN; logs go to
    `~/Library/Logs/second-brain-work-sync.log`.
 3. Copy `docs/second-brain-starter/` into `~/Brains/work`, open it in Obsidian, and run Claude Code in
-   `~/second-brain/work`.
+   `~/agents/second-brain-work`.
 4. Work phone (optional): Obsidian + the Obsidian Git plugin, cloning over HTTPS with an access
    token on the VPN, if your device policy allows it; otherwise use the git server's web UI to read
    and to add captures to `0 Inbox/`.
@@ -148,7 +148,7 @@ All paths stay inside the vault; dot-folders are refused; writes are atomic; the
   should be empty (remote-unreachable lines are fine); `systemctl list-timers 'second-brain-*'`;
   `git --git-dir=/srv/appdata/second-brain/home/vault.git log --oneline -3`.
 - Macs: `launchctl list | grep second-brain`, `tail ~/Library/Logs/second-brain-<name>-sync.log`.
-- Claude: in `~/second-brain/<name>`, `claude mcp list` shows `second-brain` connected.
+- Claude: in `~/agents/second-brain-<name>`, `claude mcp list` shows `second-brain` connected.
 
 ## Later
 

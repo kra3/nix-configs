@@ -72,7 +72,7 @@
                 };
                 claudeDir = lib.mkOption {
                   type = lib.types.str;
-                  default = "second-brain/${name}";
+                  default = "agents/second-brain-${name}";
                   description = "Directory under kra3's home where Claude Code gets this brain's tools.";
                 };
                 sync = {

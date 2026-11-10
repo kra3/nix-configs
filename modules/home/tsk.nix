@@ -52,6 +52,16 @@
         + lib.concatMapStrings (p: ''
           [agent.${p.name}]
           command = ["claude", "--agent", "${p.name}", "--permission-mode", "auto", "--effort", "${p.effort}"]
+          prompt_append = ${
+            builtins.toJSON (
+              lib.concatStringsSep " " (
+                [
+                  "The task's steps and notes are the approved design: don't stop to brainstorm or ask for design approval."
+                ]
+                ++ lib.optional (p ? tskAppend) p.tskAppend
+              )
+            )
+          }
         '') personas
         + "# END nix-managed agents\n"
       );
@@ -121,11 +131,12 @@
         };
       };
 
+      home.file.".claude/agents/tsk-triage.md".force = true;
       home.file.".claude/agents/tsk-triage.md".text = ''
         ---
         name: tsk-triage
-        description: Use when a tsk task needs a persona assigned before dispatch.
-        model: haiku
+        description: ${builtins.toJSON "Use when a tsk task needs a persona assigned before dispatch."}
+        model: claude-haiku-5-5
         tools: Bash
         ---
         You triage one tsk task so the right agent can pick it up.

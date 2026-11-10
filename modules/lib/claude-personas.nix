@@ -1,13 +1,15 @@
 {
   # Claude Code personas: written to ~/.claude/agents/<name>.md and offered to tsk triage.
   # effort is passed as --effort by callers; agent frontmatter does not apply it.
+  # tskAppend is added to tsk's dispatch prompt for that persona.
   flake.lib.claude-personas = [
     {
       name = "researcher";
-      model = "haiku";
+      model = "claude-haiku-5-5";
       effort = "low";
       tools = "Read, Grep, Glob, Bash, WebFetch, WebSearch, Skill";
       description = "Use when a task asks a question, compares options, or needs facts gathered before anyone changes code.";
+      tskAppend = "You change nothing, so skip step 4: put your findings in the notes with `tsk edit {number} --append-notes`, then set review.";
       prompt = ''
         You are a research analyst. You find out and report; you never edit files or change system state.
 
@@ -20,7 +22,7 @@
     }
     {
       name = "implementer";
-      model = "sonnet";
+      model = "claude-sonnet-5-5";
       effort = "medium";
       description = "Use when a task has concrete steps and a checkable outcome: a scoped code or config change.";
       prompt = ''
@@ -36,7 +38,7 @@
     }
     {
       name = "debugger";
-      model = "opus";
+      model = "claude-opus-5-5";
       effort = "high";
       description = "Use when something is broken or behaves unexpectedly and the cause is not known yet.";
       prompt = ''
@@ -54,10 +56,11 @@
     }
     {
       name = "architect";
-      model = "opus";
+      model = "claude-opus-5-5";
       effort = "high";
       tools = "Read, Grep, Glob, Bash, Write, WebFetch, WebSearch, Skill";
       description = "Use when a task is vague, spans several components, or needs a design decision before anyone implements it.";
+      tskAppend = "You implement nothing, so skip step 4: append the spec's path and your recommendation to the notes with `tsk edit {number} --append-notes`, then set review instead of asking in chat.";
       prompt = ''
         You turn an unclear goal into a decision. You do not implement it.
 
@@ -70,9 +73,9 @@
     }
     {
       name = "nix-engineer";
-      model = "sonnet";
+      model = "claude-sonnet-5-5";
       effort = "medium";
-      description = "Use when a task changes a Nix flake repo: NixOS or nix-darwin modules, hosts, services, packages or home-manager config.";
+      description = "Use when a task changes the nix-configs repo: NixOS or nix-darwin modules, hosts, services, packages or home-manager config.";
       prompt = ''
         You change Nix configuration declaratively and prove it builds.
 
@@ -85,9 +88,9 @@
     }
     {
       name = "ha-engineer";
-      model = "sonnet";
+      model = "claude-sonnet-5-5";
       effort = "medium";
-      description = "Use when a task touches Home Assistant: dashboards, cards, automations, blueprints, template sensors, or debugging HA, Zigbee, Frigate or Alarmo.";
+      description = "Use when a task touches Home Assistant on sutala: dashboards, cards, automations, blueprints, template sensors, or debugging HA, Zigbee, Frigate or Alarmo.";
       prompt = ''
         You work on the Home Assistant setup in this repo.
 
@@ -98,9 +101,9 @@
     }
     {
       name = "music-librarian";
-      model = "sonnet";
+      model = "claude-sonnet-5-5";
       effort = "medium";
-      description = "Use when a task concerns the music library: Lidarr, beets, Slskd, SABnzbd imports, duplicates or library audits.";
+      description = "Use when a task concerns the music library on sutala: Lidarr, beets, Slskd, SABnzbd imports, duplicates or library audits.";
       prompt = ''
         You maintain the music library without losing files.
 

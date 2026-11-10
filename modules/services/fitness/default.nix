@@ -287,12 +287,13 @@
         };
       };
 
+      # No food reminder: food is logged in Lose It and reaches Apple Health, which
+      # this server cannot read, so "nothing logged" would fire every evening. The
+      # app's `fitness remind <user> food` still works if it is wanted again.
       systemd.services.fitness-reminders-weigh-in = reminderService "weigh-in";
-      systemd.services.fitness-reminders-food = reminderService "food";
       systemd.services.fitness-reminders-supps = reminderService "supps";
       systemd.services.fitness-reminders-checkin = reminderService "checkin";
       systemd.timers.fitness-reminders-weigh-in = reminderTimer "*-*-* 10:00:00";
-      systemd.timers.fitness-reminders-food = reminderTimer "*-*-* 21:00:00";
       systemd.timers.fitness-reminders-supps = reminderTimer "*-*-* 20:30:00";
       systemd.timers.fitness-reminders-checkin = reminderTimer "Sun *-*-* 18:00:00";
 

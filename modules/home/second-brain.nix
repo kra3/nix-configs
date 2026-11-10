@@ -35,12 +35,23 @@ in
           inherit name;
           inherit (b) vaultDir;
         };
-      envFor = b: {
-        VAULT_DIR = b.vaultDir;
-        VAULT_GIT_DIR = b.gitDir;
-        REMOTE = b.sync.remote;
-        SYNC_HOST = cfg.hostLabel;
-      };
+      obsidianFor =
+        name: b:
+        sb.mkObsidianConfig pkgs {
+          inherit name;
+          inherit (b) obsidian;
+        };
+      envFor =
+        name: b:
+        {
+          VAULT_DIR = b.vaultDir;
+          VAULT_GIT_DIR = b.gitDir;
+          REMOTE = b.sync.remote;
+          SYNC_HOST = cfg.hostLabel;
+        }
+        // lib.optionalAttrs (obsidianFor name b != null) {
+          OBSIDIAN_MANAGED = "${obsidianFor name b}";
+        };
     in
     {
       options.programs.secondBrain = {
@@ -88,6 +99,31 @@ in
                       default = 300;
                     };
                   };
+                  obsidian = {
+                    settings = lib.mkOption {
+                      type = lib.types.attrsOf (pkgs.formats.json { }).type;
+                      default = { };
+                      example = {
+                        appearance.cssTheme = "Catppuccin";
+                        daily-notes.folder = "0 Inbox";
+                      };
+                      description = ''
+                        Values for the vault's .obsidian/<name>.json files, merged in by every sync run:
+                        these keys always win, everything else in the file stays as the app left it.
+                        A name may include a folder, e.g. "plugins/obsidian-style-settings/data".
+                      '';
+                    };
+                    themes = lib.mkOption {
+                      type = lib.types.attrsOf lib.types.package;
+                      default = { };
+                      description = "Themes to install, by name: a folder with theme.css and manifest.json.";
+                    };
+                    plugins = lib.mkOption {
+                      type = lib.types.attrsOf lib.types.package;
+                      default = { };
+                      description = "Community plugins to install and enable, by id: a folder with main.js and manifest.json.";
+                    };
+                  };
                   mcp.enable = lib.mkEnableOption "the local MCP server for Claude Code in ~/${config.claudeDir}" // {
                     default = true;
                   };
@@ -121,7 +157,7 @@ in
               enable = true;
               config = {
                 ProgramArguments = [ (lib.getExe syncScript) ];
-                EnvironmentVariables = envFor b;
+                EnvironmentVariables = envFor name b;
                 StartInterval = b.sync.intervalSeconds;
                 RunAtLoad = true;
                 ProcessType = "Background";
@@ -140,7 +176,7 @@ in
               Service = {
                 Type = "oneshot";
                 ExecStart = lib.getExe syncScript;
-                Environment = lib.mapAttrsToList (k: v: "${k}=${v}") (envFor b);
+                Environment = lib.mapAttrsToList (k: v: "${k}=${v}") (envFor name b);
                 SuccessExitStatus = [ 75 ];
               };
             }

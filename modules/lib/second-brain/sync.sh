@@ -1,6 +1,6 @@
 # Two-way git sync of one second-brain vault with its hub repo, run every few minutes
 # (sutala: systemd timer; Macs: launchd agent).
-# Env: VAULT_DIR, VAULT_GIT_DIR, REMOTE, SYNC_HOST; on sutala a deploy key via
+# Env: VAULT_DIR, VAULT_GIT_DIR, REMOTE, SYNC_HOST, optional OBSIDIAN_MANAGED (see below); on sutala a deploy key via
 # $CREDENTIALS_DIRECTORY/deploy-key, elsewhere the user's own ssh setup.
 # The git dir lives outside the vault, so nothing in the vault itself is git machinery.
 # Remote unreachable (offline, VPN down): local changes are still committed, the run exits 75
@@ -46,6 +46,41 @@ fi
 # Shared ignore rules, committed so every clone uses them.
 if [ ! -e "$VAULT_DIR/.gitignore" ]; then
   printf '%s\n' '.obsidian/workspace*.json' '.obsidian/cache' '.trash/' '.mcp-*.tmp' '.DS_Store' '.obsidian/plugins/obsidian-git/data.json' >"$VAULT_DIR/.gitignore"
+fi
+
+# Obsidian settings declared in Nix (a brain's `obsidian` option): OBSIDIAN_MANAGED is a store path
+# with settings/<file>.json, themes/<name>/ and plugins/<id>/. Managed keys win and the rest of
+# the vault's .obsidian stays as is; the changes are then committed and synced like any edit.
+if [ -n "${OBSIDIAN_MANAGED:-}" ]; then
+  obs="$VAULT_DIR/.obsidian"
+  mkdir -p "$obs"
+  while IFS= read -r -d '' frag; do
+    rel="${frag#"$OBSIDIAN_MANAGED"/settings/}"
+    dest="$obs/$rel"
+    mkdir -p "$(dirname "$dest")"
+    tmp="$(mktemp "$dest.XXXXXX")"
+    if [ -s "$dest" ] && jq -e . "$dest" >/dev/null 2>&1; then
+      # Arrays (community-plugins) are unioned; objects merge with managed keys winning.
+      jq -s '.[0] as $a | .[1] as $b
+             | if ($a|type) == "array" and ($b|type) == "array" then ($a + $b | unique)
+               elif ($a|type) == "object" and ($b|type) == "object" then $a * $b
+               else $b end' "$dest" "$frag" >"$tmp"
+    else
+      jq . "$frag" >"$tmp"
+    fi
+    if [ -f "$dest" ] && cmp -s "$tmp" "$dest"; then rm -f "$tmp"; else chmod 664 "$tmp"; mv "$tmp" "$dest"; fi
+  done < <(find -L "$OBSIDIAN_MANAGED/settings" -type f -name '*.json' -print0 2>/dev/null)
+  for kind in themes plugins; do
+    for src in "$OBSIDIAN_MANAGED/$kind"/*; do
+      [ -e "$src" ] || continue
+      dest="$obs/$kind/$(basename "$src")"
+      if ! diff -rq "$src/" "$dest/" >/dev/null 2>&1; then
+        mkdir -p "$dest"
+        cp -rL --no-preserve=mode,ownership "$src/." "$dest/"
+        chmod -R u+rwX,g+rwX "$dest"
+      fi
+    done
+  done
 fi
 
 g add --all

@@ -43,6 +43,8 @@ home-manager.users.<me>.imports = [ inputs.nix-configs.homeManagerModules.home-s
 | `sync.interval` / `sync.intervalSeconds` | `"5min"` | `300` | |
 | `remoteControl.enable` | `false` | n/a | Always-on `claude remote-control` in `claudeDir` (kra3 user service, lingering) so the phone can always connect |
 | `remoteControl.permissionMode` | `"default"` | n/a | `acceptEdits` skips approving each edit from the phone |
+| `obsidian.settings` | `{}` | `{}` | Keys for the vault's `.obsidian/<name>.json` (e.g. `appearance`, `daily-notes`, `templates`), merged in on every sync run: these keys win, the rest of the file stays yours |
+| `obsidian.themes` / `obsidian.plugins` | `{}` | `{}` | Themes (by name) and community plugins (by id) to install into `.obsidian/`; plugins are also enabled. `flake.lib.second-brain-packages.obsidianAssets pkgs` has pinned Catppuccin and Style Settings |
 | `sync.deployKeySecret` | `second-brain.<name>.git.deploy_key` | n/a | Home Manager uses the user's own ssh keys, config and agent |
 | `programs.secondBrain.hostLabel` | n/a | `"mac"` | Names the machine in commits and `conflict/<host>-…` branches; sutala uses its hostname |
 
@@ -62,6 +64,22 @@ programs.secondBrain.brains.home = { mcp.enable = false; sync = { enable = true;
 programs.secondBrain.hostLabel = "mac";
 programs.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
 ```
+
+## Obsidian settings in Nix
+
+A brain's `obsidian` option declares the vault's look and layout (theme, Daily notes, Templates,
+plugins). It is applied inside the sync run, before the commit, so it is not a symlink into the Nix
+store: the files in `.obsidian/` are ordinary vault files that git carries to every device (so the
+phone and Macs get them too, and Home Manager's `programs.obsidian` is not used for vaults).
+
+- Declared keys always win; other keys in the same file (and everything you change in the app
+  outside them) are kept. Arrays such as `community-plugins` are unioned.
+- A change reaches the vault on the next sync run (within the interval) and the app on reload.
+- Theme flavour and accent are Style Settings values: `plugins/obsidian-style-settings/data` with
+  `catppuccin-theme-settings@@catppuccin-theme-dark = "ctp-mocha"` and `…@@catppuccin-theme-accents`
+  (e.g. `ctp-accent-blue`). sutala's `hosts/sutala/configuration.nix` is the worked example.
+- Not declarative: the Obsidian account login (only needed for the paid Sync/Publish) lives in the
+  app's own storage; sign in once per device if you use them.
 
 ## Sync
 

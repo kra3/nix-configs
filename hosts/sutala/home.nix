@@ -3,6 +3,7 @@
   lib,
   pkgs,
   osConfig,
+  inputs,
   flakeModules,
   ...
 }:
@@ -33,6 +34,12 @@ in
   programs.obsidian = {
     enable = true;
     cli.enable = true;
+    # Obsidian moves faster than the stable channel; follow nixpkgs-unstable (unfree allowed).
+    package =
+      (import inputs.nixpkgs-unstable {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      }).obsidian;
   };
 
   catppuccin.enable = true;

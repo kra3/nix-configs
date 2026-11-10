@@ -94,6 +94,31 @@
       enable = true;
       remote = "git@github.com:kra3/second-brain.git";
     };
+    # Obsidian's look and layout, applied to the vault by every sync run (so it reaches the other
+    # devices through git). Theme flavour and accent are Style Settings values.
+    obsidian =
+      let
+        assets = flakeLib.second-brain-packages.obsidianAssets pkgs;
+      in
+      {
+        themes.Catppuccin = assets.catppuccin;
+        plugins.obsidian-style-settings = assets.styleSettings;
+        settings = {
+          appearance = {
+            cssTheme = "Catppuccin";
+            theme = "obsidian"; # base color scheme: dark
+          };
+          daily-notes = {
+            folder = "0 Inbox";
+            template = "Templates/Daily.md";
+          };
+          templates.folder = "Templates";
+          "plugins/obsidian-style-settings/data" = {
+            "catppuccin-theme-settings@@catppuccin-theme-dark" = "ctp-mocha";
+            "catppuccin-theme-settings@@catppuccin-theme-accents" = "ctp-accent-blue";
+          };
+        };
+      };
     # Always-on `claude remote-control` for the phone; edits stay inside the vault (and its git history).
     remoteControl = {
       enable = true;

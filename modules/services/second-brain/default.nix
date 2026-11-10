@@ -30,6 +30,13 @@
           inherit (b) vaultDir;
         };
 
+      obsidianFor =
+        name: b:
+        sb.mkObsidianConfig pkgs {
+          inherit name;
+          inherit (b) obsidian;
+        };
+
       common =
         flakeLib.deployment-hardening.mkServiceSandbox {
           readWritePaths = [ baseDir ];
@@ -83,6 +90,31 @@
                     type = lib.types.str;
                     default = "second-brain.${name}.git.deploy_key";
                     description = "sops key holding the deploy key (`just second-brain-secrets ${name}`).";
+                  };
+                };
+                obsidian = {
+                  settings = lib.mkOption {
+                    type = lib.types.attrsOf (pkgs.formats.json { }).type;
+                    default = { };
+                    example = {
+                      appearance.cssTheme = "Catppuccin";
+                      daily-notes.folder = "0 Inbox";
+                    };
+                    description = ''
+                      Values for the vault's .obsidian/<name>.json files, merged in by every sync run:
+                      these keys always win, everything else in the file stays as the app left it.
+                      A name may include a folder, e.g. "plugins/obsidian-style-settings/data".
+                    '';
+                  };
+                  themes = lib.mkOption {
+                    type = lib.types.attrsOf lib.types.package;
+                    default = { };
+                    description = "Themes to install, by name: a folder with theme.css and manifest.json.";
+                  };
+                  plugins = lib.mkOption {
+                    type = lib.types.attrsOf lib.types.package;
+                    default = { };
+                    description = "Community plugins to install and enable, by id: a folder with main.js and manifest.json.";
                   };
                 };
                 mcp.enable = lib.mkEnableOption "the local MCP server for Claude Code in ~/${config.claudeDir}" // {
@@ -152,6 +184,9 @@
               VAULT_GIT_DIR = b.gitDir;
               REMOTE = b.sync.remote;
               SYNC_HOST = config.networking.hostName;
+            }
+            // lib.optionalAttrs (obsidianFor name b != null) {
+              OBSIDIAN_MANAGED = "${obsidianFor name b}";
             };
             serviceConfig = common // {
               Type = "oneshot";

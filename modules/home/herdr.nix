@@ -39,13 +39,15 @@
 
       plugins = {
         # Its claude..maki codepoints match herdr-bar's icon font, so it reuses that font instead of a second clashing one.
+        # Icons default to "font": its auto check uses Nix fontconfig, which misses ~/Library/Fonts on macOS.
         "testy-cool.herdr-sidebar" = pkgs.runCommand "herdr-sidebar-plugin" { } ''
           cp -r ${sidebarSrc} $out
           chmod -R u+w $out
           substituteInPlace $out/run.sh \
             --replace-fail 'exec python3' 'PATH=${pkgs.fontconfig.bin}/bin:$PATH exec ${pkgs.python3}/bin/python3'
           substituteInPlace $out/runtime.py \
-            --replace-fail 'FONT_FAMILY = "Herdr Sidebar Logos"' 'FONT_FAMILY = "Herdr Agent Icons Max"'
+            --replace-fail 'FONT_FAMILY = "Herdr Sidebar Logos"' 'FONT_FAMILY = "Herdr Agent Icons Max"' \
+            --replace-fail 'config.get("icons", "auto")' 'config.get("icons", "font")'
         '';
         # Without jq on PATH navigate.sh silently skips Vim detection.
         vim-herdr-navigation = pkgs.runCommand "vim-herdr-navigation-plugin" { } ''
@@ -281,10 +283,15 @@
         # Owns <C-h/j/k/l>; outside herdr it falls back to TmuxNavigate (plugins/editing.lua disables that plugin's own mappings).
         xdg.configFile."nvim/after/plugin/herdr_nav.lua".source = "${navSrc}/editor/nvim.lua";
 
-        # Reports slow shell commands to the agents sidebar; a no-op outside herdr panes.
+        # Reports slow shell commands to the agents sidebar; a no-op outside herdr panes. Its cmd write lacks >|, so NO_CLOBBER breaks it.
         programs.zsh.initContent = ''
           HSP_BIN=${shellProgress}/bin/herdr-shell-progress
-          source ${shellProgress.src}/shell/init.zsh
+          source ${
+            pkgs.runCommand "hsp-init.zsh" { } ''
+              substitute ${shellProgress.src}/shell/init.zsh $out \
+                --replace-fail '"$cmd" > "$_HSP_STATE_DIR/cmd"' '"$cmd" >| "$_HSP_STATE_DIR/cmd"'
+            ''
+          }
         '';
 
         # herdr-bar's agent logos.

@@ -155,6 +155,11 @@
           DB_FILE = "${stateDir}/fitness.db";
           # Set by nginx after Authelia forward-auth (see flakeLib.nginx).
           USER_HEADER = "Remote-User";
+          # Phone shortcut (Lose It via Apple Health): POST /api/ingest with this
+          # token fills calories and protein for kra3. The service creates the
+          # token file on first start; read it with `sudo cat`.
+          INGEST_TOKEN_FILE = "${stateDir}/ingest-token";
+          INGEST_USER = "kra3";
         };
         serviceConfig = sandbox // {
           ExecStart = "${fitness}/bin/fitness";
@@ -282,12 +287,13 @@
         };
       };
 
+      # No food reminder: food is logged in Lose It and reaches Apple Health, which
+      # this server cannot read, so "nothing logged" would fire every evening. The
+      # app's `fitness remind <user> food` still works if it is wanted again.
       systemd.services.fitness-reminders-weigh-in = reminderService "weigh-in";
-      systemd.services.fitness-reminders-food = reminderService "food";
       systemd.services.fitness-reminders-supps = reminderService "supps";
       systemd.services.fitness-reminders-checkin = reminderService "checkin";
       systemd.timers.fitness-reminders-weigh-in = reminderTimer "*-*-* 10:00:00";
-      systemd.timers.fitness-reminders-food = reminderTimer "*-*-* 21:00:00";
       systemd.timers.fitness-reminders-supps = reminderTimer "*-*-* 20:30:00";
       systemd.timers.fitness-reminders-checkin = reminderTimer "Sun *-*-* 18:00:00";
 
@@ -332,6 +338,17 @@
         locations."= /healthz" = {
           proxyPass = "http://unix:${socket}:/healthz";
           extraConfig = ''proxy_set_header Remote-User "";'';
+        };
+        # The phone shortcut posts here with a bearer token, so this one path
+        # skips Authelia (still behind the CIDR allowlist). The app checks the
+        # token and accepts only calories and protein for one user. As above,
+        # the fixed URI is what reaches the app, and a client Remote-User is dropped.
+        locations."= /api/ingest" = {
+          proxyPass = "http://unix:${socket}:/api/ingest";
+          extraConfig = ''
+            proxy_set_header Remote-User "";
+            client_max_body_size 4k;
+          '';
         };
       };
     };

@@ -169,15 +169,25 @@
 - id: tv_off_at_bedtime
   alias: TV — Off at bedtime if idle
   description: >-
-    Turn off TV when sleep schedule starts, but only if it hasn't been
-    playing anything for the last 15 minutes (a momentary non-playing
-    state, e.g. between episodes, shouldn't trigger a shutdown).
-    Skipped during party mode; catches up when it ends.
+    Turn off TV when sleep schedule starts, or later during the sleep
+    schedule, once it hasn't been playing anything for 15 minutes (a
+    momentary non-playing state, e.g. between episodes, shouldn't trigger
+    a shutdown). Skipped during party mode; catches up when it ends.
   triggers:
   - entity_id: schedule.sleep
     to: "on"
     trigger: state
     id: sleep_start
+  - entity_id: media_player.lg_webos_tv_oled77c35la
+    not_to:
+    - playing
+    - "off"
+    - unavailable
+    - unknown
+    for:
+      minutes: 15
+    trigger: state
+    id: tv_idle
   - trigger: event
     event_type: modes_ended
     id: resumed

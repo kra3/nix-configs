@@ -30,6 +30,7 @@
               sponsorblock
               multi-account-containers
               vimium
+              web-clipper-obsidian
             ])
             ++ [
               # Not packaged in NUR; built directly from AMO since Nix pins the version anyway.
@@ -72,6 +73,7 @@
         # External Extensions mechanism using the Web Store update URL.
         extensions = [
           { id = "nngceckbapebfimnlniiiahkandclblb"; }
+          { id = "cnjifjpddelmedmihgijeibhnjfabmlf"; } # Obsidian Web Clipper
         ];
       };
 

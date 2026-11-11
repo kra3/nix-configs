@@ -77,7 +77,6 @@ if [ -n "${OBSIDIAN_MANAGED:-}" ]; then
       if ! diff -rq "$src/" "$dest/" >/dev/null 2>&1; then
         mkdir -p "$dest"
         cp -rL --no-preserve=mode,ownership "$src/." "$dest/"
-        chmod -R u+rwX,g+rwX "$dest"
       fi
     done
   done

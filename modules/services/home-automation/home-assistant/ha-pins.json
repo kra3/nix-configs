@@ -118,7 +118,7 @@
       "kind": "zip",
       "asset": "advanced-camera-card.zip",
       "subpath": "dist",
-      "hash": "sha256-+wTry7UVuHhE2gaOt3O7yEVAGMHFmd0gJEUSFjcpkt8="
+      "hash": "sha256-LxeGEaEi1HZPabh7gRU8WtAipjzHQvKaVFxSIX6bueA="
     },
     "alarmo-card": {
       "repo": "nielsfaber/alarmo-card",

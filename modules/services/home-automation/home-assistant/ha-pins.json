@@ -114,7 +114,7 @@
   "frontend": {
     "advanced-camera-card": {
       "repo": "dermotduffy/advanced-camera-card",
-      "version": "v8.1.0",
+      "version": "v8.2.0",
       "kind": "zip",
       "asset": "advanced-camera-card.zip",
       "subpath": "dist",

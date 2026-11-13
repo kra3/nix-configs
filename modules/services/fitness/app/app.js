@@ -1,5 +1,13 @@
 (function(){
 'use strict';
+function applyTheme(t){
+  if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+}
+var theme = '';
+try { theme = localStorage.getItem('fitness.theme') || ''; } catch(e){}
+applyTheme(theme);
 var DEF = {kcal:1850, protein:110, steps:8000, sleep:7, workouts:3, rest:90};
 var ARMS = [
   {k:'curl', n:'Biceps curl machine', sets:2, lo:10, hi:12, u:'kg'},
@@ -95,7 +103,7 @@ function disarmDelete(){
   clearTimeout(delArmed); delArmed = 0;
   var b = $('del-day'); b.textContent = 'Delete day'; b.classList.remove('armed');
 }
-function updateDelete(){ $('del-day').hidden = !docs[sel]; }
+function updateDelete(){ $('del-day').hidden = !docs[sel]; hl('hl-log', docs[sel] ? 'Logged' : 'Not logged'); }
 
 function nSets(ex, saved){ return Math.max(ex.sets, saved && saved[ex.k] ? saved[ex.k].length : 0); }
 function saveWorkout(){
@@ -188,6 +196,7 @@ function renderCheckin(){
 function renderMealTaps(){
   var host = $('meal-taps'); host.textContent = '';
   $('meal-box').hidden = !meals.length;
+  hl('hl-meals', meals.length ? meals.length + ' saved' : '');
   meals.forEach(function(m, i){
     var b = el('button', 'tab', m.name + ' · ' + fmt(m.kcal, 0) + ' kcal, ' + fmt(m.protein, 0) + ' g'); b.type = 'button'; b.id = 'meal-tap-' + i;
     b.addEventListener('click', function(){
@@ -202,6 +211,7 @@ function renderMealTaps(){
 function renderSuppChecks(){
   var host = $('supp-checks'); host.textContent = '';
   $('supp-box').hidden = !supps.length;
+  hl('hl-supps', supps.length ? supps.length + ' daily' : '');
   supps.forEach(function(x, i){
     var lb = el('label', 'day-chk'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'supp-' + i;
     cb.checked = taken.indexOf(x.name) >= 0;
@@ -296,17 +306,19 @@ function saveSupps(){
 }
 // First, latest and change for each body measurement.
 function renderMeasurements(){
-  var host = $('meas'); host.textContent = ''; var any = false;
+  var host = $('meas'); host.textContent = ''; var any = false, latest = '';
   MEAS.forEach(function(k){
     var p = series(k);
     if (!p.length) return;
     any = true;
+    if (p[p.length - 1].date > latest) latest = p[p.length - 1].date;
     var box = el('div'), f = p[0].v, l = p[p.length - 1].v;
     stat(box, fmt(l, 1) + ' cm', k.charAt(0).toUpperCase() + k.slice(1), 'latest ' + fmtDay(p[p.length - 1].date));
     box.lastChild.appendChild(el('div', 's', 'first ' + fmt(f, 1) + ' cm · ' + sgn(l - f, 1, 'cm')));
     host.appendChild(box.firstChild);
   });
   $('meas-empty').hidden = any;
+  hl('hl-meas', latest ? fmtDay(latest) : '');
 }
 function kcalCap(d){ var r = num(settings.kcal_rest); return r != null && !(d && d.workout) ? r : settings.kcal; }
 
@@ -465,6 +477,7 @@ function renderStats(){
       pace.textContent = 'Pace appears after a week of weigh-ins. Target: lose 0.25 to 0.5 kg per week.';
     }
   }
+  hl('hl-weight', pts.length ? fmt(cur, 1) + ' kg' + (wk != null ? ' · ' + sgn(wk, 2) + '/wk' : '') : '');
   var c = $('cstats'); c.textContent = '';
   var ws = series('waist');
   if (!ws.length){
@@ -475,6 +488,7 @@ function renderStats(){
     stat(c, fmt(l, 1) + ' cm', 'Latest', fmtDay(ws[ws.length - 1].date));
     stat(c, sgn(l - f, 1, 'cm'), 'Change');
   }
+  hl('hl-waist', ws.length ? fmt(l, 1) + ' cm · ' + sgn(l - f, 1) : '');
   // Body fat: the scale's reading (7-day average) and the waist-based estimate side by side.
   var b = $('bstats'); b.textContent = '';
   var bs = series('bodyfat');
@@ -490,6 +504,7 @@ function renderStats(){
   } else {
     stat(b, '—', 'Scale, 7-day avg'); stat(b, '—', 'Change');
   }
+  hl('hl-bf', bs.length ? fmt(bcur, 1) + ' %' : '');
   var est = ws.length ? rfm(ws[ws.length - 1].v) : null;
   if (est != null){
     var est0 = rfm(ws[0].v);
@@ -528,6 +543,7 @@ function renderHabits(){
       host.appendChild(c);
     });
   });
+  hl('hl-habits', (counts.Workout || 0) + ' workouts · protein ' + (counts.Protein || 0) + '/7');
   $('hsum').textContent = 'Last 7 days: ' + (counts.Workout || 0) + ' workouts, protein met on ' + (counts.Protein || 0) + ' days, steps on ' + (counts.Steps || 0) + ' days, sleep on ' + (counts.Sleep || 0) + ' days. Green means target met, amber means calories over target.';
 }
 
@@ -1120,6 +1136,7 @@ var WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 var PROFILE_TEXT = [['goal_notes', 'p-goal-notes'], ['experience', 'p-exp'], ['equipment', 'p-equip'], ['injuries', 'p-inj'], ['conditions', 'p-cond'], ['diet', 'p-diet'], ['notes', 'p-notes']];
 var goalsDraft = [];
 
+function hl(id, text){ var e = $(id); if (e) e.textContent = text || ''; }
 function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function opt(sel_, v, label, on){ var o = document.createElement('option'); o.value = v; o.textContent = label; if (on) o.selected = true; sel_.appendChild(o); }
 
@@ -1266,6 +1283,7 @@ function loadCoach(force){
 function renderProposals(list){
   var host = $('props'), open = list.filter(function(p){ return p.status === 'open'; });
   host.textContent = ''; host.hidden = !open.length;
+  $('co-badge').hidden = !open.length; $('co-badge').textContent = open.length;
   open.forEach(function(p){
     var box = el('div', 'prop');
     box.appendChild(el('h2', null, 'Your coach suggests a change to ' + (p.target === 'plan' ? 'your plan' : p.target === 'settings' ? 'your targets' : 'your profile')));
@@ -1364,6 +1382,9 @@ var KIND_LABEL = {'walk': 'Walk', 'incline-walk': 'Incline walk', 'cycle': 'Cycl
 function renderCardio(list){
   var host = $('c-list'); host.textContent = '';
   if (!list.length) host.appendChild(el('li', 'hint', 'No sessions in the last 14 days.'));
+  var wkMin = 0, wkFrom = dayNum(todayStr()) - 7;
+  list.forEach(function(s){ if (dayNum(s.date) > wkFrom) wkMin += s.minutes; });
+  hl('hl-cardio', wkMin ? wkMin + ' min this week' : '');
   list.forEach(function(s){
     var li = el('li');
     var t = fmtDay(s.date) + ' · ' + (KIND_LABEL[s.kind] || s.kind) + ' · ' + s.minutes + ' min';
@@ -1420,6 +1441,9 @@ function renderLabs(b){
     if (l.next_due) li.appendChild(el('span', 'due' + (l.next_due < today ? ' late' : ''), (l.next_due < today ? 'Recheck overdue since ' : 'Recheck ') + fmtDay(l.next_due)));
     host.appendChild(li);
   });
+  var latestLab = '';
+  (b.latest || []).forEach(function(l){ if (l.date > latestLab) latestLab = l.date; });
+  hl('hl-labs', latestLab ? fmtDay(latestLab) : '');
   var all = $('lab-all'); all.textContent = '';
   (b.labs || []).forEach(function(l){
     var li = el('li');
@@ -1806,19 +1830,25 @@ $('rest-add').addEventListener('click', function(){
 });
 $('rest-skip').addEventListener('click', restStop);
 $('rest-notify').addEventListener('click', askNotify);
-// Gym view: only the workout card. #gym in the URL (and the app shortcut) opens it.
-function setGym(on){
-  document.body.classList.toggle('gym', on);
-  $('gym-btn').textContent = on ? 'Show everything' : 'Gym view';
-  $('gym-btn').setAttribute('aria-pressed', on ? 'true' : 'false');
-  if (on && location.hash !== '#gym') history.replaceState(null, '', '#gym');
-  if (!on && location.hash === '#gym') history.replaceState(null, '', location.pathname + location.search);
+$('theme').value = theme;
+$('theme').addEventListener('change', function(){
+  try { localStorage.setItem('fitness.theme', this.value); } catch(e){}
+  applyTheme(this.value);
+});
+var VIEWS = ['coach', 'gym', 'trends', 'more'];
+function setView(){
+  var v = location.hash.slice(1);
+  if (VIEWS.indexOf(v) < 0) v = 'coach';
+  document.body.dataset.view = v;
+  Array.prototype.forEach.call($('nav').children, function(a){
+    if (a.getAttribute('href') === '#' + v) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
   window.scrollTo(0, 0);
-  if (!on) redraw();
+  redraw();
 }
-$('gym-btn').addEventListener('click', function(){ setGym(!document.body.classList.contains('gym')); });
-window.addEventListener('hashchange', function(){ setGym(location.hash === '#gym'); });
-if (location.hash === '#gym') setGym(true);
+window.addEventListener('hashchange', setView);
+setView();
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); if (!document.hidden) loadCoach(false); });
 $('px-sel').addEventListener('change', function(){ pxSel = this.value; renderProgress(); });
 $('wk-kcal-use').addEventListener('click', useKcal);

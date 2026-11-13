@@ -1977,4 +1977,23 @@ mod ingest_tests {
         assert_eq!(d("2026-11-11 Z"), None);
         let _ = fs::remove_file(&path);
     }
+
+    #[test]
+    fn every_card_has_a_view_and_every_view_a_tab() {
+        let views = ["coach", "gym", "trends", "more"];
+        for line in INDEX.lines().filter(|l| l.contains("<section class=\"card")) {
+            assert!(
+                views.iter().any(|v| line.contains(&format!("data-view=\"{v}\""))),
+                "card without a view: {line}"
+            );
+        }
+        for v in views {
+            assert!(INDEX.contains(&format!("<a href=\"#{v}\"")), "no tab for {v}");
+            assert!(
+                APP_CSS.contains(&format!("body[data-view=\"{v}\"] .grid > .card:not([data-view=\"{v}\"])")),
+                "no css rule for {v}"
+            );
+        }
+        assert!(!INDEX.contains("data-view=\"today\""), "today view is gone");
+    }
 }

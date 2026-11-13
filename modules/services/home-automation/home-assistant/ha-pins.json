@@ -114,11 +114,11 @@
   "frontend": {
     "advanced-camera-card": {
       "repo": "dermotduffy/advanced-camera-card",
-      "version": "v8.1.0",
+      "version": "v8.2.0",
       "kind": "zip",
       "asset": "advanced-camera-card.zip",
       "subpath": "dist",
-      "hash": "sha256-+wTry7UVuHhE2gaOt3O7yEVAGMHFmd0gJEUSFjcpkt8="
+      "hash": "sha256-LxeGEaEi1HZPabh7gRU8WtAipjzHQvKaVFxSIX6bueA="
     },
     "alarmo-card": {
       "repo": "nielsfaber/alarmo-card",

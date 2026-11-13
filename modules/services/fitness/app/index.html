@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Fitness</title>
-<meta name="theme-color" content="#0B7285">
+<meta name="theme-color" content="#181825">
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -21,9 +21,12 @@
       <div class="sub" id="sub">Start with today's weigh-in.</div>
       <p class="net" id="net" role="status" aria-live="polite" hidden></p>
     </div>
-    <div class="datebox">
-      <label class="lbl" for="f-date">Day</label>
-      <input type="date" id="f-date">
+    <div class="hright">
+      <button type="button" id="theme" aria-label="Switch between light and dark theme">◐</button>
+      <div class="datebox">
+        <label class="lbl" for="f-date">Day</label>
+        <input type="date" id="f-date">
+      </div>
     </div>
   </header>
   <nav id="nav" aria-label="Sections">
@@ -321,9 +324,6 @@
       </details>
     </section>
 
-    <section class="card span2" data-view="more">
-      <label class="field"><span>Theme</span><select id="theme"><option value="">Auto (follow system)</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
-    </section>
   </div>
 </div>
 

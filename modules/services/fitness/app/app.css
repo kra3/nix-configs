@@ -30,14 +30,13 @@ body{
   padding-right:max(16px,env(safe-area-inset-right,0px));
 }
 .wrap{max-width:1040px;margin:0 auto;display:grid;gap:16px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+header{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 h1{font:700 44px/0.95 var(--font-display);letter-spacing:.01em;margin:2px 0 6px;text-transform:uppercase}
 h2{font:700 22px/1.1 var(--font-display);letter-spacing:.05em;text-transform:uppercase;margin:0 0 12px;text-wrap:balance}
 .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
 .sub{color:var(--muted);font-size:14px}
 .datebox{display:grid;gap:4px}
-.hright{display:grid;gap:8px;justify-items:end;align-self:flex-start}
-#theme{min-width:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--fg);font-size:20px;line-height:1;cursor:pointer}
+#theme{position:absolute;top:0;right:0;min-width:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer}
 .banner{margin:0;padding:12px 14px;border-radius:8px;background:var(--accent-soft);color:var(--fg);font-size:14px}
 .grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}

@@ -37,10 +37,10 @@
     },
     "fresh_intellivent_sky": {
       "repo": "Spit68/Fresh-Intellivent-Sky",
-      "version": "V0.8.1",
+      "version": "V0.8.2",
       "kind": "tree",
       "subpath": "custom_components/fresh_intellivent_sky",
-      "hash": "sha256-hp3L4aWSvagZjfJki44c3yGtoGnGLkeOI+fG1QnNC28="
+      "hash": "sha256-n8WDpeQAgweXsZOso5x2DQVs9SUHIWnw/Fyxv6iBvmU="
     },
     "frigate": {
       "repo": "blakeblackshear/frigate-hass-integration",

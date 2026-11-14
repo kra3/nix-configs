@@ -1830,10 +1830,11 @@ $('rest-add').addEventListener('click', function(){
 });
 $('rest-skip').addEventListener('click', restStop);
 $('rest-notify').addEventListener('click', askNotify);
-$('theme').value = theme;
-$('theme').addEventListener('change', function(){
-  try { localStorage.setItem('fitness.theme', this.value); } catch(e){}
-  applyTheme(this.value);
+$('theme').addEventListener('click', function(){
+  var dark = theme ? theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('fitness.theme', theme); } catch(e){}
+  applyTheme(theme);
 });
 var VIEWS = ['coach', 'gym', 'trends', 'more'];
 function setView(){

@@ -1,9 +1,9 @@
 :root{color-scheme:light}
 /* Layout concept: a gym logbook. Today's bars and the day's entry sit first, trends under them, then the 14-day habit grid and the workout sheet. */
 :root{
-  --bg:#EEF3F2; --surface:#FFFFFF; --fg:#13211F; --muted:#586966; --line:#D3DDDA; --track:#E2EAE8;
-  --accent:#0B7285; --accent-ink:#FFFFFF; --accent-soft:#DCEFF3; --waist:#6B5BB5;
-  --ok:#1C8458; --warn:#B26B00; --bad:#C0392B;
+  --bg:#E6E9EF; --surface:#EFF1F5; --fg:#4C4F69; --muted:#5C5F77; --line:#CCD0DA; --track:#DCE0E8;
+  --accent:#1E66F5; --accent-ink:#EFF1F5; --accent-soft:#D2DEF5; --waist:#8839EF;
+  --ok:#40A02B; --warn:#FE640B; --bad:#D20F39;
   /* Fonts already on the viewing device; nothing is downloaded. Condensed faces
      (Apple, Android, Windows) for headings where available. */
   --font-display:'Avenir Next Condensed','DIN Condensed','Roboto Condensed','Arial Narrow',system-ui,sans-serif;
@@ -11,15 +11,15 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1614; --surface:#15201E; --fg:#E4EEEB; --muted:#92A49F; --line:#263632; --track:#22312E;
-    --accent:#5CC4DB; --accent-ink:#06222A; --accent-soft:#17323A; --waist:#A99BEA;
-    --ok:#4CC38A; --warn:#E0A03A; --bad:#EF7A6C; color-scheme:dark;
+    --bg:#181825; --surface:#1E1E2E; --fg:#CDD6F4; --muted:#A6ADC8; --line:#313244; --track:#313244;
+    --accent:#89B4FA; --accent-ink:#11111B; --accent-soft:#2E344D; --waist:#CBA6F7;
+    --ok:#A6E3A1; --warn:#FAB387; --bad:#F38BA8; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1614; --surface:#15201E; --fg:#E4EEEB; --muted:#92A49F; --line:#263632; --track:#22312E;
-  --accent:#5CC4DB; --accent-ink:#06222A; --accent-soft:#17323A; --waist:#A99BEA;
-  --ok:#4CC38A; --warn:#E0A03A; --bad:#EF7A6C; color-scheme:dark;
+  --bg:#181825; --surface:#1E1E2E; --fg:#CDD6F4; --muted:#A6ADC8; --line:#313244; --track:#313244;
+  --accent:#89B4FA; --accent-ink:#11111B; --accent-soft:#2E344D; --waist:#CBA6F7;
+  --ok:#A6E3A1; --warn:#FAB387; --bad:#F38BA8; color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{
@@ -30,12 +30,13 @@ body{
   padding-right:max(16px,env(safe-area-inset-right,0px));
 }
 .wrap{max-width:1040px;margin:0 auto;display:grid;gap:16px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+header{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 h1{font:700 44px/0.95 var(--font-display);letter-spacing:.01em;margin:2px 0 6px;text-transform:uppercase}
 h2{font:700 22px/1.1 var(--font-display);letter-spacing:.05em;text-transform:uppercase;margin:0 0 12px;text-wrap:balance}
 .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
 .sub{color:var(--muted);font-size:14px}
 .datebox{display:grid;gap:4px}
+#theme{position:absolute;top:0;right:0;min-width:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer}
 .banner{margin:0;padding:12px 14px;border-radius:8px;background:var(--accent-soft);color:var(--fg);font-size:14px}
 .grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}

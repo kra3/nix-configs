@@ -128,8 +128,8 @@ PRAGMA user_version = 5;";
 // Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
 // Schema version 7 (RIR and pain per set, training block, progression rule) lives in training.rs,
 // version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs,
-// version 9 (blood tests, cardio, photo names) in extras.rs.
-const MIGRATIONS: [&str; 9] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9];
+// version 9 (blood tests, cardio, photo names) in extras.rs, version 10 (rest per exercise, session names) in training.rs.
+const MIGRATIONS: [&str; 10] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9, training::SCHEMA_10];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -285,6 +285,7 @@ struct PlanEx {
     unit: String,
     inc: Option<f64>,
     prog: Option<String>,
+    rest: Option<i64>,
 }
 
 // The plan document: exercises plus the optional training block.
@@ -292,22 +293,24 @@ struct PlanEx {
 struct Plan {
     ex: Vec<PlanEx>,
     block: Option<training::Block>,
+    names: [Option<String>; 2],
 }
 
 fn int_field(o: &Map<String, Value>, k: &str, lo: i64, hi: i64) -> Result<i64, String> {
     o.get(k).and_then(Value::as_i64).filter(|x| (lo..=hi).contains(x)).ok_or_else(|| format!("{k} must be a whole number from {lo} to {hi}"))
 }
 
-// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?, "prog"?}, ...], "B": [...], "block"?: {...}}
+// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?, "prog"?, "rest"?}, ...], "B": [...], "block"?: {...}, "names"?: {"A", "B"}}
 fn parse_plan(v: &Value) -> Result<Plan, String> {
     let o = v.as_object().ok_or("object expected")?;
-    if let Some(k) = o.keys().find(|k| *k != "block" && !WORKOUTS.contains(&k.as_str())) {
+    if let Some(k) = o.keys().find(|k| *k != "block" && *k != "names" && !WORKOUTS.contains(&k.as_str())) {
         return Err(format!("unknown workout {k}"));
     }
     let block = match o.get("block") {
         None | Some(Value::Null) => None,
         Some(b) => Some(training::parse_block(b)?),
     };
+    let names = training::parse_names(o.get("names"))?;
     let mut out = Vec::new();
     for w in WORKOUTS {
         let Some(list) = o.get(w) else { continue };
@@ -319,7 +322,7 @@ fn parse_plan(v: &Value) -> Result<Plan, String> {
         for (i, e) in list.iter().enumerate() {
             let at = format!("workout {w}, exercise {}", i + 1);
             let e = e.as_object().ok_or_else(|| format!("{at} must be an object"))?;
-            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u", "inc", "prog"].contains(&k.as_str())) {
+            if let Some(k) = e.keys().find(|k| !["k", "n", "sets", "lo", "hi", "u", "inc", "prog", "rest"].contains(&k.as_str())) {
                 return Err(format!("{at}: unknown field {k}"));
             }
             let key = e.get("k").and_then(Value::as_str).filter(|k| valid_key(k)).ok_or_else(|| format!("{at}: bad key"))?;
@@ -341,10 +344,14 @@ fn parse_plan(v: &Value) -> Result<Plan, String> {
                 return Err(format!("{at}: inc must be above 0"));
             }
             let prog = training::parse_prog(e.get("prog")).map_err(|m| format!("{at}: {m}"))?;
-            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into(), inc, prog });
+            let rest = match e.get("rest") {
+                None | Some(Value::Null) => None,
+                Some(_) => Some(int_field(e, "rest", 15, 900).map_err(|m| format!("{at}: {m}"))?),
+            };
+            out.push(PlanEx { workout: w, key: key.into(), name: name.into(), sets, lo, hi, unit: unit.into(), inc, prog, rest });
         }
     }
-    Ok(Plan { ex: out, block })
+    Ok(Plan { ex: out, block, names })
 }
 
 /* ---------- rows -> JSON document ---------- */
@@ -433,7 +440,7 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
     let Some(version) = c.query_row("SELECT version FROM plans WHERE user = ?1", params![user], |r| r.get::<_, i64>(0)).optional()? else {
         return Ok(None);
     };
-    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit, inc, prog FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
+    let mut st = c.prepare_cached("SELECT workout, key, name, sets, lo, hi, unit, inc, prog, rest FROM plan_exercises WHERE user = ?1 ORDER BY workout, pos")?;
     let rows = st.query_map(params![user], |r| {
         let mut e = json!({ "k": r.get::<_, String>(1)?, "n": r.get::<_, String>(2)?, "sets": r.get::<_, i64>(3)?,
                             "lo": r.get::<_, i64>(4)?, "hi": r.get::<_, i64>(5)?, "u": r.get::<_, String>(6)? });
@@ -442,6 +449,9 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
         }
         if let (Some(prog), Value::Object(m)) = (r.get::<_, Option<String>>(8)?, &mut e) {
             m.insert("prog".into(), json!(prog));
+        }
+        if let (Some(rest), Value::Object(m)) = (r.get::<_, Option<i64>>(9)?, &mut e) {
+            m.insert("rest".into(), json!(rest));
         }
         Ok((r.get::<_, String>(0)?, e))
     })?;
@@ -457,6 +467,9 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
     }
     if let Some(b) = training::get_block(c, user)? {
         m.insert("block".into(), training::block_value(&b));
+    }
+    if let Some(n) = training::get_names(c, user)? {
+        m.insert("names".into(), n);
     }
     Ok(Some((version, Value::Object(m))))
 }
@@ -538,16 +551,17 @@ fn write_plan(c: &Connection, user: &str, p: &Plan, base: i64) -> rusqlite::Resu
     tx.execute("DELETE FROM plan_exercises WHERE user = ?1", params![user])?;
     {
         let mut st = tx.prepare_cached(
-            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc, prog) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc, prog, rest) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         )?;
         let mut pos = [0i64; 2];
         for e in &p.ex {
             let i = WORKOUTS.iter().position(|w| *w == e.workout).unwrap_or(0);
-            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc, e.prog])?;
+            st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc, e.prog, e.rest])?;
             pos[i] += 1;
         }
     }
     training::write_block(&tx, user, p.block.as_ref())?;
+    tx.execute("UPDATE plans SET name_a = ?2, name_b = ?3 WHERE user = ?1", params![user, p.names[0], p.names[1]])?;
     tx.commit()?;
     Ok(Some(version))
 }
@@ -739,7 +753,11 @@ fn api(c: &Connection, user: &str, method: &Method, path: &str, query: &str, if_
                     Err(e) => return db_err(e),
                 }
             }
-            reply(200, json!({ "user": user, "docs": docs }))
+            let muscle_sets = match training::muscle_sets(c, user, &coach::local_today(c)) {
+                Ok(m) => m,
+                Err(e) => return db_err(e),
+            };
+            reply(200, json!({ "user": user, "docs": docs, "muscle_sets": muscle_sets }))
         }
         (Method::Get, "/api/library") => training::library(),
         (Method::Get, "/api/export") => match export_map(c, user) {

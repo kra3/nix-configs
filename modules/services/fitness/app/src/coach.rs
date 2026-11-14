@@ -844,7 +844,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
             "two_weeks_exercises": lifts_2w.map(|x| x.1),
         },
         "nutrition": nutrition, "supplements": supplements, "targets": Value::Object(targets),
-        "block": training::block_summary(&plan_v, end), "library_count": training::library_count(),
+        "block": training::block_summary(&plan_v, end), "muscle_sets": training::muscle_sets(c, user, end_s)?, "library_count": training::library_count(),
         "plan": plan.map(|(v, p)| json!({ "version": v, "data": p })),
         "open_proposals": open_props, "log": log,
     }))
@@ -1131,18 +1131,20 @@ pub fn summary_text(s: &Value) -> String {
                     .flatten()
                     .map(|e| {
                         format!(
-                            "{} [{}] {}x{}-{} {}{}",
+                            "{} [{}] {}x{}-{} {}{}{}",
                             f(&e["n"]),
                             f(&e["k"]),
                             e["sets"],
                             e["lo"],
                             e["hi"],
                             f(&e["u"]),
-                            e["inc"].as_f64().map(|i| format!(" +{i}")).unwrap_or_default()
+                            e["inc"].as_f64().map(|i| format!(" +{i}")).unwrap_or_default(),
+                            e["rest"].as_i64().map(|r| format!(" rest {r}s")).unwrap_or_default()
                         )
                     })
                     .collect();
-                let _ = writeln!(o, "  {w}: {}", list.join("; "));
+                let name = p.get("names").and_then(|n| n[w].as_str()).map(|n| format!(" ({n})")).unwrap_or_default();
+                let _ = writeln!(o, "  {w}{name}: {}", list.join("; "));
             }
             if let Some(w) = s["block"]["week"].as_i64() {
                 let _ = writeln!(o, "  Block: week {w} of {}{}", s["block"]["weeks"], if s["block"]["lighter_week"] == true { " (lighter week)" } else { "" });
@@ -1152,6 +1154,10 @@ pub fn summary_text(s: &Value) -> String {
             let _ = writeln!(o, "  Exercise library: {} exercises (GET /api/library)", s["library_count"]);
             let _ = writeln!(o, "  as JSON: {}", s["plan"]["data"]);
         }
+    }
+    let _ = writeln!(o, "\nSETS PER MUSCLE, last 7 days (done / planned)");
+    for m in s["muscle_sets"].as_array().into_iter().flatten() {
+        let _ = writeln!(o, "  {} {} / {}", f(&m["m"]), m["done"], m["planned"]);
     }
     let _ = writeln!(o, "\nOPEN PROPOSALS: {}", s["open_proposals"]);
     let _ = writeln!(o, "\nCOACH LOG (last 10, newest first)");

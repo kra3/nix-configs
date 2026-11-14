@@ -1271,7 +1271,7 @@ function fieldName(k){ return {kcal: 'Calories', kcal_rest: 'Rest-day calories',
   birth_year: 'Birth year', goal: 'Goal', goal_notes: 'Goal notes', experience: 'Experience', days_per_week: 'Days per week', days: 'Usual days', session_minutes: 'Session (min)',
   equipment: 'Equipment', injuries: 'Injuries', conditions: 'Conditions and medications', diet: 'Diet', notes: 'Notes', goals: 'Goals'}[k] || k; }
 function show(v){ return v == null || v === '' ? '—' : Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : String(v); }
-function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : '') + (e.prog && e.prog !== 'double' ? ', ' + e.prog + ' only' : ''); }
+function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : '') + (e.rest ? ', rest ' + e.rest + ' s' : '') + (e.prog && e.prog !== 'double' ? ', ' + e.prog + ' only' : ''); }
 function diffLines(target, cur, next){
   var out = [];
   if (target === 'plan'){
@@ -1288,6 +1288,7 @@ function diffLines(target, cur, next){
       var kb = b.map(function(x){ return x.k; }).filter(function(k){ return a.some(function(e){ return e.k === k; }); });
       if (ka.join() !== kb.join()) out.push(['chg', 'Workout ' + w + ': new order ' + b.map(function(e){ return e.n; }).join(', ')]);
     });
+    if (!same(cur.names, next.names)) out.push(['chg', 'Session names: ' + show(cur.names) + ' → ' + show(next.names)]);
     if (!same(cur.block, next.block)) out.push(['chg', 'Training block: ' + show(cur.block) + ' → ' + show(next.block)]);
   } else {
     cur = cur || {};

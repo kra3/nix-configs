@@ -455,9 +455,9 @@ const SORE: usize = 9;
 const HUNGER: usize = 10;
 const MEASURES_CM: [(&str, usize); 5] = [("neck", 11), ("chest", 12), ("arm", 13), ("thigh", 14), ("hip", 15)];
 
-struct DayRow {
+pub(crate) struct DayRow {
     dn: i64,
-    nums: [Option<f64>; NDAY],
+    pub(crate) nums: [Option<f64>; NDAY],
     supps: Vec<String>,
     workout: bool,
     sets: BTreeMap<String, Vec<(Option<f64>, f64)>>,
@@ -465,20 +465,29 @@ struct DayRow {
     effort: BTreeMap<String, Vec<(Option<i64>, bool)>>,
 }
 
-fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayRow>> {
-    let mut st = c.prepare_cached(&format!("SELECT date, {}, workout, supps FROM days WHERE user = ?1 ORDER BY date", daily::day_cols()))?;
+pub(crate) fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayRow>> {
+    let mut st = c.prepare_cached(&format!("SELECT date, {}, workout, supps, carried FROM days WHERE user = ?1 ORDER BY date", daily::day_cols()))?;
     let rows = st.query_map(params![user], |r| {
         let mut nums = [None; NDAY];
         for (i, n) in nums.iter_mut().enumerate() {
             *n = r.get::<_, Option<f64>>(i + 1)?;
         }
         let supps = r.get::<_, Option<String>>(NDAY + 2)?.and_then(|t| serde_json::from_str::<Vec<String>>(&t).ok()).unwrap_or_default();
-        Ok((r.get::<_, String>(0)?, nums, r.get::<_, Option<String>>(NDAY + 1)?.is_some(), supps))
+        let carried = r.get::<_, Option<String>>(NDAY + 3)?.and_then(|t| serde_json::from_str::<Vec<String>>(&t).ok()).unwrap_or_default();
+        Ok((r.get::<_, String>(0)?, nums, r.get::<_, Option<String>>(NDAY + 1)?.is_some(), supps, carried))
     })?;
     let mut days = Vec::new();
     let mut idx = BTreeMap::new();
     for row in rows {
-        let (date, nums, workout, supps) = row?;
+        let (date, mut nums, workout, supps, carried) = row?;
+        for name in &carried {
+            if let Some(i) = DAY_NUM.iter().position(|(n, _)| n == name) {
+                nums[i] = None;
+            }
+        }
+        if !carried.is_empty() && nums.iter().all(Option::is_none) && supps.is_empty() && !workout {
+            continue;
+        }
         idx.insert(date.clone(), days.len());
         days.push(DayRow { dn: day_num(&date), nums, supps, workout, sets: BTreeMap::new(), effort: BTreeMap::new() });
     }

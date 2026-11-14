@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 tiny_http = "0.12"
-rusqlite = "0.41"
+rusqlite = "0.42"
 serde_json = "1"
 
 # Links the system SQLite (nixpkgs in the Nix build). Use --features bundled

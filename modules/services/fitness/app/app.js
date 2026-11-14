@@ -33,6 +33,8 @@ var DEFAULT_PLAN = {
   ].concat(ARMS)
 };
 var PLAN = DEFAULT_PLAN;
+var muscleSets = [];
+function wname(k){ return (PLAN.names && PLAN.names[k]) || 'Workout ' + k; }
 
 var docs = {}, settings = Object.assign({}, DEF);
 var MEAS = ['neck', 'chest', 'arm', 'thigh', 'hip'];
@@ -591,7 +593,7 @@ function logAsSuggested(ex, i, sg){
   if (!s0){ r.focus(); return; }
   if (w && w.value === '' && s0[0] != null) w.value = s0[0];
   if (r.value === '') r.value = s0[1];
-  restStart();
+  restStart(ex.rest);
 }
 function mkInput(id, ph, label){
   var el = document.createElement('input');
@@ -605,7 +607,7 @@ function renderWorkout(){
   ['A','B'].forEach(function(k){
     var b = document.createElement('button'); b.type = 'button'; b.className = 'tab';
     b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === wsel ? 'true' : 'false');
-    b.textContent = 'Workout ' + k;
+    b.textContent = wname(k);
     if (k === next && !logged){ var s = document.createElement('span'); s.className = 'nx'; s.textContent = 'next up'; b.appendChild(s); }
     b.addEventListener('click', function(){ if (draft) readEditor(); wsel = k; setStatus('st-workout', ''); renderWorkout(); });
     tabs.appendChild(b);
@@ -645,12 +647,12 @@ function renderWorkout(){
         var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
         var r = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : 'reps', ex.n + ' set ' + (i + 1) + ' reps');
         if (sv) r.value = sv[1];
-        r.addEventListener('change', onRepsEntered);
+        r.addEventListener('change', function(ev){ onRepsEntered(ev, ex); });
         row.appendChild(w); row.appendChild(x); row.appendChild(r);
       } else {
         var r2 = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : (ex.u === 'sec' ? 'sec' : 'reps'), ex.n + ' set ' + (i + 1) + (ex.u === 'sec' ? ' seconds' : ' reps'));
         if (sv) r2.value = sv[1];
-        r2.addEventListener('change', onRepsEntered);
+        r2.addEventListener('change', function(ev){ onRepsEntered(ev, ex); });
         row.appendChild(r2);
       }
       var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.className = 'rir'; rq.title = 'Reps in reserve';
@@ -697,12 +699,17 @@ function keyFor(name, list){
   return k;
 }
 function startEdit(){
-  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B, block: PLAN.block}));
+  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B, block: PLAN.block, names: PLAN.names}));
   setStatus('st-workout', ''); renderWorkout();
 }
 function stopEdit(){ draft = null; renderWorkout(); }
 function readEditor(){
   var list = draft[wsel];
+  if ($('pn-A')){
+    var nm = {};
+    ['A', 'B'].forEach(function(w){ var v = $('pn-' + w).value.trim(); if (v) nm[w] = v; });
+    if (Object.keys(nm).length) draft.names = nm; else delete draft.names;
+  }
   list.forEach(function(e, i){
     var g = function(f){ return $('pe-' + i + '-' + f); };
     if (!g('n')) return;
@@ -713,6 +720,8 @@ function readEditor(){
     e.u = g('u').value;
     var inc = num(g('inc').value);
     if (inc == null) delete e.inc; else e.inc = inc;
+    var rest = num(g('rest').value);
+    if (rest == null) delete e.rest; else e.rest = Math.round(rest);
     if (g('prog').value === 'double') delete e.prog; else e.prog = g('prog').value;
   });
   if ($('pb-start')){
@@ -731,9 +740,11 @@ function planProblem(){
       else if (!(e.sets >= 1 && e.sets <= 10)) bad = at + 'sets must be 1 to 10.';
       else if (!(e.lo >= 1 && e.hi >= e.lo && e.hi <= 600)) bad = at + 'the range must run from low to high, up to 600.';
       else if (e.inc != null && !(e.inc > 0 && e.inc <= 50)) bad = at + 'the weight step must be above 0 and at most 50 kg.';
+      else if (e.rest != null && !(e.rest >= 15 && e.rest <= 900)) bad = at + 'rest must be 15 to 900 seconds.';
       else if (e.k && draft[w].some(function(o, j){ return j < i && o.k === e.k; })) bad = at + 'this exercise is already in the workout.';
     });
   });
+  ['A', 'B'].forEach(function(w){ if (!bad && draft.names && draft.names[w] && draft.names[w].length > 20) bad = 'Session names are up to 20 characters.'; });
   var b = draft.block;
   if (!bad && b){
     if (!(b.weeks >= 4 && b.weeks <= 16)) bad = 'Block: length must be 4 to 16 weeks.';
@@ -748,6 +759,7 @@ function savePlan(){
   ['A', 'B'].forEach(function(w){ draft[w].forEach(function(e){ e.n = e.n.trim(); if (!e.k) e.k = keyFor(e.n, draft[w]); }); });
   var next = {A: draft.A, B: draft.B};
   if (draft.block) next.block = draft.block;
+  if (draft.names) next.names = draft.names;
   PLAN = next; draft = null; renderHeader();
   setStatus('st-workout', 'Saving plan…');
   renderWorkout();
@@ -757,8 +769,14 @@ function renderEditor(){
   var host = $('planed'); host.textContent = '';
   var list = draft[wsel];
   var hint = document.createElement('p'); hint.className = 'hint';
-  hint.textContent = 'Workout ' + wsel + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last box is the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg).';
+  hint.textContent = wname(wsel) + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last two boxes are the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg) and the rest after each set in seconds (blank uses your default).';
   host.appendChild(hint);
+  var nr = el('div', 'pe-nums'), dn = draft.names || {};
+  ['A', 'B'].forEach(function(w){
+    var ni = document.createElement('input'); ni.type = 'text'; ni.id = 'pn-' + w; ni.maxLength = 20; ni.value = dn[w] || '';
+    ni.placeholder = 'Workout ' + w; ni.setAttribute('aria-label', 'Name of workout ' + w); nr.appendChild(ni);
+  });
+  host.appendChild(nr);
   var bk = draft.block || {}, bx = el('div', 'pe-block');
   bx.appendChild(el('p', 'hint', 'Training block (optional): a start date, its length in weeks and which weeks are lighter (deload), separated by commas. Leave the date empty for no block.'));
   var br = el('div', 'pe-nums');
@@ -807,6 +825,7 @@ function renderEditor(){
     nums.appendChild(u);
     var inc = field('inc', 'Weight step in kg', e.inc != null ? e.inc : '', {type: 'number', inputmode: 'decimal', min: '0', step: 'any', placeholder: '+' + DEF_INC + ' kg', title: 'How much to add when every set reaches the top of the range'});
     nums.appendChild(inc);
+    nums.appendChild(field('rest', 'Rest in seconds', e.rest != null ? e.rest : '', {type: 'number', inputmode: 'numeric', min: '15', max: '900', placeholder: 'rest s', title: 'Rest after each set, seconds (blank uses the default)'}));
     row.appendChild(nums);
     var btns = document.createElement('div'); btns.className = 'pe-btns';
     [['↑', 'Move up', -1], ['↓', 'Move down', 1], ['✕', 'Remove', 0]].forEach(function(b){
@@ -838,6 +857,23 @@ function renderEditor(){
   var st = document.createElement('span'); st.className = 'status'; st.id = 'st-plan'; st.setAttribute('role', 'status'); st.setAttribute('aria-live', 'polite');
   acts.appendChild(st);
   host.appendChild(acts);
+}
+
+function renderMuscles(){
+  var host = $('muscles'); if (!host) return;
+  host.textContent = '';
+  var worst = null;
+  muscleSets.forEach(function(m){
+    var row = el('div', 'bar-row'), tr = el('div', 'track'), fl = el('div', 'fill'), pct = m.planned > 0 ? Math.min(100, m.done / m.planned * 100) : 0;
+    fl.style.width = pct + '%';
+    if (m.planned > 0 && m.done >= m.planned) fl.classList.add('ok');
+    tr.appendChild(fl);
+    row.appendChild(el('div', 'name', m.m)); row.appendChild(tr); row.appendChild(el('div', 'val', fmt(m.done, 1) + ' / ' + (m.planned > 0 ? fmt(m.planned, 1) : '–')));
+    host.appendChild(row);
+    if (m.planned > 0 && (!worst || m.done / m.planned < worst.done / worst.planned)) worst = m;
+  });
+  $('muscles-empty').hidden = muscleSets.length > 0;
+  hl('hl-muscles', worst ? worst.m + ' ' + fmt(worst.done, 0) + '/' + fmt(worst.planned, 1) : '');
 }
 
 /* ---------- strength: per-exercise scores, records, suggestions ---------- */
@@ -1235,7 +1271,7 @@ function fieldName(k){ return {kcal: 'Calories', kcal_rest: 'Rest-day calories',
   birth_year: 'Birth year', goal: 'Goal', goal_notes: 'Goal notes', experience: 'Experience', days_per_week: 'Days per week', days: 'Usual days', session_minutes: 'Session (min)',
   equipment: 'Equipment', injuries: 'Injuries', conditions: 'Conditions and medications', diet: 'Diet', notes: 'Notes', goals: 'Goals'}[k] || k; }
 function show(v){ return v == null || v === '' ? '—' : Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : String(v); }
-function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : '') + (e.prog && e.prog !== 'double' ? ', ' + e.prog + ' only' : ''); }
+function exLine(e){ return e.n + ' ' + e.sets + '×' + e.lo + '–' + e.hi + ' ' + e.u + (e.inc ? ', +' + e.inc + ' kg' : '') + (e.rest ? ', rest ' + e.rest + ' s' : '') + (e.prog && e.prog !== 'double' ? ', ' + e.prog + ' only' : ''); }
 function diffLines(target, cur, next){
   var out = [];
   if (target === 'plan'){
@@ -1252,6 +1288,7 @@ function diffLines(target, cur, next){
       var kb = b.map(function(x){ return x.k; }).filter(function(k){ return a.some(function(e){ return e.k === k; }); });
       if (ka.join() !== kb.join()) out.push(['chg', 'Workout ' + w + ': new order ' + b.map(function(e){ return e.n; }).join(', ')]);
     });
+    if (!same(cur.names, next.names)) out.push(['chg', 'Session names: ' + show(cur.names) + ' → ' + show(next.names)]);
     if (!same(cur.block, next.block)) out.push(['chg', 'Training block: ' + show(cur.block) + ' → ' + show(next.block)]);
   } else {
     cur = cur || {};
@@ -1551,7 +1588,7 @@ function renderHeader(){
   if (bw) sub.textContent += ' · Block week ' + bw.n + ' of ' + bw.weeks + (bw.light ? ' · lighter week' : '');
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements();
+  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderMuscles();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------
@@ -1572,7 +1609,7 @@ document.addEventListener('input', function(){ typed = true; }, {once: true});
 function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
-function persist(){ saveJSON(skey('outbox'), outbox); saveJSON(skey('cache'), {server: server, vers: vers}); }
+function persist(){ saveJSON(skey('outbox'), outbox); saveJSON(skey('cache'), {server: server, vers: vers, muscles: muscleSets}); }
 function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : id === 'meals' ? 'Your meals' : id === 'supplements' ? 'Your supplements' : fmtDay(id); }
 
 function rebuild(){
@@ -1701,6 +1738,7 @@ function load(){
     confirmed = true;
     server = {}; vers = {};
     j.docs.forEach(function(x){ server[x.id] = x.data; vers[x.id] = x.version; });
+    muscleSets = j.muscle_sets || [];
     persist(); rebuild();
     // The forms were filled from the offline copy (or nothing); refresh them from
     // the first server answer unless the user has already started typing.
@@ -1715,7 +1753,7 @@ function sync(){ return load(); }
 
 function connect(){
   var c = loadJSON(skey('cache'), null);
-  if (c && c.server){ server = c.server; vers = c.vers || {}; }
+  if (c && c.server){ server = c.server; vers = c.vers || {}; muscleSets = c.muscles || []; }
   rebuild();
   sync().then(loadLibrary);
   setInterval(function(){ if (!document.hidden) sync(); }, 30000);
@@ -1744,11 +1782,11 @@ function importFile(file){
 
 /* ---------- rest timer ---------- */
 var restEnd = 0, restTick = 0, restHide = 0, audio = null;
-function onRepsEntered(ev){ if (ev.target.value !== '') restStart(); }
-function restStart(){
+function onRepsEntered(ev, ex){ if (ev.target.value !== '') restStart(ex && ex.rest); }
+function restStart(sec){
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch(e){ audio = null; }
   clearTimeout(restHide);
-  restEnd = Date.now() + (num(settings.rest) || DEF.rest) * 1000;
+  restEnd = Date.now() + (sec || num(settings.rest) || DEF.rest) * 1000;
   var el = $('rest'); el.hidden = false; el.classList.remove('done');
   document.body.classList.add('resting');
   $('rest-l').textContent = 'Rest';

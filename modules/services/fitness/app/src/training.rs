@@ -2,6 +2,7 @@
 // library, training blocks (with deload weeks) and per-exercise progression rules.
 
 use super::*;
+use std::collections::BTreeMap;
 
 // Schema version 7: RIR and pain flag per set; the training block on the plan;
 // the progression rule per plan exercise.
@@ -13,6 +14,13 @@ ALTER TABLE plans ADD COLUMN block_weeks INTEGER;
 ALTER TABLE plans ADD COLUMN block_deload TEXT;
 ALTER TABLE plan_exercises ADD COLUMN prog TEXT CHECK (prog IN ('double', 'reps', 'hold'));
 PRAGMA user_version = 7;";
+
+// Schema version 10: rest seconds per plan exercise; the two session names on the plan.
+pub const SCHEMA_10: &str = "
+ALTER TABLE plan_exercises ADD COLUMN rest INTEGER;
+ALTER TABLE plans ADD COLUMN name_a TEXT;
+ALTER TABLE plans ADD COLUMN name_b TEXT;
+PRAGMA user_version = 10;";
 
 pub const PROGS: [&str; 3] = ["double", "reps", "hold"];
 
@@ -100,6 +108,36 @@ pub fn parse_block(v: &Value) -> Result<Block, String> {
     Ok(Block { start, weeks, deload })
 }
 
+// {"A": "Upper", "B": "Lower"}, each 1 to 20 characters.
+pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 2], String> {
+    let mut out = [None, None];
+    let o = match v {
+        None | Some(Value::Null) => return Ok(out),
+        Some(v) => v.as_object().ok_or("names must be an object")?,
+    };
+    if let Some(k) = o.keys().find(|k| !WORKOUTS.contains(&k.as_str())) {
+        return Err(format!("names: unknown workout {k}"));
+    }
+    for (i, w) in WORKOUTS.iter().enumerate() {
+        if let Some(n) = o.get(*w) {
+            let n = n.as_str().map(str::trim).filter(|n| !n.is_empty() && n.chars().count() <= 20);
+            out[i] = Some(n.ok_or_else(|| format!("names: {w} must be 1 to 20 characters"))?.to_string());
+        }
+    }
+    Ok(out)
+}
+
+pub fn get_names(c: &Connection, user: &str) -> rusqlite::Result<Option<Value>> {
+    let (a, b) = c.query_row("SELECT name_a, name_b FROM plans WHERE user = ?1", params![user], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, Option<String>>(1)?)))?;
+    let mut m = Map::new();
+    for (w, n) in WORKOUTS.iter().zip([a, b]) {
+        if let Some(n) = n {
+            m.insert((*w).into(), json!(n));
+        }
+    }
+    Ok((!m.is_empty()).then_some(Value::Object(m)))
+}
+
 pub fn block_value(b: &Block) -> Value {
     json!({ "start": b.start, "weeks": b.weeks, "deload": b.deload })
 }
@@ -150,6 +188,62 @@ const LIBRARY: &str = include_str!("library.json");
 
 pub fn library() -> Reply {
     Reply { code: 200, ctype: JSON, body: LIBRARY.as_bytes().to_vec(), extra: vec![] }
+}
+
+const MUSCLES: [&str; 11] = ["chest", "back", "shoulders", "biceps", "triceps", "quads", "hamstrings", "glutes", "calves", "abs", "other"];
+
+fn muscle_group(m: &str) -> &'static str {
+    match m {
+        "chest" => "chest",
+        "back" | "lats" | "rear delts" => "back",
+        "shoulders" | "side delts" => "shoulders",
+        "biceps" => "biceps",
+        "triceps" => "triceps",
+        "quads" => "quads",
+        "hamstrings" => "hamstrings",
+        "glutes" | "glute medius" | "inner thighs" => "glutes",
+        "calves" => "calves",
+        "abs" | "core" => "abs",
+        _ => "other",
+    }
+}
+
+fn primary_muscles() -> BTreeMap<String, &'static str> {
+    let lib: Vec<Value> = serde_json::from_str(LIBRARY).unwrap_or_default();
+    lib.iter().filter_map(|e| Some((e["key"].as_str()?.to_string(), muscle_group(e["muscles"][0].as_str()?)))).collect()
+}
+
+#[cfg(test)]
+fn muscle_of(key: &str) -> &'static str {
+    primary_muscles().get(key).copied().unwrap_or("other")
+}
+
+// Working sets in the 7 days to `end`, and planned sets for the same span, per primary muscle.
+// Muscles with neither are left out.
+pub fn muscle_sets(c: &Connection, user: &str, end: &str) -> rusqlite::Result<Value> {
+    let map = primary_muscles();
+    let group = |k: &str| map.get(k).copied().unwrap_or("other");
+    let n = coach::day_num(end);
+    let mut done: BTreeMap<&str, i64> = BTreeMap::new();
+    let mut st = c.prepare_cached("SELECT exercise, COUNT(*) FROM sets WHERE user = ?1 AND date > ?2 AND date <= ?3 AND reps > 0 GROUP BY exercise")?;
+    for r in st.query_map(params![user, coach::day_str(n - 7), end], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
+        let (k, x) = r?;
+        *done.entry(group(&k)).or_default() += x;
+    }
+    let per_week = get_settings(c, user)?.and_then(|(_, s)| s["workouts"].as_f64()).unwrap_or(3.0) / 2.0;
+    let mut plan: BTreeMap<&str, i64> = BTreeMap::new();
+    let mut st = c.prepare_cached("SELECT key, sets FROM plan_exercises WHERE user = ?1")?;
+    for r in st.query_map(params![user], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
+        let (k, x) = r?;
+        *plan.entry(group(&k)).or_default() += x;
+    }
+    Ok(MUSCLES
+        .iter()
+        .filter_map(|m| {
+            let (d, p) = (done.get(m).copied().unwrap_or(0), plan.get(m).copied().unwrap_or(0));
+            (d > 0 || p > 0).then(|| json!({ "m": m, "done": d, "planned": num_value(p as f64 * per_week) }))
+        })
+        .collect())
 }
 
 pub fn library_count() -> usize {
@@ -303,5 +397,75 @@ mod tests {
         let none = coach::summary(&c, "kra3", "2026-12-20", 2).unwrap();
         assert!(none["alerts"].as_array().unwrap().iter().all(|a| a["kind"] != "pain"));
         assert_eq!(none["block"]["week"], Value::Null);
+    }
+
+    #[test]
+    fn plan_rest_round_trips_and_validates() {
+        let c = db();
+        let good = plan_with(&|p| p["A"][0]["rest"] = json!(150));
+        assert_eq!(put(&c, "plan", "0", good.clone()).0, 200);
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, good);
+        for (base, ok) in [("1", 15), ("2", 900)] {
+            assert_eq!(put(&c, "plan", base, plan_with(&|p| p["A"][0]["rest"] = json!(ok))).0, 200);
+        }
+        for bad in [json!(14), json!(901), json!(60.5), json!("60")] {
+            assert_eq!(put(&c, "plan", "3", plan_with(&|p| p["A"][0]["rest"] = bad.clone())).0, 400, "{bad}");
+        }
+        assert_eq!(put(&c, "plan", "3", plan_with(&|_| {})).0, 200);
+        assert!(get_plan(&c, "kra3").unwrap().unwrap().1["A"][0].get("rest").is_none());
+    }
+
+    #[test]
+    fn plan_names_round_trip_and_validate() {
+        let c = db();
+        let good = plan_with(&|p| p["names"] = json!({ "A": "Upper", "B": "Lower" }));
+        assert_eq!(put(&c, "plan", "0", good.clone()).0, 200);
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, good);
+        for bad in [json!({ "A": "" }), json!({ "A": "x".repeat(21) }), json!({ "C": "Core" }), json!("Upper"), json!({ "A": 1 })] {
+            assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = bad.clone())).0, 400, "{bad}");
+        }
+        assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = json!({ "A": "x".repeat(20) }))).0, 200);
+        assert_eq!(put(&c, "plan", "2", plan_with(&|_| {})).0, 200);
+        assert!(get_plan(&c, "kra3").unwrap().unwrap().1.get("names").is_none());
+    }
+
+    #[test]
+    fn sets_per_muscle() {
+        let c = db();
+        put(&c, "settings", "0", json!({ "workouts": 4 }));
+        put(
+            &c,
+            "plan",
+            "0",
+            json!({ "A": [{ "k": "chestpress", "n": "Chest press", "sets": 3, "lo": 8, "hi": 12, "u": "kg" },
+                          { "k": "pulldown", "n": "Pulldown", "sets": 2, "lo": 8, "hi": 12, "u": "kg" }],
+                    "B": [{ "k": "chestpress", "n": "Chest press", "sets": 1, "lo": 8, "hi": 12, "u": "kg" }] }),
+        );
+        put(&c, "2026-11-10", "0", json!({ "sets": { "chestpress": [[40, 10], [40, 10], [40, 0]], "pulldown": [[30, 10]], "mystery": [[5, 5]] } }));
+        put(&c, "2026-11-03", "0", json!({ "sets": { "chestpress": [[40, 10]] } }));
+        put(&c, "2026-11-11", "0", json!({ "sets": { "chestpress": [[40, 10]] } }));
+        let m = muscle_sets(&c, "kra3", "2026-11-10").unwrap();
+        let get = |k: &str| m.as_array().unwrap().iter().find(|x| x["m"] == k).cloned();
+        assert_eq!(get("chest"), Some(json!({ "m": "chest", "done": 2, "planned": 8 })));
+        assert_eq!(get("back"), Some(json!({ "m": "back", "done": 1, "planned": 4 })));
+        assert_eq!(get("other"), Some(json!({ "m": "other", "done": 1, "planned": 0 })));
+        assert_eq!(get("quads"), None);
+        assert_eq!(muscle_of("legpress"), "quads");
+        assert_eq!(muscle_of("reardelt"), "back");
+        assert_eq!(muscle_of("nope"), "other");
+    }
+
+    #[test]
+    fn migrates_a_version_9_database_with_a_plan() {
+        let c = Connection::open_in_memory().unwrap();
+        for m in &MIGRATIONS[..9] {
+            c.execute_batch(&format!("BEGIN; {m} COMMIT;")).unwrap();
+        }
+        c.execute("INSERT INTO plans(user, version, updated) VALUES('kra3', 1, 0)", []).unwrap();
+        c.execute("INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit) VALUES('kra3', 'A', 0, 'legpress', 'Leg press', 3, 10, 12, 'kg')", []).unwrap();
+        init(&c).unwrap();
+        let plan = get_plan(&c, "kra3").unwrap().unwrap().1;
+        assert_eq!(plan["A"][0]["k"], json!("legpress"));
+        assert!(plan.get("names").is_none() && plan["A"][0].get("rest").is_none());
     }
 }

@@ -144,7 +144,7 @@ select{font:16px var(--font-body);color:var(--fg);background:var(--bg);border:1p
 .pe-nums{display:flex;align-items:center;gap:6px;min-width:0}
 .pe-nums input{width:4.2em;flex:none;padding:8px 6px}
 .pe-nums select{flex:1}
-.pe-nums .pe-inc{width:5em}
+.pe-nums .pe-inc,.pe-nums .pe-rest{width:5em}
 .wk{display:grid;gap:2px;font-size:14px;margin:4px 0 10px}
 .wk-row{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
 .wk-row span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}

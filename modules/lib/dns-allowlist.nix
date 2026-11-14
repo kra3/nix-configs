@@ -12,6 +12,11 @@
       "knaben.org"
       "remuxdb.1632022.xyz"
       "releases.moe"
+      "stremthru.13377001.xyz"
+      "nekobt.to"
+      "knaben.eu"
+      # Jikan (MyAnimeList) API used by AIOMetadata.
+      "api.jikan.moe"
       # Akashvani (All India Radio) streams via BitGravity CDN.
       "air.pc.cdn.bitgravity.com"
       "airhlspush.pc.cdn.bitgravity.com"
@@ -25,6 +30,9 @@
       "yastream.tamthai.de"
       "knaben.org"
       "remuxdb.1632022.xyz"
+      "stremthru.13377001.xyz"
+      "nekobt.to"
+      "knaben.eu"
     ];
   };
 }

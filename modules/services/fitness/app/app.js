@@ -769,7 +769,7 @@ function renderEditor(){
   var host = $('planed'); host.textContent = '';
   var list = draft[wsel];
   var hint = document.createElement('p'); hint.className = 'hint';
-  hint.textContent = wname(wsel) + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last box is the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg).';
+  hint.textContent = wname(wsel) + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last two boxes are the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg) and the rest after each set in seconds (blank uses your default).';
   host.appendChild(hint);
   var nr = el('div', 'pe-nums'), dn = draft.names || {};
   ['A', 'B'].forEach(function(w){
@@ -1609,7 +1609,7 @@ document.addEventListener('input', function(){ typed = true; }, {once: true});
 function loadJSON(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 function same(a, b){ return JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b); }
-function persist(){ saveJSON(skey('outbox'), outbox); saveJSON(skey('cache'), {server: server, vers: vers}); }
+function persist(){ saveJSON(skey('outbox'), outbox); saveJSON(skey('cache'), {server: server, vers: vers, muscles: muscleSets}); }
 function idLabel(id){ return id === 'settings' ? 'Targets' : id === 'plan' ? 'Your plan' : id === 'profile' ? 'Your profile' : id === 'meals' ? 'Your meals' : id === 'supplements' ? 'Your supplements' : fmtDay(id); }
 
 function rebuild(){
@@ -1753,7 +1753,7 @@ function sync(){ return load(); }
 
 function connect(){
   var c = loadJSON(skey('cache'), null);
-  if (c && c.server){ server = c.server; vers = c.vers || {}; }
+  if (c && c.server){ server = c.server; vers = c.vers || {}; muscleSets = c.muscles || []; }
   rebuild();
   sync().then(loadLibrary);
   setInterval(function(){ if (!document.hidden) sync(); }, 30000);

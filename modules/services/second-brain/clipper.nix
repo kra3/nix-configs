@@ -15,10 +15,8 @@
       stateDir = "/srv/appdata/second-brain/clipper";
       domain = config.vars.acme.domain;
       unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
-      python = pkgs.python3.withPackages (ps: [
-        ps.anthropic
-        ps.faster-whisper
-      ]);
+      python = pkgs.python3.withPackages (ps: [ ps.faster-whisper ]);
+      claude-code = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
     in
     {
       options.services.secondBrain.clipper = {
@@ -71,7 +69,7 @@
 
         sops.secrets = {
           "second-brain.clipper.token" = { };
-          "second-brain.clipper.anthropic_api_key" = { };
+          "second-brain.clipper.claude_oauth_token" = { };
         }
         // lib.optionalAttrs cfg.instagramCookies {
           "second-brain.clipper.cookies" = { };
@@ -90,6 +88,7 @@
           path = [
             unstable.yt-dlp # extractors break often; unstable gets the fixes first
             pkgs.ffmpeg-headless
+            claude-code # summaries run through the CLI on the subscription, not the metered API
           ];
           environment = {
             VAULT_DIR = if brain != null then brain.vaultDir else ""; # assertion above reports a bad brain
@@ -113,7 +112,7 @@
               ExecStart = "${python}/bin/python3 ${./clipper.py}";
               LoadCredential = [
                 "token:${config.sops.secrets."second-brain.clipper.token".path}"
-                "anthropic-api-key:${config.sops.secrets."second-brain.clipper.anthropic_api_key".path}"
+                "claude-oauth-token:${config.sops.secrets."second-brain.clipper.claude_oauth_token".path}"
               ]
               ++ lib.optional cfg.instagramCookies "cookies:${
                 config.sops.secrets."second-brain.clipper.cookies".path

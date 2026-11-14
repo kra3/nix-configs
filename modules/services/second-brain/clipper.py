@@ -32,8 +32,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse, urlunparse
 
-import anthropic
-
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("clipper")
 
@@ -53,7 +51,15 @@ INDEX_FILE = STATE / "index.json"  # normalised URL -> vault-relative note path
 
 TOKEN = (CREDS / "token").read_text().strip()
 COOKIES = CREDS / "cookies" if (CREDS / "cookies").exists() else None
-claude = anthropic.Anthropic(api_key=(CREDS / "anthropic-api-key").read_text().strip())
+# Summaries go through the Claude Code CLI on the user's subscription (token from
+# `claude setup-token`), not the metered API.
+CLAUDE_ENV = {
+    **os.environ,
+    "CLAUDE_CODE_OAUTH_TOKEN": (CREDS / "claude-oauth-token").read_text().strip(),
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+}
+SUMMARY_TIMEOUT = 300
 
 jobs: "queue.Queue[str]" = queue.Queue()
 index_lock = threading.Lock()
@@ -212,18 +218,34 @@ def summarise(meta: dict, transcript: str) -> dict:
         f"Caption / description:\n{(meta.get('description') or '').strip()}\n\n"
         f"Transcript:\n{transcript or '(no speech)'}"
     )
-    resp = claude.messages.create(
-        model=SUMMARY_MODEL,
-        max_tokens=16000,
-        system=SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
-        output_config={"effort": "low", "format": {"type": "json_schema", "schema": NOTE_SCHEMA}},
+    # Transcript and caption are untrusted text: run with every tool disabled, so the worst a
+    # prompt injection can do is bend the summary. The prompt goes in on stdin.
+    proc = subprocess.run(
+        [
+            "claude", "-p",
+            "--model", SUMMARY_MODEL,
+            "--system-prompt", SYSTEM,
+            "--tools", "",
+            "--no-session-persistence",
+            "--output-format", "json",
+            "--json-schema", json.dumps(NOTE_SCHEMA),
+        ],
+        input=prompt, capture_output=True, text=True, timeout=SUMMARY_TIMEOUT,
+        env=CLAUDE_ENV, cwd=STATE,
     )
-    if resp.stop_reason == "refusal":
-        raise RuntimeError(f"summary refused: {resp.stop_details}")
-    if resp.stop_reason == "max_tokens":
-        raise RuntimeError("summary hit max_tokens")
-    return json.loads(next(b.text for b in resp.content if b.type == "text"))
+    try:
+        out = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        raise RuntimeError(f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")
+    if proc.returncode != 0 or out.get("is_error"):
+        raise RuntimeError(f"claude failed: {str(out.get('result') or proc.stderr)[-500:]}")
+    note = out.get("structured_output")
+    if not isinstance(note, dict):  # older CLIs return the JSON as text in `result`
+        note = json.loads(out["result"])
+    missing = [k for k in NOTE_SCHEMA["required"] if k not in note]
+    if missing:
+        raise RuntimeError(f"summary missing fields: {missing}")
+    return note
 
 
 # ---------------------------------------------------------------- note

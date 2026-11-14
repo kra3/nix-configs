@@ -185,9 +185,11 @@ redoes it.
 ### Setup
 
 1. **Secrets:** on sutala, in `nix develop`: `just clipper-secrets`. It generates
-   `second-brain.clipper.token` and asks for an Anthropic API key
-   (`second-brain.clipper.anthropic_api_key`, from console.anthropic.com; Haiku costs a fraction of
-   a cent per clip). Commit `secrets/secrets.yaml`.
+   `second-brain.clipper.token` and asks for a Claude Code subscription token
+   (`second-brain.clipper.claude_oauth_token`): run `claude setup-token` on a machine logged in to
+   your Claude subscription and paste what it prints. Summaries run through the `claude` CLI
+   (all tools disabled), so they use the subscription's usage, with no API billing. Commit
+   `secrets/secrets.yaml`.
 2. **Config:** `services.secondBrain.clipper.enable = true;` in `hosts/sutala/configuration.nix`
    (`clipper.brain` picks the brain; it must have `sync.enable`). Merge; the nightly upgrade
    deploys it. The first clip that needs Whisper downloads the model (~500 MB for `small`) into

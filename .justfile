@@ -142,11 +142,13 @@ clipper-secrets file="secrets/secrets.yaml":
     fi
     echo "  the Shortcut's Authorization header is: Bearer <token>; read it with"
     echo "    sops decrypt --extract '[\"second-brain.clipper.token\"]' $file"
-    echo "== Anthropic API key (console.anthropic.com)"
-    if have second-brain.clipper.anthropic_api_key; then echo "  already set"; else
-      read -rsp "  key: " key; echo
-      [ -n "$key" ] || { echo "  no key given; run again with one"; exit 1; }
-      printf '%s' "$key" | put second-brain.clipper.anthropic_api_key
+    echo "== Claude Code subscription token (summaries use the CLI, not the metered API)"
+    if have second-brain.clipper.claude_oauth_token; then echo "  already set"; else
+      echo "  run \`claude setup-token\` on a machine logged in to your Claude subscription,"
+      echo "  then paste the token it prints"
+      read -rsp "  token: " key; echo
+      [ -n "$key" ] || { echo "  no token given; run again with one"; exit 1; }
+      printf '%s' "$key" | put second-brain.clipper.claude_oauth_token
       unset key
     fi
 

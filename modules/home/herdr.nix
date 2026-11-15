@@ -190,8 +190,10 @@
               }
               {
                 key = "prefix+alt+r";
-                type = "plugin_action";
-                command = "persiyanov.reviewr.toggle";
+                type = "popup";
+                command = "${plugins."persiyanov.reviewr"}/bin/herdr-reviewr";
+                width = "90%";
+                height = "90%";
                 description = "reviewr";
               }
               {

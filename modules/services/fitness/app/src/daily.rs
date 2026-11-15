@@ -114,6 +114,27 @@ pub fn carry_cli(db_path: &str, user: &str, date: &str) {
     }
 }
 
+pub fn carry_users(c: &Connection, date: &str) -> rusqlite::Result<Vec<String>> {
+    let from = coach::day_str(coach::day_num(date) - CARRY_DAYS);
+    let mut st = c.prepare("SELECT DISTINCT user FROM days WHERE date >= ?1 AND date <= ?2 ORDER BY user")?;
+    let rows = st.query_map([from.as_str(), date], |r| r.get(0))?;
+    rows.collect()
+}
+
+pub fn carry_all_cli(db_path: &str, date: &str) {
+    if !valid_date(date) {
+        eprintln!("carry failed: bad date {date}");
+        process::exit(1);
+    }
+    let users = carry_users(&open(db_path), date).unwrap_or_else(|e| {
+        eprintln!("carry failed: {e}");
+        process::exit(1);
+    });
+    for u in users {
+        carry_cli(db_path, &u, date);
+    }
+}
+
 const MAX_MEALS: usize = 40;
 const MAX_SUPPS: usize = 15;
 const MAX_LABEL: usize = 40;

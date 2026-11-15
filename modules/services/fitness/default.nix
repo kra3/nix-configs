@@ -156,11 +156,6 @@
           DB_FILE = "${stateDir}/fitness.db";
           # Set by nginx after Authelia forward-auth (see flakeLib.nginx).
           USER_HEADER = "Remote-User";
-          # Phone shortcut (Lose It via Apple Health): POST /api/ingest with this
-          # token fills calories and protein for kra3. The service creates the
-          # token file on first start; read it with `sudo cat`.
-          INGEST_TOKEN_FILE = "${stateDir}/ingest-token";
-          INGEST_USER = "kra3";
         };
         serviceConfig = sandbox // {
           ExecStart = "${fitness}/bin/fitness";
@@ -195,94 +190,30 @@
         };
       };
 
-      # Copies health readings Home Assistant already has (phone and scale) into
-      # the log for the two previous days (so one missed run is caught up), only
-      # into fields that are still empty: anything logged by hand is kept.
+      # Apple Health values arrive from each phone's shortcut (POST /api/ingest);
+      # this copies body values forward for everyone who logged in the last 14 days.
       sops.secrets."homeassistant.token" = { };
-      systemd.services.fitness-health-sync = {
-        description = "Fill Fitness steps, sleep, weight and body fat from Home Assistant";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        environment = {
-          DB_FILE = "${stateDir}/fitness.db";
-          HA_URL = "http://127.0.0.1:8123";
-          FITNESS_USER = "kra3";
-        };
+      systemd.services.fitness-carry = {
+        description = "Carry Fitness body values forward";
+        environment.DB_FILE = "${stateDir}/fitness.db";
         serviceConfig = sandbox // {
           Type = "oneshot";
-          # Needs Home Assistant, nothing else. Its published port 127.0.0.1:8123
-          # is NATed to the container on the home-auto bridge, and the unit's
-          # firewall checks the address after that, so loopback alone times out.
-          PrivateNetwork = false;
-          IPAddressAllow = [
-            "localhost"
-            config.vars.network.podmanSubnets.homeAuto
-          ];
-          IPAddressDeny = "any";
-          LoadCredential = [ "token:${config.sops.secrets."homeassistant.token".path}" ];
           ExecStart = lib.getExe (
             pkgs.writeShellApplication {
-              name = "fitness-health-sync";
+              name = "fitness-carry";
               runtimeInputs = [
-                pkgs.curl
-                pkgs.jq
                 pkgs.coreutils
-                pkgs.gnused
                 fitness
               ];
               text = ''
-                token=$(<"$CREDENTIALS_DIRECTORY/token")
-
-                # reading <entity> <day> <max|first>: one number from the readings
-                # recorded during that local day, or nothing. HA's history also
-                # returns the state carried in from before midnight; it is skipped.
-                reading() {
-                  local start end from
-                  start=$(date -d "$2" +%FT%T%:z)
-                  end=$(date -d "$2 + 1 day" +%FT%T%:z)
-                  from=$(date -d "$2" +%s)
-                  curl -fsS --max-time 30 -H "Authorization: Bearer $token" \
-                    "$HA_URL/api/history/period/''${start//+/%2B}?end_time=''${end//+/%2B}&filter_entity_id=$1&minimal_response&no_attributes" |
-                    jq -r --argjson from "$from" --arg pick "$3" '
-                      [.[0][]?
-                       | select((.last_changed // "" | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | try fromdateiso8601 catch 0) > $from)
-                       | .state | tonumber? | select(. > 0)]
-                      | if length == 0 then empty elif $pick == "max" then max else .[0] end'
-                }
-
-                for ago in 2 1; do
-                  day=$(date -d "today - $ago days" +%F)
-                  fields=()
-                  # Phone (Health app via the HA companion app): steps count up
-                  # through the day; sleep is minutes, written the morning after.
-                  if v=$(reading sensor.meghanadha_health_steps "$day" max) && [ -n "$v" ]; then
-                    fields+=("steps=$(printf '%.0f' "$v")")
-                  fi
-                  if v=$(reading sensor.meghanadha_sleep_duration "$day" max) && [ -n "$v" ]; then
-                    fields+=("sleep=$(jq -n --argjson m "$v" '($m / 15 | round) / 4')")
-                  fi
-                  # Withings scale: the first weigh-in of the day (weight and body fat %).
-                  if v=$(reading sensor.office_room_withings_kra_weight "$day" first) && [ -n "$v" ]; then
-                    fields+=("weight=$(printf '%.1f' "$v")")
-                  fi
-                  if v=$(reading sensor.office_room_withings_kra_fat_ratio "$day" first) && [ -n "$v" ]; then
-                    fields+=("bodyfat=$(printf '%.1f' "$v")")
-                  fi
-                  if [ ''${#fields[@]} -eq 0 ]; then
-                    echo "$day: no readings from Home Assistant"
-                    continue
-                  fi
-                  fitness fill "$FITNESS_USER" "$day" "''${fields[@]}"
-                done
-
-                fitness carry "$FITNESS_USER" "$(date -d yesterday +%F)"
-                fitness carry "$FITNESS_USER" "$(date +%F)"
+                fitness carry "$(date -d yesterday +%F)"
+                fitness carry "$(date +%F)"
               '';
             }
           );
         };
       };
-      systemd.timers.fitness-health-sync = {
+      systemd.timers.fitness-carry = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnCalendar = "*-*-* 06:20:00";
@@ -377,15 +308,15 @@
           proxyPass = "http://unix:${socket}:/healthz";
           extraConfig = ''proxy_set_header Remote-User "";'';
         };
-        # The phone shortcut posts here with a bearer token, so this one path
-        # skips Authelia (still behind the CIDR allowlist). The app checks the
-        # token and accepts only calories and protein for one user. As above,
-        # the fixed URI is what reaches the app, and a client Remote-User is dropped.
+        # The phone shortcut posts here with a per-user key, so this one exact
+        # path skips Authelia (still behind the CIDR allowlist); /api/ingest/key
+        # stays behind it. The fixed URI is what reaches the app, and a client
+        # Remote-User is dropped. 256k fits a 400-day backfill.
         locations."= /api/ingest" = {
           proxyPass = "http://unix:${socket}:/api/ingest";
           extraConfig = ''
             proxy_set_header Remote-User "";
-            client_max_body_size 4k;
+            client_max_body_size 256k;
           '';
         };
       };

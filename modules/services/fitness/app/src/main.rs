@@ -1241,11 +1241,14 @@ fn main() {
         return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
     }
     if args.get(1).map(String::as_str) == Some("carry") {
-        if args.len() != 4 {
-            eprintln!("usage: fitness carry <user> <YYYY-MM-DD>");
-            process::exit(2);
+        match args.len() {
+            3 => return daily::carry_all_cli(&db_path, &args[2]),
+            4 => return daily::carry_cli(&db_path, &args[2], &args[3]),
+            _ => {
+                eprintln!("usage: fitness carry [<user>] <YYYY-MM-DD>");
+                process::exit(2);
+            }
         }
-        return daily::carry_cli(&db_path, &args[2], &args[3]);
     }
     if args.get(1).map(String::as_str) == Some("remind") {
         return daily::cli(&db_path, &args[2..]);
@@ -1615,6 +1618,17 @@ mod tests {
         put(&c, &at(14), json!({ "date": at(14), "weight": 70 }));
         assert_eq!(daily::carry(&c, "kra3", &at(0)).unwrap(), ["weight"]);
         assert!(daily::carry(&c, "kra3", &at(-1)).is_err());
+    }
+
+    #[test]
+    fn carry_users_lists_only_recent_days() {
+        let c = db();
+        let n = coach::day_num(&coach::local_today(&c));
+        let at = |ago: i64| coach::day_str(n - ago);
+        put(&c, &at(15), json!({ "date": at(15), "weight": 70 }));
+        assert!(daily::carry_users(&c, &at(0)).unwrap().is_empty());
+        put(&c, &at(3), json!({ "date": at(3), "weight": 70 }));
+        assert_eq!(daily::carry_users(&c, &at(0)).unwrap(), ["kra3"]);
     }
 
     #[test]

@@ -164,7 +164,7 @@
     },
     "lovelace-mushroom": {
       "repo": "piitaya/lovelace-mushroom",
-      "version": "v5.2.3",
+      "version": "v5.3.0",
       "kind": "file",
       "asset": "mushroom.js",
       "hash": "sha256-YxZoJo5HTVNX4PF/FhMiSZ6lyTqRBDFHfhEmU9eqRWs="

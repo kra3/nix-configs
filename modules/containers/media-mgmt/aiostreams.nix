@@ -55,6 +55,7 @@
           environments.BUILTIN_PROWLARR_URL = "http://${config.vars.network.podmanAddresses.prowlarr}:9696";
           environments.JELLYFIN_MAX_LIBRARIES = "50";
           environments.MAX_ADDONS = "25";
+          environments.JELLYFIN_IMAGE_DELIVERY = "relay";
           # OIDC discovery calls auth.${config.vars.acme.domain} directly; route via the bridge gateway.
           addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
           volumes = [

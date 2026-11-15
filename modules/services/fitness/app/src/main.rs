@@ -1630,6 +1630,26 @@ mod tests {
     }
 
     #[test]
+    fn carry_refreshes_a_stale_carried_value() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70 }));
+        daily::carry(&c, "kra3", "2026-11-04").unwrap();
+        put(&c, "2026-11-03", json!({ "date": "2026-11-03", "weight": 69 }));
+        assert_eq!(daily::carry(&c, "kra3", "2026-11-04").unwrap(), ["weight"]);
+        let d = day(&c, "2026-11-04").unwrap().1;
+        assert_eq!((d["weight"].clone(), d["carried"].clone()), (json!(69), json!(["weight"])));
+    }
+
+    #[test]
+    fn carried_day_with_sets_stays_in_coach_data() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70 }));
+        put(&c, "2026-11-02", json!({ "date": "2026-11-02", "weight": 70, "carried": ["weight"], "sets": { "legpress": [[55, 12]] } }));
+        let days = coach::load_days(&c, "kra3").unwrap();
+        assert_eq!((days.len(), days[1].nums[0]), (2, None));
+    }
+
+    #[test]
     fn migrates_version_10_adding_carried() {
         let c = Connection::open_in_memory().unwrap();
         for m in &MIGRATIONS[..10] {

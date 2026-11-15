@@ -47,8 +47,6 @@ pub fn parse_carried(v: Option<&Value>) -> Result<Vec<String>, String> {
     Ok(out)
 }
 
-// Copies each empty body value from the latest measured one in the 14 days
-// before `date`, marking it carried. Returns the fields it carried.
 pub fn carry(c: &Connection, user: &str, date: &str) -> Result<Vec<String>, String> {
     if !valid_date(date) {
         return Err(format!("bad date {date}"));
@@ -72,9 +70,12 @@ pub fn carry(c: &Connection, user: &str, date: &str) -> Result<Vec<String>, Stri
         let mut carried: Vec<Value> = m.get("carried").and_then(Value::as_array).cloned().unwrap_or_default();
         let mut set = Vec::new();
         for (k, v) in &found {
-            if !m.contains_key(*k) {
+            let was = carried.iter().any(|x| x == k);
+            if !m.contains_key(*k) || (was && m[*k] != *v) {
                 m.insert(k.to_string(), v.clone());
-                carried.push(json!(k));
+                if !was {
+                    carried.push(json!(k));
+                }
                 set.push(k.to_string());
             }
         }

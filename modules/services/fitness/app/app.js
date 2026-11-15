@@ -173,7 +173,6 @@ function fillForm(){
   setStatus('st-day', '');
   disarmDelete(); updateDelete();
 }
-// A carried value shows muted with the date it was measured; typing in the field clears the mark.
 function markCarried(d){
   ['weight','waist','bodyfat'].concat(MEAS).forEach(function(k){
     var inp = $('f-' + k), old = inp.parentNode.querySelector('.carried-hint');
@@ -1707,9 +1706,12 @@ function merge(orig, mine, theirs){
   orig = orig || {}; mine = mine || {};
   var out = Object.assign({}, theirs);
   Object.keys(Object.assign({}, orig, mine)).forEach(function(k){
-    if (k === 'sets' || same(orig[k], mine[k])) return;
+    if (k === 'sets' || k === 'carried' || same(orig[k], mine[k])) return;
     if (mine[k] == null) delete out[k]; else out[k] = mine[k];
   });
+  var oc = orig.carried || [], mc = mine.carried || [];
+  var car = (theirs.carried || []).filter(function(k){ return same(orig[k], mine[k]) && !(oc.indexOf(k) >= 0 && mc.indexOf(k) < 0); });
+  if (car.length) out.carried = car; else delete out.carried;
   var os = orig.sets || {}, ms = mine.sets || {}, sets = Object.assign({}, theirs.sets || {});
   Object.keys(Object.assign({}, os, ms)).forEach(function(x){
     if (same(os[x], ms[x])) return;

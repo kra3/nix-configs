@@ -477,6 +477,8 @@ pub(crate) fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayR
         Ok((r.get::<_, String>(0)?, nums, r.get::<_, Option<String>>(NDAY + 1)?.is_some(), supps, carried))
     })?;
     let mut days = Vec::new();
+    let set_days: std::collections::BTreeSet<String> =
+        c.prepare_cached("SELECT DISTINCT date FROM sets WHERE user = ?1")?.query_map(params![user], |r| r.get(0))?.collect::<rusqlite::Result<_>>()?;
     let mut idx = BTreeMap::new();
     for row in rows {
         let (date, mut nums, workout, supps, carried) = row?;
@@ -485,7 +487,7 @@ pub(crate) fn load_days(c: &Connection, user: &str) -> rusqlite::Result<Vec<DayR
                 nums[i] = None;
             }
         }
-        if !carried.is_empty() && nums.iter().all(Option::is_none) && supps.is_empty() && !workout {
+        if !carried.is_empty() && nums.iter().all(Option::is_none) && supps.is_empty() && !workout && !set_days.contains(&date) {
             continue;
         }
         idx.insert(date.clone(), days.len());

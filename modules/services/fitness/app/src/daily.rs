@@ -27,6 +27,17 @@ pub const SCHEMA_11: &str = "
 ALTER TABLE days ADD COLUMN carried TEXT;
 PRAGMA user_version = 11;";
 
+pub const SCHEMA_12: &str = "
+ALTER TABLE days ADD COLUMN carbs REAL;
+ALTER TABLE days ADD COLUMN fat REAL;
+ALTER TABLE days ADD COLUMN satfat REAL;
+ALTER TABLE days ADD COLUMN fibre REAL;
+ALTER TABLE days ADD COLUMN sodium REAL;
+ALTER TABLE days ADD COLUMN active_kcal REAL;
+ALTER TABLE days ADD COLUMN rhr REAL;
+CREATE TABLE ingest_keys(user TEXT PRIMARY KEY, key TEXT NOT NULL UNIQUE, last INTEGER) WITHOUT ROWID;
+PRAGMA user_version = 12;";
+
 // Body values that carry forward; the rest of DAY_NUM never does.
 const CARRY: [&str; 8] = ["weight", "waist", "bodyfat", "neck", "chest", "arm", "thigh", "hip"];
 const CARRY_DAYS: i64 = 14;

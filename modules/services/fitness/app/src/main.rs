@@ -1084,9 +1084,9 @@ fn ingest_date<'a>(c: &Connection, s: &'a str, now_ts: i64) -> Option<(&'a str, 
 // hand is changed; carried values are replaced). A day after today (the client's,
 // when it sends its UTC offset) is refused. Any bad entry refuses the whole request.
 fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
-    let (list, single) = match serde_json::from_slice::<Value>(body) {
-        Ok(Value::Array(a)) => (a, false),
-        Ok(o @ Value::Object(_)) => (vec![o], true),
+    let list = match serde_json::from_slice::<Value>(body) {
+        Ok(Value::Array(a)) => a,
+        Ok(o @ Value::Object(_)) => vec![o],
         _ => return err(400, "JSON object or array expected"),
     };
     if list.len() > MAX_INGEST_DAYS {
@@ -1134,7 +1134,7 @@ fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
         }
     }
     let _ = c.execute("UPDATE ingest_keys SET last = ?2 WHERE user = ?1", params![user, now()]);
-    reply(200, if single { out.remove(0) } else { Value::Array(out) })
+    reply(200, Value::Array(out))
 }
 
 fn ingest(rq: &mut Request, method: &Method, db: &Mutex<Connection>) -> Reply {
@@ -1158,28 +1158,6 @@ fn ingest(rq: &mut Request, method: &Method, db: &Mutex<Connection>) -> Reply {
     let r = ingest_fill(&c, &user, &body);
     println!("ingest for {user}: {}", String::from_utf8_lossy(&r.body));
     r
-}
-
-fn fill_cli(db_path: &str, user: &str, date: &str, pairs: &[String]) {
-    let mut vals = Vec::new();
-    for p in pairs {
-        let parsed = p.split_once('=').and_then(|(k, v)| v.trim().parse::<f64>().ok().map(|v| (k.trim().to_string(), v)));
-        match parsed {
-            Some(kv) => vals.push(kv),
-            None => {
-                eprintln!("expected field=number, got {p}");
-                process::exit(2);
-            }
-        }
-    }
-    match fill_day(&open(db_path), user, date, &vals) {
-        Ok(set) if set.is_empty() => println!("{user} {date}: nothing to fill"),
-        Ok(set) => println!("{user} {date}: filled {}", set.join(", ")),
-        Err(e) => {
-            eprintln!("fill failed: {e}");
-            process::exit(1);
-        }
-    }
 }
 
 fn import_cli(db_path: &str, file: &str, user: &str) {
@@ -1232,13 +1210,6 @@ fn main() {
             process::exit(2);
         }
         return import_cli(&db_path, &args[2], &args[3]);
-    }
-    if args.get(1).map(String::as_str) == Some("fill") {
-        if args.len() < 5 {
-            eprintln!("usage: fitness fill <user> <YYYY-MM-DD> <field=number>...");
-            process::exit(2);
-        }
-        return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
     }
     if args.get(1).map(String::as_str) == Some("carry") {
         match args.len() {
@@ -2152,7 +2123,7 @@ mod ingest_tests {
         let put = |v: Value| assert_eq!(call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some("0"), v).0, 200);
         put(json!({ "date": "2026-11-03", "weight": 70, "steps": 100 }));
         let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","weight":66,"steps":9000,"rhr":50}"#);
-        assert_eq!(body(&r)["filled"], json!(["rhr"]));
+        assert_eq!(body(&r)[0]["filled"], json!(["rhr"]));
         let (_, d) = get_day(&c, "kra3", "2026-11-03").unwrap().unwrap();
         assert_eq!((d["weight"].clone(), d["steps"].clone()), (json!(70), json!(100)));
         let _ = fs::remove_file(&path);
@@ -2162,7 +2133,7 @@ mod ingest_tests {
         assert_eq!(code, 200);
         assert_eq!(daily::carry(&c, "kra3", "2026-11-03").unwrap(), ["weight"]);
         let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","weight":66}"#);
-        assert_eq!(body(&r)["filled"], json!(["weight"]));
+        assert_eq!(body(&r)[0]["filled"], json!(["weight"]));
         assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["weight"], json!(66));
         let _ = fs::remove_file(&path);
     }
@@ -2203,11 +2174,11 @@ mod ingest_tests {
         let c = open(&path);
         let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","kcal":2100,"protein":130}"#);
         assert_eq!(r.code, 200);
-        assert_eq!(body(&r)["filled"], json!(["kcal", "protein"]));
+        assert_eq!(body(&r)[0]["filled"], json!(["kcal", "protein"]));
         // A later, different reading does not replace what is already there.
         let r = ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","kcal":9999}"#);
         assert_eq!(r.code, 200);
-        assert_eq!(body(&r)["filled"], json!([]));
+        assert_eq!(body(&r)[0]["filled"], json!([]));
         let (_, day) = get_day(&c, "kra3", "2026-11-03").unwrap().unwrap();
         assert_eq!(day["kcal"], json!(2100));
         assert_eq!(day["protein"], json!(130));

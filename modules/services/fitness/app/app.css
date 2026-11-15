@@ -101,6 +101,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-vi
 .linkish{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .ex-head .tg{font-size:13px;color:var(--muted)}
 .hint{font-size:13px;color:var(--muted);margin:2px 0 0}
+input.carried{color:var(--muted)}
 .hint.sg{color:var(--accent)}
 .sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px}
 .set{display:flex;align-items:center;gap:6px;min-width:0}

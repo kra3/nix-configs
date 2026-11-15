@@ -274,6 +274,9 @@
                   fi
                   fitness fill "$FITNESS_USER" "$day" "''${fields[@]}"
                 done
+
+                fitness carry "$FITNESS_USER" "$(date -d yesterday +%F)"
+                fitness carry "$FITNESS_USER" "$(date +%F)"
               '';
             }
           );

@@ -56,7 +56,8 @@ function num(v){ if (v == null) return null; v = String(v).trim().replace(',', '
 function fmt(n, dec){ if (n == null || !isFinite(n)) return '—'; return Number(n).toLocaleString('en-GB', {maximumFractionDigits: dec == null ? 1 : dec, minimumFractionDigits: 0}); }
 function sgn(n, dec, u){ var a = Math.abs(n); var s = a < Math.pow(10, -(dec == null ? 1 : dec)) / 2 ? '0' : (n > 0 ? '+' : '−') + fmt(a, dec); return s + (u ? ' ' + u : ''); }
 function dates(){ return Object.keys(docs).filter(function(k){ return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort(); }
-function val(d, k){ return docs[d] ? num(docs[d][k]) : null; }
+function isCarried(d, k){ return !!(d && Array.isArray(d.carried) && d.carried.indexOf(k) >= 0); }
+function val(d, k){ return docs[d] && !isCarried(docs[d], k) ? num(docs[d][k]) : null; }
 function setStatus(id, msg, err){ var el = $(id); el.textContent = msg || ''; el.className = 'status' + (err ? ' err' : ''); }
 
 /* ---------- saving ---------- */
@@ -79,6 +80,8 @@ function saveDay(){
     if (v == null) delete next[k]; else next[k] = v;
   });
   CHECKIN.forEach(function(c){ if (checkin[c[0]] != null) next[c[0]] = checkin[c[0]]; else delete next[c[0]]; });
+  var kept = Array.isArray(next.carried) ? next.carried.filter(function(k){ return $('f-' + k) && $('f-' + k).classList.contains('carried'); }) : [];
+  if (kept.length) next.carried = kept; else delete next.carried;
   if (taken.length) next.supps = taken.slice(); else delete next.supps;
   var note = $('f-note').value.trim();
   if (note) next.note = note; else delete next.note;
@@ -161,6 +164,7 @@ function saveTargets(){
 function fillForm(){
   var d = docs[sel] || {};
   ['weight','waist','kcal','protein','steps','sleep','bodyfat'].concat(MEAS).forEach(function(k){ $('f-' + k).value = d[k] != null ? d[k] : ''; });
+  markCarried(d);
   checkin = {};
   CHECKIN.forEach(function(c){ if (num(d[c[0]]) != null) checkin[c[0]] = num(d[c[0]]); });
   taken = Array.isArray(d.supps) ? d.supps.slice() : [];
@@ -169,6 +173,22 @@ function fillForm(){
   setStatus('st-day', '');
   disarmDelete(); updateDelete();
 }
+function markCarried(d){
+  ['weight','waist','bodyfat'].concat(MEAS).forEach(function(k){
+    var inp = $('f-' + k), old = inp.parentNode.querySelector('.carried-hint');
+    if (old) old.remove();
+    inp.classList.remove('carried');
+    if (!isCarried(d, k) || d[k] == null) return;
+    var from = dates().filter(function(x){ return x < sel && docs[x][k] != null && !isCarried(docs[x], k); }).pop();
+    inp.classList.add('carried');
+    inp.parentNode.appendChild(el('small', 'hint carried-hint', from ? 'carried from ' + fmtDay(from) : 'carried'));
+  });
+}
+document.addEventListener('input', function(e){
+  if (!e.target.classList || !e.target.classList.contains('carried')) return;
+  e.target.classList.remove('carried');
+  var h = e.target.parentNode.querySelector('.carried-hint'); if (h) h.remove();
+});
 function fillTargets(){
   ['kcal','protein','steps','sleep','workouts','rest'].forEach(function(k){ $('t-' + k).value = settings[k]; });
   $('t-height').value = settings.height != null ? settings.height : '';
@@ -1074,9 +1094,9 @@ function windowStats(from, to){
     var n = dayNum(x), d = docs[x];
     if (n <= from || n > to) return;
     ['kcal', 'steps', 'sleep'].forEach(function(k){ var v = num(d[k]); if (v != null) o[k].push(v); });
-    var w = num(d.weight); if (w != null) o.w.push(w);
-    var f = num(d.bodyfat); if (f != null) o.bf.push(f);
-    if (num(d.waist) != null) o.waist = num(d.waist);
+    var w = val(x, 'weight'); if (w != null) o.w.push(w);
+    var f = val(x, 'bodyfat'); if (f != null) o.bf.push(f);
+    if (val(x, 'waist') != null) o.waist = val(x, 'waist');
     if (d.workout) o.workouts++;
     if (num(d.protein) != null && num(d.protein) >= settings.protein) o.protein++;
   });
@@ -1686,9 +1706,12 @@ function merge(orig, mine, theirs){
   orig = orig || {}; mine = mine || {};
   var out = Object.assign({}, theirs);
   Object.keys(Object.assign({}, orig, mine)).forEach(function(k){
-    if (k === 'sets' || same(orig[k], mine[k])) return;
+    if (k === 'sets' || k === 'carried' || same(orig[k], mine[k])) return;
     if (mine[k] == null) delete out[k]; else out[k] = mine[k];
   });
+  var oc = orig.carried || [], mc = mine.carried || [];
+  var car = (theirs.carried || []).filter(function(k){ return same(orig[k], mine[k]) && !(oc.indexOf(k) >= 0 && mc.indexOf(k) < 0); });
+  if (car.length) out.carried = car; else delete out.carried;
   var os = orig.sets || {}, ms = mine.sets || {}, sets = Object.assign({}, theirs.sets || {});
   Object.keys(Object.assign({}, os, ms)).forEach(function(x){
     if (same(os[x], ms[x])) return;

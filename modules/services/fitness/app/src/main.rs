@@ -128,8 +128,8 @@ PRAGMA user_version = 5;";
 // Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
 // Schema version 7 (RIR and pain per set, training block, progression rule) lives in training.rs,
 // version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs,
-// version 9 (blood tests, cardio, photo names) in extras.rs, version 10 (rest per exercise, session names) in training.rs.
-const MIGRATIONS: [&str; 10] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9, training::SCHEMA_10];
+// version 9 (blood tests, cardio, photo names) in extras.rs, version 10 (rest per exercise, session names) in training.rs, version 11 (carried-forward body values) in daily.rs.
+const MIGRATIONS: [&str; 11] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9, training::SCHEMA_10, daily::SCHEMA_11];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -190,6 +190,7 @@ struct Day {
     note: Option<String>,
     workout: Option<String>,
     sets: Vec<(String, i64, training::SetRow)>,
+    carried: Vec<String>,
 }
 
 fn num_field(v: Option<&Value>, name: &str, max: f64) -> Result<Option<f64>, String> {
@@ -206,7 +207,7 @@ fn num_field(v: Option<&Value>, name: &str, max: f64) -> Result<Option<f64>, Str
 fn parse_day(v: &Value) -> Result<Day, String> {
     let o = v.as_object().ok_or("object expected")?;
     for k in o.keys() {
-        let known = k == "date" || k == "supps" || k == "note" || k == "workout" || k == "sets" || DAY_NUM.iter().any(|(n, _)| n == k);
+        let known = k == "date" || k == "supps" || k == "note" || k == "workout" || k == "sets" || k == "carried" || DAY_NUM.iter().any(|(n, _)| n == k);
         if !known {
             return Err(format!("unknown field {k}"));
         }
@@ -249,7 +250,8 @@ fn parse_day(v: &Value) -> Result<Day, String> {
         }
         Some(_) => return Err("sets must be an object".into()),
     }
-    Ok(Day { nums, supps, note, workout, sets })
+    let carried = daily::parse_carried(o.get("carried"))?;
+    Ok(Day { nums, supps, note, workout, sets, carried })
 }
 
 struct Settings {
@@ -374,18 +376,18 @@ fn put_num(m: &mut Map<String, Value>, k: &str, v: Option<f64>) {
 fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i64, Value)>> {
     let row = c
         .query_row(
-            &format!("SELECT {}, note, workout, version, supps FROM days WHERE user = ?1 AND date = ?2", daily::day_cols()),
+            &format!("SELECT {}, note, workout, version, supps, carried FROM days WHERE user = ?1 AND date = ?2", daily::day_cols()),
             params![user, date],
             |r| {
                 let mut nums = [None; NDAY];
                 for (i, n) in nums.iter_mut().enumerate() {
                     *n = r.get::<_, Option<f64>>(i)?;
                 }
-                Ok((nums, r.get::<_, Option<String>>(NDAY)?, r.get::<_, Option<String>>(NDAY + 1)?, r.get::<_, i64>(NDAY + 2)?, r.get::<_, Option<String>>(NDAY + 3)?))
+                Ok((nums, r.get::<_, Option<String>>(NDAY)?, r.get::<_, Option<String>>(NDAY + 1)?, r.get::<_, i64>(NDAY + 2)?, r.get::<_, Option<String>>(NDAY + 3)?, r.get::<_, Option<String>>(NDAY + 4)?))
             },
         )
         .optional()?;
-    let Some((nums, note, workout, version, supps)) = row else { return Ok(None) };
+    let Some((nums, note, workout, version, supps, carried)) = row else { return Ok(None) };
     let mut m = Map::new();
     m.insert("date".into(), json!(date));
     for (i, (name, _)) in DAY_NUM.iter().enumerate() {
@@ -393,6 +395,9 @@ fn get_day(c: &Connection, user: &str, date: &str) -> rusqlite::Result<Option<(i
     }
     if let Some(l) = supps.and_then(|s| serde_json::from_str::<Value>(&s).ok()).filter(|l| l.as_array().is_some_and(|a| !a.is_empty())) {
         m.insert("supps".into(), l);
+    }
+    if let Some(l) = carried.and_then(|s| serde_json::from_str::<Value>(&s).ok()).filter(|l| l.as_array().is_some_and(|a| !a.is_empty())) {
+        m.insert("carried".into(), l);
     }
     if let Some(n) = note {
         m.insert("note".into(), json!(n));
@@ -967,7 +972,7 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
 
 // Fills numeric day fields that are still empty (e.g. steps and sleep from a
 // phone via Home Assistant). A value already logged, by hand or by an earlier
-// run, is never changed. Returns the fields it set.
+// run, is never changed; a carried value counts as empty. Returns the fields it set.
 fn fill_day(c: &Connection, user: &str, date: &str, vals: &[(String, f64)]) -> Result<Vec<String>, String> {
     if !valid_date(date) {
         return Err(format!("bad date {date}"));
@@ -981,16 +986,19 @@ fn fill_day(c: &Connection, user: &str, date: &str, vals: &[(String, f64)]) -> R
     for _ in 0..3 {
         let (base, cur) = get_day(c, user, date).map_err(|e| e.to_string())?.unwrap_or((0, json!({ "date": date })));
         let mut m = cur.as_object().cloned().unwrap_or_default();
+        let mut carried: Vec<Value> = m.get("carried").and_then(Value::as_array).cloned().unwrap_or_default();
         let mut set = Vec::new();
         for (k, v) in vals {
-            if !m.contains_key(k) {
+            if !m.contains_key(k) || carried.contains(&json!(k)) {
                 m.insert(k.clone(), num_value(*v));
+                carried.retain(|c| c != k);
                 set.push(k.clone());
             }
         }
         if set.is_empty() {
             return Ok(set);
         }
+        m.insert("carried".into(), Value::Array(carried));
         let day = parse_day(&Value::Object(m))?;
         if write_day(c, user, date, &day, base).map_err(|e| e.to_string())?.is_some() {
             return Ok(set);
@@ -1197,6 +1205,13 @@ fn main() {
             process::exit(2);
         }
         return fill_cli(&db_path, &args[2], &args[3], &args[4..]);
+    }
+    if args.get(1).map(String::as_str) == Some("carry") {
+        if args.len() != 4 {
+            eprintln!("usage: fitness carry <user> <YYYY-MM-DD>");
+            process::exit(2);
+        }
+        return daily::carry_cli(&db_path, &args[2], &args[3]);
     }
     if args.get(1).map(String::as_str) == Some("remind") {
         return daily::cli(&db_path, &args[2..]);
@@ -1534,6 +1549,117 @@ mod tests {
         assert_eq!(s["supplements"][0], json!({ "name": "Creatine", "taken_days": 1, "logged_days": 3, "pct": 33 }));
         let t = coach::summary_text(&s);
         assert!(t.contains("checkin 4/2/—/—") && t.contains("arm 33 cm") && t.contains("Creatine: 1/3 days (33%)"), "{t}");
+    }
+
+    fn put(c: &Connection, date: &str, v: Value) {
+        let base = get_day(c, "kra3", date).unwrap().map_or(0, |(b, _)| b);
+        assert_eq!(call(c, "kra3", Method::Put, &format!("/api/log/{date}"), Some(&base.to_string()), v).0, 200);
+    }
+
+    fn day(c: &Connection, date: &str) -> Option<(i64, Value)> {
+        get_day(c, "kra3", date).unwrap()
+    }
+
+    #[test]
+    fn carry_copies_latest_measured_value() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70, "waist": 80, "steps": 5000 }));
+        put(&c, "2026-11-03", json!({ "date": "2026-11-03", "weight": 69 }));
+        put(&c, "2026-11-04", json!({ "date": "2026-11-04", "waist": 79 }));
+        assert_eq!(daily::carry(&c, "kra3", "2026-11-04").unwrap(), ["weight"]);
+        let (v, d) = day(&c, "2026-11-04").unwrap();
+        assert_eq!((v, d["weight"].clone(), d["waist"].clone(), d["carried"].clone(), d.get("steps").cloned()), (2, json!(69), json!(79), json!(["weight"]), None));
+        assert_eq!(daily::carry(&c, "kra3", "2026-11-04").unwrap(), Vec::<String>::new());
+        assert_eq!(day(&c, "2026-11-04").unwrap().0, 2);
+        let mut both = daily::carry(&c, "kra3", "2026-11-05").unwrap();
+        both.sort();
+        assert_eq!(both, ["waist", "weight"]);
+        let (v, d) = day(&c, "2026-11-05").unwrap();
+        assert_eq!((v, d["weight"].clone(), d["waist"].clone()), (1, json!(69), json!(79)));
+        assert_eq!(day(&c, "2026-11-05").unwrap().1["carried"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn carry_stops_after_14_days_and_refuses_the_future() {
+        let c = db();
+        let n = coach::day_num(&coach::local_today(&c));
+        let at = |ago: i64| coach::day_str(n - ago);
+        put(&c, &at(15), json!({ "date": at(15), "weight": 70 }));
+        assert!(daily::carry(&c, "kra3", &at(0)).unwrap().is_empty());
+        assert!(day(&c, &at(0)).is_none());
+        put(&c, &at(14), json!({ "date": at(14), "weight": 70 }));
+        assert_eq!(daily::carry(&c, "kra3", &at(0)).unwrap(), ["weight"]);
+        assert!(daily::carry(&c, "kra3", &at(-1)).is_err());
+    }
+
+    #[test]
+    fn fill_replaces_carried_but_not_measured() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70, "waist": 80 }));
+        daily::carry(&c, "kra3", "2026-11-02").unwrap();
+        put(&c, "2026-11-02", json!({ "date": "2026-11-02", "waist": 78, "carried": ["weight"] }));
+        let vals = [("weight".to_string(), 71.0), ("waist".to_string(), 50.0)];
+        assert_eq!(fill_day(&c, "kra3", "2026-11-02", &vals).unwrap(), ["weight"]);
+        let d = day(&c, "2026-11-02").unwrap().1;
+        assert_eq!((d["weight"].clone(), d["waist"].clone(), d.get("carried").cloned()), (json!(71), json!(78), None));
+    }
+
+    #[test]
+    fn carried_names_are_validated() {
+        let c = db();
+        put(&c, "2026-11-02", json!({ "date": "2026-11-02", "weight": 70, "carried": ["weight", "waist"] }));
+        assert_eq!(day(&c, "2026-11-02").unwrap().1["carried"], json!(["weight"]));
+        assert!(parse_day(&json!({ "carried": ["kcal"] })).is_err());
+        assert!(parse_day(&json!({ "carried": "weight" })).is_err());
+    }
+
+    #[test]
+    fn carried_values_are_not_measurements() {
+        let c = db();
+        let today = coach::local_today(&c);
+        let yesterday = coach::day_str(coach::day_num(&today) - 1);
+        put(&c, &yesterday, json!({ "date": yesterday, "weight": 70, "kcal": 1800 }));
+        daily::carry(&c, "kra3", &today).unwrap();
+        assert_eq!(day(&c, &today).unwrap().1["weight"], 70);
+        assert!(daily::remind(&c, "kra3", "weigh-in").unwrap().is_some());
+        let days = coach::load_days(&c, "kra3").unwrap();
+        assert_eq!(days.len(), 1);
+        put(&c, &today, json!({ "date": today, "weight": 70, "kcal": 900, "carried": ["weight"] }));
+        let days = coach::load_days(&c, "kra3").unwrap();
+        assert_eq!((days.len(), days[1].nums[0], days[1].nums[2]), (2, None, Some(900.0)));
+    }
+
+    #[test]
+    fn carry_refreshes_a_stale_carried_value() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70 }));
+        daily::carry(&c, "kra3", "2026-11-04").unwrap();
+        put(&c, "2026-11-03", json!({ "date": "2026-11-03", "weight": 69 }));
+        assert_eq!(daily::carry(&c, "kra3", "2026-11-04").unwrap(), ["weight"]);
+        let d = day(&c, "2026-11-04").unwrap().1;
+        assert_eq!((d["weight"].clone(), d["carried"].clone()), (json!(69), json!(["weight"])));
+    }
+
+    #[test]
+    fn carried_day_with_sets_stays_in_coach_data() {
+        let c = db();
+        put(&c, "2026-11-01", json!({ "date": "2026-11-01", "weight": 70 }));
+        put(&c, "2026-11-02", json!({ "date": "2026-11-02", "weight": 70, "carried": ["weight"], "sets": { "legpress": [[55, 12]] } }));
+        let days = coach::load_days(&c, "kra3").unwrap();
+        assert_eq!((days.len(), days[1].nums[0]), (2, None));
+    }
+
+    #[test]
+    fn migrates_version_10_adding_carried() {
+        let c = Connection::open_in_memory().unwrap();
+        for m in &MIGRATIONS[..10] {
+            c.execute_batch(&format!("BEGIN; {m} COMMIT;")).unwrap();
+        }
+        c.execute("INSERT INTO days(user, date, weight, version, updated) VALUES('kra3', '2026-11-03', 66, 1, 0)", []).unwrap();
+        init(&c).unwrap();
+        assert_eq!(c.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 11);
+        let d = day(&c, "2026-11-03").unwrap().1;
+        assert_eq!((d["weight"].clone(), d.get("carried").cloned()), (json!(66), None));
     }
 
     #[test]

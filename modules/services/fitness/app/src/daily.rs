@@ -23,6 +23,86 @@ CREATE TABLE user_docs(
   PRIMARY KEY (user, id)) WITHOUT ROWID;
 PRAGMA user_version = 8;";
 
+pub const SCHEMA_11: &str = "
+ALTER TABLE days ADD COLUMN carried TEXT;
+PRAGMA user_version = 11;";
+
+// Body values that carry forward; the rest of DAY_NUM never does.
+const CARRY: [&str; 8] = ["weight", "waist", "bodyfat", "neck", "chest", "arm", "thigh", "hip"];
+const CARRY_DAYS: i64 = 14;
+
+pub fn parse_carried(v: Option<&Value>) -> Result<Vec<String>, String> {
+    let list = match v {
+        None | Some(Value::Null) => return Ok(Vec::new()),
+        Some(Value::Array(a)) => a,
+        Some(_) => return Err("carried must be a list".into()),
+    };
+    let mut out: Vec<String> = Vec::new();
+    for x in list {
+        let s = x.as_str().filter(|s| CARRY.contains(s)).ok_or_else(|| format!("carried names must be among {}", CARRY.join(", ")))?;
+        if !out.iter().any(|o| o == s) {
+            out.push(s.into());
+        }
+    }
+    Ok(out)
+}
+
+pub fn carry(c: &Connection, user: &str, date: &str) -> Result<Vec<String>, String> {
+    if !valid_date(date) {
+        return Err(format!("bad date {date}"));
+    }
+    if date > coach::local_today(c).as_str() {
+        return Err(format!("{date} is in the future"));
+    }
+    let n = coach::day_num(date);
+    let mut found: Vec<(&str, Value)> = Vec::new();
+    for ago in 1..=CARRY_DAYS {
+        let Some((_, d)) = get_day(c, user, &coach::day_str(n - ago)).map_err(|e| e.to_string())? else { continue };
+        for f in CARRY {
+            if !found.iter().any(|(k, _)| *k == f) && d.get(f).is_some() && !d["carried"].as_array().is_some_and(|a| a.iter().any(|x| x == f)) {
+                found.push((f, d[f].clone()));
+            }
+        }
+    }
+    for _ in 0..3 {
+        let (base, cur) = get_day(c, user, date).map_err(|e| e.to_string())?.unwrap_or((0, json!({ "date": date })));
+        let mut m = cur.as_object().cloned().unwrap_or_default();
+        let mut carried: Vec<Value> = m.get("carried").and_then(Value::as_array).cloned().unwrap_or_default();
+        let mut set = Vec::new();
+        for (k, v) in &found {
+            let was = carried.iter().any(|x| x == k);
+            if !m.contains_key(*k) || (was && m[*k] != *v) {
+                m.insert(k.to_string(), v.clone());
+                if !was {
+                    carried.push(json!(k));
+                }
+                set.push(k.to_string());
+            }
+        }
+        if set.is_empty() {
+            return Ok(set);
+        }
+        m.insert("carried".into(), Value::Array(carried));
+        let day = parse_day(&Value::Object(m))?;
+        if write_day(c, user, date, &day, base).map_err(|e| e.to_string())?.is_some() {
+            return Ok(set);
+        }
+    }
+    Err("the day kept changing; try again".into())
+}
+
+// fitness carry <user> <date>
+pub fn carry_cli(db_path: &str, user: &str, date: &str) {
+    match carry(&open(db_path), user, date) {
+        Ok(set) if set.is_empty() => println!("{user} {date}: nothing to carry"),
+        Ok(set) => println!("{user} {date}: carried {}", set.join(", ")),
+        Err(e) => {
+            eprintln!("carry failed: {e}");
+            process::exit(1);
+        }
+    }
+}
+
 const MAX_MEALS: usize = 40;
 const MAX_SUPPS: usize = 15;
 const MAX_LABEL: usize = 40;
@@ -69,19 +149,22 @@ pub fn parse_taken(v: Option<&Value>) -> Result<Vec<String>, String> {
 // Insert or replace one day's row (not its sets).
 pub fn upsert_day(c: &Connection, user: &str, date: &str, d: &Day, version: i64) -> rusqlite::Result<()> {
     let cols = day_cols();
-    let n = NDAY + 7;
+    let n = NDAY + 8;
     let holders = (1..=n).map(|i| format!("?{i}")).collect::<Vec<_>>().join(", ");
     let sets = DAY_NUM.iter().map(|(k, _)| format!("{k} = excluded.{k}")).collect::<Vec<_>>().join(", ");
     let supps = if d.supps.is_empty() { None } else { Some(json!(d.supps).to_string()) };
+    let carried = Some(d.carried.iter().filter(|k| DAY_NUM.iter().zip(&d.nums).any(|((n, _), v)| n == k && v.is_some())).collect::<Vec<_>>())
+        .filter(|l| !l.is_empty())
+        .map(|l| json!(l).to_string());
     let ts = now();
     let mut p: Vec<&dyn rusqlite::ToSql> = vec![&user, &date];
     p.extend(d.nums.iter().map(|x| x as &dyn rusqlite::ToSql));
-    p.extend([&d.note as &dyn rusqlite::ToSql, &d.workout, &supps, &version, &ts]);
+    p.extend([&d.note as &dyn rusqlite::ToSql, &d.workout, &supps, &carried, &version, &ts]);
     c.execute(
         &format!(
-            "INSERT INTO days(user, date, {cols}, note, workout, supps, version, updated) VALUES({holders})
+            "INSERT INTO days(user, date, {cols}, note, workout, supps, carried, version, updated) VALUES({holders})
              ON CONFLICT(user, date) DO UPDATE SET {sets}, note = excluded.note, workout = excluded.workout,
-               supps = excluded.supps, version = excluded.version, updated = excluded.updated"
+               supps = excluded.supps, carried = excluded.carried, version = excluded.version, updated = excluded.updated"
         ),
         rusqlite::params_from_iter(p),
     )?;
@@ -190,7 +273,7 @@ pub const KINDS: [&str; 4] = ["weigh-in", "food", "supps", "checkin"];
 
 fn today_has(c: &Connection, user: &str, today: &str, field: &str) -> Result<bool, String> {
     let day = get_day(c, user, today).map_err(|e| e.to_string())?;
-    Ok(day.is_some_and(|(_, d)| d.get(field).is_some()))
+    Ok(day.is_some_and(|(_, d)| d.get(field).is_some() && !d["carried"].as_array().is_some_and(|a| a.iter().any(|x| x == field))))
 }
 
 // The reminder text for `kind`, or None when there is nothing to remind about.

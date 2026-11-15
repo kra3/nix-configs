@@ -12,6 +12,10 @@
       "knaben.org"
       "remuxdb.1632022.xyz"
       "releases.moe"
+      # releases.moe API redirects here (SeaDex dataset sync).
+      "seadex.moe"
+      "plavio.site"
+      "cncverse.dpdns.org"
       "stremthru.13377001.xyz"
       "nekobt.to"
       "knaben.eu"

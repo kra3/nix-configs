@@ -192,7 +192,6 @@
 
       # Apple Health values arrive from each phone's shortcut (POST /api/ingest);
       # this copies body values forward for everyone who logged in the last 14 days.
-      sops.secrets."homeassistant.token" = { };
       systemd.services.fitness-carry = {
         description = "Carry Fitness body values forward";
         environment.DB_FILE = "${stateDir}/fitness.db";
@@ -221,6 +220,8 @@
           Persistent = true;
         };
       };
+
+      sops.secrets."homeassistant.token" = { };
 
       # No food reminder: food is logged in Lose It and reaches Apple Health, which
       # this server cannot read, so "nothing logged" would fire every evening. The

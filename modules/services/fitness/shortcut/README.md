@@ -42,3 +42,13 @@ Approach: Find Health Samples for the local day, Get Details, Calculate Statisti
 - `rhr`: Resting Heart Rate, bpm, first sample of the day
 
 A key is added only when the day has samples of that type.
+
+## First run check
+
+After the first sync, compare yesterday's steps, sleep and active energy in the app (Trends / Log the day) with the Health app. Known risks:
+
+- Sleep may sum In Bed plus the sleep stages.
+- Steps and active energy may double-count iPhone and Watch.
+- The day list may not encode as a JSON array.
+
+If numbers are off or nothing arrives, send a screenshot of the shortcut's result.

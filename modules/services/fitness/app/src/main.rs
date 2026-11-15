@@ -509,8 +509,15 @@ const SINGLETONS: [&str; 5] = ["settings", "plan", "profile", "meals", "suppleme
 /* ---------- writes (version-checked) ---------- */
 
 // Ok(Some(new_version)) on success, Ok(None) when `base` is not the current version.
+// A savepoint, so it nests inside ingest_fill's outer one.
 fn write_day(c: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusqlite::Result<Option<i64>> {
-    let tx = c.unchecked_transaction()?;
+    c.execute_batch("SAVEPOINT write_day")?;
+    let r = write_day_in(c, user, date, d, base);
+    c.execute_batch(if r.is_ok() { "RELEASE write_day" } else { "ROLLBACK TO write_day; RELEASE write_day" })?;
+    r
+}
+
+fn write_day_in(tx: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusqlite::Result<Option<i64>> {
     let cur: Option<i64> = tx.query_row("SELECT version FROM days WHERE user = ?1 AND date = ?2", params![user, date], |r| r.get(0)).optional()?;
     if cur.unwrap_or(0) != base {
         return Ok(None);
@@ -524,7 +531,6 @@ fn write_day(c: &Connection, user: &str, date: &str, d: &Day, base: i64) -> rusq
             st.execute(params![user, date, ex, idx, kg, reps, rir, pain.then_some(1)])?;
         }
     }
-    tx.commit()?;
     Ok(Some(version))
 }
 
@@ -918,8 +924,8 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
         return respond(rq, err(400, "bad path"));
     }
 
-    // Phone shortcut: calories and protein for one day, behind a bearer token
-    // instead of the login (nginx serves only this path without Authelia).
+    // Phone shortcut: Apple Health values from a user's shortcut, behind that user's
+    // key (bearer) instead of the login (nginx serves only this path without Authelia).
     if path == "/api/ingest" {
         let r = ingest(&mut rq, &method, db);
         return respond(rq, r);
@@ -980,7 +986,7 @@ fn handle(mut rq: Request, db: &Mutex<Connection>, header: &str, fallback: Optio
 }
 
 // Fills numeric day fields that are still empty (e.g. steps and sleep from a
-// phone via Home Assistant). A value already logged, by hand or by an earlier
+// phone's Apple Health shortcut). A value already logged, by hand or by an earlier
 // run, is never changed; a carried value counts as empty. Returns the fields it set.
 fn fill_day(c: &Connection, user: &str, date: &str, vals: &[(String, f64)]) -> Result<Vec<String>, String> {
     if !valid_date(date) {
@@ -1040,9 +1046,11 @@ fn new_ingest_key(c: &Connection, user: &str) -> Result<String, String> {
     Ok(key)
 }
 
-fn ingest_user(c: &Connection, header: Option<&str>) -> Option<String> {
-    let key = header?.trim().strip_prefix("Bearer ")?.trim();
-    c.query_row("SELECT user FROM ingest_keys WHERE key = ?1", params![key], |r| r.get(0)).optional().ok().flatten()
+fn ingest_user(c: &Connection, header: Option<&str>) -> Result<Option<String>, String> {
+    let Some(key) = header.and_then(|h| h.trim().strip_prefix("Bearer ")).map(str::trim) else {
+        return Ok(None);
+    };
+    c.query_row("SELECT user FROM ingest_keys WHERE key = ?1", params![key], |r| r.get(0)).optional().map_err(|e| e.to_string())
 }
 
 fn key_api(c: &Connection, user: &str, method: &Method) -> Reply {
@@ -1082,7 +1090,8 @@ fn ingest_date<'a>(c: &Connection, s: &'a str, now_ts: i64) -> Option<(&'a str, 
 // One day object or an array of them: {"date": "YYYY-MM-DD[ +HHMM]", "kcal": n, ...}.
 // Fills those fields on each day only where they are empty (so nothing logged by
 // hand is changed; carried values are replaced). A day after today (the client's,
-// when it sends its UTC offset) is refused. Any bad entry refuses the whole request.
+// when it sends its UTC offset) is refused, as is any malformed entry; an out-of-range number
+// is dropped for that day and listed under "skipped". The writes are all or nothing.
 fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
     let list = match serde_json::from_slice::<Value>(body) {
         Ok(Value::Array(a)) => a,
@@ -1102,6 +1111,7 @@ fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
             return err(400, "date is in the future");
         }
         let mut vals = Vec::new();
+        let mut skipped = Vec::new();
         for (k, v) in o {
             if k == "date" {
                 continue;
@@ -1110,30 +1120,40 @@ fn ingest_fill(c: &Connection, user: &str, body: &[u8]) -> Reply {
                 return err(400, &format!("unknown field {k}"));
             }
             let max = DAY_NUM.iter().find(|(n, _)| n == k).map_or(0.0, |(_, m)| *m);
-            let Some(mut n) = v.as_f64().filter(|n| n.is_finite() && *n >= 0.0) else {
-                return err(400, &format!("{k} must be a number, 0 or more"));
+            let Some(mut n) = v.as_f64() else {
+                return err(400, &format!("{k} must be a number"));
             };
             if k == "bodyfat" && n <= 1.0 {
                 n *= 100.0;
             }
-            if n > max {
-                return err(400, &format!("{k} must be at most {max}"));
+            if !n.is_finite() || n < 0.0 || n > max {
+                skipped.push(k.clone());
+                continue;
             }
             vals.push((k.clone(), n));
         }
-        days.push((date, vals));
+        days.push((date, vals, skipped));
     }
     if days.iter().all(|d| d.1.is_empty()) {
         return err(400, "nothing to fill");
     }
+    if c.execute_batch("SAVEPOINT ingest").is_err() {
+        return err(500, "database error");
+    }
     let mut out = Vec::new();
-    for (date, vals) in days {
+    for (date, vals, skipped) in days {
         match fill_day(c, user, date, &vals) {
-            Ok(set) => out.push(json!({ "date": date, "filled": set })),
-            Err(e) => return err(400, &e),
+            Ok(set) => out.push(json!({ "date": date, "filled": set, "skipped": skipped })),
+            Err(e) => {
+                let _ = c.execute_batch("ROLLBACK TO ingest; RELEASE ingest");
+                return err(400, &e);
+            }
         }
     }
     let _ = c.execute("UPDATE ingest_keys SET last = ?2 WHERE user = ?1", params![user, now()]);
+    if c.execute_batch("RELEASE ingest").is_err() {
+        return err(500, "database error");
+    }
     reply(200, Value::Array(out))
 }
 
@@ -1141,8 +1161,10 @@ fn ingest(rq: &mut Request, method: &Method, db: &Mutex<Connection>) -> Reply {
     if *method != Method::Post {
         return err(405, "POST only");
     }
-    let Some(user) = ingest_user(&db.lock().unwrap_or_else(|p| p.into_inner()), header_of(rq, "Authorization")) else {
-        return err(401, "bad key");
+    let user = match ingest_user(&db.lock().unwrap_or_else(|p| p.into_inner()), header_of(rq, "Authorization")) {
+        Ok(Some(u)) => u,
+        Ok(None) => return err(401, "bad key"),
+        Err(_) => return err(500, "database error"),
     };
     if !header_of(rq, "Content-Type").is_some_and(|t| t.trim_start().starts_with(JSON)) {
         return err(415, "JSON body expected");
@@ -2069,16 +2091,16 @@ mod ingest_tests {
         let other = ingest_key(&c, "mum").unwrap().0;
         assert_ne!(other, k);
         let hdr = |k: &str| format!("Bearer {k}");
-        assert_eq!(ingest_user(&c, Some(&hdr(&k))).as_deref(), Some("kra3"));
-        assert_eq!(ingest_user(&c, Some(&hdr(&other))).as_deref(), Some("mum"));
-        assert_eq!(ingest_user(&c, Some(&k)), None, "scheme required");
-        assert_eq!(ingest_user(&c, Some("Bearer ")), None);
-        assert_eq!(ingest_user(&c, None), None);
+        assert_eq!(ingest_user(&c, Some(&hdr(&k))).unwrap().as_deref(), Some("kra3"));
+        assert_eq!(ingest_user(&c, Some(&hdr(&other))).unwrap().as_deref(), Some("mum"));
+        assert_eq!(ingest_user(&c, Some(&k)).unwrap(), None, "scheme required");
+        assert_eq!(ingest_user(&c, Some("Bearer ")).unwrap(), None);
+        assert_eq!(ingest_user(&c, None).unwrap(), None);
         let new = new_ingest_key(&c, "kra3").unwrap();
         assert_ne!(new, k);
-        assert_eq!(ingest_user(&c, Some(&hdr(&k))), None, "old key stops working");
-        assert_eq!(ingest_user(&c, Some(&hdr(&new))).as_deref(), Some("kra3"));
-        assert_eq!(ingest_user(&c, Some(&hdr(&other))).as_deref(), Some("mum"));
+        assert_eq!(ingest_user(&c, Some(&hdr(&k))).unwrap(), None, "old key stops working");
+        assert_eq!(ingest_user(&c, Some(&hdr(&new))).unwrap().as_deref(), Some("kra3"));
+        assert_eq!(ingest_user(&c, Some(&hdr(&other))).unwrap().as_deref(), Some("mum"));
         let _ = fs::remove_file(&path);
     }
 
@@ -2106,9 +2128,14 @@ mod ingest_tests {
     fn ingest_array_is_all_or_nothing() {
         let path = tmp("atomic");
         let c = open(&path);
-        let r = ingest_fill(&c, "kra3", br#"[{"date":"2026-11-03","steps":100},{"date":"2026-11-04","steps":-1}]"#);
+        let r = ingest_fill(&c, "kra3", br#"[{"date":"2026-11-03","steps":100},{"date":"2026-11-04","steps":"x"}]"#);
         assert_eq!(r.code, 400);
         assert!(get_day(&c, "kra3", "2026-11-03").unwrap().is_none());
+        c.execute_batch("CREATE TRIGGER boom BEFORE INSERT ON days WHEN NEW.date = '2026-11-04' BEGIN SELECT RAISE(ABORT, 'boom'); END").unwrap();
+        let r = ingest_fill(&c, "kra3", br#"[{"date":"2026-11-03","steps":100},{"date":"2026-11-04","steps":100}]"#);
+        assert_eq!(r.code, 400);
+        assert!(get_day(&c, "kra3", "2026-11-03").unwrap().is_none(), "earlier day rolled back");
+        c.execute_batch("DROP TRIGGER boom").unwrap();
         let many = format!("[{}]", vec![r#"{"date":"2026-11-03","steps":1}"#; 401].join(","));
         assert_eq!(ingest_fill(&c, "kra3", many.as_bytes()).code, 400);
         let max = format!("[{}]", vec![r#"{"date":"2026-11-03","steps":1}"#; 400].join(","));
@@ -2187,13 +2214,26 @@ mod ingest_tests {
     }
 
     #[test]
+    fn ingest_skips_out_of_range_numbers() {
+        let path = tmp("skip");
+        let c = open(&path);
+        let r = ingest_fill(&c, "kra3", br#"[{"date":"2026-11-03","steps":999999,"kcal":-1,"rhr":50},{"date":"2026-11-04","steps":9000}]"#);
+        assert_eq!(r.code, 200);
+        let b = body(&r);
+        assert_eq!((&b[0]["filled"], &b[0]["skipped"]), (&json!(["rhr"]), &json!(["kcal", "steps"])));
+        assert_eq!((&b[1]["filled"], &b[1]["skipped"]), (&json!(["steps"]), &json!([])));
+        assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["rhr"], json!(50));
+        assert!(get_day(&c, "kra3", "2026-11-04").unwrap().is_some());
+        assert_eq!(ingest_fill(&c, "kra3", br#"{"date":"2026-11-05","steps":999999}"#).code, 400, "nothing valid");
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
     fn ingest_refuses_bad_input() {
         let path = tmp("db2");
         let c = open(&path);
         for (b, why) in [
             (&br#"{"date":"2026-11-03","energy":3}"#[..], "field outside the list"),
-            (br#"{"date":"2026-11-03","steps":999999}"#, "above the field's limit"),
-            (br#"{"date":"2026-11-03","kcal":-1}"#, "negative"),
             (br#"{"date":"2026-11-03","kcal":"2100"}"#, "text instead of a number"),
             (br#"{"date":"2999-01-01","kcal":2100}"#, "future date"),
             (br#"{"date":"2999-01-01 +0100","kcal":2100}"#, "future date with offset"),

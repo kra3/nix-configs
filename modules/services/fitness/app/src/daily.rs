@@ -126,12 +126,24 @@ pub fn carry_all_cli(db_path: &str, date: &str) {
         eprintln!("carry failed: bad date {date}");
         process::exit(1);
     }
-    let users = carry_users(&open(db_path), date).unwrap_or_else(|e| {
+    let c = open(db_path);
+    let users = carry_users(&c, date).unwrap_or_else(|e| {
         eprintln!("carry failed: {e}");
         process::exit(1);
     });
+    let mut failed = false;
     for u in users {
-        carry_cli(db_path, &u, date);
+        match carry(&c, &u, date) {
+            Ok(set) if set.is_empty() => println!("{u} {date}: nothing to carry"),
+            Ok(set) => println!("{u} {date}: carried {}", set.join(", ")),
+            Err(e) => {
+                eprintln!("carry failed for {u}: {e}");
+                failed = true;
+            }
+        }
+    }
+    if failed {
+        process::exit(1);
     }
 }
 

@@ -342,6 +342,26 @@ function renderMeasurements(){
   $('meas-empty').hidden = any;
   hl('hl-meas', latest ? fmtDay(latest) : '');
 }
+var FOOD_HEART = [['carbs', 'Carbs', 'g'], ['fat', 'Fat', 'g'], ['satfat', 'Saturated fat', 'g'], ['fibre', 'Fibre', 'g'], ['sodium', 'Sodium', 'mg'], ['active_kcal', 'Active energy', 'kcal'], ['rhr', 'Resting heart rate', 'bpm']];
+function weekAvg(k, from, to){
+  var v = series(k).filter(function(p){ return p.d > from && p.d <= to; }).map(function(p){ return p.v; });
+  return v.length ? v.reduce(function(a, b){ return a + b; }, 0) / v.length : null;
+}
+function renderFoodHeart(){
+  var host = $('fh'); host.textContent = ''; var any = false, end = dayNum(todayStr()), fibre = null;
+  FOOD_HEART.forEach(function(r){
+    var now = weekAvg(r[0], end - 7, end), prev = weekAvg(r[0], end - 14, end - 7);
+    if (now == null && prev == null) return;
+    any = true;
+    if (r[0] === 'fibre') fibre = now;
+    var box = el('div');
+    stat(box, fmt(now, 0) + ' ' + r[2], r[1], 'this week');
+    box.lastChild.appendChild(el('div', 's', 'last week ' + fmt(prev, 0) + ' ' + r[2]));
+    host.appendChild(box.firstChild);
+  });
+  $('fh-empty').hidden = any;
+  hl('hl-fh', fibre != null ? 'fibre ' + fmt(fibre, 0) + ' g' : '');
+}
 function kcalCap(d){ var r = num(settings.kcal_rest); return r != null && !(d && d.workout) ? r : settings.kcal; }
 
 /* ---------- today bars ---------- */
@@ -1435,6 +1455,24 @@ function loadExtras(force){
     if (r[2].ok){ photoList = r[2].body.photos || []; renderPhotos(); }
   }, function(){ extrasAt = 0; });
 }
+function showSync(r){
+  if (!r.ok){ setStatus('st-sync', r.body.error || 'Could not load the key.', true); return; }
+  $('sync-key').value = r.body.key;
+  hl('hl-sync', r.body.last ? 'last sync ' + new Date(r.body.last * 1000).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : 'not synced yet');
+  $('sync-link').hidden = !r.body.shortcut; if (r.body.shortcut) $('sync-link').href = r.body.shortcut;
+}
+function loadSync(method){
+  setStatus('st-sync', '');
+  return api(method, 'api/ingest/key').then(showSync, function(){ setStatus('st-sync', 'Offline: try again when connected.', true); });
+}
+$('sync-details').addEventListener('toggle', function(){ if (this.open && !$('sync-key').value) loadSync('GET'); });
+$('sync-new').addEventListener('click', function(){
+  if (confirm('Replace the key? The shortcut stops working until you paste the new one.')) loadSync('POST');
+});
+$('sync-copy').addEventListener('click', function(){
+  var k = $('sync-key').value; if (!k) return;
+  navigator.clipboard.writeText(k).then(function(){ setStatus('st-sync', 'Copied.'); }, function(){ $('sync-key').select(); setStatus('st-sync', 'Select and copy the key.', true); });
+});
 var KIND_LABEL = {'walk': 'Walk', 'incline-walk': 'Incline walk', 'cycle': 'Cycle', 'cross-trainer': 'Cross-trainer', 'row': 'Row', 'swim': 'Swim', 'sport': 'Sport', 'other': 'Other'};
 function renderCardio(list){
   var host = $('c-list'); host.textContent = '';
@@ -1608,7 +1646,7 @@ function renderHeader(){
   if (bw) sub.textContent += ' · Block week ' + bw.n + ' of ' + bw.weeks + (bw.light ? ' · lighter week' : '');
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderMuscles();
+  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderFoodHeart(); renderMuscles();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------

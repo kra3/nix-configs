@@ -453,6 +453,7 @@ const ENERGY: usize = 7;
 const STRESS: usize = 8;
 const SORE: usize = 9;
 const HUNGER: usize = 10;
+const FOOD_HEART: [(&str, &str, usize); 7] = [("carbs", "g", 16), ("fat", "g", 17), ("satfat", "g", 18), ("fibre", "g", 19), ("sodium", "mg", 20), ("active_kcal", "kcal", 21), ("rhr", "bpm", 22)];
 const MEASURES_CM: [(&str, usize); 5] = [("neck", 11), ("chest", 12), ("arm", 13), ("thigh", 14), ("hip", 15)];
 
 pub(crate) struct DayRow {
@@ -785,6 +786,15 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
         "maintenance": maint.map(num_value), "suggested_kcal": suggest.map(num_value), "current_kcal": targets.get("kcal").cloned(),
     });
 
+    let mut food_heart = Map::new();
+    for (name, unit, i) in FOOD_HEART {
+        let avg = |from, to| mean(&points(&days, i, from, to).iter().map(|p| p.1).collect::<Vec<_>>()).map(r1);
+        let (now, before) = (avg(end - 7, end), avg(end - 14, end - 7));
+        if now.is_some() || before.is_some() {
+            food_heart.insert(name.into(), json!({ "unit": unit, "avg7": now, "prev7": before }));
+        }
+    }
+
     // Supplements: share of the logged days in the window on which each was ticked.
     let logged: Vec<&DayRow> = days.iter().filter(|d| d.dn > win && d.dn <= end).collect();
     let supplements: Vec<Value> = daily::get_doc(c, user, "supplements")?
@@ -854,7 +864,7 @@ pub fn summary(c: &Connection, user: &str, end_s: &str, weeks: i64) -> rusqlite:
             "this_week_pct": lifts_week.map(|x| r1(x.0)), "two_weeks_pct": lifts_2w.map(|x| r1(x.0)),
             "two_weeks_exercises": lifts_2w.map(|x| x.1),
         },
-        "nutrition": nutrition, "supplements": supplements, "targets": Value::Object(targets),
+        "nutrition": nutrition, "food_heart": Value::Object(food_heart), "supplements": supplements, "targets": Value::Object(targets),
         "block": training::block_summary(&plan_v, end), "muscle_sets": training::muscle_sets(c, user, end_s)?, "library_count": training::library_count(),
         "plan": plan.map(|(v, p)| json!({ "version": v, "data": p })),
         "open_proposals": open_props, "log": log,
@@ -1099,6 +1109,12 @@ pub fn summary_text(s: &Value) -> String {
         f(&n["suggested_kcal"]),
         f(&n["current_kcal"])
     );
+    if let Some(fh) = s["food_heart"].as_object().filter(|m| !m.is_empty()) {
+        let _ = writeln!(o, "\nFOOD AND HEART, 7-day averages (previous 7)");
+        for (k, v) in fh {
+            let _ = writeln!(o, "  {k}: {} {} ({})", f(&v["avg7"]), f(&v["unit"]), f(&v["prev7"]));
+        }
+    }
     let _ = writeln!(o, "\nSUPPLEMENTS (days ticked, of logged days in the window)");
     let sup = s["supplements"].as_array().cloned().unwrap_or_default();
     if sup.is_empty() {

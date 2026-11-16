@@ -27,6 +27,17 @@ pub const SCHEMA_11: &str = "
 ALTER TABLE days ADD COLUMN carried TEXT;
 PRAGMA user_version = 11;";
 
+pub const SCHEMA_12: &str = "
+ALTER TABLE days ADD COLUMN carbs REAL;
+ALTER TABLE days ADD COLUMN fat REAL;
+ALTER TABLE days ADD COLUMN satfat REAL;
+ALTER TABLE days ADD COLUMN fibre REAL;
+ALTER TABLE days ADD COLUMN sodium REAL;
+ALTER TABLE days ADD COLUMN active_kcal REAL;
+ALTER TABLE days ADD COLUMN rhr REAL;
+CREATE TABLE ingest_keys(user TEXT PRIMARY KEY, key TEXT NOT NULL UNIQUE, last INTEGER) WITHOUT ROWID;
+PRAGMA user_version = 12;";
+
 // Body values that carry forward; the rest of DAY_NUM never does.
 const CARRY: [&str; 8] = ["weight", "waist", "bodyfat", "neck", "chest", "arm", "thigh", "hip"];
 const CARRY_DAYS: i64 = 14;
@@ -100,6 +111,39 @@ pub fn carry_cli(db_path: &str, user: &str, date: &str) {
             eprintln!("carry failed: {e}");
             process::exit(1);
         }
+    }
+}
+
+pub fn carry_users(c: &Connection, date: &str) -> rusqlite::Result<Vec<String>> {
+    let from = coach::day_str(coach::day_num(date) - CARRY_DAYS);
+    let mut st = c.prepare("SELECT DISTINCT user FROM days WHERE date >= ?1 AND date <= ?2 ORDER BY user")?;
+    let rows = st.query_map([from.as_str(), date], |r| r.get(0))?;
+    rows.collect()
+}
+
+pub fn carry_all_cli(db_path: &str, date: &str) {
+    if !valid_date(date) {
+        eprintln!("carry failed: bad date {date}");
+        process::exit(1);
+    }
+    let c = open(db_path);
+    let users = carry_users(&c, date).unwrap_or_else(|e| {
+        eprintln!("carry failed: {e}");
+        process::exit(1);
+    });
+    let mut failed = false;
+    for u in users {
+        match carry(&c, &u, date) {
+            Ok(set) if set.is_empty() => println!("{u} {date}: nothing to carry"),
+            Ok(set) => println!("{u} {date}: carried {}", set.join(", ")),
+            Err(e) => {
+                eprintln!("carry failed for {u}: {e}");
+                failed = true;
+            }
+        }
+    }
+    if failed {
+        process::exit(1);
     }
 }
 

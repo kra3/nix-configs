@@ -164,6 +164,13 @@
       </details>
     </section>
 
+    <section class="card span2" data-view="trends">
+      <details name="trends"><summary>Food and heart<span class="hl" id="hl-fh"></span></summary>
+      <div class="meas" id="fh"></div>
+      <p class="sub" id="fh-empty">Carbs, fat, fibre, sodium, active energy and resting heart rate appear here once the phone sync has run.</p>
+      </details>
+    </section>
+
     <section class="card span2" data-view="more">
       <details name="more" id="log-details"><summary>Log the day<span class="hl" id="hl-log"></span></summary>
       <form id="day-form" autocomplete="off">
@@ -315,6 +322,19 @@
         <div class="ph-pair" id="ph-pair"></div>
         <h3 class="mt">All photos</h3>
         <ul class="rows" id="ph-list"></ul>
+      </details>
+    </section>
+
+    <section class="card span2" data-view="more">
+      <details name="more" id="sync-details"><summary>Phone sync<span class="hl" id="hl-sync"></span></summary>
+      <p class="sub">Your Apple Health data reaches the app through the Fitness sync shortcut. Paste this key when it asks.</p>
+      <input type="text" id="sync-key" readonly aria-label="Sync key">
+      <div class="actions">
+        <button type="button" class="btn ghost" id="sync-copy">Copy</button>
+        <button type="button" class="btn ghost" id="sync-new">New key</button>
+        <a class="btn ghost" id="sync-link" href="#" rel="noopener" hidden>Get the shortcut</a>
+        <span class="status" id="st-sync" role="status" aria-live="polite"></span>
+      </div>
       </details>
     </section>
 

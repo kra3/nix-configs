@@ -2383,7 +2383,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Fat Total</string>
+										<string>Total Fat</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>
@@ -2630,7 +2630,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Fat Saturated</string>
+										<string>Saturated Fat</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>

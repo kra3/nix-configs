@@ -34,8 +34,8 @@ Approach: Find Health Samples for the local day, Get Details, Calculate Statisti
 - `kcal`: Dietary Energy, kcal, sum
 - `protein`: Protein, g, sum
 - `carbs`: Carbohydrates, g, sum
-- `fat`: Fat Total, g, sum
-- `satfat`: Fat Saturated, g, sum
+- `fat`: Total Fat, g, sum
+- `satfat`: Saturated Fat, g, sum
 - `fibre`: Fiber, g, sum
 - `sodium`: Sodium, mg, sum
 - `active_kcal`: Active Calories, kcal, sum

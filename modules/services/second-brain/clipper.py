@@ -16,6 +16,7 @@ Notes follow the vault rules (docs/second-brain-starter/CLAUDE.md): a capture in
 named `YYYY-MM-DD HHMM <title>.md`, frontmatter `created` + `type: capture`, no topic tags.
 """
 
+import base64
 import datetime
 import hmac
 import json
@@ -26,6 +27,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import urllib.request
 import threading
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -195,8 +197,11 @@ NOTE_SCHEMA = {
         "candidate_ideas": {"type": "array", "items": {"type": "string"},
                             "description": "0-3 claims from the video worth an evergreen note, "
                                            "each phrased as a full claim in sentence case."},
+        "slide_text": {"type": "string",
+                       "description": "Only when images are attached: the text on each image, "
+                                      "one '### Slide N' section per image; empty otherwise."},
     },
-    "required": ["title", "summary", "key_points", "candidate_ideas"],
+    "required": ["title", "summary", "key_points", "candidate_ideas", "slide_text"],
     "additionalProperties": False,
 }
 
@@ -205,12 +210,31 @@ SYSTEM = (
     "Write in English even when the video is in another language. Capture the substance: "
     "facts, steps, recommendations, numbers, names. Leave out filler, greetings, and calls "
     "to like or subscribe. If the transcript is empty or meaningless (music only), say so "
-    "in the summary and base the note on the caption. Candidate ideas are suggestions only: "
+    "in the summary and base the note on the caption. Attached images are the slides of a photo "
+    "post: read their text and treat it as the content. Candidate ideas are suggestions only: "
     "the user writes evergreen notes in their own words, so list claims, never draft their notes."
 )
 
 
-def summarise(meta: dict, transcript: str) -> dict:
+MAX_IMAGES = 20
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+
+def fetch_images(meta: dict) -> list[tuple[str, bytes]]:
+    """Slides of a photo post as (media_type, bytes); the signed CDN URLs need no cookies."""
+    out = []
+    for e in (meta.get("entries") or [meta])[:MAX_IMAGES]:
+        if not e.get("thumbnail"):
+            continue
+        with urllib.request.urlopen(e["thumbnail"], timeout=30) as r:
+            kind = r.headers.get_content_type()
+            data = r.read(MAX_IMAGE_BYTES + 1)
+        if kind in ("image/jpeg", "image/png", "image/webp") and len(data) <= MAX_IMAGE_BYTES:
+            out.append((kind, data))
+    return out
+
+
+def summarise(meta: dict, transcript: str, images: list[tuple[str, bytes]] = ()) -> dict:
     prompt = (
         f"Platform: {meta.get('extractor_key', '')}\n"
         f"Author: {meta.get('uploader') or meta.get('channel') or ''}\n"
@@ -218,24 +242,35 @@ def summarise(meta: dict, transcript: str) -> dict:
         f"Caption / description:\n{(meta.get('description') or '').strip()}\n\n"
         f"Transcript:\n{transcript or '(no speech)'}"
     )
-    # Transcript and caption are untrusted text: run with every tool disabled, so the worst a
+    # Transcript, caption and images are untrusted: run with every tool disabled, so the worst a
     # prompt injection can do is bend the summary. The prompt goes in on stdin.
-    proc = subprocess.run(
-        [
-            "claude", "-p",
-            "--model", SUMMARY_MODEL,
-            "--system-prompt", SYSTEM,
-            "--tools", "",
-            "--no-session-persistence",
-            "--output-format", "json",
-            "--json-schema", json.dumps(NOTE_SCHEMA),
-        ],
-        input=prompt, capture_output=True, text=True, timeout=SUMMARY_TIMEOUT,
-        env=CLAUDE_ENV, cwd=STATE,
-    )
+    cmd = [
+        "claude", "-p",
+        "--model", SUMMARY_MODEL,
+        "--system-prompt", SYSTEM,
+        "--tools", "",
+        "--no-session-persistence",
+        "--json-schema", json.dumps(NOTE_SCHEMA),
+    ]
+    if images:  # images only go in as stream-json content blocks, which needs stream-json out
+        cmd += ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
+        content = [{"type": "image", "source": {"type": "base64", "media_type": kind,
+                                                "data": base64.b64encode(data).decode()}}
+                   for kind, data in images]
+        stdin = json.dumps({"type": "user", "message": {
+            "role": "user", "content": [*content, {"type": "text", "text": prompt}]}})
+    else:
+        cmd += ["--output-format", "json"]
+        stdin = prompt
+    proc = subprocess.run(cmd, input=stdin, capture_output=True, text=True,
+                          timeout=SUMMARY_TIMEOUT, env=CLAUDE_ENV, cwd=STATE)
     try:
-        out = json.loads(proc.stdout)
-    except json.JSONDecodeError:
+        if images:
+            out = next(json.loads(l) for l in reversed(proc.stdout.splitlines())
+                       if l.startswith("{") and json.loads(l).get("type") == "result")
+        else:
+            out = json.loads(proc.stdout)
+    except (json.JSONDecodeError, StopIteration):
         raise RuntimeError(f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")
     if proc.returncode != 0 or out.get("is_error"):
         raise RuntimeError(f"claude failed: {str(out.get('result') or proc.stderr)[-500:]}")
@@ -259,7 +294,7 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         f"created: {when:%Y-%m-%dT%H:%M}",
         "type: capture",
         f"source: {yaml_str(meta.get('webpage_url') or url)}",
-        "kind: video",
+        f"kind: {'post' if source in ('slides', 'caption only') else 'video'}",
         f"platform: {yaml_str(meta.get('extractor_key') or '')}",
         f"author: {yaml_str(meta.get('uploader') or meta.get('channel') or '')}",
     ]
@@ -286,7 +321,10 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         # Escape hashtags: Obsidian would turn them into topic tags, which the vault rules forbid.
         desc = re.sub(r"(?<!\S)#(?=\w)", r"\\#", desc)
         body += ["## Caption", "", "> " + desc.replace("\n", "\n> "), ""]
-    body += ["## Transcript", "", transcript.strip() or "_(no speech)_", ""]
+    if source == "slides":
+        body += ["## Slide text", "", (note.get("slide_text") or "").strip() or "_(no text)_", ""]
+    elif source != "caption only":
+        body += ["## Transcript", "", transcript.strip() or "_(no speech)_", ""]
     return "\n".join(fm + [""] + body)
 
 
@@ -319,15 +357,22 @@ def process(job_file: Path) -> None:
     when = datetime.datetime.now().astimezone()
     work = Path(tempfile.mkdtemp(dir=WORK_DIR, prefix="job-"))
     try:
-        meta = json.loads(yt_dlp("--dump-single-json", "--skip-download", url, cwd=work).stdout)
+        meta = json.loads(yt_dlp("--dump-single-json", "--skip-download", "--ignore-no-formats-error",
+                                 url, cwd=work).stdout)
         if (meta.get("duration") or 0) > MAX_DURATION:
             raise RuntimeError(f"video is {meta['duration']}s long; limit is {MAX_DURATION}s")
-        transcript = subtitles_transcript(meta, work)
-        source = "subtitles"
+        has_media = meta.get("formats") or any(e.get("formats") for e in meta.get("entries") or [])
+        images = []
+        if not has_media:  # photo post: nothing to transcribe; read the slides and the caption
+            images = fetch_images(meta)
+            transcript, source = "", "slides" if images else "caption only"
+        else:
+            transcript = subtitles_transcript(meta, work)
+            source = "subtitles"
         if transcript is None:
             transcript, lang = whisper_transcript(meta.get("webpage_url") or url, work)
             source = f"whisper-{WHISPER_MODEL} ({lang})"
-        note = summarise(meta, transcript)
+        note = summarise(meta, transcript, images)
         path = unique_note_path(note["title"], when)
         write_atomic(path, render_note(url, meta, note, transcript, source, when))
         rel = str(path.relative_to(VAULT))

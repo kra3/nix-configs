@@ -20,7 +20,7 @@
         install -m755 ${tsk.src}/scripts/open-board.sh ${tsk.src}/scripts/open-capture.sh $out/scripts/
         substituteInPlace $out/scripts/open-board.sh \
           --replace-fail 'plugin_bin="''${TSK_BIN:-$script_dir/../target/release/tsk}"' 'plugin_bin=${tsk}/bin/tsk'
-        substituteInPlace $out/scripts/open-board.sh --replace-fail '--placement split' '--placement overlay'
+        substituteInPlace $out/scripts/open-board.sh --replace-fail '--placement split' '--placement popup --width 90% --height 90%'
         cat > $out/herdr-plugin.toml <<'EOF'
         id = "herdr-tsk"
         name = "herdr-tsk"
@@ -31,7 +31,7 @@
         [[panes]]
         id = "board"
         title = "tsk"
-        placement = "overlay"
+        placement = "split"
         command = ["${tsk}/bin/tsk"]
 
         [[actions]]

@@ -952,7 +952,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Weight</string>
+										<string>Body Mass</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>
@@ -1642,7 +1642,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Dietary Energy</string>
+										<string>Energy Consumed</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>
@@ -2383,7 +2383,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Total Fat</string>
+										<string>Fat Total</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>
@@ -2630,7 +2630,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Saturated Fat</string>
+										<string>Fat Saturated</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>

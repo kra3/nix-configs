@@ -28,14 +28,14 @@ Approach: Find Health Samples for the local day, Get Details, Calculate Statisti
 - `date`: YYYY-MM-DD of the day
 - `steps`: Steps, count, sum
 - `sleep`: Sleep, Duration summed, hours (seconds / 3600)
-- `weight`: Body Mass, kg, first sample of the day
+- `weight`: Weight, kg, first sample of the day
 - `bodyfat`: Body Fat Percentage, first sample (percent or fraction)
 - `waist`: Waist Circumference, cm, first sample
-- `kcal`: Energy Consumed, kcal, sum
+- `kcal`: Dietary Energy, kcal, sum
 - `protein`: Protein, g, sum
 - `carbs`: Carbohydrates, g, sum
-- `fat`: Fat Total, g, sum
-- `satfat`: Fat Saturated, g, sum
+- `fat`: Total Fat, g, sum
+- `satfat`: Saturated Fat, g, sum
 - `fibre`: Fiber, g, sum
 - `sodium`: Sodium, mg, sum
 - `active_kcal`: Active Calories, kcal, sum

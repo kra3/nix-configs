@@ -4,23 +4,6 @@
     domains = [
       # Legit Sonarr/Radarr scene-numbering API.
       "thexem.info"
-      # AIOStreams addon hosts that blocklists resolve to 0.0.0.0 (ECONNREFUSED).
-      "yastream.tamthai.de"
-      "torrent-catalogs.strem.fun"
-      "torrentgalaxy.one"
-      "comet.feels.legal"
-      "knaben.org"
-      "remuxdb.1632022.xyz"
-      "releases.moe"
-      # releases.moe API redirects here (SeaDex dataset sync).
-      "seadex.moe"
-      "plavio.site"
-      "cncverse.dpdns.org"
-      "stremthru.13377001.xyz"
-      "nekobt.to"
-      "knaben.eu"
-      # Jikan (MyAnimeList) API used by AIOMetadata.
-      "api.jikan.moe"
       # Akashvani (All India Radio) streams via BitGravity CDN.
       "air.pc.cdn.bitgravity.com"
       "airhlspush.pc.cdn.bitgravity.com"
@@ -30,13 +13,6 @@
     ];
 
     # Also blocked by Cloudflare's family upstream, which an AdGuard allow rule can't override.
-    familyBypass = [
-      "yastream.tamthai.de"
-      "knaben.org"
-      "remuxdb.1632022.xyz"
-      "stremthru.13377001.xyz"
-      "nekobt.to"
-      "knaben.eu"
-    ];
+    familyBypass = [ ];
   };
 }

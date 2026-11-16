@@ -53,8 +53,13 @@
           # Pinned IP (vars.nix podmanAddresses.aiometadata) — see radarr.nix for why.
           networks = [ "${network.ref}:ip=${ip}" ];
           # OIDC discovery calls auth.${domain} directly; route via the bridge gateway.
-          addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
+          addHosts = [
+            "auth.${config.vars.acme.domain}:10.3.1.1"
+            "aiostreams.${config.vars.acme.domain}:10.3.1.1"
+            "aiometadata.${config.vars.acme.domain}:10.3.1.1"
+          ];
           volumes = [
+            "/etc/aio-resolv.conf:/etc/resolv.conf:ro"
             "/srv/appdata/media-mgmt/aiometadata:/app/addon/data"
             "/var/cache/aiometadata/poster-cache:/app/poster-cache"
           ];

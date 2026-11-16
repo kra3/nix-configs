@@ -267,7 +267,22 @@
                 dhcp = false;
                 hosts = true;
               };
-              persistent = [ ];
+              # Addon hosts keep tripping ad/family blocklists; Quad9 still blocks malware.
+              persistent = [
+                {
+                  name = "aio-apps";
+                  ids = [
+                    cfg.podmanAddresses.aiostreams
+                    cfg.podmanAddresses.aiometadata
+                  ];
+                  use_global_settings = false;
+                  filtering_enabled = false;
+                  safebrowsing_enabled = false;
+                  parental_enabled = false;
+                  use_global_blocked_services = false;
+                  upstreams = [ "tls://dns.quad9.net" ];
+                }
+              ];
             };
 
             log = {

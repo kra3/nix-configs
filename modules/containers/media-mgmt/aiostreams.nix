@@ -57,8 +57,13 @@
           environments.MAX_ADDONS = "25";
           environments.JELLYFIN_IMAGE_DELIVERY = "relay";
           # OIDC discovery calls auth.${config.vars.acme.domain} directly; route via the bridge gateway.
-          addHosts = [ "auth.${config.vars.acme.domain}:10.3.1.1" ];
+          addHosts = [
+            "auth.${config.vars.acme.domain}:10.3.1.1"
+            "aiostreams.${config.vars.acme.domain}:10.3.1.1"
+            "aiometadata.${config.vars.acme.domain}:10.3.1.1"
+          ];
           volumes = [
+            "/etc/aio-resolv.conf:/etc/resolv.conf:ro"
             "/srv/appdata/media-mgmt/aiostreams:/app/data"
             "/var/cache/aiostreams:/app/data/cache"
           ];

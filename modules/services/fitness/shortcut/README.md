@@ -31,7 +31,7 @@ Approach: Find Health Samples for the local day, Get Details, Calculate Statisti
 - `weight`: Weight, kg, first sample of the day
 - `bodyfat`: Body Fat Percentage, first sample (percent or fraction)
 - `waist`: Waist Circumference, cm, first sample
-- `kcal`: Energy Consumed, kcal, sum
+- `kcal`: Dietary Energy, kcal, sum
 - `protein`: Protein, g, sum
 - `carbs`: Carbohydrates, g, sum
 - `fat`: Fat Total, g, sum

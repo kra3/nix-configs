@@ -1642,7 +1642,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Energy Consumed</string>
+										<string>Dietary Energy</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>

@@ -198,8 +198,10 @@
               }
               {
                 key = "prefix+t";
-                type = "plugin_action";
-                command = "herdr-tsk.open-board";
+                type = "popup";
+                command = "${inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.tsk}/bin/tsk";
+                width = "90%";
+                height = "90%";
                 description = "tsk board";
               }
               {

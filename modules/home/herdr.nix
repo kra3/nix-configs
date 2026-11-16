@@ -160,6 +160,10 @@
         xdg.configFile."herdr/config.toml".source =
           toml.generate "herdr-config.toml" config.programs.herdr.settings;
 
+        xdg.configFile."herdr/plugins/config/persiyanov.reviewr/config.toml".text = ''
+          toggle_placement = "overlay"
+        '';
+
         programs.herdr.settings = {
           onboarding = false;
           keys = {

@@ -252,24 +252,18 @@ def summarise(meta: dict, transcript: str, images: list[tuple[str, bytes]] = ())
         "--no-session-persistence",
         "--json-schema", json.dumps(NOTE_SCHEMA),
     ]
-    if images:  # images only go in as stream-json content blocks, which needs stream-json out
-        cmd += ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
-        content = [{"type": "image", "source": {"type": "base64", "media_type": kind,
-                                                "data": base64.b64encode(data).decode()}}
-                   for kind, data in images]
-        stdin = json.dumps({"type": "user", "message": {
-            "role": "user", "content": [*content, {"type": "text", "text": prompt}]}})
-    else:
-        cmd += ["--output-format", "json"]
-        stdin = prompt
+    # Images only go in as stream-json content blocks, which needs stream-json out.
+    cmd += ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"]
+    content = [{"type": "image", "source": {"type": "base64", "media_type": kind,
+                                            "data": base64.b64encode(data).decode()}}
+               for kind, data in images]
+    stdin = json.dumps({"type": "user", "message": {
+        "role": "user", "content": [*content, {"type": "text", "text": prompt}]}})
     proc = subprocess.run(cmd, input=stdin, capture_output=True, text=True,
                           timeout=SUMMARY_TIMEOUT, env=CLAUDE_ENV, cwd=STATE)
     try:
-        if images:
-            out = next(json.loads(l) for l in reversed(proc.stdout.splitlines())
-                       if l.startswith("{") and json.loads(l).get("type") == "result")
-        else:
-            out = json.loads(proc.stdout)
+        out = next(json.loads(l) for l in reversed(proc.stdout.splitlines())
+                   if l.startswith("{") and json.loads(l).get("type") == "result")
     except (json.JSONDecodeError, StopIteration):
         raise RuntimeError(f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")
     if proc.returncode != 0 or out.get("is_error"):
@@ -294,7 +288,7 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         f"created: {when:%Y-%m-%dT%H:%M}",
         "type: capture",
         f"source: {yaml_str(meta.get('webpage_url') or url)}",
-        f"kind: {'post' if source in ('slides', 'caption only') else 'video'}",
+        f"kind: {'post' if source == 'slides' else 'video'}",
         f"platform: {yaml_str(meta.get('extractor_key') or '')}",
         f"author: {yaml_str(meta.get('uploader') or meta.get('channel') or '')}",
     ]
@@ -323,7 +317,7 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         body += ["## Caption", "", "> " + desc.replace("\n", "\n> "), ""]
     if source == "slides":
         body += ["## Slide text", "", (note.get("slide_text") or "").strip() or "_(no text)_", ""]
-    elif source != "caption only":
+    else:
         body += ["## Transcript", "", transcript.strip() or "_(no speech)_", ""]
     return "\n".join(fm + [""] + body)
 
@@ -365,7 +359,7 @@ def process(job_file: Path) -> None:
         images = []
         if not has_media:  # photo post: nothing to transcribe; read the slides and the caption
             images = fetch_images(meta)
-            transcript, source = "", "slides" if images else "caption only"
+            transcript, source = "", "slides"
         else:
             transcript = subtitles_transcript(meta, work)
             source = "subtitles"

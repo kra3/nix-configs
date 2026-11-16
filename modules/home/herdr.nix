@@ -160,6 +160,10 @@
         xdg.configFile."herdr/config.toml".source =
           toml.generate "herdr-config.toml" config.programs.herdr.settings;
 
+        xdg.configFile."herdr/plugins/config/persiyanov.reviewr/config.toml".text = ''
+          toggle_placement = "overlay"
+        '';
+
         programs.herdr.settings = {
           onboarding = false;
           keys = {
@@ -190,10 +194,8 @@
               }
               {
                 key = "prefix+alt+r";
-                type = "popup";
-                command = "${plugins."persiyanov.reviewr"}/bin/herdr-reviewr";
-                width = "90%";
-                height = "90%";
+                type = "plugin_action";
+                command = "persiyanov.reviewr.toggle";
                 description = "reviewr";
               }
               {

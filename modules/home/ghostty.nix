@@ -27,6 +27,7 @@
         macos-titlebar-style = "hidden";
         keybind = [
           "shift+enter=text:\n"
+          "ctrl+enter=unbind"
         ];
       };
     };

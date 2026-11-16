@@ -355,7 +355,7 @@ def process(job_file: Path) -> None:
                                  url, cwd=work).stdout)
         if (meta.get("duration") or 0) > MAX_DURATION:
             raise RuntimeError(f"video is {meta['duration']}s long; limit is {MAX_DURATION}s")
-        has_media = meta.get("formats") or any(e.get("formats") for e in meta.get("entries") or [])
+        has_media = any(m.get("formats") or m.get("url") for m in [meta, *(meta.get("entries") or [])])
         images = []
         if not has_media:  # photo post: nothing to transcribe; read the slides and the caption
             images = fetch_images(meta)

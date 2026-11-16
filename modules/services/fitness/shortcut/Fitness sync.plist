@@ -952,7 +952,7 @@
 									<key>Enumeration</key>
 									<dict>
 										<key>Value</key>
-										<string>Body Mass</string>
+										<string>Weight</string>
 										<key>WFSerializationType</key>
 										<string>WFStringSubstitutableState</string>
 									</dict>

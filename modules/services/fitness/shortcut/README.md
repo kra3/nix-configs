@@ -28,7 +28,7 @@ Approach: Find Health Samples for the local day, Get Details, Calculate Statisti
 - `date`: YYYY-MM-DD of the day
 - `steps`: Steps, count, sum
 - `sleep`: Sleep, Duration summed, hours (seconds / 3600)
-- `weight`: Body Mass, kg, first sample of the day
+- `weight`: Weight, kg, first sample of the day
 - `bodyfat`: Body Fat Percentage, first sample (percent or fraction)
 - `waist`: Waist Circumference, cm, first sample
 - `kcal`: Energy Consumed, kcal, sum

@@ -112,7 +112,7 @@
                 lanIp
               ];
               port = 53;
-              anonymize_client_ip = true;
+              anonymize_client_ip = false;
               upstream_dns = [ "127.0.0.1:5335" ];
               upstream_dns_file = "";
               bootstrap_dns = [

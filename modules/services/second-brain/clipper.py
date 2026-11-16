@@ -363,6 +363,26 @@ def worker() -> None:
 # ---------------------------------------------------------------- http
 
 
+def auth_problem(header: str | None) -> str | None:
+    """Why an Authorization header is refused, or None if it carries the token.
+
+    Tolerates what a pasted iOS Shortcut header picks up (surrounding whitespace, invisible
+    characters, the scheme's case) and says what is wrong without revealing the token.
+    """
+    if header is None:
+        return "no Authorization header (a redirect, e.g. http:// -> https://, drops it)"
+    cleaned = re.sub(r"[\s\u200b-\u200f\u2060\ufeff]+", " ", header).strip()
+    scheme, _, value = cleaned.partition(" ")
+    if scheme.lower() != "bearer":
+        bare = " (it looks like the token alone)" if hmac.compare_digest(cleaned.encode(), TOKEN.encode()) else ""
+        return f"header must start with 'Bearer '{bare}"
+    value = value.strip()
+    if hmac.compare_digest(value.encode(), TOKEN.encode()):
+        return None
+    hint = " (that looks like the Claude token, not the clipper token)" if value.startswith("sk-ant-") else ""
+    return f"token mismatch: got {len(value)} characters, expected {len(TOKEN)}{hint}"
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "clipper"
 
@@ -383,9 +403,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         if self.path != "/clip":
             return self._send(404, {"error": "not found"})
-        auth = self.headers.get("Authorization", "")
-        if not hmac.compare_digest(auth.encode(), f"Bearer {TOKEN}".encode()):
-            return self._send(401, {"error": "unauthorized"})
+        problem = auth_problem(self.headers.get("Authorization"))
+        if problem:
+            log.warning("401 from %s: %s", self.headers.get("X-Forwarded-For", self.address_string()), problem)
+            return self._send(401, {"error": "unauthorized", "reason": problem})
         try:
             length = min(int(self.headers.get("Content-Length", "0")), 64 * 1024)
             raw = self.rfile.read(length).decode()

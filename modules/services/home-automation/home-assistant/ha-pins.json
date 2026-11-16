@@ -164,10 +164,10 @@
     },
     "lovelace-mushroom": {
       "repo": "piitaya/lovelace-mushroom",
-      "version": "v5.2.3",
+      "version": "v5.3.0",
       "kind": "file",
       "asset": "mushroom.js",
-      "hash": "sha256-YxZoJo5HTVNX4PF/FhMiSZ6lyTqRBDFHfhEmU9eqRWs="
+      "hash": "sha256-0vr0QfRJSJ5Jl1M9skjCBhuEXrYzAR9G2apueBEfojc="
     },
     "mini-media-player": {
       "repo": "kalkih/mini-media-player",

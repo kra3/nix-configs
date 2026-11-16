@@ -131,8 +131,8 @@
     };
   };
   # Share-sheet clipper: reel/YouTube link -> transcript + summary -> capture in the home brain's
-  # "0 Inbox". Off until `just clipper-secrets` has run (docs/second-brain.md, Clipper).
-  services.secondBrain.clipper.enable = false;
+  # "0 Inbox". Secrets from `just clipper-secrets`; setup in docs/second-brain.md (Clipper).
+  services.secondBrain.clipper.enable = true;
 
   hardware.enableRedistributableFirmware = true;
 

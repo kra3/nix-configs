@@ -127,6 +127,29 @@ second-brain-secrets brain="home" file="secrets/secrets.yaml":
     echo "  add this as a deploy key WITH write access on the vault repo:"
     echo "    $(ssh-keygen -y -f "$tmp/key")"
 
+# services.secondBrain.clipper (docs/second-brain.md). Idempotent; values go to sops on stdin, never argv.
+# One-time secrets for the share-sheet clipper: the iOS Shortcut's bearer token and an Anthropic API key.
+clipper-secrets file="secrets/secrets.yaml":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    file={{file}}
+    have() { sops decrypt --extract "[\"$1\"]" "$file" >/dev/null 2>&1; }
+    put() { jq -Rs . | sops set --value-stdin "$file" "[\"$1\"]"; echo "  added $1"; }
+
+    echo "== Shortcut token"
+    if have second-brain.clipper.token; then echo "  already set"; else
+      od -An -tx1 -N32 /dev/urandom | tr -d ' \n' | put second-brain.clipper.token
+    fi
+    echo "  the Shortcut's Authorization header is: Bearer <token>; read it with"
+    echo "    sops decrypt --extract '[\"second-brain.clipper.token\"]' $file"
+    echo "== Anthropic API key (console.anthropic.com)"
+    if have second-brain.clipper.anthropic_api_key; then echo "  already set"; else
+      read -rsp "  key: " key; echo
+      [ -n "$key" ] || { echo "  no key given; run again with one"; exit 1; }
+      printf '%s' "$key" | put second-brain.clipper.anthropic_api_key
+      unset key
+    fi
+
 # List tools the enabled Neovim extras expect and flag any missing from PATH.
 nvim-check-tools:
     nvim --headless -c "luafile modules/home/neovim/check-tools.lua"

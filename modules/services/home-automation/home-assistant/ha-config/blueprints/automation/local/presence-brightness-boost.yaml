@@ -2,13 +2,13 @@ blueprint:
   name: Presence brightness boost
   description: >-
     When it is dark between sunset and 22:00 and the room has been occupied for
-    2.5 min, the light (and an optional companion light) goes to 100 %. If the
+    45 s, the light (and an optional companion light) goes to 100 %. If the
     light comes back on while presence is still held, the boost is applied
     again. The boost also applies when the window opens or it turns dark while
     the room is occupied, and a once-a-minute check boosts a light that should
     be boosted but isn't unless Adaptive Lighting already holds it in manual
     control. When automations resume or the light returns after a restart with
-    the room occupied, the boost applies at once without the 2.5 min wait.
+    the room occupied, the boost applies at once without the 45 s wait.
     When the room empties or the light goes off, Adaptive Lighting takes the
     light back and the companion goes off. Party mode holds the boost; it is
     released when automations resume and the room is empty. No reaction while
@@ -49,7 +49,7 @@ triggers:
   - trigger: state
     entity_id: !input presence_sensor
     to: "on"
-    for: "00:02:30"
+    for: "00:00:45"
     id: boost
   - trigger: state
     entity_id: !input light_entity
@@ -115,7 +115,7 @@ actions:
               {{ trigger.id == 'resume'
                  or (trigger.id == 'boost' and trigger.entity_id == light_entity
                      and trigger.from_state.state in ['unknown', 'unavailable'])
-                 or (now() - states[presence_sensor].last_changed).total_seconds() >= 150 }}
+                 or (now() - states[presence_sensor].last_changed).total_seconds() >= 45 }}
           - condition: state
             entity_id: !input light_entity
             state: "on"

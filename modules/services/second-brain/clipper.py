@@ -27,8 +27,8 @@ import re
 import shutil
 import subprocess
 import tempfile
-import urllib.request
 import threading
+import urllib.request
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -224,7 +224,7 @@ def fetch_images(meta: dict) -> list[tuple[str, bytes]]:
     """Slides of a photo post as (media_type, bytes); the signed CDN URLs need no cookies."""
     out = []
     for e in (meta.get("entries") or [meta])[:MAX_IMAGES]:
-        if not e.get("thumbnail"):
+        if not str(e.get("thumbnail")).startswith("https://"):
             continue
         with urllib.request.urlopen(e["thumbnail"], timeout=30) as r:
             kind = r.headers.get_content_type()
@@ -262,8 +262,8 @@ def summarise(meta: dict, transcript: str, images: list[tuple[str, bytes]] = ())
     proc = subprocess.run(cmd, input=stdin, capture_output=True, text=True,
                           timeout=SUMMARY_TIMEOUT, env=CLAUDE_ENV, cwd=STATE)
     try:
-        out = next(json.loads(l) for l in reversed(proc.stdout.splitlines())
-                   if l.startswith("{") and json.loads(l).get("type") == "result")
+        out = next(e for e in map(json.loads, reversed(proc.stdout.splitlines()))
+                   if e.get("type") == "result")
     except (json.JSONDecodeError, StopIteration):
         raise RuntimeError(f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")
     if proc.returncode != 0 or out.get("is_error"):
@@ -359,6 +359,8 @@ def process(job_file: Path) -> None:
         images = []
         if not has_media:  # photo post: nothing to transcribe; read the slides and the caption
             images = fetch_images(meta)
+            if not images:
+                raise RuntimeError("no video and no readable images in this post")
             transcript, source = "", "slides"
         else:
             transcript = subtitles_transcript(meta, work)

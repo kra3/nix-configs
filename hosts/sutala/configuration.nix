@@ -38,6 +38,7 @@
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
     flakeModules.nixos.services-second-brain-default
+    flakeModules.nixos.services-second-brain-clipper
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
@@ -129,6 +130,9 @@
       permissionMode = "acceptEdits";
     };
   };
+  # Share-sheet clipper: reel/YouTube link -> transcript + summary -> capture in the home brain's
+  # "0 Inbox". Secrets from `just clipper-secrets`; setup in docs/second-brain.md (Clipper).
+  services.secondBrain.clipper.enable = true;
 
   hardware.enableRedistributableFirmware = true;
 

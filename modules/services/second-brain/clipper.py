@@ -44,6 +44,7 @@ PORT = int(os.environ["PORT"])
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "small")
 SUMMARY_MODEL = os.environ.get("SUMMARY_MODEL", "claude-haiku-5-5")
 MAX_DURATION = int(os.environ.get("MAX_DURATION_SECONDS", "7200"))
+LONG_SECONDS = 600  # longer clips keep the summary but not the full transcript
 MAX_ATTEMPTS = 3
 CREDS = Path(os.environ["CREDENTIALS_DIRECTORY"])
 
@@ -317,7 +318,7 @@ def render_note(url: str, meta: dict, note: dict, transcript: str, source: str,
         body += ["## Caption", "", "> " + desc.replace("\n", "\n> "), ""]
     if source == "slides":
         body += ["## Slide text", "", (note.get("slide_text") or "").strip() or "_(no text)_", ""]
-    else:
+    elif (meta.get("duration") or 0) <= LONG_SECONDS:
         body += ["## Transcript", "", transcript.strip() or "_(no speech)_", ""]
     return "\n".join(fm + [""] + body)
 

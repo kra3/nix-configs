@@ -189,57 +189,12 @@
       logRefusedPackets = true;
       logRefusedUnicastsOnly = true;
       # Default-deny inter-zone FORWARD policy with explicit allows
-      extraForwardRules =
-        let
-          c = config.vars.network.containers;
-          p = config.vars.network.podmanSubnets;
-          mon = c.monitoring.localAddress;
-          mp = c.mediaPlay.localAddress;
-          ha = c.homeAuto.localAddress;
-          haNet = p.homeAuto;
-          mmNet = p.mediaMgmt;
-          liNet = p.life;
-          lan = config.vars.network.lanCidr;
-          jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
-          unpackerr = config.virtualisation.quadlet.containers ? unpackerr;
-        in
-        ''
-          # Allow established and related traffic (replies to allowed connections)
-          ct state established,related accept
-
-          # 1. monitoring → media-play: scrape node-exporter + navidrome + jellyfin metrics
-          ip saddr ${mon} ip daddr ${mp} tcp dport { 9100, 4533${lib.optionalString jellyfin ", 8096"} } accept
-          # 1a. monitoring → media-mgmt: scrape slskd (+ unpackerr) metrics
-          ${lib.optionalString unpackerr "ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.unpackerr} tcp dport 5656 accept"}
-          ip saddr ${mon} ip daddr ${config.vars.network.podmanAddresses.slskd} tcp dport 5030 accept
-          # 2. monitoring → home-auto: scrape node-exporter + frigate metrics
-          ip saddr ${mon} ip daddr ${ha} tcp dport { 9100, 80 } accept
-          # 3. monitoring → HA pod: scrape Home Assistant Prometheus endpoint
-          ip saddr ${mon} ip daddr ${haNet} tcp dport 8123 accept
-          # 4. home-auto → monitoring: ship logs via Alloy → Loki
-          ip saddr ${ha} ip daddr ${mon} tcp dport 3100 accept
-          # 5. media-play → monitoring: ship logs via Alloy → Loki
-          ip saddr ${mp} ip daddr ${mon} tcp dport 3100 accept
-          # 6. HA pod → home-auto: HA talks to MQTT + Frigate
-          ip saddr ${haNet} ip daddr ${ha} tcp dport { 1883, 5000 } accept
-          # 6a. home-auto → HA pod: MQTT return traffic (Fixes 'Connection Reset')
-          ip saddr ${ha} ip daddr ${haNet} tcp sport 1883 accept
-          # 7. home-auto → HA pod: Frigate notifications / automations
-          ip saddr ${ha} ip daddr ${haNet} tcp dport 8123 accept
-          # 8. HA pod → media-play: HA media_player integration (Jellyfin)
-          ${lib.optionalString jellyfin "ip saddr ${haNet} ip daddr ${mp} tcp dport 8096 accept"}
-          # 9. media-mgmt pods → media-play: Seerr authenticates against Jellyfin
-          ${lib.optionalString jellyfin "ip saddr ${mmNet} ip daddr ${mp} tcp dport 8096 accept"}
-          # 9a. media-play → Seerr: Jellyfin plugins (Home Screen Sections, Litefin) call its API
-          ${lib.optionalString jellyfin "ip saddr ${mp} ip daddr ${config.vars.network.podmanAddresses.seerr} tcp dport 5055 accept"}
-          # 10. LAN → home-auto: DNAT for MQTT + WebRTC
-          ip saddr ${lan} ip daddr ${ha} tcp dport { 1883, 8555 } accept
-          ip saddr ${lan} ip daddr ${ha} udp dport 8555 accept
-          # 11. Podman subnets → internet (outbound NAT)
-          ip saddr ${liNet} accept comment "life pods outbound"
-          ip saddr ${mmNet} accept comment "media-mgmt pods outbound"
-          ip saddr ${haNet} accept comment "home-auto pods outbound"
-        '';
+      # The allow rules live in the profile that owns each destination or scrape target;
+      # this one stays here so it is always first.
+      extraForwardRules = ''
+        # Allow established and related traffic (replies to allowed connections)
+        ct state established,related accept
+      '';
     };
     nftables.enable = true;
     nameservers = [
@@ -249,28 +204,13 @@
     nat = {
       enable = true;
       externalInterface = config.vars.network.lanIf;
+      # Kept together here: the list order is part of the nft rule text, and three
+      # profiles would each own one entry. forwardPorts live in home-automation/server.
       internalInterfaces = [
         "ve-monitoring"
         "ve-media-play"
         "ve-home-auto"
         "tailscale0"
-      ];
-      forwardPorts = [
-        {
-          sourcePort = 1883;
-          destination = "${config.vars.network.containers.homeAuto.localAddress}:1883";
-          proto = "tcp";
-        }
-        {
-          sourcePort = 8555;
-          destination = "${config.vars.network.containers.homeAuto.localAddress}:8555";
-          proto = "tcp";
-        }
-        {
-          sourcePort = 8555;
-          destination = "${config.vars.network.containers.homeAuto.localAddress}:8555";
-          proto = "udp";
-        }
       ];
     };
     defaultGateway = "192.168.1.1";

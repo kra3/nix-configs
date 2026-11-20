@@ -169,7 +169,9 @@
         + lib.optionalString (config.virtualisation.quadlet.containers ? sonarr) ''
           sonarr_api_key: ${config.sops.placeholder."media.sonarr.api_key"}
         ''
-        + lib.optionalString config.containers.media-play.config.services.declarative-jellyfin.enable ''
+        + lib.optionalString (
+          config.containers.media-play.config.services.declarative-jellyfin.enable or false
+        ) ''
           jellyfin_auth_header: 'MediaBrowser Token="${
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'

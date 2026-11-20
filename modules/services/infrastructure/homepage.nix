@@ -12,7 +12,7 @@
       ip = net.podmanAddresses;
       listenPort = 8082;
       quadlet = config.virtualisation.quadlet.containers;
-      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
+      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable or false;
 
       envContent = ''
         ${lib.optionalString (quadlet ? radarr)

@@ -11,7 +11,7 @@
     }:
     let
       # Set by profiles-media-video-server; presence of the profile enables Jellyfin.
-      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
+      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable or false;
       jellyfinSsoAuthXmlContent = ''
         <?xml version="1.0" encoding="utf-8"?>
         <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">

@@ -12,6 +12,8 @@ Purpose-based bundles of NixOS modules, registered as `flake.nixosModules.profil
 | `agent` | Per-host collector that reports to a server (Alloy) |
 | `primary` / `secondary` | Redundant pair (DNS) |
 | `shared` | Network/storage common to a stack; imported by that stack's other profiles |
+| `headless` | A player variant that brings its own audio stack, for hosts without a desktop session |
+| `edge` | Reverse proxy, auth, dashboard and tailnet ingress |
 | `voice`, `notify`, `extras`, `watchdog`, `hub`, `budget`, `investments` | Named after the capability they add |
 
 ## Profiles
@@ -43,7 +45,7 @@ Purpose-based bundles of NixOS modules, registered as `flake.nixosModules.profil
 | `media-music-server` | music-assistant (Navidrome lives inside media-play) | sutala |
 | `media-music-acquire` | media-shared, lidarr, slskd, beets webhook, failed-import recovery | sutala |
 | `media-music-player` | sendspin | sutala |
-| `media-music-player-headless` | music-player, pi-audio | surasa |
+| `media-music-player-headless` | `profiles-media-music-player`, pi-audio | surasa |
 | `media-reading-server` | media-shared, audiobookshelf | sutala |
 | `media-reading-acquire` | media-shared, bookshelf, rreading-glasses, postgres (rreading_glasses db) | sutala |
 | `media-streaming-server` | media-shared, aiostreams, aiometadata, redis | sutala |
@@ -63,5 +65,5 @@ Host-specific values (player names, sinks, IPs, the office-amp bluetooth loop, s
 - **Postgres password script coupling.** `postgresql-set-passwords` in `modules/services/postgres.nix` hard-codes the ghostfolio, hass, rreading_glasses and grafana_ro roles (and their sops secrets). A host importing `services-postgres` must therefore also import `finance-investments`, `home-automation-server` and `media-reading-acquire` (true on sutala). Each profile owns its db and user but not yet the password step; making that per-profile is a follow-up.
 - **Grafana to hass coupling.** The Grafana "Home Assistant" datasource in `observability-server` reads the hass db as `grafana_ro`, so `home-automation-server` must be present with it.
 - **media-play is shared by two profiles.** `media-music-server` relies on `media-video-server` for media-play (Navidrome is inside it); `media-video-extras` expects radarr/sonarr from `media-video-acquire`.
-- **Cross-profile forward rules in observability-server.** It carries scrape and log-shipping rules for destinations owned by other profiles (navidrome 4533, slskd 5030, home-auto 9100/80/8123). Fine with one server host; if the profiles are ever split across hosts these rules should become conditional or move to the destination profiles.
+- **Cross-profile forward rules in observability-server.** It carries scrape and log-shipping rules for destinations owned by other profiles (rules 1, 1a, 2-5: media-play 9100/4533 (+8096 when Jellyfin), unpackerr 5656 (when present), slskd 5030, home-auto 9100/80, HA pod 8123, plus the log-shipping rules 4 and 5 into monitoring:3100). Fine with one server host; if the profiles are ever split across hosts these rules should become conditional or move to the destination profiles.
 - **established/related is not order-critical.** nixpkgs accepts established/related in the forward chain before `forward-allow`, so the host's own `ct state established,related accept` line is belt-and-braces, not required to be first.

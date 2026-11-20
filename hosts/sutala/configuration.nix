@@ -190,7 +190,8 @@
       logRefusedUnicastsOnly = true;
       # Default-deny inter-zone FORWARD policy with explicit allows
       # The allow rules live in the profile that owns each destination or scrape target;
-      # this one stays here (nixpkgs also accepts established/related before forward-allow, so this is belt-and-braces).
+      # this one stays here (nixpkgs also accepts established/related before forward-allow,
+      # so this is belt-and-braces).
       extraForwardRules = ''
         # Allow established and related traffic (replies to allowed connections)
         ct state established,related accept

@@ -19,7 +19,8 @@
     {
       imports = [
         flakeModules.nixos.containers-monitoring
-        # Grafana's "Home Assistant" datasource reads the hass db as grafana_ro.
+        # Grafana's "Home Assistant" datasource reads the hass db as grafana_ro; the db comes from
+        # profiles-home-automation-server, so that profile must be present alongside this one.
         flakeModules.nixos.services-postgres
       ];
 

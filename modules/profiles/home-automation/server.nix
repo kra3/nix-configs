@@ -17,6 +17,7 @@
         flakeModules.nixos.services-postgres
       ];
 
+      # The db password is still set centrally by postgresql-set-passwords in services/postgres.nix.
       services.postgresql.ensureDatabases = [ "hass" ];
       services.postgresql.ensureUsers = [
         {

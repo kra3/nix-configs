@@ -134,7 +134,7 @@
 
       # TCP proxy so HA pod (and any host-side client) can reach mosquitto in nspawn home-auto
       # via the bridge gw 10.3.2.1:1883 — same pattern as *arr nginx vhosts.
-      # LAN clients reach mosquitto via existing DNAT on lanIf (sutala/configuration.nix forwardPorts);
+      # LAN clients reach mosquitto via existing DNAT on lanIf (profiles/home-automation/server.nix forwardPorts);
       # those packets are rewritten in PREROUTING and never hit this listener.
       services.nginx.streamConfig = ''
         server {

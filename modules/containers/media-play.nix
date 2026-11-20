@@ -143,7 +143,7 @@
               flakeModules.nixos.services-system-nix-defaults-nixos
               flakeModules.nixos.containers-common
               inputs.declarative-jellyfin.nixosModules.default
-              flakeModules.nixos.services-media-players-default
+              flakeModules.nixos.services-media-servers-default
             ];
 
             services.declarative-jellyfin.enable = lib.mkForce config.vars.localMedia.enable;

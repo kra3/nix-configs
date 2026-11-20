@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.services-media-players-navidrome =
+  flake.nixosModules.services-media-servers-navidrome =
     { pkgs, inputs, ... }:
     let
       unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};

@@ -42,7 +42,7 @@ template:
       - name: "Gloomy outside"
         unique_id: gloomy_outside
         icon: mdi:weather-cloudy
-        delay_on: "00:02:00"
+        delay_on: "{{ '00:02:00' if is_state('binary_sensor.daylight_evening_rule', 'on') else '00:10:00' }}"
         delay_off: "00:10:00"
         state: >-
           {% set e = state_attr('sun.sun', 'elevation') | float(0) %}

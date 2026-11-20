@@ -200,7 +200,7 @@ class LightLogicCard extends HTMLElement {
     if ((this._seg || act) !== act) g = this._gl(act)[0];
     if (gl === null) return "";
     if (sun === "below_horizon") return "Sun is down · rooms may light up until sunrise";
-    return gl === "on" ? `Stays gloomy until daylight is above ${fmt(c)} % for 10 min` : `Lights stay off · goes gloomy below ${fmt(g)} %`;
+    return gl === "on" ? `Stays gloomy until daylight is above ${fmt(c)} % for 10 min` : `Lights stay off · goes gloomy below ${fmt(g)} % for ${(this._seg || act) === "evening" ? 2 : 10} min`;
   }
 
   _bandLive() {

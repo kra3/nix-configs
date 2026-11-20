@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.services-media-players-jellyfin =
+  flake.nixosModules.services-media-servers-jellyfin =
     {
       config,
       lib,

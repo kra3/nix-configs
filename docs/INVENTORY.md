@@ -74,7 +74,7 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Container | Defining file | Services inside | Where those are defined |
 |---|---|---|---|
 | `monitoring` | `modules/containers/monitoring.nix` | Grafana, Prometheus, Loki, Alloy | `modules/services/monitoring/{grafana,prometheus,loki}.nix` |
-| `media-play` | `modules/containers/media-play.nix` | Jellyfin, Navidrome | `modules/services/media/players/{jellyfin,navidrome}.nix` |
+| `media-play` | `modules/containers/media-play.nix` | Jellyfin, Navidrome | `modules/services/media/servers/{jellyfin,navidrome}.nix` |
 | `home-auto` | `modules/containers/home-auto.nix` | Frigate/go2rtc (NVR), Zigbee2MQTT, Mosquitto | `modules/services/surveillance/nvr.nix`, `modules/services/home-automation/{zigbee2mqtt,mosquitto}.nix` |
 
 #### Podman quadlet apps (per zone)

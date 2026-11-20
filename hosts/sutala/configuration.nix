@@ -25,6 +25,9 @@
     flakeModules.nixos.profiles-surveillance-notify
     flakeModules.nixos.profiles-second-brain-hub
     flakeModules.nixos.profiles-fitness-server
+    flakeModules.nixos.profiles-finance-budget
+    flakeModules.nixos.profiles-finance-investments
+    flakeModules.nixos.profiles-passwords-server
     flakeModules.nixos.profiles-media-video-server
     flakeModules.nixos.profiles-media-video-acquire
     flakeModules.nixos.profiles-media-video-player
@@ -40,11 +43,8 @@
     flakeModules.nixos.hardware-intel-igpu
     flakeModules.nixos.nixpkgs-overlays-nixos
     flakeModules.nixos.services-niri-default
-    flakeModules.nixos.services-postgres
-    flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
     flakeModules.nixos.services-discovery-avahi
-    flakeModules.nixos.containers-life-default
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-system-power-tuning

@@ -21,7 +21,6 @@
       };
 
       services.declarative-jellyfin = {
-        enable = true;
         logDir = "/var/log/jellyfin";
         openFirewall = true;
 

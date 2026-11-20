@@ -2,7 +2,8 @@
   flake.nixosModules.services-monitoring-prometheus =
     {
       networkVars,
-      localMedia,
+      hasJellyfin,
+      hasUnpackerr,
       domain,
       lib,
       ...
@@ -274,7 +275,7 @@
             ];
           }
         ]
-        ++ lib.optionals localMedia.enable [
+        ++ lib.optionals hasJellyfin [
           {
             job_name = "jellyfin";
             metrics_path = "/metrics";
@@ -294,7 +295,7 @@
             ];
           }
         ]
-        ++ lib.optionals (localMedia.enable && localMedia.extras.enable) [
+        ++ lib.optionals hasUnpackerr [
           {
             job_name = "unpackerr";
             metrics_path = "/metrics";

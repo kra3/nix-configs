@@ -7,6 +7,7 @@
     in
     {
       imports = [
+        flakeModules.nixos.profiles-media-shared
         (gate localMedia flakeModules.nixos.containers-media-mgmt-radarr)
         (gate localMedia flakeModules.nixos.containers-media-mgmt-sonarr)
         (gate localMedia flakeModules.nixos.containers-media-mgmt-recyclarr)

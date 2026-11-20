@@ -1,8 +1,9 @@
 {
-  # Not de-duplicated across profiles: import once from the host, not from each media profile.
+  # The key makes the module system drop repeat imports, so every media profile can import this.
   flake.nixosModules.profiles-media-shared =
     { flakeModules, ... }:
     {
+      key = "profiles-media-shared";
       imports = [
         flakeModules.nixos.containers-media-mgmt-network
         flakeModules.nixos.containers-media-mgmt-storage

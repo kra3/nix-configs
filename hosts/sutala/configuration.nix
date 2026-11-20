@@ -25,7 +25,6 @@
     flakeModules.nixos.profiles-surveillance-notify
     flakeModules.nixos.profiles-second-brain-hub
     flakeModules.nixos.profiles-fitness-server
-    flakeModules.nixos.profiles-media-shared
     flakeModules.nixos.profiles-media-video-server
     flakeModules.nixos.profiles-media-video-acquire
     flakeModules.nixos.profiles-media-video-extras

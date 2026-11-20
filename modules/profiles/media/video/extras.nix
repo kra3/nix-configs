@@ -7,6 +7,7 @@
     in
     {
       imports = [
+        flakeModules.nixos.profiles-media-shared
         (gate localMediaExtras flakeModules.nixos.containers-media-mgmt-bazarr)
         (gate localMediaExtras flakeModules.nixos.containers-media-mgmt-unpackerr)
       ];

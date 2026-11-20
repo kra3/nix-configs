@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.home-assistant = {
         containerConfig = {
-          image = "ghcr.io/home-assistant/home-assistant:2026.11.1";
+          image = "ghcr.io/home-assistant/home-assistant:2026.11.2";
           publishPorts = [ "127.0.0.1:8123:8123" ];
           logDriver = "journald";
           environments = {

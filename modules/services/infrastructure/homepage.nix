@@ -15,12 +15,12 @@
       jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
 
       envContent = ''
-        ${lib.optionalString (quadlet ? radarr) "HOMEPAGE_VAR_RADARR_KEY=${
-          config.sops.placeholder."media.radarr.api_key"
-        }"}
-        ${lib.optionalString (quadlet ? sonarr) "HOMEPAGE_VAR_SONARR_KEY=${
-          config.sops.placeholder."media.sonarr.api_key"
-        }"}
+        ${lib.optionalString (quadlet ? radarr)
+          "HOMEPAGE_VAR_RADARR_KEY=${config.sops.placeholder."media.radarr.api_key"}"
+        }
+        ${lib.optionalString (quadlet ? sonarr)
+          "HOMEPAGE_VAR_SONARR_KEY=${config.sops.placeholder."media.sonarr.api_key"}"
+        }
         HOMEPAGE_VAR_LIDARR_KEY=${config.sops.placeholder."media.lidarr.api_key"}
         HOMEPAGE_VAR_PROWLARR_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
         ${lib.optionalString (config.virtualisation.quadlet.containers ? bazarr)

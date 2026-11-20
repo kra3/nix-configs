@@ -7,6 +7,7 @@
       ...
     }:
     {
+      key = "services-postgres";
       sops.secrets."db.ghostfolio_password" = {
         owner = "postgres";
         group = "postgres";
@@ -51,33 +52,7 @@
           # auth
           password_encryption = "scram-sha-256";
         };
-        ensureDatabases = [
-          "ghostfolio"
-          "hass"
-          "rreading_glasses"
-        ];
         ensureUsers = [
-          {
-            name = "ghostfolio";
-            ensureDBOwnership = true;
-            ensureClauses = {
-              login = true;
-            };
-          }
-          {
-            name = "hass";
-            ensureDBOwnership = true;
-            ensureClauses = {
-              login = true;
-            };
-          }
-          {
-            name = "rreading_glasses";
-            ensureDBOwnership = true;
-            ensureClauses = {
-              login = true;
-            };
-          }
           {
             name = "grafana_ro";
             ensureClauses = {

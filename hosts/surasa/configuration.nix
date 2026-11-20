@@ -8,17 +8,11 @@
 {
   imports = [
     # Board profile, sd-image module, cache trust, and overlays are all imported in flake/hosts.nix.
-    flakeModules.nixos.vars
-    flakeModules.nixos.services-infrastructure-openssh
-    flakeModules.nixos.fail2ban
-    flakeModules.nixos.services-infrastructure-sops
-    flakeModules.nixos.services-infrastructure-acme
-    flakeModules.nixos.services-dns-rpi-secondary
+    flakeModules.nixos.profiles-base-server
+    flakeModules.nixos.profiles-dns-secondary
+    flakeModules.nixos.profiles-observability-watchdog
     flakeModules.nixos.services-media-pi-audio
     flakeModules.nixos.services-media-sendspin
-    flakeModules.nixos.services-monitoring-sutala-watchdog
-    flakeModules.nixos.services-monitoring-alloy-host
-    flakeModules.nixos.services-system-nix-defaults-nixos
   ];
 
   networking.hostName = "surasa";

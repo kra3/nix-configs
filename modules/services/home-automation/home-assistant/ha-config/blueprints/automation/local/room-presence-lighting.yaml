@@ -23,7 +23,9 @@ blueprint:
     bedtime_off_after_minutes, a light on after bedtime goes off once
     occupancy and the extra sensor have been clear that long and no
     bedtime block player is playing; night_off_after_minutes shortens
-    that wait once sleep has been on for half an hour.
+    that wait once sleep has been on for half an hour. Without evening_hold,
+    during sleep hours with react_during_sleep on, a light found on after
+    both sensors have been clear for 2 min goes off on the minute tick.
   domain: automation
   input:
     light_entity:
@@ -714,7 +716,11 @@ actions:
             action: light.turn_on
       - conditions:
           - condition: trigger
-            id: startup
+            id: [startup, tick]
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'startup'
+                 or (asleep and react_during_sleep and is_state(light_entity, 'on')) }}
           - condition: template
             value_template: "{{ not evening_hold }}"
           - condition: state

@@ -11,15 +11,16 @@
       net = config.vars.network;
       ip = net.podmanAddresses;
       listenPort = 8082;
-      localMedia = config.vars.localMedia.enable;
+      quadlet = config.virtualisation.quadlet.containers;
+      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
 
       envContent = ''
-        ${lib.optionalString localMedia "HOMEPAGE_VAR_RADARR_KEY=${
-          config.sops.placeholder."media.radarr.api_key"
-        }"}
-        ${lib.optionalString localMedia "HOMEPAGE_VAR_SONARR_KEY=${
-          config.sops.placeholder."media.sonarr.api_key"
-        }"}
+        ${lib.optionalString (quadlet ? radarr)
+          "HOMEPAGE_VAR_RADARR_KEY=${config.sops.placeholder."media.radarr.api_key"}"
+        }
+        ${lib.optionalString (quadlet ? sonarr)
+          "HOMEPAGE_VAR_SONARR_KEY=${config.sops.placeholder."media.sonarr.api_key"}"
+        }
         HOMEPAGE_VAR_LIDARR_KEY=${config.sops.placeholder."media.lidarr.api_key"}
         HOMEPAGE_VAR_PROWLARR_KEY=${config.sops.placeholder."media.prowlarr.api_key"}
         ${lib.optionalString (config.virtualisation.quadlet.containers ? bazarr)
@@ -27,7 +28,7 @@
         }
         HOMEPAGE_VAR_SABNZBD_KEY=${config.sops.placeholder."media.sabnzbd.api_key"}
         HOMEPAGE_VAR_SLSKD_KEY=${config.sops.placeholder."media.slskd.api_key"}
-        ${lib.optionalString localMedia "HOMEPAGE_VAR_JELLYFIN_KEY=${
+        ${lib.optionalString jellyfin "HOMEPAGE_VAR_JELLYFIN_KEY=${
           config.sops.placeholder."media.jellyfin.apikeys.seerr"
         }"}
         HOMEPAGE_VAR_BOOKSHELF_KEY=${config.sops.placeholder."media.bookshelf.api_key"}
@@ -157,7 +158,7 @@
             Media = [
               {
                 Play =
-                  lib.optionals localMedia [
+                  lib.optionals jellyfin [
                     {
                       Jellyfin = {
                         description = "Movie & TV streaming";
@@ -238,7 +239,7 @@
                     };
                   }
                 ]
-                ++ lib.optionals localMedia [
+                ++ lib.optionals (quadlet ? radarr && quadlet ? sonarr) [
                   {
                     Radarr = {
                       description = "Movie management";

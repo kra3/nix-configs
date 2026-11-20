@@ -10,6 +10,8 @@
       ...
     }:
     let
+      # Set by profiles-media-video-server; presence of the profile enables Jellyfin.
+      jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
       jellyfinSsoAuthXmlContent = ''
         <?xml version="1.0" encoding="utf-8"?>
         <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -110,14 +112,14 @@
               4533 # Navidrome
               9100 # node-exporter
             ]
-            ++ lib.optionals config.vars.localMedia.enable [
+            ++ lib.optionals jellyfin [
               443 # Jellyfin's SSO plugin calls auth.${domain} directly
               8096 # Jellyfin
             ];
             allowedUDPPorts = [
               53 # DNS (if a resolver is enabled in the container)
             ]
-            ++ lib.optionals config.vars.localMedia.enable [
+            ++ lib.optionals jellyfin [
               7359 # Jellyfin client discovery
             ];
           };
@@ -145,8 +147,6 @@
               inputs.declarative-jellyfin.nixosModules.default
               flakeModules.nixos.services-media-servers-default
             ];
-
-            services.declarative-jellyfin.enable = lib.mkForce config.vars.localMedia.enable;
 
             nixpkgs.overlays = [
               inputs.self.overlays.default
@@ -181,10 +181,10 @@
                 4533 # Navidrome
                 9100 # node-exporter
               ]
-              ++ lib.optionals config.vars.localMedia.enable [
+              ++ lib.optionals jellyfin [
                 8096 # Jellyfin
               ];
-              firewall.allowedUDPPorts = lib.optionals config.vars.localMedia.enable [
+              firewall.allowedUDPPorts = lib.optionals jellyfin [
                 7359 # Jellyfin client discovery
               ];
             };
@@ -229,7 +229,7 @@
 
             # Jellyfin only reads SSO-Auth.xml at startup; nothing else here
             # would trigger a restart on content-only changes.
-            systemd.services.jellyfin = lib.mkIf config.vars.localMedia.enable {
+            systemd.services.jellyfin = lib.mkIf jellyfin {
               restartTriggers = [ jellyfinSsoAuthXmlHash ];
 
               # Headroom for ffmpeg probing remote Gelato streams; 1 GiB OOM-killed it on playback start.
@@ -282,7 +282,7 @@
             };
 
           }
-          // lib.optionalAttrs config.vars.localMedia.enable {
+          // lib.optionalAttrs jellyfin {
             "/var/lib/jellyfin" = {
               hostPath = "/srv/appdata/media-play/jellyfin";
               isReadOnly = false;

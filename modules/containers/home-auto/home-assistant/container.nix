@@ -163,9 +163,13 @@
             config.sops.placeholder."trafiklab.realtime_key"
           }"
         ''
-        + lib.optionalString config.vars.localMedia.enable ''
+        + lib.optionalString (config.virtualisation.quadlet.containers ? radarr) ''
           radarr_api_key: ${config.sops.placeholder."media.radarr.api_key"}
+        ''
+        + lib.optionalString (config.virtualisation.quadlet.containers ? sonarr) ''
           sonarr_api_key: ${config.sops.placeholder."media.sonarr.api_key"}
+        ''
+        + lib.optionalString config.containers.media-play.config.services.declarative-jellyfin.enable ''
           jellyfin_auth_header: 'MediaBrowser Token="${
             config.sops.placeholder."media.jellyfin.apikeys.seerr"
           }"'

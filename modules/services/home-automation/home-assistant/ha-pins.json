@@ -54,7 +54,7 @@
       "version": "v2.5.3",
       "kind": "zip",
       "asset": "krisinformation.zip",
-      "hash": "sha256-DMxYBYzH/IpFrZPQqZ2ZcSKpJYH2+QKEqA/doSehoiM="
+      "hash": "sha256-P5txF94BcL4XEkVq3uDG7RPElQSPO2I+C9jrU50BB8I="
     },
     "plejd": {
       "repo": "thomasloven/hass-plejd",

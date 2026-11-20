@@ -44,10 +44,10 @@
     },
     "frigate": {
       "repo": "blakeblackshear/frigate-hass-integration",
-      "version": "v5.15.6",
+      "version": "v5.15.7",
       "kind": "tree",
       "subpath": "custom_components/frigate",
-      "hash": "sha256-xh8+X4C6QCb2Y4fbo60xCX3QuXEktbopB2DbOTfzAhA="
+      "hash": "sha256-I1KDxZp4K6bAA+iOCangy9XK7gx68rcElgCunJiQlso="
     },
     "krisinformation": {
       "repo": "Nicxe/krisinformation",

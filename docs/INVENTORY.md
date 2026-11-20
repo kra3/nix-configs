@@ -43,6 +43,19 @@ LAN-discoverable home-auto pods), and one standalone rootless podman
 instance (authelia). Full diagram, port list, and the FORWARD
 allow-table: [`network-diagram.md`](./network-diagram.md).
 
+### Profiles
+
+sutala's `imports` in `hosts/sutala/configuration.nix` are profiles (full table:
+[`modules/profiles/README.md`](../modules/profiles/README.md)). Each service
+below comes from one of: `base-server` (openssh, sops, acme, fail2ban, Alloy),
+`observability-server` (monitoring container, postgres), `dns-primary`, `edge`
+(nginx, Authelia, Homepage, Tailscale), `home-automation-server` / `-voice`,
+`surveillance-server` / `-notify`, `second-brain-hub`, `fitness-server`,
+`finance-budget`, `finance-investments`, `passwords-server`,
+`media-video-{server,acquire,player}`, `media-music-{server,acquire,player}`,
+`media-reading-{server,acquire}`, `media-streaming-server`. Firewall forward
+rules and NAT port forwards sit in the profile of the service they serve.
+
 ### Services
 
 #### Host-level infrastructure
@@ -59,8 +72,8 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Second brains (Obsidian vaults) | `modules/services/second-brain/default.nix`, shared code in `modules/lib/second-brain/` | Per brain (`services.secondBrain.brains.<name>`): git work tree under `/srv/appdata/second-brain/<name>/` synced with its hub repo, local stdio MCP server for Claude Code in `~/second-brain/<name>` (phone via Remote Control); nothing on the network. Macs use `home-second-brain`. Share-sheet clipper (`clipper.nix`/`clipper.py`, `clip.${domain}`, LAN/tailnet only, bearer token): video link → transcript + Claude summary → capture in a brain's `0 Inbox`. See `docs/second-brain.md` |
 | AdGuard Home (DNS+DHCP) | `modules/services/dns/adguard.nix` | `dns.${domain}`; static leases + rewrites for the domain |
 | Unbound (recursive resolver) | `modules/services/dns/unbound.nix` | `127.0.0.1:5335`, DoT upstreams (Cloudflare family + Quad9), redirect zone for `${domain}.` |
-| PostgreSQL | `modules/services/postgres.nix` | Ghostfolio's DB; listens on all interfaces, scram-sha-256 auth restricted to `br-life` |
-| Redis | `modules/services/redis.nix` | Ghostfolio's cache; password-protected, `FLUSHALL` renamed off |
+| PostgreSQL | `modules/services/postgres.nix` | Profiles `finance-investments` (ghostfolio db), `home-automation-server` (hass db) and `media-reading-acquire` (rreading_glasses db) import it and add their db/user; also the Grafana read-only role. Listens on all interfaces, scram-sha-256 auth restricted to `br-life` |
+| Redis | `modules/services/redis.nix` | Imported by `finance-investments` and `media-streaming-server`; Ghostfolio's cache; password-protected, `FLUSHALL` renamed off |
 | Fitness | `modules/services/fitness/default.nix` (crate in `modules/services/fitness/app/`) | Training and body-composition log (Rust + SQLite); `fitness.service`, user `fitness`; unix socket `/run/fitness/fitness.sock` (no TCP port, PrivateNetwork); state `/srv/appdata/fitness/fitness.db`, progress photos as files under `/srv/appdata/fitness/photos/<user>/` (`PHOTO_DIR` overrides; `fitness.${domain}` via nginx + Authelia forward-auth, per-user data keyed on the `Remote-User` header; coach tools: `fitness-coach-cli` (sudo to `fitness`, rule limited to the `fitness-coach` wrapper) and `~kra3/agents/fitness-coach/` (Claude Code folder with the `fitness` MCP server and check-in CLAUDE.md); `fitness-carry` timer (06:20, carries body values forward for every user active in the last 14 days); phone ingest via the per-user-key Apple Shortcut (`POST /api/ingest`, keys in More > Phone sync, shortcut source in `modules/services/fitness/shortcut/`); `fitness-reminders-{weigh-in,supps,checkin}` timers (10:00, 20:30, Sun 18:00; no food reminder, because food goes through Lose It and Apple Health, which the server cannot read) run `fitness remind` and, when it prints, push it via HA `notify.mobile_app_meghanadha` (same token, loopback only) |
 | Fitness coach session | `modules/services/fitness/default.nix` | `fitness-coach-remote` user service (kra3, lingering): Claude Code Remote Control named `fitness-coach` in `~/agents/fitness-coach`, permission mode `default` (each `propose` call is asked about); open it from the Claude app and ask for the weekly check-in. Needs a one-time `claude` login as kra3 and one interactive `claude` in the folder to trust it; until then it fails quietly and backs off (same pattern as `second-brain-home-remote`) |
 | Podman | `modules/services/virtualisation/podman.nix` | Rootful backend for the quadlet app fleet |
@@ -73,13 +86,13 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 
 | Container | Defining file | Services inside | Where those are defined |
 |---|---|---|---|
-| `monitoring` | `modules/containers/monitoring.nix` | Grafana, Prometheus, Loki, Alloy | `modules/services/monitoring/{grafana,prometheus,loki}.nix` |
-| `media-play` | `modules/containers/media-play.nix` | Jellyfin, Navidrome | `modules/services/media/servers/{jellyfin,navidrome}.nix` |
+| `monitoring` | `modules/containers/monitoring.nix` (from `observability-server`) | Grafana, Prometheus, Loki, Alloy | `modules/services/monitoring/{grafana,prometheus,loki}.nix` |
+| `media-play` | `modules/containers/media-play.nix` (from `media-video-server`; `media-music-server` relies on it) | Jellyfin, Navidrome | `modules/services/media/servers/{jellyfin,navidrome}.nix` |
 | `home-auto` | `modules/containers/home-auto.nix` | Frigate/go2rtc (NVR), Zigbee2MQTT, Mosquitto | `modules/services/surveillance/nvr.nix`, `modules/services/home-automation/{zigbee2mqtt,mosquitto}.nix` |
 
 #### Podman quadlet apps (per zone)
 
-**`life` zone (`br-life`)** — `modules/containers/life/*.nix`:
+**`life` zone (`br-life`)** — `modules/containers/life/*.nix`, imported by profiles `finance-budget`, `finance-investments`, `passwords-server` (network/storage via `life-shared`):
 
 | App | Container file | Service config |
 |---|---|---|
@@ -87,7 +100,12 @@ allow-table: [`network-diagram.md`](./network-diagram.md).
 | Vaultwarden | `life/vaultwarden.nix` | `modules/services/infrastructure/vaultwarden.nix` |
 | Ghostfolio | `life/ghostfolio/ghostfolio.nix` | `modules/services/finance/ghostfolio/{ghostfolio,scraper,backfill}.nix` |
 
-**`media-mgmt` zone (`br-media-mgmt`)** — `modules/containers/media-mgmt/*.nix`,
+**`media-mgmt` zone (`br-media-mgmt`)** — `modules/containers/media-mgmt/*.nix`
+(profiles: radarr/sonarr/recyclarr/maintainerr/seerr in `media-video-acquire`;
+bazarr/unpackerr in `media-video-extras`; lidarr/slskd in `media-music-acquire`;
+bookshelf/rreading-glasses in `media-reading-acquire`; audiobookshelf in
+`media-reading-server`; aiostreams/aiometadata in `media-streaming-server`;
+prowlarr/sabnzbd/network/storage in `media-shared`),
 paired 1:1 with `modules/services/media/acquisition/*.nix` (same basename)
 except where noted:
 
@@ -96,7 +114,9 @@ except where noted:
 `aiostreams` (service side: `modules/services/media/streaming/aiostreams.nix`).
 
 **`home-auto` zone (`br-home-auto` + `home-auto-macvlan`)** —
-`modules/containers/home-auto/*/default.nix`:
+`modules/containers/home-auto/*/default.nix` (Home Assistant, OTBR, Matter from
+`home-automation-server`; Piper/Whisper from `home-automation-voice`; Music
+Assistant from `media-music-server`; camera-announce from `surveillance-notify`):
 
 | App | Container file(s) | Service config |
 |---|---|---|
@@ -133,9 +153,11 @@ Streaming is the default; disk is the exception.
 Deletes go through the Radarr/Sonarr recycle bin (purged after 7 days).
 Gelato libraries are never touched.
 
-**Toggles:** `vars.localMedia.enable` (Jellyfin, Radarr, Sonarr, Recyclarr,
-Maintainerr); `vars.localMedia.extras.enable` (Bazarr, Unpackerr; off by
-default, Unpackerr kept for future P2P).
+**Presence, not flags:** importing `profiles-media-video-server` +
+`profiles-media-video-acquire` brings in Jellyfin, Radarr, Sonarr, Recyclarr,
+Maintainerr and Seerr; `profiles-media-video-extras` (Bazarr, Unpackerr) is
+not imported on sutala, kept for future P2P. Consumers (homepage, Prometheus,
+storage, firewall) check presence, not a flag; see `modules/profiles/README.md`.
 
 **App-internal state:** the keep tag, recycle bin, Maintainerr rules, Seerr
 defaults/library scope, Litefin's Seerr link and Gelato's settings (catalog import off)
@@ -168,7 +190,8 @@ Jellyfin-compatible server (untested).
 Secondary/off-box DNS resolver (AdGuard Home + Unbound, DoT upstreams),
 Sendspin audio player, and an independent "is sutala up" watchdog — deliberately
 placed off sutala so it can alert even if sutala itself is unreachable.
-Config: `hosts/surasa/configuration.nix`.
+Config: `hosts/surasa/configuration.nix`, which imports profiles `base-server`,
+`dns-secondary`, `observability-watchdog` and `media-music-player-headless`.
 
 ### Hardware
 Raspberry Pi 3B+ (aarch64-linux), SD-card boot, wifi-only (`wlan0`,

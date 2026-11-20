@@ -75,13 +75,20 @@ LAN 192.168.1.0/24
   `home-auto` (nspawn) -> 10.3.255.9, home-auto pods -> 10.3.2.1
 - Container DNS: `nameservers = [ 192.168.1.10 ]` everywhere
 - Port forwards (DNAT from LAN to home-auto nspawn container, `10.3.255.10`):
-  `1883/tcp` (Mosquitto), `8555/tcp+udp` (go2rtc WebRTC)
+  `1883/tcp` (Mosquitto), `8555/tcp+udp` (go2rtc WebRTC); declared in
+  `profiles/home-automation/server.nix`
 
 ### Default-deny FORWARD with explicit inter-zone allows
 
-`hosts/sutala/configuration.nix` sets `filterForward = true` and an explicit
-`extraForwardRules` allow-list (nothing crosses a zone boundary unless
-listed here):
+`hosts/sutala/configuration.nix` sets `filterForward = true` and keeps
+`ct state established,related accept` (belt-and-braces: nixpkgs already accepts
+established/related in the forward chain before `forward-allow`); the `extraForwardRules`
+allow-list (nothing crosses a zone boundary unless listed) is assembled from
+the profiles (`types.lines` concatenates). Rules 1-5 are in
+`profiles/observability/server.nix`, 6/6a/7/10/11(home-auto) in
+`profiles/home-automation/server.nix`, 8/9 in `profiles/media/video/server.nix`,
+9a (media-play → Seerr, Jellyfin plugins) in `profiles/media/video/acquire.nix`, 11 in `profiles/media/shared.nix`
+and `profiles/life/shared.nix`:
 
 | # | Flow | Ports |
 |---|---|---|

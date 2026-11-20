@@ -25,24 +25,27 @@
     flakeModules.nixos.profiles-surveillance-notify
     flakeModules.nixos.profiles-second-brain-hub
     flakeModules.nixos.profiles-fitness-server
+    flakeModules.nixos.profiles-media-shared
+    flakeModules.nixos.profiles-media-video-server
+    flakeModules.nixos.profiles-media-video-acquire
+    flakeModules.nixos.profiles-media-video-extras
+    flakeModules.nixos.profiles-media-video-player
+    flakeModules.nixos.profiles-media-music-server
+    flakeModules.nixos.profiles-media-music-acquire
+    flakeModules.nixos.profiles-media-music-player
+    flakeModules.nixos.profiles-media-reading-server
+    flakeModules.nixos.profiles-media-reading-acquire
+    flakeModules.nixos.profiles-media-streaming-server
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
     flakeModules.nixos.services-system-surasa-autodeploy
-    flakeModules.nixos.services-media-sendspin
     flakeModules.nixos.hardware-intel-igpu
     flakeModules.nixos.nixpkgs-overlays-nixos
-    flakeModules.nixos.services-lg-devmode-extend
     flakeModules.nixos.services-niri-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
-    flakeModules.nixos.services-media-lidarr-beets-webhook
-    flakeModules.nixos.services-media-lidarr-failed-import-recovery
-    flakeModules.nixos.services-media-streaming-iptv
     flakeModules.nixos.services-discovery-avahi
-    flakeModules.nixos.containers-media-mgmt-default
-    flakeModules.nixos.containers-media-play
-    flakeModules.nixos.containers-home-auto-music-assistant-default
     flakeModules.nixos.containers-life-default
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin

@@ -11,8 +11,7 @@
     flakeModules.nixos.profiles-base-server
     flakeModules.nixos.profiles-dns-secondary
     flakeModules.nixos.profiles-observability-watchdog
-    flakeModules.nixos.services-media-pi-audio
-    flakeModules.nixos.services-media-sendspin
+    flakeModules.nixos.profiles-media-music-player-headless
   ];
 
   networking.hostName = "surasa";

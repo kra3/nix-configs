@@ -38,14 +38,28 @@
           podmanArgs = [ "--cpus=1" ];
         };
       }
-      // flakeLib.quadlet.mkNetworkDeps {
-        networkServices = [
-          "home-auto-network.service"
-          "home-auto-macvlan-network.service"
-        ];
-        extraAfter = [ "dev-thread.device" ];
-        bindsTo = [ "dev-thread.device" ];
-      };
+      // (
+        let
+          deps = flakeLib.quadlet.mkNetworkDeps {
+            networkServices = [
+              "home-auto-network.service"
+              "home-auto-macvlan-network.service"
+            ];
+            extraAfter = [ "dev-thread.device" ];
+            bindsTo = [ "dev-thread.device" ];
+          };
+        in
+        deps
+        // {
+          # The image hard-codes the unauthenticated REST/web listeners to all interfaces; drop them on the LAN side (HA uses the bridge).
+          # Leading "-": never fail the unit over this. "$$": systemd would otherwise expand $t.
+          serviceConfig = deps.serviceConfig // {
+            ExecStartPost = [
+              "-/run/current-system/sw/bin/podman exec otbr sh -c 'for t in iptables ip6tables; do $$t -C INPUT -i eth1 -p tcp -m multiport --dports 8080,8081 -j DROP 2>/dev/null || $$t -I INPUT -i eth1 -p tcp -m multiport --dports 8080,8081 -j DROP; done'"
+            ];
+          };
+        }
+      );
 
       systemd.tmpfiles.rules = [
         "d /srv/appdata/home-auto/otbr 0750 root root - -"

@@ -29,7 +29,8 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d /var/cache/wyoming-piper 0750 root root - -"
+        "d /var/cache/wyoming-piper 0770 root media - -"
+        "Z /var/cache/wyoming-piper 0770 root media - -"
       ];
     };
 }

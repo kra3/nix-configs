@@ -204,7 +204,6 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
-              # Admin-only apps and rules need two_factor; the rest stay one_factor.
               - client_id: 'audiobookshelf'
                 client_name: 'Audiobookshelf'
                 client_secret: '${

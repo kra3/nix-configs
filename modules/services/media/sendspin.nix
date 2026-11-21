@@ -35,6 +35,7 @@
         after = [ "pipewire-pulse.service" ];
         wants = [ "pipewire-pulse.service" ];
         wantedBy = [ "default.target" ];
+        unitConfig.ConditionUser = "kra3";
         serviceConfig = {
           ExecStart = "${sendspin-cli}/bin/sendspin-cli -n \"${cfg.name}\" -s ${cfg.server}:8927 -o ${cfg.output}";
           Restart = "always";

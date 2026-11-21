@@ -251,6 +251,8 @@
     serviceConfig = {
       Restart = "always";
       NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
       PrivateTmp = true;
       ProtectKernelTunables = true;
       ProtectControlGroups = true;

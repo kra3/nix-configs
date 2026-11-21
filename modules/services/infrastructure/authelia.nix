@@ -21,6 +21,8 @@
         identity_validation:
           reset_password:
             jwt_secret: '${config.sops.placeholder."authelia.reset_password_jwt_secret"}'
+          elevated_session:
+            require_second_factor: true
 
         authentication_backend:
           password_reset:

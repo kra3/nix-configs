@@ -19,6 +19,12 @@
     flakeModules.nixos.profiles-observability-server
     flakeModules.nixos.profiles-dns-primary
     flakeModules.nixos.profiles-edge
+    flakeModules.nixos.profiles-home-automation-server
+    flakeModules.nixos.profiles-home-automation-voice
+    flakeModules.nixos.profiles-surveillance-server
+    flakeModules.nixos.profiles-surveillance-notify
+    flakeModules.nixos.profiles-second-brain-hub
+    flakeModules.nixos.profiles-fitness-server
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
     flakeModules.nixos.services-system-surasa-autodeploy
@@ -30,24 +36,13 @@
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
-    flakeModules.nixos.services-second-brain-default
-    flakeModules.nixos.services-second-brain-clipper
     flakeModules.nixos.services-media-lidarr-beets-webhook
     flakeModules.nixos.services-media-lidarr-failed-import-recovery
     flakeModules.nixos.services-media-streaming-iptv
-    flakeModules.nixos.services-fitness-default
-    flakeModules.nixos.services-surveillance-proxy
-    flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
     flakeModules.nixos.containers-media-mgmt-default
     flakeModules.nixos.containers-media-play
-    flakeModules.nixos.containers-home-auto
-    flakeModules.nixos.containers-home-auto-home-assistant-default
-    flakeModules.nixos.containers-home-auto-otbr-default
-    flakeModules.nixos.containers-home-auto-matter-server-default
     flakeModules.nixos.containers-home-auto-music-assistant-default
-    flakeModules.nixos.containers-home-auto-wyoming-whisper-default
-    flakeModules.nixos.containers-home-auto-wyoming-piper-default
     flakeModules.nixos.containers-life-default
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin

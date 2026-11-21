@@ -21,6 +21,8 @@
         identity_validation:
           reset_password:
             jwt_secret: '${config.sops.placeholder."authelia.reset_password_jwt_secret"}'
+          elevated_session:
+            require_second_factor: true
 
         authentication_backend:
           password_reset:
@@ -98,6 +100,18 @@
             - domain: '${domain}'
               authelia_url: 'https://auth.${domain}'
               expiration: '1h'
+              inactivity: '30m'
+
+        regulation:
+          max_retries: 3
+          find_time: '2m'
+          ban_time: '10m'
+
+        totp:
+          issuer: '${domain}'
+
+        webauthn:
+          display_name: 'karunagath'
 
         storage:
           encryption_key: '${config.sops.placeholder."authelia.storage_encryption_key"}'
@@ -484,6 +498,7 @@
             containerConfig = {
               image = "ghcr.io/authelia/authelia:4.39.28";
               publishPorts = [ "127.0.0.1:9091:9091" ];
+              memory = "512m";
               userns = "keep-id";
               volumes = [
                 "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"

@@ -6,8 +6,8 @@ Output of the 2026-11 audit. Each entry is either a deliberate exception or a kn
 
 | Area | Decision | Why |
 |---|---|---|
-| Tailnet reach | `100.64.0.0/10` stays in `nginxAllowCidrs` | Only the owner's devices join the tailnet |
-| surasa deploy | Daily autodeploy of `main`, passwordless sudo for kra3 | Compensating control is `main` branch protection and PAT scope (check in GitHub) |
+| Tailnet reach | `100.64.0.0/10` stays in `nginxAllowCidrs` | Only the owner's devices join the tailnet (unverified; checked 2026-11-21 via `tailscale status`: sutala, surasa, 3 iOS devices) |
+| surasa deploy | Daily autodeploy of `main`, passwordless sudo for kra3 | Compensating control is `main` branch protection and PAT scope (unverified, check in GitHub) |
 | surasa SSH | Port 22 open on all interfaces | First-boot bootstrap runs over USB ethernet before wifi is configured |
 | sshd ciphers | NixOS defaults kept | Already modern; restricting risks locking out the iPad client |
 | auditd / AppArmor | Not enabled | Noisy on a podman/nspawn host and not testable off-host |

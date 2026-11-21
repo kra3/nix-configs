@@ -29,7 +29,8 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d /var/cache/wyoming-whisper 0750 root root - -"
+        "d /var/cache/wyoming-whisper 0770 root media - -"
+        "Z /var/cache/wyoming-whisper 0770 root media - -"
       ];
     };
 }

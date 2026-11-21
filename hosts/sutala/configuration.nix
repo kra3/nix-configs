@@ -248,7 +248,15 @@
     wantedBy = [ "multi-user.target" ];
     wants = [ "bluetooth.service" ];
     after = [ "bluetooth.service" ];
-    serviceConfig.Restart = "always";
+    serviceConfig = {
+      Restart = "always";
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      ProtectKernelTunables = true;
+      ProtectControlGroups = true;
+    };
     script = ''
       amp=D2:C0:BF:FC:91:25
       while true; do

@@ -15,6 +15,8 @@
           PasswordAuthentication = false;
           KbdInteractiveAuthentication = false;
           PermitRootLogin = "no";
+          LoginGraceTime = 20;
+          AllowUsers = [ "kra3" ];
         };
       };
 

@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.aiostreams = {
         containerConfig = {
-          image = "ghcr.io/viren070/aiostreams:v2.38.1";
+          image = "ghcr.io/viren070/aiostreams:v2.38.1@sha256:1b90bc2fda70f365dff2ce98fc311a24708cca9841efe09aefe309cd4da1fb2c";
           user = "1000:2000";
           dropCapabilities = [ "ALL" ];
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx

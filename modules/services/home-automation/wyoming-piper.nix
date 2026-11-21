@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.wyoming-piper = {
         containerConfig = {
-          image = "docker.io/rhasspy/wyoming-piper:2.5.4";
+          image = "docker.io/rhasspy/wyoming-piper:2.5.4@sha256:333622ab9e4bcd00c80a37219b90a1a9d6aa3fd1ad34e0a6e3bddd36ee999efd";
           user = "1000:2000";
           dropCapabilities = [ "ALL" ];
           exec = "--voice en_US-lessac-medium --length-scale 1.25 --sentence-silence 0.5 --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data";

@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.sabnzbd = {
         containerConfig = {
-          image = "lscr.io/linuxserver/sabnzbd:5.1.3-ls282";
+          image = "lscr.io/linuxserver/sabnzbd:5.1.3-ls282@sha256:d225bbab93f54784c115a3b1d89711e469b1969c9f32aa6ebb11fb03b5804431";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

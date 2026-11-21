@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.matter-server = {
         containerConfig = {
-          image = "ghcr.io/home-assistant-libs/python-matter-server:8.1.0";
+          image = "ghcr.io/home-assistant-libs/python-matter-server:8.1.0@sha256:170aa093ce91c76cde4cc390918307590f0f5558fcec93f913af3cb019e6562a";
           publishPorts = [ "127.0.0.1:5580:5580" ];
           # Image default cmd plus --listen-address: the ws API is unauthenticated, keep it off the macvlan LAN address.
           exec = "--storage-path /data --paa-root-cert-dir /data/credentials --listen-address 10.3.2.12";

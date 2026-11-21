@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.slskd = {
         containerConfig = {
-          image = "slskd/slskd:0.26.2";
+          image = "slskd/slskd:0.26.2@sha256:d0963a3e5b16facd295bf4f2156dad0182f246b1b21a032cae12f5494c694843";
           user = "1000:2000";
           logDriver = "journald";
           # Only the Soulseek P2P listen port is published to the host/WAN —

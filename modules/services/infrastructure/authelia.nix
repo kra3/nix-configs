@@ -494,7 +494,7 @@
           virtualisation.quadlet.containers.authelia = {
             autoStart = true;
             containerConfig = {
-              image = "ghcr.io/authelia/authelia:4.39.28";
+              image = "ghcr.io/authelia/authelia:4.39.28@sha256:bd97cff4fcbf715b5ff1f9ae286afbe6033afce385302520b0368122d43a6f54";
               publishPorts = [ "127.0.0.1:9091:9091" ];
               memory = "512m";
               userns = "keep-id";

@@ -322,7 +322,9 @@
             domain = config.vars.acme.domain;
             monitoringLocalAddress = config.vars.network.containers.monitoring.localAddress;
             networkVars = config.vars.network;
-            localMedia = config.vars.localMedia;
+            # Host-side presence of the media apps, used to pick scrape jobs.
+            hasJellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
+            hasUnpackerr = config.virtualisation.quadlet.containers ? unpackerr;
           };
         }
         // flakeLib.container-definition.mkContainerNetwork {

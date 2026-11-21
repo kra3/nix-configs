@@ -1,6 +1,9 @@
 {
   flake.nixosModules.containers-media-mgmt-storage =
     { config, lib, ... }:
+    let
+      quadlet = config.virtualisation.quadlet.containers;
+    in
     {
       users.groups.media.gid = 2000;
 
@@ -54,15 +57,11 @@
         "d /srv/media/downloads/slskd/complete 2770 root media - -"
         "d /srv/media/downloads/slskd/incomplete 2770 root media - -"
       ]
-      ++ lib.optionals config.vars.localMedia.enable [
-        "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
-      ]
-      ++ lib.optionals (config.vars.localMedia.enable && config.vars.localMedia.extras.enable) [
-        "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
-        "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -"
-      ];
+      ++ lib.optional (quadlet ? radarr) "d /srv/appdata/media-mgmt/radarr 2770 root media - -"
+      ++ lib.optional (quadlet ? sonarr) "d /srv/appdata/media-mgmt/sonarr 2770 root media - -"
+      ++ lib.optional (quadlet ? recyclarr) "d /srv/appdata/media-mgmt/recyclarr 2770 root media - -"
+      ++ lib.optional (quadlet ? maintainerr) "d /srv/appdata/media-mgmt/maintainerr 2770 root media - -"
+      ++ lib.optional (quadlet ? bazarr) "d /srv/appdata/media-mgmt/bazarr 2770 root media - -"
+      ++ lib.optional (quadlet ? unpackerr) "d /srv/appdata/media-mgmt/unpackerr 2770 root media - -";
     };
 }

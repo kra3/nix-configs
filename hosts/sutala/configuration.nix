@@ -27,7 +27,6 @@
     flakeModules.nixos.profiles-fitness-server
     flakeModules.nixos.profiles-media-video-server
     flakeModules.nixos.profiles-media-video-acquire
-    flakeModules.nixos.profiles-media-video-extras
     flakeModules.nixos.profiles-media-video-player
     flakeModules.nixos.profiles-media-music-server
     flakeModules.nixos.profiles-media-music-acquire
@@ -201,8 +200,8 @@
           mmNet = p.mediaMgmt;
           liNet = p.life;
           lan = config.vars.network.lanCidr;
-          jellyfin = config.vars.localMedia.enable;
-          unpackerr = config.vars.localMedia.enable && config.vars.localMedia.extras.enable;
+          jellyfin = config.containers.media-play.config.services.declarative-jellyfin.enable;
+          unpackerr = config.virtualisation.quadlet.containers ? unpackerr;
         in
         ''
           # Allow established and related traffic (replies to allowed connections)

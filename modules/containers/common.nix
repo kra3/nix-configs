@@ -44,9 +44,7 @@
         isSystemUser = true;
         group = "alloy";
         extraGroups = lib.mkAfter (
-          lib.optionals (config.users.groups ? media) [ "media" ]
-          ++ lib.optionals (config.services.declarative-jellyfin.enable or false) [ "jellyfin" ]
-          ++ lib.optionals (config.services.nginx.enable or false) [ "nginx" ]
+          lib.optionals (config.services.declarative-jellyfin.enable or false) [ "jellyfin" ]
           ++ lib.optionals (config.services.adguardhome.enable or false) [ "adguardhome" ]
           ++ lib.optionals (config.services.radarr.enable or false) [ "radarr" ]
           ++ lib.optionals (config.services.sonarr.enable or false) [ "sonarr" ]

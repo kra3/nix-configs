@@ -17,3 +17,8 @@ modules/home/sesh/sesh-session-paths.toml
 .worktrees/
 __pycache__/
 *.pyc
+
+# Key material
+*.key
+*.pem
+.env

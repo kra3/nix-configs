@@ -140,9 +140,11 @@ Unbound -> DoT upstreams (1.1.1.1:853 family, 9.9.9.11:853 quad9)
 - TLS via ACME DNS-01 (Cloudflare), wildcard cert for `*.${domain}`.
 - Vhosts are allowed from `nginxAllowCidrs` — on sutala this is LAN CIDR,
   tailscale CGNAT (`100.64.0.0/10`), loopback, the monitoring container's
-  address, and the `br-home-auto` subnet (**not** `br-life`/`br-media-mgmt`
-  — apps on those zones reach other vhosts only via loopback-published
-  upstreams, not as nginx clients).
+  address, the `br-home-auto`, `br-life` and `br-media-mgmt` subnets, and
+  media-play's local address (the pods there call `auth.${domain}` for their
+  own OIDC login).
+- `loki.${domain}` is the exception: it allows only surasa and loopback, since
+  Loki has no auth.
 - Upstreams: nspawn container IPs for monitoring/media-play, `127.0.0.1:<port>`
   for every podman-quadlet app (published-port pattern above), and the
   `br-home-auto` gateway (`10.3.2.1`) for home-auto pods reaching

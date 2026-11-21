@@ -77,7 +77,7 @@
                 - 'nvr.${domain}'
                 - 'z2m.${domain}'
               subject: 'group:admin'
-              policy: 'one_factor'
+              policy: 'two_factor'
             - domain:
                 - 'nvr.${domain}'
                 - 'z2m.${domain}'
@@ -88,7 +88,7 @@
               resources:
                 - '^/admin([/?].*)?$'
               subject: 'group:admin'
-              policy: 'one_factor'
+              policy: 'two_factor'
             - domain: 'vault.${domain}'
               resources:
                 - '^/admin([/?].*)?$'
@@ -147,7 +147,7 @@
               admin_only:
                 default_policy: 'deny'
                 rules:
-                  - policy: 'one_factor'
+                  - policy: 'two_factor'
                     subject: 'group:admin'
             clients:
               - client_id: 'grafana'
@@ -204,8 +204,6 @@
                   - 'authorization_code'
                 response_types:
                   - 'code'
-              # one_factor not two_factor (Authelia's own guide default): no
-              # second factor is configured on this deployment.
               - client_id: 'audiobookshelf'
                 client_name: 'Audiobookshelf'
                 client_secret: '${

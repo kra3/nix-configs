@@ -10,6 +10,8 @@
       virtualisation.quadlet.containers.vaultwarden = {
         containerConfig = {
           image = "docker.io/vaultwarden/server:1.37.5";
+          user = "2401:2401";
+          dropCapabilities = [ "ALL" ];
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

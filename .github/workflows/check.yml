@@ -20,7 +20,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32
 
       - name: nix flake check
         run: nix flake check
@@ -33,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32
 
       - name: Evaluate hosts' drvPaths
         run: |
@@ -53,7 +53,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32
 
       - name: Build claude-code (catches upstream release 404s)
         run: nix build --no-link --inputs-from . llm-agents#claude-code
@@ -66,7 +66,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32
 
       - name: actionlint
         run: nix run nixpkgs#actionlint
@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32
 
       # Scans the tree, not history: a leaked value stays in old commits forever, so the
       # fix for a historical hit is rotation, not a permanently red check.

@@ -60,7 +60,7 @@
     };
 
     tsk = {
-      url = "github:smarzban/tsk/v0.13.0";
+      url = "github:smarzban/tsk/v0.14.1";
       flake = false;
     };
   };

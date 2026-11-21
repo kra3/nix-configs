@@ -7,6 +7,18 @@
         flakeModules.nixos.containers-home-auto-home-assistant-default
         flakeModules.nixos.containers-home-auto-otbr-default
         flakeModules.nixos.containers-home-auto-matter-server-default
+        flakeModules.nixos.services-postgres
+      ];
+
+      services.postgresql.ensureDatabases = [ "hass" ];
+      services.postgresql.ensureUsers = [
+        {
+          name = "hass";
+          ensureDBOwnership = true;
+          ensureClauses = {
+            login = true;
+          };
+        }
       ];
     };
 }

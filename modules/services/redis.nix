@@ -2,6 +2,7 @@
   flake.nixosModules.services-redis =
     { config, ... }:
     {
+      key = "services-redis";
       sops.secrets."db.redis_password" = {
         owner = "redis-default";
         group = "redis-default";

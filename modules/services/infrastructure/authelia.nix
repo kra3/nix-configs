@@ -496,7 +496,7 @@
             containerConfig = {
               image = "ghcr.io/authelia/authelia:4.39.28";
               publishPorts = [ "127.0.0.1:9091:9091" ];
-              memory = "256m";
+              memory = "512m";
               userns = "keep-id";
               volumes = [
                 "${config.sops.templates."authelia-configuration.yml".path}:/config/configuration.yml:ro"

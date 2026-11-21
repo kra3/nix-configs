@@ -187,6 +187,24 @@
             resize_mode = "prefix+shift+r";
             command = [
               {
+                key = "prefix+{";
+                type = "shell";
+                command = "${herdr}/bin/herdr pane swap --direction up";
+                description = "swap pane up";
+              }
+              {
+                key = "prefix+}";
+                type = "shell";
+                command = "${herdr}/bin/herdr pane swap --direction down";
+                description = "swap pane down";
+              }
+              {
+                key = "prefix+shift+t";
+                type = "shell";
+                command = "${herdr}/bin/herdr pane move \"$(${herdr}/bin/herdr pane current | ${pkgs.jq}/bin/jq -r .result.pane.pane_id)\" --new-tab";
+                description = "break pane into new tab";
+              }
+              {
                 key = "prefix+g";
                 type = "plugin_action";
                 command = "herdr-bar.open";

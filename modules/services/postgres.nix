@@ -74,6 +74,9 @@
       };
 
       # set DB passwords from sops secrets after postgresql is ready
+      # Known limitation: the script below hard-codes the ghostfolio/hass/rreading_glasses/grafana_ro roles,
+      # so a host importing services-postgres must also import profiles finance/investments,
+      # home-automation/server and media/reading/acquire (true on sutala). Making it per-profile is a follow-up.
       systemd.services.postgresql-set-passwords = {
         description = "Set PostgreSQL user passwords from sops secrets";
         after = [ "postgresql.service" ];

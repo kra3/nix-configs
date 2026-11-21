@@ -15,25 +15,18 @@
 
     ./hardware-configuration.nix
     ./disko.nix
-    flakeModules.nixos.services-system-nix-defaults-nixos
+    flakeModules.nixos.profiles-base-server
+    flakeModules.nixos.profiles-observability-server
+    flakeModules.nixos.profiles-dns-primary
+    flakeModules.nixos.profiles-edge
     flakeModules.nixos.services-system-nix-allow-unfree
     flakeModules.nixos.services-system-nix-autoupgrade
     flakeModules.nixos.services-system-surasa-autodeploy
     flakeModules.nixos.services-media-sendspin
     flakeModules.nixos.hardware-intel-igpu
     flakeModules.nixos.nixpkgs-overlays-nixos
-    flakeModules.nixos.vars
-    flakeModules.nixos.services-infrastructure-acme
-    flakeModules.nixos.services-proxy-nginx
-    flakeModules.nixos.services-monitoring-alloy-host
-    flakeModules.nixos.services-infrastructure-openssh
-    flakeModules.nixos.services-infrastructure-sops
-    flakeModules.nixos.services-infrastructure-authelia
-    flakeModules.nixos.services-infrastructure-homepage
     flakeModules.nixos.services-lg-devmode-extend
-    flakeModules.nixos.services-tailscale
     flakeModules.nixos.services-niri-default
-    flakeModules.nixos.services-dns-default
     flakeModules.nixos.services-postgres
     flakeModules.nixos.services-redis
     flakeModules.nixos.services-backup-usb
@@ -46,7 +39,6 @@
     flakeModules.nixos.services-surveillance-proxy
     flakeModules.nixos.services-surveillance-camera-announce
     flakeModules.nixos.services-discovery-avahi
-    flakeModules.nixos.containers-monitoring
     flakeModules.nixos.containers-media-mgmt-default
     flakeModules.nixos.containers-media-play
     flakeModules.nixos.containers-home-auto
@@ -57,7 +49,6 @@
     flakeModules.nixos.containers-home-auto-wyoming-whisper-default
     flakeModules.nixos.containers-home-auto-wyoming-piper-default
     flakeModules.nixos.containers-life-default
-    flakeModules.nixos.fail2ban
     flakeModules.nixos.services-system-vim
     flakeModules.nixos.services-system-sysadmin
     flakeModules.nixos.services-system-power-tuning
@@ -65,7 +56,6 @@
     flakeModules.nixos.services-virtualisation-default
     flakeModules.nixos.users-root
     flakeModules.nixos.users-kra3
-    flakeModules.nixos.users-authelia
   ];
 
   vars.network = {

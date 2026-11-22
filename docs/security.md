@@ -15,7 +15,7 @@ Output of the 2026-11 audit. Each entry is either a deliberate exception or a kn
 | `ma-snapcast` 1705 | Same allow-list as other vhosts | No worse than the other vhosts; Snapcast JSON-RPC has no auth of its own |
 | `/api` auth bypasses | arr apps, seerr, fitness `/api/ingest` | Each is guarded by the app's own API key |
 | go2rtc `0.0.0.0:1984` | Unchanged | Firewall opens 1984 only on `ve-home-auto`; Home Assistant needs it |
-| Alloy group access | Dropped the unneeded `media` and `nginx` groups; `jellyfin` (media-play) and `grafana` (monitoring) stay | Needed to read those apps' log files, but they also make that app's group-readable secrets readable to Alloy; fixing it means moving the logs to a dedicated group and changing logrotate, which risks silent log loss and needs live testing |
+| Alloy group access | None: Alloy has no extra groups and reads journals only | Jellyfin and Grafana log to the journal, so the file sources and their group access were removed |
 | LinuxServer images | Start as root, app drops to `abc` | Images do not support `user=` |
 
 ## Deferred

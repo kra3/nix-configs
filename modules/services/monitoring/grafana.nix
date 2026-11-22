@@ -1009,18 +1009,5 @@
         su = "grafana grafana";
       };
 
-      environment.etc."alloy/grafana.alloy".text = ''
-        loki.source.file "grafana" {
-          targets = [
-            {
-              __path__ = "/var/lib/grafana/data/log/grafana.log",
-              job = "grafana",
-              host = "${config.networking.hostName}",
-              role = "${if config.boot.isContainer then "container" else "host"}",
-            },
-          ]
-          forward_to = [loki.write.default.receiver]
-        }
-      '';
     };
 }

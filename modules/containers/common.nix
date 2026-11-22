@@ -43,19 +43,6 @@
       users.users.alloy = {
         isSystemUser = true;
         group = "alloy";
-        extraGroups = lib.mkAfter (
-          lib.optionals (config.services.declarative-jellyfin.enable or false) [ "jellyfin" ]
-          ++ lib.optionals (config.services.adguardhome.enable or false) [ "adguardhome" ]
-          ++ lib.optionals (config.services.radarr.enable or false) [ "radarr" ]
-          ++ lib.optionals (config.services.sonarr.enable or false) [ "sonarr" ]
-          ++ lib.optionals (config.services.lidarr.enable or false) [ "lidarr" ]
-          ++ lib.optionals (config.services.prowlarr.enable or false) [ "prowlarr" ]
-          ++ lib.optionals (config.services.bazarr.enable or false) [ "bazarr" ]
-          ++ lib.optionals (config.services.sabnzbd.enable or false) [ "sabnzbd" ]
-          ++ lib.optionals (config.services.seerr.enable or false) [ "jellyseerr" ]
-          ++ lib.optionals (config.services.recyclarr.enable or false) [ "recyclarr" ]
-          ++ lib.optionals (config.services.grafana.enable or false) [ "grafana" ]
-        );
       };
 
       services.alloy = {

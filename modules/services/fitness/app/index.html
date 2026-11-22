@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Fitness</title>
-<meta name="theme-color" content="#181825">
+<meta name="theme-color" content="#E6E9EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#181825" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,6 +13,7 @@
 <link rel="stylesheet" href="app.css">
 </head>
 <body data-view="coach">
+<a class="skip" href="#main">Skip to content</a>
 
 <div class="wrap">
   <header>
@@ -36,7 +38,7 @@
 
   <p class="banner" id="banner" hidden></p>
 
-  <div class="grid">
+  <div class="grid" id="main">
     <section class="card span2" data-view="coach" aria-labelledby="h-today">
       <h2 id="h-today">Today</h2>
       <div id="bars"></div>
@@ -328,7 +330,7 @@
     <section class="card span2" data-view="more">
       <details name="more" id="sync-details"><summary>Phone sync<span class="hl" id="hl-sync"></span></summary>
       <p class="sub">Your Apple Health data reaches the app through the Fitness sync shortcut. Paste this key when it asks.</p>
-      <input type="text" id="sync-key" readonly aria-label="Sync key">
+      <input type="text" id="sync-key" readonly spellcheck="false" translate="no" aria-label="Sync key">
       <div class="actions">
         <button type="button" class="btn ghost" id="sync-copy">Copy</button>
         <button type="button" class="btn ghost" id="sync-new">New key</button>
@@ -344,7 +346,7 @@
       <div class="actions">
         <a class="btn ghost" href="api/export" download="fitness-export.json">Export JSON</a>
         <label class="btn ghost" for="imp">Import JSON</label>
-        <input type="file" id="imp" accept="application/json,.json" hidden>
+        <input type="file" id="imp" class="sr" accept="application/json,.json">
         <span class="status" id="st-data" role="status" aria-live="polite"></span>
       </div>
       </details>

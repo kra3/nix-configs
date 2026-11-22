@@ -220,24 +220,5 @@
         copytruncate = true;
       };
 
-      environment.etc."alloy/jellyfin.alloy".text = ''
-        loki.source.file "jellyfin" {
-          targets = [
-            {
-              __path__ = "/var/log/jellyfin/jellyfin.log",
-              job = "jellyfin",
-              host = "${config.networking.hostName}",
-              role = "${if config.boot.isContainer then "container" else "host"}",
-            },
-            {
-              __path__ = "/var/log/jellyfin.txt",
-              job = "jellyfin",
-              host = "${config.networking.hostName}",
-              role = "${if config.boot.isContainer then "container" else "host"}",
-            },
-          ]
-          forward_to = [loki.write.default.receiver]
-        }
-      '';
     };
 }

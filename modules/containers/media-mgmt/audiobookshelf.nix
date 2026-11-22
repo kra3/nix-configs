@@ -38,6 +38,10 @@
       }
       // flakeLib.quadlet.mkNetworkDeps { networkServices = [ "media-mgmt-network.service" ]; };
 
+      systemd.tmpfiles.rules = [
+        "Z /srv/appdata/media-mgmt/audiobookshelf 2770 root media - -"
+      ];
+
       sops.secrets."media.audiobookshelf.oidc_client_secret" = { };
 
       # No forwardAuth: its auth_request redirect broke Audiobookshelf's own
@@ -47,10 +51,7 @@
           {
             domain = config.vars.acme.domain;
             cidrs = config.vars.network.nginxAllowCidrs;
-            # Container's actual listen port (80), not the old published host
-            # port (13378) — those only matched by coincidence of the publish
-            # mapping, which no longer exists.
-            upstream = "http://${ip}:80";
+            upstream = "http://${ip}:8080";
           };
     };
 }

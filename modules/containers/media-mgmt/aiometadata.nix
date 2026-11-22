@@ -46,6 +46,8 @@
       systemd.tmpfiles.rules = [
         "d /var/cache/aiometadata 2770 root media - -"
         "d /var/cache/aiometadata/poster-cache 2770 root media - -"
+        "Z /var/cache/aiometadata 2770 root media - -"
+        "Z /srv/appdata/media-mgmt/aiometadata 2770 root media - -"
       ];
 
       virtualisation.quadlet.containers.aiometadata = {

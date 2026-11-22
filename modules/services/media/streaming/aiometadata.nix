@@ -5,6 +5,8 @@
       virtualisation.quadlet.containers.aiometadata = {
         containerConfig = {
           image = "ghcr.io/cedya77/aiometadata:4.1.0@sha256:c17e1aa7c670055e14dea99087cfe18ff07fa6ea4dfce9c3484830a718e066ce";
+          user = "1000:2000";
+          dropCapabilities = [ "ALL" ];
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

@@ -211,7 +211,7 @@
                         siteMonitor = "https://audiobookshelf.${domain}";
                         widget = {
                           type = "audiobookshelf";
-                          url = "http://${ip.audiobookshelf}:80";
+                          url = "http://${ip.audiobookshelf}:8080";
                           key = "{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}";
                         };
                       };

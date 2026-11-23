@@ -2,8 +2,8 @@
 'use strict';
 function applyTheme(t){
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-  var m = document.querySelector('meta[name="theme-color"]');
-  if (m) m.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  var c = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.content = t ? c : (m.media.indexOf('dark') < 0 ? '#FAFAFA' : '#0E0F11'); });
 }
 var theme = '';
 try { theme = localStorage.getItem('fitness.theme') || ''; } catch(e){}
@@ -391,7 +391,7 @@ function renderBars(){
       vl.textContent = '— / ' + fmt(r.t, 1) + (r.u ? ' ' + r.u : '');
     } else {
       var pct = Math.max(0, Math.min(100, r.v / r.t * 100));
-      fl.style.width = pct + '%';
+      fl.style.transform = 'scaleX(' + pct / 100 + ')';
       if (r.mode === 'min' && r.v >= r.t) fl.classList.add('ok');
       if (r.mode === 'max') fl.classList.add(r.v <= r.t * 1.05 ? 'ok' : 'warn');
       vl.textContent = fmt(r.v, 1) + ' / ' + fmt(r.t, 1) + (r.u ? ' ' + r.u : '');
@@ -814,7 +814,7 @@ function renderEditor(){
   var nr = el('div', 'pe-nums'), dn = draft.names || {};
   ['A', 'B'].forEach(function(w){
     var ni = document.createElement('input'); ni.type = 'text'; ni.id = 'pn-' + w; ni.maxLength = 20; ni.value = dn[w] || '';
-    ni.placeholder = 'Workout ' + w; ni.setAttribute('aria-label', 'Name of workout ' + w); nr.appendChild(ni);
+    ni.placeholder = 'Workout ' + w + '…'; ni.setAttribute('aria-label', 'Name of workout ' + w); nr.appendChild(ni);
   });
   host.appendChild(nr);
   var bk = draft.block || {}, bx = el('div', 'pe-block');
@@ -822,7 +822,7 @@ function renderEditor(){
   var br = el('div', 'pe-nums');
   var bs = document.createElement('input'); bs.type = 'date'; bs.id = 'pb-start'; bs.value = bk.start || ''; bs.setAttribute('aria-label', 'Block start date');
   var bwk = mkInput('pb-weeks', 'weeks', 'Block length in weeks'); bwk.min = '4'; bwk.max = '16'; bwk.step = '1'; bwk.inputMode = 'numeric'; bwk.value = bk.weeks || '';
-  var bdl = document.createElement('input'); bdl.type = 'text'; bdl.id = 'pb-deload'; bdl.placeholder = 'deload weeks, e.g. 6'; bdl.value = (bk.deload || []).join(', '); bdl.setAttribute('aria-label', 'Deload weeks');
+  var bdl = document.createElement('input'); bdl.type = 'text'; bdl.id = 'pb-deload'; bdl.placeholder = 'deload weeks, e.g. 6…'; bdl.value = (bk.deload || []).join(', '); bdl.setAttribute('aria-label', 'Deload weeks');
   br.appendChild(bs); br.appendChild(bwk); br.appendChild(bdl); bx.appendChild(br); host.appendChild(bx);
   list.forEach(function(e, i){
     var row = document.createElement('div'); row.className = 'pe';
@@ -905,7 +905,7 @@ function renderMuscles(){
   var worst = null;
   muscleSets.forEach(function(m){
     var row = el('div', 'bar-row'), tr = el('div', 'track'), fl = el('div', 'fill'), pct = m.planned > 0 ? Math.min(100, m.done / m.planned * 100) : 0;
-    fl.style.width = pct + '%';
+    fl.style.transform = 'scaleX(' + pct / 100 + ')';
     if (m.planned > 0 && m.done >= m.planned) fl.classList.add('ok');
     tr.appendChild(fl);
     row.appendChild(el('div', 'name', m.m)); row.appendChild(tr); row.appendChild(el('div', 'val', fmt(m.done, 1) + ' / ' + (m.planned > 0 ? fmt(m.planned, 1) : '–')));
@@ -1370,7 +1370,7 @@ function renderProposals(list){
     if (!lines.length) lines = [['chg', 'No visible change.']];
     lines.forEach(function(l){ ul.appendChild(el('li', l[0], l[1])); });
     box.appendChild(ul);
-    var note = document.createElement('input'); note.type = 'text'; note.maxLength = 500; note.placeholder = 'Note for your coach (optional)'; note.setAttribute('aria-label', 'Note for your coach');
+    var note = document.createElement('input'); note.type = 'text'; note.maxLength = 500; note.placeholder = 'Note for your coach (optional)…'; note.setAttribute('aria-label', 'Note for your coach');
     box.appendChild(note);
     var acts = el('div', 'actions'), st = el('span', 'status');
     st.setAttribute('role', 'status'); st.setAttribute('aria-live', 'polite');
@@ -1948,6 +1948,7 @@ function setView(){
   redraw();
 }
 window.addEventListener('hashchange', setView);
+document.querySelector('.skip').addEventListener('click', function(e){ e.preventDefault(); $('main').focus(); });
 setView();
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && wantAwake) keepAwake(true); if (!document.hidden) loadCoach(false); });
 $('px-sel').addEventListener('change', function(){ pxSel = this.value; renderProgress(); });

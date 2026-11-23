@@ -5,8 +5,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#181825",
-  "theme_color": "#181825",
+  "background_color": "#FAFAFA",
+  "theme_color": "#FAFAFA",
   "shortcuts": [
     { "name": "Gym view", "short_name": "Gym", "url": "./#gym", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ],

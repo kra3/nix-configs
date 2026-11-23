@@ -1,14 +1,14 @@
 {
   "repo": "Sendspin/sendspin-cpp-cli",
-  "version": "v0.4.0",
+  "version": "v1.0.0",
   "assets": {
     "aarch64-linux": {
       "arch": "arm64",
-      "hash": "sha256-A1iZi6eR3JcB2uIT/XDEAS+9ASZDLrZ8f/Agiezi8Mo="
+      "hash": "sha256-VPsEQPJAhbviSX+hpGiAmtBwaxvIJNxWFZdOqCKxXdk="
     },
     "x86_64-linux": {
       "arch": "x86_64",
-      "hash": "sha256-QO/Ks57zA9Am2IgK0a2ntTsp6AYRSuN0T57TPa7gxdk="
+      "hash": "sha256-MPtE44r0TP2ukB3QfLoaBdAcIlIH9wLiCqlvJQgDluQ="
     }
   }
 }

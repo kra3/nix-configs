@@ -71,6 +71,23 @@
         "type": "github"
       }
     },
+    "catppuccin-lazygit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791650580,
+        "narHash": "sha256-TUrQcoA5T46Jvl9jeHiNO/+8ZddtUqRY6eDr51zGbYU=",
+        "owner": "catppuccin",
+        "repo": "lazygit",
+        "rev": "1a4b26cbc2b5be05cc5494d0d7f764120a2cf86d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "ref": "v2.3.1",
+        "repo": "lazygit",
+        "type": "github"
+      }
+    },
     "declarative-jellyfin": {
       "inputs": {
         "nix-fast-build": "nix-fast-build",
@@ -595,6 +612,7 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
+        "catppuccin-lazygit": "catppuccin-lazygit",
         "declarative-jellyfin": "declarative-jellyfin",
         "disko": "disko",
         "flake-parts": "flake-parts_2",

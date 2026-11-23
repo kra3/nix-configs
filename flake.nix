@@ -47,6 +47,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    catppuccin-lazygit = {
+      url = "github:catppuccin/lazygit/v2.3.1";
+      flake = false;
+    };
+
     mcp-nixos.url = "github:utensils/mcp-nixos";
 
     nur.url = "github:nix-community/NUR";

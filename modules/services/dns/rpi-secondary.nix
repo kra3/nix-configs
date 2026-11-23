@@ -134,6 +134,8 @@
 
         settings = {
           schema_version = config.services.adguardhome.package.schema_version;
+          auth_attempts = 3;
+          block_auth_min = 15;
 
           dns = {
             bind_hosts = [

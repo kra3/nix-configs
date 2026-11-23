@@ -3,7 +3,7 @@
 function applyTheme(t){
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   var c = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
-  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.content = t ? c : (m.media.indexOf('dark') < 0 ? '#FAFAFA' : '#0E0F11'); });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.content = t ? c : (m.media.indexOf('dark') < 0 ? '#E4E7EA' : '#101214'); });
 }
 var theme = '';
 try { theme = localStorage.getItem('fitness.theme') || ''; } catch(e){}
@@ -631,15 +631,79 @@ function swapText(ex){
 function logAsSuggested(ex, i, sg){
   var s0 = sg ? sg.sets[i] : null, r = $('in-' + ex.k + '-' + i + '-r'), w = $('in-' + ex.k + '-' + i + '-w');
   if (!s0){ r.focus(); return; }
-  if (w && w.value === '' && s0[0] != null) w.value = s0[0];
-  if (r.value === '') r.value = s0[1];
+  var fire = function(i){ i.dispatchEvent(new Event('input', {bubbles: true})); };
+  if (w && w.value === '' && s0[0] != null){ w.value = s0[0]; fire(w); }
+  var fresh = r.value === '';
+  if (fresh){ r.value = s0[1]; fire(r); }
   restStart(ex.rest);
+  exProgress(ex, fresh);
 }
 function mkInput(id, ph, label){
   var el = document.createElement('input');
   el.type = 'number'; el.inputMode = 'decimal'; el.step = 'any'; el.min = '0';
   el.id = id; el.placeholder = ph || ''; el.setAttribute('aria-label', label);
   return el;
+}
+// Plates are drawn in competition colours; only barbell exercises get the bar.
+var BAR_KG = 20, PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
+var PLATE_COL = {25: '#D62828', 20: '#1D5FD1', 15: '#F2C200', 10: '#2A9D4E', 5: '#F4F4F2', 2.5: '#D62828', 1.25: '#B9BEC4'};
+var PLATE_H = {25: 66, 20: 66, 15: 66, 10: 58, 5: 47, 2.5: 34, 1.25: 28}, PLATE_W = {25: 20, 20: 20, 15: 18, 10: 16, 5: 12, 2.5: 10, 1.25: 7};
+function platesFor(total){
+  var side = (total - BAR_KG) / 2, out = [];
+  PLATES.forEach(function(p){ while (side + 1e-9 >= p){ out.push(p); side -= p; } });
+  return {out: out, left: side > 0.01 ? side : 0};
+}
+function barSvg(pl){
+  var x = 46, s = '';
+  pl.forEach(function(p){
+    var h = PLATE_H[p], w = PLATE_W[p];
+    s += '<rect x="' + x + '" y="' + (54 - h / 2) + '" width="' + w + '" height="' + h + '" rx="5" fill="' + PLATE_COL[p] + '" stroke="#14161A" stroke-opacity="' + (p === 5 ? 1 : .25) + '" stroke-width="1.5"/>';
+    s += '<text x="' + (x + w / 2) + '" y="' + (54 + h / 2 + 13) + '" text-anchor="middle">' + p + '</text>';
+    x += w + 3;
+  });
+  var W = Math.max(340, x + 16);
+  return '<svg viewBox="0 0 ' + W + ' 108" role="img" aria-label="Plates on each side: ' + (pl.length ? pl.join(', ') + ' kg' : 'none') + '"><rect x="0" y="48" width="' + W + '" height="12" rx="4" fill="#B9BEC4"/><rect x="26" y="41" width="10" height="26" rx="3" fill="#8D939A"/>' + s + '</svg>';
+}
+function updBar(box){
+  var bar = box.querySelector('.bar'); if (!bar) return;
+  var w = null;
+  box.querySelectorAll('input[id$="-w"]').forEach(function(i){ if (w == null) w = num(i.value) != null ? num(i.value) : num(i.placeholder); });
+  if (w == null || w <= BAR_KG){ bar.hidden = true; return; }
+  var p = platesFor(w);
+  bar.hidden = false;
+  bar.querySelector('.bar-art').innerHTML = barSvg(p.out);
+  bar.querySelector('.bar-l').textContent = p.out.length ? 'Each side ' + p.out.join(' + ') + (p.left ? ' (+' + fmt(p.left, 2) + ' short)' : '') : 'Bar only';
+  bar.querySelector('.bar-r').textContent = fmt(w, 2) + ' kg';
+  bar.title = 'Total with a ' + BAR_KG + ' kg bar';
+}
+// Reps against the exercise's range: the marker is the bottom of the range, green means the top was reached.
+function updRail(row, ex){
+  var r = row.querySelector('input[id$="-r"]'), v = num(r.value), w = row.querySelector('.rail-w');
+  var unit = ex.u === 'sec' ? ' sec' : ' reps', hit = v != null && v >= ex.hi;
+  w.classList.toggle('hit', hit);
+  row.querySelector('.rail i').style.transform = 'scaleX(' + (v == null ? 0 : Math.min(1, v / ex.hi)) + ')';
+  row.querySelector('.rail-t').textContent = v == null ? 'Aim for ' + ex.lo + '–' + ex.hi + unit : hit ? (ex.u === 'kg' ? 'Top of range: add weight' : 'Top of range') : v < ex.lo ? 'Below ' + ex.lo + unit : 'In range';
+}
+function stepReps(row, ex, d){
+  var r = row.querySelector('input[id$="-r"]'), was = r.value !== '';
+  var base = was ? num(r.value) : (num(r.placeholder) != null ? num(r.placeholder) : ex.lo);
+  r.value = Math.max(0, base + d);
+  r.dispatchEvent(new Event('input', {bubbles: true}));
+  if (!was) r.dispatchEvent(new Event('change', {bubbles: true}));
+  exProgress(ex, !was);
+}
+// One effort answer per exercise: how many reps were left on the last set (the stored RIR).
+var EFFORT = [['Easy', 3, '3 or more reps left'], ['Good', 2, '2 reps left'], ['Hard', 1, '1 rep left'], ['Failed', 0, 'no reps left']];
+// The answer belongs to the last logged set; earlier sets keep what they had.
+function lastLogged(box){ var l = box.querySelectorAll('.set.logged'); return l.length ? l[l.length - 1] : null; }
+function syncEffort(box){
+  var row = lastLogged(box), q = row && row.querySelector('select[id$="-q"]');
+  var cur = q && q.value !== '' ? Math.min(3, Number(q.value)) : null;
+  box.querySelectorAll('.chips button').forEach(function(b){ b.disabled = !row; b.setAttribute('aria-pressed', Number(b.dataset.v) === cur ? 'true' : 'false'); });
+}
+function setOpen(box, open){
+  box.classList.toggle('collapsed', !open);
+  box.querySelector('.ex-head').setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 function renderWorkout(){
   var tabs = $('tabs'); tabs.textContent = '';
@@ -659,60 +723,145 @@ function renderWorkout(){
   $('planed').textContent = '';
   var host = $('exlist'); host.textContent = '';
   var saved = (docs[sel] && docs[sel].sets) || {};
-  host.appendChild(el('p', 'hint', 'Per set: RIR is how many more reps you could have done (–  means not recorded). Tick Pain if the set hurt.'));
-  PLAN[wsel].forEach(function(ex){
-    var box = document.createElement('div'); box.className = 'ex';
-    var head = document.createElement('div'); head.className = 'ex-head';
-    var nm = document.createElement('button'); nm.type = 'button'; nm.className = 'nm linkish'; nm.textContent = ex.n;
-    nm.setAttribute('aria-label', ex.n + ': show progress');
-    nm.addEventListener('click', function(){ showProgress(ex.k); });
-    var tg = document.createElement('span'); tg.className = 'tg';
-    tg.textContent = ex.sets + ' sets · ' + (ex.u === 'sec' ? ex.lo + '–' + ex.hi + ' sec' : ex.lo + '–' + ex.hi + ' reps');
-    head.appendChild(nm); head.appendChild(tg); box.appendChild(head);
-    var last = lastFor(ex.k);
-    var sg = suggestSets(ex, last);
-    if (last){ var h = document.createElement('p'); h.className = 'hint'; h.textContent = lastText(ex, last); box.appendChild(h); }
-    if (sg){ var h2 = document.createElement('p'); h2.className = 'hint sg'; h2.textContent = suggestText(ex, sg); box.appendChild(h2); }
-    var sets = document.createElement('div'); sets.className = 'sets';
+  PLAN[wsel].forEach(function(ex, xi){
+    var box = document.createElement('div'); box.className = 'ex collapsed'; box.dataset.k = ex.k;
+    var head = document.createElement('button'); head.type = 'button'; head.className = 'ex-head'; head.setAttribute('aria-expanded', 'false');
+    var idx = el('span', 'ex-idx', String(xi + 1)); idx.setAttribute('aria-hidden', 'true');
+    var tt = el('span', 'ex-t'); tt.appendChild(el('b', null, ex.n));
+    tt.appendChild(el('span', 'ex-sum', ex.sets + ' sets · ' + ex.lo + '–' + ex.hi + (ex.u === 'sec' ? ' sec' : ' reps')));
+    head.appendChild(idx); head.appendChild(tt); head.appendChild(el('span', 'ex-chev'));
+    head.addEventListener('click', function(){ setOpen(box, box.classList.contains('collapsed')); });
+    box.appendChild(head);
+    var body = el('div', 'ex-body'); box.appendChild(body);
+    var last = lastFor(ex.k), sg = suggestSets(ex, last);
+    if (last) body.appendChild(el('p', 'hint', lastText(ex, last)));
+    if (sg) body.appendChild(el('p', 'hint sg', suggestText(ex, sg)));
+    var lb = libEx(ex.k);
+    if (ex.u === 'kg' && lb && /barbell/i.test(lb.equipment || '')){
+      var bar = el('div', 'bar'); bar.hidden = true;
+      bar.appendChild(el('div', 'bar-art'));
+      var cap = el('div', 'bar-cap'); cap.appendChild(el('span', 'bar-l')); cap.appendChild(el('span', 'bar-r')); bar.appendChild(cap);
+      body.appendChild(bar);
+    }
+    var sets = el('div', 'sets');
     for (var i = 0; i < nSets(ex, saved); i++){
-      var row = document.createElement('div'); row.className = 'set';
+      var row = el('div', ex.u === 'kg' ? 'set' : 'set nw');
       var ls = sg ? sg.sets[i] : null, sv = saved[ex.k] && saved[ex.k][i] ? saved[ex.k][i] : null;
       var no = document.createElement('button'); no.type = 'button'; no.className = 'no'; no.textContent = (i + 1);
       no.setAttribute('aria-label', 'Set ' + (i + 1) + (ls ? ': log as ' + (ex.u === 'kg' ? fmt(ls[0], 2) + ' kg × ' + ls[1] : ls[1]) + ' and start rest' : ': enter it'));
       no.addEventListener('click', (function(i_){ return function(){ logAsSuggested(ex, i_, sg); }; })(i));
       row.appendChild(no);
+      var unit = ex.u === 'sec' ? 'sec' : 'reps';
+      var r = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : unit, ex.n + ' set ' + (i + 1) + (ex.u === 'sec' ? ' seconds' : ' reps'));
+      if (sv) r.value = sv[1];
+      r.addEventListener('change', function(ev){ onRepsEntered(ev, ex); });
       if (ex.u === 'kg'){
         var w = mkInput('in-' + ex.k + '-' + i + '-w', ls ? fmt(ls[0], 2) : 'kg', ex.n + ' set ' + (i + 1) + ' weight in kg');
         if (sv && sv[0] != null) w.value = sv[0];
-        var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
-        var r = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : 'reps', ex.n + ' set ' + (i + 1) + ' reps');
-        if (sv) r.value = sv[1];
-        r.addEventListener('change', function(ev){ onRepsEntered(ev, ex); });
-        row.appendChild(w); row.appendChild(x); row.appendChild(r);
-      } else {
-        var r2 = mkInput('in-' + ex.k + '-' + i + '-r', ls ? fmt(ls[1], 0) : (ex.u === 'sec' ? 'sec' : 'reps'), ex.n + ' set ' + (i + 1) + (ex.u === 'sec' ? ' seconds' : ' reps'));
-        if (sv) r2.value = sv[1];
-        r2.addEventListener('change', function(ev){ onRepsEntered(ev, ex); });
-        row.appendChild(r2);
+        var wf = el('div', 'w fld'); wf.appendChild(w); wf.appendChild(el('em', null, 'kg'));
+        row.appendChild(wf);
       }
-      var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.className = 'rir'; rq.title = 'Reps in reserve';
-      rq.setAttribute('aria-label', ex.n + ' set ' + (i + 1) + ' reps in reserve');
+      var st = el('div', 's step');
+      var mn = el('button', 'stp', '−'), pl = el('button', 'stp', '+'); mn.type = pl.type = 'button';
+      mn.setAttribute('aria-label', 'One fewer ' + unit); pl.setAttribute('aria-label', 'One more ' + unit);
+      mn.addEventListener('click', (function(rw){ return function(){ stepReps(rw, ex, -1); }; })(row));
+      pl.addEventListener('click', (function(rw){ return function(){ stepReps(rw, ex, 1); }; })(row));
+      st.appendChild(mn); st.appendChild(r); st.appendChild(pl); row.appendChild(st);
+      // The per-set effort select stays in the page for saving; the buttons below the sets fill it in.
+      var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.hidden = true;
       ['', 0, 1, 2, 3, 4, 5].forEach(function(v){ opt(rq, v === '' ? '' : String(v), v === '' ? '–' : String(v), sv && sv[2] === v); });
       var pn = document.createElement('button'); pn.type = 'button'; pn.className = 'pn'; pn.id = 'in-' + ex.k + '-' + i + '-p'; pn.textContent = 'Pain';
       pn.setAttribute('aria-label', ex.n + ' set ' + (i + 1) + ' pain'); pn.setAttribute('aria-pressed', sv && sv[3] === true ? 'true' : 'false');
       pn.addEventListener('click', function(){ this.setAttribute('aria-pressed', this.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); });
-      row.appendChild(rq); row.appendChild(pn);
+      var rw_ = el('div', 'r rail-w'), rh = el('div', 'rail-h'), rl = el('div', 'rail');
+      rh.appendChild(el('span', 'rail-t')); rh.appendChild(pn);
+      rl.appendChild(el('i')); var mk = el('u'); mk.style.left = (ex.lo / ex.hi * 100) + '%'; rl.appendChild(mk);
+      rw_.appendChild(rh); rw_.appendChild(rl); row.appendChild(rw_); row.appendChild(rq);
+      row.addEventListener('input', function(e){
+        if (/-r$/.test(e.target.id)) updRail(this, ex); else if (/-w$/.test(e.target.id)) updBar(box);
+      });
+      row.addEventListener('focusout', function(e){
+        var rr = this.querySelector('input[id$="-r"]');
+        if (!this.contains(e.relatedTarget)) exProgress(ex, !!rr && rr.value !== '' && !this.classList.contains('logged'));
+      });
+      updRail(row, ex);
       sets.appendChild(row);
     }
-    box.appendChild(sets);
-    var lb = libEx(ex.k);
+    body.appendChild(sets);
+    var eff = el('div', 'eff'), ef = el('div', 'lbl', 'How hard was the last set?'), chips = el('div', 'chips');
+    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'How hard was the last set');
+    EFFORT.forEach(function(e){
+      var c = el('button', null, e[0]); c.type = 'button'; c.dataset.v = e[1]; c.setAttribute('aria-label', e[0] + ': ' + e[2]);
+      c.addEventListener('click', function(){
+        var row = lastLogged(box), q = row && row.querySelector('select[id$="-q"]'); if (!q) return;
+        q.value = c.getAttribute('aria-pressed') === 'true' ? '' : String(e[1]);
+        syncEffort(box);
+      });
+      chips.appendChild(c);
+    });
+    eff.appendChild(ef); eff.appendChild(chips);
+    eff.appendChild(el('p', 'hint', 'Easy: 3 or more reps left. Good: 2. Hard: 1. Failed: none.'));
+    body.appendChild(eff);
     if (lb && lb.cues && lb.cues.length){
       var dt = el('details', 'cues'); dt.appendChild(el('summary', null, 'Cues'));
       var ul = el('ul'); lb.cues.forEach(function(c){ ul.appendChild(el('li', null, c)); });
-      dt.appendChild(ul); box.appendChild(dt);
+      dt.appendChild(ul); body.appendChild(dt);
     }
+    var pg = el('button', 'linkish', 'See progress'); pg.type = 'button';
+    pg.addEventListener('click', function(){ showProgress(ex.k); });
+    body.appendChild(pg);
     host.appendChild(box);
+    syncEffort(box); updBar(box);
+    exProgress(ex, false, true);
   });
+  var first = host.querySelector('.ex:not(.done)'); if (first) setOpen(first, true);
+}
+function kgRange(a){ var lo = Math.min.apply(null, a), hi = Math.max.apply(null, a); return lo === hi ? fmt(lo, 2) : fmt(lo, 2) + '–' + fmt(hi, 2); }
+// Update an exercise's progress; once every set is logged, collapse it, open the next one and scroll to it.
+function exProgress(ex, jump, init){
+  var box = document.querySelector('.ex[data-k="' + CSS.escape(ex.k) + '"]'); if (!box) return;
+  var rows = box.querySelectorAll('.set'), n = 0, pend = null, reps = [], kgs = [];
+  rows.forEach(function(rw){
+    var r = rw.querySelector('input[id$="-r"]'), w = rw.querySelector('input[id$="-w"]'), on = !!r && r.value !== '';
+    rw.classList.remove('next'); rw.classList.toggle('logged', on);
+    if (on){ n++; reps.push(r.value); if (w && num(w.value) != null) kgs.push(num(w.value)); } else if (!pend) pend = rw;
+  });
+  syncEffort(box);
+  if (pend) pend.classList.add('next');
+  var done = rows.length > 0 && !pend;
+  box.classList.toggle('done', done);
+  var idx = box.querySelector('.ex-idx'), sum = box.querySelector('.ex-sum');
+  idx.textContent = done ? '✓' : String(Array.prototype.indexOf.call(box.parentNode.children, box) + 1);
+  sum.textContent = n ? (done ? reps.join(' · ') + (ex.u === 'sec' ? ' sec' : ' reps') + (kgs.length ? ' @ ' + kgRange(kgs) + ' kg' : '') : n + ' of ' + rows.length + ' sets logged') : ex.sets + ' sets · ' + ex.lo + '–' + ex.hi + (ex.u === 'sec' ? ' sec' : ' reps');
+  if (init || !jump) return;
+  var t = pend;
+  if (done){
+    setOpen(box, false);
+    for (var nx = box.nextElementSibling; nx && !t; nx = nx.nextElementSibling){
+      if (nx.classList.contains('done')) continue;
+      setOpen(nx, true); t = nx.querySelector('.set.next') || nx;
+    }
+  }
+  (t || $('save-workout')).scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
+}
+// Coach: today's session first, with the targets the plan suggests.
+function renderHero(){
+  var h = $('hero'), next = suggestWorkout(sel), logged = docs[sel] && docs[sel].workout, k = logged || next;
+  if (!PLAN[k] || !PLAN[k].length){ h.hidden = true; return; }
+  h.hidden = false;
+  $('hero-k').textContent = logged ? 'Logged today' : 'Next up';
+  $('h-hero').textContent = wname(k);
+  var list = $('hero-list'); list.textContent = ''; var sub = '';
+  PLAN[k].forEach(function(ex){
+    var sg = suggestSets(ex, lastFor(ex.k)), row = el('div'), first = sg && sg.sets[0];
+    if (!sub && sg) sub = suggestText(ex, sg);
+    row.appendChild(el('b', null, ex.n));
+    row.appendChild(el('span', null, ex.sets + ' × ' + ex.lo + '–' + ex.hi + (ex.u === 'sec' ? ' sec' : '') + (ex.u === 'kg' && first && first[0] != null ? ' · ' + fmt(first[0], 2) + ' kg' : '')));
+    list.appendChild(row);
+  });
+  $('hero-sub').textContent = logged ? '' : sub; $('hero-sub').hidden = !sub || !!logged;
+  $('hero-go').textContent = logged ? 'Open workout' : 'Start session';
+  $('hero-go').onclick = function(){ wsel = k; renderWorkout(); location.hash = '#gym'; };
 }
 
 /* ---------- plan editor ---------- */
@@ -1646,7 +1795,7 @@ function renderHeader(){
   if (bw) sub.textContent += ' · Block week ' + bw.n + ' of ' + bw.weeks + (bw.light ? ' · lighter week' : '');
 }
 function renderDerived(){
-  renderHeader(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderFoodHeart(); renderMuscles();
+  renderHeader(); renderHero(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderFoodHeart(); renderMuscles();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------

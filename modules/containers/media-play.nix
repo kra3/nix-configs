@@ -90,7 +90,7 @@
               domain = config.vars.acme.domain;
               cidrs = config.vars.network.nginxAllowCidrs;
               upstream = "http://${config.vars.network.containers.mediaPlay.localAddress}:8096";
-            }) { locations."/metrics".return = "404"; }
+            }) { locations."~* ^/metrics".return = "404"; }
           );
 
       services.nginx.virtualHosts."navidrome.${config.vars.acme.domain}" =

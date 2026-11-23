@@ -1,5 +1,7 @@
 {
-  flake.homeManagerModules.home-git-lazygit = { ... }: {
+  flake.homeManagerModules.home-git-lazygit = { inputs, ... }: {
+    catppuccin.sources.lazygit = "${inputs.catppuccin-lazygit}/themes";
+
     programs.lazygit = {
       enable = true;
       settings = {
@@ -29,7 +31,7 @@
 
           border = "rounded";
 
-          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE), not an explicit block here.
+          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE); source pinned above for the 2.3.1 authorColors fix.
         };
 
         git = {

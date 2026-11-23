@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Fitness</title>
-<meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E0F11" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E4E7EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101214" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -29,15 +29,23 @@
     </div>
   </header>
   <nav id="nav" aria-label="Sections">
-    <a href="#coach">Coach<span class="badge" id="co-badge" hidden></span></a>
-    <a href="#gym">Gym</a>
-    <a href="#trends" class="aux">Trends</a>
-    <a href="#more" class="aux">More</a>
+    <a href="#coach"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>Coach<span class="badge" id="co-badge" hidden></span></a>
+    <a href="#gym"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg></span>Gym</a>
+    <a href="#trends"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18l5-6 4 3 7-9"/></svg></span>Trends</a>
+    <a href="#more"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/></svg></span>More</a>
 </nav>
 
   <p class="banner" id="banner" hidden></p>
 
   <div class="grid" id="main" tabindex="-1">
+    <section class="card hero span2" data-view="coach" id="hero" aria-labelledby="h-hero" hidden>
+      <div class="lbl" id="hero-k">Next up</div>
+      <h2 id="h-hero"></h2>
+      <p class="hero-sub" id="hero-sub"></p>
+      <div class="hero-list" id="hero-list"></div>
+      <button type="button" class="btn" id="hero-go">Start session</button>
+    </section>
+
     <section class="card span2" data-view="coach" aria-labelledby="h-today">
       <h2 id="h-today">Today</h2>
       <div id="bars"></div>
@@ -72,11 +80,11 @@
     </section>
 
     <section class="card span2" data-view="gym" id="wo-card" aria-labelledby="h-workout">
-      <h2 id="h-workout">Workout</h2>
+      <h2 id="h-workout" class="sr">Workout</h2>
       <div class="tabs" role="tablist" id="tabs"></div>
       <div id="exlist"></div>
       <div id="planed" hidden></div>
-      <div class="actions">
+      <div class="actions savebar">
         <button type="button" class="btn" id="save-workout">Save workout</button>
         <button type="button" class="btn ghost" id="edit-plan">Edit plan</button>
         <span class="status" id="st-workout" role="status" aria-live="polite"></span>

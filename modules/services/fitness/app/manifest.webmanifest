@@ -7,6 +7,7 @@
   "display": "standalone",
   "background_color": "#FAFAFA",
   "theme_color": "#FAFAFA",
+  "color_scheme_dark": { "theme_color": "#0E0F11", "background_color": "#0E0F11" },
   "shortcuts": [
     { "name": "Gym view", "short_name": "Gym", "url": "./#gym", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ],

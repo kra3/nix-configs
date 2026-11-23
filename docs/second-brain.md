@@ -65,6 +65,44 @@ programs.secondBrain.hostLabel = "mac";
 programs.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
 ```
 
+## Adding a device
+
+Every device is a git clone of the hub, `github.com/kra3/second-brain`. The theme and Obsidian
+settings arrive with the clone.
+
+### Nix machine (Mac or NixOS)
+
+1. Import `inputs.nix-configs.homeManagerModules.home-second-brain` and declare the brain:
+
+   ```nix
+   programs.secondBrain.hostLabel = "mac";
+   programs.secondBrain.brains.home.sync = { enable = true; remote = "git@github.com:kra3/second-brain.git"; };
+   ```
+
+   Add `mcp.enable = false;` to the brain for a files-only machine such as the work Mac.
+2. Give the machine ssh access to the hub: a GitHub account key, or a deploy key with write access.
+3. Rebuild, then open `~/Brains/home` in Obsidian and run Claude from `~/agents/second-brain-home`.
+
+The Home Manager module has been evaluated but not yet run on a Mac.
+
+### iPhone or iPad
+
+1. Install Obsidian and create an empty vault.
+2. In Settings > Community plugins, turn off Restricted mode and install the Git plugin.
+3. Open the command palette (pull the page down on iPhone) and run `Git: Clone an existing remote repo`.
+   URL `https://github.com/kra3/second-brain.git`, username `kra3`, password a fine-grained personal
+   access token limited to the `second-brain` repo with Contents: read and write, and an expiry. Use
+   a separate token per device so it can be revoked alone; never paste it in chat or commit it.
+4. Set the author name and the GitHub noreply email.
+5. Turn on auto pull on startup and auto commit-and-sync every 5 minutes. iOS only syncs while
+   Obsidian is open, so pull before editing.
+6. Test: add a note in `0 Inbox` and run `Git: Commit-and-sync`.
+
+### Per-device files
+
+The Git plugin folder (`.obsidian/plugins/obsidian-git/`) is git-ignored, since its settings may
+hold the token. Plugin files committed earlier stay tracked, so devices keep the plugin.
+
 ## Obsidian settings in Nix
 
 A brain's `obsidian` option declares the vault's look and layout (theme, Daily notes, Templates,

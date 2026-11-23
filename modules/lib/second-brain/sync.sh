@@ -45,7 +45,7 @@ fi
 
 # Shared ignore rules, committed so every clone uses them.
 if [ ! -e "$VAULT_DIR/.gitignore" ]; then
-  printf '%s\n' '.obsidian/workspace*.json' '.obsidian/cache' '.trash/' '.mcp-*.tmp' '.DS_Store' '.obsidian/plugins/obsidian-git/data.json' >"$VAULT_DIR/.gitignore"
+  printf '%s\n' '.obsidian/workspace*.json' '.obsidian/cache' '.trash/' '.mcp-*.tmp' '.DS_Store' '.obsidian/plugins/obsidian-git/' >"$VAULT_DIR/.gitignore"
 fi
 
 # Obsidian settings declared in Nix (a brain's `obsidian` option): OBSIDIAN_MANAGED is a store path

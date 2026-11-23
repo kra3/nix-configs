@@ -67,20 +67,27 @@
               resources:
                 - '^/[0-9]+/download([/?].*)?$'
               policy: 'bypass'
-            # Home Assistant's Frigate integration calls nvr.${domain} (host nginx) with no browser session.
-            - domain: 'nvr.${domain}'
+            # Home Assistant's Frigate / Music Assistant / Navidrome integrations call these through
+            # host nginx (addHosts -> 10.3.2.1) with no browser session.
+            - domain:
+                - 'nvr.${domain}'
+                - 'ma.${domain}'
+                - 'navidrome.${domain}'
               networks:
                 - '10.3.2.10/32'
               policy: 'bypass'
-            # Frigate and zigbee2mqtt UIs are admin-only.
+            # Frigate, zigbee2mqtt and Music Assistant UIs are admin-only (everyone else uses MA via HA).
+            # Navidrome's UI falls through to default_policy: any logged-in user.
             - domain:
                 - 'nvr.${domain}'
                 - 'z2m.${domain}'
+                - 'ma.${domain}'
               subject: 'group:admin'
               policy: 'two_factor'
             - domain:
                 - 'nvr.${domain}'
                 - 'z2m.${domain}'
+                - 'ma.${domain}'
               policy: 'deny'
             # Vaultwarden's admin panel. Only /admin is forward-authed in nginx;
             # the API/web vault must stay reachable for Bitwarden clients.

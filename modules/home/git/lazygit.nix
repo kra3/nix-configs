@@ -31,7 +31,7 @@
 
           border = "rounded";
 
-          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE); source pinned above for the 2.3.1 authorColors fix.
+          # Theming comes from catppuccin.lazygit (LG_CONFIG_FILE), not an explicit block here.
         };
 
         git = {

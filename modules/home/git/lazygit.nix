@@ -38,7 +38,7 @@
           diffRenderers = [
             {
               colorArg = "always";
-              command = "delta --{{colorScheme}} --paging=never";
+              command = "delta --dark --paging=never";
             }
           ];
           commit = {

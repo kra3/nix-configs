@@ -847,7 +847,7 @@ function exProgress(ex, jump, init){
 // Coach: today's session first, with the targets the plan suggests.
 function renderHero(){
   var h = $('hero'), next = suggestWorkout(sel), logged = docs[sel] && docs[sel].workout, k = logged || next;
-  if (!PLAN[k] || !PLAN[k].length){ h.hidden = true; return; }
+  if (!PLAN[k] || !PLAN[k].length){ h.hidden = true; $('rung-card').hidden = true; return; }
   h.hidden = false;
   $('hero-k').textContent = logged ? 'Logged today' : 'Next up';
   $('h-hero').textContent = wname(k);
@@ -862,6 +862,48 @@ function renderHero(){
   $('hero-sub').textContent = logged ? '' : sub; $('hero-sub').hidden = !sub || !!logged;
   $('hero-go').textContent = logged ? 'Open workout' : 'Start session';
   $('hero-go').onclick = function(){ wsel = k; renderWorkout(); location.hash = '#gym'; };
+  renderRung(k);
+}
+// Coach: the last sessions of today's first weighted lift, then today's target.
+function renderRung(k){
+  var card = $('rung-card'), list = $('rung-list'); list.textContent = '';
+  var ex = (PLAN[k] || []).filter(function(e){ return e.u === 'kg' && exSeries(e.k).some(function(p){ return p.date < sel; }); })[0];
+  var sg = ex && suggestSets(ex, lastFor(ex.k)), top = sg && sg.sets[0];
+  if (!ex || !top || top[0] == null){ card.hidden = true; return; }
+  card.hidden = false;
+  $('rung-h').textContent = ex.n + ' · next rung';
+  var rows = exSeries(ex.k).filter(function(p){ return p.date < sel; }).slice(-3).map(function(p){ return {t: fmtDay(p.date), w: p.best.w, r: p.best.r}; });
+  rows[rows.length - 1].t = 'Last';
+  rows.push({t: 'Today', w: top[0], r: top[1], next: true});
+  var ws = rows.map(function(x){ return x.w; }), lo = Math.min.apply(null, ws), span = Math.max.apply(null, ws) - lo;
+  rows.forEach(function(x){
+    var r = el('div', 'rung' + (x.next ? ' next' : '')), t = el('div', 't'), b = el('i');
+    b.style.width = (span ? 30 + Math.round((x.w - lo) / span * 70) : 100) + '%';
+    t.appendChild(b);
+    r.appendChild(el('span', null, x.t)); r.appendChild(t);
+    r.appendChild(el('span', null, fmt(x.w, 2) + ' × ' + fmt(x.r, 0) + (x.next ? '+' : '')));
+    list.appendChild(r);
+  });
+}
+// Coach: waist over the last six weeks as a small line.
+function renderWaistCard(){
+  var card = $('waist-card'), end = dayNum(sel);
+  var pts = series('waist').filter(function(p){ return p.d <= end && p.d > end - 42; });
+  if (pts.length < 2){ card.hidden = true; return; }
+  card.hidden = false;
+  var a = pts[0], z = pts[pts.length - 1], d = z.v - a.v;
+  $('waist-n').textContent = fmt(z.v, 1);
+  var dl = $('waist-d'); dl.textContent = sgn(d, 1, 'cm'); dl.className = 'delta' + (d > 0 ? ' up' : '');
+  var lo = Math.min.apply(null, pts.map(function(p){ return p.v; })), hi = Math.max.apply(null, pts.map(function(p){ return p.v; })), span = hi - lo || 1;
+  var NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 340 80'); svg.setAttribute('aria-hidden', 'true');
+  var xy = pts.map(function(p){ return [10 + (p.d - a.d) / ((z.d - a.d) || 1) * 320, 8 + (hi - p.v) / span * 56]; });
+  var ln = document.createElementNS(NS, 'polyline'); ln.setAttribute('class', 'ln');
+  ln.setAttribute('points', xy.map(function(q){ return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' '));
+  var dot = document.createElementNS(NS, 'circle'), e = xy[xy.length - 1];
+  dot.setAttribute('class', 'end'); dot.setAttribute('cx', e[0]); dot.setAttribute('cy', e[1]); dot.setAttribute('r', 7);
+  svg.appendChild(ln); svg.appendChild(dot);
+  var host = $('waist-svg'); host.textContent = ''; host.appendChild(svg);
 }
 
 /* ---------- plan editor ---------- */
@@ -1795,7 +1837,7 @@ function renderHeader(){
   if (bw) sub.textContent += ' · Block week ' + bw.n + ' of ' + bw.weeks + (bw.light ? ' · lighter week' : '');
 }
 function renderDerived(){
-  renderHeader(); renderHero(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderFoodHeart(); renderMuscles();
+  renderHeader(); renderHero(); renderWaistCard(); renderBars(); renderStats(); drawCharts(); renderHabits(); renderWeek(); renderProgress(); renderMeasurements(); renderFoodHeart(); renderMuscles();
 }
 
 /* ---------- storage: server copy, offline cache, outbox ----------

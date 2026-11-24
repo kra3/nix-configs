@@ -160,7 +160,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .rail-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
 .rail-t{font-size:12px;color:var(--muted)}
 .rail-w.hit .rail-t{color:var(--ok);font-weight:800}
-.rail{height:8px;border-radius:4px;background:var(--track);position:relative}
+.rail{height:8px;border-radius:4px;background:var(--track);position:relative;margin:6px 0 4px}
 .rail i{position:absolute;inset:0;border-radius:4px;background:var(--fg);transform:scaleX(0);transform-origin:left;transition:transform .2s}
 .rail-w.hit .rail i{background:var(--good)}
 .rail u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);opacity:.6}
@@ -234,6 +234,21 @@ label.btn:focus-within{outline:3px solid var(--fg);outline-offset:2px}
 .hero-list div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--hero-line)}
 .hero-list b{font-weight:700}
 .hero-list span{color:#CDD2D8;white-space:nowrap}
+.lad{display:grid;gap:10px;margin-top:12px}
+.rung{display:grid;grid-template-columns:62px 1fr minmax(84px,max-content);gap:12px;align-items:center;font-size:13px;white-space:nowrap}
+.rung span:last-child{text-align:right}
+.rung .t{height:10px;border-radius:5px;background:var(--track);position:relative;overflow:hidden}
+.rung .t i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--fg)}
+.rung.next .t i{background:var(--accent)}
+.rung.next{font-weight:800}
+.wrow{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.big{font:800 40px/1 var(--font-body);letter-spacing:-.03em}
+.unit{font:600 15px var(--font-body);color:var(--muted)}
+.delta{margin-left:auto;color:var(--ok);font-weight:800;font-size:15px}
+.delta.up{color:var(--warn)}
+#waist-svg svg{display:block;width:100%;height:auto;margin-top:8px}
+#waist-svg .ln{stroke:var(--fg);stroke-width:3;fill:none;stroke-linejoin:round;stroke-linecap:round}
+#waist-svg .end{fill:var(--accent);stroke:var(--fg);stroke-width:2.5}
 .hero .btn{display:block;width:100%;margin-top:14px;min-height:54px;font-size:17px;font-weight:800}
 .coach-prop{box-shadow:inset 0 0 0 2px var(--fg)}
 .prop + .prop{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
@@ -294,9 +309,11 @@ body{padding-bottom:calc(var(--nav-h) + 20px + env(safe-area-inset-bottom,0px))}
 #nav a[aria-current]{color:var(--fg);font-weight:800}
 #nav a[aria-current] .pill{background:var(--accent);color:var(--accent-ink)}
 .badge{position:absolute;top:-2px;right:calc(50% - 32px);background:var(--bad);color:#fff;border-radius:9px;padding:1px 6px;font-size:11px;font-weight:800}
-.savebar{position:sticky;bottom:calc(var(--nav-h) + 8px + env(safe-area-inset-bottom,0px));z-index:5;margin:12px -4px 0;padding:8px 4px;
+.savebar{position:sticky;bottom:calc(var(--nav-h) + 8px + env(safe-area-inset-bottom,0px));z-index:5;margin:8px -4px 0;padding:4px;
   background:linear-gradient(to top,var(--surface) 70%,transparent)}
-.savebar #save-workout{flex:1;white-space:nowrap;min-height:56px;font-size:17px;font-weight:800;box-shadow:var(--shadow)}
+.savebar .btn{min-height:48px}
+.savebar #save-workout{flex:1;white-space:nowrap;font-size:17px;font-weight:800;box-shadow:var(--shadow)}
+body:has(.set input:focus) .savebar{display:none}
 .ex,.set{scroll-margin-top:84px}
 @media (max-width:400px){
   .card{padding:14px}

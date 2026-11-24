@@ -1,6 +1,6 @@
 {
   "repo": "Sendspin/sendspin-cpp-cli",
-  "version": "v1.0.0",
+  "version": "v1.0.1",
   "assets": {
     "aarch64-linux": {
       "arch": "arm64",

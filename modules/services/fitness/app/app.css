@@ -118,7 +118,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--fg)}
 .tab[aria-selected="true"] .nx{color:var(--tabsm)}
 #exlist{display:grid;gap:10px;max-width:720px}
 .ex{background:var(--soft);border-radius:20px;padding:0;scroll-margin-top:84px}
-.ex:not(.collapsed){background:var(--surface);box-shadow:0 0 0 2px var(--fg)}
+.ex:not(.collapsed){background:var(--surface);box-shadow:0 0 0 1.5px var(--edge)}
 .ex-head{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 14px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:20px}
 .ex-idx{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 14px var(--font-body);background:var(--track);color:var(--muted)}
 .ex.done .ex-idx{background:var(--good);color:#fff}

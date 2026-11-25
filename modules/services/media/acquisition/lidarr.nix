@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.lidarr = {
         containerConfig = {
-          image = "lscr.io/linuxserver/lidarr:nightly-4.0.0.5236-ls228@sha256:656a4d008a9a60ba32aba95c85b0fd19a06af8e2680f6748ef693956aa84ae33";
+          image = "lscr.io/linuxserver/lidarr:nightly-4.0.0.5236-ls229@sha256:05200b5404112ef0595a8ee19109d494fdfb0e71e84dba82316544c8fef6593c";
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx
           # routes to a pinned bridge IP instead (set at the call site).
           logDriver = "journald";

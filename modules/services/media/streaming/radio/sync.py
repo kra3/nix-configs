@@ -87,17 +87,14 @@ class MusicAssistant:
 
     def sync(self, want, dry):
         items = self.call("music/radios/library_items", provider="builtin", limit=1000) or []
-        have = {i["name"]: i for i in items}
+        have = {i["name"] for i in items}
+        # add-only: replacing a changed URL would drop the station's favourites and history
         for name, url in want.items():
-            cur = have.get(name)
-            if cur and any(m.get("item_id") == url for m in cur.get("provider_mappings", [])):
+            if name in have:
                 continue
-            print(f"music-assistant: {'replace' if cur else 'add'} {name} -> {url}")
-            if dry:
-                continue
-            if cur:
-                self.call("music/library/remove_item", media_type="radio", library_item_id=cur["item_id"])
-            self.call("builtin/add_radio", url=url, name=name)
+            print(f"music-assistant: add {name} -> {url}")
+            if not dry:
+                self.call("builtin/add_radio", url=url, name=name)
 
 
 def cred(name):
@@ -118,8 +115,17 @@ def main():
         for n, u in want.items():
             print(f"  {n} -> {u}")
         return
-    Navidrome(a.navidrome, a.navidrome_user, cred("navidrome")).sync(want, a.dry_run)
-    MusicAssistant(a.ma, cred("ma")).sync(want, a.dry_run)
+    failed = []
+    for target in (
+        lambda: Navidrome(a.navidrome, a.navidrome_user, cred("navidrome")),
+        lambda: MusicAssistant(a.ma, cred("ma")),
+    ):
+        try:
+            target().sync(want, a.dry_run)
+        except (Exception, SystemExit) as e:
+            failed.append(str(e))
+    if failed:
+        raise SystemExit("; ".join(failed))
 
 
 if __name__ == "__main__":

@@ -684,14 +684,6 @@ function updRail(row, ex){
   row.querySelector('.rail i').style.transform = 'scaleX(' + (v == null ? 0 : Math.min(1, v / ex.hi)) + ')';
   row.querySelector('.rail-t').textContent = v == null ? 'Aim for ' + ex.lo + '–' + ex.hi + unit : hit ? (ex.u === 'kg' ? 'Top of range: add weight' : 'Top of range') : v < ex.lo ? 'Below ' + ex.lo + unit : 'In range';
 }
-function stepReps(row, ex, d){
-  var r = row.querySelector('input[id$="-r"]'), was = r.value !== '';
-  var base = was ? num(r.value) : (num(r.placeholder) != null ? num(r.placeholder) : ex.lo);
-  r.value = Math.max(0, base + d);
-  r.dispatchEvent(new Event('input', {bubbles: true}));
-  if (!was) r.dispatchEvent(new Event('change', {bubbles: true}));
-  exProgress(ex, !was);
-}
 // One effort answer per exercise: how many reps were left on the last set (the stored RIR).
 var EFFORT = [['Easy', 3, '3 or more reps left'], ['Good', 2, '2 reps left'], ['Hard', 1, '1 rep left'], ['Failed', 0, 'no reps left']];
 // The answer belongs to the last logged set; earlier sets keep what they had.
@@ -761,12 +753,7 @@ function renderWorkout(){
         var wf = el('div', 'w fld'); wf.appendChild(w); wf.appendChild(el('em', null, 'kg'));
         row.appendChild(wf);
       }
-      var st = el('div', 's step');
-      var mn = el('button', 'stp', '−'), pl = el('button', 'stp', '+'); mn.type = pl.type = 'button';
-      mn.setAttribute('aria-label', 'One fewer ' + unit); pl.setAttribute('aria-label', 'One more ' + unit);
-      mn.addEventListener('click', (function(rw){ return function(){ stepReps(rw, ex, -1); }; })(row));
-      pl.addEventListener('click', (function(rw){ return function(){ stepReps(rw, ex, 1); }; })(row));
-      st.appendChild(mn); st.appendChild(r); st.appendChild(pl); row.appendChild(st);
+      var st = el('div', 's fld'); st.appendChild(r); st.appendChild(el('em', null, unit)); row.appendChild(st);
       // The per-set effort select stays in the page for saving; the buttons below the sets fill it in.
       var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.hidden = true;
       ['', 0, 1, 2, 3, 4, 5].forEach(function(v){ opt(rq, v === '' ? '' : String(v), v === '' ? '–' : String(v), sv && sv[2] === v); });

@@ -7,7 +7,6 @@
       # Akashvani (All India Radio) streams via BitGravity CDN.
       "air.pc.cdn.bitgravity.com"
       "airhlspush.pc.cdn.bitgravity.com"
-      "cdncache.bitg.net"
       # Binimum lyrics API (Tubifarry in Lidarr) redirects here.
       "lrc.red"
     ];

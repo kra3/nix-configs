@@ -770,11 +770,11 @@ function renderWorkout(){
       // The per-set effort select stays in the page for saving; the buttons below the sets fill it in.
       var rq = document.createElement('select'); rq.id = 'in-' + ex.k + '-' + i + '-q'; rq.hidden = true;
       ['', 0, 1, 2, 3, 4, 5].forEach(function(v){ opt(rq, v === '' ? '' : String(v), v === '' ? '–' : String(v), sv && sv[2] === v); });
-      var pn = document.createElement('button'); pn.type = 'button'; pn.className = 'pn'; pn.id = 'in-' + ex.k + '-' + i + '-p'; pn.textContent = 'Pain';
+      var pn = document.createElement('button'); pn.type = 'button'; pn.className = 'pn'; pn.id = 'in-' + ex.k + '-' + i + '-p'; pn.textContent = '!'; pn.title = 'Pain';
       pn.setAttribute('aria-label', ex.n + ' set ' + (i + 1) + ' pain'); pn.setAttribute('aria-pressed', sv && sv[3] === true ? 'true' : 'false');
       pn.addEventListener('click', function(){ this.setAttribute('aria-pressed', this.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); });
       var rw_ = el('div', 'r rail-w'), rh = el('div', 'rail-h'), rl = el('div', 'rail');
-      rh.appendChild(el('span', 'rail-t')); rh.appendChild(pn);
+      rh.appendChild(el('span', 'rail-t')); row.appendChild(pn);
       rl.appendChild(el('i')); var mk = el('u'); mk.style.left = (ex.lo / ex.hi * 100) + '%'; rl.appendChild(mk);
       rw_.appendChild(rh); rw_.appendChild(rl); row.appendChild(rw_); row.appendChild(rq);
       row.addEventListener('input', function(e){

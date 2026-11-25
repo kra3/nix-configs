@@ -53,6 +53,17 @@
 
     <section class="card span2 coach-prop" data-view="coach" id="props" aria-label="Coach suggestions" hidden></section>
 
+    <section class="card" data-view="coach" id="rung-card" aria-labelledby="rung-h" hidden>
+      <div class="lbl" id="rung-h"></div>
+      <div class="lad" id="rung-list"></div>
+    </section>
+
+    <section class="card" data-view="coach" id="waist-card" aria-labelledby="waist-h" hidden>
+      <div class="lbl" id="waist-h">Waist, last 6 weeks</div>
+      <div class="wrow"><span class="big" id="waist-n"></span><span class="unit">cm</span><span class="delta" id="waist-d"></span></div>
+      <div id="waist-svg" role="img" aria-label="Waist trend over the last six weeks"></div>
+    </section>
+
     <section class="card span2" data-view="coach" aria-labelledby="h-coach">
       <h2 id="h-coach">Coach</h2>
       <ul class="co-alerts" id="co-alerts"></ul>

@@ -76,6 +76,8 @@
         serviceConfig = sandbox // {
           Type = "oneshot";
           ExecStart = "${python} ${./iptv/epg.py} --allow ${channels} --out ${stateDir}/epg.xml";
+          Restart = "on-failure";
+          RestartSec = "10min";
           TimeoutStartSec = "5min";
           MemoryMax = "256M";
         };

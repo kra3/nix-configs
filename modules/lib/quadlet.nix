@@ -31,9 +31,16 @@
         unitConfig = {
           After = networkServices ++ extraAfter;
           Requires = networkServices ++ extraRequires;
+          # A pull failing while DNS restarts mid-switch must retry, not hit the start limit.
+          StartLimitIntervalSec = 0;
         }
         // lib.optionalAttrs (bindsTo != [ ]) { BindsTo = bindsTo; };
-        serviceConfig.Restart = restart;
+        serviceConfig = {
+          Restart = restart;
+          RestartSec = "5s";
+          RestartSteps = 8;
+          RestartMaxDelaySec = "10min";
+        };
       };
   };
 }

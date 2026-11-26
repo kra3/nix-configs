@@ -31,8 +31,6 @@
         unitConfig = {
           After = networkServices ++ extraAfter;
           Requires = networkServices ++ extraRequires;
-          # A pull failing while DNS restarts mid-switch must retry, not hit the start limit.
-          StartLimitIntervalSec = 0;
         }
         // lib.optionalAttrs (bindsTo != [ ]) { BindsTo = bindsTo; };
         serviceConfig = {

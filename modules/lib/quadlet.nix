@@ -38,7 +38,7 @@
         serviceConfig = {
           Restart = restart;
           RestartSec = "5s";
-          RestartSteps = 8;
+          RestartSteps = 5;
           RestartMaxDelaySec = "10min";
         };
       };

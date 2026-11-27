@@ -50,7 +50,6 @@ sections:
     popup:
       <<: *price_timeline
       view: graph
-      slider: true
       cheap_times: true
       day_switch: false
   - type: custom:health-metric-card

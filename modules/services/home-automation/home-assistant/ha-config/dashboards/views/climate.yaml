@@ -1,11 +1,12 @@
-type: sections
+type: custom:command-centre
 title: Climate
 path: dash-climate
 icon: mdi:thermostat
-max_columns: 2
+max_columns: 3
 sections:
+- !include ../rail.yaml
 - type: grid
-  column_span: 2
+  column_span: 3
   cards:
   - type: custom:status-row-card
     grid_options:

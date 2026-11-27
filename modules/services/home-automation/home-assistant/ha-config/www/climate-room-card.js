@@ -1,16 +1,17 @@
-// Room climate tile: a status-tinted icon with a badge when the room is off its comfort range, the room name, the comfort word and temperature, humidity and dew point readings with glyphs; tapping opens a popup with the comfort reason, a 24 h or 7 d history graph and a link to the sensor details.
+// Room climate tile: a status-tinted icon with a badge when the room is off its comfort range, the room name, the comfort word and temperature, humidity and dew point readings with glyphs; tapping opens a popup with the comfort reason, a 24 h or 7 d history graph and a link to the sensor details. Tinted by comfort state; tapping asks the dashboard for a detail pane (cc_detail) with history graphs and falls back to the popup.
+
+import { tokens } from "/local/ds/tokens.js?v=4";
+import { primitives } from "/local/ds/primitives.js?v=4";
 
 const STYLE = `
   :host { display: block; }
-  ha-card { cursor: pointer; }
-  .tile { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .tile { display: flex; align-items: center; gap: var(--ds-space-3); cursor: pointer; min-height: var(--ds-touch); }
   .ic { position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
   .ic ha-icon { --mdc-icon-size: 22px; }
   .bd { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: var(--card-background-color, #fff); }
   .bd ha-icon { --mdc-icon-size: 12px; }
   .txt { min-width: 0; }
-  .name { font-size: 14px; font-weight: 500; color: var(--primary-text-color); }
-  .line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
+  .line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; margin-top: 2px; }
   .st { font-weight: 600; color: var(--c); }
   .rd { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
   .rd ha-icon { --mdc-icon-size: 14px; }
@@ -87,7 +88,7 @@ class ClimateRoomCard extends HTMLElement {
     if (!config || !config.comfort) throw new Error("climate-room-card: comfort is required");
     this._config = config;
     this._html = "";
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives];
   }
 
   getCardSize() {
@@ -116,13 +117,20 @@ class ClimateRoomCard extends HTMLElement {
       ? `<span class="st">${esc(word)}</span>${this._reading(c.temperature, "mdi:thermometer", 1)}${this._reading(c.humidity, "mdi:water-percent", 0)}${this._reading(c.dew, "mdi:water-thermometer-outline", 1)}${c.approx ? `<span class="rd">approx.</span>` : ""}`
       : `<span class="st">Not reporting</span>`;
     const html =
-      `<ha-card><div class="tile" style="--c:${color}"><div class="ic"><ha-icon icon="${esc(c.icon || "mdi:thermometer")}"></ha-icon>` +
+      `<div class="tile ${word ? "tile--tint" : ""}" role="button" tabindex="0" aria-label="${esc(c.name || "")} climate details" style="--c:${color};--tint:${color}"><div class="ic"><ha-icon icon="${esc(c.icon || "mdi:thermometer")}"></ha-icon>` +
       `${badge ? `<div class="bd"><ha-icon icon="${badge}"></ha-icon></div>` : ""}</div>` +
-      `<div class="txt"><div class="name">${esc(c.name || "")}</div><div class="line">${line}</div></div></div></ha-card>`;
+      `<div class="txt"><div class="tile__title">${esc(c.name || "")}</div><div class="line tile__sub">${line}</div></div></div>`;
     if (html !== this._html) {
       this._html = html;
       this.shadowRoot.innerHTML = `<style>${STYLE}</style>${html}`;
-      this.shadowRoot.querySelector("ha-card").addEventListener("click", () => this._open());
+      const tile = this.shadowRoot.querySelector(".tile");
+      tile.addEventListener("click", () => this._open());
+      tile.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          this._open();
+        }
+      });
     }
   }
 
@@ -149,6 +157,16 @@ class ClimateRoomCard extends HTMLElement {
   async _open() {
     if (this._overlay) return;
     const c = this._config;
+    const ids = [c.temperature, c.dew, c.humidity].filter((x) => x && this._hass.states[x]);
+    if (ids.length) {
+      const graph = (hours) => ({ type: "history-graph", hours_to_show: hours, entities: ids.map((entity) => ({ entity })) });
+      const cs = this._hass.states[c.comfort];
+      const why = cs ? this._reason(cs.state) : "";
+      const cc_detail = { type: "vertical-stack", cards: [{ type: "heading", heading: c.name || "", heading_style: "title" }, ...(why ? [{ type: "markdown", content: why }] : []), graph(24), graph(168)] };
+      const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail }, bubbles: true, composed: true, cancelable: true });
+      this.dispatchEvent(drill);
+      if (drill.defaultPrevented) return;
+    }
     if (!document.getElementById("crc-style")) {
       const st = document.createElement("style");
       st.id = "crc-style";

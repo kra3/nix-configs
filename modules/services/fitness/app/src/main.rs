@@ -77,7 +77,8 @@ const SETTING_NUM: [(&str, f64); 9] = [
 const MAX_EXERCISES: usize = 30;
 const MAX_SETS: usize = 20;
 const MAX_NOTE: usize = 500;
-const WORKOUTS: [&str; 2] = ["A", "B"];
+// C and D are optional: only plans that have them show them.
+const WORKOUTS: [&str; 4] = ["A", "B", "C", "D"];
 const UNITS: [&str; 3] = ["kg", "reps", "sec"];
 const MAX_PLAN_EXERCISES: usize = 15;
 const MAX_NAME: usize = 60;
@@ -136,8 +137,8 @@ PRAGMA user_version = 5;";
 // Schema version 6 (coach profile, proposals, coach log) lives in coach.rs.
 // Schema version 7 (RIR and pain per set, training block, progression rule) lives in training.rs,
 // version 8 (daily check-in, measurements, saved meals, supplements) in daily.rs,
-// version 9 (blood tests, cardio, photo names) in extras.rs, version 10 (rest per exercise, session names) in training.rs, version 11 (carried-forward body values) and 12 (synced food and heart values, per-user ingest keys) in daily.rs.
-const MIGRATIONS: [&str; 12] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9, training::SCHEMA_10, daily::SCHEMA_11, daily::SCHEMA_12];
+// version 9 (blood tests, cardio, photo names) in extras.rs, version 10 (rest per exercise, session names) in training.rs, version 11 (carried-forward body values) and 12 (synced food and heart values, per-user ingest keys) in daily.rs, version 13 (workouts C and D) in training.rs.
+const MIGRATIONS: [&str; 13] = [SCHEMA_1, SCHEMA_2, SCHEMA_3, SCHEMA_4, SCHEMA_5, coach::SCHEMA_6, training::SCHEMA_7, daily::SCHEMA_8, extras::SCHEMA_9, training::SCHEMA_10, daily::SCHEMA_11, daily::SCHEMA_12, training::SCHEMA_13];
 
 fn init(c: &Connection) -> rusqlite::Result<()> {
     c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
@@ -233,8 +234,8 @@ fn parse_day(v: &Value) -> Result<Day, String> {
     };
     let workout = match o.get("workout") {
         None | Some(Value::Null) => None,
-        Some(Value::String(s)) if s == "A" || s == "B" => Some(s.clone()),
-        Some(_) => return Err("workout must be A or B".into()),
+        Some(Value::String(s)) if WORKOUTS.contains(&s.as_str()) => Some(s.clone()),
+        Some(_) => return Err("workout must be A, B, C or D".into()),
     };
     let mut sets = Vec::new();
     match o.get("sets") {
@@ -303,14 +304,14 @@ struct PlanEx {
 struct Plan {
     ex: Vec<PlanEx>,
     block: Option<training::Block>,
-    names: [Option<String>; 2],
+    names: [Option<String>; 4],
 }
 
 fn int_field(o: &Map<String, Value>, k: &str, lo: i64, hi: i64) -> Result<i64, String> {
     o.get(k).and_then(Value::as_i64).filter(|x| (lo..=hi).contains(x)).ok_or_else(|| format!("{k} must be a whole number from {lo} to {hi}"))
 }
 
-// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?, "prog"?, "rest"?}, ...], "B": [...], "block"?: {...}, "names"?: {"A", "B"}}
+// {"A": [{"k", "n", "sets", "lo", "hi", "u", "inc"?, "prog"?, "rest"?}, ...], "B": [...], "C"?: [...], "D"?: [...], "block"?: {...}, "names"?: {"A", "B", "C"?, "D"?}}
 fn parse_plan(v: &Value) -> Result<Plan, String> {
     let o = v.as_object().ok_or("object expected")?;
     if let Some(k) = o.keys().find(|k| *k != "block" && *k != "names" && !WORKOUTS.contains(&k.as_str())) {
@@ -478,6 +479,11 @@ fn get_plan(c: &Connection, user: &str) -> rusqlite::Result<Option<(i64, Value)>
             list.push(e);
         }
     }
+    for w in &WORKOUTS[2..] {
+        if m.get(*w).and_then(Value::as_array).is_some_and(Vec::is_empty) {
+            m.remove(*w);
+        }
+    }
     if let Some(b) = training::get_block(c, user)? {
         m.insert("block".into(), training::block_value(&b));
     }
@@ -572,7 +578,7 @@ fn write_plan(c: &Connection, user: &str, p: &Plan, base: i64) -> rusqlite::Resu
         let mut st = tx.prepare_cached(
             "INSERT INTO plan_exercises(user, workout, pos, key, name, sets, lo, hi, unit, inc, prog, rest) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         )?;
-        let mut pos = [0i64; 2];
+        let mut pos = [0i64; 4];
         for e in &p.ex {
             let i = WORKOUTS.iter().position(|w| *w == e.workout).unwrap_or(0);
             st.execute(params![user, e.workout, pos[i], e.key, e.name, e.sets, e.lo, e.hi, e.unit, e.inc, e.prog, e.rest])?;
@@ -580,7 +586,7 @@ fn write_plan(c: &Connection, user: &str, p: &Plan, base: i64) -> rusqlite::Resu
         }
     }
     training::write_block(&tx, user, p.block.as_ref())?;
-    tx.execute("UPDATE plans SET name_a = ?2, name_b = ?3 WHERE user = ?1", params![user, p.names[0], p.names[1]])?;
+    tx.execute("UPDATE plans SET name_a = ?2, name_b = ?3, name_c = ?4, name_d = ?5 WHERE user = ?1", params![user, p.names[0], p.names[1], p.names[2], p.names[3]])?;
     tx.commit()?;
     Ok(Some(version))
 }
@@ -1337,7 +1343,7 @@ mod tests {
             json!({ "weigth": 66 }),
             json!({ "weight": -1 }),
             json!({ "weight": "66" }),
-            json!({ "workout": "C" }),
+            json!({ "workout": "E" }),
             json!({ "sets": { "Leg Press": [[1, 1]] } }),
             json!({ "sets": { "legpress": [[10]] } }),
             json!({ "sets": { "legpress": [[10, null]] } }),
@@ -1444,7 +1450,7 @@ mod tests {
             p
         };
         for bad in [
-            json!({ "C": [] }),
+            json!({ "E": [] }),
             ex(&|e| e["u"] = json!("lb")),
             ex(&|e| e["lo"] = json!(13)),
             ex(&|e| e["sets"] = json!(0)),
@@ -1456,6 +1462,52 @@ mod tests {
             let (code, _) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), bad.clone());
             assert_eq!(code, 400, "{bad}");
         }
+    }
+
+    #[test]
+    fn plans_and_days_accept_sessions_c_and_d() {
+        let c = db();
+        let ex = |k: &str| json!([{ "k": k, "n": k, "sets": 3, "lo": 8, "hi": 12, "u": "kg" }]);
+        let full = json!({ "A": ex("a"), "B": ex("b"), "C": ex("c"), "D": ex("d"), "names": { "C": "Core", "D": "Arms" } });
+        let (code, _) = call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), full.clone());
+        assert_eq!(code, 200);
+        assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, full);
+        for w in ["C", "D"] {
+            let day = json!({ "date": "2026-11-03", "workout": w });
+            let base = get_day(&c, "kra3", "2026-11-03").unwrap().map(|d| d.0.to_string()).unwrap_or("0".into());
+            assert_eq!(call(&c, "kra3", Method::Put, "/api/log/2026-11-03", Some(&base), day).0, 200, "{w}");
+            assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["workout"], w);
+        }
+        for bad in [json!("E"), json!("a"), json!(1)] {
+            let (code, _) = call(&c, "kra3", Method::Put, "/api/log/2026-11-04", Some("0"), json!({ "date": "2026-11-04", "workout": bad }));
+            assert_eq!(code, 400, "{bad}");
+        }
+        let e = json!({ "A": ex("a"), "B": [], "E": ex("e") });
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/plan", Some("1"), e).0, 400);
+    }
+
+    #[test]
+    fn legacy_a_b_plan_has_no_c_or_d() {
+        let c = db();
+        assert_eq!(call(&c, "kra3", Method::Put, "/api/log/plan", Some("0"), plan()).0, 200);
+        let got = get_plan(&c, "kra3").unwrap().unwrap().1;
+        assert_eq!(got, plan());
+        assert!(got.get("C").is_none() && got.get("D").is_none());
+    }
+
+    #[test]
+    fn migration_13_keeps_ab_rows_and_allows_c() {
+        let c = Connection::open_in_memory().unwrap();
+        for m in &MIGRATIONS[..12] {
+            c.execute_batch(&format!("BEGIN; {m} COMMIT;")).unwrap();
+        }
+        c.execute("INSERT INTO days(user, date, workout, version, updated) VALUES('kra3', '2026-11-03', 'B', 1, 0)", []).unwrap();
+        c.execute("INSERT INTO sets(user, date, exercise, idx, kg, reps) VALUES('kra3', '2026-11-03', 'legpress', 0, 40, 10)", []).unwrap();
+        assert!(c.execute("INSERT INTO days(user, date, workout, version, updated) VALUES('kra3', '2026-11-04', 'C', 1, 0)", []).is_err());
+        init(&c).unwrap();
+        assert_eq!(get_day(&c, "kra3", "2026-11-03").unwrap().unwrap().1["workout"], "B");
+        c.execute("INSERT INTO days(user, date, workout, version, updated) VALUES('kra3', '2026-11-04', 'D', 1, 0)", []).unwrap();
+        assert_eq!(write_plan(&c, "kra3", &parse_plan(&plan()).unwrap(), 0).unwrap(), Some(1));
     }
 
     #[test]
@@ -1689,7 +1741,7 @@ mod tests {
         }
         c.execute("INSERT INTO days(user, date, weight, version, updated) VALUES('kra3', '2026-11-03', 66, 1, 0)", []).unwrap();
         init(&c).unwrap();
-        assert_eq!(c.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), 12);
+        assert_eq!(c.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0)).unwrap(), MIGRATIONS.len() as i64);
         let d = day(&c, "2026-11-03").unwrap().1;
         assert_eq!((d["weight"].clone(), d.get("carried").cloned()), (json!(66), None));
     }
@@ -2189,7 +2241,7 @@ mod ingest_tests {
         c.execute("INSERT INTO days(user, date, version, updated) VALUES('kra3', '2026-11-03', 1, 0)", []).unwrap();
         drop(c);
         let c = open(&path);
-        assert_eq!(c.query_row::<i64, _, _>("PRAGMA user_version", [], |r| r.get(0)).unwrap(), 12);
+        assert_eq!(c.query_row::<i64, _, _>("PRAGMA user_version", [], |r| r.get(0)).unwrap(), MIGRATIONS.len() as i64);
         assert!(get_day(&c, "kra3", "2026-11-03").unwrap().is_some());
         assert_eq!(ingest_fill(&c, "kra3", br#"{"date":"2026-11-03","fat":9}"#).code, 200);
         let _ = fs::remove_file(&path);

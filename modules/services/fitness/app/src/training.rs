@@ -22,6 +22,16 @@ ALTER TABLE plans ADD COLUMN name_a TEXT;
 ALTER TABLE plans ADD COLUMN name_b TEXT;
 PRAGMA user_version = 10;";
 
+// Schema version 13: workouts C and D. SQLite cannot alter a CHECK, so the two
+// lists are edited in place (contents unchanged); the ADD COLUMNs bump the schema cookie.
+pub const SCHEMA_13: &str = "
+PRAGMA writable_schema = ON;
+UPDATE sqlite_master SET sql = replace(sql, 'IN (''A'', ''B'')', 'IN (''A'', ''B'', ''C'', ''D'')') WHERE name IN ('days', 'plan_exercises');
+PRAGMA writable_schema = OFF;
+ALTER TABLE plans ADD COLUMN name_c TEXT;
+ALTER TABLE plans ADD COLUMN name_d TEXT;
+PRAGMA user_version = 13;";
+
 pub const PROGS: [&str; 3] = ["double", "reps", "hold"];
 
 /* ---------- sets: [kg, reps] or [kg, reps, rir, pain] ---------- */
@@ -108,9 +118,9 @@ pub fn parse_block(v: &Value) -> Result<Block, String> {
     Ok(Block { start, weeks, deload })
 }
 
-// {"A": "Upper", "B": "Lower"}, each 1 to 20 characters.
-pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 2], String> {
-    let mut out = [None, None];
+// {"A": "Upper", "B": "Lower", "C"?, "D"?}, each 1 to 20 characters.
+pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 4], String> {
+    let mut out = [None, None, None, None];
     let o = match v {
         None | Some(Value::Null) => return Ok(out),
         Some(v) => v.as_object().ok_or("names must be an object")?,
@@ -128,9 +138,11 @@ pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 2], String> {
 }
 
 pub fn get_names(c: &Connection, user: &str) -> rusqlite::Result<Option<Value>> {
-    let (a, b) = c.query_row("SELECT name_a, name_b FROM plans WHERE user = ?1", params![user], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, Option<String>>(1)?)))?;
+    let names: [Option<String>; 4] = c.query_row("SELECT name_a, name_b, name_c, name_d FROM plans WHERE user = ?1", params![user], |r| {
+        Ok([r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?])
+    })?;
     let mut m = Map::new();
-    for (w, n) in WORKOUTS.iter().zip([a, b]) {
+    for (w, n) in WORKOUTS.iter().zip(names) {
         if let Some(n) = n {
             m.insert((*w).into(), json!(n));
         }
@@ -421,7 +433,7 @@ mod tests {
         let good = plan_with(&|p| p["names"] = json!({ "A": "Upper", "B": "Lower" }));
         assert_eq!(put(&c, "plan", "0", good.clone()).0, 200);
         assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, good);
-        for bad in [json!({ "A": "" }), json!({ "A": "x".repeat(21) }), json!({ "C": "Core" }), json!("Upper"), json!({ "A": 1 })] {
+        for bad in [json!({ "A": "" }), json!({ "A": "x".repeat(21) }), json!({ "E": "Core" }), json!("Upper"), json!({ "A": 1 })] {
             assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = bad.clone())).0, 400, "{bad}");
         }
         assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = json!({ "A": "x".repeat(20) }))).0, 200);

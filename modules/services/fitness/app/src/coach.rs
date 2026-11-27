@@ -1151,6 +1151,9 @@ pub fn summary_text(s: &Value) -> String {
         Some(p) => {
             let _ = writeln!(o, "  version {}", s["plan"]["version"]);
             for w in WORKOUTS {
+                if p.get(w).is_none() {
+                    continue;
+                }
                 let list: Vec<String> = p
                     .get(w)
                     .and_then(Value::as_array)

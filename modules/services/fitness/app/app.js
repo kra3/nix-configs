@@ -34,6 +34,9 @@ var DEFAULT_PLAN = {
 };
 var PLAN = DEFAULT_PLAN;
 var muscleSets = [];
+// Sessions the plan has: A and B always, C and D only when present.
+function wks(p){ p = p || PLAN; return ['A', 'B'].concat(p.C ? ['C'] : [], p.D ? ['D'] : []); }
+function allEx(p){ return wks(p).reduce(function(a, w){ return a.concat(p[w]); }, []); }
 function wname(k){ return (PLAN.names && PLAN.names[k]) || 'Workout ' + k; }
 
 var docs = {}, settings = Object.assign({}, DEF);
@@ -594,7 +597,8 @@ function suggestWorkout(d){
   if (docs[d] && docs[d].workout) return docs[d].workout;
   var prev = dates().filter(function(x){ return x < d && docs[x].workout; });
   if (!prev.length) return 'A';
-  return docs[prev[prev.length - 1]].workout === 'A' ? 'B' : 'A';
+  var ws = wks(), i = ws.indexOf(docs[prev[prev.length - 1]].workout);
+  return ws[(i + 1) % ws.length];
 }
 function lastFor(k){
   var ds = dates().filter(function(x){ return x < sel && docs[x].sets && docs[x].sets[k]; });
@@ -700,7 +704,7 @@ function setOpen(box, open){
 function renderWorkout(){
   var tabs = $('tabs'); tabs.textContent = '';
   var next = suggestWorkout(sel), logged = docs[sel] && docs[sel].workout;
-  ['A','B'].forEach(function(k){
+  wks().forEach(function(k){
     var b = document.createElement('button'); b.type = 'button'; b.className = 'tab';
     b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === wsel ? 'true' : 'false');
     b.textContent = wname(k);
@@ -910,14 +914,14 @@ function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-
 function keyFor(name, list){
   // Reuse the key of an exercise with the same name, so history carries over
   // (a leg curl in both A and B shares its log).
-  var all = draft.A.concat(draft.B, DEFAULT_PLAN.A, DEFAULT_PLAN.B);
+  var all = allEx(draft).concat(DEFAULT_PLAN.A, DEFAULT_PLAN.B);
   for (var i = 0; i < all.length; i++) if (all[i].n.trim().toLowerCase() === name.trim().toLowerCase() && all[i].k) return all[i].k;
   var base = slug(name), k = base, n = 2;
   while (list.some(function(e){ return e.k === k; })) k = base.slice(0, 29) + '-' + (n++);
   return k;
 }
 function startEdit(){
-  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B, block: PLAN.block, names: PLAN.names}));
+  draft = JSON.parse(JSON.stringify({A: PLAN.A, B: PLAN.B, C: PLAN.C, D: PLAN.D, block: PLAN.block, names: PLAN.names}));
   setStatus('st-workout', ''); renderWorkout();
 }
 function stopEdit(){ draft = null; renderWorkout(); }
@@ -925,7 +929,7 @@ function readEditor(){
   var list = draft[wsel];
   if ($('pn-A')){
     var nm = {};
-    ['A', 'B'].forEach(function(w){ var v = $('pn-' + w).value.trim(); if (v) nm[w] = v; });
+    wks(draft).forEach(function(w){ var v = $('pn-' + w).value.trim(); if (v) nm[w] = v; });
     if (Object.keys(nm).length) draft.names = nm; else delete draft.names;
   }
   list.forEach(function(e, i){
@@ -950,7 +954,7 @@ function readEditor(){
 }
 function planProblem(){
   var bad = null;
-  ['A', 'B'].forEach(function(w){
+  wks(draft).forEach(function(w){
     draft[w].forEach(function(e, i){
       if (bad) return;
       var at = 'Workout ' + w + ', row ' + (i + 1) + ': ';
@@ -962,7 +966,7 @@ function planProblem(){
       else if (e.k && draft[w].some(function(o, j){ return j < i && o.k === e.k; })) bad = at + 'this exercise is already in the workout.';
     });
   });
-  ['A', 'B'].forEach(function(w){ if (!bad && draft.names && draft.names[w] && draft.names[w].length > 20) bad = 'Session names are up to 20 characters.'; });
+  wks(draft).forEach(function(w){ if (!bad && draft.names && draft.names[w] && draft.names[w].length > 20) bad = 'Session names are up to 20 characters.'; });
   var b = draft.block;
   if (!bad && b){
     if (!(b.weeks >= 4 && b.weeks <= 16)) bad = 'Block: length must be 4 to 16 weeks.';
@@ -974,8 +978,10 @@ function savePlan(){
   readEditor();
   var bad = planProblem();
   if (bad){ setStatus('st-plan', bad, true); return; }
-  ['A', 'B'].forEach(function(w){ draft[w].forEach(function(e){ e.n = e.n.trim(); if (!e.k) e.k = keyFor(e.n, draft[w]); }); });
+  wks(draft).forEach(function(w){ draft[w].forEach(function(e){ e.n = e.n.trim(); if (!e.k) e.k = keyFor(e.n, draft[w]); }); });
   var next = {A: draft.A, B: draft.B};
+  if (draft.C) next.C = draft.C;
+  if (draft.D) next.D = draft.D;
   if (draft.block) next.block = draft.block;
   if (draft.names) next.names = draft.names;
   PLAN = next; draft = null; renderHeader();
@@ -990,7 +996,7 @@ function renderEditor(){
   hint.textContent = wname(wsel) + '. Renaming keeps an exercise\'s history; removing one hides it from the sheet but keeps what you logged. The last two boxes are the weight step added once every set reaches the top of the range (blank means ' + DEF_INC + ' kg) and the rest after each set in seconds (blank uses your default).';
   host.appendChild(hint);
   var nr = el('div', 'pe-nums'), dn = draft.names || {};
-  ['A', 'B'].forEach(function(w){
+  wks(draft).forEach(function(w){
     var ni = document.createElement('input'); ni.type = 'text'; ni.id = 'pn-' + w; ni.maxLength = 20; ni.value = dn[w] || '';
     ni.placeholder = 'Workout ' + w + '…'; ni.setAttribute('aria-label', 'Name of workout ' + w); nr.appendChild(ni);
   });
@@ -1100,7 +1106,7 @@ var DEF_INC = 2.5, KCAL_PER_KG = 7700;
 // of 8 and a lighter set of 12 can be ranked.
 function e1rm(w, r){ return w > 0 && r > 0 ? w * (1 + r / 30) : null; }
 function planEx(k){
-  var all = PLAN.A.concat(PLAN.B, DEFAULT_PLAN.A, DEFAULT_PLAN.B);
+  var all = allEx(PLAN).concat(DEFAULT_PLAN.A, DEFAULT_PLAN.B);
   for (var i = 0; i < all.length; i++) if (all[i].k === k) return all[i];
   return null;
 }
@@ -1229,7 +1235,7 @@ function loadLibrary(){
 var pxSel = null;
 function exerciseKeys(){
   var seen = {}, out = [];
-  PLAN.A.concat(PLAN.B).forEach(function(e){ if (!seen[e.k]){ seen[e.k] = 1; out.push({k: e.k, n: e.n}); } });
+  allEx(PLAN).forEach(function(e){ if (!seen[e.k]){ seen[e.k] = 1; out.push({k: e.k, n: e.n}); } });
   dates().forEach(function(x){
     Object.keys(docs[x].sets || {}).forEach(function(k){ if (!seen[k]){ seen[k] = 1; var e = planEx(k); out.push({k: k, n: e ? e.n : k}); } });
   });
@@ -1358,7 +1364,7 @@ function renderWeek(){
   else if (W === 'down' && (S === 'up' || S === 'flat')){ v = 'Losing weight while keeping your strength. That is the goal.'; cls = 'ok'; }
   else if (W === 'flat' && S === 'up'){ v = 'Weight is flat while lifts go up, which is normal early in a recomp. Watch the waist.'; cls = 'ok'; }
   else v = 'Steady. Keep logging; the trend gets clearer every week.';
-  var stuck = deloadOn(sel) ? [] : exerciseKeys().filter(function(e){ return PLAN.A.concat(PLAN.B).some(function(p){ return p.k === e.k; }) && stalled(e.k); });
+  var stuck = deloadOn(sel) ? [] : exerciseKeys().filter(function(e){ return allEx(PLAN).some(function(p){ return p.k === e.k; }) && stalled(e.k); });
   $('wk-stall').textContent = stuck.length ? 'No new best in the last 3 sessions: ' + stuck.map(function(e){ return e.n; }).join(', ') + '. The workout suggests a lighter session for each.' : '';
   var vp = $('wk-verdict'); vp.className = 'pace' + (cls ? ' ' + cls : '');
   vp.textContent = v + (facts.length ? ' (' + facts.join(', ') + '.)' : '');
@@ -1494,7 +1500,7 @@ function diffLines(target, cur, next){
   var out = [];
   if (target === 'plan'){
     cur = cur || DEFAULT_PLAN;
-    ['A', 'B'].forEach(function(w){
+    ['A', 'B', 'C', 'D'].forEach(function(w){
       var a = cur[w] || [], b = next[w] || [];
       b.forEach(function(e){
         var o = a.filter(function(x){ return x.k === e.k; })[0];

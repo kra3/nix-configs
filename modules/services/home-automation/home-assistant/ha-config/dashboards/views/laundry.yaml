@@ -1,9 +1,10 @@
-type: sections
+type: custom:command-centre
 title: Laundry
 path: dash-laundry
 icon: mdi:washing-machine
 max_columns: 2
 sections:
+- !include ../rail.yaml
 - type: grid
   column_span: 2
   cards:

@@ -1,9 +1,10 @@
-type: sections
+type: custom:command-centre
 title: Energy
 path: dash-energy
 icon: mdi:flash
 max_columns: 2
 sections:
+- !include ../rail.yaml
 - type: grid
   column_span: 2
   cards:
@@ -33,7 +34,7 @@ sections:
     - {name: Tax, attribute: tax, color: "#ff9f6b"}
     - {name: VAT, attribute: vat, color: "#c792ea"}
     grid_options:
-      columns: 10
+      columns: 12
   - type: custom:popup-tile-card
     title: Electricity price
     width: 900px
@@ -112,184 +113,83 @@ sections:
   column_span: 1
   cards:
   - type: heading
-    heading: Lights by room, cost today (approx.)
-    icon: mdi:lightbulb-group
+    heading: Cost today by device (approx.)
+    icon: mdi:cash-clock
     heading_style: title
-  - type: tile
-    entity: sensor.cost_today_all_lights
-    name: All lights
-    icon: mdi:lightbulb-group
-    state_content:
-    - state
-    - power
+  - type: custom:auto-entities
     grid_options:
-      columns: 12
-  - type: tile
-    entity: sensor.cost_today_bedroom
-    name: Bedroom
-    icon: mdi:bed
-    state_content:
-    - state
-    - power
+      columns: full
+    card:
+      type: entities
+      show_header_toggle: false
+    filter:
+      include: &cost_rows
+      - entity_id: sensor.cost_today_all_lights
+        options: &cost_opts
+          secondary_info: attribute
+          attribute: power
+          name: All lights
+          icon: mdi:lightbulb-group
+      - entity_id: sensor.cost_today_bedroom
+        options: {<<: *cost_opts, name: Bedroom lights, icon: "mdi:bed"}
+      - entity_id: sensor.cost_today_kitchen
+        options: {<<: *cost_opts, name: Kitchen lights, icon: "mdi:countertop"}
+      - entity_id: sensor.cost_today_kitchen_dining
+        options: {<<: *cost_opts, name: Kitchen dining lights, icon: "mdi:table-chair"}
+      - entity_id: sensor.cost_today_dining_room
+        options: {<<: *cost_opts, name: Dining room lights, icon: "mdi:silverware-fork-knife"}
+      - entity_id: sensor.cost_today_living_room
+        options: {<<: *cost_opts, name: Living room lights, icon: "mdi:sofa"}
+      - entity_id: sensor.cost_today_office
+        options: {<<: *cost_opts, name: Office lights, icon: "mdi:desk"}
+      - entity_id: sensor.cost_today_hall
+        options: {<<: *cost_opts, name: Hall lights, icon: "mdi:door"}
+      - entity_id: sensor.cost_today_tv
+        options: {<<: *cost_opts, name: TV, icon: "mdi:television"}
+      - entity_id: sensor.cost_today_receiver
+        options: {<<: *cost_opts, name: Receiver, icon: "mdi:speaker"}
+      - entity_id: sensor.cost_today_camera_duo
+        options: {<<: *cost_opts, name: Camera Duo, icon: "mdi:cctv"}
+      - entity_id: sensor.cost_today_camera_uno
+        options: {<<: *cost_opts, name: Camera Uno, icon: "mdi:cctv"}
+      - entity_id: sensor.cost_today_fridge
+        options: {<<: *cost_opts, name: Fridge, icon: "mdi:fridge"}
+      - entity_id: sensor.cost_today_kitchen_speaker
+        options: {<<: *cost_opts, name: Kitchen speaker, icon: "mdi:speaker"}
+      - entity_id: sensor.cost_today_hob
+        options: {<<: *cost_opts, name: Hob, icon: "mdi:pot-steam"}
+      - entity_id: sensor.cost_today_oven
+        options: {<<: *cost_opts, name: Oven, icon: "mdi:stove"}
+      - entity_id: sensor.cost_today_dishwasher
+        options: {<<: *cost_opts, name: Dishwasher, icon: "mdi:dishwasher"}
+      - entity_id: sensor.cost_today_microwave
+        options: {<<: *cost_opts, name: Microwave, icon: "mdi:microwave"}
+      - entity_id: sensor.cost_today_hood
+        options: {<<: *cost_opts, name: Hood, icon: "mdi:fan"}
+    sort:
+      method: state
+      numeric: true
+      reverse: true
+      count: 5
+  - type: button
+    name: All 19 devices
+    icon: mdi:format-list-numbered
     grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_kitchen
-    name: Kitchen
-    icon: mdi:countertop
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_kitchen_dining
-    name: Kitchen dining
-    icon: mdi:table-chair
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_dining_room
-    name: Dining room
-    icon: mdi:silverware-fork-knife
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_living_room
-    name: Living room
-    icon: mdi:sofa
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_office
-    name: Office
-    icon: mdi:desk
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_hall
-    name: Hall
-    icon: mdi:door
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 12
-  - type: heading
-    heading: Devices, cost today (approx.)
-    icon: mdi:television
-    heading_style: title
-  - type: tile
-    entity: sensor.cost_today_tv
-    name: TV
-    icon: mdi:television
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_receiver
-    name: Receiver
-    icon: mdi:speaker
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_camera_duo
-    name: Camera Duo
-    icon: mdi:cctv
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_camera_uno
-    name: Camera Uno
-    icon: mdi:cctv
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_fridge
-    name: Fridge
-    icon: mdi:fridge
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_kitchen_speaker
-    name: Kitchen speaker
-    icon: mdi:speaker
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_hob
-    name: Hob
-    icon: mdi:pot-steam
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_oven
-    name: Oven
-    icon: mdi:stove
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_dishwasher
-    name: Dishwasher
-    icon: mdi:dishwasher
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_microwave
-    name: Microwave
-    icon: mdi:microwave
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 6
-  - type: tile
-    entity: sensor.cost_today_hood
-    name: Hood
-    icon: mdi:fan
-    state_content:
-    - state
-    - power
-    grid_options:
-      columns: 12
+      columns: full
+    tap_action:
+      action: fire-dom-event
+      cc_detail:
+        type: custom:auto-entities
+        card:
+          type: entities
+          title: Cost today by device (approx.)
+          show_header_toggle: false
+        filter:
+          include: *cost_rows
+        sort:
+          method: state
+          numeric: true
+          reverse: true
 - type: grid
   column_span: 1
   cards:
@@ -306,7 +206,7 @@ sections:
       icon: mdi:lightbulb-group
       entity: sensor.lights_cost
       energy: sensor.lights_energy
-      color: "#c3e88d"
+      color: var(--success-color)
       popup:
         graphs:
         - name: Energy per day
@@ -319,7 +219,7 @@ sections:
       icon: mdi:television
       entity: sensor.devices_cost
       energy: sensor.devices_energy
-      color: "#c792ea"
+      color: var(--primary-color)
       popup:
         graphs:
         - name: Energy per day
@@ -332,7 +232,7 @@ sections:
       icon: mdi:washing-machine
       entity: sensor.washer_cost
       energy: sensor.washer_energy
-      color: "#6ab7ff"
+      color: color-mix(in srgb, var(--info-color) 55%, var(--secondary-text-color))
       popup:
         graphs:
         - name: Energy per day
@@ -345,7 +245,7 @@ sections:
       icon: mdi:tumble-dryer
       entity: sensor.dryer_cost
       energy: sensor.dryer_energy
-      color: "#ffb06b"
+      color: var(--warning-color)
       popup:
         graphs:
         - name: Energy per day
@@ -358,7 +258,7 @@ sections:
       icon: mdi:flash
       entity: sensor.sutala_cost
       energy: sensor.sutala_energy
-      color: "#ffd86b"
+      color: var(--state-active-color)
       popup:
         graphs:
         - name: Energy per day

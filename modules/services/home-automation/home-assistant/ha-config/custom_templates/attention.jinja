@@ -1,0 +1,32 @@
+{#- Items are appended error first, then warning, then info, so the list is already sorted by severity. -#}
+{%- macro items() -%}
+{%- from 'climate.jinja' import humid_rooms -%}
+{%- set base = '/dashboard-home/' -%}
+{%- set quiet = ['All reporting', 'unknown', 'unavailable'] -%}
+{%- set alarm = states('alarm_control_panel.vasudha_secure') -%}
+{%- set ns = namespace(a=[]) -%}
+{%- if alarm == 'triggered' -%}
+{%- set ns.a = ns.a + [{'id': 'alarm', 'label': 'Alarm triggered', 'severity': 'error', 'icon': 'mdi:shield-alert', 'path': base ~ 'dash-security'}] -%}
+{%- endif -%}
+{%- set open = states('sensor.open_doors_and_windows') -%}
+{%- if open not in ['All closed', 'unknown', 'unavailable'] and (alarm.startswith('armed') or is_state('schedule.sleep', 'on')) -%}
+{%- set ns.a = ns.a + [{'id': 'open', 'label': 'Open: ' ~ open, 'severity': 'warning', 'icon': 'mdi:door-open', 'path': base ~ 'dash-security'}] -%}
+{%- endif -%}
+{%- for r in humid_rooms() | from_json if r.name == 'Bathroom' -%}
+{%- set ns.a = ns.a + [{'id': 'bath_humid', 'label': 'Bathroom humid ' ~ r.humidity ~ ' %', 'severity': 'warning', 'icon': 'mdi:water-percent', 'path': base ~ 'dash-climate'}] -%}
+{%- endfor -%}
+{%- set rooms = states('sensor.rooms_not_reporting') -%}
+{%- set dead = (state_attr('sensor.needs_attention', 'items') or []) | selectattr('icon', 'eq', 'mdi:lan-disconnect') | list | count -%}
+{%- if rooms not in quiet or dead > 0 -%}
+{%- set parts = ([rooms] if rooms not in quiet else []) + ([dead ~ (' device offline' if dead == 1 else ' devices offline')] if dead > 0 else []) -%}
+{%- set ns.a = ns.a + [{'id': 'not_reporting', 'label': parts | join(' · '), 'severity': 'warning', 'icon': 'mdi:access-point-network-off', 'path': base ~ ('dash-climate' if rooms not in quiet else 'dash-maintenance')}] -%}
+{%- endif -%}
+{%- set bat = states('sensor.lowest_battery') -%}
+{%- if bat not in ['All OK', 'No data', 'unknown', 'unavailable'] -%}
+{%- set ns.a = ns.a + [{'id': 'battery', 'label': 'Low battery: ' ~ bat, 'severity': 'info', 'icon': 'mdi:battery-alert-variant-outline', 'path': base ~ 'dash-maintenance'}] -%}
+{%- endif -%}
+{%- for name, e in [('Washer', 'sensor.washer_status'), ('Dryer', 'sensor.dryer_status')] if is_state(e, 'Done') -%}
+{%- set ns.a = ns.a + [{'id': 'laundry_' ~ name | lower, 'label': name ~ ' done', 'severity': 'info', 'icon': 'mdi:washing-machine' if name == 'Washer' else 'mdi:tumble-dryer', 'path': base ~ 'dash-laundry'}] -%}
+{%- endfor -%}
+{{ ns.a | tojson }}
+{%- endmacro -%}

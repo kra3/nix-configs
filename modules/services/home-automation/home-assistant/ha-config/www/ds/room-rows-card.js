@@ -3,6 +3,7 @@ import { primitives } from "./primitives.js?v=4";
 
 const own = sheet(`
 :host { display: block; }
+:host([hidden]) { display: none; }
 .tile { padding-block: var(--ds-space-3); }
 .tile__label { margin-bottom: var(--ds-space-1); }
 button.row { width: 100%; box-sizing: border-box; min-height: var(--ds-touch); align-items: center; background: none; color: inherit; font: inherit;
@@ -33,8 +34,11 @@ class RoomRowsCard extends HTMLElement {
   getGridOptions() { return { columns: "full", min_columns: 3 }; }
 
   set hass(h) {
-    const rows = this._config.rooms.map((r) => ({ r, text: this._text(h, r) }));
-    const key = JSON.stringify(rows.map((x) => x.text));
+    const uid = h.user?.id;
+    const quiet = (r) => !this._config.quiet || !(h.states[r.presence]?.state === "on" || h.states[r.lights]?.state === "on" || (r.also && h.states[r.also.entity]?.state === r.also.state) || r.pin_users?.includes(uid));
+    const rows = this._config.rooms.filter(quiet).map((r) => ({ r, text: this._text(h, r) }));
+    this.hidden = rows.length === 0;
+    const key = JSON.stringify(rows.map((x) => [x.r.name, x.text]));
     if (key === this._key) return;
     this._key = key;
     this.shadowRoot.querySelector(".rows").replaceChildren(...rows.map(({ r, text }) => this._row(r, text)));

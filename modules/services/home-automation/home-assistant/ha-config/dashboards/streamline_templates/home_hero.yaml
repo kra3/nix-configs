@@ -6,6 +6,17 @@ card:
   presence: sensor.dashboard_presence_state
   period: sensor.dashboard_time_period
   eta: sensor.dashboard_eta
+  alarm: alarm_control_panel.vasudha_secure
+  alarm_detail:
+    type: custom:alarmo-card
+    entity: alarm_control_panel.vasudha_secure
+    name: Alarm
+    use_code_dialog: true
+    states:
+      armed_home:
+        hide: true
+      armed_custom_bypass:
+        hide: true
   weather: weather.forecast_vasudha
   pills:
   - label: Open door/window

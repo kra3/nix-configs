@@ -171,7 +171,14 @@ class HomeHeroCard extends HTMLElement {
   _tap(el) {
     const cfg = this._config;
     const act = el.dataset.act;
-    if (act === "alarm") return this._moreInfo(cfg.alarm);
+    if (act === "alarm") {
+      if (cfg.alarm_detail) {
+        const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: cfg.alarm_detail }, bubbles: true, composed: true, cancelable: true });
+        this.dispatchEvent(drill);
+        if (drill.defaultPrevented) return;
+      }
+      return this._moreInfo(cfg.alarm);
+    }
     if (act === "weather") return this._moreInfo(cfg.weather);
     const tap = (cfg.pills[Number(el.dataset.i)] || {}).tap || {};
     if (tap.more_info) return this._moreInfo(tap.more_info);

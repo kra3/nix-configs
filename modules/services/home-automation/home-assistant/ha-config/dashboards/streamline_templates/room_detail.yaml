@@ -60,6 +60,10 @@ card:
         action: toggle
         confirmation:
           text: Hand every light back to Adaptive and reset the Living and Office scenes?
+  - type: custom:streamline-card
+    template: light_logic
+    variables:
+      room: "[[name]]"
   - type: conditional
     conditions:
     - condition: state

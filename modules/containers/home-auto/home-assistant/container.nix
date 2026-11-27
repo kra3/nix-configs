@@ -58,6 +58,7 @@
                   "${../../../services/home-automation/home-assistant/ha-config/packages}:/config/packages:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/blueprints}:/config/blueprints:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/custom_templates}:/config/custom_templates:ro"
+                  "${../../../services/home-automation/home-assistant/ha-config/themes}:/config/themes:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/scripts.yaml}:/config/scripts.yaml:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/health-metric-card.js}:/config/www/health-metric-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/download-control-card.js}:/config/www/download-control-card.js:ro"

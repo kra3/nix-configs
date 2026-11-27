@@ -1,6 +1,7 @@
 // Comfort range: a draggable Low/High range on a temperature scale with the season's guideline band underneath, a night-offset stepper, a humidity-vs-ceiling bar and collapsible `advanced` rows (name, effect, optional `now` Jinja line, -/+ steppers; `when: {entity, state | state_not}` shows a row or stepper conditionally).
 
-import { tokens } from "/local/ds/tokens.js?v=5";
+import { tokens } from "/local/ds/tokens.js?v=6";
+import { esc, mount, num } from "/local/ds/dom.js?v=6";
 
 const STYLE = `
   :host { display: block; }
@@ -41,9 +42,7 @@ const STYLE = `
   button.adv ha-icon { --mdc-icon-size: 18px; }
 `;
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const PEND_MS = 3000;
-const num = (v) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? null : Number(v));
 const fmt = (v) => String(Math.round(v * 100) / 100);
 
 class ComfortCard extends HTMLElement {
@@ -54,7 +53,7 @@ class ComfortCard extends HTMLElement {
     this._pend = {};
     this._open = false;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
+      mount(this, tokens);
       const root = this.shadowRoot;
       root.addEventListener("click", (e) => {
         if (e.target.closest("button.adv")) {
@@ -126,7 +125,7 @@ class ComfortCard extends HTMLElement {
     const s = this._state(id);
     if (!s) return null;
     const p = this._pend[id];
-    const live = num(s.state);
+    const live = num(s);
     if (p && (p.v === live || Date.now() - p.t >= PEND_MS)) delete this._pend[id];
     return this._pend[id] ? this._pend[id].v : live;
   }
@@ -247,8 +246,8 @@ class ComfortCard extends HTMLElement {
     const highId = this._highId();
     const high = this._val(highId);
     if (low === null || high === null) return `<div class="sub">Comfort range unavailable</div>`;
-    const gmin = num((this._state(c.guideline_min) || {}).state);
-    const gmax = num((this._state(c.guideline_max) || {}).state);
+    const gmin = num(this._state(c.guideline_min));
+    const gmax = num(this._state(c.guideline_max));
     const season = (this._state(c.season) || {}).state;
     let note = "";
     if (gmin !== null && gmax !== null) {
@@ -271,9 +270,9 @@ class ComfortCard extends HTMLElement {
   _humidity() {
     const h = this._config.humidity;
     if (!h) return "";
-    const v = num((this._state(h.entity) || {}).state);
+    const v = num(this._state(h.entity));
     if (v === null) return "";
-    const ceil = this._summer() ? null : num((this._state(h.ceiling) || {}).state);
+    const ceil = this._summer() ? null : num(this._state(h.ceiling));
     const [lo, hi] = h.scale || [20, 80];
     const pct = (x) => `${Math.min(100, Math.max(0, ((x - lo) / (hi - lo)) * 100))}%`;
     const over = ceil !== null && v > ceil;

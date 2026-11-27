@@ -1,7 +1,8 @@
 // Explains why each room's light is on or off: outside daylight model, per-room verdict and tunable thresholds.
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=5";
-import { primitives } from "/local/ds/primitives.js?v=5";
+import { sheet, tokens } from "/local/ds/tokens.js?v=6";
+import { primitives } from "/local/ds/primitives.js?v=6";
+import { esc, mount } from "/local/ds/dom.js?v=6";
 
 const own = sheet(`
   :host { display: block; }
@@ -69,7 +70,6 @@ const own = sheet(`
   input[type=range]::-moz-range-thumb { box-sizing: border-box; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: auto; cursor: pointer; }
 `);
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = { success: "var(--success-color)", warning: "var(--warning-color)", error: "var(--error-color)", info: "var(--info-color)", inactive: "var(--state-inactive-color)" };
 const ROOM_KEYS = ["light", "dark", "occupancy", "lux", "threshold", "block", "nap"];
 const fmt = (n, d = 0) => Number(n.toFixed(d)).toString();
@@ -86,7 +86,7 @@ class LightLogicCard extends HTMLElement {
     this._outOpen = false;
     this._sig = null;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+      mount(this, tokens, primitives, own);
       const sr = this.shadowRoot;
       sr.addEventListener("click", (e) => {
         const sg = e.target.closest("[data-seg]");

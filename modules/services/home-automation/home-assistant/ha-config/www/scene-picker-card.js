@@ -19,10 +19,10 @@ const loadPresets = () => {
   return presetPromise;
 };
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=5";
-import { primitives } from "/local/ds/primitives.js?v=5";
+import { sheet, tokens } from "/local/ds/tokens.js?v=6";
+import { primitives } from "/local/ds/primitives.js?v=6";
+import { esc, mount } from "/local/ds/dom.js?v=6";
 
 const own = sheet(`
   :host { display: block; }
@@ -83,7 +83,7 @@ class ScenePickerCard extends HTMLElement {
     this._rooms = config.rooms || [{ name: config.name, entity: config.entity }];
     this._pending = {};
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+      mount(this, tokens, primitives, own);
       this.shadowRoot.addEventListener("click", (e) => {
         const r = e.target.closest(".rm");
         if (r) {

@@ -1,26 +1,13 @@
-import { sheet, tokens } from "./tokens.js?v=5";
-import { primitives } from "./primitives.js?v=5";
+import { tokens } from "./tokens.js?v=6";
+import { primitives } from "./primitives.js?v=6";
+import { drill, moreInfo, mount, num, rowButton, rows as own } from "./dom.js?v=6";
 
-const own = sheet(`
-:host { display: block; }
-:host([hidden]) { display: none; }
-.tile { padding-block: var(--ds-space-3); }
-.tile__label { margin-bottom: var(--ds-space-1); }
-button.row { width: 100%; box-sizing: border-box; min-height: var(--ds-touch); align-items: center; background: none; color: inherit; font: inherit;
-  text-align: left; cursor: pointer; border: 0; border-top: 1px solid var(--divider-color); touch-action: manipulation; }
-button.row:first-of-type { border-top: 0; }
-button.row:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: var(--ds-space-2); }
-.row__v { text-align: right; overflow-wrap: anywhere; }
-`);
-
-const num = (s) => (s && s.state !== "" && Number.isFinite(Number(s.state)) ? Number(s.state) : null);
 const withUnit = (s, v) => `${v}${s?.attributes?.unit_of_measurement ? " " + s.attributes.unit_of_measurement : ""}`;
 
 class CostListCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
-    this.shadowRoot.innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
+    mount(this, tokens, primitives, own).innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
   }
 
   setConfig(c) {
@@ -35,8 +22,7 @@ class CostListCard extends HTMLElement {
   getGridOptions() { return { columns: "full", min_columns: 3 }; }
 
   set hass(h) {
-    const top = this._expanded ? Infinity : this._config.top ?? 5;
-    this._h = h;
+    const top = this._config.top ?? 5;
     const rows = this._config.entities
       .map((e, i) => ({ e, i, s: h.states[e.entity], v: num(h.states[e.entity]) }))
       .sort((a, b) => (b.v ?? -Infinity) - (a.v ?? -Infinity) || a.i - b.i);
@@ -60,40 +46,20 @@ class CostListCard extends HTMLElement {
     return parts.join(" · ");
   }
 
-  _btn(name, text) {
-    const b = document.createElement("button");
-    b.className = "row";
-    b.innerHTML = `<span class="row__k"></span><span class="row__v"></span>`;
-    b.firstChild.textContent = name;
-    b.lastChild.textContent = text;
-    b.setAttribute("aria-label", [name, text].filter(Boolean).join(" · "));
-    return b;
-  }
-
-  _fire(detail) {
-    return this.dispatchEvent(new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: detail }, bubbles: true, composed: true, cancelable: true }));
-  }
-
   _row(e, name, text) {
-    const b = this._btn(name, text);
+    const b = rowButton(name, text);
     b.addEventListener("click", () => {
       const cards = [{ type: "history-graph", hours_to_show: 168, entities: [e.entity] }];
       if (e.energy) cards.push({ type: "statistics-graph", chart_type: "bar", period: "day", stat_types: ["change"], entities: [e.energy] });
       cards.push({ type: "entities", entities: [e.entity, e.power, e.energy].filter(Boolean) });
-      if (this._fire({ type: "vertical-stack", cards })) {
-        this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: e.entity }, bubbles: true, composed: true }));
-      }
+      if (!drill(this, { type: "vertical-stack", cards })) moreInfo(this, e.entity);
     });
     return b;
   }
 
   _all(n) {
-    const b = this._btn(`All ${n} devices`, "");
-    b.addEventListener("click", () => {
-      if (!this._fire({ type: "custom:cost-list-card", entities: this._config.entities, top: 999, title: this._config.title })) return;
-      this._expanded = true;
-      this.hass = this._h;
-    });
+    const b = rowButton(`All ${n} devices`, "");
+    b.addEventListener("click", () => drill(this, { type: "custom:cost-list-card", entities: this._config.entities, top: n, title: this._config.title }));
     return b;
   }
 }

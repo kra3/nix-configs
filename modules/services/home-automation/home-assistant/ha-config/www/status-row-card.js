@@ -1,6 +1,7 @@
 // Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`. `layout: rows` puts each entry on one line (label left, value right); `spark: {entity, title, hours}` adds an hourly-mean sparkline with its peak above the entries; `align: end` on a head entry pushes it to the right edge.
 
-import { tokens } from "/local/ds/tokens.js?v=5";
+import { tokens } from "/local/ds/tokens.js?v=6";
+import { esc, mount, moreInfo } from "/local/ds/dom.js?v=6";
 
 const STYLE = `
   :host { display: block; }
@@ -46,7 +47,6 @@ const STYLE = `
   .sp .ln { fill: none; stroke: var(--info-color, #039be5); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 `;
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = { primary: "var(--primary-color)", success: "var(--success-color, #43a047)", warning: "var(--warning-color, #ffa600)", error: "var(--error-color, #db4437)", info: "var(--info-color, #039be5)", inactive: "var(--state-inactive-color, var(--secondary-text-color))" };
 const tone = (v) => TONES[v] || v;
 
@@ -55,7 +55,7 @@ class StatusRowCard extends HTMLElement {
     if (!config || !Array.isArray(config.items) || !config.items.length) throw new Error("status-row-card: items are required");
     this._config = config;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
+      mount(this, tokens);
       this.shadowRoot.addEventListener("click", (e) => {
         if (e.target.closest(".sp")) return this._moreInfo(this._series()[0].entity);
         const el = e.target.closest(".it.tap");
@@ -73,7 +73,7 @@ class StatusRowCard extends HTMLElement {
   }
 
   _moreInfo(entityId) {
-    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    moreInfo(this, entityId);
   }
 
   set hass(hass) {

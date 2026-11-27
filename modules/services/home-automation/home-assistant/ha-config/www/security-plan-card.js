@@ -1,8 +1,8 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
-import { sheet, tokens } from "./ds/tokens.js?v=5";
-import { primitives } from "./ds/primitives.js?v=5";
+import { sheet, tokens } from "./ds/tokens.js?v=6";
+import { primitives } from "./ds/primitives.js?v=6";
+import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=6";
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const NOT_PERSON = /_(cat|dog|all)_occupancy$/;
@@ -177,7 +177,7 @@ class SecurityPlanCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
     this._html = "";
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+    if (!this.shadowRoot) mount(this, tokens, primitives, own);
   }
 
   getCardSize() {
@@ -209,9 +209,7 @@ class SecurityPlanCard extends HTMLElement {
       document.head.appendChild(st);
     }
     const detail = { ...base, type: "custom:advanced-camera-card", cameras, view: { ...(base.view || {}), default: "live" } };
-    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: detail }, bubbles: true, composed: true, cancelable: true });
-    this.dispatchEvent(drill);
-    if (drill.defaultPrevented) return;
+    if (drill(this, detail)) return;
     const helpers = await window.loadCardHelpers();
     const card = await helpers.createCardElement(detail);
     card.hass = this._hass;
@@ -245,7 +243,7 @@ class SecurityPlanCard extends HTMLElement {
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
-    const more = (entityId) => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    const more = (entityId) => moreInfo(this, entityId);
     for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
     for (const el of this.shadowRoot.querySelectorAll(".sw button")) {
       el.addEventListener("click", () => {

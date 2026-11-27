@@ -1,7 +1,8 @@
 // Segmented control over boolean helpers: the first mode needs no entity and means "all others off"; the selected mode explains itself in one sentence.
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=5";
-import { primitives } from "/local/ds/primitives.js?v=5";
+import { sheet, tokens } from "/local/ds/tokens.js?v=6";
+import { primitives } from "/local/ds/primitives.js?v=6";
+import { esc, mount } from "/local/ds/dom.js?v=6";
 
 const own = sheet(`
   :host { display: block; }
@@ -15,7 +16,6 @@ const own = sheet(`
   .hint { font: var(--ds-body); margin: var(--ds-space-3) var(--ds-space-1) 2px; }
 `);
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = { primary: "var(--primary-color)", success: "var(--success-color, #43a047)", warning: "var(--warning-color, #ffa600)", error: "var(--error-color, #db4437)", info: "var(--info-color, #039be5)" };
 
 class ModeSwitchCard extends HTMLElement {
@@ -23,7 +23,7 @@ class ModeSwitchCard extends HTMLElement {
     if (!config || !Array.isArray(config.modes) || config.modes.length < 2) throw new Error("mode-switch-card: at least two modes are required");
     this._config = config;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+      mount(this, tokens, primitives, own);
       this.shadowRoot.addEventListener("click", (e) => {
         const b = e.target.closest(".seg");
         if (!b || !this._hass) return;

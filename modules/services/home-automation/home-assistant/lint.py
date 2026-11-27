@@ -101,5 +101,12 @@ for a in alarm:
     if not (a["id"].startswith("alarm_") and keep.match(a["id"])):
         bad.append(f"automations/alarm.yaml:{a['id']}: alarm-keep-running: id not alarm_-prefixed or not matched by keep_running")
 
+vs = {}
+for p in sorted((cfg / "www").rglob("*.js")):
+    for v in re.findall(r'from "[^"]*\.js\?v=(\d+)"', p.read_text()):
+        vs.setdefault(v, set()).add(p.name)
+if len(vs) > 1:
+    bad.append("www: ds-import-version: mixed ?v= " + ", ".join(f"{v} ({', '.join(sorted(f))})" for v, f in sorted(vs.items())))
+
 print("\n".join(bad))
 sys.exit(bool(bad))

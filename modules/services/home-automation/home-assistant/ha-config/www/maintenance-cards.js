@@ -1,6 +1,7 @@
 // Maintenance cards: attention-list-card shows prioritised items as severity-tinted tiles with what to do, plus an optional collapsible list of broken references; battery-list-card shows device batteries grouped by room, lowest first, with a level bar and when each last reported.
 
-import { tokens } from "./ds/tokens.js?v=5";
+import { tokens } from "./ds/tokens.js?v=6";
+import { SEVERITY as SEV, esc, mount, moreInfo } from "./ds/dom.js?v=6";
 
 const STYLE = `
   :host { display: block; }
@@ -37,8 +38,6 @@ const STYLE = `
   .empty { padding: 14px 0; font-size: 13px; color: var(--secondary-text-color); }
 `;
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const SEV = { error: "var(--error-color, #db4437)", warning: "var(--warning-color, #ffa600)", info: "var(--info-color, #039be5)" };
 const levelColor = (n, lo, crit) => (n <= crit ? SEV.error : n < lo ? SEV.warning : "var(--success-color, #43a047)");
 
 function ago(iso) {
@@ -60,11 +59,11 @@ class MaintenanceBase extends HTMLElement {
     this._open = {};
     this._html = "";
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
+      mount(this, tokens);
       const act = (e) => {
         const t = e.target.closest("[data-e]");
         if (t) {
-          this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: t.dataset.e } }));
+          moreInfo(this, t.dataset.e);
           return;
         }
         const b = e.target.closest("button.tg, button.gb");

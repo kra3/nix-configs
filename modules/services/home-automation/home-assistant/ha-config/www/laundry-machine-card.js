@@ -1,6 +1,7 @@
 // Washer and dryer tiles (phase, finish estimate, live power, last cycle, Emptied button), care counters with a Done reset, and recent loads drawn as phase-coloured bars.
-import { sheet, tokens } from "/local/ds/tokens.js?v=5";
-import { primitives } from "/local/ds/primitives.js?v=5";
+import { sheet, tokens } from "/local/ds/tokens.js?v=6";
+import { primitives } from "/local/ds/primitives.js?v=6";
+import { drill, drillOr, esc, mount, moreInfo } from "/local/ds/dom.js?v=6";
 
 const STYLE = sheet(`
   :host { display: block; }
@@ -26,7 +27,6 @@ const STYLE = sheet(`
   }
 `);
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = {
   running: "var(--info-color)",
   done: "var(--warning-color)",
@@ -50,9 +50,6 @@ const median = (xs) => {
   return v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2;
 };
 const clock = (ms) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-const shadow = (el, own) => {
-  el.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
-};
 
 class LaundryMachineCard extends HTMLElement {
   setConfig(config) {
@@ -60,9 +57,9 @@ class LaundryMachineCard extends HTMLElement {
     this._config = config;
     this._pending = this._pending || {};
     if (!this.shadowRoot) {
-      shadow(this, STYLE);
+      mount(this, tokens, primitives, STYLE);
       const open = (el) => {
-        if (el && el.dataset.power) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.power }, bubbles: true, composed: true }));
+        if (el && el.dataset.power) moreInfo(this, el.dataset.power);
       };
       this.shadowRoot.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-flag]");
@@ -176,15 +173,13 @@ class PlugCostCard extends HTMLElement {
     if (!config || !Array.isArray(config.devices) || !config.devices.length) throw new Error("plug-cost-card: devices are required");
     this._config = config;
     if (!this.shadowRoot) {
-      shadow(this, COST_STYLE);
+      mount(this, tokens, primitives, COST_STYLE);
       this.shadowRoot.addEventListener("click", (e) => {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
         if (!d || !d.popup || !customElements.get("health-metric-card")) return;
         const cfg = { entity: d.entity, name: d.name, color: d.color, popup: d.popup };
-        const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: { type: "custom:health-metric-card", ...cfg, popup_inline: true } }, bubbles: true, composed: true, cancelable: true });
-        this.dispatchEvent(drill);
-        if (drill.defaultPrevented) return;
+        if (drill(this, { type: "custom:health-metric-card", ...cfg, popup_inline: true })) return;
         const card = document.createElement("health-metric-card");
         card.setConfig(cfg);
         card.hass = this._hass;
@@ -251,7 +246,7 @@ class LaundryCareCard extends HTMLElement {
     this._config = config;
     this._pending = this._pending || {};
     if (!this.shadowRoot) {
-      shadow(this, CARE_STYLE);
+      mount(this, tokens, primitives, CARE_STYLE);
       this.shadowRoot.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-i]");
         if (!btn || btn.disabled || !this._hass) return;
@@ -361,13 +356,11 @@ class LaundryRunsCard extends HTMLElement {
     if (!config || !config.washer || !config.dryer) throw new Error("laundry-runs-card: washer and dryer are required");
     this._config = config;
     if (!this.shadowRoot) {
-      shadow(this, RUNS_STYLE);
+      mount(this, tokens, primitives, RUNS_STYLE);
       const open = (el) => {
         const l = el && this._shown && this._shown[el.dataset.i];
         if (!l) return;
-        const ev = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail(l) }, bubbles: true, composed: true, cancelable: true });
-        this.dispatchEvent(ev);
-        if (!ev.defaultPrevented) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: l.wash ? this._config.washer : this._config.dryer }, bubbles: true, composed: true }));
+        drillOr(this, this._detail(l), l.wash ? this._config.washer : this._config.dryer);
       };
       this.shadowRoot.addEventListener("click", (e) => open(e.target.closest(".load")));
       this.shadowRoot.addEventListener("keydown", (e) => {

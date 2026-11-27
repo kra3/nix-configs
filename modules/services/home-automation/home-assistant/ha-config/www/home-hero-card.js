@@ -1,4 +1,5 @@
 // Home hero: presence and time of day, weather, alarm chip and attention pills that appear only when active.
+import { drill, moreInfo } from "./ds/dom.js?v=6";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -165,7 +166,7 @@ class HomeHeroCard extends HTMLElement {
   }
 
   _moreInfo(entityId) {
-    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    moreInfo(this, entityId);
   }
 
   _tap(el) {
@@ -173,9 +174,7 @@ class HomeHeroCard extends HTMLElement {
     const act = el.dataset.act;
     if (act === "alarm") {
       if (cfg.alarm_detail) {
-        const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: cfg.alarm_detail }, bubbles: true, composed: true, cancelable: true });
-        this.dispatchEvent(drill);
-        if (drill.defaultPrevented) return;
+        if (drill(this, cfg.alarm_detail)) return;
       }
       return this._moreInfo(cfg.alarm);
     }

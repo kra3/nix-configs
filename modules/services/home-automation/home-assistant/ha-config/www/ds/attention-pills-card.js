@@ -1,7 +1,6 @@
-import { sheet, tokens } from "./tokens.js?v=5";
-import { primitives } from "./primitives.js?v=5";
-
-const TINT = { error: "--error-color", warning: "--warning-color", info: "--info-color" };
+import { sheet, tokens } from "./tokens.js?v=6";
+import { primitives } from "./primitives.js?v=6";
+import { SEVERITY, mount } from "./dom.js?v=6";
 
 const own = sheet(`
 :host { display: block; }
@@ -15,8 +14,7 @@ const own = sheet(`
 class AttentionPillsCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
-    this.shadowRoot.innerHTML = `<div class="pills" role="list"></div>`;
+    mount(this, tokens, primitives, own).innerHTML = `<div class="pills" role="list"></div>`;
   }
 
   setConfig(c) {
@@ -46,7 +44,7 @@ class AttentionPillsCard extends HTMLElement {
     li.setAttribute("role", "listitem");
     const b = document.createElement("button");
     b.className = "chip chip--tint pill";
-    b.style.setProperty("--tint", `var(${TINT[i.severity] || TINT.info})`);
+    b.style.setProperty("--tint", SEVERITY[i.severity] || SEVERITY.info);
     const icon = document.createElement("ha-icon");
     icon.setAttribute("icon", i.icon || "mdi:alert-circle-outline");
     const label = document.createElement("span");

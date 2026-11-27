@@ -1,6 +1,6 @@
-import { tokens } from "./tokens.js?v=7";
-import { primitives } from "./primitives.js?v=7";
-import { drillOr, mount, num, rowButton, rows as own } from "./dom.js?v=7";
+import { tokens } from "./tokens.js?v=8";
+import { primitives } from "./primitives.js?v=8";
+import { drillOr, mount, num, rowButton, rows as own } from "./dom.js?v=8";
 
 class RoomRowsCard extends HTMLElement {
   constructor() {

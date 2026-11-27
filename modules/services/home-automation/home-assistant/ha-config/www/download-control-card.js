@@ -1,8 +1,8 @@
 // Compact download client control: one pause/resume toggle and a speed-limit slider.
 
-import { sheet, tokens } from "./ds/tokens.js?v=7";
-import { primitives } from "./ds/primitives.js?v=7";
-import { mount } from "./ds/dom.js?v=7";
+import { sheet, tokens } from "./ds/tokens.js?v=8";
+import { primitives } from "./ds/primitives.js?v=8";
+import { mount } from "./ds/dom.js?v=8";
 
 const own = sheet(`
 :host { display: block; }

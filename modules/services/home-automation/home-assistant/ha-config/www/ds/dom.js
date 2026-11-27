@@ -1,4 +1,4 @@
-import { sheet } from "./tokens.js?v=7";
+import { sheet } from "./tokens.js?v=8";
 
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 export const SEVERITY = { error: "var(--error-color)", warning: "var(--warning-color)", info: "var(--info-color)" };

@@ -1,6 +1,6 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
-import { sheet, tokens } from "./ds/tokens.js?v=4";
-import { primitives } from "./ds/primitives.js?v=4";
+import { sheet, tokens } from "./ds/tokens.js?v=5";
+import { primitives } from "./ds/primitives.js?v=5";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
@@ -202,7 +202,7 @@ class SecurityPlanCard extends HTMLElement {
       const st = document.createElement("style");
       st.id = "spc-style";
       st.textContent = `
-        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, var(--primary-text-color) 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, black 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .spc-sheet { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color); border-radius: 16px; padding: 8px; box-sizing: border-box; }
         .spc-head { display: flex; justify-content: flex-end; }
         .spc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;

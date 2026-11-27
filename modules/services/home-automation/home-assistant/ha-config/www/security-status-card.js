@@ -1,6 +1,6 @@
 // Security status: one sentence for the state of the house, what is open and for how long, and arm controls.
-import { sheet, tokens } from "./ds/tokens.js?v=4";
-import { primitives } from "./ds/primitives.js?v=4";
+import { sheet, tokens } from "./ds/tokens.js?v=5";
+import { primitives } from "./ds/primitives.js?v=5";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
@@ -214,7 +214,7 @@ class SecurityStatusCard extends HTMLElement {
       const st = document.createElement("style");
       st.id = "ssc-style";
       st.textContent = `
-        .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, var(--primary-text-color) 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, black 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .ssc-sheet { width: min(420px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
         .ssc-head { display: flex; justify-content: flex-end; }
         .ssc-force { padding: 4px 16px 8px; display: grid; gap: 12px; }

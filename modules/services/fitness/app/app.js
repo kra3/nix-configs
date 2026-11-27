@@ -139,7 +139,8 @@ function saveWorkout(){
   });
   var next = Object.assign({}, docs[d] || {});
   next.date = d;
-  next.workout = wsel;
+  // A day logged under a session the plan no longer has keeps its letter.
+  next.workout = next.workout && wks().indexOf(next.workout) < 0 ? next.workout : wsel;
   next.sets = Object.assign({}, next.sets || {}, collected);
   docs[d] = next;
   saveDoc(d, next, 'st-workout', prs.length ? 'Workout saved. New best: ' + prs.join(', ') + '.' : 'Workout saved').then(updateDelete);

@@ -22,8 +22,7 @@ ALTER TABLE plans ADD COLUMN name_a TEXT;
 ALTER TABLE plans ADD COLUMN name_b TEXT;
 PRAGMA user_version = 10;";
 
-// Schema version 13: workouts C and D. SQLite cannot alter a CHECK, so the two
-// lists are edited in place (contents unchanged); the ADD COLUMNs bump the schema cookie.
+// v13: sessions C and D; CHECKs are edited in place and ADD COLUMN bumps the schema cookie.
 pub const SCHEMA_13: &str = "
 PRAGMA writable_schema = ON;
 UPDATE sqlite_master SET sql = replace(sql, 'IN (''A'', ''B'')', 'IN (''A'', ''B'', ''C'', ''D'')') WHERE name IN ('days', 'plan_exercises');
@@ -243,8 +242,8 @@ pub fn muscle_sets(c: &Connection, user: &str, end: &str) -> rusqlite::Result<Va
         *done.entry(group(&k)).or_default() += x;
     }
     // Each session comes round once per rotation; A and B always count.
-    let sessions: i64 = c.query_row("SELECT COUNT(DISTINCT workout) FROM plan_exercises WHERE user = ?1", params![user], |r| r.get(0))?;
-    let per_week = get_settings(c, user)?.and_then(|(_, s)| s["workouts"].as_f64()).unwrap_or(3.0) / sessions.max(2) as f64;
+    let sessions: i64 = c.query_row("SELECT 2 + COUNT(DISTINCT workout) FROM plan_exercises WHERE user = ?1 AND workout IN ('C', 'D')", params![user], |r| r.get(0))?;
+    let per_week = get_settings(c, user)?.and_then(|(_, s)| s["workouts"].as_f64()).unwrap_or(3.0) / sessions as f64;
     let mut plan: BTreeMap<&str, i64> = BTreeMap::new();
     let mut st = c.prepare_cached("SELECT key, sets FROM plan_exercises WHERE user = ?1")?;
     for r in st.query_map(params![user], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
@@ -477,6 +476,11 @@ mod tests {
         assert_eq!(put(&c, "plan", "0", json!({ "A": day(1), "B": day(2), "C": day(3), "D": day(4) })).0, 200);
         let m = muscle_sets(&c, "kra3", "2026-11-10").unwrap();
         assert_eq!(m, json!([{ "m": "chest", "done": 0, "planned": 10 }]));
+        // An empty B still takes its turn in the rotation.
+        put(&c, "settings", "1", json!({ "workouts": 3 }));
+        assert_eq!(put(&c, "plan", "1", json!({ "A": day(1), "B": [], "C": day(2) })).0, 200);
+        let m = muscle_sets(&c, "kra3", "2026-11-10").unwrap();
+        assert_eq!(m, json!([{ "m": "chest", "done": 0, "planned": 3 }]));
     }
 
     #[test]

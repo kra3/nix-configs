@@ -304,7 +304,6 @@ sections:
     grid_options:
       columns: full
 - type: grid
-  column_span: 2
   cards:
   - type: heading
     heading: Rooms
@@ -686,19 +685,6 @@ sections:
       entity: switch.front_entrance_double_switch_right
       state: "on"
 - type: grid
-  column_span: 2
-  cards:
-  - type: heading
-    heading: Floor plan
-    icon: mdi:floor-plan
-    heading_style: title
-  - type: custom:streamline-card
-    template: floor_plan
-    variables:
-      layer: lights
-    grid_options:
-      columns: full
-- type: grid
   cards:
   - type: heading
     heading: House
@@ -879,6 +865,19 @@ sections:
       users:
       - a1d4401b8b714ebb83f07c5316ab399c
       - 6edcc5a09c3144d684077ee362e7394a
+    grid_options:
+      columns: full
+- type: grid
+  column_span: 2
+  cards:
+  - type: heading
+    heading: Floor plan
+    icon: mdi:floor-plan
+    heading_style: title
+  - type: custom:streamline-card
+    template: floor_plan
+    variables:
+      layer: lights
     grid_options:
       columns: full
 badges:

@@ -42,6 +42,9 @@ cards:
         action: more-info
   grid_options:
     columns: full
+  visibility:
+  - condition: screen
+    media_query: "(min-width: 820px)"
 - type: custom:mushroom-chips-card
   alignment: start
   chips:
@@ -55,6 +58,9 @@ cards:
     content_info: state
   grid_options:
     columns: full
+  visibility:
+  - condition: screen
+    media_query: "(min-width: 820px)"
 - type: custom:trip-card
   entity: sensor.arun_work_trips
   person: person.arun_karunagath

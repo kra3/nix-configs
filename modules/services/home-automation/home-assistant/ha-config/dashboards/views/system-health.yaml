@@ -63,8 +63,6 @@ sections:
         days: 7
     grid_options:
       columns: 12
-- type: grid
-  cards:
   - type: heading
     heading: Internet
     icon: mdi:web

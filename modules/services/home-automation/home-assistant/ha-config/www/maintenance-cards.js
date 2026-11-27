@@ -1,12 +1,11 @@
 // Maintenance cards: attention-list-card shows prioritised items as severity-tinted tiles with what to do, plus an optional collapsible list of broken references; battery-list-card shows device batteries grouped by room, lowest first, with a level bar and when each last reported.
 
-import { tokens } from "./ds/tokens.js?v=4";
-import { primitives } from "./ds/primitives.js?v=4";
+import { tokens } from "./ds/tokens.js?v=5";
 
 const STYLE = `
   :host { display: block; }
-  ha-card { padding: var(--ds-space-1) var(--ds-space-4) var(--ds-space-2); }
-  .t { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-2) 0; border-top: 1px solid var(--divider-color); }
+  ha-card { padding: var(--ds-space-1, 4px) var(--ds-space-4, 16px) var(--ds-space-2, 8px); }
+  .t { display: flex; align-items: center; gap: var(--ds-space-3, 12px); padding: var(--ds-space-2, 8px) 0; border-top: 1px solid var(--divider-color); }
   .t:first-child { border-top: none; }
   .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
   .ic ha-icon { --mdc-icon-size: 21px; }
@@ -14,17 +13,17 @@ const STYLE = `
   .ti { font-size: 14px; font-weight: 600; color: var(--primary-text-color); }
   .de { font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); margin-top: 1px; }
   .ok { color: var(--success-color, #43a047); }
-  button.tg { display: flex; align-items: center; gap: 4px; width: 100%; border: none; background: none; color: var(--secondary-text-color); font-size: 13px; font-weight: 600; padding: 0; min-height: var(--ds-touch); cursor: pointer; border-top: 1px solid var(--divider-color); }
+  button.tg { display: flex; align-items: center; gap: 4px; width: 100%; border: none; background: none; color: var(--secondary-text-color); font-size: 13px; font-weight: 600; padding: 0; min-height: var(--ds-touch, 44px); cursor: pointer; border-top: 1px solid var(--divider-color); }
   button.tg ha-icon { --mdc-icon-size: 18px; }
   .rf { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; border-top: 1px solid var(--divider-color); }
   .rf:first-of-type { border-top: none; }
   .rf .id { color: var(--primary-text-color); word-break: break-all; }
   .rf .fl { color: var(--secondary-text-color); text-align: right; flex: none; max-width: 45%; }
-  button.gb { display: flex; align-items: center; gap: 6px; width: 100%; min-height: var(--ds-touch); border: none; background: none; padding: 0; cursor: pointer; color: var(--secondary-text-color); font: inherit; text-align: left; }
+  button.gb { display: flex; align-items: center; gap: 6px; width: 100%; min-height: var(--ds-touch, 44px); border: none; background: none; padding: 0; cursor: pointer; color: var(--secondary-text-color); font: inherit; text-align: left; }
   button.gb ha-icon { --mdc-icon-size: 18px; flex: none; }
   .gl { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
   .gs { margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
-  .r { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-1) 0; min-height: var(--ds-touch); box-sizing: border-box; }
+  .r { display: flex; align-items: center; gap: var(--ds-space-3, 12px); padding: var(--ds-space-1, 4px) 0; min-height: var(--ds-touch, 44px); box-sizing: border-box; }
   .r .ic { width: 34px; height: 34px; }
   .r .ic ha-icon { --mdc-icon-size: 19px; }
   .n { overflow-wrap: anywhere; font-size: 14px; font-weight: 500; color: var(--primary-text-color); }
@@ -34,6 +33,7 @@ const STYLE = `
   .fill { height: 100%; border-radius: 3px; background: var(--c); }
   .lv { width: 44px; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; flex: none; }
   [data-e] { cursor: pointer; }
+  [data-e]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
   .empty { padding: 14px 0; font-size: 13px; color: var(--secondary-text-color); }
 `;
 
@@ -60,8 +60,8 @@ class MaintenanceBase extends HTMLElement {
     this._open = {};
     this._html = "";
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives];
-      this.shadowRoot.addEventListener("click", (e) => {
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
+      const act = (e) => {
         const t = e.target.closest("[data-e]");
         if (t) {
           this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: t.dataset.e } }));
@@ -72,6 +72,13 @@ class MaintenanceBase extends HTMLElement {
         this._open[b.dataset.k] = b.dataset.o !== "1";
         this._html = "";
         this._render();
+      };
+      this.shadowRoot.addEventListener("click", act);
+      this.shadowRoot.addEventListener("keydown", (e) => {
+        if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-e]")) {
+          e.preventDefault();
+          act(e);
+        }
       });
     }
   }
@@ -118,7 +125,7 @@ class AttentionListCard extends MaintenanceBase {
       ? items
           .map(
             (i) =>
-              `<div class="t"${i.entity ? ` data-e="${esc(i.entity)}"` : ""} style="--c:${SEV[i.severity] || SEV.info}"><div class="ic"><ha-icon icon="${esc(i.icon || "mdi:alert-circle-outline")}"></ha-icon></div>` +
+              `<div class="t"${i.entity ? ` data-e="${esc(i.entity)}" role="button" tabindex="0"` : ""} style="--c:${SEV[i.severity] || SEV.info}"><div class="ic"><ha-icon icon="${esc(i.icon || "mdi:alert-circle-outline")}"></ha-icon></div>` +
               `<div class="tx"><div class="ti">${esc(i.title)}</div><div class="de">${esc(i.detail || "")}</div></div></div>`,
           )
           .join("")
@@ -143,7 +150,7 @@ class BatteryListCard extends MaintenanceBase {
     if (d.type) parts.push(esc(d.type));
     if (a.stale) parts.push(`<span class="st">no report for ${esc(a.text.replace(" ago", ""))}</span>`);
     return (
-      `<div class="r" data-e="${esc(d.entity)}" style="--c:${col}"><div class="ic"><ha-icon icon="${esc(d.icon || "mdi:battery")}"></ha-icon></div>` +
+      `<div class="r" data-e="${esc(d.entity)}" role="button" tabindex="0" style="--c:${col}"><div class="ic"><ha-icon icon="${esc(d.icon || "mdi:battery")}"></ha-icon></div>` +
       `<div class="tx"><div class="n">${esc(d.name)}</div><div class="sb">${parts.join(" · ")}</div></div>` +
       `<div class="bar"><div class="fill" style="width:${Math.max(2, Math.min(100, d.level))}%"></div></div>` +
       `<div class="lv" style="color:${col}">${Math.round(d.level)} %</div></div>`
@@ -197,7 +204,7 @@ class PersonalListCard extends MaintenanceBase {
         const parts = [d.charging ? "Charging" : d.power === "Not Charging" ? "On battery" : "Power unknown"];
         if (a.minutes >= 360) parts.push(`<span class="st">last seen ${esc(a.text)}</span>`);
         return (
-          `<div class="r" data-e="${esc(d.entity)}" style="--c:${col}"><div class="ic"><ha-icon icon="${esc(d.charging ? "mdi:cellphone-charging" : d.icon || "mdi:cellphone")}"></ha-icon></div>` +
+          `<div class="r" data-e="${esc(d.entity)}" role="button" tabindex="0" style="--c:${col}"><div class="ic"><ha-icon icon="${esc(d.charging ? "mdi:cellphone-charging" : d.icon || "mdi:cellphone")}"></ha-icon></div>` +
           `<div class="tx"><div class="n">${esc(d.name)}</div><div class="sb">${parts.join(" · ")}</div></div>` +
           `<div class="bar"><div class="fill" style="width:${Math.max(2, Math.min(100, d.level))}%"></div></div>` +
           `<div class="lv" style="color:${col}">${Math.round(d.level)} %</div></div>`

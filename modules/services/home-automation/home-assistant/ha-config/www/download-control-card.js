@@ -1,23 +1,25 @@
 // Compact download client control: one pause/resume toggle and a speed-limit slider.
 
-const STYLE = `
-  :host { display: block; }
-  ha-card { padding: 12px 16px; }
-  .row { display: flex; align-items: center; gap: 16px; }
-  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border: 0; border-radius: 999px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
-  .pill:disabled { opacity: 0.5; cursor: default; }
-  .pill ha-icon { --mdc-icon-size: 20px; }
-  .limit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-  .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); }
-  .val { min-width: 4ch; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--primary-text-color); }
-  input[type="range"] { flex: 1; min-width: 60px; accent-color: var(--c); }
-`;
+import { sheet, tokens } from "./ds/tokens.js?v=5";
+import { primitives } from "./ds/primitives.js?v=5";
+
+const own = sheet(`
+:host { display: block; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ds-space-2) var(--ds-space-4); }
+button.chip { min-height: var(--ds-touch); padding: 0 var(--ds-space-4) 0 var(--ds-space-3); gap: var(--ds-space-2); border: 0; cursor: pointer;
+  font: var(--ds-title); white-space: nowrap; touch-action: manipulation; }
+button.chip:disabled { opacity: 0.5; cursor: default; }
+button.chip ha-icon { --mdc-icon-size: 20px; }
+.limit { flex: 1 1 200px; min-width: 0; display: flex; align-items: center; gap: var(--ds-space-3); }
+.val { min-width: 4ch; text-align: right; font: var(--ds-title); font-variant-numeric: tabular-nums; }
+input[type="range"] { flex: 1; min-width: 60px; min-height: var(--ds-touch); accent-color: var(--tint); }
+`);
 
 class DownloadControlCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.switch || !config.number) throw new Error("download-control-card: switch and number are required");
     this._config = config;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
     this._built = false;
   }
 
@@ -33,14 +35,14 @@ class DownloadControlCard extends HTMLElement {
   _build() {
     const c = this._config;
     this.shadowRoot.innerHTML =
-      `<style>${STYLE}</style><ha-card style="--c:${c.color || "var(--primary-color)"}"><div class="row">` +
-      `<button class="pill" type="button"><ha-icon></ha-icon><span></span></button>` +
-      `<div class="limit"><span class="lab">${c.limit_label || "Limit"}</span><input type="range"><span class="val"></span></div>` +
-      `</div></ha-card>`;
+      `<div class="tile" style="--tint:${c.color || "var(--primary-color)"}"><div class="ctl">` +
+      `<button class="chip chip--tint" type="button"><ha-icon></ha-icon><span></span></button>` +
+      `<div class="limit"><span class="tile__label">${c.limit_label || "Limit"}</span><input type="range"><span class="val"></span></div>` +
+      `</div></div>`;
     const root = this.shadowRoot;
-    this._pill = root.querySelector(".pill");
+    this._pill = root.querySelector(".chip");
     this._icon = root.querySelector("ha-icon");
-    this._text = root.querySelector(".pill span");
+    this._text = root.querySelector(".chip span");
     this._range = root.querySelector("input");
     this._val = root.querySelector(".val");
     this._pill.addEventListener("click", () => {

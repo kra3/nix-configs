@@ -1,8 +1,10 @@
+type: custom:command-centre
 title: Media
 path: media
 icon: mdi:play-circle
 max_columns: 2
 sections:
+- !include ../rail.yaml
 - type: grid
   column_span: 2
   cards:

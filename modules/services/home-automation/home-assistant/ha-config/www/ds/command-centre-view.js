@@ -1,6 +1,6 @@
-import { sheet, tokens } from "./tokens.js";
-import { primitives } from "./primitives.js";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js";
+import { sheet, tokens } from "./tokens.js?v=3";
+import { primitives } from "./primitives.js?v=3";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=3";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -9,6 +9,8 @@ const own = sheet(`
 :host([data-mode="narrow"]) { grid-template-columns: minmax(0, 1fr); padding: var(--ds-space-2); }
 [hidden] { display: none !important; }
 .rail { display: flex; flex-direction: column; gap: var(--ds-gap); min-width: 0; }
+.col { min-width: 0; }
+.badges { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-bottom: var(--ds-gap); }
 .main { display: grid; grid-auto-flow: dense; gap: var(--ds-gap); min-width: 0; }
 .pane { background: var(--card-background-color); color: var(--primary-text-color); outline: 0; box-sizing: border-box; overflow: hidden;
   animation: ds-in var(--ds-motion-sheet) var(--ds-ease); }
@@ -19,11 +21,13 @@ const own = sheet(`
 .scrim { position: fixed; inset: 0; z-index: 10; background: color-mix(in srgb, var(--primary-text-color) 40%, transparent); }
 .pane:not([hidden]) { display: flex; flex-direction: column; }
 :host([data-mode="narrow"]) .pane { min-height: 40vh; }
-.body { flex: 1; overflow: auto; }
+.body { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 var(--ds-space-4) var(--ds-space-4); }
+:host([data-mode="narrow"]) .body { padding-bottom: calc(var(--ds-space-4) + env(safe-area-inset-bottom)); }
 .head { display: flex; justify-content: flex-end; padding: var(--ds-space-2); }
-.body { padding: 0 var(--ds-space-4) var(--ds-space-4); }
-.close { width: var(--ds-touch); height: var(--ds-touch); border: 0; border-radius: 999px; cursor: pointer; font-size: 20px;
+.close { width: var(--ds-touch); height: var(--ds-touch); border: 0; border-radius: 999px; cursor: pointer; font-size: 20px; touch-action: manipulation;
   background: transparent; color: var(--primary-text-color); }
+.close:hover { background: color-mix(in srgb, var(--primary-text-color) 12%, transparent); }
+.close:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 @keyframes ds-in { from { opacity: 0; transform: translateY(16px); } }
 @keyframes ds-in-x { from { opacity: 0; transform: translateX(16px); } }
 `);
@@ -32,14 +36,14 @@ class CommandCentre extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
-    this.shadowRoot.innerHTML = `<div class="rail"></div><div class="main"></div><aside class="pane" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
+    this.shadowRoot.innerHTML = `<div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
     const $ = (s) => this.shadowRoot.querySelector(s);
-    this._rail = $(".rail"); this._main = $(".main"); this._pane = $(".pane"); this._scrim = $(".scrim");
-    this._max = 4; this._sections = []; this._hass = undefined; this._card = null;
+    this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
+    this._max = 4; this._sections = []; this._hass = undefined; this._card = null; this._openSeq = 0;
     this._ro = new ResizeObserver(() => this._layout());
     this.addEventListener("section-visibility-changed", () => this._layout(), true);
     this.addEventListener("ll-custom", (ev) => this._open(ev));
-    this.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && this._isOpen()) this._close(); });
+    this.addEventListener("keydown", (ev) => { if (ev.key === "Escape") this._close(); });
     this._scrim.addEventListener("click", () => this._close());
     this._onPop = () => this._close(true);
   }
@@ -50,6 +54,7 @@ class CommandCentre extends HTMLElement {
   }
   disconnectedCallback() {
     this._ro.disconnect();
+    this._close(true);
     window.removeEventListener("popstate", this._onPop);
   }
 
@@ -59,6 +64,7 @@ class CommandCentre extends HTMLElement {
     this._sections = v || [];
     this._place();
   }
+  set badges(v) { this._badges.replaceChildren(...(v || [])); this._badges.hidden = !v?.length; }
   get hass() { return this._hass; }
   set hass(h) { this._hass = h; if (this._card) this._card.hass = h; }
 
@@ -75,6 +81,9 @@ class CommandCentre extends HTMLElement {
     this._main.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     for (const s of this._main.children) if (!s.hidden) s.style.gridColumn = "span " + sectionSpan(s, cols);
     this._scrim.hidden = !this._isOpen() || this.dataset.mode === "wide";
+    const modal = this._isOpen() && this.dataset.mode !== "wide";
+    this._pane.setAttribute("aria-modal", String(this.dataset.mode !== "wide"));
+    for (const e of [this._rail, this._main, this._badges]) e.toggleAttribute("inert", modal);
   }
 
   _isOpen() { return !this._pane.hidden; }
@@ -83,8 +92,12 @@ class CommandCentre extends HTMLElement {
     const cfg = detailConfig(ev);
     if (!cfg) return;
     ev.stopPropagation();
-    const wasOpen = this._isOpen();
-    if (!wasOpen) this._restore = document.activeElement;
+    const seq = ++this._openSeq;
+    if (!this._isOpen()) {
+      let a = document.activeElement;
+      while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement;
+      this._restore = a ?? ev.composedPath()[0];
+    }
     let body = document.createElement("div");
     body.className = "body";
     this._card = null;
@@ -96,11 +109,13 @@ class CommandCentre extends HTMLElement {
       body.append(el);
     } catch (e) {
       console.error(e);
-      body.textContent = "Couldn't open this detail";
+      body.textContent = "Couldn’t open this detail. Close and try again.";
     }
+    if (seq !== this._openSeq) return;
+    const wasOpen = this._isOpen();
     const head = document.createElement("div");
     head.className = "head";
-    head.innerHTML = `<button class="close" aria-label="Close">✕</button>`;
+    head.innerHTML = `<button class="close" aria-label="Close"><span aria-hidden="true">✕</span></button>`;
     head.firstChild.addEventListener("click", () => this._close());
     this._pane.replaceChildren(head, body);
     this._pane.hidden = false;
@@ -111,6 +126,7 @@ class CommandCentre extends HTMLElement {
   }
 
   _close(fromPop) {
+    this._openSeq++;
     if (!this._isOpen()) return;
     this._pane.hidden = true;
     this._card = null;

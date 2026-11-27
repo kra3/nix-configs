@@ -1,5 +1,4 @@
-const sheet = (css) => { const s = new CSSStyleSheet(); s.replaceSync(css); return s; };
-export { sheet };
+export const sheet = (css) => { const s = new CSSStyleSheet(); s.replaceSync(css); return s; };
 export const tokens = sheet(`
 :host {
   --ds-space-1: 4px; --ds-space-2: 8px; --ds-space-3: 12px; --ds-space-4: 16px; --ds-space-5: 24px;

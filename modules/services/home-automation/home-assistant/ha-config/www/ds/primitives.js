@@ -1,5 +1,4 @@
-import { sheet } from "./tokens.js";
-export const tint = (v, pct = 14) => `color-mix(in srgb, ${v} ${pct}%, var(--card-background-color))`;
+import { sheet } from "./tokens.js?v=3";
 export const primitives = sheet(`
 .tile { background: var(--ha-card-background, var(--card-background-color)); border-radius: var(--ds-radius-tile);
   padding: var(--ds-tile-pad); box-shadow: var(--ha-card-box-shadow, none);
@@ -19,6 +18,7 @@ export const primitives = sheet(`
 .row__k { color: var(--secondary-text-color); }
 .row__v { font-weight: 600; font-variant-numeric: tabular-nums; }
 .btn { min-height: var(--ds-touch); padding: 0 var(--ds-space-4); border-radius: 999px; border: 0; cursor: pointer;
-  font: var(--ds-title); background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  font: var(--ds-title); background: var(--primary-color); color: var(--text-primary-color); touch-action: manipulation; }
+.btn:hover { filter: brightness(1.1); }
 .btn:focus-visible, .chip:focus-visible, .tile:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 `);

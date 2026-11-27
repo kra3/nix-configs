@@ -22,6 +22,15 @@ ALTER TABLE plans ADD COLUMN name_a TEXT;
 ALTER TABLE plans ADD COLUMN name_b TEXT;
 PRAGMA user_version = 10;";
 
+// v13: sessions C and D; CHECKs are edited in place and ADD COLUMN bumps the schema cookie.
+pub const SCHEMA_13: &str = "
+PRAGMA writable_schema = ON;
+UPDATE sqlite_master SET sql = replace(sql, 'IN (''A'', ''B'')', 'IN (''A'', ''B'', ''C'', ''D'')') WHERE name IN ('days', 'plan_exercises');
+PRAGMA writable_schema = OFF;
+ALTER TABLE plans ADD COLUMN name_c TEXT;
+ALTER TABLE plans ADD COLUMN name_d TEXT;
+PRAGMA user_version = 13;";
+
 pub const PROGS: [&str; 3] = ["double", "reps", "hold"];
 
 /* ---------- sets: [kg, reps] or [kg, reps, rir, pain] ---------- */
@@ -108,9 +117,9 @@ pub fn parse_block(v: &Value) -> Result<Block, String> {
     Ok(Block { start, weeks, deload })
 }
 
-// {"A": "Upper", "B": "Lower"}, each 1 to 20 characters.
-pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 2], String> {
-    let mut out = [None, None];
+// {"A": "Upper", "B": "Lower", "C"?, "D"?}, each 1 to 20 characters.
+pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 4], String> {
+    let mut out = [None, None, None, None];
     let o = match v {
         None | Some(Value::Null) => return Ok(out),
         Some(v) => v.as_object().ok_or("names must be an object")?,
@@ -128,9 +137,11 @@ pub fn parse_names(v: Option<&Value>) -> Result<[Option<String>; 2], String> {
 }
 
 pub fn get_names(c: &Connection, user: &str) -> rusqlite::Result<Option<Value>> {
-    let (a, b) = c.query_row("SELECT name_a, name_b FROM plans WHERE user = ?1", params![user], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, Option<String>>(1)?)))?;
+    let names: [Option<String>; 4] = c.query_row("SELECT name_a, name_b, name_c, name_d FROM plans WHERE user = ?1", params![user], |r| {
+        Ok([r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?])
+    })?;
     let mut m = Map::new();
-    for (w, n) in WORKOUTS.iter().zip([a, b]) {
+    for (w, n) in WORKOUTS.iter().zip(names) {
         if let Some(n) = n {
             m.insert((*w).into(), json!(n));
         }
@@ -230,7 +241,9 @@ pub fn muscle_sets(c: &Connection, user: &str, end: &str) -> rusqlite::Result<Va
         let (k, x) = r?;
         *done.entry(group(&k)).or_default() += x;
     }
-    let per_week = get_settings(c, user)?.and_then(|(_, s)| s["workouts"].as_f64()).unwrap_or(3.0) / 2.0;
+    // Each session comes round once per rotation; A and B always count.
+    let sessions: i64 = c.query_row("SELECT 2 + COUNT(DISTINCT workout) FROM plan_exercises WHERE user = ?1 AND workout IN ('C', 'D')", params![user], |r| r.get(0))?;
+    let per_week = get_settings(c, user)?.and_then(|(_, s)| s["workouts"].as_f64()).unwrap_or(3.0) / sessions as f64;
     let mut plan: BTreeMap<&str, i64> = BTreeMap::new();
     let mut st = c.prepare_cached("SELECT key, sets FROM plan_exercises WHERE user = ?1")?;
     for r in st.query_map(params![user], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))? {
@@ -421,7 +434,7 @@ mod tests {
         let good = plan_with(&|p| p["names"] = json!({ "A": "Upper", "B": "Lower" }));
         assert_eq!(put(&c, "plan", "0", good.clone()).0, 200);
         assert_eq!(get_plan(&c, "kra3").unwrap().unwrap().1, good);
-        for bad in [json!({ "A": "" }), json!({ "A": "x".repeat(21) }), json!({ "C": "Core" }), json!("Upper"), json!({ "A": 1 })] {
+        for bad in [json!({ "A": "" }), json!({ "A": "x".repeat(21) }), json!({ "E": "Core" }), json!("Upper"), json!({ "A": 1 })] {
             assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = bad.clone())).0, 400, "{bad}");
         }
         assert_eq!(put(&c, "plan", "1", plan_with(&|p| p["names"] = json!({ "A": "x".repeat(20) }))).0, 200);
@@ -453,6 +466,21 @@ mod tests {
         assert_eq!(muscle_of("legpress"), "quads");
         assert_eq!(muscle_of("reardelt"), "back");
         assert_eq!(muscle_of("nope"), "other");
+    }
+
+    #[test]
+    fn sets_per_muscle_with_four_sessions() {
+        let c = db();
+        put(&c, "settings", "0", json!({ "workouts": 4 }));
+        let day = |sets: i64| json!([{ "k": "chestpress", "n": "Chest press", "sets": sets, "lo": 8, "hi": 12, "u": "kg" }]);
+        assert_eq!(put(&c, "plan", "0", json!({ "A": day(1), "B": day(2), "C": day(3), "D": day(4) })).0, 200);
+        let m = muscle_sets(&c, "kra3", "2026-11-10").unwrap();
+        assert_eq!(m, json!([{ "m": "chest", "done": 0, "planned": 10 }]));
+        // An empty B still takes its turn in the rotation.
+        put(&c, "settings", "1", json!({ "workouts": 3 }));
+        assert_eq!(put(&c, "plan", "1", json!({ "A": day(1), "B": [], "C": day(2) })).0, 200);
+        let m = muscle_sets(&c, "kra3", "2026-11-10").unwrap();
+        assert_eq!(m, json!([{ "m": "chest", "done": 0, "planned": 3 }]));
     }
 
     #[test]

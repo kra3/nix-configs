@@ -74,10 +74,10 @@
     },
     "powercalc": {
       "repo": "bramstroker/homeassistant-powercalc",
-      "version": "v1.27.0",
+      "version": "v1.27.1",
       "kind": "zip",
       "asset": "powercalc.zip",
-      "hash": "sha256-btFaNOLrSrd2ou1fSK/ezh+nSjC631QETnTpO3U3bLM="
+      "hash": "sha256-WPKRCM2/HBo+7qpQpJwG9jzVPJCM17Qf9poIO6xt6lg="
     },
     "powerline": {
       "repo": "Chance-Konstruktion/ha-powerline",

@@ -1,5 +1,5 @@
-import { sheet, tokens } from "./tokens.js?v=4";
-import { primitives } from "./primitives.js?v=4";
+import { sheet, tokens } from "./tokens.js?v=5";
+import { primitives } from "./primitives.js?v=5";
 
 const TINT = { error: "--error-color", warning: "--warning-color", info: "--info-color" };
 
@@ -42,9 +42,10 @@ class AttentionPillsCard extends HTMLElement {
   }
 
   _pill(i) {
+    const li = document.createElement("span");
+    li.setAttribute("role", "listitem");
     const b = document.createElement("button");
     b.className = "chip chip--tint pill";
-    b.setAttribute("role", "listitem");
     b.style.setProperty("--tint", `var(${TINT[i.severity] || TINT.info})`);
     const icon = document.createElement("ha-icon");
     icon.setAttribute("icon", i.icon || "mdi:alert-circle-outline");
@@ -56,7 +57,8 @@ class AttentionPillsCard extends HTMLElement {
       history.pushState(null, "", i.path);
       window.dispatchEvent(new Event("location-changed"));
     });
-    return b;
+    li.append(b);
+    return li;
   }
 }
 

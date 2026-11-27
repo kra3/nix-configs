@@ -1,5 +1,5 @@
-import { sheet, tokens } from "./tokens.js?v=4";
-import { primitives } from "./primitives.js?v=4";
+import { sheet, tokens } from "./tokens.js?v=5";
+import { primitives } from "./primitives.js?v=5";
 
 const own = sheet(`
 :host { display: block; }
@@ -66,7 +66,10 @@ class RoomRowsCard extends HTMLElement {
     b.setAttribute("aria-label", [r.name, text].filter(Boolean).join(" · "));
     b.addEventListener("click", () => {
       if (!r.detail) return;
-      this.dispatchEvent(new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: r.detail }, bubbles: true, composed: true }));
+      const ev = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: r.detail }, bubbles: true, composed: true, cancelable: true });
+      this.dispatchEvent(ev);
+      const entityId = r.lights || r.temperature;
+      if (!ev.defaultPrevented && entityId) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
     });
     return b;
   }

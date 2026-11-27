@@ -137,7 +137,6 @@ sections:
         volume: true
         shuffle: true
         repeat: true
-      grid_options:
     grid_options:
       columns: full
   - type: custom:mushroom-template-card

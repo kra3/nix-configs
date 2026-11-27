@@ -1,6 +1,6 @@
-import { sheet, tokens } from "./tokens.js?v=4";
-import { primitives } from "./primitives.js?v=4";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=4";
+import { sheet, tokens } from "./tokens.js?v=5";
+import { primitives } from "./primitives.js?v=5";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=5";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;

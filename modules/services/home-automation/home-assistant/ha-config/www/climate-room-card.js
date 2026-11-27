@@ -1,7 +1,7 @@
-// Room climate tile: a status-tinted icon with a badge when the room is off its comfort range, the room name, the comfort word and temperature, humidity and dew point readings with glyphs; tapping opens a popup with the comfort reason, a 24 h or 7 d history graph and a link to the sensor details. Tinted by comfort state; tapping asks the dashboard for a detail pane (cc_detail) with history graphs and falls back to the popup.
+// Room climate tile: status-tinted icon, comfort word and readings; tapping asks the dashboard for a detail pane (cc_detail) and falls back to a history popup.
 
-import { tokens } from "/local/ds/tokens.js?v=4";
-import { primitives } from "/local/ds/primitives.js?v=4";
+import { tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
 
 const STYLE = `
   :host { display: block; }

@@ -1,6 +1,6 @@
 // Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`. `layout: rows` puts each entry on one line (label left, value right); `spark: {entity, title, hours}` adds an hourly-mean sparkline with its peak above the entries; `align: end` on a head entry pushes it to the right edge.
 
-import { tokens } from "/local/ds/tokens.js?v=4";
+import { tokens } from "/local/ds/tokens.js?v=5";
 
 const STYLE = `
   :host { display: block; }

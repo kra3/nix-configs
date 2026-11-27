@@ -1,6 +1,6 @@
 // Comfort range: a draggable Low/High range on a temperature scale with the season's guideline band underneath, a night-offset stepper, a humidity-vs-ceiling bar and collapsible `advanced` rows (name, effect, optional `now` Jinja line, -/+ steppers; `when: {entity, state | state_not}` shows a row or stepper conditionally).
 
-import { tokens } from "/local/ds/tokens.js?v=4";
+import { tokens } from "/local/ds/tokens.js?v=5";
 
 const STYLE = `
   :host { display: block; }

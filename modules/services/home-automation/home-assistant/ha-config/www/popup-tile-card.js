@@ -76,6 +76,9 @@ class PopupTileCard extends HTMLElement {
 
   async _open() {
     if (this._overlay) return;
+    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._config.popup }, bubbles: true, composed: true, cancelable: true });
+    this.dispatchEvent(drill);
+    if (drill.defaultPrevented) return;
     const helpers = await window.loadCardHelpers();
     let card = helpers.createCardElement(this._config.popup);
     if (!customElements.get(card.localName)) {

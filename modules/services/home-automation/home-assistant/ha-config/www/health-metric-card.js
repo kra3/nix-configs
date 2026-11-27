@@ -632,6 +632,15 @@ class HealthMetricCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
+    if (this._config.popup_inline) {
+      if (!this._inlined) {
+        this._inlined = true;
+        this.shadowRoot.innerHTML = `<style>${POPUP_STYLE}</style><div class="hmc-gtitle"></div><div class="hmc-body"></div>`;
+        this.shadowRoot.querySelector(".hmc-gtitle").textContent = this._config.popup.title || this._config.name || "";
+        this._fillPopup(this.shadowRoot.querySelector(".hmc-body"));
+      }
+      return;
+    }
     const st = hass.states[this._config.entity];
     const stamp = st ? st.last_updated : "";
     if (stamp !== this._stamp && Date.now() - this._lastFetch > 20000) {
@@ -910,6 +919,9 @@ class HealthMetricCard extends HTMLElement {
   async _openPopup() {
     if (this._overlay) return;
     const c = this._config;
+    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: Object.assign({}, c, { popup_inline: true }) }, bubbles: true, composed: true, cancelable: true });
+    this.dispatchEvent(drill);
+    if (drill.defaultPrevented) return;
     if (!document.getElementById("hmc-popup-style")) {
       const st = document.createElement("style");
       st.id = "hmc-popup-style";
@@ -935,7 +947,11 @@ class HealthMetricCard extends HTMLElement {
     document.addEventListener("keydown", onKey);
     document.body.appendChild(ov);
     this._overlay = ov;
-    const body = ov.querySelector(".hmc-body");
+    await this._fillPopup(ov.querySelector(".hmc-body"));
+  }
+
+  async _fillPopup(body) {
+    const c = this._config;
     if (c.popup.sleep && usable(this._hass, c.popup.sleep.duration)) {
       const sec = document.createElement("div");
       sec.className = "hmc-graph";

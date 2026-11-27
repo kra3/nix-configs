@@ -116,6 +116,7 @@ function updateDelete(){ $('del-day').hidden = !docs[sel]; hl('hl-log', docs[sel
 function nSets(ex, saved){ return Math.max(ex.sets, saved && saved[ex.k] ? saved[ex.k].length : 0); }
 function saveWorkout(){
   var d = sel, collected = {}, any = false, sv0 = (docs[sel] && docs[sel].sets) || {};
+  if (!PLAN[wsel]){ renderWorkout(); return; }
   PLAN[wsel].forEach(function(ex){
     var arr = [];
     for (var i = 0; i < nSets(ex, sv0); i++){
@@ -594,7 +595,7 @@ function renderHabits(){
 
 /* ---------- workout sheet ---------- */
 function suggestWorkout(d){
-  if (docs[d] && docs[d].workout) return docs[d].workout;
+  if (docs[d] && docs[d].workout) return wks().indexOf(docs[d].workout) < 0 ? 'A' : docs[d].workout;
   var prev = dates().filter(function(x){ return x < d && docs[x].workout; });
   if (!prev.length) return 'A';
   var ws = wks(), i = ws.indexOf(docs[prev[prev.length - 1]].workout);
@@ -703,8 +704,9 @@ function setOpen(box, open){
 }
 function renderWorkout(){
   var tabs = $('tabs'); tabs.textContent = '';
-  var next = suggestWorkout(sel), logged = docs[sel] && docs[sel].workout;
-  wks().forEach(function(k){
+  var next = suggestWorkout(sel), logged = docs[sel] && docs[sel].workout, ws = wks(draft || PLAN);
+  if (ws.indexOf(wsel) < 0) wsel = 'A';
+  ws.forEach(function(k){
     var b = document.createElement('button'); b.type = 'button'; b.className = 'tab';
     b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === wsel ? 'true' : 'false');
     b.textContent = wname(k);
@@ -980,10 +982,12 @@ function savePlan(){
   if (bad){ setStatus('st-plan', bad, true); return; }
   wks(draft).forEach(function(w){ draft[w].forEach(function(e){ e.n = e.n.trim(); if (!e.k) e.k = keyFor(e.n, draft[w]); }); });
   var next = {A: draft.A, B: draft.B};
-  if (draft.C) next.C = draft.C;
-  if (draft.D) next.D = draft.D;
+  ['C', 'D'].forEach(function(w){
+    if (draft[w] && draft[w].length) next[w] = draft[w];
+    else if (draft.names) delete draft.names[w];
+  });
   if (draft.block) next.block = draft.block;
-  if (draft.names) next.names = draft.names;
+  if (draft.names && Object.keys(draft.names).length) next.names = draft.names;
   PLAN = next; draft = null; renderHeader();
   setStatus('st-workout', 'Saving plan…');
   renderWorkout();
@@ -1077,7 +1081,7 @@ function renderEditor(){
   });
   btn('Save plan', 'btn', savePlan);
   btn('Cancel', 'btn ghost', stopEdit);
-  btn('Reset to starting plan', 'btn ghost', function(){ draft = JSON.parse(JSON.stringify(DEFAULT_PLAN)); renderEditor(); setStatus('st-plan', 'Starting plan loaded. Save to keep it.'); });
+  btn('Reset to starting plan', 'btn ghost', function(){ draft = JSON.parse(JSON.stringify(DEFAULT_PLAN)); renderWorkout(); setStatus('st-plan', 'Starting plan loaded. Save to keep it.'); });
   var st = document.createElement('span'); st.className = 'status'; st.id = 'st-plan'; st.setAttribute('role', 'status'); st.setAttribute('aria-live', 'polite');
   acts.appendChild(st);
   host.appendChild(acts);
@@ -1859,7 +1863,7 @@ function rebuild(){
   Object.keys(outbox).forEach(function(id){ if (outbox[id].op === 'delete') delete view[id]; else view[id] = outbox[id].data; });
   settings = Object.assign({}, DEF, view.settings || {});
   var p = view.plan;
-  PLAN = p && Array.isArray(p.A) && Array.isArray(p.B) && (p.A.length || p.B.length) ? p : DEFAULT_PLAN;
+  PLAN = p && Array.isArray(p.A) && Array.isArray(p.B) && allEx(p).length ? p : DEFAULT_PLAN;
   profile = view.profile || {};
   meals = view.meals && Array.isArray(view.meals.meals) ? view.meals.meals : [];
   supps = view.supplements && Array.isArray(view.supplements.items) ? view.supplements.items : [];

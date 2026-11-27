@@ -74,7 +74,7 @@
     },
     "powercalc": {
       "repo": "bramstroker/homeassistant-powercalc",
-      "version": "v1.27.0",
+      "version": "v1.27.1",
       "kind": "zip",
       "asset": "powercalc.zip",
       "hash": "sha256-btFaNOLrSrd2ou1fSK/ezh+nSjC631QETnTpO3U3bLM="

@@ -116,80 +116,30 @@ sections:
     heading: Cost today by device (approx.)
     icon: mdi:cash-clock
     heading_style: title
-  - type: custom:auto-entities
+  - type: custom:cost-list-card
+    top: 5
     grid_options:
       columns: full
-    card:
-      type: entities
-      show_header_toggle: false
-    filter:
-      include: &cost_rows
-      - entity_id: sensor.cost_today_all_lights
-        options: &cost_opts
-          secondary_info: attribute
-          attribute: power
-          name: All lights
-          icon: mdi:lightbulb-group
-      - entity_id: sensor.cost_today_bedroom
-        options: {<<: *cost_opts, name: Bedroom lights, icon: "mdi:bed"}
-      - entity_id: sensor.cost_today_kitchen
-        options: {<<: *cost_opts, name: Kitchen lights, icon: "mdi:countertop"}
-      - entity_id: sensor.cost_today_kitchen_dining
-        options: {<<: *cost_opts, name: Kitchen dining lights, icon: "mdi:table-chair"}
-      - entity_id: sensor.cost_today_dining_room
-        options: {<<: *cost_opts, name: Dining room lights, icon: "mdi:silverware-fork-knife"}
-      - entity_id: sensor.cost_today_living_room
-        options: {<<: *cost_opts, name: Living room lights, icon: "mdi:sofa"}
-      - entity_id: sensor.cost_today_office
-        options: {<<: *cost_opts, name: Office lights, icon: "mdi:desk"}
-      - entity_id: sensor.cost_today_hall
-        options: {<<: *cost_opts, name: Hall lights, icon: "mdi:door"}
-      - entity_id: sensor.cost_today_tv
-        options: {<<: *cost_opts, name: TV, icon: "mdi:television"}
-      - entity_id: sensor.cost_today_receiver
-        options: {<<: *cost_opts, name: Receiver, icon: "mdi:speaker"}
-      - entity_id: sensor.cost_today_camera_duo
-        options: {<<: *cost_opts, name: Camera Duo, icon: "mdi:cctv"}
-      - entity_id: sensor.cost_today_camera_uno
-        options: {<<: *cost_opts, name: Camera Uno, icon: "mdi:cctv"}
-      - entity_id: sensor.cost_today_fridge
-        options: {<<: *cost_opts, name: Fridge, icon: "mdi:fridge"}
-      - entity_id: sensor.cost_today_kitchen_speaker
-        options: {<<: *cost_opts, name: Kitchen speaker, icon: "mdi:speaker"}
-      - entity_id: sensor.cost_today_hob
-        options: {<<: *cost_opts, name: Hob, icon: "mdi:pot-steam"}
-      - entity_id: sensor.cost_today_oven
-        options: {<<: *cost_opts, name: Oven, icon: "mdi:stove"}
-      - entity_id: sensor.cost_today_dishwasher
-        options: {<<: *cost_opts, name: Dishwasher, icon: "mdi:dishwasher"}
-      - entity_id: sensor.cost_today_microwave
-        options: {<<: *cost_opts, name: Microwave, icon: "mdi:microwave"}
-      - entity_id: sensor.cost_today_hood
-        options: {<<: *cost_opts, name: Hood, icon: "mdi:fan"}
-    sort:
-      method: state
-      numeric: true
-      reverse: true
-      count: 5
-  - type: button
-    name: All 19 devices
-    icon: mdi:format-list-numbered
-    grid_options:
-      columns: full
-    tap_action:
-      action: fire-dom-event
-      cc_detail:
-        type: custom:auto-entities
-        card:
-          type: entities
-          title: Cost today by device (approx.)
-          show_header_toggle: false
-        filter:
-          include: *cost_rows
-        sort:
-          method: state
-          numeric: true
-          reverse: true
+    entities:
+    - {entity: sensor.cost_today_all_lights, name: All lights, power: sensor.lights_power}
+    - {entity: sensor.cost_today_bedroom, name: Bedroom lights, power: sensor.lights_bedroom_power}
+    - {entity: sensor.cost_today_kitchen, name: Kitchen lights, power: sensor.lights_kitchen_power}
+    - {entity: sensor.cost_today_kitchen_dining, name: Kitchen dining lights, power: sensor.lights_kitchen_dining_power}
+    - {entity: sensor.cost_today_dining_room, name: Dining room lights, power: sensor.lights_dining_room_power}
+    - {entity: sensor.cost_today_living_room, name: Living room lights, power: sensor.lights_living_room_power}
+    - {entity: sensor.cost_today_office, name: Office lights, power: sensor.lights_office_power}
+    - {entity: sensor.cost_today_hall, name: Hall lights, power: sensor.lights_hall_power}
+    - {entity: sensor.cost_today_tv, name: TV, power: sensor.lg_tv_power}
+    - {entity: sensor.cost_today_receiver, name: Receiver, power: sensor.marantz_nr1711_power}
+    - {entity: sensor.cost_today_camera_duo, name: Camera Duo, power: sensor.camera_duo_power}
+    - {entity: sensor.cost_today_camera_uno, name: Camera Uno, power: sensor.camera_uno_power}
+    - {entity: sensor.cost_today_fridge, name: Fridge, power: sensor.fridge_power}
+    - {entity: sensor.cost_today_kitchen_speaker, name: Kitchen speaker, power: sensor.kitchen_speaker_power}
+    - {entity: sensor.cost_today_hob, name: Hob, power: sensor.hob_power}
+    - {entity: sensor.cost_today_oven, name: Oven, power: sensor.oven_power}
+    - {entity: sensor.cost_today_dishwasher, name: Dishwasher, power: sensor.dishwasher_power}
+    - {entity: sensor.cost_today_microwave, name: Microwave, power: sensor.microwave_power}
+    - {entity: sensor.cost_today_hood, name: Hood, power: sensor.hood_power}
 - type: grid
   column_span: 1
   cards:

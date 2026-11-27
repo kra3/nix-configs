@@ -284,6 +284,26 @@ sections:
     name: Bedroom nap
     icon: mdi:power-sleep
 - type: grid
+  cards:
+  - type: heading
+    heading: Outside
+    icon: mdi:weather-partly-cloudy
+    heading_style: title
+  - type: custom:horizon-card
+    grid_options:
+      columns: full
+  - type: weather-forecast
+    entity: weather.forecast_vasudha
+    forecast_type: daily
+    show_current: true
+    show_forecast: true
+    secondary_info_attribute: wind_speed
+    forecast_slots: 5
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: full
+- type: grid
   column_span: 2
   cards:
   - type: heading

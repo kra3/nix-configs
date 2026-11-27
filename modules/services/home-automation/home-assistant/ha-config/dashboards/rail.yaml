@@ -31,18 +31,15 @@ cards:
   tap_action:
     action: fire-dom-event
     cc_detail:
-      type: vertical-stack
-      cards:
-      - type: custom:horizon-card
-      - type: weather-forecast
-        entity: weather.forecast_vasudha
-        forecast_type: daily
-        show_current: true
-        show_forecast: true
-        secondary_info_attribute: wind_speed
-        forecast_slots: 5
-        tap_action:
-          action: more-info
+      type: weather-forecast
+      entity: weather.forecast_vasudha
+      forecast_type: hourly
+      show_current: true
+      show_forecast: true
+      secondary_info_attribute: wind_speed
+      forecast_slots: 5
+      tap_action:
+        action: more-info
   grid_options:
     columns: full
 - type: custom:mushroom-chips-card

@@ -1,11 +1,12 @@
-type: sections
+type: custom:command-centre
 title: Maintenance
 path: dash-maintenance
 icon: mdi:wrench
-max_columns: 2
+max_columns: 3
 sections:
+- !include ../rail.yaml
 - type: grid
-  column_span: 2
+  column_span: 3
   cards:
   - type: custom:status-row-card
     grid_options:

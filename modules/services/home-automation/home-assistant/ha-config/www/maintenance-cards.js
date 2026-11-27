@@ -1,9 +1,12 @@
 // Maintenance cards: attention-list-card shows prioritised items as severity-tinted tiles with what to do, plus an optional collapsible list of broken references; battery-list-card shows device batteries grouped by room, lowest first, with a level bar and when each last reported.
 
+import { tokens } from "./ds/tokens.js?v=4";
+import { primitives } from "./ds/primitives.js?v=4";
+
 const STYLE = `
   :host { display: block; }
-  ha-card { padding: 4px 14px 10px; }
-  .t { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider-color); }
+  ha-card { padding: var(--ds-space-1) var(--ds-space-4) var(--ds-space-2); }
+  .t { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-2) 0; border-top: 1px solid var(--divider-color); }
   .t:first-child { border-top: none; }
   .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
   .ic ha-icon { --mdc-icon-size: 21px; }
@@ -11,17 +14,17 @@ const STYLE = `
   .ti { font-size: 14px; font-weight: 600; color: var(--primary-text-color); }
   .de { font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); margin-top: 1px; }
   .ok { color: var(--success-color, #43a047); }
-  button.tg { display: flex; align-items: center; gap: 4px; width: 100%; border: none; background: none; color: var(--secondary-text-color); font-size: 13px; font-weight: 600; padding: 0; min-height: 44px; cursor: pointer; border-top: 1px solid var(--divider-color); }
+  button.tg { display: flex; align-items: center; gap: 4px; width: 100%; border: none; background: none; color: var(--secondary-text-color); font-size: 13px; font-weight: 600; padding: 0; min-height: var(--ds-touch); cursor: pointer; border-top: 1px solid var(--divider-color); }
   button.tg ha-icon { --mdc-icon-size: 18px; }
   .rf { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; border-top: 1px solid var(--divider-color); }
   .rf:first-of-type { border-top: none; }
   .rf .id { color: var(--primary-text-color); word-break: break-all; }
   .rf .fl { color: var(--secondary-text-color); text-align: right; flex: none; max-width: 45%; }
-  button.gb { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; border: none; background: none; padding: 0; cursor: pointer; color: var(--secondary-text-color); font: inherit; text-align: left; }
+  button.gb { display: flex; align-items: center; gap: 6px; width: 100%; min-height: var(--ds-touch); border: none; background: none; padding: 0; cursor: pointer; color: var(--secondary-text-color); font: inherit; text-align: left; }
   button.gb ha-icon { --mdc-icon-size: 18px; flex: none; }
   .gl { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
   .gs { margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
-  .r { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+  .r { display: flex; align-items: center; gap: var(--ds-space-3); padding: var(--ds-space-1) 0; min-height: var(--ds-touch); box-sizing: border-box; }
   .r .ic { width: 34px; height: 34px; }
   .r .ic ha-icon { --mdc-icon-size: 19px; }
   .n { overflow-wrap: anywhere; font-size: 14px; font-weight: 500; color: var(--primary-text-color); }
@@ -57,7 +60,7 @@ class MaintenanceBase extends HTMLElement {
     this._open = {};
     this._html = "";
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives];
       this.shadowRoot.addEventListener("click", (e) => {
         const t = e.target.closest("[data-e]");
         if (t) {

@@ -1,10 +1,10 @@
 // Washer and dryer tiles (phase, finish estimate, live power, last cycle, Emptied button), care counters with a Done reset, and recent loads drawn as phase-coloured bars.
-import { sheet, tokens } from "/local/ds/tokens.js?v=4";
-import { primitives } from "/local/ds/primitives.js?v=4";
+import { sheet, tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
 
 const STYLE = sheet(`
   :host { display: block; }
-  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
+  .machines { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
   .m { display: flex; align-items: center; gap: var(--ds-space-3); cursor: pointer; outline: none; min-width: 0;
        border: 1px solid color-mix(in srgb, var(--tint) 28%, transparent); }
   .m:focus-visible { box-shadow: 0 0 0 2px var(--tint); }
@@ -150,13 +150,13 @@ class LaundryMachineCard extends HTMLElement {
         </div>`;
       })
       .join("");
-    this.shadowRoot.innerHTML = `<div class="row">${cells}</div>`;
+    this.shadowRoot.innerHTML = `<div class="machines">${cells}</div>`;
   }
 }
 
 const COST_STYLE = sheet(`
   :host { display: block; }
-  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
+  .plugs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
   .d { min-width: 0; }
   .d.tap { cursor: pointer; }
   .top { display: flex; align-items: center; gap: 10px; }
@@ -181,8 +181,12 @@ class PlugCostCard extends HTMLElement {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
         if (!d || !d.popup || !customElements.get("health-metric-card")) return;
+        const cfg = { entity: d.entity, name: d.name, color: d.color, popup: d.popup };
+        const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: { type: "custom:health-metric-card", ...cfg, popup_inline: true } }, bubbles: true, composed: true, cancelable: true });
+        this.dispatchEvent(drill);
+        if (drill.defaultPrevented) return;
         const card = document.createElement("health-metric-card");
-        card.setConfig({ entity: d.entity, name: d.name, color: d.color, popup: d.popup });
+        card.setConfig(cfg);
         card.hass = this._hass;
         card._openPopup();
       });
@@ -218,7 +222,7 @@ class PlugCostCard extends HTMLElement {
       .join("");
     const price = this._config.price && this._hass.states[this._config.price];
     const foot = `${price ? `Price now ${num(price.state)} kr/kWh with VAT. ` : ""}Estimated from this month's average spot; E.ON sets the final price after the month ends.`;
-    this.shadowRoot.innerHTML = `<div class="row">${cells}</div><div class="foot tile__sub">${esc(foot)}</div>`;
+    this.shadowRoot.innerHTML = `<div class="plugs">${cells}</div><div class="foot tile__sub">${esc(foot)}</div>`;
   }
 }
 
@@ -360,7 +364,10 @@ class LaundryRunsCard extends HTMLElement {
       shadow(this, RUNS_STYLE);
       const open = (el) => {
         const l = el && this._shown && this._shown[el.dataset.i];
-        if (l) this.dispatchEvent(new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail(l) }, bubbles: true, composed: true, cancelable: true }));
+        if (!l) return;
+        const ev = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail(l) }, bubbles: true, composed: true, cancelable: true });
+        this.dispatchEvent(ev);
+        if (!ev.defaultPrevented) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: l.wash ? this._config.washer : this._config.dryer }, bubbles: true, composed: true }));
       };
       this.shadowRoot.addEventListener("click", (e) => open(e.target.closest(".load")));
       this.shadowRoot.addEventListener("keydown", (e) => {

@@ -14,7 +14,7 @@ resources:
     type: module
   - url: /local/status-row-card.js?v=15
     type: module
-  - url: /local/laundry-machine-card.js?v=10
+  - url: /local/laundry-machine-card.js?v=12
     type: module
   - url: /local/scene-picker-card.js?v=4
     type: module
@@ -58,7 +58,7 @@ resources:
     type: module
   - url: /local/ds/room-rows-card.js?v=5
     type: module
-  - url: /local/ds/cost-list-card.js?v=1
+  - url: /local/ds/cost-list-card.js?v=3
     type: module
 dashboards:
   lovelace-map:

@@ -1,5 +1,5 @@
-import { sheet, tokens } from "./tokens.js?v=4";
-import { primitives } from "./primitives.js?v=4";
+import { sheet, tokens } from "./tokens.js?v=5";
+import { primitives } from "./primitives.js?v=5";
 
 const own = sheet(`
 :host { display: block; }
@@ -35,7 +35,8 @@ class CostListCard extends HTMLElement {
   getGridOptions() { return { columns: "full", min_columns: 3 }; }
 
   set hass(h) {
-    const top = this._config.top ?? 5;
+    const top = this._expanded ? Infinity : this._config.top ?? 5;
+    this._h = h;
     const rows = this._config.entities
       .map((e, i) => ({ e, i, s: h.states[e.entity], v: num(h.states[e.entity]) }))
       .sort((a, b) => (b.v ?? -Infinity) - (a.v ?? -Infinity) || a.i - b.i);
@@ -88,7 +89,11 @@ class CostListCard extends HTMLElement {
 
   _all(n) {
     const b = this._btn(`All ${n} devices`, "");
-    b.addEventListener("click", () => this._fire({ type: "custom:cost-list-card", entities: this._config.entities, top: 999, title: this._config.title }));
+    b.addEventListener("click", () => {
+      if (!this._fire({ type: "custom:cost-list-card", entities: this._config.entities, top: 999, title: this._config.title })) return;
+      this._expanded = true;
+      this.hass = this._h;
+    });
     return b;
   }
 }

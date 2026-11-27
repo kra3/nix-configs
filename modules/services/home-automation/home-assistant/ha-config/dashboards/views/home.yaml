@@ -835,6 +835,15 @@ sections:
           entities:
           - sensor.average_illuminance
           days: 7
+  - type: custom:mushroom-template-card
+    primary: Lights
+    secondary: "{{ states.light | selectattr('state','eq','on') | list | count }} on"
+    icon: mdi:lightbulb-group
+    tap_action:
+      action: navigate
+      navigation_path: /dashboard-home/dash-lights
+    grid_options:
+      columns: full
   - type: tile
     entity: alarm_control_panel.vasudha_secure
     name: Security

@@ -1,5 +1,5 @@
 type: custom:command-centre
-title: System Health
+title: System
 path: system-health
 icon: mdi:server
 max_columns: 3
@@ -14,6 +14,15 @@ sections:
     badges:
     - type: entity
       entity: sensor.system_monitor_last_boot
+  - type: custom:mushroom-template-card
+    primary: Maintenance
+    secondary: "Batteries, devices not reporting"
+    icon: mdi:wrench
+    tap_action:
+      action: navigate
+      navigation_path: /dashboard-home/dash-maintenance
+    grid_options:
+      columns: full
   - type: custom:health-metric-card
     entity: sensor.system_monitor_processor_use
     name: CPU

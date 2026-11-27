@@ -1,6 +1,8 @@
 type: custom:command-centre
 title: Laundry
 path: dash-laundry
+subview: true
+back_path: /dashboard-home/dash-energy
 icon: mdi:washing-machine
 max_columns: 2
 sections:

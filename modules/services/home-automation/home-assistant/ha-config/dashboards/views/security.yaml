@@ -1,6 +1,8 @@
 type: custom:command-centre
 title: Security
 path: dash-security
+subview: true
+back_path: /dashboard-home/home
 icon: mdi:shield-home
 max_columns: 4
 sections:

@@ -1,5 +1,5 @@
 // Tile that opens any stock card in an overlay popup.
-import { drill } from "./ds/dom.js?v=6";
+import { drill } from "./ds/dom.js?v=7";
 
 const STYLE = `
   :host { display: block; }

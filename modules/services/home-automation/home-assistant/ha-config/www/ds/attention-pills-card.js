@@ -1,6 +1,6 @@
-import { sheet, tokens } from "./tokens.js?v=6";
-import { primitives } from "./primitives.js?v=6";
-import { SEVERITY, mount } from "./dom.js?v=6";
+import { sheet, tokens } from "./tokens.js?v=7";
+import { primitives } from "./primitives.js?v=7";
+import { SEVERITY, mount } from "./dom.js?v=7";
 
 const own = sheet(`
 :host { display: block; }

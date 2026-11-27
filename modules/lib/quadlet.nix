@@ -33,7 +33,12 @@
           Requires = networkServices ++ extraRequires;
         }
         // lib.optionalAttrs (bindsTo != [ ]) { BindsTo = bindsTo; };
-        serviceConfig.Restart = restart;
+        serviceConfig = {
+          Restart = restart;
+          RestartSec = "5s";
+          RestartSteps = 5;
+          RestartMaxDelaySec = "10min";
+        };
       };
   };
 }

@@ -77,6 +77,7 @@
                   "${../../../services/home-automation/home-assistant/ha-config/www/security-plan-card.js}:/config/www/security-plan-card.js:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/tv-icons}:/config/www/tv-icons:ro"
                   "${../../../services/home-automation/home-assistant/ha-config/www/receiver-tint.js}:/config/www/receiver-tint.js:ro"
+                  "${../../../services/home-automation/home-assistant/ha-config/www/ds}:/config/www/ds:ro"
                   "${config.sops.secrets."home-assistant/floorplan.png".path}:/config/www/floorplan.png:ro"
                   "${config.sops.templates."home-assistant/secrets.yaml".path}:/config/secrets.yaml:ro"
                   "/run/dbus:/run/dbus:ro"

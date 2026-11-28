@@ -1,0 +1,26 @@
+{#- Heading sample: compares the new distance with the held baseline; moves under max(gps accuracy, 50 m) hold the previous heading and keep the baseline. -#}
+{%- macro sample(person, d, prev) -%}
+{%- set pd = prev.attributes.get('dist') -%}
+{%- set t0 = prev.attributes.get('sampled_at') -%}
+{%- set now_t = now().timestamp() -%}
+{%- set thr = max(state_attr(person, 'gps_accuracy') | float(0), 50) / 1000 -%}
+{%- set home = is_state(person, 'home') -%}
+{%- set fresh = pd is not number or home or (d - pd) | abs >= thr -%}
+{%- if home or pd is not number -%}
+{%- set head = 'still' -%}
+{%- elif not fresh -%}
+{%- set head = prev.state if prev.state in ['towards', 'away'] else 'still' -%}
+{%- elif d < pd -%}
+{%- set head = 'towards' -%}
+{%- else -%}
+{%- set head = 'away' -%}
+{%- endif -%}
+{%- if not fresh -%}
+{%- set speed = prev.attributes.get('speed_kmh') -%}
+{%- elif pd is number and t0 is number and now_t > t0 and d < pd and not home -%}
+{%- set speed = ((pd - d) / ((now_t - t0) / 3600)) | round(1) -%}
+{%- else -%}
+{%- set speed = none -%}
+{%- endif -%}
+{{ {'heading': head, 'dist': d if fresh else pd, 'sampled_at': now_t if fresh else t0, 'speed_kmh': speed} | tojson }}
+{%- endmacro -%}

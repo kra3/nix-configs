@@ -1,0 +1,162 @@
+# Per person: distance to zone.home, heading, approximate ETA and arrival/departure flags for the Home situation headline.
+template:
+  - sensor:
+      - name: "Arun distance home"
+        unique_id: presence_distance_home_arun
+        unit_of_measurement: km
+        icon: mdi:map-marker-distance
+        state_class: measurement
+        availability: >-
+          {{ state_attr('person.arun_karunagath', 'latitude') is number
+             and state_attr('person.arun_karunagath', 'longitude') is number
+             and state_attr('zone.home', 'latitude') is number }}
+        state: >-
+          {%- set p = 'person.arun_karunagath' -%}
+          {%- set la1 = state_attr(p, 'latitude') * pi / 180 -%}
+          {%- set la2 = state_attr('zone.home', 'latitude') * pi / 180 -%}
+          {%- set dlo = (state_attr('zone.home', 'longitude') - state_attr(p, 'longitude')) * pi / 180 -%}
+          {%- set a = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin(dlo / 2) ** 2 -%}
+          {{ (12742 * asin(sqrt(a))) | round(2) }}
+  - trigger:
+      - trigger: state
+        entity_id: sensor.arun_distance_home
+        not_to:
+          - unavailable
+          - unknown
+    sensor:
+      - name: "Arun heading home"
+        unique_id: presence_heading_home_arun
+        icon: mdi:compass-outline
+        availability: "{{ states('sensor.arun_distance_home') | is_number }}"
+        state: >-
+          {%- from 'presence.jinja' import sample -%}
+          {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).heading }}
+        attributes:
+          dist: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).dist }}
+          sampled_at: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).sampled_at }}
+          speed_kmh: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).speed_kmh }}
+  - sensor:
+      - name: "Arun ETA home"
+        unique_id: presence_eta_home_arun
+        unit_of_measurement: min
+        icon: mdi:timer-sand
+        availability: >-
+          {{ is_state('sensor.arun_heading_home', 'towards') and states('sensor.arun_distance_home') | is_number }}
+        state: >-
+          {%- set v = state_attr('sensor.arun_heading_home', 'speed_kmh') -%}
+          {%- set s = [[v, 5] | max, 120] | min if v is number else 30 -%}
+          {{ (states('sensor.arun_distance_home') | float / s * 60) | round(0) | int }}
+        attributes:
+          approx: true
+  - binary_sensor:
+      - name: "Arun arriving"
+        unique_id: presence_arriving_arun
+        icon: mdi:home-import-outline
+        state: >-
+          {{ is_state('sensor.arun_heading_home', 'towards')
+             and states('sensor.arun_eta_home') | is_number
+             and states('sensor.arun_eta_home') | int <= 15 }}
+  - trigger:
+      - trigger: state
+        entity_id: person.arun_karunagath
+        from: home
+        not_to:
+          - unavailable
+          - unknown
+        id: left
+      - trigger: state
+        entity_id: person.arun_karunagath
+        to: home
+        id: back
+    binary_sensor:
+      - name: "Arun just left"
+        unique_id: presence_just_left_arun
+        icon: mdi:home-export-outline
+        auto_off: "00:10:00"
+        state: "{{ trigger.id == 'left' }}"
+  - sensor:
+      - name: "Anjali distance home"
+        unique_id: presence_distance_home_anjali
+        unit_of_measurement: km
+        icon: mdi:map-marker-distance
+        state_class: measurement
+        availability: >-
+          {{ state_attr('person.anjalipc', 'latitude') is number
+             and state_attr('person.anjalipc', 'longitude') is number
+             and state_attr('zone.home', 'latitude') is number }}
+        state: >-
+          {%- set p = 'person.anjalipc' -%}
+          {%- set la1 = state_attr(p, 'latitude') * pi / 180 -%}
+          {%- set la2 = state_attr('zone.home', 'latitude') * pi / 180 -%}
+          {%- set dlo = (state_attr('zone.home', 'longitude') - state_attr(p, 'longitude')) * pi / 180 -%}
+          {%- set a = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin(dlo / 2) ** 2 -%}
+          {{ (12742 * asin(sqrt(a))) | round(2) }}
+  - trigger:
+      - trigger: state
+        entity_id: sensor.anjali_distance_home
+        not_to:
+          - unavailable
+          - unknown
+    sensor:
+      - name: "Anjali heading home"
+        unique_id: presence_heading_home_anjali
+        icon: mdi:compass-outline
+        availability: "{{ states('sensor.anjali_distance_home') | is_number }}"
+        state: >-
+          {%- from 'presence.jinja' import sample -%}
+          {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).heading }}
+        attributes:
+          dist: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).dist }}
+          sampled_at: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).sampled_at }}
+          speed_kmh: >-
+            {%- from 'presence.jinja' import sample -%}
+            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).speed_kmh }}
+  - sensor:
+      - name: "Anjali ETA home"
+        unique_id: presence_eta_home_anjali
+        unit_of_measurement: min
+        icon: mdi:timer-sand
+        availability: >-
+          {{ is_state('sensor.anjali_heading_home', 'towards') and states('sensor.anjali_distance_home') | is_number }}
+        state: >-
+          {%- set v = state_attr('sensor.anjali_heading_home', 'speed_kmh') -%}
+          {%- set s = [[v, 5] | max, 120] | min if v is number else 30 -%}
+          {{ (states('sensor.anjali_distance_home') | float / s * 60) | round(0) | int }}
+        attributes:
+          approx: true
+  - binary_sensor:
+      - name: "Anjali arriving"
+        unique_id: presence_arriving_anjali
+        icon: mdi:home-import-outline
+        state: >-
+          {{ is_state('sensor.anjali_heading_home', 'towards')
+             and states('sensor.anjali_eta_home') | is_number
+             and states('sensor.anjali_eta_home') | int <= 15 }}
+  - trigger:
+      - trigger: state
+        entity_id: person.anjalipc
+        from: home
+        not_to:
+          - unavailable
+          - unknown
+        id: left
+      - trigger: state
+        entity_id: person.anjalipc
+        to: home
+        id: back
+    binary_sensor:
+      - name: "Anjali just left"
+        unique_id: presence_just_left_anjali
+        icon: mdi:home-export-outline
+        auto_off: "00:10:00"
+        state: "{{ trigger.id == 'left' }}"

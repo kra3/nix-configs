@@ -448,5 +448,488 @@ sections:
           days: 30
           stat: change
           type: bar
+- type: grid
+  cards:
+  - type: heading
+    heading: Downloads
+    icon: mdi:download
+    heading_style: title
+  - type: custom:health-metric-card
+    entity: sensor.sabnzbd_karunagath_in_speed
+    name: SABnzbd
+    icon: mdi:download
+    color: "#6bb6ff"
+    decimals: 1
+    show_date: false
+    chart:
+      type: line
+      days: 7
+      stat: max
+    items:
+    - entity: sensor.sabnzbd_karunagath_in_queue_count
+      name: Queue
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.sabnzbd_karunagath_in_left_to_download
+      name: Left
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+    popup:
+      graphs:
+      - name: Speed (daily peak)
+        entities:
+        - sensor.sabnzbd_karunagath_in_speed
+        days: 7
+        stat: max
+      - name: Queue
+        entities:
+        - sensor.sabnzbd_karunagath_in_queue_count
+        days: 7
+    grid_options:
+      columns: 12
+  - type: custom:health-metric-card
+    entity: sensor.sabnzbd_karunagath_in_overall_total
+    name: SABnzbd today
+    icon: mdi:cloud-download-outline
+    color: "#8fd9c0"
+    decimals: 1
+    hero_from: chart
+    show_date: false
+    chart:
+      type: bar
+      days: 14
+      stat: change
+    popup:
+      graphs:
+      - name: Downloaded per day
+        entities:
+        - sensor.sabnzbd_karunagath_in_overall_total
+        days: 30
+        stat: change
+        type: bar
+    grid_options:
+      columns: 12
+  - type: custom:health-metric-card
+    entity: sensor.slskd_download_speed
+    name: Soulseek
+    icon: mdi:music-note-plus
+    color: "#f5c28b"
+    decimals: 1
+    show_date: false
+    chart:
+      type: line
+      days: 7
+      stat: max
+    items:
+    - entity: sensor.slskd_active_downloads
+      name: Active
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.slskd_queued_downloads
+      name: Queued
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.slskd_completed_downloads
+      name: Done
+      mode: now
+      growth: true
+      days: 7
+      decimals: 0
+      unit: ""
+    popup:
+      graphs:
+      - name: Speed (daily peak)
+        entities:
+        - sensor.slskd_download_speed
+        days: 7
+        stat: max
+      - name: Queued and active
+        entities:
+        - entity: sensor.slskd_queued_downloads
+          name: Queued
+        - entity: sensor.slskd_active_downloads
+          name: Active
+        days: 7
+    grid_options:
+      columns: 12
+  - type: custom:download-control-card
+    switch: switch.sabnzbd_downloading
+    number: number.sabnzbd_karunagath_in_speedlimit
+    color: "#6bb6ff"
+    limit_label: Limit
+    grid_options:
+      columns: 12
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.sabnzbd_karunagath_in_warnings
+      state: "on"
+    card:
+      type: tile
+      entity: binary_sensor.sabnzbd_karunagath_in_warnings
+      name: SABnzbd warnings
+    grid_options:
+      columns: 12
+- type: grid
+  cards:
+  - type: heading
+    heading: Requests & imports
+    icon: mdi:movie-search-outline
+    heading_style: title
+  - type: custom:health-metric-card
+    entity: sensor.seerr_total_requests
+    name: Seerr
+    icon: mdi:movie-open-plus-outline
+    color: "#c9a7e8"
+    decimals: 0
+    show_date: false
+    chart:
+      type: line
+      days: 7
+    items:
+    - entity: sensor.seerr_processing_requests
+      name: Processing
+      mode: now
+      range: false
+      decimals: 0
+      unit: ""
+    - entity: sensor.seerr_film_requests
+      name: Movies
+      mode: now
+      range: false
+      decimals: 0
+      unit: ""
+      chips:
+      - entity: sensor.radarr_download_queue
+        icon: mdi:download
+        name: Downloading
+        color: "#6fd0a8"
+      - entity: sensor.radarr_movies_unreleased
+        icon: mdi:calendar-clock
+        name: Not released yet
+        color: "#7fb2ff"
+      - entity: sensor.radarr_movies_searching
+        icon: mdi:magnify-close
+        name: Released, nothing found
+        color: "#f0b45a"
+    - entity: sensor.seerr_tv_requests
+      name: TV
+      mode: now
+      range: false
+      decimals: 0
+      unit: ""
+      chips:
+      - entity: sensor.sonarr_download_queue
+        icon: mdi:download
+        name: Downloading
+        color: "#6fd0a8"
+      - entity: sensor.sonarr_series_incomplete
+        icon: mdi:magnify-close
+        name: Episodes missing
+        color: "#f0b45a"
+      - entity: sensor.sonarr_series_complete
+        icon: mdi:check
+        name: Complete
+        color: "#7bd88f"
+    popup:
+      graphs:
+      - name: Total requests
+        entities:
+        - sensor.seerr_total_requests
+        days: 7
+      - name: Pending and processing
+        entities:
+        - entity: sensor.seerr_pending_requests
+          name: Pending
+        - entity: sensor.seerr_processing_requests
+          name: Processing
+        days: 7
+      - name: Movies and TV
+        entities:
+        - entity: sensor.seerr_film_requests
+          name: Movies
+        - entity: sensor.seerr_tv_requests
+          name: TV
+        days: 7
+      - name: Movies by state
+        entities:
+        - entity: sensor.radarr_download_queue
+          name: Downloading
+        - entity: sensor.radarr_movies_unreleased
+          name: Not released yet
+        - entity: sensor.radarr_movies_searching
+          name: Released, nothing found
+        days: 7
+      - name: TV by state
+        entities:
+        - entity: sensor.sonarr_download_queue
+          name: Downloading
+        - entity: sensor.sonarr_series_incomplete
+          name: Episodes missing
+        - entity: sensor.sonarr_series_complete
+          name: Complete
+        days: 7
+    grid_options:
+      columns: 12
+  - type: custom:health-metric-card
+    entity: sensor.arr_queue_total
+    name: Arr queues
+    icon: mdi:package-down
+    color: "#6bb6ff"
+    decimals: 0
+    show_date: false
+    chart:
+      type: line
+      days: 7
+    items:
+    - entity: sensor.lidarr_download_queue
+      name: Lidarr
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.radarr_download_queue
+      name: Radarr
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.sonarr_download_queue
+      name: Sonarr
+      mode: now
+      range: false
+      days: 7
+      decimals: 0
+      unit: ""
+    popup:
+      graphs:
+      - name: Queues
+        entities:
+        - entity: sensor.lidarr_download_queue
+          name: Lidarr
+        - entity: sensor.radarr_download_queue
+          name: Radarr
+        - entity: sensor.sonarr_download_queue
+          name: Sonarr
+        days: 7
+    grid_options:
+      columns: 12
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.seerr_pending_requests
+      above: 0
+    card:
+      type: tile
+      entity: sensor.seerr_pending_requests
+      name: Pending requests
+      icon: mdi:clock-alert-outline
+    grid_options:
+      columns: 12
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.seerr_open_issues
+      above: 0
+    card:
+      type: tile
+      entity: sensor.seerr_open_issues
+      name: Open issues
+      icon: mdi:alert-circle-outline
+    grid_options:
+      columns: 12
+  - type: tile
+    entity: event.seerr_last_media_event
+    name: Last event
+    grid_options:
+      columns: 12
+- type: grid
+  cards:
+  - type: heading
+    heading: Library
+    icon: mdi:multimedia
+    heading_style: title
+  - type: custom:health-metric-card
+    entity: sensor.jellyfin_movies
+    name: Jellyfin
+    icon: mdi:filmstrip-box-multiple
+    color: "#9d8cff"
+    decimals: 0
+    unit: movies
+    show_date: false
+    chart:
+      type: line
+      days: 30
+    delta:
+      mode: absolute
+      decimals: 0
+    items:
+    - entity: sensor.jellyfin_series
+      name: Series
+      mode: now
+      growth: true
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.jellyfin_episodes
+      name: Episodes
+      mode: now
+      growth: true
+      days: 7
+      decimals: 0
+      unit: ""
+    popup:
+      graphs:
+      - name: Movies
+        entities:
+        - sensor.jellyfin_movies
+        days: 30
+      - name: Series and episodes
+        entities:
+        - entity: sensor.jellyfin_series
+          name: Series
+        - entity: sensor.jellyfin_episodes
+          name: Episodes
+        days: 30
+    grid_options:
+      columns: 12
+  - type: custom:health-metric-card
+    entity: sensor.navidrome_tracks
+    name: Navidrome
+    icon: mdi:music-box-multiple-outline
+    color: "#f5c28b"
+    decimals: 0
+    unit: tracks
+    show_date: false
+    chart:
+      type: line
+      days: 7
+    delta:
+      mode: absolute
+      decimals: 0
+    items:
+    - entity: sensor.navidrome_albums
+      name: Albums
+      mode: now
+      growth: true
+      days: 7
+      decimals: 0
+      unit: ""
+    - entity: sensor.navidrome_artists
+      name: Artists
+      mode: now
+      growth: true
+      days: 7
+      decimals: 0
+      unit: ""
+    popup:
+      graphs:
+      - name: Tracks
+        entities:
+        - entity: sensor.navidrome_tracks
+          name: Tracks
+        days: 7
+      - name: Albums and artists
+        entities:
+        - entity: sensor.navidrome_albums
+          name: Albums
+        - entity: sensor.navidrome_artists
+          name: Artists
+        days: 7
+    grid_options:
+      columns: 12
+  - type: tile
+    entity: sensor.navidrome_last_scan
+    name: Last library scan
+    grid_options:
+      columns: 12
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.media_play_active_clients
+      above: 0
+    card:
+      type: tile
+      entity: sensor.media_play_active_clients
+      name: Watching now
+    grid_options:
+      columns: 12
+- type: grid
+  cards:
+  - type: heading
+    heading: Storage
+    icon: mdi:harddisk
+    heading_style: title
+  - type: custom:health-metric-card
+    entity: sensor.media_disk_used_gb
+    name: Media disk
+    icon: mdi:harddisk
+    color: "#8fd9c0"
+    decimals: 0
+    secondary:
+      entity: sensor.media_disk_used
+      inline: true
+      decimals: 0
+      unit: " %"
+    show_date: false
+    chart:
+      type: line
+      days: 30
+    delta:
+      mode: absolute
+      decimals: 0
+    items:
+    - entity: sensor.radarr_disk_space_movies
+      name: Free
+      mode: now
+      growth: true
+      days: 7
+      good: up
+      decimals: 0
+      unit: GB
+    - entity: sensor.sabnzbd_karunagath_in_total_disk_space
+      name: Total
+      mode: now
+      range: false
+      days: 7
+      decimals: 1
+      scale: 0.001
+      unit: TB
+    popup:
+      graphs:
+      - name: Media disk used
+        entities:
+        - sensor.media_disk_used_gb
+        days: 90
+      - name: Media disk used (percent)
+        entities:
+        - sensor.media_disk_used
+        days: 90
+    grid_options:
+      columns: 12
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.radarr_health
+      state: "on"
+    card:
+      type: tile
+      entity: binary_sensor.radarr_health
+      name: Radarr health
+    grid_options:
+      columns: 12
 visible:
 - user: a1d4401b8b714ebb83f07c5316ab399c

@@ -151,7 +151,7 @@ sections:
     icon: mdi:download
     tap_action:
       action: navigate
-      navigation_path: /dashboard-home/media
+      navigation_path: /dashboard-home/system-health
     visibility:
     - condition: or
       conditions:

@@ -5,884 +5,1418 @@ max_columns: 3
 sections:
 - !include ../rail.yaml
 - type: grid
+  column_span: 3
   cards:
-  - type: heading
-    heading: Now
-    heading_style: title
-  - type: heading
-    heading: Laundry
-    icon: mdi:washing-machine
-    heading_style: title
-    tap_action:
-      action: navigate
-      navigation_path: /dashboard-home/dash-laundry
-    visibility: &laundry_active
-    - condition: or
-      conditions:
-      - condition: state
-        entity: sensor.washer_status
-        state:
-        - Running
-        - Done
-      - condition: state
-        entity: sensor.dryer_status
-        state:
-        - Running
-        - Done
-  - &laundry_machines
-    type: custom:laundry-machine-card
-    grid_options:
-      columns: full
-    visibility: *laundry_active
-    machines:
-    - name: Washer
-      icon: mdi:washing-machine
-      status: sensor.washer_status
-      power: sensor.washer_power_monitor_power
-      running: binary_sensor.washer_running
-      phase: sensor.washer_phase
-      last_cycle: sensor.washer_last_cycle
-      flag: input_boolean.washer_unemptied
-    - name: Dryer
-      icon: mdi:tumble-dryer
-      status: sensor.dryer_status
-      power: sensor.dryer_power_monitor_power
-      running: binary_sensor.dryer_running
-      phase: sensor.dryer_phase
-      last_cycle: sensor.dryer_last_cycle
-      flag: input_boolean.dryer_unemptied
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: media_player.lg_webos_tv_oled77c35la
-      state:
-      - playing
-      - paused
-    card:
-      type: custom:mini-media-player
-      entity: media_player.lg_webos_tv_oled77c35la
-      name: TV
-      icon: mdi:television
-      artwork: cover
-      info: short
-      hide:
-        source: true
-        power: true
-        volume: true
-        shuffle: true
-        repeat: true
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: media_player.ma_home_theater
-      state:
-      - playing
-      - paused
-    card:
-      type: custom:mini-media-player
-      entity: media_player.ma_home_theater
-      name: Living room
-      icon: mdi:home-theater
-      artwork: cover
-      info: short
-      hide:
-        source: true
-        power: true
-        volume: true
-        shuffle: true
-        repeat: true
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: media_player.kitchen_speaker
-      state:
-      - playing
-      - paused
-    card:
-      type: custom:mini-media-player
-      entity: media_player.kitchen_speaker
-      name: Kitchen
-      icon: mdi:speaker
-      artwork: cover
-      info: short
-      hide:
-        source: true
-        power: true
-        volume: true
-        shuffle: true
-        repeat: true
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: media_player.office_speaker
-      state:
-      - playing
-      - paused
-    card:
-      type: custom:mini-media-player
-      entity: media_player.office_speaker
-      name: Office
-      icon: mdi:speaker-wireless
-      artwork: cover
-      info: short
-      hide:
-        source: true
-        power: true
-        volume: true
-        shuffle: true
-        repeat: true
-    grid_options:
-      columns: full
-  - type: custom:mushroom-template-card
-    primary: Media activity
-    secondary: >-
-      {% set q = states('sensor.sabnzbd_karunagath_in_queue_count') | int(0) %}
-      {% set p = states('sensor.seerr_pending_requests') | int(0) %}
-      {% set parts = [] %}
-      {% if q > 0 %}{% set parts = parts + [q ~ ' downloading'] %}{% endif %}
-      {% if p > 0 %}{% set parts = parts + [p ~ ' pending requests'] %}{% endif %}
-      {{ parts | join(' · ') }}
-    icon: mdi:download
-    tap_action:
-      action: navigate
-      navigation_path: /dashboard-home/system-health
-    visibility:
-    - condition: user
-      users:
-      - a1d4401b8b714ebb83f07c5316ab399c
-    - condition: or
-      conditions:
-      - condition: numeric_state
-        entity: sensor.sabnzbd_karunagath_in_queue_count
-        above: 0
-      - condition: numeric_state
-        entity: sensor.seerr_pending_requests
-        above: 0
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: numeric_state
-      entity: todo.shopping_list
-      above: 0
-    card:
-      type: todo-list
-      entity: todo.shopping_list
-      title: Shopping List
-      hide_completed: true
-  - type: conditional
-    conditions:
-    - condition: numeric_state
-      entity: todo.shopping_list
-      below: 1
-    card:
-      type: custom:popup-tile-card
-      entity: todo.shopping_list
-      name: Shopping list
-      icon: mdi:cart-outline
-      unit: items
-      popup:
-        type: todo-list
-        entity: todo.shopping_list
-        title: Shopping List
-        hide_completed: true
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: sensor.dashboard_day_part
-      state: morning
-    - condition: user
-      users:
-      - a1d4401b8b714ebb83f07c5316ab399c
-      - 6edcc5a09c3144d684077ee362e7394a
-    card:
-      type: calendar
-      title: Today
-      initial_view: listDay
-      entities:
-      - calendar.kuttunbn
-      - calendar.house
-      - calendar.va_syd_sophamntning
-      - calendar.holidays_in_sweden
-      - calendar.holidays_in_india
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: sensor.dashboard_day_part
-      state: evening
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_living
-        state: "on"
-      - condition: state
-        entity: binary_sensor.room_presence_office
-        state: "on"
-    card:
-      type: vertical-stack
-      cards:
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.room_presence_living
-          state: "on"
-        card:
-          type: custom:scene-picker-card
-          entity: input_text.living_scene
-          name: Living Room
-      - type: conditional
-        conditions:
-        - condition: state
-          entity: binary_sensor.room_presence_office
-          state: "on"
-        card:
-          type: custom:scene-picker-card
-          entity: input_text.office_scene
-          name: Office
-    grid_options:
-      columns: full
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: sensor.dashboard_day_part
-      state: night
-    - condition: state
-      entity: alarm_control_panel.vasudha_secure
-      state: disarmed
-    card:
-      type: tile
-      entity: alarm_control_panel.vasudha_secure
-      name: Bedtime
-      icon: mdi:shield-moon
-      state_content: state
-      tap_action:
-        action: perform-action
-        perform_action: script.alarm_force_arm_night
-        confirmation:
-          text: Arm the alarm for the night? Any open door or window is bypassed.
-    grid_options:
-      columns: full
-  - type: tile
-    entity: input_boolean.party_mode
-    name: Party mode
-    icon: mdi:party-popper
-  - type: tile
-    entity: input_boolean.automations_paused
-    name: Manual mode
-    icon: mdi:pause-circle
-    visibility:
-    - condition: user
-      users:
-      - a1d4401b8b714ebb83f07c5316ab399c
-  - type: tile
-    entity: input_boolean.bedroom_nap
-    name: Bedroom nap
-    icon: mdi:power-sleep
-- type: grid
-  cards:
-  - type: heading
-    heading: Outside
-    icon: mdi:weather-partly-cloudy
-    heading_style: title
-  - type: custom:horizon-card
-    grid_options:
-      columns: full
-  - type: weather-forecast
-    entity: weather.forecast_vasudha
-    forecast_type: daily
-    show_current: true
-    show_forecast: true
-    secondary_info_attribute: wind_speed
-    forecast_slots: 5
-    tap_action:
-      action: more-info
-    grid_options:
-      columns: full
-- type: grid
-  cards:
-  - type: heading
-    heading: Rooms
-    icon: mdi:floor-plan
-    heading_style: title
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Kitchen
-      icon: mdi:fridge
-      presence: binary_sensor.room_presence_kitchen
-      temperature: sensor.hue_pir_kitchen_temperature
-      illuminance: sensor.hue_pir_kitchen_illuminance
-      light: light.kitchen_lights
-      comfort: sensor.kitchen_comfort
-      approx: "true"
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_kitchen
-        state: "on"
-      - condition: state
-        entity: light.kitchen_lights
-        state: "on"
-      - condition: user
-        users:
-        - 6edcc5a09c3144d684077ee362e7394a
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Living Room
-      icon: mdi:sofa
-      presence: binary_sensor.room_presence_living
-      temperature: sensor.living_room_occupancy_temperature
-      humidity: sensor.living_room_occupancy_humidity
-      illuminance: sensor.living_room_occupancy_illuminance
-      light: light.living_room_lights
-      comfort: sensor.living_room_comfort
-      scene: input_text.living_scene
-      dew: sensor.living_room_dew_point
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_living
-        state: "on"
-      - condition: state
-        entity: light.living_room_lights
-        state: "on"
-      - condition: state
-        entity: media_player.lg_webos_tv_oled77c35la
-        state: playing
-      - condition: user
-        users:
-        - 6edcc5a09c3144d684077ee362e7394a
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Hall
-      icon: mdi:road
-      presence: binary_sensor.room_presence_hall
-      temperature: sensor.hue_pir_hallway_temperature
-      illuminance: sensor.hue_pir_hallway_illuminance
-      light: light.hallway_hall_lights
-      comfort: sensor.hall_comfort
-      approx: "true"
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_hall
-        state: "on"
-      - condition: state
-        entity: light.hallway_hall_lights
-        state: "on"
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Bedroom
-      icon: mdi:bed
-      presence: binary_sensor.bedroom_occupancy_presence
-      temperature: sensor.bedroom_occupancy_temperature
-      humidity: sensor.bedroom_occupancy_humidity
-      illuminance: sensor.bedroom_occupancy_illuminance
-      light: light.bedroom_wardrobe_lights
-      comfort: sensor.bedroom_comfort
-      dew: sensor.bedroom_dew_point
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.bedroom_occupancy_presence
-        state: "on"
-      - condition: state
-        entity: light.bedroom_wardrobe_lights
-        state: "on"
-  - type: custom:streamline-card
-    template: home_room_sensor
-    grid_options:
-      columns: 6
-    variables:
-      name: Bathroom
-      icon: mdi:bathtub
-      presence: binary_sensor.bathroom_occupancy_presence
-      temperature: sensor.bathroom_occupancy_temperature
-      humidity: sensor.bathroom_occupancy_humidity
-      illuminance: sensor.bathroom_occupancy_illuminance
-      comfort: sensor.bathroom_comfort
-      dew: sensor.bathroom_dew_point
-    visibility:
-    - condition: state
-      entity: binary_sensor.bathroom_occupancy_presence
-      state: "on"
-  - type: custom:streamline-card
-    template: home_room_sensor
-    grid_options:
-      columns: 6
-    variables:
-      name: Laundry
-      icon: mdi:tumble-dryer
-      presence: binary_sensor.laundry_occupancy_presence
-      temperature: sensor.laundry_occupancy_temperature
-      humidity: sensor.laundry_occupancy_humidity
-      illuminance: sensor.laundry_occupancy_illuminance
-      comfort: sensor.laundry_comfort
-      dew: sensor.laundry_dew_point
-    visibility:
-    - condition: state
-      entity: binary_sensor.laundry_occupancy_presence
-      state: "on"
-  - type: custom:streamline-card
-    template: home_room_sensor
-    grid_options:
-      columns: 6
-    variables:
-      name: Toilet
-      icon: mdi:toilet
-      presence: binary_sensor.toilet_occupancy_presence
-      temperature: sensor.toilet_occupancy_temperature
-      humidity: sensor.toilet_occupancy_humidity
-      illuminance: sensor.toilet_occupancy_illuminance
-      comfort: sensor.toilet_comfort
-      dew: sensor.toilet_dew_point
-    visibility:
-    - condition: state
-      entity: binary_sensor.toilet_occupancy_presence
-      state: "on"
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Dining Room
-      icon: mdi:silverware
-      presence: binary_sensor.room_presence_dining
-      light: light.dining_lights
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_dining
-        state: "on"
-      - condition: state
-        entity: light.dining_lights
-        state: "on"
-  - type: custom:streamline-card
-    template: home_room
-    grid_options:
-      columns: 6
-    variables:
-      name: Office
-      icon: mdi:laptop
-      presence: binary_sensor.room_presence_office
-      light: light.office_room_light
-      scene: input_text.office_scene
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: binary_sensor.room_presence_office
-        state: "on"
-      - condition: state
-        entity: light.office_room_light
-        state: "on"
-      - condition: user
-        users:
-        - a1d4401b8b714ebb83f07c5316ab399c
-  - type: custom:room-rows-card
-    quiet: true
-    title: Quiet rooms
-    rooms:
-    - name: Kitchen
-      lights: light.kitchen_lights
-      temperature: sensor.hue_pir_kitchen_temperature
-      presence: binary_sensor.room_presence_kitchen
-      pin_users:
-      - 6edcc5a09c3144d684077ee362e7394a
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Kitchen
-          icon: mdi:fridge
-          light: light.kitchen_lights
-          temperature: sensor.hue_pir_kitchen_temperature
-          comfort: sensor.kitchen_comfort
-          approx: "true"
-    - name: Living Room
-      lights: light.living_room_lights
-      temperature: sensor.living_room_occupancy_temperature
-      humidity: sensor.living_room_occupancy_humidity
-      presence: binary_sensor.room_presence_living
-      pin_users:
-      - 6edcc5a09c3144d684077ee362e7394a
-      also:
-        entity: media_player.lg_webos_tv_oled77c35la
-        state: playing
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Living Room
-          icon: mdi:sofa
-          light: light.living_room_lights
-          temperature: sensor.living_room_occupancy_temperature
-          humidity: sensor.living_room_occupancy_humidity
-          comfort: sensor.living_room_comfort
-          scene: input_text.living_scene
-          dew: sensor.living_room_dew_point
-    - name: Hall
-      lights: light.hallway_hall_lights
-      temperature: sensor.hue_pir_hallway_temperature
-      presence: binary_sensor.room_presence_hall
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Hall
-          icon: mdi:road
-          light: light.hallway_hall_lights
-          temperature: sensor.hue_pir_hallway_temperature
-          comfort: sensor.hall_comfort
-          approx: "true"
-    - name: Bedroom
-      lights: light.bedroom_wardrobe_lights
-      temperature: sensor.bedroom_occupancy_temperature
-      humidity: sensor.bedroom_occupancy_humidity
-      presence: binary_sensor.bedroom_occupancy_presence
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Bedroom
-          icon: mdi:bed
-          light: light.bedroom_wardrobe_lights
-          temperature: sensor.bedroom_occupancy_temperature
-          humidity: sensor.bedroom_occupancy_humidity
-          comfort: sensor.bedroom_comfort
-          dew: sensor.bedroom_dew_point
-    - name: Dining Room
-      lights: light.dining_lights
-      presence: binary_sensor.room_presence_dining
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Dining Room
-          icon: mdi:silverware
-          light: light.dining_lights
-    - name: Office
-      lights: light.office_room_light
-      presence: binary_sensor.room_presence_office
-      pin_users:
-      - a1d4401b8b714ebb83f07c5316ab399c
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Office
-          icon: mdi:laptop
-          light: light.office_room_light
-          scene: input_text.office_scene
-    - name: Bathroom
-      temperature: sensor.bathroom_occupancy_temperature
-      humidity: sensor.bathroom_occupancy_humidity
-      presence: binary_sensor.bathroom_occupancy_presence
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Bathroom
-          icon: mdi:bathtub
-          temperature: sensor.bathroom_occupancy_temperature
-          humidity: sensor.bathroom_occupancy_humidity
-          comfort: sensor.bathroom_comfort
-          dew: sensor.bathroom_dew_point
-    - name: Laundry
-      temperature: sensor.laundry_occupancy_temperature
-      humidity: sensor.laundry_occupancy_humidity
-      presence: binary_sensor.laundry_occupancy_presence
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Laundry
-          icon: mdi:tumble-dryer
-          temperature: sensor.laundry_occupancy_temperature
-          humidity: sensor.laundry_occupancy_humidity
-          comfort: sensor.laundry_comfort
-          dew: sensor.laundry_dew_point
-    - name: Toilet
-      temperature: sensor.toilet_occupancy_temperature
-      humidity: sensor.toilet_occupancy_humidity
-      presence: binary_sensor.toilet_occupancy_presence
-      detail:
-        type: custom:streamline-card
-        template: room_detail
-        variables:
-          name: Toilet
-          icon: mdi:toilet
-          temperature: sensor.toilet_occupancy_temperature
-          humidity: sensor.toilet_occupancy_humidity
-          comfort: sensor.toilet_comfort
-          dew: sensor.toilet_dew_point
-    grid_options:
-      columns: full
-  - type: tile
-    entity: light.kitchen_dining_lights
-    name: Kitchen Dining
-    area: kitchen_dining_room
-    features:
-    - type: light-brightness
-    visibility:
-    - condition: state
-      entity: light.kitchen_dining_lights
-      state: "on"
-  - type: tile
-    entity: light.tv_backlight
-    name: TV Backlight
-    area: living_room
-    features:
-    - type: light-brightness
-    visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: light.tv_backlight
-        state: "on"
-      - condition: state
-        entity: media_player.lg_webos_tv_oled77c35la
-        state: playing
-  - type: tile
-    entity: lock.front_door
-    name: Front
-    area: front
-  - type: tile
-    entity: switch.front_entrance_double_switch_left
-    name: Main Entrance
-    area: front
-    visibility:
-    - condition: state
-      entity: switch.front_entrance_double_switch_left
-      state: "on"
-  - type: tile
-    entity: switch.front_entrance_double_switch_right
-    name: Street Light
-    area: front
-    visibility:
-    - condition: state
-      entity: switch.front_entrance_double_switch_right
-      state: "on"
-- type: grid
-  cards:
-  - type: heading
-    heading: House
-    icon: mdi:home-analytics
-    heading_style: title
-  - type: vertical-stack
-    grid_options:
-      columns: full
-    card_mod:
-      style: |
-        :host {
-          --vertical-stack-card-gap: 0px;
-          --stack-card-gap: 0px;
-        }
-    cards:
-    - type: heading
-      heading: Electricity
-      icon: mdi:flash
-      heading_style: title
-      tap_action:
-        action: navigate
-        navigation_path: /dashboard-home/dash-energy
-    - type: custom:health-metric-card
-      entity: sensor.electricity_price_per_kwh
-      stack: top
-      name: Price per kWh
-      icon: mdi:cash
-      color: "#79c0ff"
-      decimals: 2
-      show_date: false
-      chart:
-        type: line
-        days: 30
-        stat: max
-      delta:
-        mode: range
-        decimals: 2
-        unit: auto
-    - type: custom:health-metric-card
-      entity: sensor.energy_cost_today
-      stack: bot
-      name: Energy today
-      icon: mdi:cash-clock
-      color: "#7fdbca"
-      decimals: 2
-      unit: kr
-      show_date: false
-      chart:
-        type: bar
-        days: 14
-        stat: max
-      secondary:
-        entity: sensor.home_power_estimate
-        prefix: "Now "
-        unit: " W"
-        decimals: 0
-  - type: vertical-stack
-    grid_options:
-      columns: full
-    card_mod:
-      style: |
-        :host {
-          --vertical-stack-card-gap: 0px;
-          --stack-card-gap: 0px;
-        }
-    cards:
-    - type: heading
-      heading: Climate
-      icon: mdi:home-thermometer
-      heading_style: title
-      tap_action:
-        action: navigate
-        navigation_path: /dashboard-home/dash-climate
-    - type: custom:health-metric-card
-      entity: sensor.average_temperature
-      stack: top
-      name: Temperature
-      icon: mdi:thermometer
-      color: "#ff9f6b"
-      decimals: 1
-      show_date: false
-      chart:
-        type: line
-        days: 7
-      delta:
-        mode: range
-        decimals: 1
-        unit: auto
-      popup:
-        graphs:
-        - name: Temperature
-          entities:
-          - sensor.average_temperature
-          days: 7
-    - type: custom:health-metric-card
-      entity: sensor.average_humidity
-      stack: mid
-      name: Humidity
-      icon: mdi:water-percent
-      color: "#6bb6ff"
-      decimals: 0
-      show_date: false
-      chart:
-        type: line
-        days: 7
-      delta:
-        mode: range
-        decimals: 0
-        unit: auto
-      popup:
-        graphs:
-        - name: Humidity
-          entities:
-          - sensor.average_humidity
-          days: 7
-    - type: custom:health-metric-card
-      entity: sensor.average_illuminance
-      stack: bot
-      name: Illuminance
-      icon: mdi:brightness-5
-      color: "#ffd86b"
-      decimals: 0
-      show_date: false
-      chart:
-        type: line
-        days: 7
-      delta:
-        mode: range
-        decimals: 0
-        unit: auto
-      popup:
-        graphs:
-        - name: Illuminance
-          entities:
-          - sensor.average_illuminance
-          days: 7
-  - type: custom:mushroom-template-card
-    primary: Lights
-    secondary: "{{ states.light | selectattr('state','eq','on') | list | count }} on"
-    icon: mdi:lightbulb-group
-    tap_action:
-      action: navigate
-      navigation_path: /dashboard-home/dash-lights
-    grid_options:
-      columns: full
-  - type: tile
-    entity: alarm_control_panel.vasudha_secure
-    name: Security
-    icon: mdi:shield-home
-    state_content: state
-    tap_action:
-      action: navigate
-      navigation_path: /dashboard-home/dash-security
-    grid_options:
-      columns: full
-  - type: tile
-    entity: calendar.kuttunbn
-    name: Family calendar
-    icon: mdi:calendar-month
-    state_content:
-    - message
-    - start_time
-    tap_action:
-      action: fire-dom-event
-      cc_detail:
-        type: calendar
-        title: Family calendar
-        initial_view: listWeek
-        show_add_event: true
-        entities:
-        - calendar.kuttunbn
-        - calendar.house
-        - calendar.va_syd_sophamntning
-        - calendar.holidays_in_sweden
-        - calendar.holidays_in_india
-    visibility:
-    - condition: user
-      users:
-      - a1d4401b8b714ebb83f07c5316ab399c
-      - 6edcc5a09c3144d684077ee362e7394a
-    grid_options:
-      columns: full
-- type: grid
-  column_span: 2
-  cards:
-  - type: heading
-    heading: Floor plan
-    icon: mdi:floor-plan
-    heading_style: title
   - type: custom:streamline-card
     template: floor_plan
     variables:
       layer: living
     grid_options:
       columns: full
+- type: grid
+  column_span: 3
+  cards:
+  - type: custom:situation-stack-card
+    headline: true
+    grid_options:
+      columns: full
+    situation_config:
+      lights:
+        Kitchen: light.kitchen_lights
+        Living Room: light.living_room_lights
+        Hall: light.hallway_hall_lights
+        Bedroom: light.bedroom_wardrobe_lights
+        Dining Room: light.dining_lights
+        Office: light.office_room_light
+        Kitchen Dining: light.kitchen_dining_lights
+        TV Backlight: light.tv_backlight
+      media:
+      - media_player.lg_webos_tv_oled77c35la
+      - media_player.ma_home_theater
+      - media_player.home_theater
+      - media_player.home_theater_2
+      - media_player.kitchen_speaker
+      - media_player.office_speaker
+    default:
+    - type: heading
+      heading: Now
+      heading_style: title
+    - type: heading
+      heading: Laundry
+      icon: mdi:washing-machine
+      heading_style: title
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-laundry
+      visibility: &laundry_active
+      - condition: or
+        conditions:
+        - condition: state
+          entity: sensor.washer_status
+          state:
+          - Running
+          - Done
+        - condition: state
+          entity: sensor.dryer_status
+          state:
+          - Running
+          - Done
+    - &laundry_machines
+      type: custom:laundry-machine-card
+      grid_options:
+        columns: full
+      visibility: *laundry_active
+      machines:
+      - name: Washer
+        icon: mdi:washing-machine
+        status: sensor.washer_status
+        power: sensor.washer_power_monitor_power
+        running: binary_sensor.washer_running
+        phase: sensor.washer_phase
+        last_cycle: sensor.washer_last_cycle
+        flag: input_boolean.washer_unemptied
+      - name: Dryer
+        icon: mdi:tumble-dryer
+        status: sensor.dryer_status
+        power: sensor.dryer_power_monitor_power
+        running: binary_sensor.dryer_running
+        phase: sensor.dryer_phase
+        last_cycle: sensor.dryer_last_cycle
+        flag: input_boolean.dryer_unemptied
+    - &m_tv
+      type: conditional
+      conditions:
+      - condition: state
+        entity: media_player.lg_webos_tv_oled77c35la
+        state:
+        - playing
+        - paused
+      card:
+        type: custom:mini-media-player
+        entity: media_player.lg_webos_tv_oled77c35la
+        name: TV
+        icon: mdi:television
+        artwork: cover
+        info: short
+        hide:
+          source: true
+          power: true
+          volume: true
+          shuffle: true
+          repeat: true
+      grid_options:
+        columns: full
+    - &m_theater
+      type: conditional
+      conditions:
+      - condition: state
+        entity: media_player.ma_home_theater
+        state:
+        - playing
+        - paused
+      card:
+        type: custom:mini-media-player
+        entity: media_player.ma_home_theater
+        name: Living room
+        icon: mdi:home-theater
+        artwork: cover
+        info: short
+        hide:
+          source: true
+          power: true
+          volume: true
+          shuffle: true
+          repeat: true
+      grid_options:
+        columns: full
+    - &m_kitchen
+      type: conditional
+      conditions:
+      - condition: state
+        entity: media_player.kitchen_speaker
+        state:
+        - playing
+        - paused
+      card:
+        type: custom:mini-media-player
+        entity: media_player.kitchen_speaker
+        name: Kitchen
+        icon: mdi:speaker
+        artwork: cover
+        info: short
+        hide:
+          source: true
+          power: true
+          volume: true
+          shuffle: true
+          repeat: true
+      grid_options:
+        columns: full
+    - &m_office
+      type: conditional
+      conditions:
+      - condition: state
+        entity: media_player.office_speaker
+        state:
+        - playing
+        - paused
+      card:
+        type: custom:mini-media-player
+        entity: media_player.office_speaker
+        name: Office
+        icon: mdi:speaker-wireless
+        artwork: cover
+        info: short
+        hide:
+          source: true
+          power: true
+          volume: true
+          shuffle: true
+          repeat: true
+      grid_options:
+        columns: full
+    - &media_activity
+      type: custom:mushroom-template-card
+      primary: Media activity
+      secondary: >-
+        {% set q = states('sensor.sabnzbd_karunagath_in_queue_count') | int(0) %}
+        {% set p = states('sensor.seerr_pending_requests') | int(0) %}
+        {% set parts = [] %}
+        {% if q > 0 %}{% set parts = parts + [q ~ ' downloading'] %}{% endif %}
+        {% if p > 0 %}{% set parts = parts + [p ~ ' pending requests'] %}{% endif %}
+        {{ parts | join(' · ') }}
+      icon: mdi:download
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/system-health
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity: sensor.sabnzbd_karunagath_in_queue_count
+          above: 0
+        - condition: numeric_state
+          entity: sensor.seerr_pending_requests
+          above: 0
+      grid_options:
+        columns: full
+    - &shop_full
+      type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        above: 0
+      card:
+        type: todo-list
+        entity: todo.shopping_list
+        title: Shopping List
+        hide_completed: true
+    - &shop_empty
+      type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: todo.shopping_list
+        below: 1
+      card:
+        type: custom:popup-tile-card
+        entity: todo.shopping_list
+        name: Shopping list
+        icon: mdi:cart-outline
+        unit: items
+        popup:
+          type: todo-list
+          entity: todo.shopping_list
+          title: Shopping List
+          hide_completed: true
+    - &cal_today
+      type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.dashboard_day_part
+        state: morning
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        - 6edcc5a09c3144d684077ee362e7394a
+      card:
+        type: calendar
+        title: Today
+        initial_view: listDay
+        entities:
+        - calendar.kuttunbn
+        - calendar.house
+        - calendar.va_syd_sophamntning
+        - calendar.holidays_in_sweden
+        - calendar.holidays_in_india
+      grid_options:
+        columns: full
+    - &scenes
+      type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.dashboard_day_part
+        state: evening
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_living
+          state: "on"
+        - condition: state
+          entity: binary_sensor.room_presence_office
+          state: "on"
+      card:
+        type: vertical-stack
+        cards:
+        - type: conditional
+          conditions:
+          - condition: state
+            entity: binary_sensor.room_presence_living
+            state: "on"
+          card:
+            type: custom:scene-picker-card
+            entity: input_text.living_scene
+            name: Living Room
+        - type: conditional
+          conditions:
+          - condition: state
+            entity: binary_sensor.room_presence_office
+            state: "on"
+          card:
+            type: custom:scene-picker-card
+            entity: input_text.office_scene
+            name: Office
+      grid_options:
+        columns: full
+    - &bedtime
+      type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.dashboard_day_part
+        state: night
+      - condition: state
+        entity: alarm_control_panel.vasudha_secure
+        state: disarmed
+      card:
+        type: tile
+        entity: alarm_control_panel.vasudha_secure
+        name: Bedtime
+        icon: mdi:shield-moon
+        state_content: state
+        tap_action:
+          action: perform-action
+          perform_action: script.alarm_force_arm_night
+          confirmation:
+            text: Arm the alarm for the night? Any open door or window is bypassed.
+      grid_options:
+        columns: full
+    - &party
+      type: tile
+      entity: input_boolean.party_mode
+      name: Party mode
+      icon: mdi:party-popper
+    - &manual
+      type: tile
+      entity: input_boolean.automations_paused
+      name: Manual mode
+      icon: mdi:pause-circle
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+    - &nap
+      type: tile
+      entity: input_boolean.bedroom_nap
+      name: Bedroom nap
+      icon: mdi:power-sleep
+    - type: heading
+      heading: Outside
+      icon: mdi:weather-partly-cloudy
+      heading_style: title
+    - &horizon
+      type: custom:horizon-card
+      grid_options:
+        columns: full
+    - &weather
+      type: weather-forecast
+      entity: weather.forecast_vasudha
+      forecast_type: daily
+      show_current: true
+      show_forecast: true
+      secondary_info_attribute: wind_speed
+      forecast_slots: 5
+      tap_action:
+        action: more-info
+      grid_options:
+        columns: full
+    - type: heading
+      heading: Rooms
+      icon: mdi:floor-plan
+      heading_style: title
+    - &room_kitchen
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Kitchen
+        icon: mdi:fridge
+        presence: binary_sensor.room_presence_kitchen
+        temperature: sensor.hue_pir_kitchen_temperature
+        illuminance: sensor.hue_pir_kitchen_illuminance
+        light: light.kitchen_lights
+        comfort: sensor.kitchen_comfort
+        approx: "true"
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_kitchen
+          state: "on"
+        - condition: state
+          entity: light.kitchen_lights
+          state: "on"
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - &room_living_room
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Living Room
+        icon: mdi:sofa
+        presence: binary_sensor.room_presence_living
+        temperature: sensor.living_room_occupancy_temperature
+        humidity: sensor.living_room_occupancy_humidity
+        illuminance: sensor.living_room_occupancy_illuminance
+        light: light.living_room_lights
+        comfort: sensor.living_room_comfort
+        scene: input_text.living_scene
+        dew: sensor.living_room_dew_point
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_living
+          state: "on"
+        - condition: state
+          entity: light.living_room_lights
+          state: "on"
+        - condition: state
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+    - &room_hall
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Hall
+        icon: mdi:road
+        presence: binary_sensor.room_presence_hall
+        temperature: sensor.hue_pir_hallway_temperature
+        illuminance: sensor.hue_pir_hallway_illuminance
+        light: light.hallway_hall_lights
+        comfort: sensor.hall_comfort
+        approx: "true"
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_hall
+          state: "on"
+        - condition: state
+          entity: light.hallway_hall_lights
+          state: "on"
+    - &room_bedroom
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Bedroom
+        icon: mdi:bed
+        presence: binary_sensor.bedroom_occupancy_presence
+        temperature: sensor.bedroom_occupancy_temperature
+        humidity: sensor.bedroom_occupancy_humidity
+        illuminance: sensor.bedroom_occupancy_illuminance
+        light: light.bedroom_wardrobe_lights
+        comfort: sensor.bedroom_comfort
+        dew: sensor.bedroom_dew_point
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.bedroom_occupancy_presence
+          state: "on"
+        - condition: state
+          entity: light.bedroom_wardrobe_lights
+          state: "on"
+    - &room_bathroom
+      type: custom:streamline-card
+      template: home_room_sensor
+      grid_options:
+        columns: 6
+      variables:
+        name: Bathroom
+        icon: mdi:bathtub
+        presence: binary_sensor.bathroom_occupancy_presence
+        temperature: sensor.bathroom_occupancy_temperature
+        humidity: sensor.bathroom_occupancy_humidity
+        illuminance: sensor.bathroom_occupancy_illuminance
+        comfort: sensor.bathroom_comfort
+        dew: sensor.bathroom_dew_point
+      visibility:
+      - condition: state
+        entity: binary_sensor.bathroom_occupancy_presence
+        state: "on"
+    - &room_laundry
+      type: custom:streamline-card
+      template: home_room_sensor
+      grid_options:
+        columns: 6
+      variables:
+        name: Laundry
+        icon: mdi:tumble-dryer
+        presence: binary_sensor.laundry_occupancy_presence
+        temperature: sensor.laundry_occupancy_temperature
+        humidity: sensor.laundry_occupancy_humidity
+        illuminance: sensor.laundry_occupancy_illuminance
+        comfort: sensor.laundry_comfort
+        dew: sensor.laundry_dew_point
+      visibility:
+      - condition: state
+        entity: binary_sensor.laundry_occupancy_presence
+        state: "on"
+    - &room_toilet
+      type: custom:streamline-card
+      template: home_room_sensor
+      grid_options:
+        columns: 6
+      variables:
+        name: Toilet
+        icon: mdi:toilet
+        presence: binary_sensor.toilet_occupancy_presence
+        temperature: sensor.toilet_occupancy_temperature
+        humidity: sensor.toilet_occupancy_humidity
+        illuminance: sensor.toilet_occupancy_illuminance
+        comfort: sensor.toilet_comfort
+        dew: sensor.toilet_dew_point
+      visibility:
+      - condition: state
+        entity: binary_sensor.toilet_occupancy_presence
+        state: "on"
+    - &room_dining_room
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Dining Room
+        icon: mdi:silverware
+        presence: binary_sensor.room_presence_dining
+        light: light.dining_lights
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_dining
+          state: "on"
+        - condition: state
+          entity: light.dining_lights
+          state: "on"
+    - &room_office
+      type: custom:streamline-card
+      template: home_room
+      grid_options:
+        columns: 6
+      variables:
+        name: Office
+        icon: mdi:laptop
+        presence: binary_sensor.room_presence_office
+        light: light.office_room_light
+        scene: input_text.office_scene
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: binary_sensor.room_presence_office
+          state: "on"
+        - condition: state
+          entity: light.office_room_light
+          state: "on"
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+    - &room_rows
+      type: custom:room-rows-card
+      quiet: true
+      title: Quiet rooms
+      rooms:
+      - name: Kitchen
+        lights: light.kitchen_lights
+        temperature: sensor.hue_pir_kitchen_temperature
+        presence: binary_sensor.room_presence_kitchen
+        pin_users:
+        - 6edcc5a09c3144d684077ee362e7394a
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Kitchen
+            icon: mdi:fridge
+            light: light.kitchen_lights
+            temperature: sensor.hue_pir_kitchen_temperature
+            comfort: sensor.kitchen_comfort
+            approx: "true"
+      - name: Living Room
+        lights: light.living_room_lights
+        temperature: sensor.living_room_occupancy_temperature
+        humidity: sensor.living_room_occupancy_humidity
+        presence: binary_sensor.room_presence_living
+        pin_users:
+        - 6edcc5a09c3144d684077ee362e7394a
+        also:
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Living Room
+            icon: mdi:sofa
+            light: light.living_room_lights
+            temperature: sensor.living_room_occupancy_temperature
+            humidity: sensor.living_room_occupancy_humidity
+            comfort: sensor.living_room_comfort
+            scene: input_text.living_scene
+            dew: sensor.living_room_dew_point
+      - name: Hall
+        lights: light.hallway_hall_lights
+        temperature: sensor.hue_pir_hallway_temperature
+        presence: binary_sensor.room_presence_hall
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Hall
+            icon: mdi:road
+            light: light.hallway_hall_lights
+            temperature: sensor.hue_pir_hallway_temperature
+            comfort: sensor.hall_comfort
+            approx: "true"
+      - name: Bedroom
+        lights: light.bedroom_wardrobe_lights
+        temperature: sensor.bedroom_occupancy_temperature
+        humidity: sensor.bedroom_occupancy_humidity
+        presence: binary_sensor.bedroom_occupancy_presence
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Bedroom
+            icon: mdi:bed
+            light: light.bedroom_wardrobe_lights
+            temperature: sensor.bedroom_occupancy_temperature
+            humidity: sensor.bedroom_occupancy_humidity
+            comfort: sensor.bedroom_comfort
+            dew: sensor.bedroom_dew_point
+      - name: Dining Room
+        lights: light.dining_lights
+        presence: binary_sensor.room_presence_dining
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Dining Room
+            icon: mdi:silverware
+            light: light.dining_lights
+      - name: Office
+        lights: light.office_room_light
+        presence: binary_sensor.room_presence_office
+        pin_users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Office
+            icon: mdi:laptop
+            light: light.office_room_light
+            scene: input_text.office_scene
+      - name: Bathroom
+        temperature: sensor.bathroom_occupancy_temperature
+        humidity: sensor.bathroom_occupancy_humidity
+        presence: binary_sensor.bathroom_occupancy_presence
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Bathroom
+            icon: mdi:bathtub
+            temperature: sensor.bathroom_occupancy_temperature
+            humidity: sensor.bathroom_occupancy_humidity
+            comfort: sensor.bathroom_comfort
+            dew: sensor.bathroom_dew_point
+      - name: Laundry
+        temperature: sensor.laundry_occupancy_temperature
+        humidity: sensor.laundry_occupancy_humidity
+        presence: binary_sensor.laundry_occupancy_presence
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Laundry
+            icon: mdi:tumble-dryer
+            temperature: sensor.laundry_occupancy_temperature
+            humidity: sensor.laundry_occupancy_humidity
+            comfort: sensor.laundry_comfort
+            dew: sensor.laundry_dew_point
+      - name: Toilet
+        temperature: sensor.toilet_occupancy_temperature
+        humidity: sensor.toilet_occupancy_humidity
+        presence: binary_sensor.toilet_occupancy_presence
+        detail:
+          type: custom:streamline-card
+          template: room_detail
+          variables:
+            name: Toilet
+            icon: mdi:toilet
+            temperature: sensor.toilet_occupancy_temperature
+            humidity: sensor.toilet_occupancy_humidity
+            comfort: sensor.toilet_comfort
+            dew: sensor.toilet_dew_point
+      grid_options:
+        columns: full
+    - &kd_tile
+      type: tile
+      entity: light.kitchen_dining_lights
+      name: Kitchen Dining
+      area: kitchen_dining_room
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: state
+        entity: light.kitchen_dining_lights
+        state: "on"
+    - &tvb_tile
+      type: tile
+      entity: light.tv_backlight
+      name: TV Backlight
+      area: living_room
+      features:
+      - type: light-brightness
+      visibility:
+      - condition: or
+        conditions:
+        - condition: state
+          entity: light.tv_backlight
+          state: "on"
+        - condition: state
+          entity: media_player.lg_webos_tv_oled77c35la
+          state: playing
+    - &front_lock
+      type: tile
+      entity: lock.front_door
+      name: Front
+      area: front
+    - &main_ent
+      type: tile
+      entity: switch.front_entrance_double_switch_left
+      name: Main Entrance
+      area: front
+      visibility:
+      - condition: state
+        entity: switch.front_entrance_double_switch_left
+        state: "on"
+    - &street
+      type: tile
+      entity: switch.front_entrance_double_switch_right
+      name: Street Light
+      area: front
+      visibility:
+      - condition: state
+        entity: switch.front_entrance_double_switch_right
+        state: "on"
+    - type: heading
+      heading: House
+      icon: mdi:home-analytics
+      heading_style: title
+    - &stack_elec
+      type: vertical-stack
+      grid_options:
+        columns: full
+      card_mod:
+        style: |
+          :host {
+            --vertical-stack-card-gap: 0px;
+            --stack-card-gap: 0px;
+          }
+      cards:
+      - type: heading
+        heading: Electricity
+        icon: mdi:flash
+        heading_style: title
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-home/dash-energy
+      - type: custom:health-metric-card
+        entity: sensor.electricity_price_per_kwh
+        stack: top
+        name: Price per kWh
+        icon: mdi:cash
+        color: "#79c0ff"
+        decimals: 2
+        show_date: false
+        chart:
+          type: line
+          days: 30
+          stat: max
+        delta:
+          mode: range
+          decimals: 2
+          unit: auto
+      - type: custom:health-metric-card
+        entity: sensor.energy_cost_today
+        stack: bot
+        name: Energy today
+        icon: mdi:cash-clock
+        color: "#7fdbca"
+        decimals: 2
+        unit: kr
+        show_date: false
+        chart:
+          type: bar
+          days: 14
+          stat: max
+        secondary:
+          entity: sensor.home_power_estimate
+          prefix: "Now "
+          unit: " W"
+          decimals: 0
+    - &stack_climate
+      type: vertical-stack
+      grid_options:
+        columns: full
+      card_mod:
+        style: |
+          :host {
+            --vertical-stack-card-gap: 0px;
+            --stack-card-gap: 0px;
+          }
+      cards:
+      - type: heading
+        heading: Climate
+        icon: mdi:home-thermometer
+        heading_style: title
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-home/dash-climate
+      - type: custom:health-metric-card
+        entity: sensor.average_temperature
+        stack: top
+        name: Temperature
+        icon: mdi:thermometer
+        color: "#ff9f6b"
+        decimals: 1
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 1
+          unit: auto
+        popup:
+          graphs:
+          - name: Temperature
+            entities:
+            - sensor.average_temperature
+            days: 7
+      - type: custom:health-metric-card
+        entity: sensor.average_humidity
+        stack: mid
+        name: Humidity
+        icon: mdi:water-percent
+        color: "#6bb6ff"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 0
+          unit: auto
+        popup:
+          graphs:
+          - name: Humidity
+            entities:
+            - sensor.average_humidity
+            days: 7
+      - type: custom:health-metric-card
+        entity: sensor.average_illuminance
+        stack: bot
+        name: Illuminance
+        icon: mdi:brightness-5
+        color: "#ffd86b"
+        decimals: 0
+        show_date: false
+        chart:
+          type: line
+          days: 7
+        delta:
+          mode: range
+          decimals: 0
+          unit: auto
+        popup:
+          graphs:
+          - name: Illuminance
+            entities:
+            - sensor.average_illuminance
+            days: 7
+    - &lights_link
+      type: custom:mushroom-template-card
+      primary: Lights
+      secondary: "{{ states.light | selectattr('state','eq','on') | list | count }} on"
+      icon: mdi:lightbulb-group
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-lights
+      grid_options:
+        columns: full
+    - &sec_tile
+      type: tile
+      entity: alarm_control_panel.vasudha_secure
+      name: Security
+      icon: mdi:shield-home
+      state_content: state
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-home/dash-security
+      grid_options:
+        columns: full
+    - &fam_cal
+      type: tile
+      entity: calendar.kuttunbn
+      name: Family calendar
+      icon: mdi:calendar-month
+      state_content:
+      - message
+      - start_time
+      tap_action:
+        action: fire-dom-event
+        cc_detail:
+          type: calendar
+          title: Family calendar
+          initial_view: listWeek
+          show_add_event: true
+          entities:
+          - calendar.kuttunbn
+          - calendar.house
+          - calendar.va_syd_sophamntning
+          - calendar.holidays_in_sweden
+          - calendar.holidays_in_india
+      visibility:
+      - condition: user
+        users:
+        - a1d4401b8b714ebb83f07c5316ab399c
+        - 6edcc5a09c3144d684077ee362e7394a
+      grid_options:
+        columns: full
+    situations:
+      away-empty:
+      - *sec_tile
+      - &cams
+        type: custom:advanced-camera-card
+        cameras:
+        - camera_entity: camera.ranger_duo_fxd
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_fxd_person_occupancy
+        - camera_entity: camera.ranger_duo_ptz
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_duo_ptz_person_occupancy
+        - camera_entity: camera.ranger_uno
+          live_provider: go2rtc
+          triggers:
+            entities:
+            - binary_sensor.ranger_uno_person_occupancy
+        live:
+          display:
+            mode: single
+        menu:
+          buttons:
+            ptz_controls:
+              enabled: true
+            ptz_home:
+              enabled: true
+        status_bar:
+          style: overlay
+        grid_options:
+          columns: full
+      - &all_off
+        type: conditional
+        conditions:
+        - condition: or
+          conditions:
+            - condition: state
+              entity: light.kitchen_lights
+              state: "on"
+            - condition: state
+              entity: light.living_room_lights
+              state: "on"
+            - condition: state
+              entity: light.hallway_hall_lights
+              state: "on"
+            - condition: state
+              entity: light.bedroom_wardrobe_lights
+              state: "on"
+            - condition: state
+              entity: light.dining_lights
+              state: "on"
+            - condition: state
+              entity: light.office_room_light
+              state: "on"
+            - condition: state
+              entity: light.kitchen_dining_lights
+              state: "on"
+            - condition: state
+              entity: light.tv_backlight
+              state: "on"
+        card:
+          type: custom:mushroom-template-card
+          primary: Turn all lights off
+          secondary: "{{ ['light.kitchen_lights', 'light.living_room_lights', 'light.hallway_hall_lights', 'light.bedroom_wardrobe_lights', 'light.dining_lights', 'light.office_room_light', 'light.kitchen_dining_lights', 'light.tv_backlight'] | select('is_state', 'on') | list | count }} on"
+          icon: mdi:lightbulb-off-outline
+          icon_color: amber
+          tap_action:
+            action: perform-action
+            perform_action: light.turn_off
+            target:
+              entity_id:
+              - light.kitchen_lights
+              - light.living_room_lights
+              - light.hallway_hall_lights
+              - light.bedroom_wardrobe_lights
+              - light.dining_lights
+              - light.office_room_light
+              - light.kitchen_dining_lights
+              - light.tv_backlight
+        grid_options:
+          columns: full
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *stack_elec
+      - type: custom:cost-list-card
+        top: 5
+        entities:
+        - {entity: sensor.cost_today_all_lights, name: All lights, power: sensor.lights_power}
+        - {entity: sensor.cost_today_bedroom, name: Bedroom lights, power: sensor.lights_bedroom_power}
+        - {entity: sensor.cost_today_kitchen, name: Kitchen lights, power: sensor.lights_kitchen_power}
+        - {entity: sensor.cost_today_kitchen_dining, name: Kitchen dining lights, power: sensor.lights_kitchen_dining_power}
+        - {entity: sensor.cost_today_dining_room, name: Dining room lights, power: sensor.lights_dining_room_power}
+        - {entity: sensor.cost_today_living_room, name: Living room lights, power: sensor.lights_living_room_power}
+        - {entity: sensor.cost_today_office, name: Office lights, power: sensor.lights_office_power}
+        - {entity: sensor.cost_today_hall, name: Hall lights, power: sensor.lights_hall_power}
+        - {entity: sensor.cost_today_tv, name: TV, power: sensor.lg_tv_power}
+        - {entity: sensor.cost_today_receiver, name: Receiver, power: sensor.marantz_nr1711_power}
+        - {entity: sensor.cost_today_camera_duo, name: Camera Duo, power: sensor.camera_duo_power}
+        - {entity: sensor.cost_today_camera_uno, name: Camera Uno, power: sensor.camera_uno_power}
+        - {entity: sensor.cost_today_fridge, name: Fridge, power: sensor.fridge_power}
+        - {entity: sensor.cost_today_kitchen_speaker, name: Kitchen speaker, power: sensor.kitchen_speaker_power}
+        - {entity: sensor.cost_today_hob, name: Hob, power: sensor.hob_power}
+        - {entity: sensor.cost_today_oven, name: Oven, power: sensor.oven_power}
+        - {entity: sensor.cost_today_dishwasher, name: Dishwasher, power: sensor.dishwasher_power}
+        - {entity: sensor.cost_today_microwave, name: Microwave, power: sensor.microwave_power}
+        - {entity: sensor.cost_today_hood, name: Hood, power: sensor.hood_power}
+        grid_options:
+          columns: full
+      - &arrival_entrance
+        type: tile
+        entity: switch.front_entrance_double_switch_left
+        name: Main Entrance
+      - &arrival_street
+        type: tile
+        entity: switch.front_entrance_double_switch_right
+        name: Street Light
+      - &arrival_hall
+        type: tile
+        entity: light.hallway_hall_lights
+        name: Hall
+        features:
+        - type: light-brightness
+      away-occupied:
+      - *room_rows
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *laundry_machines
+      - *sec_tile
+      - type: custom:trip-card
+        entity: sensor.arun_home_trips
+        person: person.arun_karunagath
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+      - type: custom:trip-card
+        entity: sensor.anjali_home_trips
+        person: person.anjalipc
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+      arriving:
+      - &alarmo
+        type: conditional
+        conditions:
+        - condition: state
+          entity: alarm_control_panel.vasudha_secure
+          state_not: disarmed
+        card:
+          type: custom:alarmo-card
+          entity: alarm_control_panel.vasudha_secure
+          name: Alarm
+          use_code_dialog: true
+          states:
+            armed_home:
+              hide: true
+            armed_custom_bypass:
+              hide: true
+        grid_options:
+          columns: full
+      - type: custom:auto-entities
+        card:
+          type: logbook
+          title: While you were out
+          hours_to_show: 12
+        show_empty: false
+        filter:
+          include:
+          - domain: binary_sensor
+            attributes:
+              device_class: door
+          - domain: binary_sensor
+            attributes:
+              device_class: window
+          - domain: binary_sensor
+            attributes:
+              device_class: garage_door
+          - domain: binary_sensor
+            attributes:
+              device_class: opening
+          - domain: lock
+          - domain: alarm_control_panel
+          - entity_id: sensor.washer_status
+          - entity_id: sensor.dryer_status
+          exclude:
+          - entity_id: binary_sensor.house_exits_open_status
+          - entity_id: lock.front_front_door_nw
+          - entity_id: binary_sensor.front_front_door_nw_door
+          - entity_id: lock.yale_front_door
+          - entity_id: lock.yale_front_door_secure_mode
+          - entity_id: binary_sensor.yale_front_door_door
+        grid_options:
+          columns: full
+      - *arrival_entrance
+      - *arrival_street
+      - *arrival_hall
+      - *front_lock
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      leaving:
+      - type: conditional
+        conditions:
+        - condition: state
+          entity: alarm_control_panel.vasudha_secure
+          state: disarmed
+        card:
+          type: tile
+          entity: alarm_control_panel.vasudha_secure
+          name: Arm away
+          icon: mdi:shield-lock
+          state_content: state
+          tap_action:
+            action: perform-action
+            perform_action: script.alarm_force_arm_away
+            confirmation:
+              text: Force-arm away, bypassing any open sensors?
+        grid_options:
+          columns: full
+      - *all_off
+      - *front_lock
+      - *sec_tile
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      waiting:
+      - type: custom:trip-card
+        entity: sensor.arun_home_trips
+        person: person.arun_karunagath
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+      - type: custom:trip-card
+        entity: sensor.anjali_home_trips
+        person: person.anjalipc
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+      - type: custom:mushroom-template-card
+        primary: Bedtime
+        secondary: >-
+          {% set out = [] %}
+          {% if not is_state('person.arun_karunagath', 'home') %}{% set out = out + ['Arun'] %}{% endif %}
+          {% if not is_state('person.anjalipc', 'home') %}{% set out = out + ['Anjali'] %}{% endif %}
+          Waiting for {{ out | join(' and ') }} to get home
+        icon: mdi:shield-moon
+        icon_color: disabled
+        tap_action:
+          action: none
+        grid_options:
+          columns: full
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *shop_full
+      - *shop_empty
+      - *party
+      - *manual
+      - *nap
+      - *room_rows
+      night-waiting:
+      - type: custom:trip-card
+        entity: sensor.arun_home_trips
+        person: person.arun_karunagath
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+      - type: custom:trip-card
+        entity: sensor.anjali_home_trips
+        person: person.anjalipc
+        direction: home
+        hide_at: zone.home
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+      - type: custom:mushroom-template-card
+        primary: Bedtime
+        secondary: >-
+          {% set out = [] %}
+          {% if not is_state('person.arun_karunagath', 'home') %}{% set out = out + ['Arun'] %}{% endif %}
+          {% if not is_state('person.anjalipc', 'home') %}{% set out = out + ['Anjali'] %}{% endif %}
+          Waiting for {{ out | join(' and ') }} to get home
+        icon: mdi:shield-moon
+        icon_color: disabled
+        tap_action:
+          action: none
+        grid_options:
+          columns: full
+      - *sec_tile
+      - *front_lock
+      - *laundry_machines
+      - *nap
+      - *room_rows
+      guest:
+      - type: tile
+        entity: light.living_room_lights
+        name: Living Room
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.kitchen_lights
+        name: Kitchen
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.kitchen_dining_lights
+        name: Kitchen Dining
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.dining_lights
+        name: Dining Room
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.hallway_hall_lights
+        name: Hall
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.bedroom_wardrobe_lights
+        name: Bedroom
+        features:
+        - type: light-brightness
+      - type: tile
+        entity: light.office_room_light
+        name: Office
+        features:
+        - type: light-brightness
+      - *stack_climate
+      home-morning:
+      - type: custom:trip-card
+        entity: sensor.arun_work_trips
+        person: person.arun_karunagath
+        direction: work
+        hide_at: zone.work
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - a1d4401b8b714ebb83f07c5316ab399c
+      - type: custom:trip-card
+        entity: sensor.anjali_work_trips
+        person: person.anjalipc
+        direction: work
+        hide_at: zone.work_smil
+        settings:
+        - input_select.transit_max_changes
+        - input_select.transit_modes
+        - input_select.transit_walking
+        visibility:
+        - condition: user
+          users:
+          - 6edcc5a09c3144d684077ee362e7394a
+      - *weather
+      - *horizon
+      - *cal_today
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *media_activity
+      - *shop_full
+      - *shop_empty
+      - *room_rows
+      - *alarmo
+      home-day:
+      - *horizon
+      - *weather
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *media_activity
+      - *shop_full
+      - *shop_empty
+      - *stack_elec
+      - *stack_climate
+      - *lights_link
+      - *sec_tile
+      - *fam_cal
+      - *room_rows
+      - *party
+      - *manual
+      - *nap
+      home-evening:
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *laundry_machines
+      - *scenes
+      - *room_kitchen
+      - *room_living_room
+      - *room_hall
+      - *room_bedroom
+      - *room_bathroom
+      - *room_laundry
+      - *room_toilet
+      - *room_dining_room
+      - *room_office
+      - *room_rows
+      - *kd_tile
+      - *tvb_tile
+      - *front_lock
+      - *main_ent
+      - *street
+      - *media_activity
+      - *shop_full
+      - *shop_empty
+      - *stack_elec
+      - *party
+      - *manual
+      - *nap
+      home-night:
+      - *bedtime
+      - *sec_tile
+      - *front_lock
+      - *laundry_machines
+      - *m_tv
+      - *m_theater
+      - *m_kitchen
+      - *m_office
+      - *room_rows
+      - *stack_climate
+      - *party
+      - *manual
+      - *nap
 badges:
 - type: entity
   show_name: true

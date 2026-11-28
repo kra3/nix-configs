@@ -51,7 +51,7 @@ const clauses = {
     const a = arr(s.attention);
     return a && a.length ? `${list(a.slice(0, 2))}${a.length > 2 ? ` and ${a.length - 2} more` : ""} need${a.length === 1 ? "s" : ""} attention` : null;
   },
-  media: (s) => (s.media && s.media.name ? `${s.media.title ? `${s.media.title} on ` : ""}${s.media.name} is playing` : null),
+  media: (s) => (s.media && s.media.name ? (s.media.title ? `${s.media.title} is playing on ${s.media.name}` : `${s.media.name} is playing`) : null),
   laundry: (s) => {
     const l = s.laundry;
     if (!l) return null;

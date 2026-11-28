@@ -82,8 +82,10 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
         .map((b) => beamPoints(b.pos[0], DOOR_ICON.test(b.icon) ? 36 : 24, az, el))
         .filter(Boolean)
     : [];
+  const gold = band === "golden";
+  const peak = (gold ? 0.2 : 0.28) * (0.5 + 0.5 * smooth(el, 0, 8));
   const svg = beams.length
-    ? `<svg class="beams" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="lpb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--warning-color)" stop-opacity="0.7"/><stop offset="1" style="stop-color:var(--warning-color)" stop-opacity="0"/></linearGradient><clipPath id="lpc"><rect width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#lpc)" style="opacity:${(0.35 + 0.65 * smooth(el, 0, 8)).toFixed(2)}">${beams.map((p) => `<polygon fill="url(#lpb)" points="${p}"/>`).join("")}</g></svg>`
+    ? `<svg class="beams" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="lpb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(${gold ? "--ds-beam-golden" : "--ds-beam"})" stop-opacity="${peak.toFixed(3)}"/><stop offset="1" style="stop-color:var(${gold ? "--ds-beam-golden" : "--ds-beam"})" stop-opacity="0"/></linearGradient><filter id="lpf" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter><clipPath id="lpc"><rect width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#lpc)" filter="url(#lpf)">${beams.map((p) => `<polygon fill="url(#lpb)" points="${p}"/>`).join("")}</g></svg>`
     : "";
   const marks = openings
     .map((b) => `<i class="mk ${b.tone}" title="${esc(b.name)}" style="left:${pct(b.pos[0], W)};top:${pct(b.pos[1], H)}"></i>`)
@@ -102,6 +104,7 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
 }
 
 export const livingSheet = sheet(`
+  :host { --ds-sun: #FFF1B8; --ds-sun-halo: #FFE58A; --ds-moon: #E6EEFF; --ds-moon-dark: #6C7BA3; --ds-beam: #FFFBEF; --ds-beam-golden: #FFE3B0; }
   .stage { position: relative; width: 100%; container: stage / inline-size; overflow: hidden; border-radius: var(--ds-radius-tile); }
   .sky { position: absolute; inset: 0; }
   .band-night .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) 26%, var(--card-background-color)), color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color))); }
@@ -109,11 +112,11 @@ export const livingSheet = sheet(`
   .band-golden .sky { background: linear-gradient(color-mix(in srgb, var(--warning-color) 30%, var(--card-background-color)), color-mix(in srgb, var(--warning-color) 10%, var(--card-background-color))); }
   .band-day .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color)), color-mix(in srgb, var(--primary-color) 3%, var(--card-background-color))); }
   .stage .plan { position: absolute; }
-  .orb { position: absolute; width: clamp(18px, 6cqw, 40px); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; background: var(--warning-color); box-shadow: 0 0 4cqw 1.5cqw color-mix(in srgb, var(--warning-color) 50%, transparent); }
-  .moon { position: absolute; width: clamp(18px, 5.5cqw, 36px); transform: translate(-50%, -50%); pointer-events: none; }
+  .orb { position: absolute; width: clamp(18px, 6cqw, 40px); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; background: var(--ds-sun); border: 1px solid color-mix(in srgb, var(--primary-text-color) 18%, transparent); box-shadow: 0 0 3cqw 1cqw color-mix(in srgb, var(--ds-sun-halo) 60%, transparent); }
+  .moon { position: absolute; width: clamp(18px, 5.5cqw, 36px); transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-moon) 55%, transparent)); }
   .moon.dim { opacity: 0.5; }
-  .moon .dk { fill: color-mix(in srgb, var(--primary-color) 35%, var(--card-background-color)); stroke: color-mix(in srgb, var(--primary-text-color) 30%, transparent); stroke-width: 1; }
-  .moon .lt { fill: color-mix(in srgb, var(--warning-color) 35%, var(--card-background-color)); }
+  .moon .dk { fill: var(--ds-moon-dark); stroke: color-mix(in srgb, var(--ds-moon) 45%, transparent); stroke-width: 1; }
+  .moon .lt { fill: var(--ds-moon); }
   .beams { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; animation: drift 6s ease-in-out infinite alternate; }
   @keyframes drift { to { opacity: 0.75; } }
   .stage .room { font: inherit; color: inherit; text-align: left; cursor: pointer; touch-action: manipulation; overflow: visible; }

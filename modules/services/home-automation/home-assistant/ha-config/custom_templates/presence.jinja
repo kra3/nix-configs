@@ -1,12 +1,14 @@
-{#- Heading sample: compares the new distance with the held baseline; moves under max(gps accuracy, 50 m) hold the previous heading and keep the baseline. -#}
+{#- Heading sample: moves under max(gps accuracy, 50 m) keep the baseline; no real move for 10 min means still, with a fresh baseline so a pause doesn't dilute the next speed. -#}
 {%- macro sample(person, d, prev) -%}
 {%- set pd = prev.attributes.get('dist') -%}
 {%- set t0 = prev.attributes.get('sampled_at') -%}
 {%- set now_t = now().timestamp() -%}
 {%- set thr = max(state_attr(person, 'gps_accuracy') | float(0), 50) / 1000 -%}
 {%- set home = is_state(person, 'home') -%}
-{%- set fresh = pd is not number or home or (d - pd) | abs >= thr -%}
-{%- if home or pd is not number -%}
+{%- set moved = pd is not number or (d - pd) | abs >= thr -%}
+{%- set stale = not moved and t0 is number and now_t - t0 > 600 -%}
+{%- set fresh = moved or home or stale -%}
+{%- if home or pd is not number or stale -%}
 {%- set head = 'still' -%}
 {%- elif not fresh -%}
 {%- set head = prev.state if prev.state in ['towards', 'away'] else 'still' -%}
@@ -17,7 +19,7 @@
 {%- endif -%}
 {%- if not fresh -%}
 {%- set speed = prev.attributes.get('speed_kmh') -%}
-{%- elif pd is number and t0 is number and now_t > t0 and d < pd and not home -%}
+{%- elif moved and pd is number and t0 is number and now_t > t0 and d < pd and not home -%}
 {%- set speed = ((pd - d) / ((now_t - t0) / 3600)) | round(1) -%}
 {%- else -%}
 {%- set speed = none -%}

@@ -23,6 +23,8 @@ template:
         not_to:
           - unavailable
           - unknown
+      - trigger: time_pattern
+        minutes: "/5"
     sensor:
       - name: "Arun heading home"
         unique_id: presence_heading_home_arun
@@ -30,17 +32,17 @@ template:
         availability: "{{ states('sensor.arun_distance_home') | is_number }}"
         state: >-
           {%- from 'presence.jinja' import sample -%}
-          {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).heading }}
+          {{ (sample('person.arun_karunagath', states('sensor.arun_distance_home') | float, this) | from_json).heading }}
         attributes:
           dist: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).dist }}
+            {{ (sample('person.arun_karunagath', states('sensor.arun_distance_home') | float, this) | from_json).dist }}
           sampled_at: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).sampled_at }}
+            {{ (sample('person.arun_karunagath', states('sensor.arun_distance_home') | float, this) | from_json).sampled_at }}
           speed_kmh: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.arun_karunagath', trigger.to_state.state | float, this) | from_json).speed_kmh }}
+            {{ (sample('person.arun_karunagath', states('sensor.arun_distance_home') | float, this) | from_json).speed_kmh }}
   - sensor:
       - name: "Arun ETA home"
         unique_id: presence_eta_home_arun
@@ -103,6 +105,8 @@ template:
         not_to:
           - unavailable
           - unknown
+      - trigger: time_pattern
+        minutes: "/5"
     sensor:
       - name: "Anjali heading home"
         unique_id: presence_heading_home_anjali
@@ -110,17 +114,17 @@ template:
         availability: "{{ states('sensor.anjali_distance_home') | is_number }}"
         state: >-
           {%- from 'presence.jinja' import sample -%}
-          {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).heading }}
+          {{ (sample('person.anjalipc', states('sensor.anjali_distance_home') | float, this) | from_json).heading }}
         attributes:
           dist: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).dist }}
+            {{ (sample('person.anjalipc', states('sensor.anjali_distance_home') | float, this) | from_json).dist }}
           sampled_at: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).sampled_at }}
+            {{ (sample('person.anjalipc', states('sensor.anjali_distance_home') | float, this) | from_json).sampled_at }}
           speed_kmh: >-
             {%- from 'presence.jinja' import sample -%}
-            {{ (sample('person.anjalipc', trigger.to_state.state | float, this) | from_json).speed_kmh }}
+            {{ (sample('person.anjalipc', states('sensor.anjali_distance_home') | float, this) | from_json).speed_kmh }}
   - sensor:
       - name: "Anjali ETA home"
         unique_id: presence_eta_home_anjali

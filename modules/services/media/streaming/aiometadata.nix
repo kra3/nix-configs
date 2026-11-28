@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.aiometadata = {
         containerConfig = {
-          image = "ghcr.io/cedya77/aiometadata:4.1.0@sha256:c17e1aa7c670055e14dea99087cfe18ff07fa6ea4dfce9c3484830a718e066ce";
+          image = "ghcr.io/cedya77/aiometadata:4.2.1@sha256:89266fd5dfd85ba9074dedead302f2f6b720fcd00734f8581450f55b7aee83cb";
           user = "1000:2000";
           dropCapabilities = [ "ALL" ];
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx

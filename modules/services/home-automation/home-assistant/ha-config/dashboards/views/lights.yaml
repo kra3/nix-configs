@@ -52,18 +52,6 @@ sections:
         "off": Switches on by itself at bedtime
     grid_options:
       columns: full
-  - type: tile
-    entity: binary_sensor.gloomy_outside
-    name: Why lights are on
-    icon: mdi:lightbulb-question
-    state_content: state
-    tap_action:
-      action: fire-dom-event
-      cc_detail:
-        type: custom:streamline-card
-        template: light_logic
-    grid_options:
-      columns: full
 - type: grid
   cards:
   - type: heading

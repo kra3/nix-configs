@@ -45,37 +45,5 @@ sections:
     heading_style: title
   - type: custom:streamline-card
     template: light_logic
-    variables:
-      room: Living Room
-    grid_options:
-      columns: full
-  - type: custom:streamline-card
-    template: light_logic
-    variables:
-      room: Dining Room
-    grid_options:
-      columns: full
-  - type: custom:streamline-card
-    template: light_logic
-    variables:
-      room: Kitchen
-    grid_options:
-      columns: full
-  - type: custom:streamline-card
-    template: light_logic
-    variables:
-      room: Bedroom
-    grid_options:
-      columns: full
-  - type: custom:streamline-card
-    template: light_logic
-    variables:
-      room: Office
-    grid_options:
-      columns: full
-  - type: custom:streamline-card
-    template: light_logic
-    variables:
-      room: Hall
     grid_options:
       columns: full

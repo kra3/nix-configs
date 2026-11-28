@@ -5,6 +5,7 @@ subview: true
 back_path: /dashboard-home/dash-energy
 icon: mdi:washing-machine
 max_columns: 2
+cc_rail: collapsed
 sections:
 - !include ../rail.yaml
 - type: grid

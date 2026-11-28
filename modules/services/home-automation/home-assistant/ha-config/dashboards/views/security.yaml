@@ -5,6 +5,7 @@ subview: true
 back_path: /dashboard-home/home
 icon: mdi:shield-home
 max_columns: 4
+cc_rail: collapsed
 sections:
 - !include ../rail.yaml
 - type: grid

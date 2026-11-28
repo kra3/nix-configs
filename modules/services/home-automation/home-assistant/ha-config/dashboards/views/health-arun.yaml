@@ -6,6 +6,7 @@ visible:
 - user: a1d4401b8b714ebb83f07c5316ab399c
 cards: []
 max_columns: 3
+cc_rail: collapsed
 sections:
 - !include ../rail.yaml
 - type: grid

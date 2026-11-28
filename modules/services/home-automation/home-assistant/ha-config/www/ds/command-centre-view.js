@@ -1,6 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=5";
-import { primitives } from "./primitives.js?v=5";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=5";
+import { sheet, tokens } from "./tokens.js?v=6";
+import { primitives } from "./primitives.js?v=6";
+import { mount } from "./dom.js?v=6";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=6";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -35,7 +36,7 @@ const own = sheet(`
 class CommandCentre extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+    mount(this, tokens, primitives, own);
     this.shadowRoot.innerHTML = `<div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
     const $ = (s) => this.shadowRoot.querySelector(s);
     this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");

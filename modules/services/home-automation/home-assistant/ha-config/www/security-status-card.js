@@ -1,8 +1,8 @@
 // Security status: one sentence for the state of the house, what is open and for how long, and arm controls.
-import { sheet, tokens } from "./ds/tokens.js?v=5";
-import { primitives } from "./ds/primitives.js?v=5";
+import { sheet, tokens } from "./ds/tokens.js?v=6";
+import { primitives } from "./ds/primitives.js?v=6";
+import { esc, mount, moreInfo } from "./ds/dom.js?v=6";
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
 const ALARM = {
@@ -158,7 +158,7 @@ class SecurityStatusCard extends HTMLElement {
     this._config = config || {};
     this._html = "";
     this._showDead = false;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+    if (!this.shadowRoot) mount(this, tokens, primitives, own);
   }
 
   getCardSize() {
@@ -193,7 +193,7 @@ class SecurityStatusCard extends HTMLElement {
   }
 
   _moreInfo(entityId) {
-    this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
+    moreInfo(this, entityId);
   }
 
   _tap(el) {

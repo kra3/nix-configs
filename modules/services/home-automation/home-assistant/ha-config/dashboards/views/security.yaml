@@ -130,22 +130,20 @@ sections:
     variables:
       camera: camera.ranger_duo_fxd
       person: binary_sensor.ranger_duo_fxd_person_occupancy
-    grid_options:
+    grid_options: &col4
       columns: 4
   - type: custom:streamline-card
     template: camera_tile
     variables:
       camera: camera.ranger_duo_ptz
       person: binary_sensor.ranger_duo_ptz_person_occupancy
-    grid_options:
-      columns: 4
+    grid_options: *col4
   - type: custom:streamline-card
     template: camera_tile
     variables:
       camera: camera.ranger_uno
       person: binary_sensor.ranger_uno_person_occupancy
-    grid_options:
-      columns: 4
+    grid_options: *col4
   - type: custom:popup-tile-card
     entity: camera.ranger_uno
     name: Recent events
@@ -156,15 +154,9 @@ sections:
     popup:
       type: custom:advanced-camera-card
       cameras:
-      - <<: *cam_fxd
-        dependencies:
-          all_cameras: true
-      - <<: *cam_ptz
-        dependencies:
-          all_cameras: true
-      - <<: *cam_uno
-        dependencies:
-          all_cameras: true
+      - {<<: *cam_fxd, dependencies: {all_cameras: true}}
+      - {<<: *cam_ptz, dependencies: {all_cameras: true}}
+      - {<<: *cam_uno, dependencies: {all_cameras: true}}
       view:
         default: reviews
         camera_select: current

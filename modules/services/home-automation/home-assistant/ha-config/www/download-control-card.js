@@ -1,7 +1,8 @@
 // Compact download client control: one pause/resume toggle and a speed-limit slider.
 
-import { sheet, tokens } from "./ds/tokens.js?v=5";
-import { primitives } from "./ds/primitives.js?v=5";
+import { sheet, tokens } from "./ds/tokens.js?v=6";
+import { primitives } from "./ds/primitives.js?v=6";
+import { mount } from "./ds/dom.js?v=6";
 
 const own = sheet(`
 :host { display: block; }
@@ -19,7 +20,7 @@ class DownloadControlCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.switch || !config.number) throw new Error("download-control-card: switch and number are required");
     this._config = config;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+    if (!this.shadowRoot) mount(this, tokens, primitives, own);
     this._built = false;
   }
 

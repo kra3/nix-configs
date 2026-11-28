@@ -1,25 +1,11 @@
-import { sheet, tokens } from "./tokens.js?v=5";
-import { primitives } from "./primitives.js?v=5";
-
-const own = sheet(`
-:host { display: block; }
-:host([hidden]) { display: none; }
-.tile { padding-block: var(--ds-space-3); }
-.tile__label { margin-bottom: var(--ds-space-1); }
-button.row { width: 100%; box-sizing: border-box; min-height: var(--ds-touch); align-items: center; background: none; color: inherit; font: inherit;
-  text-align: left; cursor: pointer; border: 0; border-top: 1px solid var(--divider-color); touch-action: manipulation; }
-button.row:first-of-type { border-top: 0; }
-button.row:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: var(--ds-space-2); }
-.row__v { text-align: right; overflow-wrap: anywhere; }
-`);
-
-const num = (s) => (s && s.state !== "" && Number.isFinite(Number(s.state)) ? Number(s.state) : null);
+import { tokens } from "./tokens.js?v=6";
+import { primitives } from "./primitives.js?v=6";
+import { drillOr, mount, num, rowButton, rows as own } from "./dom.js?v=6";
 
 class RoomRowsCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
-    this.shadowRoot.innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
+    mount(this, tokens, primitives, own).innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
   }
 
   setConfig(c) {
@@ -58,19 +44,8 @@ class RoomRowsCard extends HTMLElement {
   }
 
   _row(r, text) {
-    const b = document.createElement("button");
-    b.className = "row";
-    b.innerHTML = `<span class="row__k"></span><span class="row__v"></span>`;
-    b.firstChild.textContent = r.name;
-    b.lastChild.textContent = text;
-    b.setAttribute("aria-label", [r.name, text].filter(Boolean).join(" · "));
-    b.addEventListener("click", () => {
-      if (!r.detail) return;
-      const ev = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: r.detail }, bubbles: true, composed: true, cancelable: true });
-      this.dispatchEvent(ev);
-      const entityId = r.lights || r.temperature;
-      if (!ev.defaultPrevented && entityId) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
-    });
+    const b = rowButton(r.name, text);
+    b.addEventListener("click", () => r.detail && drillOr(this, r.detail, r.lights || r.temperature));
     return b;
   }
 }

@@ -1,7 +1,8 @@
 // Room climate tile: status-tinted icon, comfort word and readings; tapping asks the dashboard for a detail pane (cc_detail) and falls back to a history popup.
 
-import { tokens } from "/local/ds/tokens.js?v=5";
-import { primitives } from "/local/ds/primitives.js?v=5";
+import { tokens } from "/local/ds/tokens.js?v=6";
+import { primitives } from "/local/ds/primitives.js?v=6";
+import { drill, esc, moreInfo, mount } from "/local/ds/dom.js?v=6";
 
 const STYLE = `
   :host { display: block; }
@@ -50,7 +51,6 @@ const TONES = {
 };
 const INACTIVE = "var(--state-inactive-color, var(--secondary-text-color))";
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 function chartSvg(series, start, end, unit, hours, lang) {
   const W = 480, H = 130, L = 40, R = 8, T = 8, B = 22;
@@ -88,7 +88,7 @@ class ClimateRoomCard extends HTMLElement {
     if (!config || !config.comfort) throw new Error("climate-room-card: comfort is required");
     this._config = config;
     this._html = "";
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives];
+    if (!this.shadowRoot) mount(this, tokens, primitives);
   }
 
   getCardSize() {
@@ -163,9 +163,7 @@ class ClimateRoomCard extends HTMLElement {
       const cs = this._hass.states[c.comfort];
       const why = cs ? this._reason(cs.state) : "";
       const cc_detail = { type: "vertical-stack", cards: [{ type: "heading", heading: c.name || "", heading_style: "title" }, ...(why ? [{ type: "markdown", content: why }] : []), graph(24), graph(168)] };
-      const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail }, bubbles: true, composed: true, cancelable: true });
-      this.dispatchEvent(drill);
-      if (drill.defaultPrevented) return;
+      if (drill(this, cc_detail)) return;
     }
     if (!document.getElementById("crc-style")) {
       const st = document.createElement("style");
@@ -221,7 +219,7 @@ class ClimateRoomCard extends HTMLElement {
       }),
     );
     body.querySelector(".crc-link").addEventListener("click", () => {
-      this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: c.temperature || c.comfort }, bubbles: true, composed: true }));
+      moreInfo(this, c.temperature || c.comfort);
     });
     const g = body.querySelector(".crc-graph");
     const series = [

@@ -1,4 +1,5 @@
 // Tile that opens any stock card in an overlay popup.
+import { drill } from "./ds/dom.js?v=6";
 
 const STYLE = `
   :host { display: block; }
@@ -81,9 +82,7 @@ class PopupTileCard extends HTMLElement {
 
   async _open() {
     if (this._overlay) return;
-    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail() }, bubbles: true, composed: true, cancelable: true });
-    this.dispatchEvent(drill);
-    if (drill.defaultPrevented) return;
+    if (drill(this, this._detail())) return;
     const helpers = await window.loadCardHelpers();
     let card = helpers.createCardElement(this._config.popup);
     if (!customElements.get(card.localName)) {

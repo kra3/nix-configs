@@ -1,4 +1,5 @@
 // Compact health metric card: headline value, delta chip, sparkline and optional sub-metrics.
+import { drill, moreInfo } from "./ds/dom.js?v=6";
 
 const MINUS = "−";
 
@@ -919,9 +920,7 @@ class HealthMetricCard extends HTMLElement {
   async _openPopup() {
     if (this._overlay) return;
     const c = this._config;
-    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: Object.assign({}, c, { popup_inline: true }) }, bubbles: true, composed: true, cancelable: true });
-    this.dispatchEvent(drill);
-    if (drill.defaultPrevented) return;
+    if (drill(this, Object.assign({}, c, { popup_inline: true }))) return;
     if (!document.getElementById("hmc-popup-style")) {
       const st = document.createElement("style");
       st.id = "hmc-popup-style";
@@ -1094,9 +1093,7 @@ class HealthMetricCard extends HTMLElement {
       window.dispatchEvent(new Event("location-changed"));
       return;
     }
-    this.dispatchEvent(
-      new CustomEvent("hass-more-info", { detail: { entityId: this._config.entity }, bubbles: true, composed: true })
-    );
+    moreInfo(this, this._config.entity);
   }
 }
 

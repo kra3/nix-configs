@@ -24,7 +24,7 @@ resources:
     type: module
   - url: /local/comfort-card.js?v=7
     type: module
-  - url: /local/maintenance-cards.js?v=4
+  - url: /local/maintenance-cards.js?v=7
     type: module
   - url: /local/climate-room-card.js?v=5
     type: module

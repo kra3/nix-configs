@@ -78,9 +78,10 @@ class AreaRoomCard extends HTMLElement {
       const on = this._h.states[id].state;
       const t = document.createElement("button");
       t.className = "chip";
-      t.setAttribute("aria-pressed", String(on === "on" || on === "open"));
+      const lit = on === "on" || on === "open" || on === "opening";
+      t.setAttribute("aria-pressed", String(lit));
       t.setAttribute("aria-label", `Toggle ${name}`);
-      t.textContent = on === "on" || on === "open" ? "On" : "Off";
+      t.textContent = toggle === "cover" ? (lit ? "Open" : "Closed") : lit ? "On" : "Off";
       t.addEventListener("click", () => this._h.callService(toggle, "toggle", { entity_id: id }));
       wrap.append(t);
     }

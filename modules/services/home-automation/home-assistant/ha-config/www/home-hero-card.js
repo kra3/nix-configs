@@ -1,5 +1,5 @@
 // Home hero: presence and time of day, weather, alarm chip and attention pills that appear only when active.
-import { drill, moreInfo } from "./ds/dom.js?v=8";
+import { drill, moreInfo } from "./ds/dom.js?v=9";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 

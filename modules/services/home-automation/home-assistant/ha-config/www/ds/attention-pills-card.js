@@ -1,12 +1,12 @@
-import { sheet, tokens } from "./tokens.js?v=8";
-import { primitives } from "./primitives.js?v=8";
-import { SEVERITY, mount } from "./dom.js?v=8";
+import { sheet, tokens } from "./tokens.js?v=9";
+import { primitives } from "./primitives.js?v=9";
+import { SEVERITY, mount } from "./dom.js?v=9";
 
 const own = sheet(`
 :host { display: block; }
 :host([hidden]) { display: none; }
 .pills { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); }
-@media (max-width: 819px) { .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .pill { flex: none; } }
+@media (max-width: 819px) { .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .pill { flex: none; white-space: nowrap; max-width: none; } .pills > [role=listitem] { flex: none; } }
 .pill { min-height: var(--ds-touch); border: 0; cursor: pointer; text-align: left; touch-action: manipulation; max-width: 100%; }
 .pill ha-icon { --mdc-icon-size: 16px; flex: none; }
 .pill span { overflow-wrap: anywhere; }

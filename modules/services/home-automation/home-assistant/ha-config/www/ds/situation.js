@@ -161,7 +161,7 @@ export function inputFromHass(hass, userId, config = {}) {
     guestOnly: !!live(c.guestEntity) && st[c.guestEntity].state === "on",
     lightsOn: lights.length ? lights.filter(([, e]) => st[e] && st[e].state === "on").map(([n]) => n) : null,
     openings: open ? (open.attributes.open_names || "").split(", ").filter(Boolean) : null,
-    attention: att && Array.isArray(att.attributes.items) ? att.attributes.items.map((i) => i.label) : null,
+    attention: att && Array.isArray(att.attributes.items) ? att.attributes.items.filter((i) => i.id !== "open").map((i) => i.label) : null,
     media: player ? { name: player.attributes.friendly_name || player.entity_id, title: player.attributes.media_title || null } : null,
     laundry: laundry.length
       ? { running: laundry.filter(([, s]) => s.state === "Running").map(([n]) => n), done: laundry.filter(([, s]) => s.state === "Done").map(([n]) => n) }

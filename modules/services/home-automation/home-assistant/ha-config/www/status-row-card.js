@@ -1,15 +1,17 @@
 // Wrapping row of entity states: icon, label, value and an optional hint per entry; `colors` and `hints` map a state (or the value of the attribute named by `color_attribute`) to a theme tone (success, warning, error, info, inactive, primary) with `other` as the fallback; an entry is tappable only when it sets `tap: toggle`. `layout: rows` puts each entry on one line (label left, value right); `spark: {entity, title, hours}` adds an hourly-mean sparkline with its peak above the entries; `align: end` on a head entry pushes it to the right edge.
 
+import { tokens } from "/local/ds/tokens.js?v=5";
+
 const STYLE = `
   :host { display: block; }
-  ha-card { padding: 8px 10px; }
+  ha-card { padding: var(--ds-space-2) var(--ds-space-3); }
   .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--min), 1fr)); gap: 2px 8px; }
   .it { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 8px 10px; border-radius: 10px; }
   .it.tap { cursor: pointer; min-height: 44px; }
   .it.tap:hover { background: var(--secondary-background-color); }
   ha-icon { --mdc-icon-size: 22px; color: var(--c); flex: none; margin-top: 1px; }
-  .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); }
-  .val { font-size: 15px; font-weight: 600; color: var(--primary-text-color); }
+  .lab { font: var(--ds-label); letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); }
+  .val { font: var(--ds-title); color: var(--primary-text-color); }
   .hint { font-size: 12px; line-height: 1.3; color: var(--secondary-text-color); margin-top: 1px; }
   .it.off .val { color: var(--secondary-text-color); }
   .rows .row { grid-template-columns: 1fr; gap: 0; }
@@ -53,7 +55,7 @@ class StatusRowCard extends HTMLElement {
     if (!config || !Array.isArray(config.items) || !config.items.length) throw new Error("status-row-card: items are required");
     this._config = config;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
       this.shadowRoot.addEventListener("click", (e) => {
         if (e.target.closest(".sp")) return this._moreInfo(this._series()[0].entity);
         const el = e.target.closest(".it.tap");

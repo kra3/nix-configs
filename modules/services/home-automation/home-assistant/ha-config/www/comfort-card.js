@@ -1,9 +1,11 @@
 // Comfort range: a draggable Low/High range on a temperature scale with the season's guideline band underneath, a night-offset stepper, a humidity-vs-ceiling bar and collapsible `advanced` rows (name, effect, optional `now` Jinja line, -/+ steppers; `when: {entity, state | state_not}` shows a row or stepper conditionally).
 
+import { tokens } from "/local/ds/tokens.js?v=5";
+
 const STYLE = `
   :host { display: block; }
-  ha-card { padding: 12px 16px 8px; }
-  .range { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--primary-text-color); }
+  ha-card { padding: var(--ds-space-3) var(--ds-tile-pad) var(--ds-space-2); }
+  .range { font: var(--ds-value); font-variant-numeric: tabular-nums; color: var(--primary-text-color); }
   .sub { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
   .sub b { font-weight: 600; color: var(--primary-text-color); }
   .warn { color: var(--warning-color, #ffa600); }
@@ -52,7 +54,7 @@ class ComfortCard extends HTMLElement {
     this._pend = {};
     this._open = false;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens];
       const root = this.shadowRoot;
       root.addEventListener("click", (e) => {
         if (e.target.closest("button.adv")) {

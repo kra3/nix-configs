@@ -40,7 +40,7 @@ class SituationStackCard extends HTMLElement {
     const s = { ...DEFAULT_CONFIG, ...c.situation_config };
     this._sit = c.situation_config;
     this._ids = [
-      s.sun, s.attention, s.openings, s.guestEntity, ...s.media, ...Object.values(s.lights), ...Object.values(s.laundry),
+      s.sun, s.openings, s.guestEntity, ...s.media, ...Object.values(s.lights), ...Object.values(s.laundry),
       ...Object.values(s.people).flatMap((p) => [p.person, p.eta, p.arriving, p.justLeft]),
     ].filter(Boolean);
     this._sig = null;
@@ -71,8 +71,11 @@ class SituationStackCard extends HTMLElement {
     try { s = situation(inputFromHass(h, h.user?.id, this._sit)); } catch (e) { console.error(e); s = { key: "default", headline: "" }; }
     this._say(this._config.headline === false ? "" : s.headline);
     if (this._config.headline === true && !this._config.situations && !this._config.default?.length) {
-      this.hidden = !s.headline;
-      this.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.hidden }, bubbles: true, composed: true }));
+      const hide = !s.headline;
+      if (hide !== this.hidden) {
+        this.hidden = hide;
+        this.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !hide }, bubbles: true, composed: true }));
+      }
     }
     const set = pickSet(this._config.situations, s.key, this._config.default);
     if (set.id !== this._setId) {

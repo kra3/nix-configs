@@ -99,11 +99,10 @@ function heroModel(states, cfg, userId) {
   } else {
     title = presence === "away" ? "Away" : presence === "home_both" ? "Everyone's home" : "Home";
     icon = presence === "away" ? "mdi:home-export-outline" : "mdi:home-heart";
-    sub = titleCase(period) + (IDLE.includes(eta) ? "" : ` · ${eta}`);
+    sub = [titleCase(period), IDLE.includes(eta) ? "" : eta].filter(Boolean).join(" · ");
   }
-  if (!IDLE.includes(season)) sub += ` · ${titleCase(season)}`;
   const rain = val(cfg.rain);
-  if (!IDLE.includes(rain)) sub += ` · ${rain}`;
+  sub = [sub, IDLE.includes(season) ? "" : titleCase(season), IDLE.includes(rain) ? "" : rain].filter(Boolean).join(" · ");
   const w = cfg.weather && states[cfg.weather];
   const weather =
     w && typeof w.attributes.temperature === "number"

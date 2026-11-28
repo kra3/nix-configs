@@ -20,9 +20,9 @@ const loadPresets = () => {
 };
 
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=11";
-import { primitives } from "/local/ds/primitives.js?v=11";
-import { esc, mount } from "/local/ds/dom.js?v=11";
+import { sheet, tokens } from "/local/ds/tokens.js?v=12";
+import { primitives } from "/local/ds/primitives.js?v=12";
+import { esc, mount } from "/local/ds/dom.js?v=12";
 
 const own = sheet(`
   :host { display: block; }

@@ -1,11 +1,13 @@
-type: sections
+type: custom:command-centre
 title: Health
 path: health-anjali
 icon: mdi:scale-bathroom
 visible:
 - user: 6edcc5a09c3144d684077ee362e7394a
 cards: []
+max_columns: 3
 sections:
+- !include ../rail.yaml
 - type: grid
   cards:
   - type: heading
@@ -121,6 +123,8 @@ sections:
       per_day: "Active energy per day (kcal)"
     grid_options:
       columns: 12
+- type: grid
+  cards:
   - type: heading
     heading: Heart
     heading_style: title

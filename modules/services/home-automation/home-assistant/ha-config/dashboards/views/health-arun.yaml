@@ -1,11 +1,13 @@
-type: sections
+type: custom:command-centre
 title: Health
 path: health-arun
 icon: mdi:scale-bathroom
 visible:
 - user: a1d4401b8b714ebb83f07c5316ab399c
 cards: []
+max_columns: 3
 sections:
+- !include ../rail.yaml
 - type: grid
   cards:
   - type: heading
@@ -122,6 +124,8 @@ sections:
       per_day: "Active energy per day (kcal)"
     grid_options:
       columns: 12
+- type: grid
+  cards:
   - type: heading
     heading: Heart
     heading_style: title

@@ -1,7 +1,7 @@
 // Security status: one sentence for the state of the house, what is open and for how long, and arm controls.
-import { sheet, tokens } from "./ds/tokens.js?v=6";
-import { primitives } from "./ds/primitives.js?v=6";
-import { esc, mount, moreInfo } from "./ds/dom.js?v=6";
+import { sheet, tokens } from "./ds/tokens.js?v=7";
+import { primitives } from "./ds/primitives.js?v=7";
+import { esc, mount, moreInfo } from "./ds/dom.js?v=7";
 
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];

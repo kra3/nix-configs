@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=6";
-import { primitives } from "./primitives.js?v=6";
-import { mount } from "./dom.js?v=6";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=6";
+import { sheet, tokens } from "./tokens.js?v=7";
+import { primitives } from "./primitives.js?v=7";
+import { mount } from "./dom.js?v=7";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=7";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -12,14 +12,16 @@ const own = sheet(`
 .rail { display: flex; flex-direction: column; gap: var(--ds-gap); min-width: 0; }
 .col { min-width: 0; }
 .badges { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-bottom: var(--ds-gap); }
-.main { display: grid; grid-auto-flow: dense; gap: var(--ds-gap); min-width: 0; }
+.main { display: grid; grid-auto-flow: dense; grid-auto-rows: 8px; column-gap: var(--ds-gap); row-gap: 0; min-width: 0; }
+.main > * { align-self: start; margin-bottom: var(--ds-gap); }
+:host(:not([data-mode="narrow"])) .rail { position: sticky; top: calc(var(--header-height, 56px) + var(--ds-space-4)); max-height: calc(100vh - var(--header-height, 56px) - 2 * var(--ds-space-4)); overflow: auto; overscroll-behavior: contain; }
 .pane { background: var(--card-background-color); color: var(--primary-text-color); outline: 0; box-sizing: border-box; overflow: hidden;
   animation: ds-in var(--ds-motion-sheet) var(--ds-ease); }
 :host([data-mode="wide"]) .pane { position: sticky; top: var(--ds-space-4); max-height: calc(100vh - 2 * var(--ds-space-4)); border-radius: var(--ds-radius-tile); }
 :host(:not([data-mode="wide"])) .pane { position: fixed; z-index: 11; }
 :host([data-mode="mid"]) .pane { top: 0; right: 0; bottom: 0; width: min(420px, 100vw); animation-name: ds-in-x; }
 :host([data-mode="narrow"]) .pane { left: 0; right: 0; bottom: 0; max-height: 85vh; border-radius: var(--ds-radius-sheet) var(--ds-radius-sheet) 0 0; }
-.scrim { position: fixed; inset: 0; z-index: 10; background: color-mix(in srgb, var(--primary-text-color) 40%, transparent); }
+.scrim { position: fixed; inset: 0; z-index: 10; background: color-mix(in srgb, black 55%, transparent); }
 .pane:not([hidden]) { display: flex; flex-direction: column; }
 :host([data-mode="narrow"]) .pane { min-height: 40vh; }
 .body { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 var(--ds-space-4) var(--ds-space-4); }
@@ -42,6 +44,7 @@ class CommandCentre extends HTMLElement {
     this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
     this._max = 4; this._sections = []; this._hass = undefined; this._card = null; this._openSeq = 0;
     this._ro = new ResizeObserver(() => this._layout());
+    this._watched = new Set();
     this.addEventListener("section-visibility-changed", () => this._layout(), true);
     this.addEventListener("ll-custom", (ev) => this._open(ev));
     this.addEventListener("keydown", (ev) => { if (ev.key === "Escape") this._close(); });
@@ -51,6 +54,7 @@ class CommandCentre extends HTMLElement {
 
   connectedCallback() {
     this._ro.observe(this); this._ro.observe(this._main);
+    for (const s of this._watched) this._ro.observe(s);
     window.addEventListener("popstate", this._onPop);
   }
   disconnectedCallback() {
@@ -73,6 +77,8 @@ class CommandCentre extends HTMLElement {
     const { rail, main } = partition(this._sections);
     this._rail.replaceChildren(...rail);
     this._main.replaceChildren(...main);
+    for (const s of this._watched) if (s.parentNode !== this._main) { this._ro.unobserve(s); this._watched.delete(s); }
+    for (const s of main) if (!this._watched.has(s)) { this._ro.observe(s); this._watched.add(s); }
     this._layout();
   }
 
@@ -80,7 +86,10 @@ class CommandCentre extends HTMLElement {
     this.dataset.mode = layoutMode(this.getBoundingClientRect().width);
     const cols = columnCount(this._main.clientWidth, this._max);
     this._main.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    for (const s of this._main.children) if (!s.hidden) s.style.gridColumn = "span " + sectionSpan(s, cols);
+    for (const s of this._main.children) if (!s.hidden) {
+      s.style.gridColumn = "span " + sectionSpan(s, cols);
+      s.style.gridRow = "span " + Math.ceil((s.offsetHeight + parseFloat(getComputedStyle(s).marginBottom)) / 8);
+    }
     this._scrim.hidden = !this._isOpen() || this.dataset.mode === "wide";
     const modal = this._isOpen() && this.dataset.mode !== "wide";
     this._pane.setAttribute("aria-modal", String(this.dataset.mode !== "wide"));

@@ -21,11 +21,14 @@ const loadPresets = () => {
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-const STYLE = `
+import { sheet, tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
+
+const own = sheet(`
   :host { display: block; }
-  ha-card { padding: 10px 12px 12px; }
-  .rooms { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-  .rm { position: relative; font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; min-height: 32px; border-radius: 16px; border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color); cursor: pointer; }
+  ha-card { padding: var(--ds-space-3); }
+  .rooms { display: flex; gap: var(--ds-space-2); flex-wrap: wrap; margin-bottom: var(--ds-space-2); }
+  .rm { position: relative; font: var(--ds-label); padding: 6px 12px; min-height: var(--ds-touch); border-radius: 999px; border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color); cursor: pointer; }
   .rm.sel { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
   .rm.act::after { content: ""; position: absolute; top: 2px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--warning-color, orange); }
   .bs { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
@@ -46,7 +49,8 @@ const STYLE = `
   .td { font-size: 12px; line-height: 1.3; color: var(--secondary-text-color); }
   .tv { font-size: 13px; font-weight: 600; color: var(--state-inactive-color, var(--secondary-text-color)); }
   .tg.on .tv { color: var(--primary-color); }
-`;
+  .rm:focus-visible, .b:focus-visible, .tg:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+`);
 
 const PICKER_STYLE = `
   :host { all: initial; }
@@ -79,7 +83,7 @@ class ScenePickerCard extends HTMLElement {
     this._rooms = config.rooms || [{ name: config.name, entity: config.entity }];
     this._pending = {};
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
       this.shadowRoot.addEventListener("click", (e) => {
         const r = e.target.closest(".rm");
         if (r) {
@@ -173,7 +177,7 @@ class ScenePickerCard extends HTMLElement {
         ? `<div class="rooms">${this._rooms.map((r, i) => `<button class="rm${i === this._sel ? " sel" : ""}${this._value(r.entity) !== "Auto" ? " act" : ""}" data-room="${i}">${esc(r.name)}</button>`).join("")}</div>`
         : "";
     this.shadowRoot.innerHTML =
-      `<style>${STYLE}</style><ha-card>${picker}<div class="bs">` +
+      `<ha-card>${picker}<div class="bs">` +
       `<button class="b auto${auto ? " on" : ""}"><ha-icon icon="mdi:theme-light-dark"></ha-icon><span class="lb">Auto</span></button>` +
       `<button class="b mood${!auto && !dead ? " on" : ""}${p && !auto ? " img" : ""}"${p && !auto ? ` style="background-image:url('${esc(imgUrl(p))}')"` : ""}><ha-icon icon="mdi:palette"></ha-icon><span class="lb">${esc(moodLabel)}</span></button>` +
       `</div><div class="cap">${esc(cap)}</div>${this._togglesHtml()}</ha-card>`;

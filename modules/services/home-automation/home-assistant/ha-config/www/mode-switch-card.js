@@ -1,15 +1,19 @@
 // Segmented control over boolean helpers: the first mode needs no entity and means "all others off"; the selected mode explains itself in one sentence.
 
-const STYLE = `
+import { sheet, tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
+
+const own = sheet(`
   :host { display: block; }
-  ha-card { padding: 10px 12px 12px; }
-  .ti { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); margin: 2px 4px 8px; }
-  .segs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
-  .seg { font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color); cursor: pointer; }
+  ha-card { padding: var(--ds-space-3); }
+  .ti { margin: 2px var(--ds-space-1) var(--ds-space-2); }
+  .segs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--ds-space-2); }
+  .seg { font: var(--ds-title); min-height: var(--ds-touch); display: flex; align-items: center; justify-content: center; gap: var(--ds-space-2); border-radius: 999px; border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color); cursor: pointer; touch-action: manipulation; }
   .seg ha-icon { --mdc-icon-size: 20px; }
   .seg.on { background: var(--c); border-color: var(--c); color: var(--text-primary-color, #fff); }
-  .hint { margin: 10px 4px 2px; font-size: 13px; line-height: 1.35; color: var(--secondary-text-color); }
-`;
+  .seg:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+  .hint { font: var(--ds-body); margin: var(--ds-space-3) var(--ds-space-1) 2px; }
+`);
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = { primary: "var(--primary-color)", success: "var(--success-color, #43a047)", warning: "var(--warning-color, #ffa600)", error: "var(--error-color, #db4437)", info: "var(--info-color, #039be5)" };
@@ -19,7 +23,7 @@ class ModeSwitchCard extends HTMLElement {
     if (!config || !Array.isArray(config.modes) || config.modes.length < 2) throw new Error("mode-switch-card: at least two modes are required");
     this._config = config;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
       this.shadowRoot.addEventListener("click", (e) => {
         const b = e.target.closest(".seg");
         if (!b || !this._hass) return;
@@ -69,7 +73,7 @@ class ModeSwitchCard extends HTMLElement {
     const segs = c.modes
       .map((m, i) => `<button class="seg${i === cur ? " on" : ""}" data-i="${i}" style="--c:${esc(TONES[m.tone] || m.tone || TONES.primary)}"><ha-icon icon="${esc(m.icon || "")}"></ha-icon>${esc(m.name)}</button>`)
       .join("");
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${c.name ? `<div class="ti">${esc(c.name)}</div>` : ""}<div class="segs">${segs}</div><div class="hint">${esc(c.modes[cur].hint || "")}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<ha-card>${c.name ? `<div class="ti tile__label">${esc(c.name)}</div>` : ""}<div class="segs">${segs}</div><div class="hint tile__sub">${esc(c.modes[cur].hint || "")}</div></ha-card>`;
   }
 }
 

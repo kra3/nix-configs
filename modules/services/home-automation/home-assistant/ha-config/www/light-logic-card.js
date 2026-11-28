@@ -1,9 +1,13 @@
 // Explains why each room's light is on or off: outside daylight model, per-room verdict and tunable thresholds.
 
-const STYLE = `
+import { sheet, tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
+
+const own = sheet(`
   :host { display: block; }
+  :host([hidden]) { display: none; }
   ha-card { overflow: hidden; }
-  .blk { padding: 10px 16px; min-height: 44px; box-sizing: border-box; cursor: pointer; }
+  .blk { padding: var(--ds-space-3) var(--ds-space-4); min-height: var(--ds-touch); box-sizing: border-box; cursor: pointer; }
   .blk + .blk { border-top: 1px solid var(--divider-color); }
   .hd { display: flex; align-items: center; gap: 10px; min-width: 0; }
   ha-icon { --mdc-icon-size: 22px; flex: none; color: var(--c); }
@@ -26,8 +30,7 @@ const STYLE = `
   .tk { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--secondary-text-color); }
   .tk span { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-size: 10px; line-height: 1.2; white-space: nowrap; color: var(--secondary-text-color); }
   .tk.up span { top: auto; bottom: 100%; }
-  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-  .chip { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11px; font-weight: 500; background: var(--secondary-background-color); color: var(--primary-text-color); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px 8px; padding: 0; border-top: 0; }
   .chip.ok { color: var(--success-color); }
   .chip.no { color: var(--error-color); }
   .chip.na { color: var(--state-inactive-color); }
@@ -36,7 +39,7 @@ const STYLE = `
   .sl .top { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0 8px; font-size: 13px; color: var(--primary-text-color); }
   .sl .top span { color: var(--secondary-text-color); font-size: 12px; }
   .seg { display: flex; gap: 0; }
-  .seg button, .stp button { min-height: 44px; border: 1px solid var(--divider-color); background: var(--secondary-background-color); color: var(--primary-text-color); font: inherit; font-size: 14px; cursor: pointer; }
+  .seg button, .stp button { min-height: var(--ds-touch); border: 1px solid var(--divider-color); background: var(--secondary-background-color); color: var(--primary-text-color); font: inherit; font-size: 14px; cursor: pointer; }
   .seg button { flex: 1; }
   .seg button:first-child { border-radius: 22px 0 0 22px; }
   .seg button:last-child { border-radius: 0 22px 22px 0; }
@@ -64,7 +67,7 @@ const STYLE = `
   input[type=range]::-moz-range-track { height: 44px; background: transparent; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; box-sizing: border-box; width: 28px; height: 28px; margin-top: 8px; border-radius: 50%; border: 2px solid #fff; background: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: auto; cursor: pointer; }
   input[type=range]::-moz-range-thumb { box-sizing: border-box; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,.4); pointer-events: auto; cursor: pointer; }
-`;
+`);
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = { success: "var(--success-color)", warning: "var(--warning-color)", error: "var(--error-color)", info: "var(--info-color)", inactive: "var(--state-inactive-color)" };
@@ -75,12 +78,15 @@ class LightLogicCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.outside || !Array.isArray(config.rooms) || !config.rooms.length) throw new Error("light-logic-card: outside and rooms are required");
     this._config = config;
-    this._ids = [...Object.values(config.outside).filter((v) => typeof v === "string"), ...Object.values(config.house || {}), ...config.rooms.flatMap((r) => ROOM_KEYS.map((k) => r[k]))].filter(Boolean);
-    this._open = -1;
+    const want = config.room ? String(config.room).toLowerCase() : "";
+    this._rooms = want ? config.rooms.filter((r) => want.startsWith(r.name.toLowerCase())) : config.rooms;
+    this.hidden = !this._rooms.length;
+    this._ids = [...Object.values(config.outside).filter((v) => typeof v === "string"), ...Object.values(config.house || {}), ...this._rooms.flatMap((r) => ROOM_KEYS.map((k) => r[k]))].filter(Boolean);
+    this._open = want && this._rooms.length ? 0 : -1;
     this._outOpen = false;
     this._sig = null;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
       const sr = this.shadowRoot;
       sr.addEventListener("click", (e) => {
         const sg = e.target.closest("[data-seg]");
@@ -133,7 +139,7 @@ class LightLogicCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 3 + this._config.rooms.length;
+    return 3 + this._rooms.length;
   }
 
   _val(id) {
@@ -363,7 +369,7 @@ class LightLogicCard extends HTMLElement {
     const fa = this.shadowRoot.activeElement;
     const fe = fa && fa.dataset && fa.dataset.ent;
     const fb = fa && fa.dataset && fa.dataset.band;
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div class="rule">A room is dark when it's gloomy outside and below its lux mark for 2 min. It stays dark until it's light outside.</div>${this._outside()}${this._config.rooms.map((r, i) => this._room(r, i)).join("")}</ha-card>`;
+    this.shadowRoot.innerHTML = `<ha-card><div class="rule">A room is dark when it's gloomy outside and below its lux mark for 2 min. It stays dark until it's light outside.</div>${this._outside()}${this._rooms.map((r, i) => this._room(r, i)).join("")}</ha-card>`;
     if (fe) {
       const n = [...this.shadowRoot.querySelectorAll("input[data-ent]")].find((i) => i.dataset.ent === fe && i.dataset.band === fb);
       if (n) n.focus();

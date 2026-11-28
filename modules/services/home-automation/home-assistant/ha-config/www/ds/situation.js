@@ -91,19 +91,19 @@ const general = (s, lead) =>
 const LEAD = { morning: "Good morning", day: null, evening: "Good evening", night: "All quiet" };
 
 const RULES = [
-  { key: "guest", when: (s) => s.viewer === "guest" || !!s.guestOnly, hero: () => "guest", head: HEADLINES.guest },
-  { key: "away-empty", when: (s) => viewerState(s) === "away" && !anyHome(s), hero: () => "rest", head: HEADLINES["away-empty"] },
-  { key: "away-occupied", when: (s) => viewerState(s) === "away", hero: () => "live", head: HEADLINES["away-occupied"] },
-  { key: "arriving", when: (s) => viewerState(s) === "arriving", hero: (s) => (anyHome(s) ? "live" : "rest"), head: HEADLINES.arriving },
-  { key: "leaving", when: (s) => viewerState(s) === "left", hero: () => "live", head: HEADLINES.leaving },
-  { key: "night-waiting", when: (s) => s.time === "night" && othersOut(s).length > 0, hero: () => "night", head: (s) => general(s, null) },
-  { key: "waiting", when: (s) => othersOut(s).length > 0, hero: () => "live", head: (s) => general(s, null) },
-  { key: (s) => `home-${s.time}`, when: () => true, hero: (s) => (s.time === "night" ? "night" : "live"), head: (s) => general(s, LEAD[s.time]) },
+  { key: "guest", when: (s) => s.viewer === "guest" || !!s.guestOnly, head: HEADLINES.guest },
+  { key: "away-empty", when: (s) => viewerState(s) === "away" && !anyHome(s), head: HEADLINES["away-empty"] },
+  { key: "away-occupied", when: (s) => viewerState(s) === "away", head: HEADLINES["away-occupied"] },
+  { key: "arriving", when: (s) => viewerState(s) === "arriving", head: HEADLINES.arriving },
+  { key: "leaving", when: (s) => viewerState(s) === "left", head: HEADLINES.leaving },
+  { key: "night-waiting", when: (s) => s.time === "night" && othersOut(s).length > 0, head: (s) => general(s, null) },
+  { key: "waiting", when: (s) => othersOut(s).length > 0, head: (s) => general(s, null) },
+  { key: (s) => `home-${s.time}`, when: () => true, head: (s) => general(s, LEAD[s.time]) },
 ];
 
 export function situation(input) {
   const r = RULES.find((x) => x.when(input));
-  return { key: typeof r.key === "function" ? r.key(input) : r.key, headline: r.head(input), heroMode: r.hero(input) };
+  return { key: typeof r.key === "function" ? r.key(input) : r.key, headline: r.head(input) };
 }
 
 export const DEFAULT_CONFIG = {

@@ -95,12 +95,8 @@ class SituationStackCard extends HTMLElement {
   async _make(c) {
     let el;
     try {
-      if (customElements.get("hui-card")) {
-        el = document.createElement("hui-card");
-        el.config = c;
-      } else {
-        el = await (await window.loadCardHelpers()).createCardElement(c);
-      }
+      el = document.createElement("hui-card");
+      el.config = c;
     } catch (e) {
       console.error(e);
       el = document.createElement("div");

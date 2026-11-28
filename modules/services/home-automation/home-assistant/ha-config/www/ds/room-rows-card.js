@@ -42,7 +42,7 @@ class RoomRowsCard extends HTMLElement {
   _text(h, r) {
     const parts = [];
     const a = r.area ? roomEntities(h, r.area) : null;
-    const ids = (k) => (r[k] ? [r[k]] : a ? a[k].slice(0, 1) : []);
+    const ids = (k) => (r[k] ? [r[k]] : a && a[k].length === 1 ? a[k] : []);
     const lit = !r.lights && a && a.lights.length ? (a.lights.some((id) => h.states[id].state === "on") ? "on" : "off") : null;
     if (lit) parts.push(lit === "on" ? ["mdi:lightbulb-on", "on", "Lights on", "on"] : ["mdi:lightbulb-outline", "off", "Lights off"]);
     if (r.lights) {

@@ -26,7 +26,7 @@ resources:
     type: module
   - url: /local/maintenance-cards.js?v=11
     type: module
-  - url: /local/climate-room-card.js?v=9
+  - url: /local/climate-room-card.js?v=10
     type: module
   - url: /local/home-hero-card.js?v=10
     type: module
@@ -52,13 +52,13 @@ resources:
     type: module
   - url: /local/community/lovelace-auto-entities/auto-entities.js?v=@lovelace-auto-entities@
     type: module
-  - url: /local/ds/command-centre-view.js?v=9
+  - url: /local/ds/command-centre-view.js?v=10
     type: module
-  - url: /local/ds/attention-pills-card.js?v=9
+  - url: /local/ds/attention-pills-card.js?v=10
     type: module
-  - url: /local/ds/room-rows-card.js?v=9
+  - url: /local/ds/room-rows-card.js?v=10
     type: module
-  - url: /local/ds/cost-list-card.js?v=9
+  - url: /local/ds/cost-list-card.js?v=10
     type: module
 dashboards:
   lovelace-map:

@@ -1,6 +1,6 @@
-import { tokens } from "./tokens.js?v=9";
-import { primitives } from "./primitives.js?v=9";
-import { drill, moreInfo, mount, num, rowButton, rows as own } from "./dom.js?v=9";
+import { tokens } from "./tokens.js?v=10";
+import { primitives } from "./primitives.js?v=10";
+import { drill, moreInfo, mount, num, rowButton, rows as own } from "./dom.js?v=10";
 
 const withUnit = (s, v) => `${v}${s?.attributes?.unit_of_measurement ? " " + s.attributes.unit_of_measurement : ""}`;
 

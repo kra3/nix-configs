@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=9";
-import { primitives } from "./primitives.js?v=9";
-import { mount } from "./dom.js?v=9";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=9";
+import { sheet, tokens } from "./tokens.js?v=10";
+import { primitives } from "./primitives.js?v=10";
+import { mount } from "./dom.js?v=10";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=10";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;

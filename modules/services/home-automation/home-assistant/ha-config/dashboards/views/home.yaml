@@ -3,24 +3,16 @@ title: Home
 path: home
 max_columns: 3
 sections:
-- !include ../rail.yaml
-- type: grid
-  column_span: 3
-  cards:
-  - type: custom:streamline-card
-    template: floor_plan
-    variables:
-      layer: living
-    grid_options:
-      columns: full
-- type: grid
+- cc_slot: lead
+  type: grid
   column_span: 3
   cards:
   - type: custom:situation-stack-card
     headline: true
+    default: []
     grid_options:
       columns: full
-    situation_config:
+    situation_config: &situation_config
       lights:
         Kitchen: light.kitchen_lights
         Living Room: light.living_room_lights
@@ -37,6 +29,24 @@ sections:
       - media_player.home_theater_2
       - media_player.kitchen_speaker
       - media_player.office_speaker
+- !include ../rail.yaml
+- type: grid
+  column_span: 3
+  cards:
+  - type: custom:streamline-card
+    template: floor_plan
+    variables:
+      layer: living
+    grid_options:
+      columns: full
+- type: grid
+  column_span: 3
+  cards:
+  - type: custom:situation-stack-card
+    headline: false
+    grid_options:
+      columns: full
+    situation_config: *situation_config
     default:
     - type: heading
       heading: Now

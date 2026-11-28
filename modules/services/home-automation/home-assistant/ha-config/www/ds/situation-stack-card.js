@@ -70,6 +70,10 @@ class SituationStackCard extends HTMLElement {
     let s;
     try { s = situation(inputFromHass(h, h.user?.id, this._sit)); } catch (e) { console.error(e); s = { key: "default", headline: "" }; }
     this._say(this._config.headline === false ? "" : s.headline);
+    if (this._config.headline === true && !this._config.situations && !this._config.default?.length) {
+      this.hidden = !s.headline;
+      this.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.hidden }, bubbles: true, composed: true }));
+    }
     const set = pickSet(this._config.situations, s.key, this._config.default);
     if (set.id !== this._setId) {
       this._setId = set.id;

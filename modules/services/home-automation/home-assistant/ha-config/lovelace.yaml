@@ -60,6 +60,8 @@ resources:
     type: module
   - url: /local/ds/cost-list-card.js?v=10
     type: module
+  - url: /local/ds/situation-stack-card.js?v=10
+    type: module
 dashboards:
   lovelace-map:
     mode: yaml

@@ -33,7 +33,7 @@ class CostListCard extends HTMLElement {
       text: this._text(h, r),
       r,
     }));
-    const key = JSON.stringify([shown, rows.length]);
+    const key = JSON.stringify([shown.map(({ e, name, text }) => [e, name, text]), rows.length]);
     if (key === this._key) return;
     this._key = key;
     const out = shown.map(({ e, name, text }) => this._row(e, name, text));

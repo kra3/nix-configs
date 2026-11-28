@@ -134,6 +134,7 @@ card:
         - lock.front_door
         - binary_sensor.front_door_open
     - name: Toilet
+      short: WC
       areas:
         - Toilet
       rect:
@@ -144,6 +145,7 @@ card:
       presence:
         - binary_sensor.toilet_occupancy_presence
     - name: Bathroom
+      short: Bath
       areas:
         - Bathroom
       rect:

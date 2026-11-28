@@ -1,8 +1,8 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
-import { sheet, tokens } from "./ds/tokens.js?v=10";
-import { primitives } from "./ds/primitives.js?v=10";
-import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=10";
-import { livingHtml, livingSheet } from "./ds/living-plan.js?v=10";
+import { sheet, tokens } from "./ds/tokens.js?v=11";
+import { primitives } from "./ds/primitives.js?v=11";
+import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=11";
+import { livingHtml, livingSheet } from "./ds/living-plan.js?v=11";
 
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
@@ -72,7 +72,7 @@ function planModel(states, areaOf, cfg) {
     for (const b of badges) if (posOf[b.id]) b.pos = posOf[b.id];
     const status = badges.some((b) => b.tone === "alert") ? "alert" : badges.some((b) => b.tone === "open") ? "open" : occupied ? "occ" : "";
     if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
-    return { name: r.name || [...areas][0] || "", rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
+    return { name: r.name || [...areas][0] || "", short: r.short, rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };
   });
   for (const s of all) {
     const hit = SOUND.exec(s.entity_id);
@@ -245,14 +245,32 @@ class SecurityPlanCard extends HTMLElement {
     const html = living ? livingHtml(model, cfg, this._hass) : planHtml(model, cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
+    const was = new Map([...this.shadowRoot.querySelectorAll(".room[data-room]")].map((el) => [el.dataset.room, el.classList.contains("lit")]));
     this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
-    for (const el of this.shadowRoot.querySelectorAll(".room[data-room]")) {
-      el.addEventListener("click", () => {
-        const r = model.rooms.find((x) => x.name === el.dataset.room);
-        const variables = { name: r.name, ...(r.lights[0] ? { light: r.lights[0] } : {}) };
-        if (!drill(this, { type: "custom:streamline-card", template: "room_detail", variables }) && r.lights[0]) moreInfo(this, r.lights[0]);
-      });
+    const rooms = [...this.shadowRoot.querySelectorAll(".room[data-room]")];
+    for (const el of rooms) {
+      const flip = was.get(el.dataset.room);
+      if (flip !== undefined && flip !== el.classList.contains("lit")) {
+        el.classList.toggle("lit", flip);
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.toggle("lit", !flip)));
+      }
     }
+    const open = (el) => {
+      const r = model.rooms.find((x) => x.name === el.dataset.room);
+      const variables = { name: r.name, ...(r.lights[0] ? { light: r.lights[0] } : {}) };
+      if (!drill(this, { type: "custom:streamline-card", template: "room_detail", variables }) && r.lights[0]) moreInfo(this, r.lights[0]);
+    };
+    const touch = parseFloat(getComputedStyle(this).getPropertyValue("--ds-touch")) || 44;
+    const near = (e, el) => {
+      if (!e.detail) return el;
+      const box = rooms.map((x) => [x, x.getBoundingClientRect()]);
+      const inside = box.find(([, b]) => e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom);
+      if (inside) return inside[0];
+      const dist = ([, b]) => Math.hypot(e.clientX - (b.left + b.right) / 2, e.clientY - (b.top + b.bottom) / 2);
+      const hit = box.filter(([, b]) => Math.abs(e.clientX - (b.left + b.right) / 2) <= Math.max(b.width, touch) / 2 && Math.abs(e.clientY - (b.top + b.bottom) / 2) <= Math.max(b.height, touch) / 2);
+      return hit.length ? hit.sort((a, b) => dist(a) - dist(b))[0][0] : el;
+    };
+    for (const el of rooms) el.addEventListener("click", (e) => open(near(e, el)));
     const more = (entityId) => moreInfo(this, entityId);
     for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
     for (const el of this.shadowRoot.querySelectorAll(".sw button")) {

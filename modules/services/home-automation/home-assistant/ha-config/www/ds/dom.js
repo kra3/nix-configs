@@ -1,5 +1,16 @@
-import { sheet } from "./tokens.js?v=10";
+import { sheet } from "./tokens.js?v=11";
 
+export const tween = (el, from, to, fmt, ms = 400) => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  el.textContent = fmt(from);
+  const t0 = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / ms);
+    el.textContent = fmt(from + (to - from) * k);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+};
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 export const SEVERITY = { error: "var(--error-color)", warning: "var(--warning-color)", info: "var(--info-color)" };
 export const num = (s) => (s?.state == null || s.state === "" || isNaN(s.state) ? null : Number(s.state));

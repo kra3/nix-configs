@@ -1,6 +1,6 @@
-import { tokens } from "./tokens.js?v=10";
-import { primitives } from "./primitives.js?v=10";
-import { drill, moreInfo, mount, num, rowButton, rows as own } from "./dom.js?v=10";
+import { tokens } from "./tokens.js?v=11";
+import { primitives } from "./primitives.js?v=11";
+import { drill, moreInfo, mount, num, rowButton, rows as own, tween } from "./dom.js?v=11";
 
 const withUnit = (s, v) => `${v}${s?.attributes?.unit_of_measurement ? " " + s.attributes.unit_of_measurement : ""}`;
 
@@ -16,6 +16,7 @@ class CostListCard extends HTMLElement {
     this.shadowRoot.querySelector(".tile__label").textContent = c.title || "";
     this.shadowRoot.querySelector(".tile__label").hidden = !c.title;
     this._key = null;
+    this._vals = null;
   }
 
   getCardSize() { return Math.min(this._config?.entities.length || 1, (this._config?.top ?? 5) + 1); }
@@ -30,13 +31,20 @@ class CostListCard extends HTMLElement {
       e: r.e,
       name: r.e.name || r.s?.attributes?.friendly_name || r.e.entity,
       text: this._text(h, r),
+      r,
     }));
-    const key = JSON.stringify([shown, rows.length]);
+    const key = JSON.stringify([shown.map(({ e, name, text }) => [e, name, text]), rows.length]);
     if (key === this._key) return;
     this._key = key;
     const out = shown.map(({ e, name, text }) => this._row(e, name, text));
     if (rows.length > top) out.push(this._all(rows.length));
     this.shadowRoot.querySelector(".rows").replaceChildren(...out);
+    const prev = this._vals || new Map();
+    this._vals = new Map(shown.map(({ r }) => [r.e.entity, r.v]));
+    shown.forEach(({ r }, i) => {
+      const from = prev.get(r.e.entity);
+      if (from != null && r.v !== null && from !== r.v) tween(out[i].lastChild, from, r.v, (v) => this._text(h, { ...r, v }));
+    });
   }
 
   _text(h, { e, v, s }) {

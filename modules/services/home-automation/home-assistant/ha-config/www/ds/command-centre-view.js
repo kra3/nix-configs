@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=10";
-import { primitives } from "./primitives.js?v=10";
-import { mount } from "./dom.js?v=10";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=10";
+import { sheet, tokens } from "./tokens.js?v=11";
+import { primitives } from "./primitives.js?v=11";
+import { mount } from "./dom.js?v=11";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=11";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -36,6 +36,9 @@ const own = sheet(`
 .close:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 @keyframes ds-in { from { opacity: 0; transform: translateY(16px); } }
 @keyframes ds-in-x { from { opacity: 0; transform: translateX(16px); } }
+@keyframes ds-sheet-in { from { transform: translateY(100%); } }
+:host([data-mode="narrow"]) .pane { animation: ds-sheet-in 300ms cubic-bezier(.34, 1.45, .64, 1); }
+@media (prefers-reduced-motion: reduce) { .pane { animation: none !important; } }
 `);
 
 class CommandCentre extends HTMLElement {

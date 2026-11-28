@@ -1,6 +1,6 @@
-import { sheet } from "./tokens.js?v=10";
-import { esc } from "./dom.js?v=10";
-import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=10";
+import { sheet } from "./tokens.js?v=11";
+import { esc } from "./dom.js?v=11";
+import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=11";
 
 const rad = Math.PI / 180;
 const MX = 44;
@@ -96,7 +96,7 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
       const open = r.badges.filter((b) => b.kind === "opening" && (b.tone === "open" || b.tone === "alert")).length;
       const label = [r.name, r.lit ? "lights on" : "", r.occupied ? "occupied" : "", open ? `${open} open` : ""].filter(Boolean).join(", ");
       const glow = r.lit ? `--glow:${Math.round(10 + 22 * r.glow)}%;` : "";
-      return `<button class="room ${r.occupied ? "occ" : ""} ${r.lit ? "lit" : ""}" data-room="${esc(r.name)}" aria-label="${esc(label)}" style="${glow}left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}"><div class="nm">${esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div></button>`;
+      return `<button class="room ${r.occupied ? "occ" : ""} ${r.lit ? "lit" : ""}" data-room="${esc(r.name)}" aria-label="${esc(label)}" style="${glow}left:${pct(x, W)};top:${pct(y, H)};width:${pct(w, W)};height:${pct(h, H)}"><div class="nm">${r.short ? `<span class="f">${esc(r.name)}</span><span class="s">${esc(r.short)}</span>` : esc(r.name)}${r.occupied ? '<span class="dot"></span>' : ""}</div></button>`;
     })
     .join("");
   const image = cfg.image;
@@ -125,5 +125,15 @@ export const livingSheet = sheet(`
   .mk { position: absolute; width: 10px; height: 10px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; background: var(--secondary-text-color); opacity: 0.5; }
   .mk.open { background: var(--warning-color); opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-color) 35%, transparent); }
   .mk.alert { background: var(--error-color); opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--error-color) 35%, transparent); }
-  @media (prefers-reduced-motion: reduce) { .beams, .stage .dot { animation: none; } }
+  .stage .plan.img .room.lit { background: none; }
+  .stage .room::before { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 300ms ease;
+    background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--state-light-active-color) calc(var(--glow, 10%) + 8%), transparent), color-mix(in srgb, var(--state-light-active-color) var(--glow, 10%), transparent)); }
+  .stage .room.lit::before { opacity: 1; }
+  .stage .nm { position: relative; display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.15; }
+  .stage .nm .s { display: none; }
+  .stage .dot { animation: ring 3.2s ease-out infinite; }
+  @keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 35%, transparent); } to { box-shadow: 0 0 0 6px transparent; } }
+  @container room (max-width: 40px) { .stage .nm { font-size: 7px; } }
+  @container stage (max-width: 560px) { .stage .room { padding: 2px 1px 2px 2px; } .stage .nm .f { display: none; } .stage .nm .s { display: inline; } }
+  @media (prefers-reduced-motion: reduce) { .beams, .stage .dot { animation: none; } .stage .room::before { transition: none; } }
 `);

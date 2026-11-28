@@ -352,6 +352,7 @@ sections:
         columns: 6
       variables:
         name: Kitchen
+        area: kitchen
         icon: mdi:fridge
         presence: binary_sensor.room_presence_kitchen
         temperature: sensor.hue_pir_kitchen_temperature
@@ -378,6 +379,7 @@ sections:
         columns: 6
       variables:
         name: Living Room
+        area: living_room
         icon: mdi:sofa
         presence: binary_sensor.room_presence_living
         temperature: sensor.living_room_occupancy_temperature
@@ -409,6 +411,7 @@ sections:
         columns: 6
       variables:
         name: Hall
+        area: hall
         icon: mdi:road
         presence: binary_sensor.room_presence_hall
         temperature: sensor.hue_pir_hallway_temperature
@@ -432,6 +435,7 @@ sections:
         columns: 6
       variables:
         name: Bedroom
+        area: bedroom
         icon: mdi:bed
         presence: binary_sensor.bedroom_occupancy_presence
         temperature: sensor.bedroom_occupancy_temperature
@@ -456,6 +460,7 @@ sections:
         columns: 6
       variables:
         name: Bathroom
+        area: bathroom
         icon: mdi:bathtub
         presence: binary_sensor.bathroom_occupancy_presence
         temperature: sensor.bathroom_occupancy_temperature
@@ -474,6 +479,7 @@ sections:
         columns: 6
       variables:
         name: Laundry
+        area: laundry
         icon: mdi:tumble-dryer
         presence: binary_sensor.laundry_occupancy_presence
         temperature: sensor.laundry_occupancy_temperature
@@ -492,6 +498,7 @@ sections:
         columns: 6
       variables:
         name: Toilet
+        area: toilet
         icon: mdi:toilet
         presence: binary_sensor.toilet_occupancy_presence
         temperature: sensor.toilet_occupancy_temperature
@@ -510,6 +517,7 @@ sections:
         columns: 6
       variables:
         name: Dining Room
+        area: dining_room
         icon: mdi:silverware
         presence: binary_sensor.room_presence_dining
         light: light.dining_lights
@@ -529,6 +537,7 @@ sections:
         columns: 6
       variables:
         name: Office
+        area: office
         icon: mdi:laptop
         presence: binary_sensor.room_presence_office
         light: light.office_room_light
@@ -551,6 +560,7 @@ sections:
       title: Quiet rooms
       rooms:
       - name: Kitchen
+        area: kitchen
         lights: light.kitchen_lights
         temperature: sensor.hue_pir_kitchen_temperature
         presence: binary_sensor.room_presence_kitchen
@@ -561,12 +571,14 @@ sections:
           template: room_detail
           variables:
             name: Kitchen
+            area: kitchen
             icon: mdi:fridge
             light: light.kitchen_lights
             temperature: sensor.hue_pir_kitchen_temperature
             comfort: sensor.kitchen_comfort
             approx: "true"
       - name: Living Room
+        area: living_room
         lights: light.living_room_lights
         temperature: sensor.living_room_occupancy_temperature
         humidity: sensor.living_room_occupancy_humidity
@@ -581,6 +593,7 @@ sections:
           template: room_detail
           variables:
             name: Living Room
+            area: living_room
             icon: mdi:sofa
             light: light.living_room_lights
             temperature: sensor.living_room_occupancy_temperature
@@ -589,6 +602,7 @@ sections:
             scene: input_text.living_scene
             dew: sensor.living_room_dew_point
       - name: Hall
+        area: hall
         lights: light.hallway_hall_lights
         temperature: sensor.hue_pir_hallway_temperature
         presence: binary_sensor.room_presence_hall
@@ -597,12 +611,14 @@ sections:
           template: room_detail
           variables:
             name: Hall
+            area: hall
             icon: mdi:road
             light: light.hallway_hall_lights
             temperature: sensor.hue_pir_hallway_temperature
             comfort: sensor.hall_comfort
             approx: "true"
       - name: Bedroom
+        area: bedroom
         lights: light.bedroom_wardrobe_lights
         temperature: sensor.bedroom_occupancy_temperature
         humidity: sensor.bedroom_occupancy_humidity
@@ -612,6 +628,7 @@ sections:
           template: room_detail
           variables:
             name: Bedroom
+            area: bedroom
             icon: mdi:bed
             light: light.bedroom_wardrobe_lights
             temperature: sensor.bedroom_occupancy_temperature
@@ -619,6 +636,7 @@ sections:
             comfort: sensor.bedroom_comfort
             dew: sensor.bedroom_dew_point
       - name: Dining Room
+        area: dining_room
         lights: light.dining_lights
         presence: binary_sensor.room_presence_dining
         detail:
@@ -626,9 +644,11 @@ sections:
           template: room_detail
           variables:
             name: Dining Room
+            area: dining_room
             icon: mdi:silverware
             light: light.dining_lights
       - name: Office
+        area: office
         lights: light.office_room_light
         presence: binary_sensor.room_presence_office
         pin_users:
@@ -638,10 +658,12 @@ sections:
           template: room_detail
           variables:
             name: Office
+            area: office
             icon: mdi:laptop
             light: light.office_room_light
             scene: input_text.office_scene
       - name: Bathroom
+        area: bathroom
         temperature: sensor.bathroom_occupancy_temperature
         humidity: sensor.bathroom_occupancy_humidity
         presence: binary_sensor.bathroom_occupancy_presence
@@ -650,12 +672,14 @@ sections:
           template: room_detail
           variables:
             name: Bathroom
+            area: bathroom
             icon: mdi:bathtub
             temperature: sensor.bathroom_occupancy_temperature
             humidity: sensor.bathroom_occupancy_humidity
             comfort: sensor.bathroom_comfort
             dew: sensor.bathroom_dew_point
       - name: Laundry
+        area: laundry
         temperature: sensor.laundry_occupancy_temperature
         humidity: sensor.laundry_occupancy_humidity
         presence: binary_sensor.laundry_occupancy_presence
@@ -664,12 +688,14 @@ sections:
           template: room_detail
           variables:
             name: Laundry
+            area: laundry
             icon: mdi:tumble-dryer
             temperature: sensor.laundry_occupancy_temperature
             humidity: sensor.laundry_occupancy_humidity
             comfort: sensor.laundry_comfort
             dew: sensor.laundry_dew_point
       - name: Toilet
+        area: toilet
         temperature: sensor.toilet_occupancy_temperature
         humidity: sensor.toilet_occupancy_humidity
         presence: binary_sensor.toilet_occupancy_presence
@@ -678,6 +704,7 @@ sections:
           template: room_detail
           variables:
             name: Toilet
+            area: toilet
             icon: mdi:toilet
             temperature: sensor.toilet_occupancy_temperature
             humidity: sensor.toilet_occupancy_humidity

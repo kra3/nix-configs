@@ -58,6 +58,8 @@ resources:
     type: module
   - url: /local/ds/room-rows-card.js?v=14
     type: module
+  - url: /local/ds/area-room-card.js?v=14
+    type: module
   - url: /local/ds/cost-list-card.js?v=14
     type: module
   - url: /local/ds/situation-stack-card.js?v=14

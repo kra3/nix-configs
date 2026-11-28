@@ -7,6 +7,8 @@ default:
 - humidity: ""
 - dew: ""
 - approx: ""
+- area: ""
+- exclude: ""
 card:
   type: vertical-stack
   cards:
@@ -116,3 +118,10 @@ card:
         mode: range
         decimals: 0
         unit: auto
+  - type: custom:area-room-card
+    area: "[[area]]"
+    explicit:
+    - "[[light]]"
+    - "[[temperature]]"
+    - "[[humidity]]"
+    exclude: "[[exclude]]"

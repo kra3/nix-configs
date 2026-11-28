@@ -6,6 +6,7 @@ default:
 - humidity: ""
 - dew: ""
 - approx: ""
+- area: ""
 card:
   type: custom:mushroom-light-card
   entity: "[[light]]"
@@ -32,5 +33,6 @@ card:
         humidity: "[[humidity]]"
         dew: "[[dew]]"
         approx: "[[approx]]"
+        area: "[[area]]"
   hold_action:
     action: toggle

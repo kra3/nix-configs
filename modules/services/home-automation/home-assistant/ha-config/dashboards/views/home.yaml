@@ -880,7 +880,7 @@ sections:
   - type: custom:streamline-card
     template: floor_plan
     variables:
-      layer: lights
+      layer: living
     grid_options:
       columns: full
 badges:

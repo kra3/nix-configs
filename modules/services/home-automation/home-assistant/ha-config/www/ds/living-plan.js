@@ -77,7 +77,7 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
   }
   const openings = m.rooms.flatMap((r) => r.badges.filter((b) => b.pos && b.kind === "opening"));
   const beams = known
-    ? openings
+    ? [...openings, ...(cfg.windows || []).map((pos) => ({ pos, icon: "window" }))]
         .filter((b) => b.pos[1] < 20)
         .map((b) => beamPoints(b.pos[0], DOOR_ICON.test(b.icon) ? 36 : 24, az, el))
         .filter(Boolean)

@@ -4,7 +4,7 @@
     {
       virtualisation.quadlet.containers.audiobookshelf = {
         containerConfig = {
-          image = "ghcr.io/advplyr/audiobookshelf:v3@sha256:1e3999ee2ed8fda898da1383d783b225d6b33d4fcc1e00521e95db1e13e4bb37";
+          image = "ghcr.io/advplyr/audiobookshelf:v3@sha256:bd07e1b01842f8f44d3447e6dc412e6e9c1c0e89a85f8b0defb76d68f7a131d1";
           user = "1000:2000";
           dropCapabilities = [ "ALL" ];
           # No publishPorts: see services/media/acquisition/radarr.nix — nginx

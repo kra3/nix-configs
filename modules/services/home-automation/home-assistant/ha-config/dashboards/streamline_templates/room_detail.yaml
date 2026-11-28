@@ -124,4 +124,7 @@ card:
     - "[[light]]"
     - "[[temperature]]"
     - "[[humidity]]"
+    - "[[comfort]]"
+    - "[[dew]]"
+    - "[[approx]]"
     exclude: "[[exclude]]"

@@ -6,19 +6,19 @@ card:
   presence: sensor.dashboard_presence_state
   period: sensor.dashboard_time_period
   eta: sensor.dashboard_eta
+  alarm: alarm_control_panel.vasudha_secure
+  alarm_detail:
+    type: custom:alarmo-card
+    entity: alarm_control_panel.vasudha_secure
+    name: Alarm
+    use_code_dialog: true
+    states:
+      armed_home:
+        hide: true
+      armed_custom_bypass:
+        hide: true
   weather: weather.forecast_vasudha
   pills:
-  - label: Open door/window
-    icon: mdi:door-open
-    color: red
-    when:
-    - entity: binary_sensor.dashboard_alert_security
-      state: "on"
-    detail:
-      entity: binary_sensor.house_exits_open_status
-      attr: open_names
-    tap:
-      more_info: binary_sensor.house_exits_open_status
   - label: Force arm for the night
     icon: mdi:shield-lock
     color: amber
@@ -45,30 +45,6 @@ card:
     tap:
       service: script.alarm_force_arm_away
       confirm: Force-arm away, bypassing any open sensors?
-  - label: Open (not armed)
-    icon: mdi:door-open
-    color: blue
-    when:
-    - entity: binary_sensor.house_exits_open_status
-      state: "on"
-    - entity: binary_sensor.dashboard_alert_security
-      state: "off"
-    detail:
-      entity: binary_sensor.house_exits_open_status
-      attr: open_names
-    tap:
-      more_info: binary_sensor.house_exits_open_status
-  - label: Device unavailable
-    icon: mdi:alert-circle
-    color: orange
-    when:
-    - entity: binary_sensor.dashboard_alert_device_health
-      state: "on"
-    detail:
-      entity: binary_sensor.dashboard_alert_device_health
-      attr: unavailable_names
-    tap:
-      more_info: binary_sensor.dashboard_alert_device_health
   - label: Crisis information
     icon: mdi:alert
     color: red

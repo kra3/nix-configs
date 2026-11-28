@@ -1,6 +1,6 @@
-import { sheet, tokens } from "./tokens.js?v=3";
-import { primitives } from "./primitives.js?v=3";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=3";
+import { sheet, tokens } from "./tokens.js?v=5";
+import { primitives } from "./primitives.js?v=5";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=5";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -92,6 +92,7 @@ class CommandCentre extends HTMLElement {
     const cfg = detailConfig(ev);
     if (!cfg) return;
     ev.stopPropagation();
+    ev.preventDefault();
     const seq = ++this._openSeq;
     if (!this._isOpen()) {
       let a = document.activeElement;

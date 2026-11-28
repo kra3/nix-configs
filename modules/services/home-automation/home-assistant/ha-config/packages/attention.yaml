@@ -1,0 +1,13 @@
+# Everything that needs a person's attention right now, for the dashboard rail: state is the item count, `items` the list sorted error, warning, info.
+template:
+  - sensor:
+      - name: "Attention"
+        unique_id: attention_items
+        icon: mdi:bell-alert-outline
+        state: >-
+          {%- from 'attention.jinja' import items -%}
+          {{ items() | from_json | length }}
+        attributes:
+          items: >-
+            {%- from 'attention.jinja' import items -%}
+            {{ items() | from_json }}

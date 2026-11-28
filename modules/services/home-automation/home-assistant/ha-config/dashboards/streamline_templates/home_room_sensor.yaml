@@ -3,6 +3,10 @@ default:
 - humidity: ""
 - illuminance: ""
 - comfort: ""
+- dew: ""
+- approx: ""
+- light: ""
+- scene: ""
 card:
   type: vertical-stack
   card_mod:
@@ -22,6 +26,21 @@ card:
     icon: "[[icon]]"
     icon_color: primary
     color: primary
+    tap_action:
+      action: fire-dom-event
+      cc_detail:
+        type: custom:streamline-card
+        template: room_detail
+        variables:
+          name: "[[name]]"
+          icon: "[[icon]]"
+          light: "[[light]]"
+          scene: "[[scene]]"
+          comfort: "[[comfort]]"
+          temperature: "[[temperature]]"
+          humidity: "[[humidity]]"
+          dew: "[[dew]]"
+          approx: "[[approx]]"
     card_mod:
       style: |
         ha-card {

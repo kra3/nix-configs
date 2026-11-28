@@ -260,6 +260,13 @@ template:
             {% endfor %}
             {{ ns.rows }}
 
+      - name: "Next rain"
+        unique_id: climate_next_rain
+        icon: mdi:weather-rainy
+        state: >-
+          {% set r = (hr.get('weather.forecast_vasudha', {}).get('forecast', []))[:24] | selectattr('precipitation_probability', 'ge', 50) | list %}
+          {% if r %}{% set t = r[0].datetime | as_datetime | as_local %}Rain from {{ 'tomorrow ' if t.date() != now().date() else '' }}{{ t.strftime('%H:%M') }}{% else %}No rain in 24 h{% endif %}
+
       - name: "Low today"
         unique_id: climate_low_today
         device_class: temperature

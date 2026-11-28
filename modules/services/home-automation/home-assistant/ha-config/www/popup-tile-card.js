@@ -74,8 +74,16 @@ class PopupTileCard extends HTMLElement {
     this.shadowRoot.querySelector(".state").textContent = c.subtitle || (c.unit ? `${state} ${c.unit}` : state);
   }
 
+  _detail() {
+    const { title, popup } = this._config;
+    return title ? { type: "vertical-stack", cards: [{ type: "heading", heading: title }, popup] } : popup;
+  }
+
   async _open() {
     if (this._overlay) return;
+    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail() }, bubbles: true, composed: true, cancelable: true });
+    this.dispatchEvent(drill);
+    if (drill.defaultPrevented) return;
     const helpers = await window.loadCardHelpers();
     let card = helpers.createCardElement(this._config.popup);
     if (!customElements.get(card.localName)) {

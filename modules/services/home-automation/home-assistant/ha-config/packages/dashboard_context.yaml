@@ -14,6 +14,19 @@ template:
             evening
           {%- endif -%}
 
+      - name: "Dashboard Day Part"
+        unique_id: dashboard_day_part
+        state: >-
+          {%- if is_state('schedule.sleep', 'on') -%}
+            night
+          {%- elif now().hour < 11 -%}
+            morning
+          {%- elif is_state('sun.sun', 'above_horizon') -%}
+            day
+          {%- else -%}
+            evening
+          {%- endif -%}
+
       - name: "Dashboard Presence State"
         unique_id: dashboard_presence_state
         state: >-

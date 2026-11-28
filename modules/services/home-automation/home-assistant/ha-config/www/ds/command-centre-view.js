@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=14";
-import { primitives } from "./primitives.js?v=14";
-import { mount } from "./dom.js?v=14";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=14";
+import { sheet, tokens } from "./tokens.js?v=15";
+import { primitives } from "./primitives.js?v=15";
+import { mount } from "./dom.js?v=15";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=15";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -64,6 +64,7 @@ class CommandCentre extends HTMLElement {
     this._ro = new ResizeObserver(() => this._layout());
     this._watched = new Set();
     this.addEventListener("section-visibility-changed", () => this._layout(), true);
+    this.addEventListener("card-visibility-changed", () => requestAnimationFrame(() => this._layout()), true);
     this.addEventListener("ll-custom", (ev) => this._open(ev));
     this.addEventListener("keydown", (ev) => { if (ev.key === "Escape") this._close(); });
     this._scrim.addEventListener("click", () => this._close());
@@ -128,7 +129,7 @@ class CommandCentre extends HTMLElement {
     if (this._leadEls.some((s) => s.parentNode !== to)) {
       if (to === this._main) this._main.prepend(...this._leadEls); else this._lead.replaceChildren(...this._leadEls);
     }
-    this._lead.hidden = to !== this._lead || this._leadEls.every((s) => s.hidden);
+    this._lead.hidden = to !== this._lead || this._leadEls.every((s) => s.hidden || (s.cards?.length && s.cards.every((c) => c.hidden)));
     const cols = columnCount(this._main.clientWidth, this._max);
     this._main.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     for (const s of this._main.children) if (!s.hidden) {

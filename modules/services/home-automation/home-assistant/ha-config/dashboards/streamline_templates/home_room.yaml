@@ -6,6 +6,7 @@ default:
 - dew: ""
 - scene: ""
 - approx: ""
+- area: ""
 card:
   type: vertical-stack
   card_mod:
@@ -39,6 +40,7 @@ card:
           humidity: "[[humidity]]"
           dew: "[[dew]]"
           approx: "[[approx]]"
+          area: "[[area]]"
     card_mod:
       style:
         .: |

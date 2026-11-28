@@ -28,6 +28,7 @@ card:
     forecast_slots: 5
     tap_action:
       action: more-info
+  rain: sensor.next_rain
   sun: sun.sun
   sun_detail:
     type: custom:horizon-card

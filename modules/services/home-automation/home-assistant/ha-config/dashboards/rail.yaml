@@ -23,28 +23,6 @@ cards:
       users:
       - a1d4401b8b714ebb83f07c5316ab399c
       - 6edcc5a09c3144d684077ee362e7394a
-- type: custom:mushroom-template-card
-  entity: weather.forecast_vasudha
-  primary: >-
-    {%- set s = states('weather.forecast_vasudha') -%}{{ {'partlycloudy': 'Partly cloudy', 'clear-night': 'Clear night', 'lightning-rainy': 'Thunder and rain', 'snowy-rainy': 'Sleet', 'windy-variant': 'Windy'}.get(s, s | replace('-', ' ') | capitalize) }}{{ ' · ' ~ (state_attr('weather.forecast_vasudha', 'temperature') | round(0) | int) ~ '°' if state_attr('weather.forecast_vasudha', 'temperature') is number else '' }}
-  secondary: "{{ states('sensor.next_rain') }}"
-  tap_action:
-    action: fire-dom-event
-    cc_detail:
-      type: weather-forecast
-      entity: weather.forecast_vasudha
-      forecast_type: hourly
-      show_current: true
-      show_forecast: true
-      secondary_info_attribute: wind_speed
-      forecast_slots: 5
-      tap_action:
-        action: more-info
-  grid_options:
-    columns: full
-  visibility:
-  - condition: screen
-    media_query: "(min-width: 820px)"
 - type: custom:mushroom-chips-card
   alignment: start
   chips:

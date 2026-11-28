@@ -1,5 +1,5 @@
 // Compact health metric card: headline value, delta chip, sparkline and optional sub-metrics.
-import { drill, moreInfo } from "./ds/dom.js?v=14";
+import { drill, moreInfo } from "./ds/dom.js?v=15";
 
 const MINUS = "−";
 

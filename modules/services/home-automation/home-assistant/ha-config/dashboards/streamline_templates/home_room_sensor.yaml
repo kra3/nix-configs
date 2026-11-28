@@ -5,6 +5,7 @@ default:
 - comfort: ""
 - dew: ""
 - approx: ""
+- area: ""
 - light: ""
 - scene: ""
 card:
@@ -41,6 +42,7 @@ card:
           humidity: "[[humidity]]"
           dew: "[[dew]]"
           approx: "[[approx]]"
+          area: "[[area]]"
     card_mod:
       style: |
         ha-card {

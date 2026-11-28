@@ -1,3 +1,5 @@
+import { roomEntities } from "./areas.js?v=15";
+
 const HOUR = 36e5;
 
 export function timeOfDay(now, sunElevation, sunsetDate) {
@@ -113,9 +115,9 @@ export const DEFAULT_CONFIG = {
     anjali: { person: "person.anjalipc", eta: "sensor.anjali_eta_home", arriving: "binary_sensor.anjali_arriving", justLeft: "binary_sensor.anjali_just_left" },
   },
   sun: "sun.sun",
-  attention: "sensor.attention",
   openings: "binary_sensor.house_exits_open_status",
   lights: {},
+  areaNames: { hall: "Hall", bedroom: "Bedroom", office: "Office", laundry: "Laundry" },
   media: [],
   laundry: { Washer: "sensor.washer_status", Dryer: "sensor.dryer_status" },
   guestEntity: null,
@@ -144,7 +146,6 @@ export function inputFromHass(hass, userId, config = {}) {
     };
   }
   const viewer = Object.keys(c.users).find((k) => c.users[k] === userId) || "guest";
-  const att = live(c.attention);
   const open = live(c.openings);
   const lights = Object.entries(c.lights);
   const player = c.media.map((e) => st[e]).find((s) => s && s.state === "playing");
@@ -155,9 +156,14 @@ export function inputFromHass(hass, userId, config = {}) {
     viewer,
     people,
     guestOnly: !!live(c.guestEntity) && st[c.guestEntity].state === "on",
-    lightsOn: lights.length ? lights.filter(([, e]) => st[e] && st[e].state === "on").map(([n]) => n) : null,
+    lightsOn: lights.length
+      ? lights.filter(([, e]) => st[e] && st[e].state === "on").map(([n]) => n)
+      : hass.areas && Object.keys(hass.areas).length
+        ? Object.entries(hass.areas)
+            .filter(([id]) => roomEntities(hass, id).lights.some((l) => st[l].state === "on"))
+            .map(([id, a]) => c.areaNames[id] || a.name)
+        : null,
     openings: open ? (open.attributes.open_names || "").split(", ").filter(Boolean) : null,
-    attention: att && Array.isArray(att.attributes.items) ? att.attributes.items.filter((i) => i.id !== "open").map((i) => i.label) : null,
     media: player ? { name: player.attributes.friendly_name || player.entity_id, title: player.attributes.media_title || null } : null,
     laundry: laundry.length
       ? { running: laundry.filter(([, s]) => s.state === "Running").map(([n]) => n), done: laundry.filter(([, s]) => s.state === "Done").map(([n]) => n) }

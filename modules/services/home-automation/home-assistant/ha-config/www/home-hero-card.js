@@ -1,5 +1,5 @@
 // Home hero: presence and time of day, weather, sun and moon, alarm chip and attention pills that appear only when active.
-import { drill, moreInfo } from "./ds/dom.js?v=14";
+import { drill, moreInfo } from "./ds/dom.js?v=15";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -99,9 +99,10 @@ function heroModel(states, cfg, userId) {
   } else {
     title = presence === "away" ? "Away" : presence === "home_both" ? "Everyone's home" : "Home";
     icon = presence === "away" ? "mdi:home-export-outline" : "mdi:home-heart";
-    sub = titleCase(period) + (IDLE.includes(eta) ? "" : ` · ${eta}`);
+    sub = [titleCase(period), IDLE.includes(eta) ? "" : eta].filter(Boolean).join(" · ");
   }
-  if (!IDLE.includes(season)) sub += ` · ${titleCase(season)}`;
+  const rain = val(cfg.rain);
+  sub = [sub, IDLE.includes(season) ? "" : titleCase(season), IDLE.includes(rain) ? "" : rain].filter(Boolean).join(" · ");
   const w = cfg.weather && states[cfg.weather];
   const weather =
     w && typeof w.attributes.temperature === "number"
@@ -156,7 +157,7 @@ function heroHtml(m) {
 }
 
 const STYLE = `
-  :host { display: block; }
+  :host { display: block; container: hero / inline-size; }
   ha-card { overflow: hidden; }
   button { font: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
   button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
@@ -165,12 +166,13 @@ const STYLE = `
   .badge { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
   .badge ha-icon { --mdc-icon-size: 24px; }
   .txt { flex: 1; min-width: 0; }
-  .title { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--primary-text-color); overflow-wrap: anywhere; }
+  .title { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--primary-text-color); overflow-wrap: normal; hyphens: none; }
   .sub { font-size: 13px; color: var(--secondary-text-color); margin-top: 2px; }
   .weather { flex: none; min-height: 44px; padding: 4px 8px; border-radius: 12px; background: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
   .weather .t { display: flex; align-items: center; gap: 6px; font-size: 24px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
   .weather ha-icon { --mdc-icon-size: 26px; color: var(--secondary-text-color); }
   .weather .c { font-size: 12px; color: var(--secondary-text-color); }
+  @container hero (max-width: 360px) { .top { flex-wrap: wrap; } .weather { flex: 0 0 100%; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; padding: 4px 0; } }
   .sky { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 12px; }
   .cell { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; text-align: left; background: color-mix(in srgb, var(--c) 10%, var(--card-background-color)); --c: var(--secondary-text-color); }
   .cell.sun { --c: var(--warning-color, #ff9800); }

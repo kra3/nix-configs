@@ -1,6 +1,6 @@
-import { sheet } from "./tokens.js?v=14";
-import { esc } from "./dom.js?v=14";
-import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=14";
+import { sheet } from "./tokens.js?v=15";
+import { esc } from "./dom.js?v=15";
+import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=15";
 
 const rad = Math.PI / 180;
 const MX = 44;
@@ -56,15 +56,17 @@ export function openingSvg(b, size) {
   const tone = b.tone === "open" || b.tone === "alert" ? b.tone : b.tone === "dead" ? "dead" : "ok";
   const on = tone === "open" || tone === "alert";
   const P = (u, v) => `${f1(x + tx * u + nx * v)} ${f1(y + ty * u + ny * v)}`;
+  const s = b.swing === "in" ? 1 : -1;
   const [hx, hy] = P(-L / 2, 0).split(" ");
   const line = (cls, u1, v1, u2, v2) => `<path class="${cls}" d="M${P(u1, v1)}L${P(u2, v2)}"/>`;
   const h = L / 2;
   let body;
   if (DOOR_ICON.test(b.icon)) {
-    const sweep = nx * ty - ny * tx > 0 ? 1 : 0;
+    const sweep = (nx * ty - ny * tx > 0 ? 1 : 0) ^ (s < 0 ? 1 : 0);
     const arc = `A${L} ${L} 0 0 ${sweep} ${P(h, 0)}`;
+    const T = s * L;
     body = on
-      ? `<path class="sector" d="M${P(-h, 0)}L${P(-h, L)}${arc}Z"/>${line("leaf", -h, 0, -h, L)}<path class="arc" d="M${P(-h, L)}${arc}"/>${line("jamb", -h, 0, h, 0)}<circle class="hinge" cx="${hx}" cy="${hy}" r="2.4"/>`
+      ? `<path class="sector" d="M${P(-h, 0)}L${P(-h, T)}${arc}Z"/>${line("leaf", -h, 0, -h, T)}<path class="arc" d="M${P(-h, T)}${arc}"/>${line("jamb", -h, 0, h, 0)}<circle class="hinge" cx="${hx}" cy="${hy}" r="2.4"/>`
       : `${line("jamb", -h, 0, h, 0)}<circle class="hinge" cx="${hx}" cy="${hy}" r="2"/>`;
   } else {
     const g = L * 0.28;
@@ -103,7 +105,7 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
   if (known && el >= 0) {
     const [x, y] = ringPos(az, [W, H]);
     parts.push(
-      `<svg class="orb" viewBox="-32 -32 64 64" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" aria-hidden="true"><defs><radialGradient id="lph"><stop offset="0.35" style="stop-color:var(--ds-sun-halo)" stop-opacity="0.7"/><stop offset="1" style="stop-color:var(--ds-sun-halo)" stop-opacity="0"/></radialGradient><radialGradient id="lpd" cx="0.4" cy="0.38" r="0.7"><stop offset="0" style="stop-color:var(--ds-sun-core)"/><stop offset="0.5" style="stop-color:var(--ds-sun)"/><stop offset="1" style="stop-color:var(--ds-sun-edge)"/></radialGradient></defs><circle r="32" fill="url(#lph)"/><g class="rays">${rays}</g><circle r="13" fill="url(#lpd)"/></svg>`
+      `<svg class="orb" viewBox="-32 -32 64 64" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" aria-hidden="true"><defs><radialGradient id="lph"><stop offset="0.35" style="stop-color:var(--ds-sun-halo)" stop-opacity="0.2"/><stop offset="1" style="stop-color:var(--ds-sun-halo)" stop-opacity="0"/></radialGradient><radialGradient id="lpd" cx="0.4" cy="0.38" r="0.7"><stop offset="0" style="stop-color:var(--ds-sun-core)"/><stop offset="0.5" style="stop-color:var(--ds-sun)"/><stop offset="1" style="stop-color:var(--ds-sun-edge)"/></radialGradient></defs><circle r="32" fill="url(#lph)"/><g class="rays">${rays}</g><circle r="13" fill="url(#lpd)"/></svg>`
     );
   }
   let moonUp = null;
@@ -160,11 +162,11 @@ export const livingSheet = sheet(`
   .band-golden .sky { background: linear-gradient(color-mix(in srgb, var(--warning-color) calc(30% * var(--ds-sky-k, 1)), var(--card-background-color)), color-mix(in srgb, var(--warning-color) calc(10% * var(--ds-sky-k, 1)), var(--card-background-color))); }
   .band-day .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) calc(12% * var(--ds-sky-k, 1)), var(--card-background-color)), color-mix(in srgb, var(--primary-color) calc(3% * var(--ds-sky-k, 1)), var(--card-background-color))); }
   .stage .plan { position: absolute; }
-  .orb { position: absolute; width: clamp(40px, 9cqw, 64px); transform: translate(-50%, -50%); pointer-events: none; overflow: visible; }
+  .orb { position: absolute; width: clamp(16px, 3.6cqw, 28px); transform: translate(-50%, -50%); pointer-events: none; overflow: visible; }
   .orb .rays path { fill: var(--ds-sun-ray); }
   .orb .rays { animation: spin 90s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .moon { position: absolute; width: clamp(18px, 5.5cqw, 36px); transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-moon) 55%, transparent)); }
+  .moon { position: absolute; width: clamp(12px, 3cqw, 20px); transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ds-moon) 55%, transparent)); }
   .moon.dim { opacity: 0.5; }
   .moon .dk { fill: var(--ds-moon-dark); stroke: color-mix(in srgb, var(--ds-moon) 45%, transparent); stroke-width: 1; }
   .moon .lt { fill: var(--ds-moon); }
@@ -198,7 +200,7 @@ export const livingSheet = sheet(`
   .stage .room::before { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 300ms ease;
     background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--state-light-active-color) calc(var(--glow, 10%) + 8%), transparent), color-mix(in srgb, var(--state-light-active-color) var(--glow, 10%), transparent)); }
   .stage .room.lit::before { opacity: 1; }
-  .stage .nm { position: relative; display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.15; }
+  .stage .nm { position: relative; display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; hyphens: none; line-height: 1.15; }
   .stage .nm .s { display: none; }
   .stage .dot { animation: ring 3.2s ease-out infinite; }
   @keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 35%, transparent); } to { box-shadow: 0 0 0 6px transparent; } }

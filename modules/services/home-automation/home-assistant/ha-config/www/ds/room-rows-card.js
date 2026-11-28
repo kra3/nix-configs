@@ -1,11 +1,18 @@
-import { tokens } from "./tokens.js?v=12";
+import { sheet, tokens } from "./tokens.js?v=12";
 import { primitives } from "./primitives.js?v=12";
 import { drillOr, mount, num, rowButton, rows as own } from "./dom.js?v=12";
+
+const extra = sheet(`
+.row__v { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--ds-space-1) var(--ds-space-3); }
+.val { display: inline-flex; align-items: center; gap: var(--ds-space-1); font-variant-numeric: tabular-nums; }
+.val ha-icon { --mdc-icon-size: 16px; color: var(--secondary-text-color); }
+.val.on ha-icon { color: var(--state-light-active-color, var(--warning-color)); }
+`);
 
 class RoomRowsCard extends HTMLElement {
   constructor() {
     super();
-    mount(this, tokens, primitives, own).innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
+    mount(this, tokens, primitives, own, extra).innerHTML = `<div class="tile"><div class="tile__label"></div><div class="rows"></div></div>`;
   }
 
   setConfig(c) {
@@ -34,17 +41,27 @@ class RoomRowsCard extends HTMLElement {
     const parts = [];
     if (r.lights) {
       const s = h.states[r.lights]?.state;
-      parts.push(s === "on" ? "on" : s === "off" ? "off" : "unavailable");
+      parts.push(s === "on" ? ["mdi:lightbulb-on", "on", "Lights on", "on"] : s === "off" ? ["mdi:lightbulb-outline", "off", "Lights off"] : ["mdi:lightbulb-question-outline", "unavailable", "Lights unavailable"]);
     }
     const t = num(h.states[r.temperature]);
-    if (t !== null) parts.push(t.toFixed(1) + "°");
+    if (t !== null) parts.push(["mdi:thermometer", t.toFixed(1) + "°", "Temperature"]);
     const hum = num(h.states[r.humidity]);
-    if (hum !== null) parts.push(Math.round(hum) + "%");
-    return parts.join(" · ");
+    if (hum !== null) parts.push(["mdi:water-percent", Math.round(hum) + "%", "Humidity"]);
+    return parts;
   }
 
-  _row(r, text) {
-    const b = rowButton(r.name, text);
+  _row(r, parts) {
+    const b = rowButton(r.name, "");
+    b.setAttribute("aria-label", [r.name, ...parts.map(([, v, l]) => (l.startsWith("Lights") ? l : `${l} ${v}`))].join(", "));
+    b.lastChild.replaceChildren(...parts.map(([icon, v, , cls]) => {
+      const e = document.createElement("span");
+      e.className = "val " + (cls || "");
+      const i = document.createElement("ha-icon");
+      i.setAttribute("icon", icon);
+      i.setAttribute("aria-hidden", "true");
+      e.append(i, v);
+      return e;
+    }));
     b.addEventListener("click", () => r.detail && drillOr(this, r.detail, r.lights || r.temperature));
     return b;
   }

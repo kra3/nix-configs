@@ -52,6 +52,8 @@ resources:
     type: module
   - url: /local/community/lovelace-auto-entities/auto-entities.js?v=@lovelace-auto-entities@
     type: module
+  - url: /local/ds/command-centre-view.js?v=3
+    type: module
 dashboards:
   lovelace-map:
     mode: yaml

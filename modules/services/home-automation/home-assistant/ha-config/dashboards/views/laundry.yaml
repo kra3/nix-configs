@@ -1,0 +1,133 @@
+type: sections
+title: Laundry
+path: dash-laundry
+icon: mdi:washing-machine
+max_columns: 2
+sections:
+- type: grid
+  column_span: 2
+  cards:
+  - type: heading
+    heading: Now
+    icon: mdi:washing-machine
+    heading_style: title
+  - type: custom:laundry-machine-card
+    grid_options:
+      columns: full
+    machines:
+    - name: Washer
+      icon: mdi:washing-machine
+      status: sensor.washer_status
+      power: sensor.washer_power_monitor_power
+      running: binary_sensor.washer_running
+      phase: sensor.washer_phase
+      last_cycle: sensor.washer_last_cycle
+      flag: input_boolean.washer_unemptied
+    - name: Dryer
+      icon: mdi:tumble-dryer
+      status: sensor.dryer_status
+      power: sensor.dryer_power_monitor_power
+      running: binary_sensor.dryer_running
+      phase: sensor.dryer_phase
+      last_cycle: sensor.dryer_last_cycle
+      flag: input_boolean.dryer_unemptied
+    visibility: []
+- type: grid
+  column_span: 1
+  cards:
+  - type: heading
+    heading: Energy
+    icon: mdi:lightning-bolt
+    heading_style: title
+  - type: custom:health-metric-card
+    entity: sensor.washer_power_monitor_energy
+    name: Washer energy today
+    icon: mdi:washing-machine
+    color: "#6ab7ff"
+    decimals: 2
+    hero_from: chart
+    show_date: false
+    chart:
+      type: bar
+      days: 14
+      stat: change
+    secondary:
+      entity: sensor.washer_cost
+      prefix: "This month "
+      unit: " kr"
+      decimals: 2
+    popup:
+      graphs:
+      - name: Washer energy per day
+        entities:
+        - sensor.washer_power_monitor_energy
+        days: 30
+        stat: change
+        type: bar
+    grid_options:
+      columns: 12
+  - type: custom:health-metric-card
+    entity: sensor.dryer_power_monitor_energy
+    name: Dryer energy today
+    icon: mdi:tumble-dryer
+    color: "#ffb06b"
+    decimals: 2
+    hero_from: chart
+    show_date: false
+    chart:
+      type: bar
+      days: 14
+      stat: change
+    secondary:
+      entity: sensor.dryer_cost
+      prefix: "This month "
+      unit: " kr"
+      decimals: 2
+    popup:
+      graphs:
+      - name: Dryer energy per day
+        entities:
+        - sensor.dryer_power_monitor_energy
+        days: 30
+        stat: change
+        type: bar
+    grid_options:
+      columns: 12
+  - type: heading
+    heading: Care and checks
+    icon: mdi:wrench-clock
+    heading_style: title
+  - type: custom:laundry-care-card
+    grid_options:
+      columns: full
+    items:
+    - entity: counter.washer_care
+      name: Washer drum clean
+      icon: mdi:washing-machine-alert
+      every: 10
+      unit: washes
+      confirm: Ran the DrumClean programme? This resets the count.
+    - entity: counter.dryer_care
+      name: Dryer filters
+      icon: mdi:air-filter
+      every: 5
+      unit: dryer runs
+      confirm: Rinsed the fluff and foam filters? This resets the count.
+    - entity: counter.dryer_water
+      name: Dryer water container
+      icon: mdi:cup-water
+      every: 5
+      unit: dryer runs
+      confirm: Emptied the water container? This resets the count.
+- type: grid
+  column_span: 1
+  cards:
+  - type: heading
+    heading: Recent runs
+    icon: mdi:history
+    heading_style: title
+  - type: custom:laundry-runs-card
+    grid_options:
+      columns: full
+    washer: sensor.washer_last_cycle
+    dryer: sensor.dryer_last_cycle

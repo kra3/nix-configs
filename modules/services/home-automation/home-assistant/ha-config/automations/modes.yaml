@@ -4,7 +4,7 @@
   description: >-
     Pauses/resumes every automation via input_boolean.automations_paused
     except those whose config id matches keep_running: security, Frigate,
-    bookkeeping, notifications and this one. New automations are paused
+    bookkeeping, notifications, theme and this one. New automations are paused
     by default. Adaptive Lighting is switched off with them.
   triggers:
   - entity_id: input_boolean.automations_paused
@@ -13,7 +13,7 @@
     event: start
   variables:
     keep_running: >-
-      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|person_left_home$|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|light_scene_|vacation_|everyone_left_home$|tv_media_off_when_armed_away$|1733595301092$)
+      ^(alarm_|frigate_|laundry_|electricity_|climate_|ble_|withings_|krisinformation_|waste_|person_left_home$|front_door_knock_(detect|announcements)$|automations_paused_sync$|modes_|light_scene_|theme_|vacation_|everyone_left_home$|tv_media_off_when_armed_away$|1733595301092$)
     targets: >-
       {{ states.automation
          | selectattr('attributes.id', 'defined')

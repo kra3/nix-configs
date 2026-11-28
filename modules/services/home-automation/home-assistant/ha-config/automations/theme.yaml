@@ -1,0 +1,16 @@
+- id: theme_apply_bento
+  alias: Theme · apply Bento
+  description: Sets Bento as the default theme for light and dark mode on every start.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  actions:
+  - action: frontend.set_theme
+    data:
+      name: bento
+      mode: light
+  - action: frontend.set_theme
+    data:
+      name: bento
+      mode: dark
+  mode: single

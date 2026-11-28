@@ -1,40 +1,37 @@
 // Washer and dryer tiles (phase, finish estimate, live power, last cycle, Emptied button), care counters with a Done reset, and recent loads drawn as phase-coloured bars.
+import { sheet, tokens } from "/local/ds/tokens.js?v=5";
+import { primitives } from "/local/ds/primitives.js?v=5";
 
-const STYLE = `
+const STYLE = sheet(`
   :host { display: block; }
-  ha-card { padding: 0; background: none; border: none; box-shadow: none; }
-  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
-  .m { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; outline: none; min-width: 0;
-       background: color-mix(in srgb, var(--c) 9%, transparent); border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
-  .m:focus-visible { box-shadow: 0 0 0 2px var(--c); }
+  .machines { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
+  .m { display: flex; align-items: center; gap: var(--ds-space-3); cursor: pointer; outline: none; min-width: 0;
+       border: 1px solid color-mix(in srgb, var(--tint) 28%, transparent); }
+  .m:focus-visible { box-shadow: 0 0 0 2px var(--tint); }
   .ic { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
+        background: color-mix(in srgb, var(--tint) 20%, transparent); color: var(--tint); }
   .ic ha-icon { --mdc-icon-size: 26px; }
   .tx { flex: 1; min-width: 0; }
-  .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); }
-  .val { font-size: 20px; font-weight: 700; line-height: 1.2; color: var(--primary-text-color); }
-  .sub { font-size: 12px; line-height: 1.35; color: var(--secondary-text-color); overflow-wrap: anywhere; }
+  .tile__sub { font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
   .rt { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-  .w { font-size: 15px; font-weight: 600; color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
-  .btn { font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
-         border: 1px solid var(--c); background: var(--c); color: var(--text-primary-color, #fff); }
-  .btn[disabled] { opacity: 0.6; cursor: default; }
-  .m.done .btn { color: #1a1a1a; }
-  .m.idle .val, .m.unknown .val { color: var(--secondary-text-color); }
-  .pg { height: 4px; border-radius: 2px; margin-top: 6px; background: color-mix(in srgb, var(--c) 18%, transparent); overflow: hidden; }
-  .pg i { display: block; height: 100%; background: var(--c); }
+  .w { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .m .btn { font: 600 13px/1 var(--ds-font); background: var(--tint); }
+  .m .btn[disabled] { opacity: 0.6; cursor: default; }
+  .m.idle .tile__value, .m.unknown .tile__value { color: var(--secondary-text-color); }
+  .pg { height: 4px; border-radius: 2px; margin-top: 6px; background: color-mix(in srgb, var(--tint) 18%, transparent); overflow: hidden; }
+  .pg i { display: block; height: 100%; background: var(--tint); }
   @media (prefers-reduced-motion: no-preference) {
     .m.running .ic { animation: pulse 2.4s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: 0.55; } }
   }
-`;
+`);
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const TONES = {
-  running: "var(--info-color, #039be5)",
-  done: "var(--warning-color, #ffa600)",
-  idle: "var(--state-inactive-color, #9e9e9e)",
-  unknown: "var(--state-inactive-color, #9e9e9e)",
+  running: "var(--info-color)",
+  done: "var(--warning-color)",
+  idle: "var(--state-inactive-color)",
+  unknown: "var(--state-inactive-color)",
 };
 const PENDING_MS = 4000;
 
@@ -53,6 +50,9 @@ const median = (xs) => {
   return v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2;
 };
 const clock = (ms) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const shadow = (el, own) => {
+  el.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
+};
 
 class LaundryMachineCard extends HTMLElement {
   setConfig(config) {
@@ -60,7 +60,7 @@ class LaundryMachineCard extends HTMLElement {
     this._config = config;
     this._pending = this._pending || {};
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      shadow(this, STYLE);
       const open = (el) => {
         if (el && el.dataset.power) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: el.dataset.power }, bubbles: true, composed: true }));
       };
@@ -143,48 +143,50 @@ class LaundryMachineCard extends HTMLElement {
         const waiting = key === "done" && flag && flag.state === "on";
         const pending = waiting && this._pending[m.flag] && now - this._pending[m.flag] < PENDING_MS;
         const btn = waiting ? `<button class="btn" data-flag="${esc(m.flag)}"${pending ? " disabled" : ""}>${pending ? "Clearing…" : "Emptied"}</button>` : "";
-        return `<div class="m ${key}" style="--c:${TONES[key]}" data-power="${esc(m.power || "")}" tabindex="0" role="button" aria-label="${esc(m.name)}, ${esc(label)}">
+        return `<div class="m tile tile--tint ${key}" style="--tint:${TONES[key]}" data-power="${esc(m.power || "")}" tabindex="0" role="button" aria-label="${esc(m.name)}, ${esc(label)}">
           <div class="ic"><ha-icon icon="${esc(m.icon || "mdi:washing-machine")}"></ha-icon></div>
-          <div class="tx"><div class="lab">${esc(m.name)}</div><div class="val">${esc(label)}</div><div class="sub">${esc(sub)}</div>${extra ? `<div class="sub">${esc(extra)}</div>` : ""}${bar}</div>
+          <div class="tx"><div class="tile__label">${esc(m.name)}</div><div class="tile__value">${esc(label)}</div><div class="tile__sub">${esc(sub)}</div>${extra ? `<div class="tile__sub">${esc(extra)}</div>` : ""}${bar}</div>
           <div class="rt"><div class="w">${esc(watts)}</div>${btn}</div>
         </div>`;
       })
       .join("");
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div class="row">${cells}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<div class="machines">${cells}</div>`;
   }
 }
 
-const COST_STYLE = `
+const COST_STYLE = sheet(`
   :host { display: block; }
-  ha-card { padding: 10px; }
-  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
-  .d { padding: 12px 14px; border-radius: 12px; min-width: 0; background: var(--secondary-background-color); }
+  .plugs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--ds-gap); }
+  .d { min-width: 0; }
   .d.tap { cursor: pointer; }
   .top { display: flex; align-items: center; gap: 10px; }
   .top ha-icon { --mdc-icon-size: 22px; color: var(--c); flex: none; }
-  .lab { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--secondary-text-color); flex: 1; }
-  .hero { font-size: 22px; font-weight: 700; color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
-  .hero small { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); margin-left: 4px; }
+  .top .tile__label { flex: 1; }
+  .hero small { font: var(--ds-body); font-size: 12px; color: var(--secondary-text-color); margin-left: 4px; }
   .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
   .k { min-width: 0; }
-  .k .t { font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--secondary-text-color); }
-  .k .v { font-size: 14px; font-weight: 600; color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
+  .k .tile__label { font-size: 10px; }
+  .k .v { font-weight: 600; font-variant-numeric: tabular-nums; }
   .k .w { font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
-  .foot { margin: 10px 4px 2px; font-size: 12px; line-height: 1.4; color: var(--secondary-text-color); }
-`;
+  .foot { margin: var(--ds-space-3) var(--ds-space-1) 0; font-size: 12px; line-height: 1.4; }
+`);
 
 class PlugCostCard extends HTMLElement {
   setConfig(config) {
     if (!config || !Array.isArray(config.devices) || !config.devices.length) throw new Error("plug-cost-card: devices are required");
     this._config = config;
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      shadow(this, COST_STYLE);
       this.shadowRoot.addEventListener("click", (e) => {
         const cell = e.composedPath().find((n) => n.dataset && n.dataset.i !== undefined);
         const d = cell && this._config.devices[cell.dataset.i];
         if (!d || !d.popup || !customElements.get("health-metric-card")) return;
+        const cfg = { entity: d.entity, name: d.name, color: d.color, popup: d.popup };
+        const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: { type: "custom:health-metric-card", ...cfg, popup_inline: true } }, bubbles: true, composed: true, cancelable: true });
+        this.dispatchEvent(drill);
+        if (drill.defaultPrevented) return;
         const card = document.createElement("health-metric-card");
-        card.setConfig({ entity: d.entity, name: d.name, color: d.color, popup: d.popup });
+        card.setConfig(cfg);
         card.hass = this._hass;
         card._openPopup();
       });
@@ -211,38 +213,37 @@ class PlugCostCard extends HTMLElement {
           const e = d.energy && hass.states[`${d.energy}_${p}`];
           return e && !isNaN(parseFloat(e.state)) ? `${num(e.state, 1)} kWh` : "";
         };
-        const k = (t, v, w = "") => `<div class="k"><div class="t">${t}</div><div class="v">${esc(num(v))}</div>${w ? `<div class="w">${esc(w)}</div>` : ""}</div>`;
+        const k = (t, v, w = "") => `<div class="k"><div class="tile__label">${t}</div><div class="v">${esc(num(v))}</div>${w ? `<div class="w">${esc(w)}</div>` : ""}</div>`;
         const mk = kwh("month");
-        return `<div class="d${d.popup ? " tap" : ""}" data-i="${i}" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="lab">${esc(d.name)}</div>
-          <div class="hero">${esc(num(s && s.state))}<small>kr this month${mk ? ` · ${esc(mk)}` : ""}</small></div></div>
+        return `<div class="d tile${d.popup ? " tap" : ""}" data-i="${i}" style="--c:${esc(d.color || "var(--primary-color)")}"><div class="top"><ha-icon icon="${esc(d.icon || "mdi:flash")}"></ha-icon><div class="tile__label">${esc(d.name)}</div>
+          <div class="tile__value hero">${esc(num(s && s.state))}<small>kr this month${mk ? ` · ${esc(mk)}` : ""}</small></div></div>
           <div class="grid">${k("Today", a.today, kwh("day"))}${k("Week", a.week, kwh("week"))}${k("Quarter", a.quarter)}${k("Last month", a.last_month)}</div></div>`;
       })
       .join("");
     const price = this._config.price && this._hass.states[this._config.price];
     const foot = `${price ? `Price now ${num(price.state)} kr/kWh with VAT. ` : ""}Estimated from this month's average spot; E.ON sets the final price after the month ends.`;
-    this.shadowRoot.innerHTML = `<style>${COST_STYLE}</style><ha-card><div class="row">${cells}</div><div class="foot">${esc(foot)}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<div class="plugs">${cells}</div><div class="foot tile__sub">${esc(foot)}</div>`;
   }
 }
 
-const CARE_STYLE = `
+const CARE_STYLE = sheet(`
   :host { display: block; }
-  ha-card { padding: 4px 14px; }
-  .r { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider-color); }
+  .tile { padding-block: var(--ds-space-1); }
+  .r { display: flex; align-items: center; gap: var(--ds-space-3); padding: 10px 0; border-top: 1px solid var(--divider-color); }
   .r:first-child { border-top: none; }
   .ic { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
         background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); }
   .ic ha-icon { --mdc-icon-size: 22px; }
   .tx { flex: 1; min-width: 0; }
-  .n { font-size: 14px; font-weight: 600; color: var(--primary-text-color); }
+  .n { font-weight: 600; }
   .s { font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
   .r.due .s { color: var(--c); font-weight: 600; }
-  .pg { height: 6px; border-radius: 3px; margin-top: 6px; background: var(--secondary-background-color); overflow: hidden; }
+  .pg { height: 6px; border-radius: 3px; margin-top: 6px; background: var(--divider-color); overflow: hidden; }
   .pg i { display: block; height: 100%; border-radius: 3px; background: var(--c); }
-  .btn { flex: none; font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
-         border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: none; color: var(--c); }
-  .r.due .btn { background: var(--c); border-color: var(--c); color: var(--text-primary-color, #fff); }
-  .btn[disabled] { opacity: 0.6; cursor: default; }
-`;
+  .r .btn { flex: none; font: 600 13px/1 var(--ds-font); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: none; color: var(--c); }
+  .r.due .btn { background: var(--c); border-color: var(--c); color: var(--text-primary-color); }
+  .r .btn[disabled] { opacity: 0.6; cursor: default; }
+`);
 
 class LaundryCareCard extends HTMLElement {
   setConfig(config) {
@@ -250,7 +251,7 @@ class LaundryCareCard extends HTMLElement {
     this._config = config;
     this._pending = this._pending || {};
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      shadow(this, CARE_STYLE);
       this.shadowRoot.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-i]");
         if (!btn || btn.disabled || !this._hass) return;
@@ -290,7 +291,7 @@ class LaundryCareCard extends HTMLElement {
           due = true;
           text = n > every ? `Due now · ${n - every} ${unit} overdue` : "Due now";
         } else text = `${n} of ${every} · ${every - n} ${unit} to go`;
-        const tone = due ? "var(--warning-color, #ffa600)" : "var(--primary-color)";
+        const tone = due ? "var(--warning-color)" : "var(--primary-color)";
         const pct = isNaN(n) ? 0 : Math.min(100, (n / every) * 100);
         return `<div class="r${due ? " due" : ""}" style="--c:${tone}">
           <div class="ic"><ha-icon icon="${esc(item.icon || "mdi:wrench-clock")}"></ha-icon></div>
@@ -299,24 +300,25 @@ class LaundryCareCard extends HTMLElement {
         </div>`;
       })
       .join("");
-    this.shadowRoot.innerHTML = `<style>${CARE_STYLE}</style><ha-card>${rows}</ha-card>`;
+    this.shadowRoot.innerHTML = `<div class="tile">${rows}</div>`;
   }
 }
 
+const mix = (a, b, p) => `color-mix(in srgb, ${a} ${p}%, ${b})`;
 const PHASE_COLORS = {
-  Filling: "#4a7fb0",
-  Heating: "#ff7b7b",
-  Washing: "#6ab7ff",
-  Rinsing: "#9fd4ff",
-  Spinning: "#c9a7e8",
-  Starting: "#c79a6b",
-  Drying: "#ffb06b",
-  Finishing: "#ffd08f",
-  Cooling: "#8fd3c7",
-  Stopped: "#8a8a8a",
-  "Anti-crease": "#b9a37e",
+  Filling: mix("var(--primary-color)", "var(--secondary-text-color)", 55),
+  Heating: "var(--error-color)",
+  Washing: "var(--primary-color)",
+  Rinsing: mix("var(--primary-color)", "var(--card-background-color)", 45),
+  Spinning: mix("var(--primary-color)", "var(--error-color)", 50),
+  Starting: mix("var(--warning-color)", "var(--secondary-text-color)", 55),
+  Drying: "var(--warning-color)",
+  Finishing: mix("var(--warning-color)", "var(--card-background-color)", 50),
+  Cooling: "var(--success-color)",
+  Stopped: "var(--state-inactive-color)",
+  "Anti-crease": mix("var(--warning-color)", "var(--error-color)", 50),
 };
-const MACHINE_COLORS = { washer: "#6ab7ff", dryer: "#ffb06b" };
+const MACHINE_COLORS = { washer: "var(--primary-color)", dryer: "var(--warning-color)" };
 const hatch = (c) => `repeating-linear-gradient(135deg, ${c} 0 6px, color-mix(in srgb, ${c} 45%, transparent) 6px 12px)`;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DAY = 86400000;
@@ -331,12 +333,13 @@ const startMs = (c, now) => {
   return d.getTime();
 };
 
-const RUNS_STYLE = `
+const RUNS_STYLE = sheet(`
   :host { display: block; }
-  ha-card { padding: 4px 14px 12px; }
-  .load { padding: 10px 0; border-top: 1px solid var(--divider-color); }
+  .tile { padding-block: var(--ds-space-1) var(--ds-space-3); }
+  .load { padding: 10px 0; border-top: 1px solid var(--divider-color); cursor: pointer; min-height: var(--ds-touch); }
   .load:first-child { border-top: none; }
-  .day { font-size: 13px; font-weight: 600; color: var(--primary-text-color); margin-bottom: 6px; }
+  .load:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: var(--ds-space-2); }
+  .day { font-weight: 600; margin-bottom: 6px; }
   .track { position: relative; height: 22px; }
   .seg { position: absolute; top: 0; height: 22px; border-radius: 6px; display: flex; overflow: hidden; }
   .seg i { display: block; height: 100%; }
@@ -344,21 +347,36 @@ const RUNS_STYLE = `
   .gap span { position: absolute; left: 0; right: 0; top: -17px; text-align: center; font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; }
   .meta { display: flex; flex-wrap: wrap; column-gap: 12px; row-gap: 2px; margin-top: 6px; font-size: 12px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
   .meta b { color: var(--primary-text-color); font-weight: 600; }
-  .meta b.off { color: var(--warning-color, #ffa600); }
-  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 10px; border-top: 1px solid var(--divider-color); font-size: 11px; color: var(--secondary-text-color); }
-  .legend { flex-direction: column; }
+  .meta b.off { color: var(--warning-color); }
+  .legend { display: flex; flex-direction: column; gap: 4px 12px; padding-top: 10px; border-top: 1px solid var(--divider-color); font-size: 11px; color: var(--secondary-text-color); }
   .lg { display: flex; flex-wrap: wrap; gap: 4px 12px; }
   .lg b { font-weight: 600; color: var(--primary-text-color); min-width: 52px; }
   .legend span.nd::before { background: var(--h); }
   .legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 2px; background: var(--c); margin-right: 4px; vertical-align: -1px; }
-  .empty { padding: 14px 0; font-size: 13px; color: var(--secondary-text-color); }
-`;
+  .empty { padding: 14px 0; color: var(--secondary-text-color); }
+`);
 
 class LaundryRunsCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.washer || !config.dryer) throw new Error("laundry-runs-card: washer and dryer are required");
     this._config = config;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) {
+      shadow(this, RUNS_STYLE);
+      const open = (el) => {
+        const l = el && this._shown && this._shown[el.dataset.i];
+        if (!l) return;
+        const ev = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: this._detail(l) }, bubbles: true, composed: true, cancelable: true });
+        this.dispatchEvent(ev);
+        if (!ev.defaultPrevented) this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: l.wash ? this._config.washer : this._config.dryer }, bubbles: true, composed: true }));
+      };
+      this.shadowRoot.addEventListener("click", (e) => open(e.target.closest(".load")));
+      this.shadowRoot.addEventListener("keydown", (e) => {
+        if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("load")) {
+          e.preventDefault();
+          open(e.target);
+        }
+      });
+    }
   }
 
   getCardSize() {
@@ -381,6 +399,17 @@ class LaundryRunsCard extends HTMLElement {
       .filter((r) => !isNaN(r.at));
   }
 
+  _detail(l) {
+    const first = l.wash || l.dry;
+    const day = new Date(first.at).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    const part = (r, name) => {
+      const phases = (r.phases || []).filter((p) => p[1] > 0).map((p) => `- ${p[0]}: ${Math.round(p[1])} min`);
+      return [`**${name}** ${clock(r.at)} · ${r.minutes} min · ${num(r.kwh)} kWh · ${num(r.cost)} kr`, ...phases].join("\n");
+    };
+    const wait = l.wash && l.dry ? `Wait between wash and dry: ${span(Math.max(0, Math.round((l.dry.at - l.wash.at) / 60000 - l.wash.minutes)))}` : "";
+    return { type: "markdown", title: day, content: [l.wash && part(l.wash, "Wash"), wait, l.dry && part(l.dry, "Dry")].filter(Boolean).join("\n\n") };
+  }
+
   _render() {
     if (!this._config || !this._hass) return;
     const washes = this._runs("washer").sort((a, b) => a.at - b.at);
@@ -396,8 +425,9 @@ class LaundryRunsCard extends HTMLElement {
       else loads.push({ dry: d });
     }
     const shown = loads.sort((a, b) => (b.wash || b.dry).at - (a.wash || a.dry).at).slice(0, this._config.loads || 6);
+    this._shown = shown;
     if (!shown.length) {
-      this.shadowRoot.innerHTML = `<style>${RUNS_STYLE}</style><ha-card><div class="empty">No runs recorded yet.</div></ha-card>`;
+      this.shadowRoot.innerHTML = `<div class="tile"><div class="empty">No runs recorded yet.</div></div>`;
       return;
     }
     const gapOf = (l) => (l.wash && l.dry ? Math.max(0, Math.round((l.dry.at - l.wash.at) / 60000 - l.wash.minutes)) : 0);
@@ -426,7 +456,7 @@ class LaundryRunsCard extends HTMLElement {
       return `<span>${name} ${esc(clock(r.at))} · <b${off ? ' class="off"' : ""}>${r.minutes} min</b> · <b>${num(r.kwh)} kWh</b> · <b>${num(r.cost)} kr</b></span>`;
     };
     const rows = shown
-      .map((l) => {
+      .map((l, i) => {
         const first = l.wash || l.dry;
         const day = new Date(first.at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
         let track = "";
@@ -442,7 +472,7 @@ class LaundryRunsCard extends HTMLElement {
           x += w + 4;
         }
         if (l.dry) track += bar(l.dry, x);
-        return `<div class="load"><div class="day">${esc(day)}</div><div class="track">${track}</div><div class="meta">${l.wash ? meta(l.wash) : ""}${l.dry ? meta(l.dry) : ""}</div></div>`;
+        return `<div class="load" data-i="${i}" tabindex="0" role="button" aria-label="${esc(day)}, show run details"><div class="day">${esc(day)}</div><div class="track">${track}</div><div class="meta">${l.wash ? meta(l.wash) : ""}${l.dry ? meta(l.dry) : ""}</div></div>`;
       })
       .join("");
     const groups = [
@@ -456,7 +486,7 @@ class LaundryRunsCard extends HTMLElement {
         return items.length ? `<div class="lg"><b>${label}</b>${items.join("")}</div>` : "";
       })
       .join("");
-    this.shadowRoot.innerHTML = `<style>${RUNS_STYLE}</style><ha-card>${rows}<div class="legend">${legend}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<div class="tile">${rows}<div class="legend">${legend}</div></div>`;
   }
 }
 

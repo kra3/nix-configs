@@ -61,7 +61,7 @@ function planModel(states, areaOf, cfg) {
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
     const presenceIds = new Set([
       ...(r.presence || []),
-      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && s.attributes.device_class === "occupancy" && !NOT_PERSON.test(s.entity_id) && personFor(s.entity_id, away, states)).map((s) => s.entity_id),
+      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && ["occupancy", "presence", "motion"].includes(s.attributes.device_class) && !NOT_PERSON.test(s.entity_id) && personFor(s.entity_id, away, states)).map((s) => s.entity_id),
     ]);
     const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
     const person = mine.some((s) => PERSON.test(s.entity_id) && personFor(s.entity_id, away, states) && s.state === "on");

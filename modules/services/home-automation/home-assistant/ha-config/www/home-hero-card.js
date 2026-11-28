@@ -87,13 +87,21 @@ function heroModel(states, cfg, userId) {
     w && typeof w.attributes.temperature === "number"
       ? { temp: Math.round(w.attributes.temperature), unit: w.attributes.temperature_unit || "°C", icon: WEATHER_ICONS[w.state] || "mdi:weather-cloudy" }
       : null;
+  const sun = cfg.sun && states[cfg.sun];
+  const dusk = sun && sun.state === "above_horizon" && new Date(sun.attributes.next_dusk);
+  const season = val(cfg.season);
+  const info = [
+    w && !IDLE.includes(w.state) && titleCase(w.state),
+    dusk && !isNaN(dusk) && `Dusk ${dusk.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`,
+    !IDLE.includes(season) && titleCase(season),
+  ].filter(Boolean);
   const a = cfg.alarm && states[cfg.alarm];
   const alarm = a ? { state: a.state, icon: (ALARM[a.state] || ALARM.disarmed)[0], label: (ALARM[a.state] || [0, titleCase(a.state), "neutral"])[1], tone: (ALARM[a.state] || [0, 0, "neutral"])[2] } : null;
   const pills = (cfg.pills || [])
     .map((p, i) => ({ p, i }))
     .filter(({ p }) => whenOk(states, p.when, userId))
     .map(({ p, i }) => ({ i, label: p.label, icon: p.icon, color: COLORS[p.color] || COLORS.blue, detail: pillDetail(states, p.detail) }));
-  return { title, icon, sub, weather, alarm, pills };
+  return { title, icon, sub, info, weather, alarm, pills };
 }
 
 function heroHtml(m) {
@@ -110,7 +118,7 @@ function heroHtml(m) {
     )
     .join("");
   return `<div class="card">
-    <div class="top"><ha-icon class="lead" icon="${m.icon}"></ha-icon><div class="txt"><div class="title">${esc(m.title)}</div><div class="sub">${esc(m.sub)}</div></div>${weather}</div>
+    <div class="top"><ha-icon class="lead" icon="${m.icon}"></ha-icon><div class="txt"><div class="title">${esc(m.title)}</div><div class="sub">${esc(m.sub)}</div>${m.info.length ? `<div class="info">${m.info.map((i) => `<span>${esc(i)}</span>`).join("")}</div>` : ""}</div>${weather}</div>
     <div class="chips">${alarm}${pills}</div>
   </div>`;
 }
@@ -124,6 +132,7 @@ const STYLE = `
   .txt { flex: 1; min-width: 0; }
   .title { font-size: 20px; font-weight: 700; color: var(--primary-text-color); }
   .sub { font-size: 13px; color: var(--secondary-text-color); margin-top: 2px; }
+  .info { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 4px; font-size: 12px; color: var(--secondary-text-color); }
   .weather { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--primary-text-color); cursor: pointer; }
   .weather ha-icon { --mdc-icon-size: 26px; color: var(--secondary-text-color); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

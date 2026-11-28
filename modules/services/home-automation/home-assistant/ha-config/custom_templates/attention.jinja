@@ -19,11 +19,11 @@
 {%- set dead = (state_attr('sensor.needs_attention', 'items') or []) | selectattr('icon', 'eq', 'mdi:lan-disconnect') | list | count -%}
 {%- if rooms not in quiet or dead > 0 -%}
 {%- set parts = ([rooms] if rooms not in quiet else []) + ([dead ~ (' device offline' if dead == 1 else ' devices offline')] if dead > 0 else []) -%}
-{%- set ns.a = ns.a + [{'id': 'not_reporting', 'label': parts | join(' · '), 'severity': 'warning', 'icon': 'mdi:access-point-network-off', 'path': base ~ ('dash-climate' if rooms not in quiet else 'dash-maintenance')}] -%}
+{%- set ns.a = ns.a + [{'id': 'not_reporting', 'label': parts | join(' · '), 'severity': 'warning', 'icon': 'mdi:access-point-network-off', 'path': base ~ 'dash-climate' if rooms not in quiet else '/dashboard-admin/maintenance'}] -%}
 {%- endif -%}
 {%- set bat = states('sensor.lowest_battery') -%}
 {%- if bat not in ['All OK', 'No data', 'unknown', 'unavailable'] -%}
-{%- set ns.a = ns.a + [{'id': 'battery', 'label': 'Low battery: ' ~ bat, 'severity': 'info', 'icon': 'mdi:battery-alert-variant-outline', 'path': base ~ 'dash-maintenance'}] -%}
+{%- set ns.a = ns.a + [{'id': 'battery', 'label': 'Low battery: ' ~ bat, 'severity': 'info', 'icon': 'mdi:battery-alert-variant-outline', 'path': '/dashboard-admin/maintenance'}] -%}
 {%- endif -%}
 {%- for name, e in [('Washer', 'sensor.washer_status'), ('Dryer', 'sensor.dryer_status')] if is_state(e, 'Done') -%}
 {%- set ns.a = ns.a + [{'id': 'laundry_' ~ name | lower, 'label': name ~ ' done', 'severity': 'info', 'icon': 'mdi:washing-machine' if name == 'Washer' else 'mdi:tumble-dryer', 'path': base ~ 'dash-laundry'}] -%}

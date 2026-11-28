@@ -1,8 +1,6 @@
 type: custom:command-centre
 title: Maintenance
-path: dash-maintenance
-subview: true
-back_path: /dashboard-home/system-health
+path: maintenance
 icon: mdi:wrench
 max_columns: 2
 sections:

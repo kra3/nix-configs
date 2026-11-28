@@ -5,9 +5,7 @@ views:
 - !include views/energy.yaml
 - !include views/health-arun.yaml
 - !include views/health-anjali.yaml
-- !include views/system-health.yaml
 - !include views/lights.yaml
 - !include views/security.yaml
 - !include views/climate.yaml
 - !include views/laundry.yaml
-- !include views/maintenance.yaml

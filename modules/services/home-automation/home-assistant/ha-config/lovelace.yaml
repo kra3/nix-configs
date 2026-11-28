@@ -10,7 +10,7 @@ resources:
     type: module
   - url: /local/health-metric-card.js?v=34
     type: module
-  - url: /local/download-control-card.js?v=2
+  - url: /local/download-control-card.js?v=4
     type: module
   - url: /local/status-row-card.js?v=15
     type: module

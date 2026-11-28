@@ -77,3 +77,10 @@ dashboards:
     icon: mdi:home-lightning-bolt
     show_in_sidebar: true
     require_admin: false
+  dashboard-admin:
+    mode: yaml
+    filename: dashboards/admin.yaml
+    title: Admin
+    icon: mdi:tune
+    show_in_sidebar: true
+    require_admin: false

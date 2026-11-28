@@ -188,7 +188,7 @@ sections:
       icon: mdi:download
       tap_action:
         action: navigate
-        navigation_path: /dashboard-home/system-health
+        navigation_path: /dashboard-admin/media
       visibility:
       - condition: user
         users:

@@ -75,4 +75,4 @@ card:
       entity: binary_sensor.dashboard_alert_system
       attr: reasons
     tap:
-      navigate: /dashboard-home/system-health
+      navigate: /dashboard-admin/system

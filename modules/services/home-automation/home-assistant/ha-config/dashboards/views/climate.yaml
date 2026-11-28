@@ -303,34 +303,3 @@ sections:
     grid_options:
       columns: full
       rows: auto
-- type: grid
-  column_span: 1
-  cards:
-  - type: heading
-    heading: Comfort
-    icon: mdi:tune
-    heading_style: title
-  - type: custom:comfort-card
-    grid_options:
-      columns: full
-    season: sensor.season
-    low: input_number.climate_temp_low
-    high: input_number.climate_temp_high
-    high_summer: input_number.climate_temp_high_summer
-    guideline_min: sensor.guideline_temp_min
-    guideline_max: sensor.guideline_temp_max
-    scale: [14, 30]
-    night_offset: input_number.climate_night_offset
-    humidity:
-      entity: sensor.average_humidity
-      ceiling: sensor.humidity_ceiling
-    advanced:
-    - name: Moisture limit
-      effect: "Swedish winter guideline (Folkhälsomyndigheten): at most 3 g/m³ more water vapour indoors than outdoors."
-      when:
-        entity: sensor.season
-        state_not: summer
-      now: >-
-        Now: surplus {{ states('sensor.moisture_surplus') }} g/m³, 24 h average {{ states('sensor.moisture_surplus_24h') }} g/m³.
-      entities:
-      - entity: input_number.climate_moisture_limit

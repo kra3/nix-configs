@@ -83,4 +83,4 @@ dashboards:
     title: Admin
     icon: mdi:tune
     show_in_sidebar: true
-    require_admin: true
+    require_admin: false

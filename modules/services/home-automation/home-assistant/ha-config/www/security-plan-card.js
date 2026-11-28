@@ -1,6 +1,7 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
 import { sheet, tokens } from "./ds/tokens.js?v=15";
 import { primitives } from "./ds/primitives.js?v=15";
+import { cameraMotion } from "./ds/areas.js?v=15";
 import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=15";
 import { livingHtml, livingSheet } from "./ds/living-plan.js?v=15";
 
@@ -42,7 +43,7 @@ function badgeFor(s, armed) {
   };
 }
 
-function planModel(states, areaOf, cfg) {
+function planModel(states, areaOf, cfg, camMotion = () => false) {
   const all = Object.values(states);
   const alarm = cfg.alarm ? states[cfg.alarm] : all.find((s) => s.entity_id.startsWith("alarm_control_panel."));
   const away = !!alarm && ["armed_away", "armed_vacation"].includes(alarm.state);
@@ -61,7 +62,7 @@ function planModel(states, areaOf, cfg) {
       .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
     const presenceIds = new Set([
       ...(r.presence || []),
-      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && ["occupancy", "presence", "motion"].includes(s.attributes.device_class) && !NOT_PERSON.test(s.entity_id) && personFor(s.entity_id, away, states)).map((s) => s.entity_id),
+      ...mine.filter((s) => s.entity_id.startsWith("binary_sensor.") && ["occupancy", "presence", "motion"].includes(s.attributes.device_class) && !NOT_PERSON.test(s.entity_id) && !camMotion(s.entity_id) && personFor(s.entity_id, away, states)).map((s) => s.entity_id),
     ]);
     const occupied = [...presenceIds].some((id) => states[id] && states[id].state === "on");
     const person = mine.some((s) => PERSON.test(s.entity_id) && personFor(s.entity_id, away, states) && s.state === "on");
@@ -240,7 +241,7 @@ class SecurityPlanCard extends HTMLElement {
   _render() {
     const cfg = this._config;
     const layer = this._layer || cfg.layer || "security";
-    const model = planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg);
+    const model = planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg, (id) => cameraMotion(this._hass, id));
     const living = layer === "living";
     const html = living ? livingHtml(model, cfg, this._hass) : planHtml(model, cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;

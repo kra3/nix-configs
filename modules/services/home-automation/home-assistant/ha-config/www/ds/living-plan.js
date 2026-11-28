@@ -1,6 +1,6 @@
-import { sheet } from "./tokens.js?v=13";
-import { esc } from "./dom.js?v=13";
-import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=13";
+import { sheet } from "./tokens.js?v=14";
+import { esc } from "./dom.js?v=14";
+import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=14";
 
 const rad = Math.PI / 180;
 const MX = 44;
@@ -157,8 +157,8 @@ export const livingSheet = sheet(`
   .sky { position: absolute; inset: 0; }
   .band-night .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) 26%, var(--card-background-color)), color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color))); }
   .band-twilight .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) 18%, var(--card-background-color)), color-mix(in srgb, var(--warning-color) 22%, var(--card-background-color))); }
-  .band-golden .sky { background: linear-gradient(color-mix(in srgb, var(--warning-color) 30%, var(--card-background-color)), color-mix(in srgb, var(--warning-color) 10%, var(--card-background-color))); }
-  .band-day .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) 12%, var(--card-background-color)), color-mix(in srgb, var(--primary-color) 3%, var(--card-background-color))); }
+  .band-golden .sky { background: linear-gradient(color-mix(in srgb, var(--warning-color) calc(30% * var(--ds-sky-k, 1)), var(--card-background-color)), color-mix(in srgb, var(--warning-color) calc(10% * var(--ds-sky-k, 1)), var(--card-background-color))); }
+  .band-day .sky { background: linear-gradient(color-mix(in srgb, var(--primary-color) calc(12% * var(--ds-sky-k, 1)), var(--card-background-color)), color-mix(in srgb, var(--primary-color) calc(3% * var(--ds-sky-k, 1)), var(--card-background-color))); }
   .stage .plan { position: absolute; }
   .orb { position: absolute; width: clamp(40px, 9cqw, 64px); transform: translate(-50%, -50%); pointer-events: none; overflow: visible; }
   .orb .rays path { fill: var(--ds-sun-ray); }

@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=11";
-import { primitives } from "./primitives.js?v=11";
-import { mount } from "./dom.js?v=11";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=11";
+import { sheet, tokens } from "./tokens.js?v=12";
+import { primitives } from "./primitives.js?v=12";
+import { mount } from "./dom.js?v=12";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=12";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -9,7 +9,8 @@ const own = sheet(`
 :host([data-mode="wide"][open]) { grid-template-columns: 260px minmax(0, 1fr) 360px; }
 :host([data-mode="narrow"]) { grid-template-columns: minmax(0, 1fr); padding: var(--ds-space-2); }
 [hidden] { display: none !important; }
-.rail > * { min-width: 0; }
+.rail > *, .lead > * { min-width: 0; }
+.lead { display: flex; flex-direction: column; min-width: 0; }
 .rail { display: flex; flex-direction: column; gap: var(--ds-gap); min-width: 0; }
 .col { min-width: 0; }
 .badges { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-bottom: var(--ds-gap); }
@@ -45,9 +46,9 @@ class CommandCentre extends HTMLElement {
   constructor() {
     super();
     mount(this, tokens, primitives, own);
-    this.shadowRoot.innerHTML = `<div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
+    this.shadowRoot.innerHTML = `<div class="lead" hidden></div><div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
     const $ = (s) => this.shadowRoot.querySelector(s);
-    this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
+    this._lead = $(".lead"); this._leadEls = []; this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
     this._max = 4; this._sections = []; this._hass = undefined; this._card = null; this._openSeq = 0;
     this._ro = new ResizeObserver(() => this._layout());
     this._watched = new Set();
@@ -80,16 +81,23 @@ class CommandCentre extends HTMLElement {
   set hass(h) { this._hass = h; if (this._card) this._card.hass = h; }
 
   _place() {
-    const { rail, main } = partition(this._sections);
+    const { rail, main, lead } = partition(this._sections);
     this._rail.replaceChildren(...rail);
     this._main.replaceChildren(...main);
-    for (const s of this._watched) if (s.parentNode !== this._main) { this._ro.unobserve(s); this._watched.delete(s); }
-    for (const s of main) if (!this._watched.has(s)) { this._ro.observe(s); this._watched.add(s); }
+    this._leadEls = lead;
+    this._lead.replaceChildren();
+    for (const s of this._watched) if (!main.includes(s) && !lead.includes(s)) { this._ro.unobserve(s); this._watched.delete(s); }
+    for (const s of [...lead, ...main]) if (!this._watched.has(s)) { this._ro.observe(s); this._watched.add(s); }
     this._layout();
   }
 
   _layout() {
     this.dataset.mode = layoutMode(this.getBoundingClientRect().width);
+    const to = this.dataset.mode === "narrow" ? this._lead : this._main;
+    if (this._leadEls.some((s) => s.parentNode !== to)) {
+      if (to === this._main) this._main.prepend(...this._leadEls); else this._lead.replaceChildren(...this._leadEls);
+    }
+    this._lead.hidden = to !== this._lead || this._leadEls.every((s) => s.hidden);
     const cols = columnCount(this._main.clientWidth, this._max);
     this._main.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     for (const s of this._main.children) if (!s.hidden) {
@@ -99,7 +107,7 @@ class CommandCentre extends HTMLElement {
     this._scrim.hidden = !this._isOpen() || this.dataset.mode === "wide";
     const modal = this._isOpen() && this.dataset.mode !== "wide";
     this._pane.setAttribute("aria-modal", String(this.dataset.mode !== "wide"));
-    for (const e of [this._rail, this._main, this._badges]) e.toggleAttribute("inert", modal);
+    for (const e of [this._lead, this._rail, this._main, this._badges]) e.toggleAttribute("inert", modal);
   }
 
   _isOpen() { return !this._pane.hidden; }

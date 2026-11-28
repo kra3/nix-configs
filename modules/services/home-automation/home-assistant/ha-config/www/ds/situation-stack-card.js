@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=11";
-import { mount } from "./dom.js?v=11";
-import { pickSet } from "./layout.js?v=11";
-import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=11";
+import { sheet, tokens } from "./tokens.js?v=12";
+import { mount } from "./dom.js?v=12";
+import { pickSet } from "./layout.js?v=12";
+import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=12";
 
 const own = sheet(`
 :host { display: block; }
@@ -70,6 +70,10 @@ class SituationStackCard extends HTMLElement {
     let s;
     try { s = situation(inputFromHass(h, h.user?.id, this._sit)); } catch (e) { console.error(e); s = { key: "default", headline: "" }; }
     this._say(this._config.headline === false ? "" : s.headline);
+    if (this._config.headline === true && !this._config.situations && !this._config.default?.length) {
+      this.hidden = !s.headline;
+      this.dispatchEvent(new CustomEvent("card-visibility-changed", { detail: { value: !this.hidden }, bubbles: true, composed: true }));
+    }
     const set = pickSet(this._config.situations, s.key, this._config.default);
     if (set.id !== this._setId) {
       this._setId = set.id;
@@ -91,12 +95,8 @@ class SituationStackCard extends HTMLElement {
   async _make(c) {
     let el;
     try {
-      if (customElements.get("hui-card")) {
-        el = document.createElement("hui-card");
-        el.config = c;
-      } else {
-        el = await (await window.loadCardHelpers()).createCardElement(c);
-      }
+      el = document.createElement("hui-card");
+      el.config = c;
     } catch (e) {
       console.error(e);
       el = document.createElement("div");

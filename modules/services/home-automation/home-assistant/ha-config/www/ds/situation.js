@@ -47,10 +47,6 @@ const clauses = {
     const l = arr(s.lightsOn);
     return l && l.length ? `lights on in ${list(l)}` : null;
   },
-  attention: (s) => {
-    const a = arr(s.attention);
-    return a && a.length ? `${list(a.slice(0, 2))}${a.length > 2 ? ` and ${a.length - 2} more` : ""} need${a.length === 1 ? "s" : ""} attention` : null;
-  },
   media: (s) => (s.media && s.media.name ? (s.media.title ? `${s.media.title} is playing on ${s.media.name}` : `${s.media.name} is playing`) : null),
   laundry: (s) => {
     const l = s.laundry;
@@ -72,7 +68,7 @@ const allOff = (s) => arr(s.lightsOn) && arr(s.openings) && !s.lightsOn.length &
 const HEADLINES = {
   guest: (s) => sentence(["Make yourself at home", clauses.lights(s)]),
   "away-empty": (s) =>
-    sentence(["Home is empty", clauses.openings(s), clauses.lights(s), allOff(s) ? "everything is off" : null, clauses.attention(s)]),
+    sentence(["Home is empty", clauses.openings(s), clauses.lights(s), allOff(s) ? "everything is off" : null]),
   "away-occupied": (s) => {
     const n = homeNames(s);
     return sentence([`${list(n)} ${n.length > 1 ? "are" : "is"} home`, clauses.lights(s), clauses.media(s), clauses.openings(s)]);
@@ -90,24 +86,24 @@ const HEADLINES = {
 };
 
 const general = (s, lead) =>
-  sentence([lead, clauses.others(s), clauses.laundry(s), clauses.media(s), clauses.openings(s), clauses.lights(s), clauses.attention(s)]);
+  sentence([lead, clauses.others(s), clauses.laundry(s), clauses.media(s), clauses.openings(s), clauses.lights(s)]);
 
 const LEAD = { morning: "Good morning", day: null, evening: "Good evening", night: "All quiet" };
 
 const RULES = [
-  { key: "guest", when: (s) => s.viewer === "guest" || !!s.guestOnly, hero: () => "guest", head: HEADLINES.guest },
-  { key: "away-empty", when: (s) => viewerState(s) === "away" && !anyHome(s), hero: () => "rest", head: HEADLINES["away-empty"] },
-  { key: "away-occupied", when: (s) => viewerState(s) === "away", hero: () => "live", head: HEADLINES["away-occupied"] },
-  { key: "arriving", when: (s) => viewerState(s) === "arriving", hero: (s) => (anyHome(s) ? "live" : "rest"), head: HEADLINES.arriving },
-  { key: "leaving", when: (s) => viewerState(s) === "left", hero: () => "live", head: HEADLINES.leaving },
-  { key: "night-waiting", when: (s) => s.time === "night" && othersOut(s).length > 0, hero: () => "night", head: (s) => general(s, null) },
-  { key: "waiting", when: (s) => othersOut(s).length > 0, hero: () => "live", head: (s) => general(s, null) },
-  { key: (s) => `home-${s.time}`, when: () => true, hero: (s) => (s.time === "night" ? "night" : "live"), head: (s) => general(s, LEAD[s.time]) },
+  { key: "guest", when: (s) => s.viewer === "guest" || !!s.guestOnly, head: HEADLINES.guest },
+  { key: "away-empty", when: (s) => viewerState(s) === "away" && !anyHome(s), head: HEADLINES["away-empty"] },
+  { key: "away-occupied", when: (s) => viewerState(s) === "away", head: HEADLINES["away-occupied"] },
+  { key: "arriving", when: (s) => viewerState(s) === "arriving", head: HEADLINES.arriving },
+  { key: "leaving", when: (s) => viewerState(s) === "left", head: HEADLINES.leaving },
+  { key: "night-waiting", when: (s) => s.time === "night" && othersOut(s).length > 0, head: (s) => general(s, null) },
+  { key: "waiting", when: (s) => othersOut(s).length > 0, head: (s) => general(s, null) },
+  { key: (s) => `home-${s.time}`, when: () => true, head: (s) => general(s, LEAD[s.time]) },
 ];
 
 export function situation(input) {
   const r = RULES.find((x) => x.when(input));
-  return { key: typeof r.key === "function" ? r.key(input) : r.key, headline: r.head(input), heroMode: r.hero(input) };
+  return { key: typeof r.key === "function" ? r.key(input) : r.key, headline: r.head(input) };
 }
 
 export const DEFAULT_CONFIG = {

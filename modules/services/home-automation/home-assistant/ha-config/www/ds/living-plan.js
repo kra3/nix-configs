@@ -1,6 +1,6 @@
-import { sheet } from "./tokens.js?v=11";
-import { esc } from "./dom.js?v=11";
-import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=11";
+import { sheet } from "./tokens.js?v=12";
+import { esc } from "./dom.js?v=12";
+import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=12";
 
 const rad = Math.PI / 180;
 const MX = 44;
@@ -77,7 +77,7 @@ export function livingHtml(m, cfg, hass, now = new Date()) {
   }
   const openings = m.rooms.flatMap((r) => r.badges.filter((b) => b.pos && b.kind === "opening"));
   const beams = known
-    ? openings
+    ? [...openings, ...(cfg.windows || []).map((pos) => ({ pos, icon: "window" }))]
         .filter((b) => b.pos[1] < 20)
         .map((b) => beamPoints(b.pos[0], DOOR_ICON.test(b.icon) ? 36 : 24, az, el))
         .filter(Boolean)

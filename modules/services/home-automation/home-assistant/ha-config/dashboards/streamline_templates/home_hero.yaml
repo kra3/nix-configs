@@ -18,6 +18,8 @@ card:
       armed_custom_bypass:
         hide: true
   weather: weather.forecast_vasudha
+  sun: sun.sun
+  season: sensor.season
   pills:
   - label: Force arm for the night
     icon: mdi:shield-lock

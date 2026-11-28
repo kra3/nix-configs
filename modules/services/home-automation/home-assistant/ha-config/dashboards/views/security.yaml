@@ -1,9 +1,10 @@
-type: sections
+type: custom:command-centre
 title: Security
 path: dash-security
 icon: mdi:shield-home
 max_columns: 4
 sections:
+- !include ../rail.yaml
 - type: grid
   column_span: 4
   cards:
@@ -26,19 +27,6 @@ sections:
       binary_sensor.dining_room_person_occupancy: Dining Room
       binary_sensor.hallway_person_occupancy: Hallway
       image.ranger_duo_fxd_person: Living Room
-    grid_options:
-      columns: full
-- type: grid
-  column_span: 2
-  cards:
-  - type: heading
-    heading: Floor plan
-    icon: mdi:floor-plan
-    heading_style: title
-  - type: custom:streamline-card
-    template: floor_plan
-    variables:
-      layer: security
     grid_options:
       columns: full
 - type: grid
@@ -137,6 +125,27 @@ sections:
       mode: camera
     grid_options:
       columns: full
+  - type: custom:streamline-card
+    template: camera_tile
+    variables:
+      camera: camera.ranger_duo_fxd
+      person: binary_sensor.ranger_duo_fxd_person_occupancy
+    grid_options:
+      columns: 4
+  - type: custom:streamline-card
+    template: camera_tile
+    variables:
+      camera: camera.ranger_duo_ptz
+      person: binary_sensor.ranger_duo_ptz_person_occupancy
+    grid_options:
+      columns: 4
+  - type: custom:streamline-card
+    template: camera_tile
+    variables:
+      camera: camera.ranger_uno
+      person: binary_sensor.ranger_uno_person_occupancy
+    grid_options:
+      columns: 4
   - type: custom:popup-tile-card
     entity: camera.ranger_uno
     name: Recent events
@@ -164,6 +173,19 @@ sections:
     grid_options:
       columns: full
 - type: grid
+  column_span: 2
+  cards:
+  - type: heading
+    heading: Floor plan
+    icon: mdi:floor-plan
+    heading_style: title
+  - type: custom:streamline-card
+    template: floor_plan
+    variables:
+      layer: security
+    grid_options:
+      columns: full
+- type: grid
   cards:
   - type: heading
     heading: Locks
@@ -187,6 +209,22 @@ sections:
           - area_name
           features:
           - type: lock-commands
+          tap_action:
+            action: fire-dom-event
+            cc_detail:
+              type: vertical-stack
+              cards:
+              - type: tile
+                entity: this.entity_id
+                state_content:
+                - state
+                - area_name
+                features:
+                - type: lock-commands
+              - type: logbook
+                hours_to_show: 24
+                target:
+                  entity_id: this.entity_id
       exclude:
       - entity_id: lock.front_front_door_nw
       - entity_id: lock.yale_front_door

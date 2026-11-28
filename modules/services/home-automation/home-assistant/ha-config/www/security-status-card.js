@@ -1,4 +1,6 @@
 // Security status: one sentence for the state of the house, what is open and for how long, and arm controls.
+import { sheet, tokens } from "./ds/tokens.js?v=5";
+import { primitives } from "./ds/primitives.js?v=5";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
@@ -99,7 +101,7 @@ function secModel(states, areaOf, now, cfg) {
 
 function secHtml(m, showDead) {
   const chip = (cls, icon, label, extra, attrs) =>
-    `<button class="chip ${cls}" ${attrs}><ha-icon icon="${icon}"></ha-icon><span class="lbl">${esc(label)}</span>${extra ? `<span class="detail">${esc(extra)}</span>` : ""}</button>`;
+    `<button class="chip chip--tint ${cls}" ${attrs}><ha-icon icon="${icon}"></ha-icon><span class="lbl">${esc(label)}</span>${extra ? `<span class="detail">${esc(extra)}</span>` : ""}</button>`;
   const chips = [
     ...m.people.map((p) => chip("bad pulse", "mdi:walk", "Person", p.area, `data-act="more" data-id="${esc(p.id)}"`)),
     ...m.open.map((o) => chip(m.armed ? "bad" : "amber", "mdi:door-open", o.name, [o.area, ago(o.since, m.now)].filter(Boolean).join(" · "), `data-act="more" data-id="${esc(o.id)}"`)),
@@ -123,39 +125,40 @@ const STYLE = `
   :host { display: block; }
   ha-card { overflow: hidden; }
   .card { padding: 14px 16px; --c: var(--secondary-text-color); border-left: 4px solid var(--c); }
-  .card.good { --c: var(--success-color, #4caf50); }
-  .card.warn { --c: #ffb300; }
-  .card.bad { --c: var(--error-color, #f44336); }
+  .card.good { --c: var(--success-color); }
+  .card.warn { --c: var(--warning-color); }
+  .card.bad { --c: var(--error-color); }
   .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .lead { --mdc-icon-size: 30px; color: var(--c); }
   .txt { flex: 1; min-width: 180px; }
   .title { font-size: 20px; font-weight: 700; color: var(--primary-text-color); }
   .sub { font-size: 13px; color: var(--secondary-text-color); margin-top: 2px; }
   .arm { display: flex; gap: 8px; }
-  .btn { font: inherit; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--primary-text-color); background: var(--secondary-background-color); }
+  .btn { font: var(--ds-label); border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: var(--ds-touch); padding: 0 var(--ds-space-4); border-radius: 999px; touch-action: manipulation; color: var(--primary-text-color); background: var(--secondary-background-color); }
   .btn ha-icon { --mdc-icon-size: 18px; }
   .btn.on { background: color-mix(in srgb, var(--c) 28%, transparent); color: var(--c); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .chip { max-width: 100%; font: inherit; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; --k: var(--secondary-text-color); color: var(--k); background: color-mix(in srgb, var(--k) 16%, transparent); text-align: left; }
+  .chip { max-width: 100%; border: 0; cursor: pointer; min-height: var(--ds-touch); padding-inline: var(--ds-space-3); text-align: left; touch-action: manipulation; --tint: var(--secondary-text-color); }
   .chip ha-icon { --mdc-icon-size: 18px; }
-  .chip.amber { --k: #ffb300; }
-  .chip.warn { --k: #ffb300; }
-  .chip.bad { --k: var(--error-color, #f44336); }
-  .chip.info { cursor: default; }
+  .chip.amber, .chip.warn { --tint: var(--warning-color); }
+  .chip.bad { --tint: var(--error-color); }
+  .chip.info { cursor: default; min-height: 28px; }
   .chip.pulse { animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
   .lbl { white-space: nowrap; }
   .detail { font-weight: 500; opacity: 0.8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dead { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; }
-  .link { font: inherit; border: 0; padding: 0; background: none; cursor: pointer; color: var(--secondary-text-color); text-decoration: underline; }
+  .dead { display: flex; flex-wrap: wrap; gap: 0 var(--ds-space-4); margin-top: 10px; font-size: 12px; }
+  .link { font: inherit; border: 0; padding: var(--ds-space-3) 0; background: none; cursor: pointer; color: var(--secondary-text-color); text-decoration: underline; }
 `;
+
+const own = sheet(STYLE);
 
 class SecurityStatusCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
     this._html = "";
     this._showDead = false;
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
   }
 
   getCardSize() {
@@ -185,7 +188,7 @@ class SecurityStatusCard extends HTMLElement {
     const html = secHtml(this._model, this._showDead);
     if (html === this._html) return;
     this._html = html;
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
+    this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
     for (const el of this.shadowRoot.querySelectorAll("[data-act]")) el.addEventListener("click", () => this._tap(el));
   }
 
@@ -211,16 +214,16 @@ class SecurityStatusCard extends HTMLElement {
       const st = document.createElement("style");
       st.id = "ssc-style";
       st.textContent = `
-        .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
-        .ssc-sheet { width: min(420px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
+        .ssc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, black 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .ssc-sheet { width: min(420px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color); border-radius: 16px; padding: 8px 8px 12px; box-sizing: border-box; }
         .ssc-head { display: flex; justify-content: flex-end; }
         .ssc-force { padding: 4px 16px 8px; display: grid; gap: 12px; }
         .ssc-force h3 { margin: 0; font-size: 18px; }
         .ssc-force p { margin: 0; color: var(--secondary-text-color); font-size: 14px; }
         .ssc-force input { font-size: 22px; letter-spacing: 6px; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--divider-color); background: transparent; color: var(--primary-text-color); }
         .ssc-force .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .ssc-force button { padding: 12px; border-radius: 10px; border: 0; font-size: 15px; cursor: pointer; background: var(--primary-color); color: var(--text-primary-color, #fff); }
-        .ssc-force .err { color: var(--error-color, #db4437); min-height: 1em; }
+        .ssc-force button { padding: 12px; border-radius: 10px; border: 0; font-size: 15px; cursor: pointer; background: var(--primary-color); color: var(--text-primary-color); }
+        .ssc-force .err { color: var(--error-color); min-height: 1em; }
         .ssc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
       document.head.appendChild(st);
     }

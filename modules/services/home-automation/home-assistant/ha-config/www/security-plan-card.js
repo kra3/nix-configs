@@ -1,4 +1,6 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
+import { sheet, tokens } from "./ds/tokens.js?v=5";
+import { primitives } from "./ds/primitives.js?v=5";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
@@ -118,45 +120,47 @@ const STYLE = `
   .room { position: absolute; box-sizing: border-box; border: 2px solid var(--divider-color); background: var(--secondary-background-color); border-radius: 4px; padding: 3px 5px; overflow: hidden; container: room / inline-size; }
   .plan.img::before { content: ""; position: absolute; inset: 0; background: var(--secondary-text-color); opacity: 0.6; -webkit-mask: var(--img) center / 100% 100% no-repeat; mask: var(--img) center / 100% 100% no-repeat; }
   .plan.img .room { border: 0; background: transparent; border-radius: 0; }
-  .plan.img .room.lit { background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, #ffcf6b calc(var(--glow) + 8%), transparent), color-mix(in srgb, #ffcf6b var(--glow), transparent)); }
+  .plan.img .room.lit { background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--state-light-active-color) calc(var(--glow) + 8%), transparent), color-mix(in srgb, var(--state-light-active-color) var(--glow), transparent)); }
   .plan.img .room.tog { cursor: pointer; }
   .plan.img .room.occ .nm { color: var(--primary-color); }
   .bulb { line-height: 0; color: var(--secondary-text-color); }
-  .bulb.on { color: #ffb300; }
+  .bulb.on { color: var(--warning-color); }
   .bulb ha-icon { --mdc-icon-size: 18px; }
   .sw { display: inline-flex; gap: 2px; padding: 2px; margin-bottom: 8px; border-radius: 999px; background: var(--secondary-background-color); }
-  .sw button { display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 4px 12px; border-radius: 999px; font-size: 12px; cursor: pointer; background: transparent; color: var(--secondary-text-color); }
-  .sw button.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .sw button { display: inline-flex; align-items: center; gap: 4px; border: 0; min-height: var(--ds-touch); padding: 4px var(--ds-space-4); touch-action: manipulation; border-radius: 999px; font-size: 12px; cursor: pointer; background: transparent; color: var(--secondary-text-color); }
+  .sw button.on { background: var(--primary-color); color: var(--text-primary-color); }
   .sw ha-icon { --mdc-icon-size: 16px; }
   .room.out { background: transparent; border-style: dashed; opacity: 0.8; }
   .room.occ { background: color-mix(in srgb, var(--primary-color) 20%, var(--secondary-background-color)); }
-  .room.open { border-color: #ffb300; }
-  .room.alert { border-color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 14%, var(--secondary-background-color)); }
-  .b.seen { box-shadow: 0 0 0 2px var(--error-color, #f44336); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
-  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--error-color, #f44336) 40%, transparent); } }
+  .room.open { border-color: var(--warning-color); }
+  .room.alert { border-color: var(--error-color); background: color-mix(in srgb, var(--error-color) 14%, var(--secondary-background-color)); }
+  .b.seen { box-shadow: 0 0 0 2px var(--error-color); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--error-color) 40%, transparent); } }
   .nm { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dot { display: inline-block; width: 9px; height: 9px; margin-left: 5px; border-radius: 50%; background: var(--primary-color); animation: beat 2s ease-in-out infinite; }
   @keyframes beat { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 30%, transparent); } }
   .bs { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
-  .b { border: 0; padding: 2px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--secondary-text-color); line-height: 0; }
+  .b { position: relative; border: 0; padding: 2px; border-radius: 6px; cursor: pointer; background: transparent; color: var(--secondary-text-color); line-height: 0; }
   .b ha-icon { --mdc-icon-size: 20px; }
-  .b.open { color: #ffb300; background: color-mix(in srgb, #ffb300 18%, transparent); }
-  .b.alert { color: var(--error-color, #f44336); background: color-mix(in srgb, var(--error-color, #f44336) 18%, transparent); }
+  .b::after { content: ""; position: absolute; inset: calc((100% - var(--ds-touch)) / 2); }
+  .b:focus-visible, .sw button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+  .b.open { color: var(--warning-color); background: color-mix(in srgb, var(--warning-color) 18%, transparent); }
+  .b.alert { color: var(--error-color); background: color-mix(in srgb, var(--error-color) 18%, transparent); }
   .b.cam { color: var(--primary-color); }
-  .b.heard { outline: 2px dashed var(--error-color, #f44336); outline-offset: 1px; border-radius: 50%; }
+  .b.heard { outline: 2px dashed var(--error-color); outline-offset: 1px; border-radius: 50%; }
   .b.dead { opacity: 0.45; }
   .b.w { position: absolute; transform: translate(-50%, -50%); z-index: 1; background: var(--card-background-color); border-radius: 50%; }
   .b.w.ok { opacity: 0.6; }
-  .b.w.open { background: #ffb300; color: #1c1c1c; }
-  .b.w.alert { background: var(--error-color, #f44336); color: #fff; }
+  .b.w.open { background: var(--warning-color); color: var(--card-background-color); }
+  .b.w.alert { background: var(--error-color); color: var(--text-primary-color); }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 11px; color: var(--secondary-text-color); }
   .legend .k { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; }
   .k.occ { background: var(--primary-color); border-radius: 50%; width: 7px; height: 7px; margin: 0 7px 0 1.5px; }
-  .k.open { background: #ffb300; border-radius: 50%; }
-  .k.alert { background: var(--error-color, #f44336); border-radius: 50%; }
-  .k.lit { background: color-mix(in srgb, #ffcf6b 45%, transparent); }
+  .k.open { background: var(--warning-color); border-radius: 50%; }
+  .k.alert { background: var(--error-color); border-radius: 50%; }
+  .k.lit { background: color-mix(in srgb, var(--state-light-active-color) 45%, transparent); }
   .k.cam { background: var(--primary-color); border-radius: 50%; }
-  .k.heard { border: 2px dashed var(--error-color, #f44336); border-radius: 50%; width: 6px; height: 6px; }
+  .k.heard { border: 2px dashed var(--error-color); border-radius: 50%; width: 6px; height: 6px; }
   @container plan (max-width: 560px) {
     .nm { font-size: 9px; }
     .room { padding: 2px 3px; }
@@ -167,11 +171,13 @@ const STYLE = `
   @container room (max-width: 34px) { .nm { display: none; } .b ha-icon { --mdc-icon-size: 14px; } }
 `;
 
+const own = sheet(STYLE);
+
 class SecurityPlanCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
     this._html = "";
-    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" }).adoptedStyleSheets = [tokens, primitives, own];
   }
 
   getCardSize() {
@@ -196,14 +202,18 @@ class SecurityPlanCard extends HTMLElement {
       const st = document.createElement("style");
       st.id = "spc-style";
       st.textContent = `
-        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
-        .spc-sheet { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color, #1c1c1c); border-radius: 16px; padding: 8px; box-sizing: border-box; }
+        .spc-overlay { position: fixed; inset: 0; z-index: 9; background: color-mix(in srgb, black 60%, transparent); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .spc-sheet { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--card-background-color); border-radius: 16px; padding: 8px; box-sizing: border-box; }
         .spc-head { display: flex; justify-content: flex-end; }
         .spc-close { background: none; border: 0; color: var(--secondary-text-color); font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 10px; }`;
       document.head.appendChild(st);
     }
+    const detail = { ...base, type: "custom:advanced-camera-card", cameras, view: { ...(base.view || {}), default: "live" } };
+    const drill = new CustomEvent("ll-custom", { detail: { action: "fire-dom-event", cc_detail: detail }, bubbles: true, composed: true, cancelable: true });
+    this.dispatchEvent(drill);
+    if (drill.defaultPrevented) return;
     const helpers = await window.loadCardHelpers();
-    const card = await helpers.createCardElement({ ...base, type: "custom:advanced-camera-card", cameras, view: { ...(base.view || {}), default: "live" } });
+    const card = await helpers.createCardElement(detail);
     card.hass = this._hass;
     const ov = document.createElement("div");
     ov.className = "spc-overlay";
@@ -234,7 +244,7 @@ class SecurityPlanCard extends HTMLElement {
     const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${html}</ha-card>`;
+    this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
     const more = (entityId) => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
     for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
     for (const el of this.shadowRoot.querySelectorAll(".sw button")) {

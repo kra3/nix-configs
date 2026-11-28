@@ -1,0 +1,48 @@
+default:
+- camera: ""
+- person: ""
+card:
+  type: tile
+  entity: "[[camera]]"
+  state_content:
+  - state
+  tap_action:
+    action: fire-dom-event
+    cc_detail:
+      type: custom:advanced-camera-card
+      cameras:
+      - camera_entity: "[[camera]]"
+        live_provider: go2rtc
+        triggers:
+          entities:
+          - "[[person]]"
+          reviews:
+            severities:
+            - high
+      view:
+        default: live
+        camera_select: current
+      menu:
+        buttons:
+          microphone:
+            enabled: true
+          clips:
+            enabled: true
+          reviews:
+            enabled: true
+          ptz_controls:
+            enabled: true
+          ptz_home:
+            enabled: true
+          screenshot:
+            enabled: true
+          download:
+            enabled: false
+          folders:
+            enabled: false
+          gallery:
+            enabled: false
+          camera_ui:
+            enabled: false
+      status_bar:
+        style: overlay

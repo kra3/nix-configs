@@ -47,10 +47,6 @@ const clauses = {
     const l = arr(s.lightsOn);
     return l && l.length ? `lights on in ${list(l)}` : null;
   },
-  attention: (s) => {
-    const a = arr(s.attention);
-    return a && a.length ? `${list(a.slice(0, 2))}${a.length > 2 ? ` and ${a.length - 2} more` : ""} need${a.length === 1 ? "s" : ""} attention` : null;
-  },
   media: (s) => (s.media && s.media.name ? (s.media.title ? `${s.media.title} is playing on ${s.media.name}` : `${s.media.name} is playing`) : null),
   laundry: (s) => {
     const l = s.laundry;
@@ -72,7 +68,7 @@ const allOff = (s) => arr(s.lightsOn) && arr(s.openings) && !s.lightsOn.length &
 const HEADLINES = {
   guest: (s) => sentence(["Make yourself at home", clauses.lights(s)]),
   "away-empty": (s) =>
-    sentence(["Home is empty", clauses.openings(s), clauses.lights(s), allOff(s) ? "everything is off" : null, clauses.attention(s)]),
+    sentence(["Home is empty", clauses.openings(s), clauses.lights(s), allOff(s) ? "everything is off" : null]),
   "away-occupied": (s) => {
     const n = homeNames(s);
     return sentence([`${list(n)} ${n.length > 1 ? "are" : "is"} home`, clauses.lights(s), clauses.media(s), clauses.openings(s)]);
@@ -90,7 +86,7 @@ const HEADLINES = {
 };
 
 const general = (s, lead) =>
-  sentence([lead, clauses.others(s), clauses.laundry(s), clauses.media(s), clauses.openings(s), clauses.lights(s), clauses.attention(s)]);
+  sentence([lead, clauses.others(s), clauses.laundry(s), clauses.media(s), clauses.openings(s), clauses.lights(s)]);
 
 const LEAD = { morning: "Good morning", day: null, evening: "Good evening", night: "All quiet" };
 

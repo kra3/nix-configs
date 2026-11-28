@@ -1,0 +1,6 @@
+streamline_templates: !include_dir_named streamline_templates/
+views:
+- !include admin/system.yaml
+- !include admin/media.yaml
+- !include admin/maintenance.yaml
+- !include admin/tuning.yaml

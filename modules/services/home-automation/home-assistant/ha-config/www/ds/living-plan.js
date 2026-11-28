@@ -125,9 +125,15 @@ export const livingSheet = sheet(`
   .mk { position: absolute; width: 10px; height: 10px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; background: var(--secondary-text-color); opacity: 0.5; }
   .mk.open { background: var(--warning-color); opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-color) 35%, transparent); }
   .mk.alert { background: var(--error-color); opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--error-color) 35%, transparent); }
-  .stage .nm { display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.15; }
+  .stage .plan.img .room.lit { background: none; }
+  .stage .room::before { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 300ms ease;
+    background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--state-light-active-color) calc(var(--glow, 10%) + 8%), transparent), color-mix(in srgb, var(--state-light-active-color) var(--glow, 10%), transparent)); }
+  .stage .room.lit::before { opacity: 1; }
+  .stage .nm { position: relative; display: block; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.15; }
   .stage .nm .s { display: none; }
+  .stage .dot { animation: ring 3.2s ease-out infinite; }
+  @keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 35%, transparent); } to { box-shadow: 0 0 0 6px transparent; } }
   @container room (max-width: 40px) { .stage .nm { font-size: 7px; } }
   @container stage (max-width: 560px) { .stage .room { padding: 2px 1px 2px 2px; } .stage .nm .f { display: none; } .stage .nm .s { display: inline; } }
-  @media (prefers-reduced-motion: reduce) { .beams, .stage .dot { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .beams, .stage .dot { animation: none; } .stage .room::before { transition: none; } }
 `);

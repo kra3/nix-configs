@@ -245,8 +245,16 @@ class SecurityPlanCard extends HTMLElement {
     const html = living ? livingHtml(model, cfg, this._hass) : planHtml(model, cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
+    const was = new Map([...this.shadowRoot.querySelectorAll(".room[data-room]")].map((el) => [el.dataset.room, el.classList.contains("lit")]));
     this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
     const rooms = [...this.shadowRoot.querySelectorAll(".room[data-room]")];
+    for (const el of rooms) {
+      const flip = was.get(el.dataset.room);
+      if (flip !== undefined && flip !== el.classList.contains("lit")) {
+        el.classList.toggle("lit", flip);
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.toggle("lit", !flip)));
+      }
+    }
     const open = (el) => {
       const r = model.rooms.find((x) => x.name === el.dataset.room);
       const variables = { name: r.name, ...(r.lights[0] ? { light: r.lights[0] } : {}) };

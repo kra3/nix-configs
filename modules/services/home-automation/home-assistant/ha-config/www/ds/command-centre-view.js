@@ -36,6 +36,9 @@ const own = sheet(`
 .close:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 @keyframes ds-in { from { opacity: 0; transform: translateY(16px); } }
 @keyframes ds-in-x { from { opacity: 0; transform: translateX(16px); } }
+@keyframes ds-sheet-in { from { transform: translateY(100%); } }
+:host([data-mode="narrow"]) .pane { animation: ds-sheet-in 300ms cubic-bezier(.34, 1.45, .64, 1); }
+@media (prefers-reduced-motion: reduce) { .pane { animation: none !important; } }
 `);
 
 class CommandCentre extends HTMLElement {

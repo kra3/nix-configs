@@ -6,9 +6,9 @@ import { roomEntities } from "./areas.js?v=14";
 const extra = sheet(`
 .sec + .sec { margin-top: var(--ds-space-3); }
 .ctl { display: flex; align-items: center; border-top: 1px solid var(--divider-color); }
-.ctl:first-of-type { border-top: 0; }
+.tile__label + .ctl { border-top: 0; }
 .ctl .row { flex: 1; min-width: 0; border-top: 0; }
-.ctl .chip { border: 0; cursor: pointer; min-height: var(--ds-touch); touch-action: manipulation; }
+.ctl .chip { min-width: 56px; justify-content: center; margin-left: var(--ds-space-2); border: 0; cursor: pointer; min-height: var(--ds-touch); touch-action: manipulation; }
 .ctl .chip[aria-pressed=true] { background: color-mix(in srgb, var(--state-light-active-color, var(--warning-color)) 28%, var(--card-background-color)); }
 `);
 
@@ -78,8 +78,8 @@ class AreaRoomCard extends HTMLElement {
   _ctl(id, n, v, state) {
     const wrap = document.createElement("div");
     wrap.className = "ctl";
-    wrap.append(this._info(id, n, v));
     const dom = id.split(".")[0];
+    wrap.append(this._info(id, n, TOGGLE.includes(dom) ? "" : v));
     if (TOGGLE.includes(dom)) {
       const t = document.createElement("button");
       t.className = "chip";

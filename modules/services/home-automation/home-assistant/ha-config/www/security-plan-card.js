@@ -2,6 +2,7 @@
 import { sheet, tokens } from "./ds/tokens.js?v=10";
 import { primitives } from "./ds/primitives.js?v=10";
 import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=10";
+import { livingHtml, livingSheet } from "./ds/living-plan.js?v=10";
 
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];
@@ -177,7 +178,7 @@ class SecurityPlanCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
     this._html = "";
-    if (!this.shadowRoot) mount(this, tokens, primitives, own);
+    if (!this.shadowRoot) mount(this, tokens, primitives, own, livingSheet);
   }
 
   getCardSize() {
@@ -239,10 +240,19 @@ class SecurityPlanCard extends HTMLElement {
   _render() {
     const cfg = this._config;
     const layer = this._layer || cfg.layer || "security";
-    const html = planHtml(planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg), cfg.size || [730, 620], cfg.image, layer);
+    const model = planModel(this._hass.states, (id) => areaFor(this._hass, id, cfg), cfg);
+    const living = layer === "living";
+    const html = living ? livingHtml(model, cfg, this._hass) : planHtml(model, cfg.size || [730, 620], cfg.image, layer);
     if (html === this._html) return;
     this._html = html;
     this.shadowRoot.innerHTML = `<ha-card>${html}</ha-card>`;
+    for (const el of this.shadowRoot.querySelectorAll(".room[data-room]")) {
+      el.addEventListener("click", () => {
+        const r = model.rooms.find((x) => x.name === el.dataset.room);
+        const variables = { name: r.name, ...(r.lights[0] ? { light: r.lights[0] } : {}) };
+        if (!drill(this, { type: "custom:streamline-card", template: "room_detail", variables }) && r.lights[0]) moreInfo(this, r.lights[0]);
+      });
+    }
     const more = (entityId) => moreInfo(this, entityId);
     for (const el of this.shadowRoot.querySelectorAll(".b")) el.addEventListener("click", () => (el.dataset.id.startsWith("camera.") && cfg.camera_card ? this._openCamera(el.dataset.id) : more(el.dataset.id)));
     for (const el of this.shadowRoot.querySelectorAll(".sw button")) {

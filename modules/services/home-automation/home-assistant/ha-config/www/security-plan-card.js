@@ -69,7 +69,7 @@ function planModel(states, areaOf, cfg) {
     const on = lights.filter((s) => s.state === "on");
     const glow = on.length ? Math.max(...on.map((s) => (s.attributes.brightness == null ? 255 : s.attributes.brightness))) / 255 : 0;
     const posOf = cfg.positions || {};
-    for (const b of badges) if (posOf[b.id]) b.pos = posOf[b.id];
+    for (const b of badges) if (posOf[b.id]) (b.pos = posOf[b.id]), (b.swing = (cfg.swing || {})[b.id]);
     const status = badges.some((b) => b.tone === "alert") ? "alert" : badges.some((b) => b.tone === "open") ? "open" : occupied ? "occ" : "";
     if (person) for (const b of badges) if (b.kind === "camera") b.seen = true;
     return { name: r.name || [...areas][0] || "", short: r.short, rect: r.rect, outdoor: !!r.outdoor, badges, occupied, person, status, lights: lights.map((s) => s.entity_id), lit: on.length, glow };

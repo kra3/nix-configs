@@ -116,14 +116,3 @@ card:
         mode: range
         decimals: 0
         unit: auto
-  - type: custom:mushroom-template-card
-    primary: Why is it on?
-    icon: mdi:head-lightbulb-outline
-    fill_container: true
-    tap_action:
-      action: fire-dom-event
-      cc_detail:
-        type: custom:streamline-card
-        template: light_logic
-        variables:
-          room: "[[name]]"

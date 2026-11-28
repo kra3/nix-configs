@@ -153,6 +153,9 @@ sections:
       action: navigate
       navigation_path: /dashboard-home/system-health
     visibility:
+    - condition: user
+      users:
+      - a1d4401b8b714ebb83f07c5316ab399c
     - condition: or
       conditions:
       - condition: numeric_state

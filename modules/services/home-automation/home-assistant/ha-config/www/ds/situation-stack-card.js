@@ -6,7 +6,7 @@ import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=10";
 const own = sheet(`
 :host { display: block; }
 :host([hidden]) { display: none; }
-.head { margin: 0 0 var(--ds-space-3); font: 600 20px/1.3 var(--ds-font); color: var(--primary-text-color);
+.head { margin: 0 0 var(--ds-space-3); font: 600 clamp(17px, 2vw + 9px, 22px)/1.3 var(--ds-font); color: var(--primary-text-color);
   transition: opacity var(--ds-motion-state) linear; text-wrap: balance; }
 .head.fade { opacity: 0; }
 .head[hidden] { display: none; }

@@ -18,7 +18,20 @@ card:
       armed_custom_bypass:
         hide: true
   weather: weather.forecast_vasudha
+  weather_detail:
+    type: weather-forecast
+    entity: weather.forecast_vasudha
+    forecast_type: daily
+    show_current: true
+    show_forecast: true
+    secondary_info_attribute: wind_speed
+    forecast_slots: 5
+    tap_action:
+      action: more-info
   sun: sun.sun
+  sun_detail:
+    type: custom:horizon-card
+  moon: sensor.moon_phase
   season: sensor.season
   pills:
   - label: Force arm for the night

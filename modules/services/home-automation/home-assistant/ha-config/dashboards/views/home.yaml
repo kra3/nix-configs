@@ -342,26 +342,6 @@ sections:
       name: Bedroom nap
       icon: mdi:power-sleep
     - type: heading
-      heading: Outside
-      icon: mdi:weather-partly-cloudy
-      heading_style: title
-    - &horizon
-      type: custom:horizon-card
-      grid_options:
-        columns: full
-    - &weather
-      type: weather-forecast
-      entity: weather.forecast_vasudha
-      forecast_type: daily
-      show_current: true
-      show_forecast: true
-      secondary_info_attribute: wind_speed
-      forecast_slots: 5
-      tap_action:
-        action: more-info
-      grid_options:
-        columns: full
-    - type: heading
       heading: Rooms
       icon: mdi:floor-plan
       heading_style: title
@@ -1359,8 +1339,6 @@ sections:
         - condition: user
           users:
           - 6edcc5a09c3144d684077ee362e7394a
-      - *weather
-      - *horizon
       - *cal_today
       - *laundry_machines
       - *m_tv
@@ -1373,8 +1351,6 @@ sections:
       - *room_rows
       - *alarmo
       home-day:
-      - *horizon
-      - *weather
       - *laundry_machines
       - *m_tv
       - *m_theater
@@ -1440,12 +1416,16 @@ badges:
   entity: person.anjalipc
   picture: "{{ state_attr('person.anjalipc', 'entity_picture') }}"
   label: Anjali
+  visibility: &phone_only
+  - condition: screen
+    media_query: "(max-width: 819px)"
   content: >-
     {% set e = states('sensor.anjali_eta_home') %}{% set s = states('person.anjalipc') %}{{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
 - type: custom:mushroom-template-badge
   entity: person.arun_karunagath
   picture: "{{ state_attr('person.arun_karunagath', 'entity_picture') }}"
   label: Arun
+  visibility: *phone_only
   content: >-
     {% set e = states('sensor.arun_eta_home') %}{% set s = states('person.arun_karunagath') %}{{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
 - type: entity
@@ -1474,10 +1454,4 @@ badges:
   - condition: state
     entity: sun.sun
     state: below_horizon
-- type: entity
-  show_name: false
-  show_state: true
-  show_icon: true
-  entity: sensor.moon_phase
-  color: ''
 cards: []

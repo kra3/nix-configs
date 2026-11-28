@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=14";
-import { primitives } from "./primitives.js?v=14";
-import { moreInfo, mount, rowButton, rows as own } from "./dom.js?v=14";
-import { roomEntities } from "./areas.js?v=14";
+import { sheet, tokens } from "./tokens.js?v=15";
+import { primitives } from "./primitives.js?v=15";
+import { moreInfo, mount, rowButton, rows as own } from "./dom.js?v=15";
+import { roomEntities } from "./areas.js?v=15";
 
 const extra = sheet(`
 .sec + .sec { margin-top: var(--ds-space-3); }

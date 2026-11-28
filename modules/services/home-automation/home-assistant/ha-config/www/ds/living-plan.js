@@ -1,6 +1,6 @@
-import { sheet } from "./tokens.js?v=14";
-import { esc } from "./dom.js?v=14";
-import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=14";
+import { sheet } from "./tokens.js?v=15";
+import { esc } from "./dom.js?v=15";
+import { moonIllumination, moonPosition, planAngle } from "./astro.js?v=15";
 
 const rad = Math.PI / 180;
 const MX = 44;

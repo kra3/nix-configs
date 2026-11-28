@@ -1,4 +1,4 @@
-import { roomEntities } from "./areas.js?v=14";
+import { roomEntities } from "./areas.js?v=15";
 
 const HOUR = 36e5;
 

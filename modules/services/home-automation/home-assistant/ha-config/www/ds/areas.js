@@ -27,3 +27,33 @@ export function roomEntities(hass, areaId, { exclude = [] } = {}) {
   for (const list of Object.values(out)) list.sort((a, b) => nameOf(hass, a).localeCompare(nameOf(hass, b)) || a.localeCompare(b));
   return out;
 }
+
+const TOGGLE = ["light", "fan", "cover"];
+const CONTROLS = ["lights", "switches", "fans", "covers", "media", "locks", "climate"];
+const SENSORS = ["temperature", "humidity", "illuminance", "co2"];
+const OPENING = { on: "Open", off: "Closed" };
+const ONOFF = { on: "On", off: "Off" };
+
+const unit = (s) => (s.attributes.unit_of_measurement ? ` ${s.attributes.unit_of_measurement}` : "");
+
+// Switches can cut power, so area-discovered ones are read-only rows.
+export function areaRows(hass, areaId, exclude = []) {
+  const r = roomEntities(hass, areaId, { exclude });
+  const st = (id) => hass.states[id];
+  const fmt = (id, map = {}) => (hass.formatEntityState ? hass.formatEntityState(st(id)) : map[st(id).state] || `${st(id).state}${unit(st(id))}`);
+  const power = (id) => {
+    const dev = hass.entities[id]?.device_id;
+    const p = dev && Object.keys(hass.entities).find((o) => o !== id && hass.entities[o].device_id === dev && st(o)?.attributes.device_class === "power" && !isNaN(st(o).state));
+    return p ? ` \u00b7 ${fmt(p)}` : "";
+  };
+  const row = (id, extra) => ({ id, name: st(id).attributes.friendly_name || id, ...extra });
+  const controls = CONTROLS.flatMap((k) => r[k]).map((id) => {
+    const dom = id.split(".")[0];
+    if (TOGGLE.includes(dom)) return row(id, { text: "", toggle: dom });
+    if (dom === "switch") return row(id, { text: fmt(id, ONOFF) + power(id), readonly: true });
+    return row(id, { text: fmt(id) });
+  });
+  const openings = r.openings.map((id) => row(id, { text: fmt(id, OPENING) }));
+  const sensors = SENSORS.flatMap((k) => r[k]).map((id) => row(id, { text: fmt(id) }));
+  return { controls, openings, sensors };
+}

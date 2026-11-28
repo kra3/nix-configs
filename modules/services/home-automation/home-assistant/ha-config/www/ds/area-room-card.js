@@ -1,7 +1,7 @@
 import { sheet, tokens } from "./tokens.js?v=15";
 import { primitives } from "./primitives.js?v=15";
 import { moreInfo, mount, rowButton, rows as own } from "./dom.js?v=15";
-import { roomEntities } from "./areas.js?v=15";
+import { areaRows } from "./areas.js?v=15";
 
 const extra = sheet(`
 .sec + .sec { margin-top: var(--ds-space-3); }
@@ -11,11 +11,6 @@ const extra = sheet(`
 .ctl .chip { min-width: 56px; justify-content: center; margin-left: var(--ds-space-2); border: 0; cursor: pointer; min-height: var(--ds-touch); touch-action: manipulation; }
 .ctl .chip[aria-pressed=true] { background: color-mix(in srgb, var(--state-light-active-color, var(--warning-color)) 28%, var(--card-background-color)); }
 `);
-
-const TOGGLE = ["light", "switch", "fan", "cover"];
-const CONTROLS = ["lights", "switches", "fans", "covers", "media", "locks", "climate"];
-const SENSORS = ["temperature", "humidity", "illuminance", "co2"];
-const LABEL = { temperature: "Temperature", humidity: "Humidity", illuminance: "Illuminance", co2: "CO₂" };
 
 const listOf = (v) => (Array.isArray(v) ? v : String(v || "").split(","));
 
@@ -38,20 +33,12 @@ class AreaRoomCard extends HTMLElement {
     const c = this._config;
     if (!c.area) return;
     const exclude = [...listOf(c.explicit), ...listOf(c.exclude)].map((x) => x.trim()).filter(Boolean);
-    const r = roomEntities(h, c.area, { exclude });
-    const fmt = (id) => {
-      const s = h.states[id];
-      return h.formatEntityState ? h.formatEntityState(s) : `${s.state}${s.attributes.unit_of_measurement ? " " + s.attributes.unit_of_measurement : ""}`;
-    };
-    const name = (id) => h.states[id].attributes.friendly_name || id;
-    const ctl = CONTROLS.flatMap((k) => r[k]).map((id) => [id, name(id), fmt(id), h.states[id].state]);
-    const sens = SENSORS.flatMap((k) => r[k].map((id) => [id, `${name(id)}`, fmt(id), LABEL[k]]));
-    const open = r.openings.map((id) => [id, name(id), fmt(id), h.states[id].state]);
-    const key = JSON.stringify([ctl, sens, open]);
+    const { controls: ctl, openings: open, sensors: sens } = areaRows(h, c.area, exclude);
+    this._h = h;
+    const key = JSON.stringify([ctl, sens, open, ctl.map((x) => h.states[x.id].state)]);
     this.hidden = !ctl.length && !sens.length && !open.length;
     if (key === this._key) return;
     this._key = key;
-    this._h = h;
     const area = h.areas?.[c.area]?.name || "";
     const sec = (title, kids) => {
       const d = document.createElement("div");
@@ -63,9 +50,9 @@ class AreaRoomCard extends HTMLElement {
       return d;
     };
     const secs = [];
-    if (ctl.length) secs.push(sec(c.title || (area ? `Also in ${area}` : "Also here"), ctl.map((x) => this._ctl(...x))));
-    if (open.length) secs.push(sec("Doors and windows", open.map(([id, n, v]) => this._info(id, n, v))));
-    if (sens.length) secs.push(sec("Sensors", sens.map(([id, n, v]) => this._info(id, n, v))));
+    if (ctl.length) secs.push(sec(c.title || (area ? `Also in ${area}` : "Also here"), ctl.map((x) => this._ctl(x))));
+    if (open.length) secs.push(sec("Doors and windows", open.map((x) => this._info(x.id, x.name, x.text))));
+    if (sens.length) secs.push(sec("Sensors", sens.map((x) => this._info(x.id, x.name, x.text))));
     this.shadowRoot.querySelector(".tile").replaceChildren(...secs);
   }
 
@@ -75,18 +62,26 @@ class AreaRoomCard extends HTMLElement {
     return b;
   }
 
-  _ctl(id, n, v, state) {
+  _ctl({ id, name, text, toggle, readonly }) {
+    if (readonly) {
+      const d = document.createElement("div");
+      d.className = "row";
+      d.innerHTML = `<span class="row__k"></span><span class="row__v"></span>`;
+      d.firstChild.textContent = name;
+      d.lastChild.textContent = text;
+      return d;
+    }
     const wrap = document.createElement("div");
     wrap.className = "ctl";
-    const dom = id.split(".")[0];
-    wrap.append(this._info(id, n, TOGGLE.includes(dom) ? "" : v));
-    if (TOGGLE.includes(dom)) {
+    wrap.append(this._info(id, name, text));
+    if (toggle) {
+      const on = this._h.states[id].state;
       const t = document.createElement("button");
       t.className = "chip";
-      t.setAttribute("aria-pressed", String(state === "on" || state === "open"));
-      t.setAttribute("aria-label", `Toggle ${n}`);
-      t.textContent = state === "on" || state === "open" ? "On" : "Off";
-      t.addEventListener("click", () => this._h.callService(dom, "toggle", { entity_id: id }));
+      t.setAttribute("aria-pressed", String(on === "on" || on === "open"));
+      t.setAttribute("aria-label", `Toggle ${name}`);
+      t.textContent = on === "on" || on === "open" ? "On" : "Off";
+      t.addEventListener("click", () => this._h.callService(toggle, "toggle", { entity_id: id }));
       wrap.append(t);
     }
     return wrap;

@@ -65,6 +65,8 @@ function pillDetail(states, d) {
   return v == null || IDLE.includes(v) ? "" : String(v);
 }
 
+const WEATHER_TEXT = { partlycloudy: "Partly cloudy", "clear-night": "Clear night", "lightning-rainy": "Thunder and rain", "snowy-rainy": "Sleet", "windy-variant": "Windy" };
+
 function heroModel(states, cfg, userId) {
   const val = (id) => (id && states[id] ? states[id].state : "");
   const presence = val(cfg.presence);
@@ -91,7 +93,7 @@ function heroModel(states, cfg, userId) {
   const dusk = sun && sun.state === "above_horizon" && new Date(sun.attributes.next_dusk);
   const season = val(cfg.season);
   const info = [
-    w && !IDLE.includes(w.state) && titleCase(w.state),
+    w && !IDLE.includes(w.state) && (WEATHER_TEXT[w.state] || titleCase(w.state.replace(/-/g, " "))),
     dusk && !isNaN(dusk) && `Dusk ${dusk.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`,
     !IDLE.includes(season) && titleCase(season),
   ].filter(Boolean);

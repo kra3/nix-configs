@@ -26,7 +26,7 @@ cards:
 - type: custom:mushroom-template-card
   entity: weather.forecast_vasudha
   primary: >-
-    {{ states('weather.forecast_vasudha') | replace('-', ' ') | capitalize }}{{ ' · ' ~ (state_attr('weather.forecast_vasudha', 'temperature') | round(0) | int) ~ '°' if state_attr('weather.forecast_vasudha', 'temperature') is number else '' }}
+    {%- set s = states('weather.forecast_vasudha') -%}{{ {'partlycloudy': 'Partly cloudy', 'clear-night': 'Clear night', 'lightning-rainy': 'Thunder and rain', 'snowy-rainy': 'Sleet', 'windy-variant': 'Windy'}.get(s, s | replace('-', ' ') | capitalize) }}{{ ' · ' ~ (state_attr('weather.forecast_vasudha', 'temperature') | round(0) | int) ~ '°' if state_attr('weather.forecast_vasudha', 'temperature') is number else '' }}
   secondary: "{{ states('sensor.next_rain') }}"
   tap_action:
     action: fire-dom-event

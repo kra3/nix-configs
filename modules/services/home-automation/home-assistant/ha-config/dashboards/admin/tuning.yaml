@@ -4,7 +4,6 @@ path: tuning
 icon: mdi:tune
 max_columns: 3
 sections:
-- !include ../rail.yaml
 - type: grid
   column_span: 1
   cards:

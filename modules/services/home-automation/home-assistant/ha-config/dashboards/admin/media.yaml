@@ -4,7 +4,6 @@ path: media
 icon: mdi:download-network
 max_columns: 2
 sections:
-- !include ../rail.yaml
 - type: grid
   cards:
   - type: heading

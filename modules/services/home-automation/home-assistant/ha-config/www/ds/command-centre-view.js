@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=7";
-import { primitives } from "./primitives.js?v=7";
-import { mount } from "./dom.js?v=7";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=7";
+import { sheet, tokens } from "./tokens.js?v=9";
+import { primitives } from "./primitives.js?v=9";
+import { mount } from "./dom.js?v=9";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=9";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
@@ -9,12 +9,15 @@ const own = sheet(`
 :host([data-mode="wide"][open]) { grid-template-columns: 260px minmax(0, 1fr) 360px; }
 :host([data-mode="narrow"]) { grid-template-columns: minmax(0, 1fr); padding: var(--ds-space-2); }
 [hidden] { display: none !important; }
+.rail > * { min-width: 0; }
 .rail { display: flex; flex-direction: column; gap: var(--ds-gap); min-width: 0; }
 .col { min-width: 0; }
 .badges { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin-bottom: var(--ds-gap); }
+:host([data-mode="narrow"]) .badges { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+:host([data-mode="narrow"]) .badges > * { flex: none; }
 .main { display: grid; grid-auto-flow: dense; grid-auto-rows: 8px; column-gap: var(--ds-gap); row-gap: 0; min-width: 0; }
 .main > * { align-self: start; margin-bottom: var(--ds-gap); }
-:host(:not([data-mode="narrow"])) .rail { position: sticky; top: calc(var(--header-height, 56px) + var(--ds-space-4)); max-height: calc(100vh - var(--header-height, 56px) - 2 * var(--ds-space-4)); overflow: auto; overscroll-behavior: contain; }
+:host(:not([data-mode="narrow"])) .rail { position: sticky; top: calc(var(--header-height, 56px) + var(--ds-space-4)); max-height: calc(100vh - var(--header-height, 56px) - 2 * var(--ds-space-4)); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .pane { background: var(--card-background-color); color: var(--primary-text-color); outline: 0; box-sizing: border-box; overflow: hidden;
   animation: ds-in var(--ds-motion-sheet) var(--ds-ease); }
 :host([data-mode="wide"]) .pane { position: sticky; top: var(--ds-space-4); max-height: calc(100vh - 2 * var(--ds-space-4)); border-radius: var(--ds-radius-tile); }

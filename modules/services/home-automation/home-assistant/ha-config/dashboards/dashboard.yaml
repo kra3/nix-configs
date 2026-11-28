@@ -2,12 +2,12 @@ streamline_templates: !include_dir_named streamline_templates/
 views:
 - !include views/home.yaml
 - !include views/media.yaml
+- !include views/energy.yaml
 - !include views/health-arun.yaml
 - !include views/health-anjali.yaml
+- !include views/system-health.yaml
 - !include views/lights.yaml
 - !include views/security.yaml
 - !include views/climate.yaml
-- !include views/energy.yaml
 - !include views/laundry.yaml
-- !include views/system-health.yaml
 - !include views/maintenance.yaml

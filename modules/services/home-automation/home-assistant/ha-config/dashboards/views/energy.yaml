@@ -12,6 +12,15 @@ sections:
     heading: Now
     icon: mdi:flash
     heading_style: title
+  - type: custom:mushroom-template-card
+    primary: Laundry
+    secondary: "{{ states('sensor.washer_status') }} · {{ states('sensor.dryer_status') }}"
+    icon: mdi:washing-machine
+    tap_action:
+      action: navigate
+      navigation_path: /dashboard-home/dash-laundry
+    grid_options:
+      columns: full
   - type: custom:health-metric-card
     entity: sensor.electricity_price_per_kwh
     name: Price per kWh

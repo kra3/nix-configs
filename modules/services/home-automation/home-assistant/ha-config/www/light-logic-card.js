@@ -1,8 +1,8 @@
 // Explains why each room's light is on or off: outside daylight model, per-room verdict and tunable thresholds.
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=7";
-import { primitives } from "/local/ds/primitives.js?v=7";
-import { esc, mount } from "/local/ds/dom.js?v=7";
+import { sheet, tokens } from "/local/ds/tokens.js?v=9";
+import { primitives } from "/local/ds/primitives.js?v=9";
+import { esc, mount } from "/local/ds/dom.js?v=9";
 
 const own = sheet(`
   :host { display: block; }

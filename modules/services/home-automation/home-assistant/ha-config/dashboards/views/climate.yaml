@@ -1,6 +1,8 @@
 type: custom:command-centre
 title: Climate
 path: dash-climate
+subview: true
+back_path: /dashboard-home/home
 icon: mdi:thermostat
 max_columns: 3
 sections:

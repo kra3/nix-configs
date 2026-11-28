@@ -1,6 +1,8 @@
 type: custom:command-centre
 title: Lights
 path: dash-lights
+subview: true
+back_path: /dashboard-home/home
 icon: mdi:lightbulb-group
 max_columns: 2
 sections:

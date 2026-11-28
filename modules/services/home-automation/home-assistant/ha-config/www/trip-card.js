@@ -131,8 +131,8 @@ class TripCard extends HTMLElement {
   }
 
   _label() {
-    const d = this._config.direction;
-    return d ? `To ${d}` : "Trips";
+    const { direction: d, title } = this._config;
+    return title ? esc(title) : d ? `To ${d}` : "Trips";
   }
 
   _atDest() {

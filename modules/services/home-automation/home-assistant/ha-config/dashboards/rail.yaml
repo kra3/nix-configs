@@ -48,14 +48,16 @@ cards:
 - type: custom:mushroom-chips-card
   alignment: start
   chips:
-  - type: entity
+  - type: template
     entity: person.arun_karunagath
-    use_entity_picture: true
-    content_info: state
-  - type: entity
+    picture: "{{ state_attr('person.arun_karunagath', 'entity_picture') }}"
+    content: >-
+      {% set e = states('sensor.arun_eta_home') %}{% set s = states('person.arun_karunagath') %}Arun · {{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
+  - type: template
     entity: person.anjalipc
-    use_entity_picture: true
-    content_info: state
+    picture: "{{ state_attr('person.anjalipc', 'entity_picture') }}"
+    content: >-
+      {% set e = states('sensor.anjali_eta_home') %}{% set s = states('person.anjalipc') %}Anjali · {{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
   grid_options:
     columns: full
   visibility:

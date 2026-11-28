@@ -1081,6 +1081,7 @@ sections:
         entity: sensor.arun_home_trips
         person: person.arun_karunagath
         direction: home
+        title: Arun → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1094,6 +1095,7 @@ sections:
         entity: sensor.anjali_home_trips
         person: person.anjalipc
         direction: home
+        title: Anjali → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1196,6 +1198,7 @@ sections:
         entity: sensor.arun_home_trips
         person: person.arun_karunagath
         direction: home
+        title: Arun → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1209,6 +1212,7 @@ sections:
         entity: sensor.anjali_home_trips
         person: person.anjalipc
         direction: home
+        title: Anjali → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1247,6 +1251,7 @@ sections:
         entity: sensor.arun_home_trips
         person: person.arun_karunagath
         direction: home
+        title: Arun → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1260,6 +1265,7 @@ sections:
         entity: sensor.anjali_home_trips
         person: person.anjalipc
         direction: home
+        title: Anjali → home
         hide_at: zone.home
         settings:
         - input_select.transit_max_changes
@@ -1329,6 +1335,7 @@ sections:
         entity: sensor.arun_work_trips
         person: person.arun_karunagath
         direction: work
+        title: Arun → work
         hide_at: zone.work
         settings:
         - input_select.transit_max_changes
@@ -1342,6 +1349,7 @@ sections:
         entity: sensor.anjali_work_trips
         person: person.anjalipc
         direction: work
+        title: Anjali → work
         hide_at: zone.work_smil
         settings:
         - input_select.transit_max_changes
@@ -1428,18 +1436,18 @@ sections:
       - *manual
       - *nap
 badges:
-- type: entity
-  show_name: true
-  show_state: true
-  show_icon: true
+- type: custom:mushroom-template-badge
   entity: person.anjalipc
-  color: ''
-- type: entity
-  show_name: true
-  show_state: true
-  show_icon: true
+  picture: "{{ state_attr('person.anjalipc', 'entity_picture') }}"
+  label: Anjali
+  content: >-
+    {% set e = states('sensor.anjali_eta_home') %}{% set s = states('person.anjalipc') %}{{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
+- type: custom:mushroom-template-badge
   entity: person.arun_karunagath
-  color: ''
+  picture: "{{ state_attr('person.arun_karunagath', 'entity_picture') }}"
+  label: Arun
+  content: >-
+    {% set e = states('sensor.arun_eta_home') %}{% set s = states('person.arun_karunagath') %}{{ '≈ ' ~ (e | int) ~ ' min' if s != 'home' and e | is_number else ('Away' if s == 'not_home' else s | title) }}
 - type: entity
   show_name: false
   show_state: true

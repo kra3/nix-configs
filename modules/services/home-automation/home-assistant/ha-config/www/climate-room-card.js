@@ -1,8 +1,8 @@
 // Room climate tile: status-tinted icon, comfort word and readings; tapping asks the dashboard for a detail pane (cc_detail) and falls back to a history popup.
 
-import { tokens } from "/local/ds/tokens.js?v=10";
-import { primitives } from "/local/ds/primitives.js?v=10";
-import { drill, esc, moreInfo, mount } from "/local/ds/dom.js?v=10";
+import { tokens } from "/local/ds/tokens.js?v=11";
+import { primitives } from "/local/ds/primitives.js?v=11";
+import { drill, esc, moreInfo, mount } from "/local/ds/dom.js?v=11";
 
 const STYLE = `
   :host { display: block; }

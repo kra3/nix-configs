@@ -1,7 +1,7 @@
-import { sheet, tokens } from "./tokens.js?v=10";
-import { mount } from "./dom.js?v=10";
-import { pickSet } from "./layout.js?v=10";
-import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=10";
+import { sheet, tokens } from "./tokens.js?v=11";
+import { mount } from "./dom.js?v=11";
+import { pickSet } from "./layout.js?v=11";
+import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=11";
 
 const own = sheet(`
 :host { display: block; }

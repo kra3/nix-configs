@@ -1,8 +1,8 @@
 // Floor plan: fixed room rectangles, devices placed by area, so added or removed devices appear without edits.
-import { sheet, tokens } from "./ds/tokens.js?v=10";
-import { primitives } from "./ds/primitives.js?v=10";
-import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=10";
-import { livingHtml, livingSheet } from "./ds/living-plan.js?v=10";
+import { sheet, tokens } from "./ds/tokens.js?v=11";
+import { primitives } from "./ds/primitives.js?v=11";
+import { drill, esc, mount, moreInfo } from "./ds/dom.js?v=11";
+import { livingHtml, livingSheet } from "./ds/living-plan.js?v=11";
 
 const OPEN_CLASSES = ["door", "window", "garage_door", "opening"];
 const GONE = ["unknown", "unavailable"];

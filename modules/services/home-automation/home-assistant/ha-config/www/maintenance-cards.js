@@ -1,7 +1,7 @@
 // Maintenance cards: attention-list-card shows prioritised items as severity-tinted tiles with what to do, plus an optional collapsible list of broken references; battery-list-card shows device batteries grouped by room, lowest first, with a level bar and when each last reported.
 
-import { tokens } from "./ds/tokens.js?v=12";
-import { SEVERITY as SEV, esc, mount, moreInfo } from "./ds/dom.js?v=12";
+import { tokens } from "./ds/tokens.js?v=14";
+import { SEVERITY as SEV, esc, mount, moreInfo } from "./ds/dom.js?v=14";
 
 const STYLE = `
   :host { display: block; }

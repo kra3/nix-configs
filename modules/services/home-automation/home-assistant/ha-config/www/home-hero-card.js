@@ -1,5 +1,5 @@
-// Home hero: presence and time of day, weather, alarm chip and attention pills that appear only when active.
-import { drill, moreInfo } from "./ds/dom.js?v=12";
+// Home hero: presence and time of day, weather, sun and moon, alarm chip and attention pills that appear only when active.
+import { drill, moreInfo } from "./ds/dom.js?v=14";
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -67,11 +67,28 @@ function pillDetail(states, d) {
 
 const WEATHER_TEXT = { partlycloudy: "Partly cloudy", "clear-night": "Clear night", "lightning-rainy": "Thunder and rain", "snowy-rainy": "Sleet", "windy-variant": "Windy" };
 
+const MOON_ICONS = {
+  new_moon: "mdi:moon-new",
+  waxing_crescent: "mdi:moon-waxing-crescent",
+  first_quarter: "mdi:moon-first-quarter",
+  waxing_gibbous: "mdi:moon-waxing-gibbous",
+  full_moon: "mdi:moon-full",
+  waning_gibbous: "mdi:moon-waning-gibbous",
+  last_quarter: "mdi:moon-last-quarter",
+  waning_crescent: "mdi:moon-waning-crescent",
+};
+
+const clock = (iso) => {
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+};
+
 function heroModel(states, cfg, userId) {
   const val = (id) => (id && states[id] ? states[id].state : "");
   const presence = val(cfg.presence);
   const period = val(cfg.period);
   const eta = val(cfg.eta);
+  const season = val(cfg.season);
   let title;
   let icon;
   let sub;
@@ -84,32 +101,44 @@ function heroModel(states, cfg, userId) {
     icon = presence === "away" ? "mdi:home-export-outline" : "mdi:home-heart";
     sub = titleCase(period) + (IDLE.includes(eta) ? "" : ` · ${eta}`);
   }
+  if (!IDLE.includes(season)) sub += ` · ${titleCase(season)}`;
   const w = cfg.weather && states[cfg.weather];
   const weather =
     w && typeof w.attributes.temperature === "number"
-      ? { temp: Math.round(w.attributes.temperature), unit: w.attributes.temperature_unit || "°C", icon: WEATHER_ICONS[w.state] || "mdi:weather-cloudy" }
+      ? {
+          temp: Math.round(w.attributes.temperature),
+          unit: w.attributes.temperature_unit || "°C",
+          icon: WEATHER_ICONS[w.state] || "mdi:weather-cloudy",
+          text: IDLE.includes(w.state) ? "" : WEATHER_TEXT[w.state] || titleCase(w.state.replace(/-/g, " ")),
+        }
       : null;
-  const sun = cfg.sun && states[cfg.sun];
-  const dusk = sun && sun.state === "above_horizon" && new Date(sun.attributes.next_dusk);
-  const season = val(cfg.season);
-  const info = [
-    w && !IDLE.includes(w.state) && (WEATHER_TEXT[w.state] || titleCase(w.state.replace(/-/g, " "))),
-    dusk && !isNaN(dusk) && `Dusk ${dusk.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}`,
-    !IDLE.includes(season) && titleCase(season),
-  ].filter(Boolean);
+  const s = cfg.sun && states[cfg.sun];
+  let sun = null;
+  if (s) {
+    const up = s.state === "above_horizon";
+    const at = clock(s.attributes[up ? "next_setting" : "next_rising"]);
+    const dusk = up && clock(s.attributes.next_dusk);
+    sun = { icon: up ? "mdi:weather-sunset-down" : "mdi:weather-sunset-up", label: `${up ? "Sunset" : "Sunrise"}${at ? ` ${at}` : ""}`, sub: dusk ? `Dusk ${dusk}` : "" };
+  }
+  const phase = val(cfg.moon);
+  const moon = MOON_ICONS[phase] ? { icon: MOON_ICONS[phase], label: titleCase(phase) } : null;
   const a = cfg.alarm && states[cfg.alarm];
   const alarm = a ? { state: a.state, icon: (ALARM[a.state] || ALARM.disarmed)[0], label: (ALARM[a.state] || [0, titleCase(a.state), "neutral"])[1], tone: (ALARM[a.state] || [0, 0, "neutral"])[2] } : null;
   const pills = (cfg.pills || [])
     .map((p, i) => ({ p, i }))
     .filter(({ p }) => whenOk(states, p.when, userId))
     .map(({ p, i }) => ({ i, label: p.label, icon: p.icon, color: COLORS[p.color] || COLORS.blue, detail: pillDetail(states, p.detail) }));
-  return { title, icon, sub, info, weather, alarm, pills };
+  return { title, icon, sub, weather, sun, moon, alarm, pills };
 }
 
 function heroHtml(m) {
   const weather = m.weather
-    ? `<div class="weather" data-act="weather"><ha-icon icon="${m.weather.icon}"></ha-icon><span>${m.weather.temp}${esc(m.weather.unit)}</span></div>`
+    ? `<button class="weather" data-act="weather" aria-label="Weather ${m.weather.temp}${esc(m.weather.unit)} ${esc(m.weather.text)}"><span class="t"><ha-icon icon="${m.weather.icon}"></ha-icon>${m.weather.temp}${esc(m.weather.unit)}</span>${m.weather.text ? `<span class="c">${esc(m.weather.text)}</span>` : ""}</button>`
     : "";
+  const sky = [
+    m.sun && `<button class="cell sun" data-act="sky"><ha-icon icon="${m.sun.icon}"></ha-icon><span class="cx"><span class="k">${esc(m.sun.label)}</span>${m.sun.sub ? `<span class="v">${esc(m.sun.sub)}</span>` : ""}</span></button>`,
+    m.moon && `<button class="cell moon" data-act="sky"><ha-icon icon="${m.moon.icon}"></ha-icon><span class="cx"><span class="k">${esc(m.moon.label)}</span><span class="v">Moon</span></span></button>`,
+  ].filter(Boolean).join("");
   const alarm = m.alarm
     ? `<button class="chip ${m.alarm.tone}" data-act="alarm"><ha-icon icon="${m.alarm.icon}"></ha-icon>${esc(m.alarm.label)}</button>`
     : "";
@@ -120,30 +149,42 @@ function heroHtml(m) {
     )
     .join("");
   return `<div class="card">
-    <div class="top"><ha-icon class="lead" icon="${m.icon}"></ha-icon><div class="txt"><div class="title">${esc(m.title)}</div><div class="sub">${esc(m.sub)}</div>${m.info.length ? `<div class="info">${m.info.map((i) => `<span>${esc(i)}</span>`).join("")}</div>` : ""}</div>${weather}</div>
-    <div class="chips">${alarm}${pills}</div>
+    <div class="top"><span class="badge"><ha-icon icon="${m.icon}"></ha-icon></span><div class="txt"><div class="title">${esc(m.title)}</div><div class="sub">${esc(m.sub)}</div></div>${weather}</div>
+    ${sky ? `<div class="sky">${sky}</div>` : ""}
+    ${alarm || pills ? `<div class="chips">${alarm}${pills}</div>` : ""}
   </div>`;
 }
 
 const STYLE = `
   :host { display: block; }
   ha-card { overflow: hidden; }
-  .card { padding: 14px 16px; }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
+  button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+  .card { padding: 16px; }
   .top { display: flex; align-items: center; gap: 12px; }
-  .lead { --mdc-icon-size: 28px; color: var(--primary-color); }
+  .badge { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
+  .badge ha-icon { --mdc-icon-size: 24px; }
   .txt { flex: 1; min-width: 0; }
-  .title { font-size: 20px; font-weight: 700; color: var(--primary-text-color); }
+  .title { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--primary-text-color); overflow-wrap: anywhere; }
   .sub { font-size: 13px; color: var(--secondary-text-color); margin-top: 2px; }
-  .info { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 4px; font-size: 12px; color: var(--secondary-text-color); }
-  .weather { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--primary-text-color); cursor: pointer; }
+  .weather { flex: none; min-height: 44px; padding: 4px 8px; border-radius: 12px; background: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+  .weather .t { display: flex; align-items: center; gap: 6px; font-size: 24px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
   .weather ha-icon { --mdc-icon-size: 26px; color: var(--secondary-text-color); }
+  .weather .c { font-size: 12px; color: var(--secondary-text-color); }
+  .sky { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 12px; }
+  .cell { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; text-align: left; background: color-mix(in srgb, var(--c) 10%, var(--card-background-color)); --c: var(--secondary-text-color); }
+  .cell.sun { --c: var(--warning-color, #ff9800); }
+  .cell.moon { --c: var(--primary-color); }
+  .cell ha-icon { --mdc-icon-size: 24px; flex: none; color: var(--c); }
+  .cx { display: flex; flex-direction: column; min-width: 0; }
+  .cx .k { font-size: 13px; font-weight: 600; }
+  .cx .v { font-size: 12px; color: var(--secondary-text-color); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .chip { max-width: 100%; font: inherit; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; --c: var(--secondary-text-color); color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+  .chip { max-width: 100%; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; text-align: left; --c: var(--secondary-text-color); color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
   .chip ha-icon { --mdc-icon-size: 18px; }
   .chip.good { --c: var(--success-color, #4caf50); }
   .chip.bad { --c: var(--error-color, #f44336); }
   .chip.warn { --c: #ffb300; }
-  .chip { text-align: left; }
   .lbl { white-space: nowrap; }
   .detail { font-weight: 500; opacity: 0.8; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;
@@ -189,7 +230,8 @@ class HomeHeroCard extends HTMLElement {
       }
       return this._moreInfo(cfg.alarm);
     }
-    if (act === "weather") return this._moreInfo(cfg.weather);
+    if (act === "weather") return (cfg.weather_detail && drill(this, cfg.weather_detail)) || this._moreInfo(cfg.weather);
+    if (act === "sky") return (cfg.sun_detail && drill(this, cfg.sun_detail)) || this._moreInfo(cfg.sun);
     const tap = (cfg.pills[Number(el.dataset.i)] || {}).tap || {};
     if (tap.more_info) return this._moreInfo(tap.more_info);
     if (tap.navigate) {
@@ -210,7 +252,7 @@ if (typeof customElements !== "undefined" && !customElements.get("home-hero-card
   window.customCards.push({
     type: "home-hero-card",
     name: "Home hero card",
-    description: "Presence, weather, alarm chip and attention pills.",
+    description: "Presence, weather, sun and moon, alarm chip and attention pills.",
   });
 }
 

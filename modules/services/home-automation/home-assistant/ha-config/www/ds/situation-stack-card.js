@@ -1,13 +1,13 @@
-import { sheet, tokens } from "./tokens.js?v=12";
-import { mount } from "./dom.js?v=12";
-import { pickSet } from "./layout.js?v=12";
-import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=12";
+import { sheet, tokens } from "./tokens.js?v=14";
+import { mount } from "./dom.js?v=14";
+import { pickSet } from "./layout.js?v=14";
+import { situation, inputFromHass, DEFAULT_CONFIG } from "./situation.js?v=14";
 
 const own = sheet(`
 :host { display: block; }
 :host([hidden]) { display: none; }
-.head { margin: 0 0 var(--ds-space-3); font: 600 clamp(17px, 2vw + 9px, 22px)/1.3 var(--ds-font); color: var(--primary-text-color);
-  transition: opacity var(--ds-motion-state) linear; text-wrap: balance; }
+.head { margin: 0 0 var(--ds-space-3); padding-left: var(--ds-space-3); max-width: 62ch; border-left: 3px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
+  font: 500 clamp(15px, 0.5vw + 13px, 18px)/1.4 var(--ds-font); color: var(--primary-text-color); transition: opacity var(--ds-motion-state) linear; text-wrap: pretty; }
 .head.fade { opacity: 0; }
 .head[hidden] { display: none; }
 .set { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--ds-gap); align-items: start; }

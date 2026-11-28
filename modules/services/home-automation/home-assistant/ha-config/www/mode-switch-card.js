@@ -1,8 +1,8 @@
 // Segmented control over boolean helpers: the first mode needs no entity and means "all others off"; the selected mode explains itself in one sentence.
 
-import { sheet, tokens } from "/local/ds/tokens.js?v=12";
-import { primitives } from "/local/ds/primitives.js?v=12";
-import { esc, mount } from "/local/ds/dom.js?v=12";
+import { sheet, tokens } from "/local/ds/tokens.js?v=14";
+import { primitives } from "/local/ds/primitives.js?v=14";
+import { esc, mount } from "/local/ds/dom.js?v=14";
 
 const own = sheet(`
   :host { display: block; }

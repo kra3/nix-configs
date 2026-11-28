@@ -1,15 +1,26 @@
-import { sheet, tokens } from "./tokens.js?v=12";
-import { primitives } from "./primitives.js?v=12";
-import { mount } from "./dom.js?v=12";
-import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=12";
+import { sheet, tokens } from "./tokens.js?v=14";
+import { primitives } from "./primitives.js?v=14";
+import { mount } from "./dom.js?v=14";
+import { layoutMode, partition, columnCount, sectionSpan, detailConfig } from "./layout.js?v=14";
 
 const own = sheet(`
 :host { display: grid; gap: var(--ds-gap); padding: var(--ds-space-4); box-sizing: border-box; align-items: start;
   grid-template-columns: 260px minmax(0, 1fr); color: var(--primary-text-color); }
 :host([data-mode="wide"][open]) { grid-template-columns: 260px minmax(0, 1fr) 360px; }
 :host([data-mode="narrow"]) { grid-template-columns: minmax(0, 1fr); padding: var(--ds-space-2); }
+:host([data-norail]) { grid-template-columns: minmax(0, 1fr); }
+:host([data-norail][data-mode="wide"][open]) { grid-template-columns: minmax(0, 1fr) 360px; }
 [hidden] { display: none !important; }
 .rail > *, .lead > * { min-width: 0; }
+.railbar { display: flex; align-items: center; gap: var(--ds-space-2); width: 100%; min-height: var(--ds-touch); box-sizing: border-box; padding: 0 var(--ds-space-3); border: 0; border-radius: var(--ds-radius-tile);
+  background: var(--card-background-color); color: var(--primary-text-color); font: var(--ds-label); text-align: left; cursor: pointer; touch-action: manipulation; }
+.railbar:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.railbar ha-icon { --mdc-icon-size: 18px; flex: none; }
+.railbar .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.railbar .n.warn, .railbar .n.warn ha-icon { color: var(--warning-color); }
+.railbar .a { color: var(--secondary-text-color); white-space: nowrap; }
+.railbar .chev { transition: transform var(--ds-motion-state) var(--ds-ease); }
+.railbar[aria-expanded="true"] .chev { transform: rotate(180deg); }
 .lead { display: flex; flex-direction: column; min-width: 0; }
 .rail { display: flex; flex-direction: column; gap: var(--ds-gap); min-width: 0; }
 .col { min-width: 0; }
@@ -46,9 +57,9 @@ class CommandCentre extends HTMLElement {
   constructor() {
     super();
     mount(this, tokens, primitives, own);
-    this.shadowRoot.innerHTML = `<div class="lead" hidden></div><div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
+    this.shadowRoot.innerHTML = `<div class="lead" hidden></div><button class="railbar" aria-expanded="false" hidden></button><div class="rail"></div><div class="col"><div class="badges" hidden></div><div class="main"></div></div><aside class="pane" role="dialog" aria-label="Details" tabindex="-1" hidden></aside><div class="scrim" hidden></div>`;
     const $ = (s) => this.shadowRoot.querySelector(s);
-    this._lead = $(".lead"); this._leadEls = []; this._rail = $(".rail"); this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
+    this._lead = $(".lead"); this._leadEls = []; this._rail = $(".rail"); this._bar = $(".railbar"); this._railOpen = false; this._cfg = {}; this._main = $(".main"); this._badges = $(".badges"); this._pane = $(".pane"); this._scrim = $(".scrim");
     this._max = 4; this._sections = []; this._hass = undefined; this._card = null; this._openSeq = 0;
     this._ro = new ResizeObserver(() => this._layout());
     this._watched = new Set();
@@ -56,6 +67,7 @@ class CommandCentre extends HTMLElement {
     this.addEventListener("ll-custom", (ev) => this._open(ev));
     this.addEventListener("keydown", (ev) => { if (ev.key === "Escape") this._close(); });
     this._scrim.addEventListener("click", () => this._close());
+    this._bar.addEventListener("click", () => { this._railOpen = !this._railOpen; this._layout(); });
     this._onPop = () => this._close(true);
   }
 
@@ -70,7 +82,7 @@ class CommandCentre extends HTMLElement {
     window.removeEventListener("popstate", this._onPop);
   }
 
-  setConfig(c) { this._max = c?.max_columns ?? 4; this._layout(); }
+  setConfig(c) { this._cfg = c ?? {}; this._max = c?.max_columns ?? 4; this._layout(); }
   get sections() { return this._sections; }
   set sections(v) {
     this._sections = v || [];
@@ -78,7 +90,7 @@ class CommandCentre extends HTMLElement {
   }
   set badges(v) { this._badges.replaceChildren(...(v || [])); this._badges.hidden = !v?.length; }
   get hass() { return this._hass; }
-  set hass(h) { this._hass = h; if (this._card) this._card.hass = h; }
+  set hass(h) { this._hass = h; this._summary(); if (this._card) this._card.hass = h; }
 
   _place() {
     const { rail, main, lead } = partition(this._sections);
@@ -91,8 +103,27 @@ class CommandCentre extends HTMLElement {
     this._layout();
   }
 
+  _summary() {
+    const h = this._hass;
+    if (!h || this._bar.hidden) return;
+    const n = Number(h.states["sensor.attention"]?.state) || 0;
+    const a = (h.states["alarm_control_panel.vasudha_secure"]?.state ?? "").replace(/_/g, " ");
+    const key = n + "|" + a;
+    if (key === this._barKey) return;
+    this._barKey = key;
+    this._bar.innerHTML = `<span class="n ${n ? "warn" : ""}"><ha-icon icon="${n ? "mdi:alert-circle-outline" : "mdi:check-circle-outline"}"></ha-icon> ${n ? `${n} need${n === 1 ? "s" : ""} attention` : "All clear"}</span>${a ? `<span class="a">Alarm ${a}</span>` : ""}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon>`;
+  }
+
   _layout() {
     this.dataset.mode = layoutMode(this.getBoundingClientRect().width);
+    const folded = this.dataset.mode === "narrow" && this._cfg.cc_rail === "collapsed";
+    this._bar.hidden = !folded;
+    this._bar.setAttribute("aria-expanded", String(this._railOpen));
+    const norail = !this._rail.children.length;
+    this.toggleAttribute("data-norail", norail);
+    this._rail.hidden = norail || (folded && !this._railOpen);
+    if (norail) this._bar.hidden = true;
+    this._summary();
     const to = this.dataset.mode === "narrow" ? this._lead : this._main;
     if (this._leadEls.some((s) => s.parentNode !== to)) {
       if (to === this._main) this._main.prepend(...this._leadEls); else this._lead.replaceChildren(...this._leadEls);
@@ -107,7 +138,7 @@ class CommandCentre extends HTMLElement {
     this._scrim.hidden = !this._isOpen() || this.dataset.mode === "wide";
     const modal = this._isOpen() && this.dataset.mode !== "wide";
     this._pane.setAttribute("aria-modal", String(this.dataset.mode !== "wide"));
-    for (const e of [this._lead, this._rail, this._main, this._badges]) e.toggleAttribute("inert", modal);
+    for (const e of [this._lead, this._bar, this._rail, this._main, this._badges]) e.toggleAttribute("inert", modal);
   }
 
   _isOpen() { return !this._pane.hidden; }

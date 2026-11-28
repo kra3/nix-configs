@@ -1,7 +1,7 @@
 // Washer and dryer tiles (phase, finish estimate, live power, last cycle, Emptied button), care counters with a Done reset, and recent loads drawn as phase-coloured bars.
-import { sheet, tokens } from "/local/ds/tokens.js?v=12";
-import { primitives } from "/local/ds/primitives.js?v=12";
-import { drill, drillOr, esc, mount, moreInfo } from "/local/ds/dom.js?v=12";
+import { sheet, tokens } from "/local/ds/tokens.js?v=14";
+import { primitives } from "/local/ds/primitives.js?v=14";
+import { drill, drillOr, esc, mount, moreInfo } from "/local/ds/dom.js?v=14";
 
 const STYLE = sheet(`
   :host { display: block; }

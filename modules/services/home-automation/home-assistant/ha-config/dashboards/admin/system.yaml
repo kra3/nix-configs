@@ -4,7 +4,6 @@ path: system
 icon: mdi:server
 max_columns: 3
 sections:
-- !include ../rail.yaml
 - type: grid
   cards:
   - type: heading
